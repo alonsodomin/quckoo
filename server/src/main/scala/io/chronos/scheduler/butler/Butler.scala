@@ -53,6 +53,7 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
   // execution plan is event sourced
   private var executionPlan = ExecutionPlan.empty
 
+  private val executionCounter = hazelcastInstance.getAtomicLong("executionCounter")
   private val jobDefinitions = hazelcastInstance.getMap[JobId, JobDefinition]("jobDefinitions")
 
   val cleanupTask = context.system.scheduler.schedule(workTimeout / 2, workTimeout / 2, self, CleanupTick)
