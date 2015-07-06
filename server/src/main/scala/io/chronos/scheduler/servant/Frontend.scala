@@ -24,7 +24,7 @@ class Frontend extends Actor {
   var butlerProxy = context.actorOf(ClusterSingletonProxy.props(
     singletonPath = Butler.Path,
     role = Some("backend")
-  ), name = "masterProxy")
+  ), name = "butlerProxy")
 
   def receive = {
     case work =>

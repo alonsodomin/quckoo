@@ -5,9 +5,9 @@ import scala.collection.immutable.Queue
 /**
  * Created by aalonsodominguez on 05/07/15.
  */
-object WorkState {
+object ExecutionPlan {
 
-  def empty: WorkState = WorkState(
+  def empty: ExecutionPlan = ExecutionPlan(
     pendingWork = Queue.empty,
     workInProgress = Map.empty,
     acceptedWorks = Set.empty,
@@ -25,13 +25,13 @@ object WorkState {
 
 }
 
-case class WorkState private (
+case class ExecutionPlan private (
   private val pendingWork: Queue[Work],
   private val workInProgress: Map[String, Work],
   private val acceptedWorks: Set[String],
   private val finishedWorkIds: Set[String]) {
 
-  import WorkState._
+  import ExecutionPlan._
 
   def hasWork: Boolean = pendingWork.nonEmpty
   def nextWork: Work = pendingWork.head
@@ -39,7 +39,7 @@ case class WorkState private (
   def isInProgress(workId: String): Boolean = workInProgress.contains(workId)
   def isDone(workId: String): Boolean = finishedWorkIds.contains(workId)
 
-  def updated(event: WorkDomainEvent): WorkState = event match {
+  def updated(event: WorkDomainEvent): ExecutionPlan = event match {
     case WorkAccepted(work) =>
       copy(
         pendingWork = pendingWork enqueue work,

@@ -5,7 +5,7 @@ import akka.cluster.Cluster
 import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.persistence.PersistentActor
 import io.chronos.scheduler.protocol.WorkerProtocol
-import io.chronos.scheduler.worker.{Work, WorkResult, WorkState}
+import io.chronos.scheduler.worker.{ExecutionPlan, Work, WorkResult}
 
 import scala.concurrent.duration.{Deadline, FiniteDuration}
 
@@ -35,7 +35,7 @@ object Butler {
 
 class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
   import Butler._
-  import WorkState._
+  import ExecutionPlan._
   import WorkerProtocol._
 
   val mediator = DistributedPubSubExtension(context.system).mediator
@@ -51,14 +51,14 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
   private var workers = Map[String, WorkerState]()
 
   // work state is event sourced
-  private var workState = WorkState.empty
+  private var executionPlan = ExecutionPlan.empty
 
   import context.dispatcher
   val cleanupTask = context.system.scheduler.schedule(workTimeout / 2, workTimeout / 2, self, CleanupTick)
   override def postStop(): Unit = cleanupTask.cancel()
 
   def notifyWorkers(): Unit =
-    if (workState.hasWork) {
+    if (executionPlan.hasWork) {
       workers.foreach {
         case (_, WorkerState(ref, Idle)) => ref ! WorkReady
         case _ => // busy
@@ -74,7 +74,7 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
 
   override def receiveRecover: Receive = {
     case event: WorkDomainEvent =>
-      workState = workState.updated(event)
+      executionPlan = executionPlan.updated(event)
       log.info("Replayed {}", event.getClass.getSimpleName)
   }
 
@@ -85,18 +85,18 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
       } else {
         workers += (workerId -> WorkerState(sender(), status = Idle))
         log.info("Worker registered: {}", workerId)
-        if (workState.hasWork) {
+        if (executionPlan.hasWork) {
           sender() ! WorkReady
         }
       }
 
     case RequestWork(workerId) =>
-      if (workState.hasWork) {
+      if (executionPlan.hasWork) {
         workers.get(workerId) match {
           case Some(workerState @ WorkerState(_, Idle)) =>
-            val work = workState.nextWork
+            val work = executionPlan.nextWork
             persist(WorkStarted(work.workId)) { event =>
-              workState = workState.updated(event)
+              executionPlan = executionPlan.updated(event)
               log.info("Giving worker {} some work {}", workerId, work.workId)
               workers += (workerId -> workerState.copy(status = Busy(work.workId, Deadline.now + workTimeout)))
               sender() ! work
@@ -106,39 +106,39 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
       }
 
     case WorkDone(workerId, workId, result) =>
-      if (workState.isDone(workId)) {
+      if (executionPlan.isDone(workId)) {
         // previous Ack was lost, confirm again that this is done
         sender() ! WorkAck(workId)
-      } else if (!workState.isInProgress(workId)) {
+      } else if (!executionPlan.isInProgress(workId)) {
         log.info("Work {} not in progress, reported as done by worker {}", workId, workerId)
       } else {
         log.info("Work {} is done by worker {}", workId, workerId)
         changeWorkerToIdle(workerId, workId)
         persist(WorkCompleted(workId, result)) { event =>
-          workState = workState.updated(event)
+          executionPlan = executionPlan.updated(event)
           mediator ! DistributedPubSubMediator.Publish(ResultsTopic, WorkResult(workId, result))
           sender ! WorkAck(workId)
         }
       }
 
     case WorkFailed(workerId, workId) =>
-      if (workState.isInProgress(workId)) {
+      if (executionPlan.isInProgress(workId)) {
         log.info("Work {} failed by worker {}", workId, workerId)
         changeWorkerToIdle(workerId, workId)
         persist(WorkerFailed(workId)) { event =>
-          workState = workState.updated(event)
+          executionPlan = executionPlan.updated(event)
           notifyWorkers()
         }
       }
 
     case work: Work =>
-      if (workState.isAccepted(work.workId)) {
+      if (executionPlan.isAccepted(work.workId)) {
         sender() ! Ack(work.workId)
       } else {
         log.info("Accepted work {}", work.workId)
         persist(WorkAccepted(work)) { event =>
           sender() ! Ack(work.workId)
-          workState = workState.updated(event)
+          executionPlan = executionPlan.updated(event)
           notifyWorkers()
         }
       }
@@ -149,7 +149,7 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
           log.info("Work timed out: {}", workId)
           workers -= workerId
           persist(WorkerTimedOut(workId)) { event =>
-            workState = workState.updated(event)
+            executionPlan = executionPlan.updated(event)
             notifyWorkers()
           }
         }
