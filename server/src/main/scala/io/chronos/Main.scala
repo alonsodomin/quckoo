@@ -2,12 +2,16 @@ package io.chronos
 
 import akka.actor._
 import akka.contrib.pattern.{ClusterClient, ClusterSingletonManager}
+import akka.japi.Util._
 import akka.pattern.ask
 import akka.persistence.journal.leveldb.{SharedLeveldbJournal, SharedLeveldbStore}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import io.chronos.scheduler._
-import akka.japi.Util._
+import io.chronos.scheduler.butler.Master
+import io.chronos.scheduler.servant.Frontend
+import io.chronos.scheduler.worker.{JobExecutor, Worker}
+
 import scala.concurrent.duration._
 
 /**

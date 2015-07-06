@@ -1,9 +1,10 @@
-package io.chronos.scheduler
+package io.chronos.scheduler.servant
 
 import akka.actor.Actor
 import akka.contrib.pattern.ClusterSingletonProxy
 import akka.pattern._
 import akka.util.Timeout
+import io.chronos.scheduler.butler.Master
 
 import scala.concurrent.duration._
 

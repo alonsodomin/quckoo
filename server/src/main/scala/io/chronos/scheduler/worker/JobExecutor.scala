@@ -1,4 +1,4 @@
-package io.chronos.scheduler
+package io.chronos.scheduler.worker
 
 import akka.actor.Actor
 

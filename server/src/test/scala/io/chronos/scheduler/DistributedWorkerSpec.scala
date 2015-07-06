@@ -4,11 +4,13 @@ import java.io.File
 
 import akka.actor.{Actor, ActorSystem, PoisonPill, Props, RootActorPath}
 import akka.cluster.Cluster
-import akka.contrib.pattern.{ClusterClient, ClusterSingletonManager, DistributedPubSubExtension}
 import akka.contrib.pattern.DistributedPubSubMediator.{Subscribe, SubscribeAck}
+import akka.contrib.pattern.{ClusterClient, ClusterSingletonManager, DistributedPubSubExtension}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
-import io.chronos.scheduler._
+import io.chronos.scheduler.butler.Master
+import io.chronos.scheduler.servant.Frontend
+import io.chronos.scheduler.worker.{JobExecutor, Work, WorkResult, Worker}
 import org.apache.commons.io.FileUtils
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 

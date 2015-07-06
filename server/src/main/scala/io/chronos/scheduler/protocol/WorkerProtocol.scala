@@ -1,4 +1,4 @@
-package io.chronos.scheduler
+package io.chronos.scheduler.protocol
 
 /**
  * Created by aalonsodominguez on 05/07/15.

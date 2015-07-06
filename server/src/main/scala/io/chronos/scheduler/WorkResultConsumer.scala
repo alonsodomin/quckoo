@@ -1,7 +1,9 @@
 package io.chronos.scheduler
 
-import akka.actor.{ActorLogging, Actor}
-import akka.contrib.pattern.{DistributedPubSubMediator, DistributedPubSubExtension}
+import akka.actor.{Actor, ActorLogging}
+import akka.contrib.pattern.{DistributedPubSubExtension, DistributedPubSubMediator}
+import io.chronos.scheduler.butler.Master
+import io.chronos.scheduler.worker.WorkResult
 
 /**
  * Created by aalonsodominguez on 05/07/15.

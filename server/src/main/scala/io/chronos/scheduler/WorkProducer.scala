@@ -2,10 +2,12 @@ package io.chronos.scheduler
 
 import java.util.UUID
 
-import akka.actor.{ActorLogging, Actor, ActorRef}
+import akka.actor.{Actor, ActorLogging, ActorRef}
+import io.chronos.scheduler.servant.Frontend
+import io.chronos.scheduler.worker.Work
 
-import scala.concurrent.forkjoin.ThreadLocalRandom
 import scala.concurrent.duration._
+import scala.concurrent.forkjoin.ThreadLocalRandom
 
 /**
  * Created by aalonsodominguez on 05/07/15.

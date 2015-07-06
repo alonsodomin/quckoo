@@ -1,9 +1,11 @@
-package io.chronos.scheduler
+package io.chronos.scheduler.butler
 
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.persistence.PersistentActor
+import io.chronos.scheduler.protocol.WorkerProtocol
+import io.chronos.scheduler.worker.{Work, WorkResult, WorkState}
 
 import scala.concurrent.duration.{Deadline, FiniteDuration}
 
