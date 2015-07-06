@@ -16,7 +16,7 @@ object PowerOfNActor {
   case object Tick
 }
 
-class PowerOfNActor(endpoint: ActorRef) extends Actor with ActorLogging {
+class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
   import PowerOfNActor._
   import context.dispatcher
 
@@ -26,6 +26,11 @@ class PowerOfNActor(endpoint: ActorRef) extends Actor with ActorLogging {
   def nextWorkId = UUID.randomUUID().toString
 
   var n = 0
+
+  def job: String = {
+    val n2 = n * n
+    s"$n * $n = $n2"
+  }
 
   override def preStart(): Unit =
     scheduler.scheduleOnce(5.seconds, self, Tick)
@@ -37,16 +42,16 @@ class PowerOfNActor(endpoint: ActorRef) extends Actor with ActorLogging {
       n += 1
       log.info("Produced work: {}", n)
       val work = Work(nextWorkId, n)
-      endpoint ! work
-      context.become(waitAccepted(work), discardOld = false)
+      receptor ! work
+      context.become(waitAccepted, discardOld = false)
   }
 
-  def waitAccepted(work: Work): Receive = {
+  def waitAccepted: Receive = {
     case ReceptorActor.Accepted =>
       context.unbecome()
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
     case ReceptorActor.Rejected =>
       log.info("Work not accepted, retry after a while")
-      scheduler.scheduleOnce(3.seconds, endpoint, Tick)
+      scheduler.scheduleOnce(3.seconds, receptor, Tick)
   }
 }

@@ -6,7 +6,7 @@ import akka.actor.Actor
 import akka.contrib.pattern.ClusterSingletonProxy
 import akka.pattern._
 import akka.util.Timeout
-import io.chronos.scheduler.Job
+import io.chronos.scheduler.JobDefinition
 import io.chronos.scheduler.butler.Butler
 import io.chronos.scheduler.worker.Work
 
@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 
 object ReceptorActor {
   sealed trait ReceptorMessage
-  case class EnqueueJob(job: Any) extends ReceptorMessage
+  case class Register(job: JobDefinition) extends ReceptorMessage
 
   sealed trait ReceptorResponse
   case object Accepted extends ReceptorResponse
@@ -37,8 +37,9 @@ class ReceptorActor extends Actor {
   def nextWorkId = UUID.randomUUID().toString
 
   def receive = {
-    case EnqueueJob(job: Job.Execution) =>
-      val work = Work(nextWorkId, job)
+    case Register(job) =>
+      val workId = nextWorkId
+      val work = Work(workId, job.execution)
       implicit val timeout = Timeout(5.seconds)
       (butlerProxy ? work) map {
         case Butler.Ack(_) => Accepted

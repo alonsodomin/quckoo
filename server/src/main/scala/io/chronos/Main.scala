@@ -53,7 +53,7 @@ object Main {
       ClusterSingletonManager.props(
         Butler.props(workTimeout), "active", PoisonPill, Some(role)
       ),
-      "master"
+      "butler"
     )
   }
 
@@ -61,7 +61,7 @@ object Main {
     val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port)
       .withFallback(ConfigFactory.load())
     val system = ActorSystem("ClusterSystem", conf)
-    val frontend = system.actorOf(Props[ReceptorActor], "frontend")
+    val frontend = system.actorOf(Props[ReceptorActor], "receptor")
     system.actorOf(Props(classOf[PowerOfNActor], frontend), "producer")
     system.actorOf(Props[WorkResultConsumer], "consumer")
   }
