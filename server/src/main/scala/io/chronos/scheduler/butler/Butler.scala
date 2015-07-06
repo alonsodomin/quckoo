@@ -1,11 +1,11 @@
 package io.chronos.scheduler.butler
 
-import akka.actor.{ActorLogging, ActorRef, Props}
+import akka.actor.{ActorLogging, Props}
 import akka.cluster.Cluster
 import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.persistence.PersistentActor
 import io.chronos.scheduler.protocol.WorkerProtocol
-import io.chronos.scheduler.worker.{ExecutionPlan, Work, WorkResult}
+import io.chronos.scheduler.worker.{ExecutionPlan, Work, WorkResult, WorkerState}
 
 import scala.concurrent.duration.{Deadline, FiniteDuration}
 
@@ -22,12 +22,6 @@ object Butler {
   def props(workTimeout: FiniteDuration): Props = Props(classOf[Butler], workTimeout)
 
   case class Ack(workId: String)
-
-  private sealed trait WorkerStatus
-  private case object Idle extends WorkerStatus
-  private case class Busy(workId: String, deadline: Deadline) extends WorkerStatus
-
-  private case class WorkerState(ref: ActorRef, status: WorkerStatus)
 
   private case object CleanupTick
 }
@@ -60,15 +54,15 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
   def notifyWorkers(): Unit =
     if (executionPlan.hasWork) {
       workers.foreach {
-        case (_, WorkerState(ref, Idle)) => ref ! WorkReady
+        case (_, WorkerState(ref, WorkerState.Idle)) => ref ! WorkReady
         case _ => // busy
       }
     }
 
   def changeWorkerToIdle(workerId: String, workId: String): Unit =
     workers.get(workerId) match {
-      case Some(s @ WorkerState(_, Busy(`workId`, _))) =>
-        workers += (workerId -> s.copy(status = Idle))
+      case Some(s @ WorkerState(_, WorkerState.Busy(`workId`, _))) =>
+        workers += (workerId -> s.copy(status = WorkerState.Idle))
       case _ => // might happen after standby recovery, worker state is not persisted
     }
 
@@ -83,7 +77,7 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
       if (workers.contains(workerId)) {
         workers += (workerId -> workers(workerId).copy(ref = sender()))
       } else {
-        workers += (workerId -> WorkerState(sender(), status = Idle))
+        workers += (workerId -> WorkerState(sender(), status = WorkerState.Idle))
         log.info("Worker registered: {}", workerId)
         if (executionPlan.hasWork) {
           sender() ! WorkReady
@@ -93,12 +87,12 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
     case RequestWork(workerId) =>
       if (executionPlan.hasWork) {
         workers.get(workerId) match {
-          case Some(workerState @ WorkerState(_, Idle)) =>
+          case Some(workerState @ WorkerState(_, WorkerState.Idle)) =>
             val work = executionPlan.nextWork
             persist(WorkStarted(work.workId)) { event =>
               executionPlan = executionPlan.updated(event)
               log.info("Giving worker {} some work {}", workerId, work.workId)
-              workers += (workerId -> workerState.copy(status = Busy(work.workId, Deadline.now + workTimeout)))
+              workers += (workerId -> workerState.copy(status = WorkerState.Busy(work.workId, Deadline.now + workTimeout)))
               sender() ! work
             }
           case _ =>
@@ -144,7 +138,7 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
       }
 
     case CleanupTick =>
-      for ((workerId, workerState @ WorkerState(_, Busy(workId, timeout))) <- workers) {
+      for ((workerId, workerState @ WorkerState(_, WorkerState.Busy(workId, timeout))) <- workers) {
         if (timeout.isOverdue()) {
           log.info("Work timed out: {}", workId)
           workers -= workerId
