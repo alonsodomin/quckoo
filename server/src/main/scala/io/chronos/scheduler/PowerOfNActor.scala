@@ -3,7 +3,7 @@ package io.chronos.scheduler
 import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
-import io.chronos.scheduler.servant.Frontend
+import io.chronos.scheduler.receptor.ReceptorActor
 import io.chronos.scheduler.worker.Work
 
 import scala.concurrent.duration._
@@ -12,12 +12,12 @@ import scala.concurrent.forkjoin.ThreadLocalRandom
 /**
  * Created by aalonsodominguez on 05/07/15.
  */
-object WorkProducer {
+object PowerOfNActor {
   case object Tick
 }
 
-class WorkProducer(endpoint: ActorRef) extends Actor with ActorLogging {
-  import WorkProducer._
+class PowerOfNActor(endpoint: ActorRef) extends Actor with ActorLogging {
+  import PowerOfNActor._
   import context.dispatcher
 
   def scheduler = context.system.scheduler
@@ -42,10 +42,10 @@ class WorkProducer(endpoint: ActorRef) extends Actor with ActorLogging {
   }
 
   def waitAccepted(work: Work): Receive = {
-    case Frontend.Accepted =>
+    case ReceptorActor.Accepted =>
       context.unbecome()
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
-    case Frontend.Rejected =>
+    case ReceptorActor.Rejected =>
       log.info("Work not accepted, retry after a while")
       scheduler.scheduleOnce(3.seconds, endpoint, Tick)
   }

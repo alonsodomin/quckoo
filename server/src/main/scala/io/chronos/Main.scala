@@ -9,7 +9,7 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import io.chronos.scheduler._
 import io.chronos.scheduler.butler.Butler
-import io.chronos.scheduler.servant.Frontend
+import io.chronos.scheduler.receptor.ReceptorActor
 import io.chronos.scheduler.worker.{JobExecutor, Worker}
 
 import scala.concurrent.duration._
@@ -61,8 +61,8 @@ object Main {
     val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port)
       .withFallback(ConfigFactory.load())
     val system = ActorSystem("ClusterSystem", conf)
-    val frontend = system.actorOf(Props[Frontend], "frontend")
-    system.actorOf(Props(classOf[WorkProducer], frontend), "producer")
+    val frontend = system.actorOf(Props[ReceptorActor], "frontend")
+    system.actorOf(Props(classOf[PowerOfNActor], frontend), "producer")
     system.actorOf(Props[WorkResultConsumer], "consumer")
   }
 

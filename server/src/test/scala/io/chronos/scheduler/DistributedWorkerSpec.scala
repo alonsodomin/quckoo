@@ -9,7 +9,7 @@ import akka.contrib.pattern.{ClusterClient, ClusterSingletonManager, Distributed
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import io.chronos.scheduler.butler.Butler
-import io.chronos.scheduler.servant.Frontend
+import io.chronos.scheduler.receptor.ReceptorActor
 import io.chronos.scheduler.worker.{JobExecutor, Work, WorkResult, Worker}
 import org.apache.commons.io.FileUtils
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
@@ -78,7 +78,8 @@ class DistributedWorkerSpec(_system: ActorSystem)
 
   val storageLocations = List(
     "akka.persistence.journal.leveldb.dir",
-    "akka.persistence.snapshot-store.local.dir").map(s => new File(system.settings.config.getString(s)))
+    "akka.persistence.snapshot-store.local.dir"
+  ).map(s => new File(system.settings.config.getString(s)))
 
   override def beforeAll: Unit = {
     storageLocations.foreach(dir => FileUtils.deleteDirectory(dir))
@@ -88,6 +89,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
     system.shutdown()
     backendSystem.shutdown()
     workerSystem.shutdown()
+
     system.awaitTermination()
     backendSystem.awaitTermination()
     workerSystem.awaitTermination()
@@ -109,7 +111,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
     val flakyWorker = workerSystem.actorOf(Worker.props(clusterClient, Props[FlakyWorkExecutor], 1.second), "flaky-worker")
 
     Cluster(system).join(clusterAddress)
-    val frontend = system.actorOf(Props[Frontend], "frontend")
+    val frontend = system.actorOf(Props[ReceptorActor], "frontend")
 
     val results = TestProbe()
     DistributedPubSubExtension(system).mediator ! Subscribe(Butler.ResultsTopic, results.ref)
@@ -119,7 +121,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
     within(10.seconds) {
       awaitAssert {
         frontend ! Work("1", 1)
-        expectMsg(Frontend.Accepted)
+        expectMsg(ReceptorActor.Accepted)
       }
     }
 
@@ -127,7 +129,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
 
     for (n <- 2 to 100) {
       frontend ! Work(n.toString, n)
-      expectMsg(Frontend.Accepted)
+      expectMsg(ReceptorActor.Accepted)
     }
 
     results.within(10.seconds) {
