@@ -9,6 +9,7 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import io.chronos.scheduler._
 import io.chronos.scheduler.butler.Butler
+import io.chronos.scheduler.example.PowerOfNActor
 import io.chronos.scheduler.receptor.ReceptorActor
 import io.chronos.scheduler.worker.{JobExecutor, Worker}
 

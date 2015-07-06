@@ -2,7 +2,7 @@ package io.chronos.scheduler.receptor
 
 import java.util.UUID
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorLogging}
 import akka.contrib.pattern.ClusterSingletonProxy
 import akka.pattern._
 import akka.util.Timeout
@@ -18,14 +18,14 @@ import scala.concurrent.duration._
 
 object ReceptorActor {
   sealed trait ReceptorMessage
-  case class Register(job: JobDefinition) extends ReceptorMessage
+  case class RegisterJob(job: JobDefinition) extends ReceptorMessage
 
   sealed trait ReceptorResponse
   case object Accepted extends ReceptorResponse
   case object Rejected extends ReceptorResponse
 }
 
-class ReceptorActor extends Actor {
+class ReceptorActor extends Actor with ActorLogging {
   import ReceptorActor._
   import context.dispatcher
 
@@ -37,9 +37,10 @@ class ReceptorActor extends Actor {
   def nextWorkId = UUID.randomUUID().toString
 
   def receive = {
-    case Register(job) =>
+    case RegisterJob(job: JobDefinition) =>
+      log.info("Registering job {}", job.jobId)
       val workId = nextWorkId
-      val work = Work(workId, job.execution)
+      val work = Work(workId, job.job)
       implicit val timeout = Timeout(5.seconds)
       (butlerProxy ? work) map {
         case Butler.Ack(_) => Accepted

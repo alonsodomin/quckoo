@@ -1,10 +1,9 @@
-package io.chronos.scheduler
+package io.chronos.scheduler.example
 
 import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import io.chronos.scheduler.receptor.ReceptorActor
-import io.chronos.scheduler.worker.Work
 
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ThreadLocalRandom
@@ -27,11 +26,6 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
 
   var n = 0
 
-  def job: String = {
-    val n2 = n * n
-    s"$n * $n = $n2"
-  }
-
   override def preStart(): Unit =
     scheduler.scheduleOnce(5.seconds, self, Tick)
 
@@ -41,8 +35,8 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
     case Tick =>
       n += 1
       log.info("Produced work: {}", n)
-      val work = Work(nextWorkId, n)
-      receptor ! work
+      val jobDef = PowerOfNJobDef
+      receptor ! ReceptorActor.RegisterJob(jobDef)
       context.become(waitAccepted, discardOld = false)
   }
 
