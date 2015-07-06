@@ -11,7 +11,8 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc(),
 
-    "com.hazelcast" % "hazelcast" % hazelcastVersion,
+    "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
+    "com.hazelcast" % "hazelcast-client" % hazelcastVersion withSources() withJavadoc(),
 
     "io.spray" %% "spray-can"     % sprayVersion          withSources() withJavadoc(),
     "io.spray" %% "spray-routing" % sprayVersion          withSources() withJavadoc(),

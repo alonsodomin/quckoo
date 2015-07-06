@@ -51,7 +51,7 @@ object DistributedWorkerSpec {
 
         val n2 = n * n
         val result = s"$n * $n = $n2"
-        sender() ! Worker.WorkComplete(result)
+        sender() ! Worker.WorkerDone(result)
     }
   }
 }
@@ -125,7 +125,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
       }
     }
 
-    results.expectMsgType[WorkResult].workId should be("1")
+    results.expectMsgType[WorkResult].jobId should be("1")
 
     for (n <- 2 to 100) {
       frontend ! Work(n.toString, n)

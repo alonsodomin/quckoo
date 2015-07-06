@@ -6,6 +6,7 @@ import akka.actor.{Actor, ActorLogging}
 import akka.contrib.pattern.ClusterSingletonProxy
 import akka.pattern._
 import akka.util.Timeout
+import com.hazelcast.client.HazelcastClient
 import io.chronos.scheduler.JobDefinition
 import io.chronos.scheduler.butler.Butler
 import io.chronos.scheduler.worker.Work
@@ -33,6 +34,8 @@ class ReceptorActor extends Actor with ActorLogging {
     singletonPath = Butler.Path,
     role = Some("backend")
   ), name = "butlerProxy")
+
+  val hazelcastClient = HazelcastClient.newHazelcastClient()
 
   def nextWorkId = UUID.randomUUID().toString
 
