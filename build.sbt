@@ -1,9 +1,17 @@
 import Dependencies._
 
+organization in ThisBuild := "io.chronos"
+
 scalaVersion in ThisBuild := "2.11.6"
 
-lazy val rootProject = Project(id = "chronos", base = file(".")).
-  aggregate(chronosServer, chronosManager)
+resolvers in ThisBuild ++= Seq(
+  "Typesafe releases" at "http://repo.typesafe.com/typesafe/releases/"
+)
+
+lazy val rootProject = Project(id = "chronos", base = file(".")).aggregate(
+  chronosServer,
+  chronosManager
+)
 
 lazy val chronosServer = Project(id = "chronos-server", base = file("server")).
   settings(Commons.settings: _*).
@@ -14,7 +22,9 @@ lazy val chronosServer = Project(id = "chronos-server", base = file("server")).
 
 lazy val chronosManager = Project(id = "chronos-manager", base = file("manager")).
   settings(Commons.settings: _*).
+  enablePlugins(PlayScala).
   settings(
-    libraryDependencies ++= managerDeps
+    libraryDependencies ++= managerDeps,
+    routesGenerator := InjectedRoutesGenerator
   )
 
