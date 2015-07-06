@@ -13,11 +13,13 @@ import scala.concurrent.duration.{Deadline, FiniteDuration}
  * Created by aalonsodominguez on 05/07/15.
  */
 
-object Master {
+object Butler {
 
   val ResultsTopic = "results"
 
-  def props(workTimeout: FiniteDuration): Props = Props(classOf[Master], workTimeout)
+  val Path = "/user/butler/active"
+
+  def props(workTimeout: FiniteDuration): Props = Props(classOf[Butler], workTimeout)
 
   case class Ack(workId: String)
 
@@ -31,8 +33,8 @@ object Master {
 }
 
 
-class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
-  import Master._
+class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
+  import Butler._
   import WorkState._
   import WorkerProtocol._
 
@@ -91,12 +93,12 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
     case RequestWork(workerId) =>
       if (workState.hasWork) {
         workers.get(workerId) match {
-          case Some(s @ WorkerState(_, Idle)) =>
+          case Some(workerState @ WorkerState(_, Idle)) =>
             val work = workState.nextWork
             persist(WorkStarted(work.workId)) { event =>
               workState = workState.updated(event)
               log.info("Giving worker {} some work {}", workerId, work.workId)
-              workers += (workerId -> s.copy(status = Busy(work.workId, Deadline.now + workTimeout)))
+              workers += (workerId -> workerState.copy(status = Busy(work.workId, Deadline.now + workTimeout)))
               sender() ! work
             }
           case _ =>
@@ -142,7 +144,7 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
       }
 
     case CleanupTick =>
-      for ((workerId, s @ WorkerState(_, Busy(workId, timeout))) <- workers) {
+      for ((workerId, workerState @ WorkerState(_, Busy(workId, timeout))) <- workers) {
         if (timeout.isOverdue()) {
           log.info("Work timed out: {}", workId)
           workers -= workerId

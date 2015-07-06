@@ -4,7 +4,7 @@ import akka.actor.Actor
 import akka.contrib.pattern.ClusterSingletonProxy
 import akka.pattern._
 import akka.util.Timeout
-import io.chronos.scheduler.butler.Master
+import io.chronos.scheduler.butler.Butler
 
 import scala.concurrent.duration._
 
@@ -21,16 +21,16 @@ class Frontend extends Actor {
   import Frontend._
   import context.dispatcher
 
-  var masterProxy = context.actorOf(ClusterSingletonProxy.props(
-    singletonPath = "/user/master/active",
+  var butlerProxy = context.actorOf(ClusterSingletonProxy.props(
+    singletonPath = Butler.Path,
     role = Some("backend")
   ), name = "masterProxy")
 
   def receive = {
     case work =>
       implicit val timeout = Timeout(5.seconds)
-      (masterProxy ? work) map {
-        case Master.Ack(_) => Accepted
+      (butlerProxy ? work) map {
+        case Butler.Ack(_) => Accepted
       } recover {
         case _ => Rejected
       } pipeTo sender()

@@ -8,7 +8,7 @@ import akka.persistence.journal.leveldb.{SharedLeveldbJournal, SharedLeveldbStor
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import io.chronos.scheduler._
-import io.chronos.scheduler.butler.Master
+import io.chronos.scheduler.butler.Butler
 import io.chronos.scheduler.servant.Frontend
 import io.chronos.scheduler.worker.{JobExecutor, Worker}
 
@@ -51,7 +51,7 @@ object Main {
 
     system.actorOf(
       ClusterSingletonManager.props(
-        Master.props(workTimeout), "active", PoisonPill, Some(role)
+        Butler.props(workTimeout), "active", PoisonPill, Some(role)
       ),
       "master"
     )

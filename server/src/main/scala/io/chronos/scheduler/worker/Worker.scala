@@ -5,6 +5,7 @@ import java.util.UUID
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.contrib.pattern.ClusterClient.SendToAll
+import io.chronos.scheduler.butler.Butler
 import io.chronos.scheduler.protocol.WorkerProtocol
 
 import scala.concurrent.duration._
@@ -30,7 +31,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
 
   val registerTask = context.system.scheduler.schedule(
     0.seconds, registerInterval, clusterClient,
-    SendToAll("/user/master/active", RegisterWorker(workerId))
+    SendToAll(Butler.Path, RegisterWorker(workerId))
   )
 
   val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "exec"))
@@ -79,7 +80,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   }
 
   def sendToMaster(msg: Any): Unit = {
-    clusterClient ! SendToAll("/user/master/active", msg)
+    clusterClient ! SendToAll(Butler.Path, msg)
   }
 
   override def supervisorStrategy = OneForOneStrategy() {
