@@ -9,7 +9,8 @@ lazy val chronosServer = Project(id = "chronos-server", base = file("server")).
   settings(Commons.settings: _*).
   settings(
     libraryDependencies ++= serverDeps
-  )
+  ).
+  settings(Revolver.settings: _*)
 
 lazy val chronosManager = Project(id = "chronos-manager", base = file("manager")).
   settings(Commons.settings: _*).
