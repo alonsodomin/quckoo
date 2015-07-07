@@ -6,7 +6,7 @@ package io.chronos.scheduler
 package object id {
 
   type JobId = String
-  type ExecutionId = String
+  type ExecutionId = Long
 
   type WorkerId = String
   type WorkId = (JobId, ExecutionId)
