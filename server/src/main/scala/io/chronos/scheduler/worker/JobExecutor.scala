@@ -2,7 +2,7 @@ package io.chronos.scheduler.worker
 
 import akka.actor.{Actor, ActorLogging, Props}
 import io.chronos.scheduler.id.WorkId
-import io.chronos.scheduler.{Job, JobSpec}
+import io.chronos.scheduler.{Job, JobSpec, Work}
 
 /**
  * Created by aalonsodominguez on 05/07/15.

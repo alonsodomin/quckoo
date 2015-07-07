@@ -1,6 +1,7 @@
 package io.chronos.scheduler
 
-import java.time.Clock
+import java.time.{Clock, ZonedDateTime}
+import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorLogging, Props}
 import akka.cluster.Cluster
@@ -9,7 +10,7 @@ import akka.persistence.PersistentActor
 import io.chronos.scheduler.id._
 import io.chronos.scheduler.jobstore.JobStore
 import io.chronos.scheduler.protocol.WorkerProtocol
-import io.chronos.scheduler.worker.{ExecutionPlan, WorkResult, WorkerState}
+import io.chronos.scheduler.worker.WorkerState
 
 import scala.concurrent.duration._
 
@@ -24,12 +25,13 @@ object Scheduler {
 
   val defaultHeartbeatInterval = 1000.millis
   val defaultBatchSize = 10
+  val defaultMaxWorkTimeout = 1.minute
 
   def props(clock: Clock,
-            workTimeout: FiniteDuration,
+            maxWorkTimeout: FiniteDuration = defaultMaxWorkTimeout,
             heartbeatInterval: FiniteDuration = defaultHeartbeatInterval,
             jobBatchSize: Int = defaultBatchSize): Props =
-    Props(classOf[Scheduler], clock, workTimeout, heartbeatInterval, jobBatchSize)
+    Props(classOf[Scheduler], clock, maxWorkTimeout, heartbeatInterval, jobBatchSize)
 
   case class ScheduleJob(jobDefinition: JobDefinition)
   case class ScheduleAck(jobId: JobId)
@@ -39,7 +41,7 @@ object Scheduler {
 }
 
 
-class Scheduler(clock: Clock, workTimeout: FiniteDuration, heartbeatInterval: FiniteDuration, jobBatchSize: Int)
+class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval: FiniteDuration, jobBatchSize: Int)
   extends PersistentActor with ActorLogging {
 
   import ExecutionPlan._
@@ -64,7 +66,7 @@ class Scheduler(clock: Clock, workTimeout: FiniteDuration, heartbeatInterval: Fi
   // execution plan is event sourced
   private var executionPlan = ExecutionPlan.empty
 
-  val cleanupTask = context.system.scheduler.schedule(workTimeout / 2, workTimeout / 2, self, CleanupTick)
+  val cleanupTask = context.system.scheduler.schedule(maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupTick)
   val heartbeatTask = context.system.scheduler.schedule(0.seconds, heartbeatInterval, self, Heartbeat)
 
   override def postStop(): Unit = {
@@ -115,10 +117,11 @@ class Scheduler(clock: Clock, workTimeout: FiniteDuration, heartbeatInterval: Fi
         workers.get(workerId) match {
           case Some(workerState @ WorkerState(_, WorkerState.Idle)) =>
             val work = executionPlan.nextWork
-            persist(WorkStarted(work.id)) { event =>
+            persist(WorkStarted(work.id, ZonedDateTime.now(clock))) { event =>
               executionPlan = executionPlan.updated(event)
               log.info("Giving worker {} some work {}", workerId, work.id)
-              workers += (workerId -> workerState.copy(status = WorkerState.Busy(work.id, Deadline.now + workTimeout)))
+              val deadline = workDeadline(work)
+              workers += (workerId -> workerState.copy(status = WorkerState.Busy(work.id, deadline)))
               sender() ! work
             }
           case _ =>
@@ -134,7 +137,7 @@ class Scheduler(clock: Clock, workTimeout: FiniteDuration, heartbeatInterval: Fi
       } else {
         log.info("Work {} is done by worker {}", workId, workerId)
         changeWorkerToIdle(workerId, workId)
-        persist(WorkCompleted(workId, result)) { event =>
+        persist(WorkCompleted(workId, ZonedDateTime.now(clock), result)) { event =>
           executionPlan = executionPlan.updated(event)
           mediator ! DistributedPubSubMediator.Publish(ResultsTopic, WorkResult(workId, result))
           sender ! WorkDoneAck(workId)
@@ -145,7 +148,7 @@ class Scheduler(clock: Clock, workTimeout: FiniteDuration, heartbeatInterval: Fi
       if (executionPlan.isInProgress(workId)) {
         log.info("Work {} failed by worker {}", workId, workerId)
         changeWorkerToIdle(workerId, workId)
-        persist(WorkerFailed(workId)) { event =>
+        persist(WorkerFailed(workId, ZonedDateTime.now(clock))) { event =>
           executionPlan = executionPlan.updated(event)
           notifyWorkers()
         }
@@ -156,7 +159,7 @@ class Scheduler(clock: Clock, workTimeout: FiniteDuration, heartbeatInterval: Fi
         val work = jobStore.createWork(jobDef)
         if (!executionPlan.isAccepted(work.id)) {
           log.info("Dispatching job to work queue. workId={}", work.id)
-          persist(WorkAccepted(work)) { event =>
+          persist(WorkTriggered(work, ZonedDateTime.now(clock))) { event =>
             executionPlan = executionPlan.updated(event)
             notifyWorkers()
           }
@@ -168,11 +171,21 @@ class Scheduler(clock: Clock, workTimeout: FiniteDuration, heartbeatInterval: Fi
         if (timeout.isOverdue()) {
           log.info("Work timed out: {}", workId)
           workers -= workerId
-          persist(WorkerTimedOut(workId)) { event =>
+          persist(WorkerTimedOut(workId, ZonedDateTime.now(clock))) { event =>
             executionPlan = executionPlan.updated(event)
             notifyWorkers()
           }
         }
       }
   }
+
+  private def workDeadline(work: Work): Deadline = {
+    val now = Deadline(Duration(clock.instant().getNano, TimeUnit.NANOSECONDS))
+    val timeout = work.workTimeout match {
+      case Some(t) => t
+      case None => maxWorkTimeout
+    }
+    now + timeout
+  }
+
 }

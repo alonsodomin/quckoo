@@ -1,4 +1,6 @@
-package io.chronos.scheduler.worker
+package io.chronos.scheduler
+
+import java.time.ZonedDateTime
 
 import io.chronos.scheduler.id.WorkId
 
@@ -18,12 +20,12 @@ object ExecutionPlan {
 
   sealed trait WorkDomainEvent
 
-  case class WorkAccepted(work: Work) extends WorkDomainEvent
-  case class WorkStarted(workId: WorkId) extends WorkDomainEvent
-  case class WorkCompleted(workId: WorkId, result: Any) extends WorkDomainEvent
+  case class WorkTriggered(work: Work, when: ZonedDateTime) extends WorkDomainEvent
+  case class WorkStarted(workId: WorkId, when: ZonedDateTime) extends WorkDomainEvent
+  case class WorkCompleted(workId: WorkId, when: ZonedDateTime, result: Any) extends WorkDomainEvent
 
-  case class WorkerFailed(workId: WorkId) extends WorkDomainEvent
-  case class WorkerTimedOut(workId: WorkId) extends WorkDomainEvent
+  case class WorkerFailed(workId: WorkId, when: ZonedDateTime) extends WorkDomainEvent
+  case class WorkerTimedOut(workId: WorkId, when: ZonedDateTime) extends WorkDomainEvent
 
 }
 
@@ -42,7 +44,7 @@ case class ExecutionPlan private (
   def isDone(workId: WorkId): Boolean = finishedWorkIds.contains(workId)
 
   def updated(event: WorkDomainEvent): ExecutionPlan = event match {
-    case WorkAccepted(work) =>
+    case WorkTriggered(work) =>
       copy(
         pendingWork = pendingWork enqueue work,
         acceptedWorks = acceptedWorks + work.id

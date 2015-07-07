@@ -3,9 +3,8 @@ package io.chronos.scheduler.jobstore
 import java.time.{Clock, ZonedDateTime}
 import java.util.concurrent.atomic.AtomicLong
 
-import io.chronos.scheduler.JobDefinition
 import io.chronos.scheduler.id.JobId
-import io.chronos.scheduler.worker.Work
+import io.chronos.scheduler.{JobDefinition, Work}
 
 import scala.collection.mutable
 
@@ -42,7 +41,7 @@ class JobStore extends JobQueue with WorkFactory {
 
   override def createWork(jobDef: JobDefinition): Work = {
     val workId = (jobDef.jobId, executionCounter.incrementAndGet())
-    Work(workId, jobDef.params, jobDef.jobSpec)
+    Work(workId, jobDef.params, jobDef.jobSpec, jobDef.timeout)
   }
 
 }

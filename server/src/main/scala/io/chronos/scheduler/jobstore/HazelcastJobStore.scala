@@ -6,9 +6,8 @@ import java.util.Map.Entry
 import com.hazelcast.client.HazelcastClient
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.query.{PagingPredicate, Predicate}
-import io.chronos.scheduler.JobDefinition
 import io.chronos.scheduler.id._
-import io.chronos.scheduler.worker.Work
+import io.chronos.scheduler.{JobDefinition, Work}
 
 import scala.collection.JavaConversions._
 

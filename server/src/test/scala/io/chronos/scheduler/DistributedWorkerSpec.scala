@@ -9,7 +9,7 @@ import akka.contrib.pattern.{ClusterClient, ClusterSingletonManager, Distributed
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import io.chronos.scheduler.receptor.ReceptorActor
-import io.chronos.scheduler.worker.{JobExecutor, Work, WorkResult, Worker}
+import io.chronos.scheduler.worker.{JobExecutor, Worker}
 import org.apache.commons.io.FileUtils
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
