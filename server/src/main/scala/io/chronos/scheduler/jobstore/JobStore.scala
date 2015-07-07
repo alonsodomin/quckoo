@@ -3,8 +3,8 @@ package io.chronos.scheduler.jobstore
 import java.time.{Clock, ZonedDateTime}
 import java.util.concurrent.atomic.AtomicLong
 
-import io.chronos.scheduler.id.JobId
-import io.chronos.scheduler.{JobDefinition, Work}
+import io.chronos.id.JobId
+import io.chronos.{JobDefinition, Work}
 
 import scala.collection.mutable
 

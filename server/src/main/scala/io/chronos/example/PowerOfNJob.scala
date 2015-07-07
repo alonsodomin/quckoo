@@ -1,6 +1,6 @@
-package io.chronos.scheduler.example
+package io.chronos.example
 
-import io.chronos.scheduler.{Job, JobDefinition}
+import io.chronos.{Job, JobDefinition}
 
 import scala.concurrent.forkjoin.ThreadLocalRandom
 

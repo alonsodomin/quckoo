@@ -1,10 +1,8 @@
-package io.chronos.scheduler.example
-
-import java.util.UUID
+package io.chronos.example
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import io.chronos.receptor.ReceptorActor
 import io.chronos.scheduler.Scheduler
-import io.chronos.scheduler.receptor.ReceptorActor
 
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ThreadLocalRandom
@@ -25,8 +23,6 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
 
   def scheduler = context.system.scheduler
   def rnd = ThreadLocalRandom.current
-
-  def nextWorkId = UUID.randomUUID().toString
 
   var n = 0
 

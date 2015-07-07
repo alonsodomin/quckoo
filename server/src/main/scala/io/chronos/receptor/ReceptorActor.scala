@@ -1,4 +1,4 @@
-package io.chronos.scheduler.receptor
+package io.chronos.receptor
 
 import akka.actor.{Actor, ActorLogging}
 import akka.contrib.pattern.ClusterSingletonProxy

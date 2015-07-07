@@ -7,10 +7,11 @@ import akka.actor.{ActorLogging, Props}
 import akka.cluster.Cluster
 import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.persistence.PersistentActor
-import io.chronos.scheduler.id._
+import io.chronos.id._
+import io.chronos.protocol.WorkerProtocol
 import io.chronos.scheduler.jobstore.JobStore
-import io.chronos.scheduler.protocol.WorkerProtocol
-import io.chronos.scheduler.worker.WorkerState
+import io.chronos.worker.WorkerState
+import io.chronos.{JobDefinition, Work, WorkResult}
 
 import scala.concurrent.duration._
 
@@ -181,7 +182,7 @@ class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval:
 
   private def workDeadline(work: Work): Deadline = {
     val now = Deadline(Duration(clock.instant().getNano, TimeUnit.NANOSECONDS))
-    val timeout = work.workTimeout match {
+    val timeout = work.timeout match {
       case Some(t) => t
       case None => maxWorkTimeout
     }

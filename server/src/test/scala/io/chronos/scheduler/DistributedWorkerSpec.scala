@@ -8,8 +8,9 @@ import akka.contrib.pattern.DistributedPubSubMediator.{Subscribe, SubscribeAck}
 import akka.contrib.pattern.{ClusterClient, ClusterSingletonManager, DistributedPubSubExtension}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
-import io.chronos.scheduler.receptor.ReceptorActor
-import io.chronos.scheduler.worker.{JobExecutor, Worker}
+import io.chronos.receptor.ReceptorActor
+import io.chronos.worker.{JobExecutor, Worker}
+import io.chronos.{Work, WorkResult}
 import org.apache.commons.io.FileUtils
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
@@ -100,7 +101,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
     val clusterAddress = Cluster(backendSystem).selfAddress
     Cluster(backendSystem).join(clusterAddress)
     backendSystem.actorOf(ClusterSingletonManager.props(Scheduler.props(workTimeout), "active",
-      PoisonPill, Some("backend")), "butler")
+      PoisonPill, Some("backend")), "scheduler")
 
     val initialContacts = Set(
       workerSystem.actorSelection(RootActorPath(clusterAddress) / "user" / "receptionist"))

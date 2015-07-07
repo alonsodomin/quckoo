@@ -1,9 +1,9 @@
-package io.chronos.scheduler
+package io.chronos
 
 import java.time.{Clock, ZonedDateTime}
 
-import io.chronos.scheduler.JobDefinition.{Immediate, Trigger}
-import io.chronos.scheduler.id.JobId
+import io.chronos.JobDefinition.{Immediate, Trigger}
+import io.chronos.id.JobId
 
 import scala.concurrent.duration.FiniteDuration
 

@@ -2,7 +2,7 @@ package io.chronos.scheduler.jobstore
 
 import java.time.Clock
 
-import io.chronos.scheduler.JobDefinition
+import io.chronos.JobDefinition
 
 /**
  * Created by domingueza on 07/07/15.

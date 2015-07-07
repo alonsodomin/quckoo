@@ -2,7 +2,8 @@ package io.chronos.scheduler
 
 import java.time.ZonedDateTime
 
-import io.chronos.scheduler.id.WorkId
+import io.chronos.Work
+import io.chronos.id.WorkId
 
 import scala.collection.immutable.Queue
 

@@ -1,6 +1,6 @@
-package io.chronos.scheduler
+package io.chronos
 
-import io.chronos.scheduler.id._
+import io.chronos.id.WorkId
 
 /**
  * Created by aalonsodominguez on 07/07/15.

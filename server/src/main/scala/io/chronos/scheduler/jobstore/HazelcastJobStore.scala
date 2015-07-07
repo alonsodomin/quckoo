@@ -6,8 +6,8 @@ import java.util.Map.Entry
 import com.hazelcast.client.HazelcastClient
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.query.{PagingPredicate, Predicate}
-import io.chronos.scheduler.id._
-import io.chronos.scheduler.{JobDefinition, Work}
+import io.chronos.id._
+import io.chronos.{JobDefinition, Work}
 
 import scala.collection.JavaConversions._
 
@@ -56,7 +56,7 @@ class HazelcastJobStore(private val hazelcastInstance: HazelcastInstance) extend
 
   override def createWork(jobDef: JobDefinition): Work = {
     val workId: WorkId = (jobDef.jobId, executionCounter.incrementAndGet())
-    Work(id = workId, params = jobDef.params, jobSpec = jobDef.jobSpec)
+    Work(id = workId, params = jobDef.params, jobSpec = jobDef.jobSpec, jobDef.timeout)
   }
 
   override def push(jobDef: JobDefinition): Unit = {

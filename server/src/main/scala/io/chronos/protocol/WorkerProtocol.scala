@@ -1,6 +1,6 @@
-package io.chronos.scheduler.protocol
+package io.chronos.protocol
 
-import io.chronos.scheduler.id.{WorkId, WorkerId}
+import io.chronos.id.{WorkId, WorkerId}
 
 /**
  * Created by aalonsodominguez on 05/07/15.

@@ -1,9 +1,9 @@
-package io.chronos
+package io
 
 /**
  * Created by aalonsodominguez on 07/07/15.
  */
-package object scheduler {
+package object chronos {
 
   type JobSpec = Class[_ <: Job]
 

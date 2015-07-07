@@ -9,10 +9,10 @@ import akka.pattern.ask
 import akka.persistence.journal.leveldb.{SharedLeveldbJournal, SharedLeveldbStore}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+import io.chronos.example.PowerOfNActor
+import io.chronos.receptor.ReceptorActor
 import io.chronos.scheduler._
-import io.chronos.scheduler.example.PowerOfNActor
-import io.chronos.scheduler.receptor.ReceptorActor
-import io.chronos.scheduler.worker.{JobExecutor, Worker}
+import io.chronos.worker.{JobExecutor, Worker}
 
 import scala.concurrent.duration._
 

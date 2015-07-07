@@ -1,13 +1,14 @@
-package io.chronos.scheduler.worker
+package io.chronos.worker
 
 import java.util.UUID
 
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.contrib.pattern.ClusterClient.SendToAll
-import io.chronos.scheduler.id.{ExecutionId, JobId, WorkId}
-import io.chronos.scheduler.protocol.WorkerProtocol
-import io.chronos.scheduler.{Scheduler, Work}
+import io.chronos.Work
+import io.chronos.id.{ExecutionId, JobId, WorkId}
+import io.chronos.protocol.WorkerProtocol
+import io.chronos.scheduler.Scheduler
 
 import scala.concurrent.duration._
 

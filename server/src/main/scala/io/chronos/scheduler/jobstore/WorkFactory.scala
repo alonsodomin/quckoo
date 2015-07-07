@@ -1,6 +1,6 @@
 package io.chronos.scheduler.jobstore
 
-import io.chronos.scheduler.{JobDefinition, Work}
+import io.chronos.{JobDefinition, Work}
 
 /**
  * Created by domingueza on 07/07/15.

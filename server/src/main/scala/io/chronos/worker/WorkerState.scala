@@ -1,7 +1,7 @@
-package io.chronos.scheduler.worker
+package io.chronos.worker
 
 import akka.actor.ActorRef
-import io.chronos.scheduler.id.WorkId
+import io.chronos.id.WorkId
 
 import scala.concurrent.duration.Deadline
 
