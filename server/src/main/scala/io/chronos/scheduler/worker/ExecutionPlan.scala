@@ -16,7 +16,7 @@ object ExecutionPlan {
     finishedWorkIds = Set.empty
   )
 
-  trait WorkDomainEvent
+  sealed trait WorkDomainEvent
 
   case class WorkAccepted(work: Work) extends WorkDomainEvent
   case class WorkStarted(workId: WorkId) extends WorkDomainEvent

@@ -9,7 +9,7 @@ import akka.util.Timeout
 import com.hazelcast.client.HazelcastClient
 import io.chronos.scheduler.JobDefinition
 import io.chronos.scheduler.butler.Butler
-import io.chronos.scheduler.worker.Work
+import io.chronos.scheduler.jobstore.HazelcastJobStore
 
 import scala.concurrent.duration._
 
@@ -35,21 +35,16 @@ class ReceptorActor extends Actor with ActorLogging {
     role = Some("backend")
   ), name = "butlerProxy")
 
-  val hazelcastClient = HazelcastClient.newHazelcastClient()
+  private val hazelcastClient = HazelcastClient.newHazelcastClient()
+  private val jobStore = new HazelcastJobStore(hazelcastClient)
 
   def nextWorkId = UUID.randomUUID().toString
 
   def receive = {
-    case RegisterJob(job: JobDefinition) =>
-      log.info("Registering job {}", job.jobId)
-      val workId = nextWorkId
-      val work = Work(workId, job.job)
-      implicit val timeout = Timeout(5.seconds)
-      (butlerProxy ? work) map {
-        case Butler.Ack(_) => Accepted
-      } recover {
-        case _ => Rejected
-      } pipeTo sender()
+    case RegisterJob(jobDef: JobDefinition) =>
+      log.info("Registering job {}", jobDef.jobId)
+      jobStore.push(jobDef)
+      Accepted
 
     case work =>
       implicit val timeout = Timeout(5.seconds)

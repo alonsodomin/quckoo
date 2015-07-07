@@ -4,9 +4,7 @@ import akka.actor.{ActorLogging, Props}
 import akka.cluster.Cluster
 import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.persistence.PersistentActor
-import com.hazelcast.core.Hazelcast
-import io.chronos.scheduler.JobDefinition
-import io.chronos.scheduler.id.{JobId, WorkId, WorkerId}
+import io.chronos.scheduler.id.{WorkId, WorkerId}
 import io.chronos.scheduler.protocol.WorkerProtocol
 import io.chronos.scheduler.worker.{ExecutionPlan, Work, WorkResult, WorkerState}
 
@@ -39,8 +37,6 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
   val mediator = DistributedPubSubExtension(context.system).mediator
   ClusterReceptionistExtension(context.system).registerService(self)
 
-  private val hazelcastInstance = Hazelcast.newHazelcastInstance()
-
   // persistenceId must include cluster role to support multiple masters
   override def persistenceId: String = Cluster(context.system).selfRoles.find(_.startsWith("backend-")) match {
     case Some(role) => role + "-master"
@@ -52,9 +48,6 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
 
   // execution plan is event sourced
   private var executionPlan = ExecutionPlan.empty
-
-  private val executionCounter = hazelcastInstance.getAtomicLong("executionCounter")
-  private val jobDefinitions = hazelcastInstance.getMap[JobId, JobDefinition]("jobDefinitions")
 
   val cleanupTask = context.system.scheduler.schedule(workTimeout / 2, workTimeout / 2, self, CleanupTick)
   val heartbeatTask = context.system.scheduler.schedule(0.seconds, 100.millis, self, Heartbeat)

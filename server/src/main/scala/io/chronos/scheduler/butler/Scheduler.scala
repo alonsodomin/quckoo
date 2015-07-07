@@ -1,13 +1,14 @@
 package io.chronos.scheduler.butler
 
+import java.time.Clock
+
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.contrib.pattern.ClusterSingletonProxy
 import com.hazelcast.core.Hazelcast
-import com.hazelcast.query.PagingPredicate
 import io.chronos.scheduler.JobDefinition
 import io.chronos.scheduler.id._
-import io.chronos.scheduler.worker.Work
+import io.chronos.scheduler.jobstore.HazelcastJobStore
 
-import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 
 /**
@@ -17,19 +18,25 @@ object Scheduler {
 
   val defaultHeartbeatInterval = 100.millis
 
-  def props(heartbeatInterval: FiniteDuration): Props = Props(classOf[Scheduler], heartbeatInterval)
+  def props(clock: Clock, heartbeatInterval: FiniteDuration, jobBatchSize: Int): Props =
+    Props(classOf[Scheduler], clock, heartbeatInterval, jobBatchSize)
 
   private case object Heartbeat
 
 }
 
-class Scheduler(director: ActorRef, heartbeatInterval: FiniteDuration) extends Actor with ActorLogging {
+class Scheduler(clock: Clock, director: ActorRef, heartbeatInterval: FiniteDuration, jobBatchSize: Int) extends Actor with ActorLogging {
   import Scheduler._
 
-  private val hazelcastInstance = Hazelcast.newHazelcastInstance()
+  var butlerProxy = context.actorOf(ClusterSingletonProxy.props(
+    singletonPath = Butler.Path,
+    role = Some("backend")
+  ), name = "butlerProxy")
 
-  private val executionCounter = hazelcastInstance.getAtomicLong("executionCounter")
-  private val jobDefinitions = hazelcastInstance.getMap[JobId, JobDefinition]("jobDefinitions")
+  private val hazelcastInstance = Hazelcast.newHazelcastInstance()
+  private val jobStore = new HazelcastJobStore(hazelcastInstance)
+
+  private val pendingAck = hazelcastInstance.getMap[WorkId, JobDefinition]("jobPendingAck")
 
   val heartbeatTask = context.system.scheduler.schedule(0.seconds, heartbeatInterval, self, Heartbeat)
 
@@ -37,12 +44,20 @@ class Scheduler(director: ActorRef, heartbeatInterval: FiniteDuration) extends A
 
   def receive = {
     case Heartbeat =>
-      val predicate = new PagingPredicate()
+      jobStore.pollOverdueJobs(clock, jobBatchSize) { jobDef =>
+        val work = jobStore.createWork(jobDef)
+        log.info("Dispatching job to master. workId={}", work.id)
+        director ! work
+        pendingAck.put(work.id, jobDef)
+      }
 
-      jobDefinitions.values(predicate).foreach { jobDef =>
-        jobDefinitions.remove(jobDef.jobId)
-        val workId: WorkId = (jobDef.jobId, executionCounter.incrementAndGet())
-        director ! Work(workId)
+    case Butler.Ack(workId) =>
+      val jobDef = Option(pendingAck.remove(workId))
+      jobDef match {
+        case Some(_) =>
+          log.debug("Work acknowledged by the master. workId={}", workId)
+        case None =>
+          log.warning("Received acknowledge of a non-enqueued work. workId={}", workId)
       }
   }
 
