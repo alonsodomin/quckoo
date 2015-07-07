@@ -1,15 +1,11 @@
 package io.chronos.scheduler.receptor
 
-import java.util.UUID
-
 import akka.actor.{Actor, ActorLogging}
 import akka.contrib.pattern.ClusterSingletonProxy
 import akka.pattern._
 import akka.util.Timeout
-import com.hazelcast.client.HazelcastClient
-import io.chronos.scheduler.JobDefinition
-import io.chronos.scheduler.butler.Butler
-import io.chronos.scheduler.jobstore.HazelcastJobStore
+import io.chronos.scheduler.Scheduler
+import io.chronos.scheduler.Scheduler.{ScheduleAck, ScheduleJob}
 
 import scala.concurrent.duration._
 
@@ -18,8 +14,6 @@ import scala.concurrent.duration._
  */
 
 object ReceptorActor {
-  sealed trait ReceptorMessage
-  case class RegisterJob(job: JobDefinition) extends ReceptorMessage
 
   sealed trait ReceptorResponse
   case object Accepted extends ReceptorResponse
@@ -30,26 +24,20 @@ class ReceptorActor extends Actor with ActorLogging {
   import ReceptorActor._
   import context.dispatcher
 
-  var butlerProxy = context.actorOf(ClusterSingletonProxy.props(
-    singletonPath = Butler.Path,
-    role = Some("backend")
-  ), name = "butlerProxy")
-
-  private val hazelcastClient = HazelcastClient.newHazelcastClient()
-  private val jobStore = new HazelcastJobStore(hazelcastClient)
-
-  def nextWorkId = UUID.randomUUID().toString
+  var schedulerProxy = context.actorOf(
+    ClusterSingletonProxy.props(
+      singletonPath = Scheduler.Path,
+      role = Some("backend")
+    ),
+    name = "schedulerProxy"
+  )
 
   def receive = {
-    case RegisterJob(jobDef: JobDefinition) =>
-      log.info("Registering job {}", jobDef.jobId)
-      jobStore.push(jobDef)
-      Accepted
-
-    case work =>
+    case s: ScheduleJob =>
+      log.info("Registering job. jobId={}", s.jobDefinition.jobId)
       implicit val timeout = Timeout(5.seconds)
-      (butlerProxy ? work) map {
-        case Butler.Ack(_) => Accepted
+      (schedulerProxy ? s) map {
+        case ScheduleAck(jobId) => Accepted
       } recover {
         case _ => Rejected
       } pipeTo sender()

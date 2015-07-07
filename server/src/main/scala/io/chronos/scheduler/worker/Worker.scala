@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.contrib.pattern.ClusterClient.SendToAll
-import io.chronos.scheduler.butler.Butler
+import io.chronos.scheduler.Scheduler
 import io.chronos.scheduler.id.{ExecutionId, JobId, WorkId}
 import io.chronos.scheduler.protocol.WorkerProtocol
 
@@ -31,7 +31,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   
   val registerTask = context.system.scheduler.schedule(
     0.seconds, registerInterval, clusterClient,
-    SendToAll(Butler.Path, RegisterWorker(workerId))
+    SendToAll(Scheduler.Path, RegisterWorker(workerId))
   )
 
   val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "exec"))
@@ -61,10 +61,10 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
     case WorkReady =>
       sendToMaster(RequestWork(workerId))
 
-    case Work(workId) =>
-      log.info("Received work for job {} on execution {}", jobId, executionId)
-      currentWorkId = Some(workId)
-      jobExecutor ! JobExecutor.ExecuteWork(workId)
+    case work: Work =>
+      log.info("Received work for job {} on execution {}", work.id._1, work.id._2)
+      currentWorkId = Some(work.id)
+      jobExecutor ! JobExecutor.ExecuteWork(work)
       context.become(working)
   }
 
@@ -91,7 +91,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   }
 
   def sendToMaster(msg: Any): Unit = {
-    clusterClient ! SendToAll(Butler.Path, msg)
+    clusterClient ! SendToAll(Scheduler.Path, msg)
   }
 
   override def supervisorStrategy = OneForOneStrategy() {

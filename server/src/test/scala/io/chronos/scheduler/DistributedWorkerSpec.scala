@@ -8,7 +8,6 @@ import akka.contrib.pattern.DistributedPubSubMediator.{Subscribe, SubscribeAck}
 import akka.contrib.pattern.{ClusterClient, ClusterSingletonManager, DistributedPubSubExtension}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
-import io.chronos.scheduler.butler.Butler
 import io.chronos.scheduler.receptor.ReceptorActor
 import io.chronos.scheduler.worker.{JobExecutor, Work, WorkResult, Worker}
 import org.apache.commons.io.FileUtils
@@ -100,7 +99,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
   "Distributed workers" should "perform work and publish results" in {
     val clusterAddress = Cluster(backendSystem).selfAddress
     Cluster(backendSystem).join(clusterAddress)
-    backendSystem.actorOf(ClusterSingletonManager.props(Butler.props(workTimeout), "active",
+    backendSystem.actorOf(ClusterSingletonManager.props(Scheduler.props(workTimeout), "active",
       PoisonPill, Some("backend")), "butler")
 
     val initialContacts = Set(
@@ -114,7 +113,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
     val frontend = system.actorOf(Props[ReceptorActor], "frontend")
 
     val results = TestProbe()
-    DistributedPubSubExtension(system).mediator ! Subscribe(Butler.ResultsTopic, results.ref)
+    DistributedPubSubExtension(system).mediator ! Subscribe(Scheduler.ResultsTopic, results.ref)
     expectMsgType[SubscribeAck]
 
     // might take a while for things to get connected

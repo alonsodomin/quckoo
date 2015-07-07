@@ -5,6 +5,8 @@ import java.time.{Clock, ZonedDateTime}
 import io.chronos.scheduler.JobDefinition.{Immediate, Trigger}
 import io.chronos.scheduler.id.JobId
 
+import scala.concurrent.duration.FiniteDuration
+
 /**
  * Created by domingueza on 06/07/15.
  */
@@ -30,7 +32,8 @@ object JobDefinition {
 case class JobDefinition(
   jobId: JobId,
   params: Map[String, Any] = Map.empty,
-  job: Class[_ <: Job],
-  trigger: Trigger = Immediate) extends Serializable {
+  jobSpec: JobSpec,
+  trigger: Trigger = Immediate,
+  timeout: Option[FiniteDuration] = None) extends Serializable {
 
 }

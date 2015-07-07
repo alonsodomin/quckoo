@@ -1,36 +1,49 @@
-package io.chronos.scheduler.butler
+package io.chronos.scheduler
+
+import java.time.Clock
 
 import akka.actor.{ActorLogging, Props}
 import akka.cluster.Cluster
 import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.persistence.PersistentActor
-import io.chronos.scheduler.id.{WorkId, WorkerId}
+import io.chronos.scheduler.id._
+import io.chronos.scheduler.jobstore.JobStore
 import io.chronos.scheduler.protocol.WorkerProtocol
-import io.chronos.scheduler.worker.{ExecutionPlan, Work, WorkResult, WorkerState}
+import io.chronos.scheduler.worker.{ExecutionPlan, WorkResult, WorkerState}
 
 import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 05/07/15.
  */
-object Butler {
+object Scheduler {
 
   val ResultsTopic = "results"
 
-  val Path = "/user/butler/active"
+  val Path = "/user/scheduler/active"
 
-  def props(workTimeout: FiniteDuration): Props = Props(classOf[Butler], workTimeout)
+  val defaultHeartbeatInterval = 1000.millis
+  val defaultBatchSize = 10
 
-  case class Ack(workId: WorkId)
+  def props(clock: Clock,
+            workTimeout: FiniteDuration,
+            heartbeatInterval: FiniteDuration = defaultHeartbeatInterval,
+            jobBatchSize: Int = defaultBatchSize): Props =
+    Props(classOf[Scheduler], clock, workTimeout, heartbeatInterval, jobBatchSize)
+
+  case class ScheduleJob(jobDefinition: JobDefinition)
+  case class ScheduleAck(jobId: JobId)
 
   private case object Heartbeat
   private case object CleanupTick
 }
 
 
-class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
-  import Butler._
+class Scheduler(clock: Clock, workTimeout: FiniteDuration, heartbeatInterval: FiniteDuration, jobBatchSize: Int)
+  extends PersistentActor with ActorLogging {
+
   import ExecutionPlan._
+  import Scheduler._
   import WorkerProtocol._
   import context.dispatcher
 
@@ -43,6 +56,8 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
     case _ => "master"
   }
 
+  private val jobStore = new JobStore
+
   // worker state is not event sourced
   private var workers = Map[WorkerId, WorkerState]()
 
@@ -50,7 +65,7 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
   private var executionPlan = ExecutionPlan.empty
 
   val cleanupTask = context.system.scheduler.schedule(workTimeout / 2, workTimeout / 2, self, CleanupTick)
-  val heartbeatTask = context.system.scheduler.schedule(0.seconds, 100.millis, self, Heartbeat)
+  val heartbeatTask = context.system.scheduler.schedule(0.seconds, heartbeatInterval, self, Heartbeat)
 
   override def postStop(): Unit = {
     cleanupTask.cancel()
@@ -79,6 +94,11 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
   }
 
   override def receiveCommand: Receive = {
+    case ScheduleJob(jobDef) =>
+      log.info("Job scheduled. jobId={}", jobDef.jobId)
+      jobStore.push(jobDef)
+      sender() ! ScheduleAck(jobDef.jobId)
+
     case RegisterWorker(workerId) =>
       if (workers.contains(workerId)) {
         workers += (workerId -> workers(workerId).copy(ref = sender()))
@@ -131,15 +151,15 @@ class Butler(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
         }
       }
 
-    case work: Work =>
-      if (executionPlan.isAccepted(work.id)) {
-        sender() ! Ack(work.id)
-      } else {
-        log.info("Accepted work {}", work.id)
-        persist(WorkAccepted(work)) { event =>
-          sender() ! Ack(work.id)
-          executionPlan = executionPlan.updated(event)
-          notifyWorkers()
+    case Heartbeat =>
+      jobStore.pollOverdueJobs(clock, jobBatchSize) { jobDef =>
+        val work = jobStore.createWork(jobDef)
+        if (!executionPlan.isAccepted(work.id)) {
+          log.info("Dispatching job to work queue. workId={}", work.id)
+          persist(WorkAccepted(work)) { event =>
+            executionPlan = executionPlan.updated(event)
+            notifyWorkers()
+          }
         }
       }
 

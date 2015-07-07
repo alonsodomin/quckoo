@@ -7,7 +7,7 @@ import io.chronos.scheduler.JobDefinition
 /**
  * Created by domingueza on 07/07/15.
  */
-trait ScheduledJobQueue {
+trait JobQueue {
 
   type JobConsumer = (JobDefinition) => Unit
 

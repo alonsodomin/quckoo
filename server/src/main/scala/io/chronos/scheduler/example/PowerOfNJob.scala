@@ -7,7 +7,8 @@ import scala.concurrent.forkjoin.ThreadLocalRandom
 /**
  * Created by domingueza on 06/07/15.
  */
-class PowerOfNJob(val n: Int) extends Job {
+class PowerOfNJob extends Job {
+  val n = 2
 
   override def execute(): String = {
     val n2 = n * n
@@ -16,7 +17,7 @@ class PowerOfNJob(val n: Int) extends Job {
 
 }
 
-object PowerOfNJobDef extends JobDefinition(jobId = "Power Of N", job = classOf[PowerOfNJob]) {
+object PowerOfNJobDef extends JobDefinition(jobId = "Power Of N", jobSpec = classOf[PowerOfNJob]) {
 
   def rnd = ThreadLocalRandom.current
   val n = rnd.nextInt(3, 20)

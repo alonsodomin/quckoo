@@ -1,5 +1,7 @@
 package io.chronos
 
+import java.time.Clock
+
 import akka.actor._
 import akka.contrib.pattern.{ClusterClient, ClusterSingletonManager}
 import akka.japi.Util._
@@ -8,7 +10,6 @@ import akka.persistence.journal.leveldb.{SharedLeveldbJournal, SharedLeveldbStor
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import io.chronos.scheduler._
-import io.chronos.scheduler.butler.Butler
 import io.chronos.scheduler.example.PowerOfNActor
 import io.chronos.scheduler.receptor.ReceptorActor
 import io.chronos.scheduler.worker.{JobExecutor, Worker}
@@ -46,15 +47,16 @@ object Main {
       .withFallback(ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port))
       .withFallback(ConfigFactory.load())
     val system = ActorSystem("ClusterSystem", conf)
+    val clock = Clock.systemUTC()
 
     startupSharedJournal(system, startStore = (port == 2551), path =
       ActorPath.fromString("akka.tcp://ClusterSystem@127.0.0.1:2551/user/store"))
 
     system.actorOf(
       ClusterSingletonManager.props(
-        Butler.props(workTimeout), "active", PoisonPill, Some(role)
+        Scheduler.props(clock, workTimeout), "active", PoisonPill, Some(role)
       ),
-      "butler"
+      "scheduler"
     )
   }
 
@@ -63,7 +65,7 @@ object Main {
       .withFallback(ConfigFactory.load())
     val system = ActorSystem("ClusterSystem", conf)
     val frontend = system.actorOf(Props[ReceptorActor], "receptor")
-    system.actorOf(Props(classOf[PowerOfNActor], frontend), "producer")
+    system.actorOf(PowerOfNActor.props(frontend), "producer")
     system.actorOf(Props[WorkResultConsumer], "consumer")
   }
 
