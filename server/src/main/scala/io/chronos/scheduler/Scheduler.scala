@@ -7,10 +7,10 @@ import akka.cluster.Cluster
 import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.persistence.PersistentActor
 import io.chronos.id._
-import io.chronos.protocol.WorkerProtocol
+import io.chronos.protocol.{SchedulerProtocol, WorkerProtocol}
 import io.chronos.scheduler.jobstore.JobStore
 import io.chronos.worker.WorkerState
-import io.chronos.{JobDefinition, Work, WorkResult}
+import io.chronos.{Work, WorkResult}
 
 import scala.concurrent.duration._
 
@@ -33,9 +33,6 @@ object Scheduler {
             jobBatchSize: Int = defaultBatchSize): Props =
     Props(classOf[Scheduler], clock, maxWorkTimeout, heartbeatInterval, jobBatchSize)
 
-  case class ScheduleJob(jobDefinition: JobDefinition)
-  case class ScheduleAck(jobId: JobId)
-
   private case object Heartbeat
   private case object CleanupTick
 }
@@ -46,6 +43,7 @@ class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval:
 
   import ExecutionPlan._
   import Scheduler._
+  import SchedulerProtocol._
   import WorkerProtocol._
   import context.dispatcher
 

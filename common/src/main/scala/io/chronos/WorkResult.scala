@@ -5,4 +5,4 @@ import io.chronos.id.WorkId
 /**
  * Created by aalonsodominguez on 07/07/15.
  */
-case class WorkResult(id: WorkId, result: Any)
+case class WorkResult(workId: WorkId, result: Any)

@@ -4,8 +4,8 @@ import akka.actor.{Actor, ActorLogging}
 import akka.contrib.pattern.ClusterSingletonProxy
 import akka.pattern._
 import akka.util.Timeout
+import io.chronos.protocol.SchedulerProtocol
 import io.chronos.scheduler.Scheduler
-import io.chronos.scheduler.Scheduler.{ScheduleAck, ScheduleJob}
 
 import scala.concurrent.duration._
 
@@ -22,6 +22,7 @@ object ReceptorActor {
 
 class ReceptorActor extends Actor with ActorLogging {
   import ReceptorActor._
+  import SchedulerProtocol._
   import context.dispatcher
 
   var schedulerProxy = context.actorOf(

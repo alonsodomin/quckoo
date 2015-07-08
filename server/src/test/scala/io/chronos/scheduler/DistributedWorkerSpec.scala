@@ -1,6 +1,7 @@
 package io.chronos.scheduler
 
 import java.io.File
+import java.time.Clock
 
 import akka.actor.{Actor, ActorSystem, PoisonPill, Props, RootActorPath}
 import akka.cluster.Cluster
@@ -8,6 +9,8 @@ import akka.contrib.pattern.DistributedPubSubMediator.{Subscribe, SubscribeAck}
 import akka.contrib.pattern.{ClusterClient, ClusterSingletonManager, DistributedPubSubExtension}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
+import io.chronos.example.PowerOfNJobDef
+import io.chronos.protocol.SchedulerProtocol
 import io.chronos.receptor.ReceptorActor
 import io.chronos.worker.{JobExecutor, Worker}
 import io.chronos.{Work, WorkResult}
@@ -98,9 +101,11 @@ class DistributedWorkerSpec(_system: ActorSystem)
   }
 
   "Distributed workers" should "perform work and publish results" in {
+    val clock = Clock.systemUTC()
+
     val clusterAddress = Cluster(backendSystem).selfAddress
     Cluster(backendSystem).join(clusterAddress)
-    backendSystem.actorOf(ClusterSingletonManager.props(Scheduler.props(workTimeout), "active",
+    backendSystem.actorOf(ClusterSingletonManager.props(Scheduler.props(clock, workTimeout), "active",
       PoisonPill, Some("backend")), "scheduler")
 
     val initialContacts = Set(
@@ -120,12 +125,12 @@ class DistributedWorkerSpec(_system: ActorSystem)
     // might take a while for things to get connected
     within(10.seconds) {
       awaitAssert {
-        frontend ! Work("1", 1)
+        frontend ! SchedulerProtocol.ScheduleJob(PowerOfNJobDef)
         expectMsg(ReceptorActor.Accepted)
       }
     }
 
-    results.expectMsgType[WorkResult].jobId should be("1")
+    results.expectMsgType[WorkResult].workId._1 should be(PowerOfNJobDef.jobId)
 
     for (n <- 2 to 100) {
       frontend ! Work(n.toString, n)

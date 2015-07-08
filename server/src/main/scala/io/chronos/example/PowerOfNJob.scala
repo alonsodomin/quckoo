@@ -1,8 +1,6 @@
 package io.chronos.example
 
-import io.chronos.{Job, JobDefinition}
-
-import scala.concurrent.forkjoin.ThreadLocalRandom
+import io.chronos.Job
 
 /**
  * Created by domingueza on 06/07/15.
@@ -15,11 +13,4 @@ class PowerOfNJob extends Job {
     s"$n * $n = $n2"
   }
 
-}
-
-object PowerOfNJobDef extends JobDefinition(jobId = "Power Of N", jobSpec = classOf[PowerOfNJob]) {
-
-  def rnd = ThreadLocalRandom.current
-  val n = rnd.nextInt(3, 20)
-  
 }
