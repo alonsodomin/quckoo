@@ -45,13 +45,13 @@ case class ExecutionPlan private (
   def isDone(workId: WorkId): Boolean = finishedWorkIds.contains(workId)
 
   def updated(event: WorkDomainEvent): ExecutionPlan = event match {
-    case WorkTriggered(work) =>
+    case WorkTriggered(work, _) =>
       copy(
         pendingWork = pendingWork enqueue work,
         acceptedWorks = acceptedWorks + work.id
       )
 
-    case WorkStarted(workId) =>
+    case WorkStarted(workId, _) =>
       val (work, rest) = pendingWork.dequeue
       require(work.id == workId, s"WorkStarted expected workId $workId == ${work.id}")
       copy(
@@ -59,19 +59,19 @@ case class ExecutionPlan private (
         workInProgress = workInProgress + (workId -> work)
       )
 
-    case WorkCompleted(workId, _) =>
+    case WorkCompleted(workId, _, _) =>
       copy(
         workInProgress = workInProgress - workId,
         finishedWorkIds = finishedWorkIds + workId
       )
 
-    case WorkerFailed(workId) =>
+    case WorkerFailed(workId, _) =>
       copy(
         pendingWork = pendingWork enqueue workInProgress(workId),
         workInProgress = workInProgress - workId
       )
 
-    case WorkerTimedOut(workId) =>
+    case WorkerTimedOut(workId, _) =>
       copy(
         pendingWork = pendingWork enqueue workInProgress(workId),
         workInProgress = workInProgress - workId

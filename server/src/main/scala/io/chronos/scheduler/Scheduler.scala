@@ -1,7 +1,6 @@
 package io.chronos.scheduler
 
 import java.time.{Clock, ZonedDateTime}
-import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorLogging, Props}
 import akka.cluster.Cluster
@@ -181,7 +180,7 @@ class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval:
   }
 
   private def workDeadline(work: Work): Deadline = {
-    val now = Deadline(Duration(clock.instant().getNano, TimeUnit.NANOSECONDS))
+    val now = Deadline.now
     val timeout = work.timeout match {
       case Some(t) => t
       case None => maxWorkTimeout
