@@ -9,15 +9,22 @@ resolvers in ThisBuild ++= Seq(
 )
 
 lazy val chronos = (project in file(".")).aggregate(
-  server, manager
+  common, server, manager
 )
+
+lazy val common = (project in file("common")).
+  settings(Commons.settings: _*).
+  settings(
+    libraryDependencies ++= commonLibs
+  )
 
 lazy val server = (project in file("server")).
   settings(Commons.settings: _*).
   settings(
     libraryDependencies ++= serverDeps
   ).
-  settings(Revolver.settings: _*)
+  settings(Revolver.settings: _*).
+  dependsOn(common)
 
 lazy val manager = (project in file("manager")).
   settings(Commons.settings: _*).
@@ -25,5 +32,6 @@ lazy val manager = (project in file("manager")).
   settings(
     libraryDependencies ++= managerDeps,
     routesGenerator := InjectedRoutesGenerator
-  )
+  ).
+  dependsOn(common)
 

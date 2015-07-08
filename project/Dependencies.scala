@@ -1,9 +1,14 @@
+import play.sbt.PlayImport._
 import sbt._
 
 object Dependencies {
   val akkaVersion = "2.3.11"
   val hazelcastVersion = "3.4.4"
   val sprayVersion = "1.3.3"
+
+  val commonLibs: Seq[ModuleID] = Seq(
+    "org.scalaz.stream" %% "scalaz-stream" % "0.7a" withSources() withJavadoc()
+  )
 
   val serverDeps: Seq[ModuleID] = Seq(
     "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
@@ -23,6 +28,8 @@ object Dependencies {
     "commons-io" % "commons-io" % "2.4" % "test"
   )
 
-  val managerDeps: Seq[ModuleID] = Seq()
+  val managerDeps: Seq[ModuleID] = commonLibs ++ Seq(
+    specs2 % Test
+  )
 
 }

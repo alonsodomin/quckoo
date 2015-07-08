@@ -1,4 +1,4 @@
-
+import play.test.WithBrowser
 
 /**
  * add your integration spec here.

@@ -1,5 +1,6 @@
 import play.api.test.Helpers._
 import play.api.test._
+import play.test.WithApplication
 
 /**
  * Add your spec here.
