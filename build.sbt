@@ -8,7 +8,7 @@ resolvers in ThisBuild ++= Seq(
 )
 
 lazy val chronos = (project in file(".")).aggregate(
-  common, server, console, http
+  common, scheduler, console, http, worker
 )
 
 lazy val common = (project in file("common")).
@@ -17,10 +17,10 @@ lazy val common = (project in file("common")).
     libraryDependencies ++= Dependencies.commonLibs
   )
 
-lazy val server = (project in file("server")).
+lazy val scheduler = (project in file("scheduler")).
   settings(Commons.settings: _*).
   settings(
-    libraryDependencies ++= Dependencies.serverLibs
+    libraryDependencies ++= Dependencies.schedulerLibs
   ).
   settings(Revolver.settings: _*).
   dependsOn(common)
@@ -38,5 +38,12 @@ lazy val http = (project in file("http")).
   settings(Commons.settings: _*).
   settings(
     libraryDependencies ++= Dependencies.httpLibs
+  ).
+  dependsOn(common)
+
+lazy val worker = (project in file("worker")).
+  settings(Commons.settings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.workerLibs
   ).
   dependsOn(common)

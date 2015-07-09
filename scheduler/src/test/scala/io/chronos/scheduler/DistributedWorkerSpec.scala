@@ -11,7 +11,6 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import io.chronos.example.PowerOfNJobDef
 import io.chronos.protocol.SchedulerProtocol
-import io.chronos.worker.{JobExecutor, Worker}
 import io.chronos.{Work, WorkResult}
 import org.apache.commons.io.FileUtils
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}

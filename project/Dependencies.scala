@@ -12,13 +12,13 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-remote"  % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
 
     "org.scala-lang"    % "scala-compiler" % scalaVersion,
     "org.scalaz.stream" %% "scalaz-stream" % "0.7a" withSources() withJavadoc()
   )
 
-  val serverLibs: Seq[ModuleID] = commonLibs ++ Seq(
-    "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
+  val schedulerLibs: Seq[ModuleID] = commonLibs ++ Seq(
     "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc(),
 
@@ -46,6 +46,10 @@ object Dependencies {
     "io.spray" %% "spray-testkit" % sprayVersion % "test" withSources() withJavadoc(),
 
     "org.scalatest" %% "scalatest" % "2.2.4" % "test"
+  )
+
+  val workerLibs: Seq[ModuleID] = commonLibs ++ Seq(
+
   )
 
 }
