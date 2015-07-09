@@ -2,6 +2,23 @@
 
 @main("Chronos Console") {
 
+    <section>
+        <h2>@message</h2>
 
+        <table id="scheduledJobs_table" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Job ID</th>
+                    <th>Trigger</th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: jobs">
+                <tr>
+                    <td data-bind="text: jobId"></td>
+                    <td data-bind="text: trigger"></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
 
 }

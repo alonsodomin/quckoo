@@ -1,10 +1,9 @@
-package io.chronos.console
+package modules
 
-import akka.actor.ActorRef
+import akka.actor.ActorSystem
 import com.google.inject.AbstractModule
 import com.google.inject.name.Names
-import io.chronos.facade.Facade
-import play.libs.Akka
+import common.Global
 
 /**
  * Created by domingueza on 09/07/15.
@@ -12,11 +11,10 @@ import play.libs.Akka
 class ConsoleModule extends AbstractModule {
 
   override def configure(): Unit = {
-    val chronosFacade = Akka.system().actorOf(Facade.props(), "chronosFacade")
-
-    bind(classOf[ActorRef]).
+    bind(classOf[ActorSystem]).
       annotatedWith(Names.named("chronos")).
-      toInstance(chronosFacade)
+      toInstance(Global.chronosSystem)
+
   }
 
 }

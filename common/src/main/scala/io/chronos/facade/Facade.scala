@@ -50,6 +50,7 @@ class Facade extends Actor with ActorLogging {
       } pipeTo sender()
 
     case msg: GetScheduledJobs =>
+      log.debug("Fetching all the scheduled jobs from the chronos backend.")
       implicit val timeout = Timeout(5.seconds)
       (schedulerProxy ? msg) map {
         case res: ScheduledJobs => res

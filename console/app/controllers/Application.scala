@@ -4,15 +4,19 @@ import javax.inject.Inject
 
 import components.RemoteScheduler
 import play.api.mvc._
+import play.libs.Json
+
+import scala.concurrent.ExecutionContext
 
 class Application @Inject() (val remoteScheduler: RemoteScheduler) extends Controller {
 
   def index = Action {
-    Ok(views.html.index("Your new application is ready."))
+    Ok(views.html.index("Scheduled Jobs"))
   }
 
   def scheduledJobs = Action.async {
-    remoteScheduler.jobDefinitions.map(jobDefs => Ok(jobDefs))
+    implicit val xc: ExecutionContext = ExecutionContext.global
+    remoteScheduler.jobDefinitions.map(jobDefs => Ok(Json.toJson(jobDefs).asText()))
   }
 
 }
