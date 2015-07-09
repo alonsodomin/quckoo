@@ -9,7 +9,7 @@ object Dependencies {
   val sprayVersion = "1.3.3"
 
   val commonLibs: Seq[ModuleID] = Seq(
-    "org.scala-lang" % "scala-compiler" % scalaVersion,
+    "org.scala-lang"    % "scala-compiler" % scalaVersion,
     "org.scalaz.stream" %% "scalaz-stream" % "0.7a" withSources() withJavadoc()
   )
 
@@ -31,7 +31,7 @@ object Dependencies {
     "commons-io" % "commons-io" % "2.4" % "test"
   )
 
-  val managerLibs: Seq[ModuleID] = commonLibs ++ Seq(
+  val consoleLibs: Seq[ModuleID] = commonLibs ++ Seq(
     specs2 % Test  
   )
 

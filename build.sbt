@@ -8,7 +8,7 @@ resolvers in ThisBuild ++= Seq(
 )
 
 lazy val chronos = (project in file(".")).aggregate(
-  common, server, manager
+  common, server, console
 )
 
 lazy val common = (project in file("common")).
@@ -25,11 +25,11 @@ lazy val server = (project in file("server")).
   settings(Revolver.settings: _*).
   dependsOn(common)
 
-lazy val manager = (project in file("manager")).
+lazy val console = (project in file("console")).
   settings(Commons.settings: _*).
   enablePlugins(PlayScala).
   settings(
-    libraryDependencies ++= Dependencies.managerLibs,
+    libraryDependencies ++= Dependencies.consoleLibs,
     routesGenerator := InjectedRoutesGenerator
   ).
   dependsOn(common)
