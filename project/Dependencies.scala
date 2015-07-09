@@ -32,6 +32,10 @@ object Dependencies {
   )
 
   val consoleLibs: Seq[ModuleID] = commonLibs ++ Seq(
+    "org.webjars" %% "webjars-play" % "2.4.0-1" withSources() withJavadoc(),
+    "org.webjars" % "font-awesome" % "4.3.0-3",
+    "org.webjars" %  "bootstrap"    % "3.3.5",
+
     specs2 % Test  
   )
 
