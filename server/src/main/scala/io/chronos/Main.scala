@@ -10,7 +10,6 @@ import akka.persistence.journal.leveldb.{SharedLeveldbJournal, SharedLeveldbStor
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import io.chronos.example.PowerOfNActor
-import io.chronos.receptor.ReceptorActor
 import io.chronos.scheduler._
 import io.chronos.worker.{JobExecutor, Worker}
 
@@ -64,7 +63,7 @@ object Main {
     val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port)
       .withFallback(ConfigFactory.load())
     val system = ActorSystem("ClusterSystem", conf)
-    val frontend = system.actorOf(Props[ReceptorActor], "receptor")
+    val frontend = system.actorOf(Props[Facade], "receptor")
     system.actorOf(PowerOfNActor.props(frontend), "producer")
     system.actorOf(Props[WorkResultConsumer], "consumer")
   }

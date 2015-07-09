@@ -11,6 +11,8 @@ trait JobQueue {
 
   type JobConsumer = (JobDefinition) => Unit
 
+  def allJobs: Seq[JobDefinition]
+
   def pollOverdueJobs(clock: Clock, batchSize: Int)(implicit consumer: JobConsumer)
 
   def push(jobDefinition: JobDefinition): Unit

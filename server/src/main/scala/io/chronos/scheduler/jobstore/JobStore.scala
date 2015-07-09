@@ -16,6 +16,8 @@ class JobStore extends JobQueue with WorkFactory {
   private val executionHistory: mutable.Map[JobId, ZonedDateTime] = mutable.Map.empty
   private val executionCounter = new AtomicLong(0)
 
+  override def allJobs: Seq[JobDefinition] = jobQueue
+
   override def pollOverdueJobs(clock: Clock, batchSize: Int)(implicit consumer: JobConsumer): Unit = {
     var itemCount: Int = 0
     for ((jobDef, idx) <- jobQueue.view.zipWithIndex.takeWhile(_ => itemCount < batchSize)) {
@@ -27,7 +29,7 @@ class JobStore extends JobQueue with WorkFactory {
         case Some(time) if time.isBefore(now) || time.isEqual(now) =>
           jobQueue = jobQueue.patch(idx, Nil, 1)
           consumer.apply(jobDef)
-          itemCount = itemCount + 1
+          itemCount += 1
         case Some(_) =>
         case None =>
           jobQueue = jobQueue.patch(idx, Nil, 1)

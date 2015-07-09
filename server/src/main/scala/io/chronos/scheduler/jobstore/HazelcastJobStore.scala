@@ -46,6 +46,8 @@ class HazelcastJobStore(private val hazelcastInstance: HazelcastInstance) extend
   private val jobDefinitions = hazelcastInstance.getMap[JobId, JobDefinition]("jobDefinitions")
   private val executionCounter = hazelcastInstance.getAtomicLong("executionCounter")
 
+  override def allJobs: Seq[JobDefinition] = jobDefinitions.values().toSeq
+
   override def pollOverdueJobs(clock: Clock, batchSize: Int)(implicit consumer: JobConsumer) = {
     val predicate = new PagingPredicate(new OverdueJobPredicate(), batchSize)
     jobDefinitions.values(predicate).foreach { jobDef =>

@@ -3,6 +3,7 @@ package io.chronos.console
 import akka.actor.ActorRef
 import com.google.inject.AbstractModule
 import com.google.inject.name.Names
+import io.chronos.facade.Facade
 import play.libs.Akka
 
 /**
@@ -11,7 +12,7 @@ import play.libs.Akka
 class ConsoleModule extends AbstractModule {
 
   override def configure(): Unit = {
-    val chronosFacade = Akka.system().actorOf(ChronosFacade.props, "chronos")
+    val chronosFacade = Akka.system().actorOf(Facade.props(), "chronosFacade")
 
     bind(classOf[ActorRef]).
       annotatedWith(Names.named("chronos")).

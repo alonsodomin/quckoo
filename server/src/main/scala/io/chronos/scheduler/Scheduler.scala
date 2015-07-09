@@ -21,8 +21,6 @@ object Scheduler {
 
   val ResultsTopic = "results"
 
-  val Path = "/user/scheduler/active"
-
   val defaultHeartbeatInterval = 1000.millis
   val defaultBatchSize = 10
   val defaultMaxWorkTimeout = 1.minute
@@ -94,6 +92,9 @@ class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval:
   }
 
   override def receiveCommand: Receive = {
+    case GetScheduledJobs =>
+      sender() ! ScheduledJobs(jobStore.allJobs)
+
     case ScheduleJob(jobDef) =>
       log.info("Job scheduled. jobId={}", jobDef.jobId)
       jobStore.push(jobDef)

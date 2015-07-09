@@ -8,7 +8,7 @@ resolvers in ThisBuild ++= Seq(
 )
 
 lazy val chronos = (project in file(".")).aggregate(
-  common, server, console
+  common, server, console, http
 )
 
 lazy val common = (project in file("common")).
@@ -34,3 +34,9 @@ lazy val console = (project in file("console")).
   ).
   dependsOn(common)
 
+lazy val http = (project in file("http")).
+  settings(Commons.settings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.httpLibs
+  ).
+  dependsOn(common)

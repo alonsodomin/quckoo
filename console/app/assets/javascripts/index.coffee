@@ -1,2 +1,2 @@
-require ["bootstrap"], () ->
-  console.log "boostrap javascript loaded"
+require ['knockout', 'scheduledJobs', 'domReady!'], (ko, ScheduledJobs) ->
+  ko.applyBindings(new ScheduledJobs())

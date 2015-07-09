@@ -11,7 +11,6 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import io.chronos.example.PowerOfNJobDef
 import io.chronos.protocol.SchedulerProtocol
-import io.chronos.receptor.ReceptorActor
 import io.chronos.worker.{JobExecutor, Worker}
 import io.chronos.{Work, WorkResult}
 import org.apache.commons.io.FileUtils
@@ -116,7 +115,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
     val flakyWorker = workerSystem.actorOf(Worker.props(clusterClient, Props[FlakyWorkExecutor], 1.second), "flaky-worker")
 
     Cluster(system).join(clusterAddress)
-    val frontend = system.actorOf(Props[ReceptorActor], "frontend")
+    val frontend = system.actorOf(Props[Facade], "frontend")
 
     val results = TestProbe()
     DistributedPubSubExtension(system).mediator ! Subscribe(Scheduler.ResultsTopic, results.ref)
@@ -126,7 +125,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
     within(10.seconds) {
       awaitAssert {
         frontend ! SchedulerProtocol.ScheduleJob(PowerOfNJobDef)
-        expectMsg(ReceptorActor.Accepted)
+        expectMsg(Facade.Accepted)
       }
     }
 
@@ -134,7 +133,7 @@ class DistributedWorkerSpec(_system: ActorSystem)
 
     for (n <- 2 to 100) {
       frontend ! Work(n.toString, n)
-      expectMsg(ReceptorActor.Accepted)
+      expectMsg(Facade.Accepted)
     }
 
     results.within(10.seconds) {
