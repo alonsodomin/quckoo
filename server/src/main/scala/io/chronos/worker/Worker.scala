@@ -6,9 +6,8 @@ import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.contrib.pattern.ClusterClient.SendToAll
 import io.chronos.id.{ExecutionId, JobId, WorkId}
-import io.chronos.{Work, path}
 import io.chronos.protocol.WorkerProtocol
-import io.chronos.scheduler.Scheduler
+import io.chronos.{Work, path}
 
 import scala.concurrent.duration._
 
@@ -92,7 +91,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   }
 
   def sendToMaster(msg: Any): Unit = {
-    clusterClient ! SendToAll(Scheduler.Path, msg)
+    clusterClient ! SendToAll(path.Scheduler, msg)
   }
 
   override def supervisorStrategy = OneForOneStrategy() {
