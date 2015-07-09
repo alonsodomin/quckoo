@@ -1,7 +1,7 @@
 package io.chronos.example
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import io.chronos.facade.Facade
+import io.chronos.Facade
 import io.chronos.protocol.SchedulerProtocol
 
 import scala.concurrent.duration._

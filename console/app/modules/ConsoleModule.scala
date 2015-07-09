@@ -1,6 +1,6 @@
 package modules
 
-import akka.actor.ActorSystem
+import akka.actor.ActorRef
 import com.google.inject.AbstractModule
 import com.google.inject.name.Names
 import common.Global
@@ -11,9 +11,9 @@ import common.Global
 class ConsoleModule extends AbstractModule {
 
   override def configure(): Unit = {
-    bind(classOf[ActorSystem]).
+    bind(classOf[ActorRef]).
       annotatedWith(Names.named("chronos")).
-      toInstance(Global.chronosSystem)
+      toInstance(Global.chronosClient)
 
   }
 

@@ -1,10 +1,9 @@
-package io.chronos.facade
+package io.chronos
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterSingletonProxy
 import akka.pattern._
 import akka.util.Timeout
-import io.chronos.path
 import io.chronos.protocol.SchedulerProtocol
 
 import scala.concurrent.duration._
