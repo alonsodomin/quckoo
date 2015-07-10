@@ -14,7 +14,7 @@ class JobRegistrySpec extends FlatSpec with Matchers with BeforeAndAfter {
   val clock = Clock.systemUTC()
   val hazelcastInstance = Hazelcast.newHazelcastInstance()
 
-  val jobRegistry = new JobRegistry(clock, hazelcastInstance)
+  val jobRegistry = new HazelcastJobRegistry(clock, hazelcastInstance)
 
   "A Job Registry" should "accept publishing Job Specs" in {
     val jobSpec = JobSpec(id = "foo", displayName = "Foo Job", jobClass = classOf[DummyJob])

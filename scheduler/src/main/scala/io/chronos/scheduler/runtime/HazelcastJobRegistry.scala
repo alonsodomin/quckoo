@@ -14,7 +14,7 @@ import scala.concurrent.duration.FiniteDuration
 /**
  * Created by aalonsodominguez on 09/07/15.
  */
-class JobRegistry(val clock: Clock, val hazelcastInstance: HazelcastInstance) extends JobRepository {
+class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends JobRepository {
 
   private val jobRegistry = hazelcastInstance.getMap[JobId, JobSpec]("jobRegistry")
 
@@ -53,14 +53,14 @@ class JobRegistry(val clock: Clock, val hazelcastInstance: HazelcastInstance) ex
 
   def scheduleOf(executionId: ExecutionId): JobSchedule = getSchedule(executionId._1).get
 
-  def schedule(schedule: JobSchedule): ExecutionId = {
+  def schedule(clock: Clock, schedule: JobSchedule): ExecutionId = {
     require(jobRegistry.containsKey(schedule.jobId), s"The job specification ${schedule.jobId} has not been registered yet.")
 
     val scheduleId = (schedule.jobId, scheduleCounter.incrementAndGet())
     scheduleMap.put(scheduleId, schedule)
     scheduleByJob.put(schedule.jobId, scheduleId)
 
-    createExecution(scheduleId, schedule).executionId
+    createExecution(clock, scheduleId, schedule).executionId
   }
 
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)] = {
@@ -78,7 +78,7 @@ class JobRegistry(val clock: Clock, val hazelcastInstance: HazelcastInstance) ex
   def executionTimeout(executionId: ExecutionId): Option[FiniteDuration] =
     getSchedule(executionId._1).flatMap(job => job.executionTimeout)
 
-  def fetchOverdueJobs(batchSize: Int)(implicit c: Execution => Unit): Unit = {
+  def fetchOverdueJobs(clock: Clock, batchSize: Int)(implicit c: Execution => Unit): Unit = {
     var itemCount: Int = 0
 
     def notInProgress(pair: (ScheduleId, JobSchedule)): Boolean = Option(executionBySchedule.get(pair._1)).
@@ -145,7 +145,7 @@ class JobRegistry(val clock: Clock, val hazelcastInstance: HazelcastInstance) ex
     }
   }
 
-  private def createExecution(scheduleId: ScheduleId, schedule: JobSchedule): Execution = {
+  private def createExecution(clock: Clock, scheduleId: ScheduleId, schedule: JobSchedule): Execution = {
     val executionId = (scheduleId, executionCounter.incrementAndGet())
     val execution = Execution.scheduled(executionId, ZonedDateTime.now(clock))
     executionMap.put(executionId, execution)

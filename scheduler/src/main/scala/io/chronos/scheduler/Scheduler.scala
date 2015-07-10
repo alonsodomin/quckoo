@@ -7,7 +7,7 @@ import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExte
 import com.hazelcast.core.HazelcastInstance
 import io.chronos.id._
 import io.chronos.protocol.{SchedulerProtocol, WorkerProtocol}
-import io.chronos.scheduler.runtime.{Execution, JobRegistry}
+import io.chronos.scheduler.runtime.{Execution, HazelcastJobRegistry}
 import io.chronos.worker.WorkerState
 import io.chronos.{Work, WorkResult}
 
@@ -53,7 +53,7 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
     case _ => "master"
   }*/
 
-  private val jobRegistry = new JobRegistry(clock, hazelcastInstance)
+  private val jobRegistry = new HazelcastJobRegistry(hazelcastInstance)
 
   // worker state is not event sourced
   private var workers = Map[WorkerId, WorkerState]()
@@ -85,20 +85,9 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
     }
 
   def receive = {
-    case PublishJob(job) =>
-      jobRegistry.publishSpec(job)
-      log.info("Job spec has been published. jobId={}, name={}", job.id, job.displayName)
-
-    case GetJobSpecs =>
-      log.info("Retrieving the available job specs from the registry.")
-      sender() ! JobSpecs(jobRegistry.availableSpecs)
-
-    case GetScheduledJobs =>
-      sender() ! ScheduledJobs(jobRegistry.scheduledJobs)
-
     case ScheduleJob(jobDef) =>
       log.info("Job scheduled. jobId={}", jobDef.jobId)
-      jobRegistry.schedule(jobDef)
+      jobRegistry.schedule(clock, jobDef)
       sender() ! ScheduleAck(jobDef.jobId)
 
     case RegisterWorker(workerId) =>
@@ -168,7 +157,7 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
       }
 
     case Heartbeat =>
-      jobRegistry.fetchOverdueJobs(jobBatchSize) { execution =>
+      jobRegistry.fetchOverdueJobs(clock, jobBatchSize) { execution =>
         val executionEvent = Execution.Triggered(ZonedDateTime.now(clock))
         log.info("Dispatching job execution queue. executionId={}", execution.executionId)
         jobRegistry.update(execution.executionId, executionEvent) { exec =>

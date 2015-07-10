@@ -14,7 +14,7 @@ object Execution {
     Execution(id, Scheduled(when) :: Nil)
   }
 
-  sealed abstract class Status(val ordinal: Int) extends Ordered[Status] {
+  sealed abstract class Status(val ordinal: Int) extends Ordered[Status] with Serializable {
     implicit val when: ZonedDateTime
 
     override def compare(that: Status): Int = {
