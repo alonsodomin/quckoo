@@ -4,7 +4,7 @@ import java.time.{Clock, ZonedDateTime}
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
-import com.hazelcast.core.Hazelcast
+import com.hazelcast.core.HazelcastInstance
 import io.chronos.id._
 import io.chronos.protocol.{SchedulerProtocol, WorkerProtocol}
 import io.chronos.scheduler.runtime.{Execution, JobRegistry}
@@ -25,17 +25,18 @@ object Scheduler {
   val defaultMaxWorkTimeout = 1.minute
 
   def props(clock: Clock,
+            hazelcastInstance: HazelcastInstance,
             maxWorkTimeout: FiniteDuration = defaultMaxWorkTimeout,
             heartbeatInterval: FiniteDuration = defaultHeartbeatInterval,
             jobBatchSize: Int = defaultBatchSize): Props =
-    Props(classOf[Scheduler], clock, maxWorkTimeout, heartbeatInterval, jobBatchSize)
+    Props(classOf[Scheduler], clock, hazelcastInstance, maxWorkTimeout, heartbeatInterval, jobBatchSize)
 
   private case object Heartbeat
   private case object CleanupTick
 }
 
 
-class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval: FiniteDuration, jobBatchSize: Int)
+class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeout: FiniteDuration, heartbeatInterval: FiniteDuration, jobBatchSize: Int)
   extends Actor with ActorLogging {
 
   import Scheduler._
@@ -52,7 +53,6 @@ class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval:
     case _ => "master"
   }*/
 
-  private val hazelcastInstance = Hazelcast.newHazelcastInstance()
   private val jobRegistry = new JobRegistry(clock, hazelcastInstance)
 
   // worker state is not event sourced
@@ -85,7 +85,12 @@ class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval:
     }
 
   def receive = {
+    case PublishJob(job) =>
+      jobRegistry.publishSpec(job)
+      log.info("Job spec has been published. jobId={}, name={}", job.id, job.displayName)
+
     case GetJobSpecs =>
+      log.info("Retrieving the available job specs from the registry.")
       sender() ! JobSpecs(jobRegistry.availableSpecs)
 
     case GetScheduledJobs =>

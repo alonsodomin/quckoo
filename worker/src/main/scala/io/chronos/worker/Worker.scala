@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.contrib.pattern.ClusterClient.SendToAll
-import io.chronos.id.{JobId, WorkId, WorkSubId}
+import io.chronos.id.ExecutionId
 import io.chronos.protocol.WorkerProtocol
 import io.chronos.{Work, path}
 
@@ -36,21 +36,11 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
 
   val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "exec"))
   
-  private var currentWorkId: Option[WorkId] = None
+  private var currentExecutionId: Option[ExecutionId] = None
 
-  def workId: WorkId = currentWorkId match {
+  def executionId: ExecutionId = currentExecutionId match {
     case Some(id) => id
     case None     => throw new IllegalStateException("Not working")
-  }
-
-  def jobId: JobId = currentWorkId match {
-    case Some((jobId, _)) => jobId
-    case None             => throw new IllegalStateException("Not working")
-  }
-
-  def executionId: WorkSubId = currentWorkId match {
-    case Some((_, executionId)) => executionId
-    case None                   => throw new IllegalStateException("Not working")
   }
 
   override def postStop(): Unit = registerTask.cancel()
@@ -62,16 +52,16 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
       sendToMaster(RequestWork(workerId))
 
     case work: Work =>
-      log.info("Received work for job {} on execution {}", work.id._1, work.id._2)
-      currentWorkId = Some(work.id)
+      log.info("Received work for execution {}", work.executionId)
+      currentExecutionId = Some(work.executionId)
       jobExecutor ! JobExecutor.ExecuteWork(work)
       context.become(working)
   }
 
   def working: Receive = {
-    case JobExecutor.CompletedWork(workId, result) =>
+    case JobExecutor.CompletedWork(executionId, result) =>
       log.info("Work is complete. Result {}.", result)
-      sendToMaster(WorkDone(workerId, workId, result))
+      sendToMaster(WorkDone(workerId, executionId, result))
       context.setReceiveTimeout(5.seconds)
       context.become(waitForWorkDoneAck(result))
 
@@ -80,14 +70,14 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   }
 
   def waitForWorkDoneAck(result: Any): Receive = {
-    case WorkDoneAck(id) if id == workId =>
+    case WorkDoneAck(id) if id == executionId =>
       sendToMaster(RequestWork(workerId))
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 
     case ReceiveTimeout =>
       log.info("No ack from master, retrying")
-      sendToMaster(WorkDone(workerId, workId, result))
+      sendToMaster(WorkDone(workerId, executionId, result))
   }
 
   def sendToMaster(msg: Any): Unit = {
@@ -97,9 +87,9 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   override def supervisorStrategy = OneForOneStrategy() {
     case _: ActorInitializationException => Stop
     case _: DeathPactException => Stop
-    case _: Exception =>
-      currentWorkId.foreach {
-        workId => sendToMaster(WorkFailed(workerId, workId))
+    case cause: Exception =>
+      currentExecutionId.foreach {
+        executionId => sendToMaster(WorkFailed(workerId, executionId, cause))
       }
       context.become(idle)
       Restart

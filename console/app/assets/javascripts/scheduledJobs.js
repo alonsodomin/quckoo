@@ -1,17 +1,18 @@
 define(['knockout', 'jquery'], function (ko, $) {
-    function ScheduledJobsView() {
-        this.jobs = ko.observableArray();
-        this._initialize();
-    }
+    return function ScheduledJobsView() {
+        var self = this;
 
-    ScheduledJobsView.prototype = {
-        _initialize: function () {
-            var self = this;
+        self.jobs = ko.observableArray();
+
+        self._initialize = function() {
             $.get('/jobs', function (result) {
-                self.jobs.push(result);
+                console.log(JSON.stringify(result));
+                $.each(result, function (item) {
+                    self.jobs.push(item);
+                });
             });
-        }
-    };
+        };
 
-    return ScheduledJobsView;
+        self._initialize();
+    };
 });

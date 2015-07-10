@@ -31,7 +31,15 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
 
   override def postRestart(reason: Throwable): Unit = ()
 
-  def receive = {
+  def receive = start
+
+  def start: Receive = {
+    case Tick =>
+      receptor ! SchedulerProtocol.PublishJob(PowerOfNJobSpec)
+      context.become(produce)
+  }
+
+  def produce: Receive = {
     case Tick =>
       n += 1
       log.info("Produced work: {}", n)

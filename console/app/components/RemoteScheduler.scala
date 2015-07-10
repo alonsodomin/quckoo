@@ -32,12 +32,9 @@ class RemoteScheduler @Inject() (system: ActorSystem) {
 
   def jobDefinitions: Future[Seq[JobSpec]] = {
     implicit val xc: ExecutionContext = ExecutionContext.global
-    implicit val timeout = Timeout(5.seconds)
+    implicit val timeout = Timeout(10.seconds)
 
-    val msg = SchedulerProtocol.GetJobSpecs
-    (chronosClient ? SendToAll(path.Scheduler, GetJobSpecs)).asInstanceOf[Future[JobSpecs]] map {
-      response => response.specs
-    }
+    (chronosClient ? SendToAll(path.Scheduler, GetJobSpecs)).asInstanceOf[Future[JobSpecs]] map { response => response.specs }
   }
 
 }

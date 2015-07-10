@@ -33,14 +33,18 @@ class Facade extends Actor with ActorLogging {
   var schedulerProxy = context.actorOf(
     ClusterSingletonProxy.props(
       singletonPath = path.Scheduler,
-      role = Some("backend")
+      role = Some("scheduler")
     ),
     name = "schedulerProxy"
   )
 
   def receive = {
+    case p: PublishJob =>
+      log.info("Publishing job spec. spec={}", p.job.id)
+      schedulerProxy ! p
+
     case s: ScheduleJob =>
-      log.info("Registering job. jobId={}", s.jobDefinition.jobId)
+      log.info("Scheduling job. jobId={}", s.schedule.jobId)
       implicit val timeout = Timeout(5.seconds)
       (schedulerProxy ? s) map {
         case ScheduleAck(jobId) => JobAccepted

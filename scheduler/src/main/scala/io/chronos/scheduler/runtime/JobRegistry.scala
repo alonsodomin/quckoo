@@ -7,6 +7,7 @@ import io.chronos.id.{ExecutionId, JobId, ScheduleId}
 import io.chronos.scheduler.JobRepository
 import io.chronos.{JobSchedule, JobSpec}
 
+import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
@@ -27,11 +28,20 @@ class JobRegistry(val clock: Clock, val hazelcastInstance: HazelcastInstance) ex
 
   private val executionQueue = hazelcastInstance.getQueue[Execution]("executionQueue")
 
-  override def availableSpecs: Seq[JobSpec] = jobRegistry.values().toSeq
+  override def availableSpecs: Seq[JobSpec] = {
+    @tailrec
+    def recurse(iterator: Iterator[JobSpec], accumulator: Seq[JobSpec]): Seq[JobSpec] = {
+      if (!iterator.hasNext) {
+        accumulator
+      } else {
+        recurse(iterator, accumulator :+ iterator.next())
+      }
+    }
 
-  override def publishSpec(jobSpec: JobSpec): Unit = {
-    jobRegistry.put(jobSpec.id, jobSpec)
+    recurse(jobRegistry.values().iterator(), Vector())
   }
+
+  override def publishSpec(jobSpec: JobSpec): Unit = jobRegistry.put(jobSpec.id, jobSpec)
 
   def getSpec(jobId: JobId): Option[JobSpec] = Option(jobRegistry.get(jobId))
 
