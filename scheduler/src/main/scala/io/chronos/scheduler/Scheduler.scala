@@ -115,7 +115,7 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
             sender() ! work
 
             val executionEvent = Execution.Started(ZonedDateTime.now(clock), workerId)
-            jobRegistry.update(execution.executionId, executionEvent) { exec =>
+            jobRegistry.updateExecution(execution.executionId, executionEvent) { exec =>
               val deadline = executionDeadline(exec)
               workers += (workerId -> workerState.copy(status = WorkerState.Busy(exec.executionId, deadline)))
             }
@@ -133,7 +133,7 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
           log.info("Execution {} is done by worker {}", executionId, workerId)
           changeWorkerToIdle(workerId, executionId)
           val executionEvent = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
-          jobRegistry.update(executionId, executionEvent) { exec =>
+          jobRegistry.updateExecution(executionId, executionEvent) { exec =>
             mediator ! DistributedPubSubMediator.Publish(ResultsTopic, WorkResult(exec.executionId, result))
             sender() ! WorkDoneAck(exec.executionId)
           }
@@ -147,7 +147,7 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
           log.info("Execution {} failed by worker {}", executionId, workerId)
           changeWorkerToIdle(workerId, executionId)
           val executionEvent = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Failed(cause))
-          jobRegistry.update(executionId, executionEvent) { exec =>
+          jobRegistry.updateExecution(executionId, executionEvent) { exec =>
             // TODO implement a retry logic
             notifyWorkers()
           }
@@ -157,10 +157,10 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
       }
 
     case Heartbeat =>
-      jobRegistry.fetchOverdueJobs(clock, jobBatchSize) { execution =>
+      jobRegistry.fetchOverdueExecutions(clock, jobBatchSize) { execution =>
         val executionEvent = Execution.Triggered(ZonedDateTime.now(clock))
         log.info("Dispatching job execution queue. executionId={}", execution.executionId)
-        jobRegistry.update(execution.executionId, executionEvent) { exec =>
+        jobRegistry.updateExecution(execution.executionId, executionEvent) { exec =>
           notifyWorkers()
         }
       }
@@ -171,7 +171,7 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
           log.info("Execution {} at worker {} timed out!", executionId, workerId)
           workers -= workerId
           val executionEvent = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.TimedOut)
-          jobRegistry.update(executionId, executionEvent) { exec =>
+          jobRegistry.updateExecution(executionId, executionEvent) { exec =>
             notifyWorkers()
           }
         }
