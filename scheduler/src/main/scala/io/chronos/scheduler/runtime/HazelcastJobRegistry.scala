@@ -96,7 +96,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
       nextExecutionTime match {
         case Some(time) if time.isBefore(now) || time.isEqual(now) =>
-          val execution = createExecution(scheduleId, schedule)
+          val execution = getExecution(executionBySchedule.get(scheduleId)).get
           itemCount += 1
           c(execution)
         case Some(_) =>
