@@ -39,9 +39,9 @@ object Scheduler {
 class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval: FiniteDuration, jobBatchSize: Int)
   extends PersistentActor with ActorLogging {
 
-  import ExecutionPlan._
   import Scheduler._
   import SchedulerProtocol._
+  import WorkQueue._
   import WorkerProtocol._
   import context.dispatcher
 
@@ -49,7 +49,7 @@ class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval:
   ClusterReceptionistExtension(context.system).registerService(self)
 
   // persistenceId must include cluster role to support multiple masters
-  override def persistenceId: String = Cluster(context.system).selfRoles.find(_.startsWith("backend-")) match {
+  override def persistenceId: String = Cluster(context.system).selfRoles.find(_.startsWith("scheduler-")) match {
     case Some(role) => role + "-master"
     case _ => "master"
   }
@@ -60,7 +60,7 @@ class Scheduler(clock: Clock, maxWorkTimeout: FiniteDuration, heartbeatInterval:
   private var workers = Map[WorkerId, WorkerState]()
 
   // execution plan is event sourced
-  private var executionPlan = ExecutionPlan.empty
+  private var executionPlan = WorkQueue.empty
 
   val cleanupTask = context.system.scheduler.schedule(maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupTick)
   val heartbeatTask = context.system.scheduler.schedule(0.seconds, heartbeatInterval, self, Heartbeat)

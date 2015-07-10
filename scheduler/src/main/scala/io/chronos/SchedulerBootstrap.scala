@@ -17,10 +17,10 @@ import scala.concurrent.duration._
  */
 object SchedulerBootstrap extends App {
 
-  startBackend(2551, "backend")
-  startBackend(2552, "backend")
+  startScheduler(2551, "scheduler")
+  startScheduler(2552, "scheduler")
 
-  def startBackend(port: Int, role: String): Unit = {
+  def startScheduler(port: Int, role: String): Unit = {
     val conf = ConfigFactory.parseString(s"akka.cluster.roles=[$role]")
       .withFallback(ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port))
       .withFallback(ConfigFactory.load())

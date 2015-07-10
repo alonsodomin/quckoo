@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.contrib.pattern.ClusterClient.SendToAll
-import io.chronos.id.{ExecutionId, JobId, WorkId}
+import io.chronos.id.{JobId, WorkId, WorkSubId}
 import io.chronos.protocol.WorkerProtocol
 import io.chronos.{Work, path}
 
@@ -48,7 +48,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
     case None             => throw new IllegalStateException("Not working")
   }
 
-  def executionId: ExecutionId = currentWorkId match {
+  def executionId: WorkSubId = currentWorkId match {
     case Some((_, executionId)) => executionId
     case None                   => throw new IllegalStateException("Not working")
   }

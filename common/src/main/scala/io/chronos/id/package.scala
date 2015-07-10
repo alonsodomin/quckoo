@@ -6,9 +6,11 @@ package io.chronos
 package object id {
 
   type JobId = String
-  type ExecutionId = Long
+  type ScheduleId = (JobId, Long)
+  type ExecutionId = (ScheduleId, Long)
+  type WorkSubId = Long
 
   type WorkerId = String
-  type WorkId = (JobId, ExecutionId)
+  type WorkId = (JobId, WorkSubId)
 
 }

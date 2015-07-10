@@ -10,9 +10,9 @@ import scala.collection.immutable.Queue
 /**
  * Created by aalonsodominguez on 05/07/15.
  */
-object ExecutionPlan {
+object WorkQueue {
 
-  def empty: ExecutionPlan = ExecutionPlan(
+  def empty: WorkQueue = WorkQueue(
     pendingWork = Queue.empty,
     workInProgress = Map.empty,
     acceptedWorks = Set.empty,
@@ -30,13 +30,13 @@ object ExecutionPlan {
 
 }
 
-case class ExecutionPlan private (
+case class WorkQueue private (
   private val pendingWork: Queue[Work],
   private val workInProgress: Map[WorkId, Work],
   private val acceptedWorks: Set[WorkId],
   private val finishedWorkIds: Set[WorkId]) {
 
-  import ExecutionPlan._
+  import WorkQueue._
 
   def hasWork: Boolean = pendingWork.nonEmpty
   def nextWork: Work = pendingWork.head
@@ -44,7 +44,7 @@ case class ExecutionPlan private (
   def isInProgress(workId: WorkId): Boolean = workInProgress.contains(workId)
   def isDone(workId: WorkId): Boolean = finishedWorkIds.contains(workId)
 
-  def updated(event: WorkDomainEvent): ExecutionPlan = event match {
+  def updated(event: WorkDomainEvent): WorkQueue = event match {
     case WorkTriggered(work, _) =>
       copy(
         pendingWork = pendingWork enqueue work,

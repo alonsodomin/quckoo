@@ -5,6 +5,6 @@ package io
  */
 package object chronos {
 
-  type JobSpec = Class[_ <: Job]
+  type JobClass = Class[_ <: Job]
 
 }

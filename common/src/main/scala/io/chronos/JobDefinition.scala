@@ -11,9 +11,9 @@ import scala.concurrent.duration.FiniteDuration
 
 class JobDefinition(
   val jobId: JobId,
-  val jobSpec: JobSpec,
   val params: Map[String, Any] = Map.empty,
   val trigger: Trigger = Immediate,
-  val timeout: Option[FiniteDuration] = None) extends Parameterizable with Serializable {
+  val triggerTimeout: Option[FiniteDuration] = None,
+  val executionTimeout: Option[FiniteDuration] = None) extends Parameterizable with Serializable {
 
 }

@@ -4,11 +4,12 @@ import javax.inject.{Inject, Singleton}
 
 import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
 import akka.contrib.pattern.ClusterClient
+import akka.contrib.pattern.ClusterClient.SendToAll
 import akka.japi.Util._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import io.chronos.JobDefinition
+import io.chronos.{JobDefinition, path}
 import io.chronos.protocol.SchedulerProtocol
 
 import scala.concurrent._
@@ -31,8 +32,11 @@ class RemoteScheduler @Inject() (system: ActorSystem) {
   def jobDefinitions: Future[Seq[JobDefinition]] = {
     implicit val xc: ExecutionContext = ExecutionContext.global
     implicit val timeout = Timeout(5.seconds)
-    (chronosClient ? SchedulerProtocol.GetScheduledJobs).
-      asInstanceOf[Future[SchedulerProtocol.ScheduledJobs]] map { response => response.jobs }
+
+    val msg = SchedulerProtocol.GetScheduledJobs
+    (chronosClient ? SendToAll(path.Scheduler, msg)).asInstanceOf[Future[SchedulerProtocol.ScheduledJobs]] map {
+      response => response.jobs
+    }
   }
 
 }

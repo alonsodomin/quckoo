@@ -58,7 +58,7 @@ class HazelcastJobStore(private val hazelcastInstance: HazelcastInstance) extend
 
   override def createWork(jobDef: JobDefinition): Work = {
     val workId: WorkId = (jobDef.jobId, executionCounter.incrementAndGet())
-    Work(id = workId, params = jobDef.params, jobSpec = jobDef.jobSpec, jobDef.timeout)
+    Work(id = workId, params = jobDef.params, jobSpec = jobDef.jobSpec, jobDef.executionTimeout)
   }
 
   override def push(jobDef: JobDefinition): Unit = {

@@ -43,7 +43,7 @@ class JobStore extends JobQueue with WorkFactory {
 
   override def createWork(jobDef: JobDefinition): Work = {
     val workId = (jobDef.jobId, executionCounter.incrementAndGet())
-    Work(workId, jobDef.params, jobDef.jobSpec, jobDef.timeout)
+    Work(workId, jobDef.params, jobDef.jobSpec, jobDef.executionTimeout)
   }
 
 }
