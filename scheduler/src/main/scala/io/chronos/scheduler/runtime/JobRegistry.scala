@@ -8,6 +8,7 @@ import io.chronos.scheduler.JobRepository
 import io.chronos.{JobSchedule, JobSpec}
 
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * Created by aalonsodominguez on 09/07/15.
@@ -32,18 +33,24 @@ class JobRegistry(val clock: Clock, val hazelcastInstance: HazelcastInstance) ex
     jobRegistry.put(jobSpec.id, jobSpec)
   }
 
-  def apply(scheduleId: ScheduleId): Option[JobSchedule] = Option(scheduleMap.get(scheduleId))
+  def getSpec(jobId: JobId): Option[JobSpec] = Option(jobRegistry.get(jobId))
 
-  def apply(executionId: ExecutionId): Option[Execution] = Option(executionMap.get(executionId))
+  def getSchedule(scheduleId: ScheduleId): Option[JobSchedule] = Option(scheduleMap.get(scheduleId))
 
-  def schedule(schedule: JobSchedule): ScheduleId = {
+  def getExecution(executionId: ExecutionId): Option[Execution] = Option(executionMap.get(executionId))
+
+  def specOf(executionId: ExecutionId): JobSpec = getSpec(executionId._1._1).get
+
+  def scheduleOf(executionId: ExecutionId): JobSchedule = getSchedule(executionId._1).get
+
+  def schedule(schedule: JobSchedule): ExecutionId = {
     require(jobRegistry.containsKey(schedule.jobId), s"The job specification ${schedule.jobId} has not been registered yet.")
 
     val scheduleId = (schedule.jobId, scheduleCounter.incrementAndGet())
     scheduleMap.put(scheduleId, schedule)
     scheduleByJob.put(schedule.jobId, scheduleId)
 
-    scheduleId
+    createExecution(scheduleId, schedule).executionId
   }
 
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)] = {
@@ -58,11 +65,23 @@ class JobRegistry(val clock: Clock, val hazelcastInstance: HazelcastInstance) ex
 
   def nextExecution = executionQueue.take()
 
-  def pollOverdueJobs(batchSize: Int)(implicit c: Execution => Unit): Unit = {
+  def executionTimeout(executionId: ExecutionId): Option[FiniteDuration] =
+    getSchedule(executionId._1).flatMap(job => job.executionTimeout)
+
+  def fetchOverdueJobs(batchSize: Int)(implicit c: Execution => Unit): Unit = {
     var itemCount: Int = 0
-    for ((scheduleId, schedule) <- scheduleMap.toMap.takeWhile(_ => itemCount < batchSize)) {
-      val lastExecutionTime = lastExecutionTime(scheduleId)
-      val nextExecutionTime = schedule.trigger.nextExecutionTime(clock, lastExecutionTime)
+
+    def notInProgress(pair: (ScheduleId, JobSchedule)): Boolean = Option(executionBySchedule.get(pair._1)).
+      map(executionId => executionMap.get(executionId)).
+      map(execution => execution.status) match {
+      case Some(_: Execution.InProgress) => false
+      case _                             => true
+    }
+
+    def underBatchLimit(pair: (ScheduleId, JobSchedule)): Boolean = itemCount < batchSize
+
+    for ((scheduleId, schedule) <- scheduleMap.toMap.filter(notInProgress).takeWhile(underBatchLimit)) {
+      val nextExecutionTime = schedule.trigger.nextExecutionTime(clock, lastExecutionTime(scheduleId))
       val now = ZonedDateTime.now(clock)
 
       nextExecutionTime match {
@@ -76,14 +95,17 @@ class JobRegistry(val clock: Clock, val hazelcastInstance: HazelcastInstance) ex
     }
   }
   
-  def update(executionId: ExecutionId, status: Execution.Status): Unit = {
+  def update(executionId: ExecutionId, status: Execution.Status)(implicit c: Execution => Unit): Unit = {
     require(executionMap.containsKey(executionId), s"There is no execution with ID $executionId")
     require(scheduleMap.containsKey(executionId._1), s"There is no schedule with ID ${executionId._1}")
 
     executionMap.lock(executionId)
     try {
-      val updated = this(executionId) map (e => e.update(status)) get;
+      val updated = getExecution(executionId) map (e => e.update(status)) get;
       status match {
+        case Execution.Triggered(_) =>
+          executionQueue.put(updated)
+
         case Execution.Finished(_, _, _) =>
           scheduleMap.lock(executionId._1)
           try {
@@ -93,9 +115,12 @@ class JobRegistry(val clock: Clock, val hazelcastInstance: HazelcastInstance) ex
           } finally {
             scheduleMap.unlock(executionId._1)
           }
+          
         case _ =>
       }
+
       executionMap.put(executionId, updated)
+      c(updated)
     } finally {
       executionMap.unlock(executionId)
     }
@@ -105,8 +130,8 @@ class JobRegistry(val clock: Clock, val hazelcastInstance: HazelcastInstance) ex
     Option(executionBySchedule.get(scheduleId)).
       flatMap (execId => Option(executionMap.get(execId))).
       map (exec => exec.status) match {
-      case Some(Execution.Finished(when, _)) => Some(when)
-      case None => None
+      case Some(Execution.Finished(when, _, _)) => Some(when)
+      case _ => None
     }
   }
 

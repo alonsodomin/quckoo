@@ -48,12 +48,12 @@ case class WorkQueue private (
     case WorkTriggered(work, _) =>
       copy(
         pendingWork = pendingWork enqueue work,
-        acceptedWorks = acceptedWorks + work.id
+        acceptedWorks = acceptedWorks
       )
 
     case WorkStarted(workId, _) =>
       val (work, rest) = pendingWork.dequeue
-      require(work.id == workId, s"WorkStarted expected workId $workId == ${work.id}")
+      require(work.executionId == workId, s"WorkStarted expected workId $workId == ${work.executionId}")
       copy(
         pendingWork = rest,
         workInProgress = workInProgress + (workId -> work)

@@ -5,4 +5,4 @@ import io.chronos.id.JobId
 /**
  * Created by aalonsodominguez on 10/07/15.
  */
-case class JobSpec(id: JobId, displayName: String, description: String = "", jobClass: JobClass)
+class JobSpec(val id: JobId, val displayName: String, val description: String = "", val jobClass: JobClass)

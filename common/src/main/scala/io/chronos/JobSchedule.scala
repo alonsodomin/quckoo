@@ -12,7 +12,7 @@ class JobSchedule(val jobId: JobId,
                   val params: Map[String, Any] = Map.empty,
                   val trigger: Trigger = Immediate,
                   val triggerTimeout: Option[FiniteDuration] = None,
-                  val executionTimeout: Option[FiniteDuration] = None) {
+                  val executionTimeout: Option[FiniteDuration] = None) extends Parameterizable with Serializable {
 
   def isRecurring: Boolean = trigger.isRecurring
 

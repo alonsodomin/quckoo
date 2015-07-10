@@ -1,8 +1,8 @@
 package io.chronos
 
-import io.chronos.id.WorkId
+import io.chronos.id.ExecutionId
 
 /**
  * Created by aalonsodominguez on 07/07/15.
  */
-case class WorkResult(workId: WorkId, result: Any)
+case class WorkResult(executionId: ExecutionId, result: Any)

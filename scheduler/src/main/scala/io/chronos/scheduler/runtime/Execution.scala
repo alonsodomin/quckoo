@@ -27,7 +27,7 @@ object Execution {
   sealed trait InProgress extends Status
 
   case class Scheduled(when: ZonedDateTime) extends Status(1) with Waiting
-  case class Triggered(when: ZonedDateTime) extends Status(2) with Waiting
+  case class Triggered(when: ZonedDateTime) extends Status(2) with Waiting with InProgress
   case class Started(when: ZonedDateTime, where: WorkerId) extends Status(3) with InProgress
   case class Finished(when: ZonedDateTime, where: WorkerId, outcome: Outcome) extends Status(4)
   

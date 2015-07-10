@@ -16,7 +16,7 @@ class Application @Inject() (val remoteScheduler: RemoteScheduler) extends Contr
 
   def scheduledJobs = Action.async {
     implicit val xc: ExecutionContext = ExecutionContext.global
-    remoteScheduler.jobDefinitions.map(jobDefs => Ok(Json.toJson(jobDefs).asText()))
+    remoteScheduler.jobDefinitions.map(specs => Ok(Json.toJson(specs).asText()))
   }
 
 }

@@ -22,9 +22,9 @@ class JobExecutor extends Actor with ActorLogging {
   def receive = {
     case ExecuteWork(work) =>
       log.info("Executing work. workId={}", work.id)
-      val jobInstance = work.jobSpec.newInstance()
+      val jobInstance = work.jobClass.newInstance()
 
-      populateJobParams(work.jobSpec, work.params, jobInstance)
+      populateJobParams(work.jobClass, work.params, jobInstance)
 
       try {
         val result = jobInstance.execute()

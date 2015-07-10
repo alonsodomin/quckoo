@@ -1,7 +1,7 @@
 package io.chronos.worker
 
 import akka.actor.ActorRef
-import io.chronos.id.WorkId
+import io.chronos.id.ExecutionId
 
 import scala.concurrent.duration.Deadline
 
@@ -14,7 +14,7 @@ object WorkerState {
   sealed trait WorkerStatus
 
   case object Idle extends WorkerStatus
-  case class Busy(workId: WorkId, deadline: Deadline) extends WorkerStatus
+  case class Busy(executionId: ExecutionId, deadline: Deadline) extends WorkerStatus
 
 }
 
