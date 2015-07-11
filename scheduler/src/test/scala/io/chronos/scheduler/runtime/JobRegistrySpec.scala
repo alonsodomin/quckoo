@@ -3,6 +3,7 @@ package io.chronos.scheduler.runtime
 import java.time.Clock
 
 import com.hazelcast.core.Hazelcast
+import io.chronos.internal.HazelcastJobRegistry
 import io.chronos.test.DummyJob
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 

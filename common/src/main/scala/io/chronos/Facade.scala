@@ -1,7 +1,7 @@
 package io.chronos
 
-import akka.actor.{Actor, ActorLogging, Props}
-import akka.contrib.pattern.ClusterSingletonProxy
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.contrib.pattern._
 import akka.pattern._
 import akka.util.Timeout
 import io.chronos.protocol.SchedulerProtocol
@@ -14,7 +14,7 @@ import scala.concurrent.duration._
 
 object Facade {
 
-  def props(): Props = Props(classOf[Facade])
+  def props(client: ActorRef): Props = Props(classOf[Facade], client)
   
   trait Unreachable
   
@@ -25,28 +25,21 @@ object Facade {
   case object ResourceUnreachable extends Unreachable
 }
 
-class Facade extends Actor with ActorLogging {
+class Facade(repositoryClient: ActorRef) extends Actor with ActorLogging {
+  import ClusterClient._
   import Facade._
   import SchedulerProtocol._
   import context.dispatcher
-
-  var schedulerProxy = context.actorOf(
-    ClusterSingletonProxy.props(
-      singletonPath = path.Scheduler,
-      role = Some("scheduler")
-    ),
-    name = "schedulerProxy"
-  )
-
+  
   def receive = {
     case p: PublishJob =>
       log.info("Publishing job spec. spec={}", p.job.id)
-      schedulerProxy ! p
+      repositoryClient ! Send(path.Repository, p, localAffinity = false)
 
     case s: ScheduleJob =>
       log.info("Scheduling job. jobId={}", s.schedule.jobId)
       implicit val timeout = Timeout(5.seconds)
-      (schedulerProxy ? s) map {
+      (repositoryClient ? SendToAll(path.Scheduler, s)) map {
         case ScheduleAck(jobId) => JobAccepted
       } recover {
         case _ => JobRejected

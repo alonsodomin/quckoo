@@ -2,14 +2,13 @@ package io.chronos.scheduler
 
 import java.time.{Clock, ZonedDateTime}
 
-import akka.actor.{Actor, ActorLogging, Props}
-import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
-import com.hazelcast.core.HazelcastInstance
+import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
+import akka.contrib.pattern.{ClusterReceptionistExtension, ClusterSingletonManager, DistributedPubSubExtension, DistributedPubSubMediator}
 import io.chronos.id._
+import io.chronos.internal.HazelcastJobRegistry
 import io.chronos.protocol.{SchedulerProtocol, WorkerProtocol}
-import io.chronos.scheduler.runtime.{Execution, HazelcastJobRegistry}
 import io.chronos.worker.WorkerState
-import io.chronos.{Work, WorkResult}
+import io.chronos.{Execution, Work, WorkResult}
 
 import scala.concurrent.duration._
 
@@ -25,18 +24,26 @@ object Scheduler {
   val defaultMaxWorkTimeout = 1.minute
 
   def props(clock: Clock,
-            hazelcastInstance: HazelcastInstance,
+            jobRegistry: HazelcastJobRegistry,
             maxWorkTimeout: FiniteDuration = defaultMaxWorkTimeout,
             heartbeatInterval: FiniteDuration = defaultHeartbeatInterval,
-            jobBatchSize: Int = defaultBatchSize): Props =
-    Props(classOf[Scheduler], clock, hazelcastInstance, maxWorkTimeout, heartbeatInterval, jobBatchSize)
+            jobBatchSize: Int = defaultBatchSize,
+            role: Option[String] = None): Props =
+    ClusterSingletonManager.props(
+      Props(classOf[Scheduler], clock, jobRegistry, maxWorkTimeout, heartbeatInterval, jobBatchSize),
+      "active", PoisonPill, role
+    )
 
   private case object Heartbeat
   private case object CleanupTick
 }
 
 
-class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeout: FiniteDuration, heartbeatInterval: FiniteDuration, jobBatchSize: Int)
+class Scheduler(clock: Clock,
+                jobRegistry: HazelcastJobRegistry,
+                maxWorkTimeout: FiniteDuration,
+                heartbeatInterval: FiniteDuration,
+                jobBatchSize: Int)
   extends Actor with ActorLogging {
 
   import Scheduler._
@@ -52,8 +59,6 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
     case Some(role) => role + "-master"
     case _ => "master"
   }*/
-
-  private val jobRegistry = new HazelcastJobRegistry(hazelcastInstance)
 
   // worker state is not event sourced
   private var workers = Map[WorkerId, WorkerState]()
@@ -85,14 +90,6 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
     }
 
   def receive = {
-    case PublishJob(job) =>
-      jobRegistry.publishSpec(job)
-      log.info("Job spec has been published. jobId={}, name={}", job.id, job.displayName)
-
-    case GetJobSpecs =>
-      log.info("Retrieving the available job specs from the registry.")
-      sender() ! JobSpecs(jobRegistry.availableSpecs)
-
     case GetScheduledJobs =>
       sender() ! ScheduledJobs(jobRegistry.scheduledJobs)
 

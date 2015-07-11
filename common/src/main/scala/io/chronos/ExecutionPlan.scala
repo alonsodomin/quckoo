@@ -1,15 +1,15 @@
-package io.chronos.scheduler
+package io.chronos
 
 import java.time.{Clock, ZonedDateTime}
 
-import io.chronos.JobSchedule
 import io.chronos.id._
-import io.chronos.scheduler.runtime.Execution
 
 /**
- * Created by aalonsodominguez on 10/07/15.
- */
+  * Created by aalonsodominguez on 10/07/15.
+  */
 trait ExecutionPlan {
+
+  def scheduledJobs: Seq[(ScheduleId, JobSchedule)]
 
   def schedule(clock: Clock, schedule: JobSchedule): ExecutionId
 
@@ -19,4 +19,4 @@ trait ExecutionPlan {
 
   def updateExecution(executionId: ExecutionId, status: Execution.Status)(implicit c: Execution => Unit): Unit
 
-}
+ }

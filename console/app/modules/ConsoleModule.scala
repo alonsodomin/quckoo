@@ -1,12 +1,10 @@
 package modules
 
-import akka.actor.{AddressFromURIString, RootActorPath}
-import akka.contrib.pattern.ClusterClient
-import akka.japi.Util._
 import com.google.inject.AbstractModule
-import com.typesafe.config.ConfigFactory
-import play.api.Play.current
-import play.api.libs.concurrent.Akka
+import com.hazelcast.client.HazelcastClient
+import com.hazelcast.core.HazelcastInstance
+import io.chronos.internal.HazelcastJobRegistry
+import io.chronos.{ExecutionPlan, JobRepository}
 
 /**
  * Created by domingueza on 09/07/15.
@@ -14,16 +12,12 @@ import play.api.libs.concurrent.Akka
 class ConsoleModule extends AbstractModule {
 
   override def configure(): Unit = {
-    val chronosConf = ConfigFactory.load("chronos")
+    val hazelcastClient = HazelcastClient.newHazelcastClient()
+    bind(classOf[HazelcastInstance]).toInstance(hazelcastClient)
 
-    val initialContacts = immutableSeq(chronosConf.getStringList("chronos.seed-nodes")).map {
-      case AddressFromURIString(addr) => Akka.system.actorSelection(RootActorPath(addr) / "user" / "receptionist")
-    }.toSet
-
-    val chronosClient = Akka.system.actorOf(ClusterClient.props(initialContacts), "chronosClient")
-
-
-
+    val hazelcastJobRegistry = new HazelcastJobRegistry(hazelcastClient)
+    bind(classOf[JobRepository]).toInstance(hazelcastJobRegistry)
+    bind(classOf[ExecutionPlan]).toInstance(hazelcastJobRegistry)
   }
 
 }

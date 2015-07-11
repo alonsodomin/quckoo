@@ -3,14 +3,16 @@ package io.chronos
 import java.time.Clock
 
 import akka.actor._
-import akka.contrib.pattern.ClusterSingletonManager
+import akka.contrib.pattern.ClusterClient
+import akka.japi.Util._
 import akka.pattern.ask
 import akka.persistence.journal.leveldb.{SharedLeveldbJournal, SharedLeveldbStore}
 import akka.util.Timeout
 import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigFactory
 import io.chronos.example.PowerOfNActor
-import io.chronos.scheduler.Scheduler
+import io.chronos.internal.HazelcastJobRegistry
+import io.chronos.scheduler.{Repository, Scheduler}
 
 import scala.concurrent.duration._
 
@@ -20,6 +22,7 @@ import scala.concurrent.duration._
 object SchedulerBootstrap extends App {
 
   val hazelcastInstance = Hazelcast.newHazelcastInstance()
+  val jobRegistry = new HazelcastJobRegistry(hazelcastInstance)
 
   startScheduler(2551, "scheduler")
   startScheduler(2552, "scheduler")
@@ -32,24 +35,28 @@ object SchedulerBootstrap extends App {
     val system = ActorSystem("ClusterSystem", conf)
     val clock = Clock.systemUTC()
 
-    startupSharedJournal(system, startStore = (port == 2551), path =
-      ActorPath.fromString("akka.tcp://ClusterSystem@127.0.0.1:2551/user/store"))
+    /*startupSharedJournal(system, startStore = (port == 2551), path =
+      ActorPath.fromString("akka.tcp://ClusterSystem@127.0.0.1:2551/user/store"))*/
 
-    system.actorOf(
-      ClusterSingletonManager.props(
-        Scheduler.props(clock, hazelcastInstance), "active", PoisonPill, Some(role)
-      ),
-      "scheduler"
-    )
+    system.actorOf(Scheduler.props(clock, jobRegistry), "scheduler")
+    system.actorOf(Repository.props(jobRegistry), "repository")
+
+    system.actorOf(Props[WorkResultConsumer], "consumer")
   }
 
   def startFrontend(port: Int): Unit = {
-    val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).
-      withFallback(ConfigFactory.load())
-    val system = ActorSystem("ClusterSystem", conf)
-    val frontend = system.actorOf(Props[Facade], "frontend")
+    val defaultPort = 0
+
+    val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + defaultPort)
+      .withFallback(ConfigFactory.load("facade"))
+    val system = ActorSystem("FacadeSystem", conf)
+    val initialContacts = immutableSeq(conf.getStringList("contact-points")).map {
+      case AddressFromURIString(addr) => system.actorSelection(RootActorPath(addr) / "user" / "receptionist")
+    }.toSet
+
+    val clusterClient = system.actorOf(ClusterClient.props(initialContacts), "clusterClient")
+    val frontend = system.actorOf(Facade.props(clusterClient), "frontend")
     system.actorOf(Props(classOf[PowerOfNActor], frontend), "producer")
-    system.actorOf(Props[WorkResultConsumer], "consumer")
   }
 
   def startupSharedJournal(system: ActorSystem, startStore: Boolean, path: ActorPath): Unit = {

@@ -5,6 +5,7 @@ package io.chronos
  */
 package object path {
 
+  val Repository = "/user/repository"
   val Scheduler = "/user/scheduler/active"
 
 }

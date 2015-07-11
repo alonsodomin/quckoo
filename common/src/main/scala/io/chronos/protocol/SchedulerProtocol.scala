@@ -11,6 +11,7 @@ object SchedulerProtocol {
   sealed trait SchedulerResponse
 
   case class PublishJob(job: JobSpec) extends SchedulerRequest
+  case object PublishJobAck extends SchedulerResponse
   
   case object GetJobSpecs extends SchedulerRequest
   case class JobSpecs(specs: Seq[JobSpec])

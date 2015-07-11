@@ -1,4 +1,4 @@
-package io.chronos.scheduler.runtime
+package io.chronos
 
 import java.time.ZonedDateTime
 
@@ -53,7 +53,7 @@ case class Execution private (id: ExecutionId, statusHistory: List[Execution.Sta
     case _                       => None
   }
 
-  private[runtime] def update(status: Status): Execution = {
+  def update(status: Status): Execution = {
     require(this.status.ordinal < status.ordinal)
     copy(statusHistory = status :: statusHistory)
   }

@@ -14,6 +14,8 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
 
+    "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
+
     "org.scala-lang"    % "scala-compiler" % scalaVersion,
     "org.scalaz.stream" %% "scalaz-stream" % "0.7a" withSources() withJavadoc()
   )
@@ -22,7 +24,6 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc(),
 
-    "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
     "com.hazelcast" % "hazelcast-client" % hazelcastVersion withSources() withJavadoc(),
 
     "org.scalatest" %% "scalatest" % "2.2.4" % "test",
@@ -30,7 +31,9 @@ object Dependencies {
   )
 
   val consoleLibs: Seq[ModuleID] = commonLibs ++ Seq(
-    "org.webjars"       %% "webjars-play"      % "2.4.0-1" withSources() withJavadoc(),
+    "com.hazelcast"     % "hazelcast-client"   % hazelcastVersion withSources() withJavadoc(),
+
+    "org.webjars"       %% "webjars-play"      % "2.4.0-1"        withSources() withJavadoc(),
     "org.webjars"       % "font-awesome"       % "4.3.0-3",
     "org.webjars"       % "bootstrap"          % "3.3.5",
     "org.webjars"       % "knockout"           % "3.3.0",
