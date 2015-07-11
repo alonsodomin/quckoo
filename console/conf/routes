@@ -3,17 +3,21 @@
 # ~~~~
 
 # Home page
-GET     /                           @controllers.Application.index
+GET        /                       @controllers.Application.index
 
-GET     /repository                 @controllers.JobRepository.index
+GET        /repository             @controllers.JobRepositoryController.index
 
-GET     /repository/jobs            @controllers.JobRepository.jobs
+GET        /repository/jobs        @controllers.JobRepositoryController.jobs
+
+GET        /scheduler              @controllers.SchedulerController.index
+
+GET        /scheduler/jobs         @controllers.SchedulerController.schedules
 
 # Versioned assets
-GET     /vassets/*file              controllers.Assets.versioned(path = "/public", file: Asset)
+GET        /vassets/*file          controllers.Assets.versioned(path = "/public", file: Asset)
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.at(path="/public", file)
+GET        /assets/*file           controllers.Assets.at(path="/public", file)
 
 # WebJars
-GET     /webjars/*file              controllers.WebJarAssets.at(file)
+GET        /webjars/*file          controllers.WebJarAssets.at(file)

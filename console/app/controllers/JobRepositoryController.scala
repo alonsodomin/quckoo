@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext
 /**
  * Created by aalonsodominguez on 11/07/15.
  */
-class JobRepository @Inject() (val remoteScheduler: RemoteScheduler) extends Controller {
+class JobRepositoryController @Inject() (val remoteScheduler: RemoteScheduler) extends Controller {
 
   def index = Action {
     Ok(views.html.repository("Job Repository"))

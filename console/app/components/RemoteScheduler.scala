@@ -9,8 +9,9 @@ import akka.japi.Util._
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+import io.chronos.id.ScheduleId
 import io.chronos.protocol.SchedulerProtocol
-import io.chronos.{JobSpec, path}
+import io.chronos.{JobSchedule, JobSpec, path}
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -35,6 +36,13 @@ class RemoteScheduler @Inject() (system: ActorSystem) {
     implicit val timeout = Timeout(10.seconds)
 
     (chronosClient ? SendToAll(path.Scheduler, GetJobSpecs)).asInstanceOf[Future[JobSpecs]] map { response => response.specs }
+  }
+
+  def scheduledJobs: Future[Seq[(ScheduleId, JobSchedule)]] = {
+    implicit val xc: ExecutionContext = ExecutionContext.global
+    implicit val timeout = Timeout(10.seconds)
+
+    (chronosClient ? SendToAll(path.Scheduler, GetScheduledJobs)).asInstanceOf[Future[ScheduledJobs]] map { response => response.jobs }
   }
 
 }

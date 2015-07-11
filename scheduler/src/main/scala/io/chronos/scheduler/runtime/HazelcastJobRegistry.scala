@@ -29,16 +29,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
   private val executionQueue = hazelcastInstance.getQueue[Execution]("executionQueue")
 
   override def availableSpecs: Seq[JobSpec] = {
-    @tailrec
-    def recurse(iterator: Iterator[JobSpec], accumulator: Seq[JobSpec]): Seq[JobSpec] = {
-      if (!iterator.hasNext) {
-        accumulator
-      } else {
-        recurse(iterator, accumulator :+ iterator.next())
-      }
-    }
-
-    recurse(jobRegistry.values().iterator(), Vector())
+    collectFrom(jobRegistry.values().iterator(), Vector())
   }
 
   override def publishSpec(jobSpec: JobSpec): Unit = jobRegistry.put(jobSpec.id, jobSpec)
@@ -64,11 +55,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
   }
 
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)] = {
-    var allSchedules: List[(ScheduleId, JobSchedule)] = Nil
-    for ((scheduleId, schedule) <- scheduleMap.toMap) {
-      allSchedules = (scheduleId, schedule) :: allSchedules
-    }
-    allSchedules
+    collectFrom[(ScheduleId, JobSchedule)](scheduleMap.iterator, Vector[(ScheduleId, JobSchedule)]())
   }
 
   def hasPendingExecutions = executionQueue nonEmpty
@@ -153,5 +140,14 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
     execution
   }
-  
+
+  @tailrec
+  private def collectFrom[T](iterator: Iterator[T], accumulator: Seq[T]): Seq[T] = {
+    if (!iterator.hasNext) {
+      accumulator
+    } else {
+      collectFrom(iterator, accumulator :+ iterator.next())
+    }
+  }
+
 }
