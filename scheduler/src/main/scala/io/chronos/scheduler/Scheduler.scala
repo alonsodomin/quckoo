@@ -8,7 +8,7 @@ import io.chronos.id._
 import io.chronos.internal.HazelcastJobRegistry
 import io.chronos.protocol.{SchedulerProtocol, WorkerProtocol}
 import io.chronos.worker.WorkerState
-import io.chronos.{Execution, Work, WorkResult}
+import io.chronos.{Work, WorkResult}
 
 import scala.concurrent.duration._
 

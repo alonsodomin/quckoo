@@ -1,7 +1,8 @@
-package io.chronos
+package io.chronos.scheduler
 
 import java.time.{Clock, ZonedDateTime}
 
+import io.chronos.JobSchedule
 import io.chronos.id._
 
 /**

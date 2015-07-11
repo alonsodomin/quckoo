@@ -1,4 +1,6 @@
-package io.chronos
+package io.chronos.scheduler
+
+import io.chronos.JobSpec
 
 /**
   * Created by domingueza on 10/07/15.

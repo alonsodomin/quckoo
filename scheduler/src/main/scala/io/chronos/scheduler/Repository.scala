@@ -2,7 +2,6 @@ package io.chronos.scheduler
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
-import io.chronos.JobRepository
 import io.chronos.protocol.SchedulerProtocol._
 
 /**

@@ -5,6 +5,7 @@ import java.time.{Clock, ZonedDateTime}
 import com.hazelcast.core.HazelcastInstance
 import io.chronos._
 import io.chronos.id.{ExecutionId, JobId, ScheduleId}
+import io.chronos.scheduler.{Execution, ExecutionPlan, JobRepository}
 
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._

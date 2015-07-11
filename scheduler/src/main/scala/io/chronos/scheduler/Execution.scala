@@ -1,4 +1,4 @@
-package io.chronos
+package io.chronos.scheduler
 
 import java.time.ZonedDateTime
 
