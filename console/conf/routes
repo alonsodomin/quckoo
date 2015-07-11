@@ -5,7 +5,9 @@
 # Home page
 GET     /                           @controllers.Application.index
 
-GET     /jobs                       @controllers.Application.scheduledJobs
+GET     /repository                 @controllers.JobRepository.index
+
+GET     /repository/jobs            @controllers.JobRepository.jobs
 
 # Versioned assets
 GET     /vassets/*file              controllers.Assets.versioned(path = "/public", file: Asset)

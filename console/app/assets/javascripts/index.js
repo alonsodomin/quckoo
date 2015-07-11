@@ -1,6 +1,4 @@
-require(['knockout', 'scheduledJobs', 'requirejs-domready!'], function (ko, ScheduledJobsView) {
-    var view = new ScheduledJobsView();
-    console.log(JSON.stringify(ScheduledJobsView));
-    console.log(JSON.stringify(view));
+require(['knockout', 'JobRepository', 'requirejs-domready!'], function (ko, JobRepositoryView) {
+    var view = new JobRepositoryView();
     ko.applyBindings(view);
 });

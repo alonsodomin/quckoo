@@ -1,13 +1,13 @@
 define(['knockout', 'jquery'], function (ko, $) {
-    return function ScheduledJobsView() {
+    return function JobRepositoryView() {
         var self = this;
 
-        self.jobs = ko.observableArray();
+        self.baseUri = "/repository";
+        self.jobs = ko.observableArray([]);
 
         self._initialize = function() {
-            $.get('/jobs', function (result) {
-                console.log(JSON.stringify(result));
-                $.each(result, function (item) {
+            $.get(self.baseUri + '/jobs', function (result) {
+                $.each(result, function (idx, item) {
                     self.jobs.push(item);
                 });
             });

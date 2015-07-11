@@ -52,8 +52,11 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
 
   def waitAccepted: Receive = {
     case Facade.JobAccepted =>
+      if (n < 10) {
+        scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
+      }
       context.unbecome()
-      scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
+
     case Facade.JobRejected =>
       log.info("Work not accepted, retry after a while")
       scheduler.scheduleOnce(3.seconds, receptor, Tick)

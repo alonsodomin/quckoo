@@ -85,6 +85,17 @@ class Scheduler(clock: Clock, hazelcastInstance: HazelcastInstance, maxWorkTimeo
     }
 
   def receive = {
+    case PublishJob(job) =>
+      jobRegistry.publishSpec(job)
+      log.info("Job spec has been published. jobId={}, name={}", job.id, job.displayName)
+
+    case GetJobSpecs =>
+      log.info("Retrieving the available job specs from the registry.")
+      sender() ! JobSpecs(jobRegistry.availableSpecs)
+
+    case GetScheduledJobs =>
+      sender() ! ScheduledJobs(jobRegistry.scheduledJobs)
+
     case ScheduleJob(jobDef) =>
       log.info("Job scheduled. jobId={}", jobDef.jobId)
       jobRegistry.schedule(clock, jobDef)
