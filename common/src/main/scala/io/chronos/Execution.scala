@@ -33,11 +33,8 @@ object Execution {
 
 }
 
-trait Execution extends Serializable {
+case class Execution(id: ExecutionId, statusHistory: List[Execution.Status]) extends Serializable {
   import Execution._
-
-  implicit val id: ExecutionId
-  implicit val statusHistory: Seq[Execution.Status]
 
   def executionId = id
 

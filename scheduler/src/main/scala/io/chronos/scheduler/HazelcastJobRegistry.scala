@@ -98,7 +98,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
     executionMap.lock(executionId)
     try {
-      val updated = getExecution(executionId) map (e => e.asInstanceOf[ScheduledExecution].update(status)) get;
+      val updated = getExecution(executionId) map (e => e.copy(statusHistory = status :: e.statusHistory)) get;
       status match {
         case Execution.Triggered(_) =>
           executionQueue.put(updated)
@@ -134,7 +134,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
   private def createExecution(clock: Clock, scheduleId: ScheduleId, schedule: JobSchedule): Execution = {
     val executionId = (scheduleId, executionCounter.incrementAndGet())
-    val execution = ScheduledExecution.scheduled(executionId, ZonedDateTime.now(clock))
+    val execution = Execution(executionId, Execution.Scheduled(ZonedDateTime.now(clock)) :: Nil)
     executionMap.put(executionId, execution)
     executionBySchedule.put(scheduleId, executionId)
 

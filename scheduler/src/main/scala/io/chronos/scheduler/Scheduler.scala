@@ -3,11 +3,11 @@ package io.chronos.scheduler
 import java.time.{Clock, ZonedDateTime}
 
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
-import akka.contrib.pattern.{ClusterReceptionistExtension, ClusterSingletonManager, DistributedPubSubExtension, DistributedPubSubMediator}
+import akka.contrib.pattern._
 import io.chronos.id._
 import io.chronos.protocol.{SchedulerProtocol, WorkerProtocol}
 import io.chronos.worker.WorkerState
-import io.chronos.{Execution, Work, WorkResult}
+import io.chronos.{Execution, Work, WorkResult, topic}
 
 import scala.concurrent.duration._
 
@@ -15,8 +15,6 @@ import scala.concurrent.duration._
  * Created by aalonsodominguez on 05/07/15.
  */
 object Scheduler {
-
-  val ResultsTopic = "results"
 
   val defaultHeartbeatInterval = 1000.millis
   val defaultBatchSize = 10
@@ -128,6 +126,7 @@ class Scheduler(clock: Clock,
             jobRegistry.updateExecution(execution.executionId, executionEvent) { exec =>
               val deadline = executionDeadline(exec)
               workers += (workerId -> workerState.copy(status = WorkerState.Busy(exec.executionId, deadline)))
+              mediator ! DistributedPubSubMediator.Publish(topic.execution(execution.executionId), executionEvent)
             }
 
           case _ =>
@@ -144,7 +143,8 @@ class Scheduler(clock: Clock,
           changeWorkerToIdle(workerId, executionId)
           val executionEvent = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
           jobRegistry.updateExecution(executionId, executionEvent) { exec =>
-            mediator ! DistributedPubSubMediator.Publish(ResultsTopic, WorkResult(exec.executionId, result))
+            mediator ! DistributedPubSubMediator.Publish(topic.AllResults, WorkResult(exec.executionId, result))
+            mediator ! DistributedPubSubMediator.Publish(topic.execution(executionId), executionEvent)
             sender() ! WorkDoneAck(exec.executionId)
           }
         case _ =>
@@ -160,6 +160,7 @@ class Scheduler(clock: Clock,
           jobRegistry.updateExecution(executionId, executionEvent) { exec =>
             // TODO implement a retry logic
             notifyWorkers()
+            mediator ! DistributedPubSubMediator.Publish(topic.execution(executionId), executionEvent)
           }
 
         case _ =>
@@ -172,6 +173,7 @@ class Scheduler(clock: Clock,
         log.info("Dispatching job execution queue. executionId={}", execution.executionId)
         jobRegistry.updateExecution(execution.executionId, executionEvent) { exec =>
           notifyWorkers()
+          mediator ! DistributedPubSubMediator.Publish(topic.execution(execution.executionId), executionEvent)
         }
       }
 
