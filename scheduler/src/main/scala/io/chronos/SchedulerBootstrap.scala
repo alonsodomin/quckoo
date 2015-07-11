@@ -11,8 +11,7 @@ import akka.util.Timeout
 import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigFactory
 import io.chronos.example.PowerOfNActor
-import io.chronos.internal.HazelcastJobRegistry
-import io.chronos.scheduler.{Repository, Scheduler}
+import io.chronos.scheduler.{HazelcastJobRegistry, Repository, Scheduler}
 
 import scala.concurrent.duration._
 

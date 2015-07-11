@@ -10,17 +10,18 @@ import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import io.chronos.id._
-import io.chronos.protocol.SchedulerProtocol.{GetJobSpecs, GetScheduledJobs, JobSpecs, ScheduledJobs}
-import io.chronos.{JobSchedule, JobSpec, path}
+import io.chronos.protocol.SchedulerProtocol._
+import io.chronos.{Execution, JobSchedule, JobSpec, path}
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Created by aalonsodominguez on 11/07/15.
  */
 @Singleton
 class ChronosClient @Inject() (system: ActorSystem) {
+  import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   private val chronosConf = ConfigFactory.load("chronos")
 
@@ -31,7 +32,6 @@ class ChronosClient @Inject() (system: ActorSystem) {
   private val chronosClient = system.actorOf(ClusterClient.props(initialContacts), "chronosClient")
 
   def availableJobSpecs: Future[Seq[JobSpec]] = {
-    implicit val xc: ExecutionContext = ExecutionContext.global
     implicit val timeout = Timeout(10.seconds)
 
     (chronosClient ? Send(path.Repository, GetJobSpecs, localAffinity = false)).
@@ -39,11 +39,17 @@ class ChronosClient @Inject() (system: ActorSystem) {
   }
 
   def scheduledJobs: Future[Seq[(ScheduleId, JobSchedule)]] = {
-    implicit val xc: ExecutionContext = ExecutionContext.global
     implicit val timeout = Timeout(10.seconds)
 
     (chronosClient ? SendToAll(path.Scheduler, GetScheduledJobs)).
       asInstanceOf[Future[ScheduledJobs]] map { response => response.jobs }
+  }
+
+  def executions: Future[Seq[Execution]] = {
+    implicit val timeout = Timeout(10.seconds)
+
+    (chronosClient ? SendToAll(path.Scheduler, GetExecutions)).
+      asInstanceOf[Future[Executions]] map { response => response.executions }
   }
 
 }

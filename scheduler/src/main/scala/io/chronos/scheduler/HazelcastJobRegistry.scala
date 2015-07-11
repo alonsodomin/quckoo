@@ -1,11 +1,10 @@
-package io.chronos.internal
+package io.chronos.scheduler
 
 import java.time.{Clock, ZonedDateTime}
 
 import com.hazelcast.core.HazelcastInstance
 import io.chronos._
 import io.chronos.id.{ExecutionId, JobId, ScheduleId}
-import io.chronos.scheduler.{Execution, ExecutionPlan, JobRepository}
 
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
@@ -54,9 +53,10 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
     createExecution(clock, scheduleId, schedule).executionId
   }
 
-  def scheduledJobs: Seq[(ScheduleId, JobSchedule)] = {
+  def scheduledJobs: Seq[(ScheduleId, JobSchedule)] =
     collectFrom[(ScheduleId, JobSchedule)](scheduleMap.iterator, Vector[(ScheduleId, JobSchedule)]())
-  }
+
+  def executions: Seq[Execution] = collectFrom(executionMap.values().iterator(), Vector())
 
   def hasPendingExecutions = executionQueue nonEmpty
 
@@ -98,7 +98,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
     executionMap.lock(executionId)
     try {
-      val updated = getExecution(executionId) map (e => e.update(status)) get;
+      val updated = getExecution(executionId) map (e => e.asInstanceOf[ScheduledExecution].update(status)) get;
       status match {
         case Execution.Triggered(_) =>
           executionQueue.put(updated)
@@ -134,7 +134,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
   private def createExecution(clock: Clock, scheduleId: ScheduleId, schedule: JobSchedule): Execution = {
     val executionId = (scheduleId, executionCounter.incrementAndGet())
-    val execution = Execution.scheduled(executionId, ZonedDateTime.now(clock))
+    val execution = ScheduledExecution.scheduled(executionId, ZonedDateTime.now(clock))
     executionMap.put(executionId, execution)
     executionBySchedule.put(scheduleId, executionId)
 

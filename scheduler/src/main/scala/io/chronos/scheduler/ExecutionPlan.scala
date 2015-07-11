@@ -2,8 +2,8 @@ package io.chronos.scheduler
 
 import java.time.{Clock, ZonedDateTime}
 
-import io.chronos.JobSchedule
 import io.chronos.id._
+import io.chronos.{Execution, JobSchedule}
 
 /**
   * Created by aalonsodominguez on 10/07/15.

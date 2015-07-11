@@ -5,10 +5,9 @@ import java.time.{Clock, ZonedDateTime}
 import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
 import akka.contrib.pattern.{ClusterReceptionistExtension, ClusterSingletonManager, DistributedPubSubExtension, DistributedPubSubMediator}
 import io.chronos.id._
-import io.chronos.internal.HazelcastJobRegistry
 import io.chronos.protocol.{SchedulerProtocol, WorkerProtocol}
 import io.chronos.worker.WorkerState
-import io.chronos.{Work, WorkResult}
+import io.chronos.{Execution, Work, WorkResult}
 
 import scala.concurrent.duration._
 
@@ -92,6 +91,9 @@ class Scheduler(clock: Clock,
   def receive = {
     case GetScheduledJobs =>
       sender() ! ScheduledJobs(jobRegistry.scheduledJobs)
+
+    case GetExecutions =>
+      sender() ! Executions(jobRegistry.executions)
 
     case ScheduleJob(jobDef) =>
       log.info("Job scheduled. jobId={}", jobDef.jobId)

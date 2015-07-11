@@ -1,5 +1,5 @@
 define ['knockout', 'jquery'], (ko, $) ->
-  class SchedulerView
+  class ScheduledJobsView
     constructor: () ->
       @baseUri = '/scheduler'
       @schedules = ko.observableArray()

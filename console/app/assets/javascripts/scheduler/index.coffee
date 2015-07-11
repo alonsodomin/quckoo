@@ -1,2 +1,2 @@
-require ['knockout', 'SchedulerView', 'requirejs-domready!'], (ko, SchedulerView) ->
-  ko.applyBindings(new SchedulerView())
+require ['knockout', 'ScheduledJobsView', 'requirejs-domready!'], (ko, ScheduledJobsView) ->
+  ko.applyBindings(new ScheduledJobsView())
