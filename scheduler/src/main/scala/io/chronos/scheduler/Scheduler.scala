@@ -107,6 +107,7 @@ class Scheduler(clock: Clock,
         if (jobRegistry.hasPendingExecutions) {
           sender() ! WorkReady
         }
+        mediator ! DistributedPubSubMediator.Publish(topic.Workers, WorkerRegistered(workerId))
       }
 
     case RequestWork(workerId) =>
@@ -126,7 +127,7 @@ class Scheduler(clock: Clock,
             jobRegistry.updateExecution(execution.executionId, executionEvent) { exec =>
               val deadline = executionDeadline(exec)
               workers += (workerId -> workerState.copy(status = WorkerState.Busy(exec.executionId, deadline)))
-              mediator ! DistributedPubSubMediator.Publish(topic.execution(execution.executionId), executionEvent)
+              mediator ! DistributedPubSubMediator.Publish(topic.Executions, executionEvent)
             }
 
           case _ =>
@@ -144,7 +145,7 @@ class Scheduler(clock: Clock,
           val executionEvent = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
           jobRegistry.updateExecution(executionId, executionEvent) { exec =>
             mediator ! DistributedPubSubMediator.Publish(topic.AllResults, WorkResult(exec.executionId, result))
-            mediator ! DistributedPubSubMediator.Publish(topic.execution(executionId), executionEvent)
+            mediator ! DistributedPubSubMediator.Publish(topic.Executions, executionEvent)
             sender() ! WorkDoneAck(exec.executionId)
           }
         case _ =>
@@ -160,7 +161,7 @@ class Scheduler(clock: Clock,
           jobRegistry.updateExecution(executionId, executionEvent) { exec =>
             // TODO implement a retry logic
             notifyWorkers()
-            mediator ! DistributedPubSubMediator.Publish(topic.execution(executionId), executionEvent)
+            mediator ! DistributedPubSubMediator.Publish(topic.Executions, executionEvent)
           }
 
         case _ =>
@@ -173,7 +174,7 @@ class Scheduler(clock: Clock,
         log.info("Dispatching job execution queue. executionId={}", execution.executionId)
         jobRegistry.updateExecution(execution.executionId, executionEvent) { exec =>
           notifyWorkers()
-          mediator ! DistributedPubSubMediator.Publish(topic.execution(execution.executionId), executionEvent)
+          mediator ! DistributedPubSubMediator.Publish(topic.Executions, executionEvent)
         }
       }
 
@@ -182,9 +183,11 @@ class Scheduler(clock: Clock,
         if (timeout.isOverdue()) {
           log.info("Execution {} at worker {} timed out!", executionId, workerId)
           workers -= workerId
+          mediator ! DistributedPubSubMediator.Publish(topic.Workers, WorkerUnregistered(workerId))
           val executionEvent = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.TimedOut)
           jobRegistry.updateExecution(executionId, executionEvent) { exec =>
             notifyWorkers()
+            mediator ! DistributedPubSubMediator.Publish(topic.Executions, executionEvent)
           }
         }
       }
