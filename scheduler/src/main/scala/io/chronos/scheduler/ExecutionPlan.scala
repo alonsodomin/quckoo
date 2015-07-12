@@ -14,10 +14,10 @@ trait ExecutionPlan {
 
   def schedule(clock: Clock, schedule: JobSchedule): ExecutionId
 
-  def fetchOverdueExecutions(clock: Clock, batchSize: Int)(implicit c: Execution => Unit): Unit
+  def fetchOverdueExecutions(clock: Clock, batchSize: Int)(c: Execution => Unit): Unit
 
   def lastExecutionTime(scheduleId: ScheduleId): Option[ZonedDateTime]
 
-  def updateExecution(executionId: ExecutionId, status: Execution.Status)(implicit c: Execution => Unit): Unit
+  def updateExecution(executionId: ExecutionId, status: Execution.Status)(c: Execution => Unit): Unit
 
  }

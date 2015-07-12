@@ -65,7 +65,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
   def executionTimeout(executionId: ExecutionId): Option[FiniteDuration] =
     getSchedule(executionId._1).flatMap(job => job.executionTimeout)
 
-  def fetchOverdueExecutions(clock: Clock, batchSize: Int)(implicit c: Execution => Unit): Unit = {
+  def fetchOverdueExecutions(clock: Clock, batchSize: Int)(c: Execution => Unit): Unit = {
     var itemCount: Int = 0
 
     def notInProgress(pair: (ScheduleId, JobSchedule)): Boolean = Option(executionBySchedule.get(pair._1)).
@@ -97,7 +97,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
     }
   }
   
-  def updateExecution(executionId: ExecutionId, status: Execution.Status)(implicit c: Execution => Unit): Unit = {
+  def updateExecution(executionId: ExecutionId, status: Execution.Status)(c: Execution => Unit): Unit = {
     require(executionMap.containsKey(executionId), s"There is no execution with ID $executionId")
     require(scheduleMap.containsKey(executionId._1), s"There is no schedule with ID ${executionId._1}")
 

@@ -170,8 +170,8 @@ class Scheduler(clock: Clock,
 
     case Heartbeat =>
       jobRegistry.fetchOverdueExecutions(clock, jobBatchSize) { execution =>
-        val executionStatus = Execution.Triggered(ZonedDateTime.now(clock))
         log.info("Placing execution into work queue. executionId={}", execution.executionId)
+        val executionStatus = Execution.Triggered(ZonedDateTime.now(clock))
         jobRegistry.updateExecution(execution.executionId, executionStatus) { exec =>
           notifyWorkers()
           mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, executionStatus))
