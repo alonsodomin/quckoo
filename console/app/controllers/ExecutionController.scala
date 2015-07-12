@@ -12,7 +12,10 @@ import play.api.mvc.{Action, Controller, WebSocket}
 /**
  * Created by aalonsodominguez on 11/07/15.
  */
-class ExecutionController @Inject() (private val client: ChronosClient, private val listener: ChronosListener) extends Controller {
+class ExecutionController @Inject() (private val client: ChronosClient,
+                                     private val listener: ChronosListener)
+  extends Controller {
+
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   val subscriptionId = 2

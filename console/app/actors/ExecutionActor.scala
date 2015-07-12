@@ -1,6 +1,6 @@
 package actors
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorLogging}
 import akka.contrib.pattern.{DistributedPubSubExtension, DistributedPubSubMediator}
 import io.chronos.protocol.SchedulerProtocol._
 import io.chronos.topic
@@ -20,7 +20,7 @@ object ExecutionActor {
   case class CloseChannel(subscriptionId: Long)
 }
 
-class ExecutionActor extends Actor {
+class ExecutionActor extends Actor with ActorLogging {
   import ExecutionActor._
 
   private val mediator = DistributedPubSubExtension(context.system).mediator
@@ -45,6 +45,7 @@ class ExecutionActor extends Actor {
       if (!subscriptions.contains(subscriptionId)) {
         subscriptions += (subscriptionId -> channel)
       }
+      log.info("Execution channel open with subscription {}", subscriptionId)
       sender() ! channel.enumerator
 
     case CloseChannel(subscriptionId) =>
@@ -53,6 +54,7 @@ class ExecutionActor extends Actor {
       subscriptions -= subscriptionId
 
     case event: ExecutionEvent =>
+      log.info("Received execution event: " + event)
       subscriptions.values.foreach { subscription =>
         subscription.channel.push(event)
       }

@@ -25,7 +25,7 @@ object Facade {
   case object ResourceUnreachable extends Unreachable
 }
 
-class Facade(repositoryClient: ActorRef) extends Actor with ActorLogging {
+class Facade(client: ActorRef) extends Actor with ActorLogging {
   import ClusterClient._
   import Facade._
   import SchedulerProtocol._
@@ -34,12 +34,12 @@ class Facade(repositoryClient: ActorRef) extends Actor with ActorLogging {
   def receive = {
     case p: PublishJob =>
       log.info("Publishing job spec. spec={}", p.job.id)
-      repositoryClient ! Send(path.Repository, p, localAffinity = false)
+      client ! Send(path.Repository, p, localAffinity = false)
 
     case s: ScheduleJob =>
-      log.info("Scheduling job. jobId={}", s.schedule.jobId)
+      log.info("Scheduling job. jobId={}, desc={}", s.schedule.jobId, s.schedule)
       implicit val timeout = Timeout(5.seconds)
-      (repositoryClient ? SendToAll(path.Scheduler, s)) map {
+      (client ? SendToAll(path.Scheduler, s)) map {
         case ScheduleAck(jobId) => JobAccepted
       } recover {
         case _ => JobRejected

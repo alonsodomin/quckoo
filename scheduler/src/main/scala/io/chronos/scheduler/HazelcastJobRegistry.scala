@@ -78,16 +78,21 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
     def underBatchLimit(pair: (ScheduleId, JobSchedule)): Boolean = itemCount < batchSize
 
     for ((scheduleId, schedule) <- scheduleMap.toMap.filter(notInProgress).takeWhile(underBatchLimit)) {
-      val nextExecutionTime = schedule.trigger.nextExecutionTime(clock, lastExecutionTime(scheduleId))
-      val now = ZonedDateTime.now(clock)
+      referenceExecutionTime(scheduleId) match {
+        case Some(either) =>
+          val nextExecutionTime = schedule.trigger.nextExecutionTime(clock, either)
+          val now = ZonedDateTime.now(clock)
 
-      nextExecutionTime match {
-        case Some(time) if time.isBefore(now) || time.isEqual(now) =>
-          val execution = getExecution(executionBySchedule.get(scheduleId)).get
-          itemCount += 1
-          c(execution)
-        case Some(_) =>
-        case None =>
+          nextExecutionTime match {
+            case Some(time) if time.isBefore(now) || time.isEqual(now) =>
+              val execution = getExecution(executionBySchedule.get(scheduleId)).get
+              itemCount += 1
+              c(execution)
+            case Some(_) =>
+            case None =>
+          }
+
+        case _ =>
       }
     }
   }
@@ -120,6 +125,16 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
       c(updated)
     } finally {
       executionMap.unlock(executionId)
+    }
+  }
+
+  def referenceExecutionTime(scheduleId: ScheduleId): Option[Either[ZonedDateTime, ZonedDateTime]] = {
+    Option(executionBySchedule.get(scheduleId)).
+      flatMap (execId => Option(executionMap.get(execId))).
+      map (exec => exec.status) match {
+      case Some(Execution.Finished(when, _, _)) => Some(Right(when))
+      case Some(Execution.Scheduled(when))      => Some(Left(when))
+      case _ => None
     }
   }
 

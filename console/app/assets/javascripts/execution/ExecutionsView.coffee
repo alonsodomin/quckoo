@@ -2,8 +2,10 @@ define ['knockout', 'jquery'], (ko, $) ->
   class ExecutionsView
     constructor: () ->
       @baseUri = '/executions'
+      @socketUrl = jsRoutes.controllers.ExecutionController.executionsWs().webSocketURL()
       @executions = ko.observableArray()
-      @socket = new WebSocket(jsRoutes.controllers.ExecutionController.executionsWs().webSocketURL())
+      console.log "Connecting to WebSocket: " + @socketUrl
+      @socket = new WebSocket(@socketUrl)
       @initialize()
 
     initialize: () ->
