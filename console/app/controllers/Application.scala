@@ -13,6 +13,8 @@ class Application @Inject() extends Controller {
 
   def javascriptRoutes = Action { implicit request =>
     Ok(JavaScriptReverseRouter("jsRoutes")(
+      routes.javascript.JobRepositoryController.jobs,
+      routes.javascript.SchedulerController.schedules,
       routes.javascript.ExecutionController.executionsWs
     )).as("text/javascript")
   }
