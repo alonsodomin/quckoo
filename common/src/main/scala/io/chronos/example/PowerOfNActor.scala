@@ -60,5 +60,6 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
     case Facade.JobRejected =>
       log.info("Work not accepted, retry after a while")
       scheduler.scheduleOnce(3.seconds, receptor, Tick)
+      context.unbecome()
   }
 }

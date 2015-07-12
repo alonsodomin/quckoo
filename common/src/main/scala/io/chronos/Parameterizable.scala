@@ -10,7 +10,7 @@ trait Parameterizable
 
 object Parameterizable {
   implicit class Mappable[P <: Parameterizable](val jobDef: P) extends AnyVal {
-    def guessParams: Map[String, Any] = macro Macros.params_impl[P]
+    def params: Map[String, Any] = macro Macros.params_impl[P]
   }
 
   private object Macros {
@@ -19,12 +19,12 @@ object Parameterizable {
       import c.universe._
 
       val mapApply = Select(reify(Map).tree, TermName("apply"))
-      val jobDefinition = Select(c.prefix.tree, TermName("jobDefinition"))
+      val jobSchedule = Select(c.prefix.tree, TermName("jobSchedule"))
 
       val pairs = weakTypeOf[T].decls.collect {
         case m: MethodSymbol if m.isCaseAccessor =>
           val name = c.literal(m.name.decodedName.toString)
-          val value = c.Expr(Select(jobDefinition, m.name))
+          val value = c.Expr(Select(jobSchedule, m.name))
           reify(name.splice -> value.splice).tree
       }
 
