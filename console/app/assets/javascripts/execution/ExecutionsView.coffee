@@ -20,12 +20,10 @@ define ['knockout', 'jquery'], (ko, $) ->
       idx = tmp.indexOf(event.executionId)
       if (idx >= 0)
         console.log "Updating execution: " + event.executionId
-        @executions()[idx] = ko.observable(event)
+        @executions()[idx] = event
       else
         console.log "Adding new execution: " + event.executionId
-        @executions.push
-          id: event.executionId
-          status: event.status
+        @executions.push event
 
     processWsMessage: (data) ->
       if (data.event && data.event == "execution")
