@@ -1,9 +1,13 @@
 package actors
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.contrib.pattern.{DistributedPubSubExtension, DistributedPubSubMediator}
+import akka.actor._
+import akka.contrib.pattern.ClusterClient
+import akka.contrib.pattern.ClusterClient.Send
+import akka.japi.Util._
+import com.typesafe.config.ConfigFactory
+import io.chronos.path
+import io.chronos.protocol.ListenerProtocol
 import io.chronos.protocol.SchedulerProtocol._
-import io.chronos.topic
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.WebSocket.FrameFormatter
@@ -58,22 +62,38 @@ object ExecutionSubscriberActor {
 class ExecutionSubscriberActor(websocket: ActorRef) extends Actor with ActorLogging {
   import ExecutionSubscriberActor._
 
-  private val mediator = DistributedPubSubExtension(context.system).mediator
-  mediator ! DistributedPubSubMediator.Subscribe(topic.Executions, self)
-  
+  private val chronosConf = ConfigFactory.load("chronos")
+
+  private val initialContacts = immutableSeq(chronosConf.getStringList("chronos.seed-nodes")).map {
+    case AddressFromURIString(addr) => context.actorSelection(RootActorPath(addr) / "user" / "receptionist")
+  }.toSet
+
+  private val chronosClient = context.actorOf(ClusterClient.props(initialContacts), "listener")
+
+  @throws[Exception](classOf[Exception])
+  override def preStart(): Unit = {
+    chronosClient ! Send(path.ExecutionMonitor, ListenerProtocol.Subscribe(self), localAffinity = false)
+  }
+
+  @throws[Exception](classOf[Exception])
+  override def postStop(): Unit = {
+    chronosClient ! Send(path.ExecutionMonitor, ListenerProtocol.Unsubscribe(self), localAffinity = false)
+  }
+
   def receive = {
-    case _: DistributedPubSubMediator.SubscribeAck =>
+    case ListenerProtocol.SubscribeAck =>
+      log.info("Subscribed to executions.")
       context.become(ready, discardOld = false)
   }
 
   def ready: Receive = {
-    case _: DistributedPubSubMediator.UnsubscribeAck =>
-      context.unbecome()
-
     case ExecutionEvent(executionId, status) =>
       val event = Notification(executionId.toString(), status.toString)
       log.info("Received execution event: " + event)
       websocket ! event
+
+    case ListenerProtocol.UnsubscribeAck =>
+      context.unbecome()
   }
 
 }

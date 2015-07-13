@@ -17,6 +17,8 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
   private val jobRegistry = hazelcastInstance.getMap[JobId, JobSpec]("jobRegistry")
 
+  private val fetchLock = hazelcastInstance.getLock("fetchLock")
+
   private val scheduleCounter = hazelcastInstance.getAtomicLong("scheduleCounter")
   private val scheduleMap = hazelcastInstance.getMap[ScheduleId, JobSchedule]("scheduleMap")
   private val scheduleByJob = hazelcastInstance.getMap[JobId, ScheduleId]("scheduleByHJob")
@@ -77,23 +79,28 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
     def underBatchLimit(pair: (ScheduleId, JobSchedule)): Boolean = itemCount < batchSize
 
-    for ((scheduleId, schedule) <- scheduleMap.toMap.filter(notInProgress).takeWhile(underBatchLimit)) {
-      referenceExecutionTime(scheduleId) match {
-        case Some(either) =>
-          val nextExecutionTime = schedule.trigger.nextExecutionTime(clock, either)
-          val now = ZonedDateTime.now(clock)
+    fetchLock.lockInterruptibly()
+    try {
+      for ((scheduleId, schedule) <- scheduleMap.toMap.filter(notInProgress).takeWhile(underBatchLimit)) {
+        referenceExecutionTime(scheduleId) match {
+          case Some(either) =>
+            val nextExecutionTime = schedule.trigger.nextExecutionTime(clock, either)
+            val now = ZonedDateTime.now(clock)
 
-          nextExecutionTime match {
-            case Some(time) if time.isBefore(now) || time.isEqual(now) =>
-              val execution = getExecution(executionBySchedule.get(scheduleId)).get
-              itemCount += 1
-              c(execution)
-            case Some(_) =>
-            case None =>
-          }
+            nextExecutionTime match {
+              case Some(time) if time.isBefore(now) || time.isEqual(now) =>
+                val execution = getExecution(executionBySchedule.get(scheduleId)).get
+                itemCount += 1
+                c(execution)
+              case Some(_) =>
+              case None =>
+            }
 
-        case _ =>
+          case _ =>
+        }
       }
+    } finally {
+      fetchLock.unlock()
     }
   }
   

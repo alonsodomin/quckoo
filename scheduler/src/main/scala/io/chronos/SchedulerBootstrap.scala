@@ -11,7 +11,7 @@ import akka.util.Timeout
 import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigFactory
 import io.chronos.example.PowerOfNActor
-import io.chronos.scheduler.{HazelcastJobRegistry, Repository, Scheduler}
+import io.chronos.scheduler.{Scheduler, _}
 
 import scala.concurrent.duration._
 
@@ -36,6 +36,9 @@ object SchedulerBootstrap extends App {
 
     /*startupSharedJournal(system, startStore = (port == 2551), path =
       ActorPath.fromString("akka.tcp://ClusterSystem@127.0.0.1:2551/user/store"))*/
+
+    system.actorOf(Props[ClusterMonitor], "monitor")
+    system.actorOf(Props[ExecutionMonitor], "executions")
 
     system.actorOf(Scheduler.props(clock, jobRegistry), "scheduler")
     system.actorOf(Repository.props(jobRegistry), "repository")

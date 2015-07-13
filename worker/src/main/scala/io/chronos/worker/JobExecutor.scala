@@ -9,9 +9,9 @@ import io.chronos.{Job, JobClass, Work}
  */
 object JobExecutor {
 
-  case class ExecuteWork(work: Work)
-  case class FailedWork(workId: ExecutionId, cause: Throwable)
-  case class CompletedWork(workId: ExecutionId, result: Any)
+  case class Execute(work: Work)
+  case class Failed(workId: ExecutionId, cause: Throwable)
+  case class Completed(workId: ExecutionId, result: Any)
   
   def props = Props[JobExecutor]
 }
@@ -20,7 +20,7 @@ class JobExecutor extends Actor with ActorLogging {
   import JobExecutor._
 
   def receive = {
-    case ExecuteWork(work) =>
+    case Execute(work) =>
       log.info("Executing work. workId={}", work.executionId)
       val jobInstance = work.jobClass.newInstance()
 
@@ -28,10 +28,10 @@ class JobExecutor extends Actor with ActorLogging {
 
       try {
         val result = jobInstance.execute()
-        sender() ! CompletedWork(work.executionId, result)
+        sender() ! Completed(work.executionId, result)
       } catch {
         case cause: Throwable =>
-          sender() ! FailedWork(work.executionId, cause)
+          sender() ! Failed(work.executionId, cause)
       }
   }
 
