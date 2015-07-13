@@ -32,7 +32,6 @@ class ExecutionMonitor extends Actor with ActorLogging {
 
   def receive = {
     case DistributedPubSubMediator.SubscribeAck(subscribe) =>
-      log.info("Subscribed to topic: " + subscribe.topic)
       context.become(ready, discardOld = false)
   }
 
