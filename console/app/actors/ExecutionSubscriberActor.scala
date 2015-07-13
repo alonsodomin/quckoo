@@ -72,12 +72,12 @@ class ExecutionSubscriberActor(websocket: ActorRef) extends Actor with ActorLogg
 
   @throws[Exception](classOf[Exception])
   override def preStart(): Unit = {
-    chronosClient ! Send(path.ExecutionMonitor, ListenerProtocol.Subscribe(self), localAffinity = false)
+    chronosClient ! Send(path.ExecutionMonitor, ListenerProtocol.Subscribe, localAffinity = false)
   }
 
   @throws[Exception](classOf[Exception])
   override def postStop(): Unit = {
-    chronosClient ! Send(path.ExecutionMonitor, ListenerProtocol.Unsubscribe(self), localAffinity = false)
+    chronosClient ! Send(path.ExecutionMonitor, ListenerProtocol.Unsubscribe, localAffinity = false)
   }
 
   def receive = {

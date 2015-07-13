@@ -1,7 +1,7 @@
 package io.chronos.scheduler
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
-import akka.contrib.pattern.{DistributedPubSubExtension, DistributedPubSubMediator}
+import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
 import io.chronos.protocol.ListenerProtocol._
 import io.chronos.protocol.SchedulerProtocol.ExecutionEvent
 import io.chronos.topic
@@ -15,6 +15,7 @@ object ExecutionMonitor {
 
 class ExecutionMonitor extends Actor with ActorLogging {
 
+  ClusterReceptionistExtension(context.system).registerService(self)
   private val mediator = DistributedPubSubExtension(context.system).mediator
 
   var subscribers = Set.empty[ActorRef]
@@ -36,9 +37,9 @@ class ExecutionMonitor extends Actor with ActorLogging {
   }
 
   def ready: Receive = {
-    case Subscribe(subscriber) =>
-      subscribers += subscriber
-      subscriber ! SubscribeAck
+    case Subscribe =>
+      subscribers += sender()
+      sender() ! SubscribeAck
 
     case event: ExecutionEvent =>
       log.info("Received execution event: " + event)
@@ -46,9 +47,9 @@ class ExecutionMonitor extends Actor with ActorLogging {
         subscriber ! event
       }
 
-    case Unsubscribe(subscriber) =>
-      subscribers -= subscriber
-      subscriber ! UnsubscribeAck
+    case Unsubscribe =>
+      subscribers -= sender()
+      sender() ! UnsubscribeAck
 
     case _: DistributedPubSubMediator.UnsubscribeAck =>
       subscribers = Set.empty
