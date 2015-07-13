@@ -45,14 +45,14 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
   def scheduleOf(executionId: ExecutionId): JobSchedule = getSchedule(executionId._1).get
 
-  def schedule(clock: Clock, schedule: JobSchedule): ExecutionId = {
+  def schedule(clock: Clock, schedule: JobSchedule): Execution = {
     require(jobRegistry.containsKey(schedule.jobId), s"The job specification ${schedule.jobId} has not been registered yet.")
 
     val scheduleId = (schedule.jobId, scheduleCounter.incrementAndGet())
     scheduleMap.put(scheduleId, schedule)
     scheduleByJob.put(schedule.jobId, scheduleId)
 
-    createExecution(clock, scheduleId, schedule).executionId
+    createExecution(clock, scheduleId, schedule)
   }
 
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)] =

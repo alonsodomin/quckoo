@@ -95,7 +95,8 @@ class Scheduler(clock: Clock,
 
     case ScheduleJob(jobDef) =>
       log.info("Job scheduled. jobId={}", jobDef.jobId)
-      jobRegistry.schedule(clock, jobDef)
+      val execution = jobRegistry.schedule(clock, jobDef)
+      mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.status))
       sender() ! ScheduleAck(jobDef.jobId)
 
     case RegisterWorker(workerId) =>

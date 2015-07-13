@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.Inject
 
-import actors.ExecutionSubscriberActor
+import actors.ExecutionsActor
 import components.ChronosClient
 import io.chronos.Execution
 import play.api.Play.current
@@ -15,7 +15,7 @@ import play.api.mvc.{Action, Controller, WebSocket}
 class ExecutionController @Inject() (private val client: ChronosClient)
   extends Controller {
 
-  import ExecutionSubscriberActor.SubscriptionEvent._
+  import ExecutionsActor.SubscriptionEvent._
   import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
   val subscriptionId = 2
@@ -36,7 +36,7 @@ class ExecutionController @Inject() (private val client: ChronosClient)
   }
 
   def executionsWs = WebSocket.acceptWithActor { _ => websocket =>
-    ExecutionSubscriberActor.props(websocket)
+    ExecutionsActor.props(websocket)
   }
 
 }

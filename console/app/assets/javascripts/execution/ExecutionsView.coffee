@@ -6,9 +6,7 @@ define ['knockout', 'jquery'], (ko, $) ->
       @executions = ko.observableArray()
       @socket = new WebSocket(@socketUrl)
       @socket.onmessage = (msg) =>
-        console.log "Received: " + JSON.stringify msg
-        if (msg.data.event && msg.data.event == 'execution')
-          @executionEvent(msg.data)
+        @processWsMessage msg.data
       @initialize()
 
     initialize: () ->
@@ -17,4 +15,21 @@ define ['knockout', 'jquery'], (ko, $) ->
           @executions.push item
 
     executionEvent: (event) ->
-      @executions[event.executionId] = event
+      tmp = @executions.map (item) ->
+        item.id
+      idx = tmp.indexOf(event.executionId)
+      if (idx >= 0)
+        console.log "Updating execution: " + event.executionId
+        @executions[idx] = ko.observable(event)
+      else
+        console.log "Adding new execution: " + event.executionId
+        @executions.push
+          id: event.executionId
+          status: event.status
+
+    processWsMessage: (data) =>
+      console.log "Received: " + JSON.stringify data
+      console.log data["event"]
+      if (data.event && data.event == "execution")
+        @executionEvent(data)
+      undefined

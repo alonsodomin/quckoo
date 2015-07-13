@@ -12,7 +12,7 @@ trait ExecutionPlan {
 
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)]
 
-  def schedule(clock: Clock, schedule: JobSchedule): ExecutionId
+  def schedule(clock: Clock, schedule: JobSchedule): Execution
 
   def fetchOverdueExecutions(clock: Clock, batchSize: Int)(c: Execution => Unit): Unit
 
