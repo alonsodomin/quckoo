@@ -5,6 +5,7 @@ import akka.contrib.pattern.ClusterClient
 import akka.contrib.pattern.ClusterClient.Send
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
+import io.chronos.id.ExecutionId
 import io.chronos.path
 import io.chronos.protocol.ListenerProtocol
 import io.chronos.protocol.SchedulerProtocol._
@@ -16,13 +17,14 @@ import play.api.mvc.WebSocket.FrameFormatter
  * Created by aalonsodominguez on 12/07/15.
  */
 object ExecutionSubscriberActor {
+  import json._
   
   def props(websocket: ActorRef): Props =
     Props(classOf[ExecutionSubscriberActor], websocket)
 
   sealed trait SubscriptionEvent
   
-  case class Notification(executionId: String, status: String) extends SubscriptionEvent
+  case class Notification(executionId: ExecutionId, status: String) extends SubscriptionEvent
 
   object SubscriptionEvent {
     implicit def subscriptionEventFormat: Format[SubscriptionEvent] = Format(
@@ -47,12 +49,12 @@ object ExecutionSubscriberActor {
   object Notification {
     implicit def notificationFormat: Format[Notification] = (
         (__ \ "event").format[String] and
-        (__ \ "executionId").format[String] and
+        (__ \ "executionId").format[ExecutionId] and
         (__ \ "status").format[String]
     )({
-      case ("notification", executionId, status) => Notification(executionId, status)
+      case ("execution", executionId, status) => Notification(executionId, status)
     },
-      notif => ("notification", notif.executionId, notif.status)
+      notif => ("execution", notif.executionId, notif.status)
     )
 
   }
@@ -88,7 +90,7 @@ class ExecutionSubscriberActor(websocket: ActorRef) extends Actor with ActorLogg
 
   def ready: Receive = {
     case ExecutionEvent(executionId, status) =>
-      val event = Notification(executionId.toString(), status.toString)
+      val event = Notification(executionId, status.toString)
       log.info("Received execution event: " + event)
       websocket ! event
 
