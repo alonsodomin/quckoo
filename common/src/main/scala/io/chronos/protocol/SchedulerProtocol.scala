@@ -9,9 +9,6 @@ import io.chronos.{Execution, JobSchedule, JobSpec}
 object SchedulerProtocol {
   sealed trait Request
   sealed trait Response
-  sealed trait SchedulerQuery[T <: Query] extends Request {
-    implicit val query: T
-  }
 
   case class PublishJob(job: JobSpec) extends Request
   case object PublishJobAck extends Response
