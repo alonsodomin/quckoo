@@ -142,7 +142,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
       map (exec => exec.stage) match {
       case Some(Execution.Finished(when, _, _)) => Some(Right(when))
       case Some(Execution.Scheduled(when))      => Some(Left(when))
-      case _ => None
+      case _                                    => None
     }
   }
 
@@ -151,7 +151,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
       flatMap (execId => Option(executionMap.get(execId))).
       map (exec => exec.stage) match {
       case Some(Execution.Finished(when, _, _)) => Some(when)
-      case _ => None
+      case _                                    => None
     }
   }
 
