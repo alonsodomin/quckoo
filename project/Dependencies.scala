@@ -2,7 +2,7 @@ import play.sbt.PlayImport._
 import sbt._
 
 object Dependencies {
-  val scalaVersion = "2.11.6"
+  val scalaVersion = "2.11.7"
   
   val akkaVersion = "2.3.11"
   val hazelcastVersion = "3.4.4"
@@ -12,25 +12,25 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-remote"  % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
-
-    "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
 
     "org.scala-lang"  % "scala-compiler" % scalaVersion,
     "org.scalatest"   %% "scalatest"     % "2.2.4" % "test"
   )
 
-  val schedulerLibs: Seq[ModuleID] = commonLibs ++ Seq(
+  val schedulerLibs: Seq[ModuleID] = Seq(
     "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc(),
 
+    "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
     "com.hazelcast" % "hazelcast-client" % hazelcastVersion withSources() withJavadoc(),
 
+    "org.reactivecouchbase" %% "reactivecouchbase-core" % "0.3" withSources() withJavadoc(),
+
     "org.scalatest" %% "scalatest" % "2.2.4" % "test",
-    "commons-io" % "commons-io" % "2.4" % "test"
+    "commons-io"    % "commons-io" % "2.4" % "test"
   )
 
-  val consoleLibs: Seq[ModuleID] = commonLibs ++ Seq(
+  val consoleLibs: Seq[ModuleID] = Seq(
     "com.hazelcast"     % "hazelcast-client"   % hazelcastVersion withSources() withJavadoc(),
 
     "org.webjars"       %% "webjars-play"      % "2.4.0-1"        withSources() withJavadoc(),
@@ -42,7 +42,7 @@ object Dependencies {
     specs2 % Test  
   )
 
-  val httpLibs: Seq[ModuleID] = commonLibs ++ Seq(
+  val httpLibs: Seq[ModuleID] = Seq(
     "io.spray" %% "spray-can"     % sprayVersion          withSources() withJavadoc(),
     "io.spray" %% "spray-routing" % sprayVersion          withSources() withJavadoc(),
     "io.spray" %% "spray-httpx"   % sprayVersion          withSources() withJavadoc(),
@@ -51,8 +51,9 @@ object Dependencies {
     "org.scalatest" %% "scalatest" % "2.2.4" % "test"
   )
 
-  val workerLibs: Seq[ModuleID] = commonLibs ++ Seq(
-
+  val workerLibs: Seq[ModuleID] = Seq(
+    "org.apache.ivy"     % "ivy"    % "2.4.0",
+    "org.eclipse.aether" % "aether" % "1.0.2.v20150114"
   )
 
 }

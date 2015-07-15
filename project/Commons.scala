@@ -10,7 +10,8 @@ object Commons {
     ideaExcludeFolders := ".idea" :: Nil,
     resolvers ++= Seq(
       Opts.resolver.mavenLocalFile,
-      "Scalaz Bintray Repo" at "https://dl.bintray.com/scalaz/releases"
+      "Scalaz Bintray Repo" at "https://dl.bintray.com/scalaz/releases",
+      "ReactiveCouchbase Releases" at "https://raw.github.com/ReactiveCouchbase/repository/master/releases/"
     )
   )
 }
