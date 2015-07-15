@@ -35,15 +35,15 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
   override def publishSpec(jobSpec: JobSpec): Unit = jobRegistry.put(jobSpec.id, jobSpec)
 
-  def getSpec(jobId: JobId): Option[JobSpec] = Option(jobRegistry.get(jobId))
+  def specById(jobId: JobId): Option[JobSpec] = Option(jobRegistry.get(jobId))
 
-  def getSchedule(scheduleId: ScheduleId): Option[JobSchedule] = Option(scheduleMap.get(scheduleId))
+  def scheduleById(scheduleId: ScheduleId): Option[JobSchedule] = Option(scheduleMap.get(scheduleId))
 
-  def getExecution(executionId: ExecutionId): Option[Execution] = Option(executionMap.get(executionId))
+  def executionById(executionId: ExecutionId): Option[Execution] = Option(executionMap.get(executionId))
 
-  def specOf(executionId: ExecutionId): JobSpec = getSpec(executionId._1._1).get
+  def specOf(executionId: ExecutionId): Option[JobSpec] = specById(executionId._1._1)
 
-  def scheduleOf(executionId: ExecutionId): JobSchedule = getSchedule(executionId._1).get
+  def scheduleOf(executionId: ExecutionId): Option[JobSchedule] = scheduleById(executionId._1)
 
   def schedule(schedule: JobSchedule)(implicit clock: Clock): Execution = {
     require(jobRegistry.containsKey(schedule.jobId), s"The job specification ${schedule.jobId} has not been registered yet.")
@@ -66,7 +66,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
   def nextExecution = executionQueue.take()
 
   def executionTimeout(executionId: ExecutionId): Option[FiniteDuration] =
-    getSchedule(executionId._1).flatMap(job => job.executionTimeout)
+    scheduleById(executionId._1).flatMap(job => job.executionTimeout)
 
   def fetchOverdueExecutions(batchSize: Int)(consumer: Execution => Unit)(implicit clock: Clock): Unit = {
     var itemCount: Int = 0
@@ -90,7 +90,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
             nextExecutionTime match {
               case Some(time) if time.isBefore(now) || time.isEqual(now) =>
-                val execution = getExecution(executionBySchedule.get(scheduleId)).get
+                val execution = executionById(executionBySchedule.get(scheduleId)).get
                 itemCount += 1
                 consumer(execution)
               case Some(_) =>
@@ -111,7 +111,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
     executionMap.lock(executionId)
     try {
-      val updated = getExecution(executionId) map (_ << newStage) get;
+      val updated = executionById(executionId) map (_ << newStage) get;
       newStage match {
         case Execution.Triggered(_) =>
           executionQueue.put(updated)

@@ -9,4 +9,9 @@ import io.chronos.JobSpec
  */
 case object PowerOfNJobSpec extends PowerOfNJobSpec
 
-class PowerOfNJobSpec() extends JobSpec(id = UUID.randomUUID(), displayName = "Power Of N", jobClass = classOf[PowerOfNJob])
+class PowerOfNJobSpec() extends JobSpec(
+  id = UUID.randomUUID(),
+  displayName = "Power Of N",
+  moduleId = "io.chronos:chronos-examples:0.1.0",
+  jobClass = classOf[PowerOfNJob]
+)

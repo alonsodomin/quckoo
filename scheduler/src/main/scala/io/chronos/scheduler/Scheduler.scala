@@ -116,13 +116,14 @@ class Scheduler(implicit clock: Clock,
         workers.get(workerId) match {
           case Some(workerState @ WorkerState(_, WorkerState.Idle)) =>
             val execution = jobRegistry.nextExecution
-            val work = Work(executionId = execution.executionId,
-              params = jobRegistry.scheduleOf(execution.executionId).params,
-              jobClass = jobRegistry.specOf(execution.executionId).jobClass
-            )
+
+            val work = for (
+              schedule <- jobRegistry.scheduleOf(execution.executionId);
+              spec     <- jobRegistry.specOf(execution.executionId)
+            ) yield Work(execution.executionId, schedule.params, spec.moduleId, spec.jobClass)
 
             log.info("Delivering execution to worker. executionId={}, workerId={}", execution.executionId, workerId)
-            sender() ! work
+            sender() ! work.get
 
             val executionStatus = Execution.Started(ZonedDateTime.now(clock), workerId)
             jobRegistry.updateExecution(execution.executionId, executionStatus) { exec =>
@@ -136,7 +137,7 @@ class Scheduler(implicit clock: Clock,
       }
 
     case WorkDone(workerId, executionId, result) =>
-      jobRegistry.getExecution(executionId).map(e => e.stage) match {
+      jobRegistry.executionById(executionId).map(e => e.stage) match {
         case Some(_: Execution.Finished) =>
           // previous Ack was lost, confirm again that this is done
           sender() ! WorkDoneAck(executionId)
@@ -154,7 +155,7 @@ class Scheduler(implicit clock: Clock,
       }
 
     case WorkFailed(workerId, executionId, cause) =>
-      jobRegistry.getExecution(executionId).map(e => e.stage) match {
+      jobRegistry.executionById(executionId).map(e => e.stage) match {
         case Some(_: Execution.InProgress) =>
           log.info("Execution {} failed by worker {}", executionId, workerId)
           changeWorkerToIdle(workerId, executionId)

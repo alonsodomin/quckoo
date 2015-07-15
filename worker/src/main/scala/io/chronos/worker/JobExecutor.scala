@@ -4,14 +4,16 @@ import akka.actor.{Actor, ActorLogging, Props}
 import io.chronos.id.ExecutionId
 import io.chronos.{Job, JobClass, Work}
 
+import scala.util.{Failure, Success, Try}
+
 /**
  * Created by aalonsodominguez on 05/07/15.
  */
 object JobExecutor {
 
   case class Execute(work: Work)
-  case class Failed(workId: ExecutionId, cause: Throwable)
-  case class Completed(workId: ExecutionId, result: Any)
+  case class Failed(executionId: ExecutionId, cause: Throwable)
+  case class Completed(executionId: ExecutionId, result: Any)
   
   def props = Props[JobExecutor]
 }
@@ -26,11 +28,10 @@ class JobExecutor extends Actor with ActorLogging {
 
       populateJobParams(work.jobClass, work.params, jobInstance)
 
-      try {
-        val result = jobInstance.execute()
-        sender() ! Completed(work.executionId, result)
-      } catch {
-        case cause: Throwable =>
+      Try[Any](jobInstance.execute()) match {
+        case Success(result) =>
+          sender() ! Completed(work.executionId, result)
+        case Failure(cause) =>
           sender() ! Failed(work.executionId, cause)
       }
   }

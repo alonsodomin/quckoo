@@ -5,4 +5,8 @@ import io.chronos.id._
 /**
  * Created by aalonsodominguez on 10/07/15.
  */
-class JobSpec(val id: JobId, val displayName: String, val description: String = "", val jobClass: JobClass) extends Serializable
+class JobSpec(val id: JobId,
+              val displayName: String,
+              val description: String = "",
+              val moduleId: ModuleId,
+              val jobClass: JobClass) extends Serializable
