@@ -9,42 +9,87 @@ import io.chronos.id._
  */
 object Execution {
 
-  sealed abstract class Status(val ordinal: Int) extends Ordered[Status] with Serializable {
+  sealed abstract class Stage(val ordinal: Int) extends Ordered[Stage] with Serializable {
     implicit val when: ZonedDateTime
 
-    override def compare(that: Status): Int = {
-      ordinal compareTo that.ordinal
-    }
+    override def compare(that: Stage): Int = ordinal compare that.ordinal
 
   }
 
-  sealed trait Waiting extends Status
-  sealed trait InProgress extends Status
+  sealed trait Status
 
-  case class Scheduled(when: ZonedDateTime) extends Status(1) with Waiting
-  case class Triggered(when: ZonedDateTime) extends Status(2) with Waiting with InProgress
-  case class Started(when: ZonedDateTime, where: WorkerId) extends Status(3) with InProgress
-  case class Finished(when: ZonedDateTime, where: WorkerId, outcome: Outcome) extends Status(4)
+  sealed trait Waiting extends Stage with Status
+  sealed trait InProgress extends Stage with Status
+  sealed trait Complete extends Stage with Status
+
+  val Pending = classOf[Waiting]
+  val Running = classOf[InProgress]
+  val Done = classOf[Complete]
+
+  case class Scheduled(when: ZonedDateTime) extends Stage(1) with Waiting
+  case class Triggered(when: ZonedDateTime) extends Stage(2) with Waiting with InProgress
+  case class Started(when: ZonedDateTime, where: WorkerId) extends Stage(3) with InProgress
+  case class Finished(when: ZonedDateTime, where: WorkerId, outcome: Outcome) extends Stage(4) with Complete
 
   sealed trait Outcome
-  case class Success(result: Any) extends Outcome
-  case class Failed(cause: Throwable) extends Outcome
-  case object TimedOut extends Outcome
+  case class Success(result: Any) extends Outcome with Status
+  case class Failed(cause: Throwable) extends Outcome with Status
+  case object TimedOut extends Outcome with Status
+
+  type StageType = Class[_ <: Stage]
+  type StatusType = Class[_ <: Status]
+
+  val ScheduledStage = classOf[Scheduled]
+  val TriggeredStage = classOf[Triggered]
+  val StartedStage = classOf[Started]
+  val FinishedStage = classOf[Finished]
+
+  implicit def is(status: StatusType)(implicit exec: Execution): Boolean =
+    implicitly[Execution].is(status)
+  implicit def at(stage: StageType, between: (ZonedDateTime, ZonedDateTime))(implicit exec: Execution): Boolean =
+    implicitly[Execution].at(stage, between)
+
+  def compareByDate(stage: StageType): Ordering[Execution] = new Ordering[Execution] {
+    override def compare(x: Execution, y: Execution): Int = {
+      val comparison = for (
+        xStage <- x(stage);
+        yStage <- y(stage)
+      ) yield xStage.when.compareTo(yStage.when)
+      comparison getOrElse 0
+    }
+  }
 
 }
 
-case class Execution(id: ExecutionId, statusHistory: List[Execution.Status]) extends Serializable {
+case class Execution(id: ExecutionId, stages: List[Execution.Stage]) extends Serializable {
   import Execution._
+
+  def apply(stageType: StageType): Option[Stage] = stages.find(st => stageType.isInstance(st))
 
   def executionId = id
 
   def scheduleId: ScheduleId = executionId._1
 
-  def status: Status = statusHistory.head
+  def stage: Stage = stages.head
 
-  def lastStatusChange: ZonedDateTime = status.when
+  def lastStatusChange: ZonedDateTime = stage.when
 
-  def outcome: Option[Outcome] = status match {
+  def is(status: StatusType): Boolean = outcome match {
+    case Some(o) => status.isInstance(o) || status.isInstance(stage)
+    case None    => status.isInstance(stage)
+  }
+
+  def at(stage: StageType, between: (ZonedDateTime, ZonedDateTime)): Boolean = {
+    def stageFilter(st: Stage): Boolean = {
+      stage.isInstance(st) && (
+        (st.when.isEqual(between._1) || st.when.isAfter(between._1)) &&
+          (st.when.isBefore(between._2) || st.when.isEqual(between._2))
+      )
+    }
+    stages.count(stageFilter) > 0
+  }
+
+  def outcome: Option[Outcome] = stage match {
     case Finished(_, _, outcome) => Some(outcome)
     case _                       => None
   }

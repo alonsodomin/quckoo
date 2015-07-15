@@ -58,7 +58,8 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)] =
     collectFrom[(ScheduleId, JobSchedule)](scheduleMap.iterator, Vector[(ScheduleId, JobSchedule)]())
 
-  def executions: Seq[Execution] = collectFrom(executionMap.values().iterator(), Vector())
+  def executions(filter: Execution => Boolean): Seq[Execution] =
+    collectFrom(executionMap.values().filter(filter).iterator, Vector())
 
   def hasPendingExecutions = executionQueue nonEmpty
 
@@ -72,7 +73,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
     def notInProgress(pair: (ScheduleId, JobSchedule)): Boolean = Option(executionBySchedule.get(pair._1)).
       map(executionId => executionMap.get(executionId)).
-      map(execution => execution.status) match {
+      map(execution => execution.stage) match {
       case Some(_: Execution.InProgress) => false
       case _                             => true
     }
@@ -104,13 +105,13 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
     }
   }
   
-  def updateExecution(executionId: ExecutionId, status: Execution.Status)(c: Execution => Unit): Unit = {
+  def updateExecution(executionId: ExecutionId, status: Execution.Stage)(c: Execution => Unit): Unit = {
     require(executionMap.containsKey(executionId), s"There is no execution with ID $executionId")
     require(scheduleMap.containsKey(executionId._1), s"There is no schedule with ID ${executionId._1}")
 
     executionMap.lock(executionId)
     try {
-      val updated = getExecution(executionId) map (e => e.copy(statusHistory = status :: e.statusHistory)) get;
+      val updated = getExecution(executionId) map (e => e.copy(stages = status :: e.stages)) get;
       status match {
         case Execution.Triggered(_) =>
           executionQueue.put(updated)
@@ -138,7 +139,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
   def referenceExecutionTime(scheduleId: ScheduleId): Option[Either[ZonedDateTime, ZonedDateTime]] = {
     Option(executionBySchedule.get(scheduleId)).
       flatMap (execId => Option(executionMap.get(execId))).
-      map (exec => exec.status) match {
+      map (exec => exec.stage) match {
       case Some(Execution.Finished(when, _, _)) => Some(Right(when))
       case Some(Execution.Scheduled(when))      => Some(Left(when))
       case _ => None
@@ -148,7 +149,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
   def lastExecutionTime(scheduleId: ScheduleId): Option[ZonedDateTime] = {
     Option(executionBySchedule.get(scheduleId)).
       flatMap (execId => Option(executionMap.get(execId))).
-      map (exec => exec.status) match {
+      map (exec => exec.stage) match {
       case Some(Execution.Finished(when, _, _)) => Some(when)
       case _ => None
     }

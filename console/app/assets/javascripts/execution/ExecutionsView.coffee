@@ -1,15 +1,17 @@
-define ['knockout', 'jquery'], (ko, $) ->
+define ['knockout', 'jquery', 'ExecutionModel'], (ko, $) ->
   class ExecutionsView
     constructor: () ->
       @baseUri = '/executions'
       @socketUrl = jsRoutes.controllers.ExecutionController.executionsWs().webSocketURL()
       @executions = ko.observableArray()
       @socket = new WebSocket(@socketUrl)
-      @socket.onmessage = (msg) =>
-        @processWsMessage JSON.parse(msg.data)
       @initialize()
 
     initialize: () ->
+      @socket.onopen = () =>
+        @socket.send('Subscribe')
+      @socket.onmessage = (msg) =>
+        @processWsMessage JSON.parse(msg.data)
       $.get @baseUri + '/history', (result) =>
         $.each result, (idx, item) =>
           @executions.push item

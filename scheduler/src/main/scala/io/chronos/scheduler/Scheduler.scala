@@ -90,13 +90,13 @@ class Scheduler(clock: Clock,
     case GetScheduledJobs =>
       sender() ! ScheduledJobs(jobRegistry.scheduledJobs)
 
-    case GetExecutions =>
-      sender() ! Executions(jobRegistry.executions)
+    case GetExecutions(filter) =>
+      sender() ! Executions(jobRegistry.executions(filter))
 
     case ScheduleJob(jobDef) =>
       log.info("Job scheduled. jobId={}", jobDef.jobId)
       val execution = jobRegistry.schedule(clock, jobDef)
-      mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.status))
+      mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.stage))
       sender() ! ScheduleAck(jobDef.jobId)
 
     case RegisterWorker(workerId) =>
@@ -136,7 +136,7 @@ class Scheduler(clock: Clock,
       }
 
     case WorkDone(workerId, executionId, result) =>
-      jobRegistry.getExecution(executionId).map(e => e.status) match {
+      jobRegistry.getExecution(executionId).map(e => e.stage) match {
         case Some(_: Execution.Finished) =>
           // previous Ack was lost, confirm again that this is done
           sender() ! WorkDoneAck(executionId)
@@ -154,7 +154,7 @@ class Scheduler(clock: Clock,
       }
 
     case WorkFailed(workerId, executionId, cause) =>
-      jobRegistry.getExecution(executionId).map(e => e.status) match {
+      jobRegistry.getExecution(executionId).map(e => e.stage) match {
         case Some(_: Execution.InProgress) =>
           log.info("Execution {} failed by worker {}", executionId, workerId)
           changeWorkerToIdle(workerId, executionId)

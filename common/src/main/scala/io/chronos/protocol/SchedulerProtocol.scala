@@ -9,6 +9,9 @@ import io.chronos.{Execution, JobSchedule, JobSpec}
 object SchedulerProtocol {
   sealed trait Request
   sealed trait Response
+  sealed trait SchedulerQuery[T <: Query] extends Request {
+    implicit val query: T
+  }
 
   case class PublishJob(job: JobSpec) extends Request
   case object PublishJobAck extends Response
@@ -19,7 +22,7 @@ object SchedulerProtocol {
   case object GetScheduledJobs extends Request
   case class ScheduledJobs(jobs: Seq[(ScheduleId, JobSchedule)]) extends Response
 
-  case object GetExecutions extends Request
+  case class GetExecutions(filter: Execution => Boolean) extends Request
   case class Executions(executions: Seq[Execution]) extends Response
 
   case class ScheduleJob(schedule: JobSchedule) extends Request
@@ -27,7 +30,7 @@ object SchedulerProtocol {
 
   // ----- Events -----------------
 
-  case class ExecutionEvent(executionId: ExecutionId, status: Execution.Status)
+  case class ExecutionEvent(executionId: ExecutionId, status: Execution.Stage)
 
   sealed trait WorkerEvent
 

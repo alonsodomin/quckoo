@@ -10,6 +10,8 @@ import io.chronos.{Execution, JobSchedule}
   */
 trait ExecutionPlan {
 
+  def executions(filter: Execution => Boolean)
+
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)]
 
   def schedule(clock: Clock, schedule: JobSchedule): Execution
@@ -18,6 +20,6 @@ trait ExecutionPlan {
 
   def lastExecutionTime(scheduleId: ScheduleId): Option[ZonedDateTime]
 
-  def updateExecution(executionId: ExecutionId, status: Execution.Status)(c: Execution => Unit): Unit
+  def updateExecution(executionId: ExecutionId, status: Execution.Stage)(c: Execution => Unit): Unit
 
  }

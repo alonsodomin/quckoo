@@ -1,21 +1,24 @@
 package actors
 
 import akka.actor._
-import akka.contrib.pattern.ClusterClient
-import akka.contrib.pattern.ClusterClient.Send
-import akka.japi.Util._
-import com.typesafe.config.ConfigFactory
-import io.chronos.path
-import io.chronos.protocol.ListenerProtocol
-import io.chronos.protocol.SchedulerProtocol._
+import akka.contrib.pattern.ClusterClient.{Send, SendToAll}
+import akka.pattern._
+import akka.util.Timeout
+import common.{Global, MessageTypes}
+import io.chronos.protocol.{ListenerProtocol, SchedulerProtocol}
+import io.chronos.{Execution, path}
+import model.ExecutionModel
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.WebSocket.FrameFormatter
+
+import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 12/07/15.
  */
 object ExecutionsActor {
+  import MessageTypes._
 
   def props(websocket: ActorRef): Props =
     Props(classOf[ExecutionsActor], websocket)
@@ -23,6 +26,11 @@ object ExecutionsActor {
   sealed trait SubscriptionEvent
   
   case class Notification(executionId: String, status: String) extends SubscriptionEvent
+
+  sealed abstract class Message(val messageType: MessageType, val payload: Any)
+
+  case object GetFinishedExecutions extends Message(Request, Nil)
+  case class ExecutionNotification(execution: ExecutionModel) extends Message(Event, execution)
 
   object SubscriptionEvent {
     implicit def subscriptionEventFormat: Format[SubscriptionEvent] = Format(
@@ -59,16 +67,13 @@ object ExecutionsActor {
 
 }
 
-class ExecutionsActor(websocket: ActorRef) extends Actor with ActorLogging {
+class ExecutionsActor(upstream: ActorRef) extends Actor with ActorLogging {
+  import Execution._
   import ExecutionsActor._
+  import SchedulerProtocol._
+  import context.dispatcher
 
-  private val chronosConf = ConfigFactory.load("chronos")
-
-  private val initialContacts = immutableSeq(chronosConf.getStringList("chronos.seed-nodes")).map {
-    case AddressFromURIString(addr) => context.actorSelection(RootActorPath(addr) / "user" / "receptionist")
-  }.toSet
-
-  private val chronosClient = context.actorOf(ClusterClient.props(initialContacts), "listener")
+  private val chronosClient = context.actorSelection(context.system / Global.ChronosClient)
 
   @throws[Exception](classOf[Exception])
   override def preStart(): Unit = {
@@ -87,10 +92,17 @@ class ExecutionsActor(websocket: ActorRef) extends Actor with ActorLogging {
   }
 
   def ready: Receive = {
+    case GetFinishedExecutions =>
+      implicit val timeout = Timeout(10.seconds)
+      val req = GetExecutions(is(Done)(_))
+      ( chronosClient ? SendToAll(path.Scheduler, req)) map {
+        case e: Execution => ExecutionModel(e.executionId.toString(), e.stage.toString)
+      } pipeTo sender()
+    
     case ExecutionEvent(executionId, status) =>
-      val event = Notification(executionId.toString(), status.toString)
-      log.info("Received execution event: " + event)
-      websocket ! event
+      val execution = ExecutionModel(executionId.toString(), status.toString)
+      log.info("Received execution: " + execution)
+      upstream ! execution
 
     case ListenerProtocol.UnsubscribeAck =>
       context.unbecome()

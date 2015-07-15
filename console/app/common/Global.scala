@@ -11,6 +11,8 @@ import play.api.{Application, GlobalSettings}
  */
 object Global extends GlobalSettings {
 
+  val ChronosClient = "chronosClient"
+
   override def onStart(app: Application) = {
     val chronosConf = ConfigFactory.load("chronos")
 
@@ -18,7 +20,7 @@ object Global extends GlobalSettings {
       case AddressFromURIString(addr) => app.actorSystem.actorSelection(RootActorPath(addr) / "user" / "receptionist")
     }.toSet
 
-    val chronosClient = app.actorSystem.actorOf(ClusterClient.props(initialContacts), "chronosClient")
+    app.actorSystem.actorOf(ClusterClient.props(initialContacts), ChronosClient)
   }
 
 }

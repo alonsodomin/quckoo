@@ -28,7 +28,7 @@ class ExecutionController @Inject() (private val client: ChronosClient)
     client.executions.map { executions =>
       def writer(exec: Execution): JsValue = Json.obj(
         "executionId" -> exec.executionId.toString,
-        "status"      -> exec.status.toString
+        "status"      -> exec.stage.toString
       )
       implicit val writes = Writes(writer)
       Ok(Json.toJson(executions))
