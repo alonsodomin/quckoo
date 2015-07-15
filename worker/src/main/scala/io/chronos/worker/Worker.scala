@@ -27,7 +27,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   import WorkerProtocol._
   import context.dispatcher
 
-  val workerId = UUID.randomUUID().toString
+  val workerId = UUID.randomUUID()
   
   val registerTask = context.system.scheduler.schedule(
     0.seconds, registerInterval, clusterClient,

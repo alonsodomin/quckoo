@@ -12,7 +12,7 @@ package object id {
   type ExecutionId = (ScheduleId, Long)
   type WorkSubId = Long
 
-  type WorkerId = String
+  type WorkerId = UUID
   type WorkId = (JobId, WorkSubId)
 
 }
