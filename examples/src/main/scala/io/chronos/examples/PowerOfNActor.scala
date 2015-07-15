@@ -1,8 +1,8 @@
-package io.chronos.example
+package io.chronos.examples
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import io.chronos.Trigger
 import io.chronos.protocol.SchedulerProtocol
-import io.chronos.{Facade, Trigger}
 
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ThreadLocalRandom

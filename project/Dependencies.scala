@@ -56,4 +56,7 @@ object Dependencies {
     "org.eclipse.aether" % "aether" % "1.0.2.v20150114"
   )
 
+  val examplesLibs: Seq[ModuleID] = Seq(
+  )
+
 }

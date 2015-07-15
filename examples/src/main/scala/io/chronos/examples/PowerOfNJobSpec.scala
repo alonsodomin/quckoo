@@ -1,4 +1,4 @@
-package io.chronos.example
+package io.chronos.examples
 
 import java.util.UUID
 

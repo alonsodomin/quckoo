@@ -32,7 +32,8 @@ lazy val console = (project in file("console")).
     libraryDependencies ++= Dependencies.consoleLibs,
     routesGenerator := InjectedRoutesGenerator
   ).
-  dependsOn(common)
+  dependsOn(common).
+  dependsOn(examples)
 
 lazy val http = (project in file("http")).
   settings(Commons.settings: _*).
@@ -45,5 +46,12 @@ lazy val worker = (project in file("worker")).
   settings(Commons.settings: _*).
   settings(
     libraryDependencies ++= Dependencies.workerLibs
+  ).
+  dependsOn(common)
+
+lazy val examples = (project in file("examples")).
+  settings(Commons.settings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.examplesLibs
   ).
   dependsOn(common)

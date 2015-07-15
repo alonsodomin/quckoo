@@ -9,7 +9,6 @@ import akka.contrib.pattern.DistributedPubSubMediator.{Subscribe, SubscribeAck}
 import akka.contrib.pattern.{ClusterClient, ClusterSingletonManager, DistributedPubSubExtension}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
-import io.chronos.example.PowerOfNJobDef
 import io.chronos.protocol.SchedulerProtocol
 import io.chronos.{Work, WorkResult}
 import org.apache.commons.io.FileUtils

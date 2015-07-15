@@ -1,9 +1,10 @@
-package io.chronos
+package actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.contrib.pattern._
 import akka.pattern._
 import akka.util.Timeout
+import io.chronos.path
 import io.chronos.protocol.SchedulerProtocol
 
 import scala.concurrent.duration._
@@ -12,9 +13,9 @@ import scala.concurrent.duration._
  * Created by aalonsodominguez on 05/07/15.
  */
 
-object Facade {
+object FacadeActor {
 
-  def props(client: ActorRef): Props = Props(classOf[Facade], client)
+  def props(client: ActorRef): Props = Props(classOf[FacadeActor], client)
   
   trait Unreachable
   
@@ -25,9 +26,9 @@ object Facade {
   case object ResourceUnreachable extends Unreachable
 }
 
-class Facade(client: ActorRef) extends Actor with ActorLogging {
+class FacadeActor(client: ActorRef) extends Actor with ActorLogging {
   import ClusterClient._
-  import Facade._
+  import FacadeActor._
   import SchedulerProtocol._
   import context.dispatcher
   
