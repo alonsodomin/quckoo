@@ -10,7 +10,7 @@ import io.chronos.id._
 object Execution {
 
   def apply(executionId: ExecutionId)(implicit c: Clock): Execution = {
-    new Execution(executionId) >> Scheduled(ZonedDateTime.now(c))
+    new Execution(executionId) << Scheduled(ZonedDateTime.now(c))
   }
   
   sealed abstract class Stage(val ordinal: Int) extends Ordered[Stage] with Serializable {
@@ -48,12 +48,12 @@ object Execution {
   val StartedStage = classOf[Started]
   val FinishedStage = classOf[Finished]
 
-  implicit def is(status: StatusType): Boolean =
+  implicit def is(status: StatusType)(implicit e: Execution): Boolean =
     implicitly[Execution].is(status)
-  implicit def at(stage: StageType, between: (ZonedDateTime, ZonedDateTime)): Boolean =
+  implicit def at(stage: StageType, between: (ZonedDateTime, ZonedDateTime))(implicit e: Execution): Boolean =
     implicitly[Execution].at(stage, between)
 
-  implicit def >> (stage: Stage): Execution = implicitly[Execution].>>(stage)
+  implicit def << (stage: Stage)(implicit e: Execution): Execution = implicitly[Execution].<<(stage)
   
   def compareByDate(stage: StageType): Ordering[Execution] = new Ordering[Execution] {
     override def compare(x: Execution, y: Execution): Int = {
@@ -67,7 +67,7 @@ object Execution {
 
 }
 
-case class Execution(id: ExecutionId, stages: List[Execution.Stage] = Nil) extends Serializable {
+case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = Nil) extends Serializable {
   import Execution._
 
   def apply(stageType: StageType): Option[Stage] = stages.find(st => stageType.isInstance(st))
@@ -80,8 +80,10 @@ case class Execution(id: ExecutionId, stages: List[Execution.Stage] = Nil) exten
 
   def lastStatusChange: ZonedDateTime = stage.when
 
-  def >> (newStage: Stage): Execution = {
-    require(newStage > stage)
+  def << (newStage: Stage): Execution = {
+    if (stages.nonEmpty) {
+      require(newStage > stage)
+    }
     copy(stages = newStage :: stages)
   }
 

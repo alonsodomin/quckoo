@@ -111,7 +111,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
     executionMap.lock(executionId)
     try {
-      val updated = getExecution(executionId) map (_ >> newStage) get;
+      val updated = getExecution(executionId) map (_ << newStage) get;
       newStage match {
         case Execution.Triggered(_) =>
           executionQueue.put(updated)
