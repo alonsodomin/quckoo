@@ -1,6 +1,6 @@
 package io.chronos
 
-import java.time.Clock
+import java.time.{Clock, Instant, ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import io.chronos.id.ExecutionId
@@ -13,7 +13,10 @@ import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 class ExecutionTest extends FlatSpec with GivenWhenThen with Matchers {
   import Execution._
 
-  implicit val clock = Clock.systemUTC()
+  val FixedInstant = Instant.ofEpochMilli(893293345)
+  val UTCZone      = ZoneId.of("UTC")
+
+  implicit val clock = Clock.fixed(FixedInstant, UTCZone)
 
   class StatusMatcher(statusType: StatusType) extends BeMatcher[Execution] {
     def apply(left: Execution) = MatchResult(
@@ -34,6 +37,13 @@ class ExecutionTest extends FlatSpec with GivenWhenThen with Matchers {
 
     Then("it is pending")
     execution shouldBe status(Pending)
+
+    And("scheduled as of now")
+    assert(execution.stage match {
+      case Scheduled(when) =>
+        when == ZonedDateTime.now(clock)
+      case _ => false
+    })
   }
 
 }
