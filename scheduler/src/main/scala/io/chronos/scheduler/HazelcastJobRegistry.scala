@@ -45,14 +45,14 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
   def scheduleOf(executionId: ExecutionId): JobSchedule = getSchedule(executionId._1).get
 
-  def schedule(clock: Clock, schedule: JobSchedule): Execution = {
+  def schedule(schedule: JobSchedule)(implicit clock: Clock): Execution = {
     require(jobRegistry.containsKey(schedule.jobId), s"The job specification ${schedule.jobId} has not been registered yet.")
 
     val scheduleId = (schedule.jobId, scheduleCounter.incrementAndGet())
     scheduleMap.put(scheduleId, schedule)
     scheduleByJob.put(schedule.jobId, scheduleId)
 
-    createExecution(clock, scheduleId, schedule)
+    createExecution(scheduleId, schedule)
   }
 
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)] =
@@ -68,7 +68,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
   def executionTimeout(executionId: ExecutionId): Option[FiniteDuration] =
     getSchedule(executionId._1).flatMap(job => job.executionTimeout)
 
-  def fetchOverdueExecutions(clock: Clock, batchSize: Int)(c: Execution => Unit): Unit = {
+  def fetchOverdueExecutions(batchSize: Int)(consumer: Execution => Unit)(implicit clock: Clock): Unit = {
     var itemCount: Int = 0
 
     def notInProgress(pair: (ScheduleId, JobSchedule)): Boolean = Option(executionBySchedule.get(pair._1)).
@@ -92,7 +92,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
               case Some(time) if time.isBefore(now) || time.isEqual(now) =>
                 val execution = getExecution(executionBySchedule.get(scheduleId)).get
                 itemCount += 1
-                c(execution)
+                consumer(execution)
               case Some(_) =>
               case None =>
             }
@@ -105,13 +105,13 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
     }
   }
   
-  def updateExecution(executionId: ExecutionId, newStage: Execution.Stage)(c: Execution => Unit): Unit = {
+  def updateExecution(executionId: ExecutionId, newStage: Execution.Stage)(consumer: Execution => Unit): Unit = {
     require(executionMap.containsKey(executionId), s"There is no execution with ID $executionId")
     require(scheduleMap.containsKey(executionId._1), s"There is no schedule with ID ${executionId._1}")
 
     executionMap.lock(executionId)
     try {
-      val updated = getExecution(executionId) map (e => e :> newStage) get;
+      val updated = getExecution(executionId) map (_ >> newStage) get;
       newStage match {
         case Execution.Triggered(_) =>
           executionQueue.put(updated)
@@ -130,7 +130,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
       }
 
       executionMap.put(executionId, updated)
-      c(updated)
+      consumer(updated)
     } finally {
       executionMap.unlock(executionId)
     }
@@ -155,12 +155,11 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
     }
   }
 
-  private def createExecution(clock: Clock, scheduleId: ScheduleId, schedule: JobSchedule): Execution = {
+  private def createExecution(scheduleId: ScheduleId, schedule: JobSchedule)(implicit clock: Clock): Execution = {
     val executionId = (scheduleId, executionCounter.incrementAndGet())
-    val execution = Execution(executionId, Execution.Scheduled(ZonedDateTime.now(clock)) :: Nil)
+    val execution = Execution(executionId)
     executionMap.put(executionId, execution)
     executionBySchedule.put(scheduleId, executionId)
-
     execution
   }
 

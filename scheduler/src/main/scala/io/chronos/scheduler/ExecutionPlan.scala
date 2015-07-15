@@ -14,9 +14,9 @@ trait ExecutionPlan {
 
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)]
 
-  def schedule(clock: Clock, schedule: JobSchedule): Execution
+  def schedule(schedule: JobSchedule)(implicit clock: Clock): Execution
 
-  def fetchOverdueExecutions(clock: Clock, batchSize: Int)(c: Execution => Unit): Unit
+  def fetchOverdueExecutions(batchSize: Int)(consumer: Execution => Unit)(implicit clock: Clock): Unit
 
   def lastExecutionTime(scheduleId: ScheduleId): Option[ZonedDateTime]
 

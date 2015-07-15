@@ -16,8 +16,8 @@ object Dependencies {
 
     "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
 
-    "org.scala-lang"    % "scala-compiler" % scalaVersion,
-    "org.scalaz.stream" %% "scalaz-stream" % "0.7a" withSources() withJavadoc()
+    "org.scala-lang"  % "scala-compiler" % scalaVersion,
+    "org.scalatest"   %% "scalatest"     % "2.2.4" % "test"
   )
 
   val schedulerLibs: Seq[ModuleID] = commonLibs ++ Seq(

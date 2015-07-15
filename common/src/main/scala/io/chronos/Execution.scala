@@ -1,6 +1,6 @@
 package io.chronos
 
-import java.time.ZonedDateTime
+import java.time.{Clock, ZonedDateTime}
 
 import io.chronos.id._
 
@@ -9,6 +9,10 @@ import io.chronos.id._
  */
 object Execution {
 
+  def apply(executionId: ExecutionId)(implicit c: Clock): Execution = {
+    new Execution(executionId) >> Scheduled(ZonedDateTime.now(c))
+  }
+  
   sealed abstract class Stage(val ordinal: Int) extends Ordered[Stage] with Serializable {
     implicit val when: ZonedDateTime
 
@@ -49,6 +53,8 @@ object Execution {
   implicit def at(stage: StageType, between: (ZonedDateTime, ZonedDateTime)): Boolean =
     implicitly[Execution].at(stage, between)
 
+  implicit def >> (stage: Stage): Execution = implicitly[Execution].>>(stage)
+  
   def compareByDate(stage: StageType): Ordering[Execution] = new Ordering[Execution] {
     override def compare(x: Execution, y: Execution): Int = {
       val comparison = for (
@@ -61,7 +67,7 @@ object Execution {
 
 }
 
-case class Execution(id: ExecutionId, stages: List[Execution.Stage]) extends Serializable {
+case class Execution(id: ExecutionId, stages: List[Execution.Stage] = Nil) extends Serializable {
   import Execution._
 
   def apply(stageType: StageType): Option[Stage] = stages.find(st => stageType.isInstance(st))
@@ -74,7 +80,7 @@ case class Execution(id: ExecutionId, stages: List[Execution.Stage]) extends Ser
 
   def lastStatusChange: ZonedDateTime = stage.when
 
-  def :> (newStage: Stage): Execution = {
+  def >> (newStage: Stage): Execution = {
     require(newStage > stage)
     copy(stages = newStage :: stages)
   }

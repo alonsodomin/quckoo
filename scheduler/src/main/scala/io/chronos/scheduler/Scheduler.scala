@@ -36,7 +36,7 @@ object Scheduler {
 }
 
 
-class Scheduler(clock: Clock,
+class Scheduler(implicit clock: Clock,
                 jobRegistry: HazelcastJobRegistry,
                 maxWorkTimeout: FiniteDuration,
                 heartbeatInterval: FiniteDuration,
@@ -95,7 +95,7 @@ class Scheduler(clock: Clock,
 
     case ScheduleJob(jobDef) =>
       log.info("Job scheduled. jobId={}", jobDef.jobId)
-      val execution = jobRegistry.schedule(clock, jobDef)
+      val execution = jobRegistry.schedule(jobDef)
       mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.stage))
       sender() ! ScheduleAck(jobDef.jobId)
 
@@ -170,7 +170,7 @@ class Scheduler(clock: Clock,
       }
 
     case Heartbeat =>
-      jobRegistry.fetchOverdueExecutions(clock, jobBatchSize) { execution =>
+      jobRegistry.fetchOverdueExecutions(jobBatchSize) { execution =>
         log.info("Placing execution into work queue. executionId={}", execution.executionId)
         val executionStatus = Execution.Triggered(ZonedDateTime.now(clock))
         jobRegistry.updateExecution(execution.executionId, executionStatus) { exec =>
