@@ -44,9 +44,9 @@ object Execution {
   val StartedStage = classOf[Started]
   val FinishedStage = classOf[Finished]
 
-  implicit def is(status: StatusType)(implicit exec: Execution): Boolean =
+  implicit def is(status: StatusType): Boolean =
     implicitly[Execution].is(status)
-  implicit def at(stage: StageType, between: (ZonedDateTime, ZonedDateTime))(implicit exec: Execution): Boolean =
+  implicit def at(stage: StageType, between: (ZonedDateTime, ZonedDateTime)): Boolean =
     implicitly[Execution].at(stage, between)
 
   def compareByDate(stage: StageType): Ordering[Execution] = new Ordering[Execution] {

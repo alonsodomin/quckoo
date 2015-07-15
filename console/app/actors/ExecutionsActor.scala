@@ -94,7 +94,7 @@ class ExecutionsActor(upstream: ActorRef) extends Actor with ActorLogging {
   def ready: Receive = {
     case GetFinishedExecutions =>
       implicit val timeout = Timeout(10.seconds)
-      val req = GetExecutions(is(Done)(_))
+      val req = GetExecutions(_ is Done)
       ( chronosClient ? SendToAll(path.Scheduler, req)) map {
         case e: Execution => ExecutionModel(e.executionId.toString(), e.stage.toString)
       } pipeTo sender()
