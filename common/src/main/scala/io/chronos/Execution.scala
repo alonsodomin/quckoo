@@ -74,6 +74,11 @@ case class Execution(id: ExecutionId, stages: List[Execution.Stage]) extends Ser
 
   def lastStatusChange: ZonedDateTime = stage.when
 
+  def :> (newStage: Stage): Execution = {
+    require(newStage > stage)
+    copy(stages = newStage :: stages)
+  }
+
   def is(status: StatusType): Boolean = outcome match {
     case Some(o) => status.isInstance(o) || status.isInstance(stage)
     case None    => status.isInstance(stage)

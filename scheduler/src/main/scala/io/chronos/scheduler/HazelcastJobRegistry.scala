@@ -105,14 +105,14 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
     }
   }
   
-  def updateExecution(executionId: ExecutionId, status: Execution.Stage)(c: Execution => Unit): Unit = {
+  def updateExecution(executionId: ExecutionId, newStage: Execution.Stage)(c: Execution => Unit): Unit = {
     require(executionMap.containsKey(executionId), s"There is no execution with ID $executionId")
     require(scheduleMap.containsKey(executionId._1), s"There is no schedule with ID ${executionId._1}")
 
     executionMap.lock(executionId)
     try {
-      val updated = getExecution(executionId) map (e => e.copy(stages = status :: e.stages)) get;
-      status match {
+      val updated = getExecution(executionId) map (e => e :> newStage) get;
+      newStage match {
         case Execution.Triggered(_) =>
           executionQueue.put(updated)
 
