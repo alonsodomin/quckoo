@@ -46,4 +46,20 @@ class ExecutionTest extends FlatSpec with GivenWhenThen with Matchers {
     })
   }
 
+  "An execution" should "not accept an early stage" in {
+    Given("An execution ID")
+    val executionId: ExecutionId = ((UUID.randomUUID(), 0), 0)
+
+    And("an execution in progress")
+    val execution = Execution(executionId) << Started(ZonedDateTime.now(clock), UUID.randomUUID().toString)
+
+    When("Making the execution 'triggered'")
+    val thrown = intercept[Exception] {
+      execution << Triggered(ZonedDateTime.now(clock))
+    }
+
+    Then("the exception is thrown")
+    assert(thrown.getMessage === "Can't move the execution to an earlier stage.")
+  }
+
 }

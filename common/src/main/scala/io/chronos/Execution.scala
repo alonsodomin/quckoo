@@ -81,8 +81,8 @@ case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = N
   def lastStatusChange: ZonedDateTime = stage.when
 
   def << (newStage: Stage): Execution = {
-    if (stages.nonEmpty) {
-      require(newStage > stage)
+    if (stages.nonEmpty && stage > newStage) {
+      throw new IllegalArgumentException("Can't move the execution to an earlier stage.")
     }
     copy(stages = newStage :: stages)
   }
