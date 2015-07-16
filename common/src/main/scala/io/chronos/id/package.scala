@@ -13,7 +13,7 @@ package object id {
   type WorkerId = UUID
 
   implicit def parseModuleId(moduleId: String): ModuleId = {
-    val parts = moduleId.split(':').map(_.trim)
+    val parts = moduleId.split(ModuleId.Separator).map(_.trim)
     ModuleId(parts(0), parts(1), parts(2))
   }
 

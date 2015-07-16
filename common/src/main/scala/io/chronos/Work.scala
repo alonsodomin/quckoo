@@ -9,4 +9,4 @@ import io.chronos.id.{ExecutionId, ModuleId}
 case class Work(executionId: ExecutionId,
                 params: Map[String, Any] = Map.empty,
                 moduleId: ModuleId,
-                jobClass: JobClass)
+                jobClass: String)

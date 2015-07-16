@@ -34,7 +34,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
     SendToAll(path.Scheduler, RegisterWorker(workerId))
   )
 
-  val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "exec"))
+  val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "executor"))
   
   private var currentExecutionId: Option[ExecutionId] = None
 

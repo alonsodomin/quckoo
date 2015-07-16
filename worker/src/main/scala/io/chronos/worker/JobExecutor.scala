@@ -1,8 +1,10 @@
 package io.chronos.worker
 
 import akka.actor.{Actor, ActorLogging, Props}
-import io.chronos.id.ExecutionId
+import io.chronos.id.{ExecutionId, ModuleId}
 import io.chronos.{Job, JobClass, Work}
+import org.codehaus.plexus.classworlds.ClassWorld
+import org.codehaus.plexus.classworlds.realm.ClassRealm
 
 import scala.util.{Failure, Success, Try}
 
@@ -15,18 +17,23 @@ object JobExecutor {
   case class Failed(executionId: ExecutionId, cause: Throwable)
   case class Completed(executionId: ExecutionId, result: Any)
   
-  def props = Props[JobExecutor]
+  def props(classWorld: ClassWorld, moduleResolver: ModuleResolver): Props =
+    Props(classOf[JobExecutor], classWorld, moduleResolver)
 }
 
-class JobExecutor extends Actor with ActorLogging {
+class JobExecutor(val classWorld: ClassWorld, val moduleResolver: ModuleResolver) extends Actor with ActorLogging {
   import JobExecutor._
 
   def receive = {
     case Execute(work) =>
-      log.info("Executing work. workId={}", work.executionId)
-      val jobInstance = work.jobClass.newInstance()
+      log.info(s"Resolving module ${work.moduleId}")
+      val classRealm = resolveClassRealm(work.moduleId)
+      val jobClass = classRealm.loadClass(work.jobClass).asInstanceOf[JobClass]
 
-      populateJobParams(work.jobClass, work.params, jobInstance)
+      log.info("Executing work. workId={}", work.executionId)
+      val jobInstance = jobClass.newInstance()
+
+      populateJobParams(jobClass, work.params, jobInstance)
 
       Try[Any](jobInstance.execute()) match {
         case Success(result) =>
@@ -34,6 +41,14 @@ class JobExecutor extends Actor with ActorLogging {
         case Failure(cause) =>
           sender() ! Failed(work.executionId, cause)
       }
+  }
+
+  private def resolveClassRealm(moduleId: ModuleId): ClassRealm = {
+    val realm = classWorld.newRealm(moduleId.toString)
+    moduleResolver.resolveTransitive(moduleId).map(_.getArtifact).foreach { artifact =>
+      realm.addURL(artifact.getFile.toURI.toURL)
+    }
+    realm
   }
 
   private def populateJobParams[T <: Job](jobClass: JobClass, params: Map[String, Any], jobInstance: T): Unit = {

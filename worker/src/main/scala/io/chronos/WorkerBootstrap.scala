@@ -1,10 +1,11 @@
 package io.chronos
 
-import akka.actor.{ActorSystem, AddressFromURIString, Props, RootActorPath}
+import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
 import akka.contrib.pattern.ClusterClient
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
-import io.chronos.worker.{JobExecutor, Worker}
+import io.chronos.worker.{ChronosRepositorySystem, JobExecutor, ModuleResolver, Worker}
+import org.codehaus.plexus.classworlds.ClassWorld
 
 /**
  * Created by domingueza on 09/07/15.
@@ -20,9 +21,13 @@ object WorkerBootstrap extends App {
     case AddressFromURIString(addr) => system.actorSelection(RootActorPath(addr) / "user" / "receptionist")
   }.toSet
 
+  val classWorld = new ClassWorld()
 
+  val repositorySystem = ChronosRepositorySystem.repositorySystem
+  val repositorySession = ChronosRepositorySystem.repositorySession(repositorySystem)
+  val moduleResolver = new ModuleResolver(repositorySystem, repositorySession)
 
   val clusterClient = system.actorOf(ClusterClient.props(initialContacts), "clusterClient")
-  system.actorOf(Worker.props(clusterClient, Props[JobExecutor]), "worker")
+  system.actorOf(Worker.props(clusterClient, JobExecutor.props(classWorld, moduleResolver)), "worker")
 
 }
