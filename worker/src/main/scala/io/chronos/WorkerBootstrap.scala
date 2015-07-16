@@ -20,6 +20,8 @@ object WorkerBootstrap extends App {
     case AddressFromURIString(addr) => system.actorSelection(RootActorPath(addr) / "user" / "receptionist")
   }.toSet
 
+
+
   val clusterClient = system.actorOf(ClusterClient.props(initialContacts), "clusterClient")
   system.actorOf(Worker.props(clusterClient, Props[JobExecutor]), "worker")
 

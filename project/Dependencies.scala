@@ -7,6 +7,7 @@ object Dependencies {
   val akkaVersion = "2.3.11"
   val hazelcastVersion = "3.4.4"
   val sprayVersion = "1.3.3"
+  val aetherVersion = "1.0.2.v20150114"
 
   val commonLibs: Seq[ModuleID] = Seq(
     "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
@@ -52,11 +53,14 @@ object Dependencies {
   )
 
   val workerLibs: Seq[ModuleID] = Seq(
-    "org.apache.ivy"     % "ivy"    % "2.4.0",
-    "org.eclipse.aether" % "aether" % "1.0.2.v20150114"
+    "org.eclipse.aether" % "aether-api"                 % aetherVersion withSources() withJavadoc(),
+    "org.eclipse.aether" % "aether-transport-classpath" % aetherVersion withSources() withJavadoc(),
+    "org.eclipse.aether" % "aether-transport-http"      % aetherVersion withSources() withJavadoc(),
+    "org.eclipse.aether" % "aether-impl"                % aetherVersion withSources() withJavadoc(),
+
+    "org.apache.maven" % "maven-aether-provider" % "3.1.0"
   )
 
-  val examplesLibs: Seq[ModuleID] = Seq(
-  )
+  val examplesLibs: Seq[ModuleID] = Seq()
 
 }
