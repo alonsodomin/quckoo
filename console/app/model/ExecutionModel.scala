@@ -19,7 +19,7 @@ object ExecutionModel {
 case class ExecutionModel(executionId: String, status: String) {
 
   def this(execution: Execution) {
-    this(execution.executionId, execution.stage.toString)
+    this(execution.executionId.toString(), execution.stage.toString)
   }
 
 }

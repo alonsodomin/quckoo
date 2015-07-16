@@ -4,7 +4,7 @@ import akka.actor._
 import akka.contrib.pattern.ClusterClient.{Send, SendToAll}
 import akka.pattern._
 import akka.util.Timeout
-import common.{Global, MessageTypes}
+import common.MessageTypes
 import io.chronos.protocol.{ListenerProtocol, SchedulerProtocol}
 import io.chronos.{Execution, path}
 import model.ExecutionModel
@@ -73,7 +73,7 @@ class ExecutionsActor(upstream: ActorRef) extends Actor with ActorLogging {
   import SchedulerProtocol._
   import context.dispatcher
 
-  private val chronosClient = context.actorSelection(context.system / Global.ChronosClient)
+  private val chronosClient = context.actorSelection(context.system / "chronosClient")
 
   @throws[Exception](classOf[Exception])
   override def preStart(): Unit = {

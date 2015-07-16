@@ -1,10 +1,13 @@
 package io.chronos.examples.parameters
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import io.chronos.Trigger
+import io.chronos._
 import io.chronos.examples.FacadeActor
 import io.chronos.protocol.SchedulerProtocol
 
+import scala.collection.immutable.HashMap
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ThreadLocalRandom
 
@@ -25,6 +28,11 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
   def scheduler = context.system.scheduler
   def rnd = ThreadLocalRandom.current
 
+  val jobSpec = JobSpec(id = UUID.randomUUID(),
+    displayName = "Power Of N",
+    moduleId = "io.chronos:chronos-examples:0.1.0",
+    jobClass = classOf[PowerOfNJob].toString
+  )
   var n = 0
 
   override def preStart(): Unit =
@@ -36,10 +44,9 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
 
   def start: Receive = {
     case Tick =>
-      receptor ! SchedulerProtocol.PublishJob(PowerOfNJobSpec)
+      receptor ! SchedulerProtocol.PublishJob(jobSpec)
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       context.become(produce)
-
   }
 
   def produce: Receive = {
@@ -47,7 +54,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
       n += 1
       log.info("Produced work: {}", n)
       val delay  = rnd.nextInt(1, 30)
-      val jobDef = PowerOfNJobDef(n, Trigger.After(delay.seconds))
+      val jobDef = JobSchedule(jobSpec.id, HashMap("n" -> n), Trigger.After(delay.seconds))
       receptor ! SchedulerProtocol.ScheduleJob(jobDef)
       context.become(waitAccepted, discardOld = false)
   }

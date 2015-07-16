@@ -1,5 +1,3 @@
-package common
-
 import akka.actor.{AddressFromURIString, Props, RootActorPath}
 import akka.contrib.pattern.ClusterClient
 import akka.japi.Util._

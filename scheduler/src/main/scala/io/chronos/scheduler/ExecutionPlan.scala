@@ -10,7 +10,7 @@ import io.chronos.{Execution, JobSchedule}
   */
 trait ExecutionPlan {
 
-  def executions(filter: Execution => Boolean)
+  def executions(filter: Execution => Boolean): Seq[Execution]
 
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)]
 

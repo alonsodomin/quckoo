@@ -8,10 +8,10 @@ import scala.concurrent.duration.FiniteDuration
 /**
  * Created by aalonsodominguez on 09/07/15.
  */
-class JobSchedule(val jobId: JobId,
-                  val trigger: Trigger = Immediate,
-                  val triggerTimeout: Option[FiniteDuration] = None,
-                  val executionTimeout: Option[FiniteDuration] = None) extends Parameterizable with Serializable {
+case class JobSchedule(jobId: JobId,
+                       params: Map[String, Any] = Map.empty,
+                       trigger: Trigger = Immediate,
+                       timeout: Option[FiniteDuration] = None) {
 
   def isRecurring: Boolean = trigger.isRecurring
 

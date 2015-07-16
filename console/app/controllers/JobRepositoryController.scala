@@ -23,7 +23,7 @@ class JobRepositoryController @Inject() (val client: ChronosClient) extends Cont
         "id"          -> spec.id,
         "displayName" -> spec.displayName,
         "description" -> spec.description,
-        "jobClass"    -> spec.jobClass.getName
+        "jobClass"    -> spec.jobClass
       )
       implicit val writes = Writes(writer)
       Ok(Json.toJson(specs))

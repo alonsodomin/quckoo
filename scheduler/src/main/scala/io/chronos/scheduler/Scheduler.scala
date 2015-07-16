@@ -51,12 +51,6 @@ class Scheduler(implicit clock: Clock,
   val mediator = DistributedPubSubExtension(context.system).mediator
   ClusterReceptionistExtension(context.system).registerService(self)
 
-  /* persistenceId must include cluster role to support multiple masters
-  override def persistenceId: String = Cluster(context.system).selfRoles.find(_.startsWith("scheduler-")) match {
-    case Some(role) => role + "-master"
-    case _ => "master"
-  }*/
-
   // worker state is not event sourced
   private var workers = Map[WorkerId, WorkerState]()
 
