@@ -1,11 +1,11 @@
 package common
 
-import actors.FacadeActor
 import akka.actor.{AddressFromURIString, Props, RootActorPath}
 import akka.contrib.pattern.ClusterClient
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
-import io.chronos.examples.PowerOfNActor
+import io.chronos.examples.FacadeActor
+import io.chronos.examples.parameters.PowerOfNActor
 import play.api.{Application, GlobalSettings}
 
 /**

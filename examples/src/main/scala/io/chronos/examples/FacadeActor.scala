@@ -1,4 +1,4 @@
-package actors
+package io.chronos.examples
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.contrib.pattern._

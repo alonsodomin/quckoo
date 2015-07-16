@@ -1,4 +1,4 @@
-package io.chronos.examples
+package io.chronos.examples.parameters
 
 import io.chronos.{JobSchedule, Trigger}
 

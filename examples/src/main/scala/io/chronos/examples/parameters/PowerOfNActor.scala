@@ -1,7 +1,8 @@
-package io.chronos.examples
+package io.chronos.examples.parameters
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.chronos.Trigger
+import io.chronos.examples.FacadeActor
 import io.chronos.protocol.SchedulerProtocol
 
 import scala.concurrent.duration._
@@ -52,13 +53,13 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
   }
 
   def waitAccepted: Receive = {
-    case Facade.JobAccepted =>
+    case FacadeActor.JobAccepted =>
       if (n < 25) {
         scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       }
       context.unbecome()
 
-    case Facade.JobRejected =>
+    case FacadeActor.JobRejected =>
       log.info("Work not accepted, retry after a while")
       scheduler.scheduleOnce(3.seconds, self, Tick)
       context.unbecome()
