@@ -1,0 +1,9 @@
+couchbase:
+  image: jamesdbloom/couchbase:3.0.0
+  environment:
+    CLUSTER_INIT_USER: Administrator
+    CLUSTER_INIT_PASSWORD: password
+  ports:
+    - 11210:11210
+    - 8091:8091
+    - 8092:8092
