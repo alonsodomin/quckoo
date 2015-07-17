@@ -6,7 +6,7 @@ import java.time.Clock
 import akka.actor._
 import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigFactory
-import io.chronos.resolver.JobModuleResolver
+import io.chronos.resolver.JobModuleRepository
 import io.chronos.scheduler.{Scheduler, _}
 
 /**
@@ -29,7 +29,7 @@ object SchedulerBootstrap extends App {
   val jobRegistry = new HazelcastJobRegistry(hazelcastInstance)
 
   val localRepo = Paths.get(conf.getString("ivy.localRepo"))
-  val moduleResolver = new JobModuleResolver(localRepo)
+  val moduleResolver = new JobModuleRepository(localRepo)
 
   system.actorOf(Props[ClusterMonitor], "monitor")
   system.actorOf(Props[ExecutionMonitor], "executions")
