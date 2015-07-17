@@ -29,11 +29,11 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
   private val executionQueue = hazelcastInstance.getQueue[Execution]("executionQueue")
 
-  override def availableSpecs: Seq[JobSpec] = {
+  override def availableJobSpecs: Seq[JobSpec] = {
     collectFrom(jobRegistry.values().iterator(), Vector())
   }
 
-  override def publishSpec(jobSpec: JobSpec): Unit = jobRegistry.put(jobSpec.id, jobSpec)
+  override def registerJobSpec(jobSpec: JobSpec): Unit = jobRegistry.put(jobSpec.id, jobSpec)
 
   def specById(jobId: JobId): Option[JobSpec] = Option(jobRegistry.get(jobId))
 

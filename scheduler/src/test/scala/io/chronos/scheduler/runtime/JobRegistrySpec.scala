@@ -19,7 +19,7 @@ class JobRegistrySpec extends FlatSpec with Matchers with BeforeAndAfter {
 
   "A Job Registry" should "accept publishing Job Specs" in {
     val jobSpec = JobSpec(id = "foo", displayName = "Foo Job", jobClass = classOf[DummyJob])
-    jobRegistry.publishSpec(jobSpec)
+    jobRegistry.registerJobSpec(jobSpec)
     assert(jobRegistry(jobSpec.id).get == jobSpec)
   }
 

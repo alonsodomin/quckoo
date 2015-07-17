@@ -9,16 +9,22 @@ object Dependencies {
   val sprayVersion = "1.3.3"
   val aetherVersion = "1.0.2.v20150114"
 
-  val commonLibs: Seq[ModuleID] = Seq(
-    "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-remote"  % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc(),
-
+  private val sharedLibs: Seq[ModuleID] = Seq(
     "org.scala-lang"  % "scala-compiler" % scalaVersion,
     "org.scalatest"   %% "scalatest"     % "2.2.4" % "test"
   )
 
-  val schedulerLibs: Seq[ModuleID] = Seq(
+  val commonLibs: Seq[ModuleID] = sharedLibs ++ Seq(
+    "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-remote"  % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc()
+  )
+
+  val resolverLibs: Seq[ModuleID] = sharedLibs ++ Seq(
+    "org.apache.ivy" % "ivy" % "2.4.0"
+  )
+
+  val schedulerLibs: Seq[ModuleID] = sharedLibs ++ Seq(
     "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc(),
 
@@ -27,7 +33,6 @@ object Dependencies {
 
     "org.reactivecouchbase" %% "reactivecouchbase-core" % "0.3" withSources() withJavadoc(),
 
-    "org.scalatest" %% "scalatest" % "2.2.4" % "test",
     "commons-io"    % "commons-io" % "2.4" % "test"
   )
 
@@ -43,16 +48,14 @@ object Dependencies {
     specs2 % Test  
   )
 
-  val httpLibs: Seq[ModuleID] = Seq(
+  val httpLibs: Seq[ModuleID] = sharedLibs ++ Seq(
     "io.spray" %% "spray-can"     % sprayVersion          withSources() withJavadoc(),
     "io.spray" %% "spray-routing" % sprayVersion          withSources() withJavadoc(),
     "io.spray" %% "spray-httpx"   % sprayVersion          withSources() withJavadoc(),
-    "io.spray" %% "spray-testkit" % sprayVersion % "test" withSources() withJavadoc(),
-
-    "org.scalatest" %% "scalatest" % "2.2.4" % "test"
+    "io.spray" %% "spray-testkit" % sprayVersion % "test" withSources() withJavadoc()
   )
 
-  val workerLibs: Seq[ModuleID] = Seq(
+  val workerLibs: Seq[ModuleID] = sharedLibs ++ Seq(
     "org.eclipse.aether" % "aether-api"                 % aetherVersion withSources() withJavadoc(),
     "org.eclipse.aether" % "aether-transport-classpath" % aetherVersion withSources() withJavadoc(),
     "org.eclipse.aether" % "aether-transport-http"      % aetherVersion withSources() withJavadoc(),
@@ -64,6 +67,6 @@ object Dependencies {
     "org.codehaus.plexus" % "plexus-classworlds" % "2.5.2" withSources() withJavadoc()
   )
 
-  val examplesLibs: Seq[ModuleID] = Seq()
+  val examplesLibs: Seq[ModuleID] = sharedLibs
 
 }

@@ -3,12 +3,12 @@ package io.chronos.id
 /**
  * Created by aalonsodominguez on 15/07/15.
  */
-object ModuleId {
+object JobModuleId {
   val Separator: Char = ':'
 }
 
-case class ModuleId(group: String, artifact: String, version: String) {
-  import ModuleId._
+case class JobModuleId(group: String, artifact: String, version: String) {
+  import JobModuleId._
 
   override def toString: String = s"$group$Separator$artifact$Separator$version"
 

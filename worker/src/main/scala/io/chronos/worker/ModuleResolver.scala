@@ -1,6 +1,5 @@
 package io.chronos.worker
 
-import io.chronos.id.ModuleId
 import org.eclipse.aether.artifact.{Artifact, DefaultArtifact}
 import org.eclipse.aether.collection.CollectRequest
 import org.eclipse.aether.graph.Dependency
@@ -22,7 +21,7 @@ object ModuleResolver {
 class ModuleResolver(val system: RepositorySystem, val session: RepositorySystemSession) {
   import ModuleResolver._
 
-  def resolve(moduleId: ModuleId): Artifact = {
+  def resolve(moduleId: JobModuleId): Artifact = {
     val unresolvedArtifact = new DefaultArtifact(moduleId.toString)
 
     val request = new ArtifactRequest()
@@ -33,7 +32,7 @@ class ModuleResolver(val system: RepositorySystem, val session: RepositorySystem
     result.getArtifact
   }
 
-  def resolveTransitive(moduleId: ModuleId): Seq[ArtifactResult] = {
+  def resolveTransitive(moduleId: JobModuleId): Seq[ArtifactResult] = {
     val unresolvedArtifact = new DefaultArtifact(moduleId.toString)
     val dependencyFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME)
 

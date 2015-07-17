@@ -19,13 +19,21 @@ lazy val common = (project in file("common")).
     libraryDependencies ++= Dependencies.commonLibs
   )
 
+lazy val resolver = (project in file("resolver")).
+  settings(Commons.settings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.resolverLibs
+  ).
+  dependsOn(common)
+
 lazy val scheduler = (project in file("scheduler")).
   settings(Commons.settings: _*).
   settings(
     libraryDependencies ++= Dependencies.schedulerLibs
   ).
   settings(Revolver.settings: _*).
-  dependsOn(common)
+  dependsOn(common).
+  dependsOn(resolver)
 
 lazy val console = (project in file("console")).
   settings(Commons.settings: _*).

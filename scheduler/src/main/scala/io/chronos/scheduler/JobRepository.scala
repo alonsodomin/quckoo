@@ -8,10 +8,10 @@ import io.chronos.id._
   */
 trait JobRepository {
 
-   def availableSpecs: Seq[JobSpec]
+   def availableJobSpecs: Seq[JobSpec]
 
    def specById(jobId: JobId): Option[JobSpec]
 
-   def publishSpec(jobSpec: JobSpec): Unit
+   def registerJobSpec(jobSpec: JobSpec): Unit
 
  }

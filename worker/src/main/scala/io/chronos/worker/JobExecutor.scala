@@ -1,7 +1,7 @@
 package io.chronos.worker
 
 import akka.actor.{Actor, ActorLogging, Props}
-import io.chronos.id.{ExecutionId, ModuleId}
+import io.chronos.id.ExecutionId
 import io.chronos.{Job, JobClass, Work}
 import org.codehaus.plexus.classworlds.ClassWorld
 import org.codehaus.plexus.classworlds.realm.ClassRealm
@@ -43,7 +43,7 @@ class JobExecutor(val classWorld: ClassWorld, val moduleResolver: ModuleResolver
       }
   }
 
-  private def resolveClassRealm(moduleId: ModuleId): ClassRealm = {
+  private def resolveClassRealm(moduleId: JobModuleId): ClassRealm = {
     val realm = classWorld.newRealm(moduleId.toString)
     moduleResolver.resolveTransitive(moduleId).map(_.getArtifact).foreach { artifact =>
       realm.addURL(artifact.getFile.toURI.toURL)

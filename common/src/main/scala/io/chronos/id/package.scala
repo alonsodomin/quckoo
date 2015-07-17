@@ -12,9 +12,9 @@ package object id {
   type ExecutionId = (ScheduleId, Long)
   type WorkerId = UUID
 
-  implicit def parseModuleId(moduleId: String): ModuleId = {
-    val parts = moduleId.split(ModuleId.Separator).map(_.trim)
-    ModuleId(parts(0), parts(1), parts(2))
+  implicit def parseModuleId(moduleId: String): JobModuleId = {
+    val parts = moduleId.split(JobModuleId.Separator).map(_.trim)
+    JobModuleId(parts(0), parts(1), parts(2))
   }
 
 }
