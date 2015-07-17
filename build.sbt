@@ -3,6 +3,8 @@ organization in ThisBuild := "io.chronos"
 
 scalaVersion in ThisBuild := Dependencies.scalaVersion
 
+scalacOptions in ThisBuild += "-Xexperimental"
+
 resolvers in ThisBuild ++= Seq(
   "Typesafe releases" at "http://repo.typesafe.com/typesafe/releases/"
 )
