@@ -3,7 +3,7 @@ package io.chronos
 import java.time.{Clock, ZonedDateTime}
 
 import io.chronos.id._
-import io.chronos.protocol.WorkerProtocol.WorkFailedCause
+import io.chronos.protocol.ExecutionFailedCause
 
 /**
  * Created by aalonsodominguez on 11/07/15.
@@ -38,7 +38,7 @@ object Execution {
 
   sealed trait Outcome
   case class Success(result: Any) extends Outcome with Status
-  case class Failed(cause: WorkFailedCause) extends Outcome with Status
+  case class Failed(cause: ExecutionFailedCause) extends Outcome with Status
   case object TimedOut extends Outcome with Status
 
   type StageType = Class[_ <: Stage]

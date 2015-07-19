@@ -3,6 +3,7 @@ package io.chronos.resolver
 import java.nio.file.Path
 
 import io.chronos.id.JobModuleId
+import io.chronos.protocol._
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor.{DefaultDependencyDescriptor, DefaultModuleDescriptor}
 import org.apache.ivy.core.module.id.ModuleRevisionId
@@ -15,7 +16,7 @@ import org.apache.ivy.plugins.resolver.{DependencyResolver, URLResolver}
  */
 trait JobModuleResolver {
 
-  def resolve(jobModuleId: JobModuleId): Either[JobModulePackage, InvalidJobModule]
+  def resolve(jobModuleId: JobModuleId): Either[JobModulePackage, ResolutionFailed]
 
 }
 
@@ -40,7 +41,7 @@ class IvyJobModuleResolver(workDir: Path) extends JobModuleResolver {
 
   private val ivy = Ivy.newInstance(ivySettings)
 
-  def resolve(jobModuleId: JobModuleId): Either[JobModulePackage, InvalidJobModule] = {
+  def resolve(jobModuleId: JobModuleId): Either[JobModulePackage, ResolutionFailed] = {
     val resolveOptions = new ResolveOptions()
     resolveOptions.setTransitive(true)
     resolveOptions.setDownload(false)
@@ -57,7 +58,7 @@ class IvyJobModuleResolver(workDir: Path) extends JobModuleResolver {
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
     if (resolveReport.hasError) {
-      Right(InvalidJobModule(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
+      Right(ResolutionFailed(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
     } else {
       val artifactUrls = resolveReport.getAllArtifactsReports.map(_.getLocalFile.toURI.normalize.toURL)
       Left(JobModulePackage(jobModuleId, artifactUrls))

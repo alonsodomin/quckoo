@@ -2,7 +2,7 @@ package io.chronos.worker
 
 import akka.actor.{Actor, ActorLogging, Props}
 import io.chronos.id.ExecutionId
-import io.chronos.protocol.WorkerProtocol.{ResolutionFailed, WorkFailedCause}
+import io.chronos.protocol.ExecutionFailedCause
 import io.chronos.resolver.JobModuleResolver
 import io.chronos.{Job, JobClass, Work}
 import org.codehaus.plexus.classworlds.ClassWorld
@@ -16,7 +16,7 @@ object JobExecutor {
 
   case class Execute(work: Work)
 
-  case class Failed(executionId: ExecutionId, reason: WorkFailedCause)
+  case class Failed(executionId: ExecutionId, reason: ExecutionFailedCause)
   case class Completed(executionId: ExecutionId, result: Any)
 
   def props(classWorld: ClassWorld, moduleResolver: JobModuleResolver): Props =
@@ -49,7 +49,7 @@ class JobExecutor(val classWorld: ClassWorld, val moduleResolver: JobModuleResol
           }
 
         case Right(invalid) =>
-          sender() ! Failed(work.executionId, Left(ResolutionFailed(invalid.unresolvedDependencies)))
+          sender() ! Failed(work.executionId, Left(invalid))
       }
   }
 
