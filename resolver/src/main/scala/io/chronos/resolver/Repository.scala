@@ -13,6 +13,8 @@ import scala.xml.XML
 sealed trait Repository {
   type RepositoryType <: Repository
 
+  def name: String
+
   def patterns: Patterns
 
   protected def copy(patterns: Patterns): RepositoryType
@@ -32,7 +34,7 @@ final case class URLRepository(name: String, patterns: Patterns) extends Reposit
 final case class FileRepository(name: String, patterns: Patterns) extends Repository {
   type RepositoryType = FileRepository
 
-  override protected def copy(patterns: Patterns): FileRepository = FileRepository(name, patterns)
+  override protected def copy(patterns: Patterns): RepositoryType = FileRepository(name, patterns)
 }
 
 object Repository {
