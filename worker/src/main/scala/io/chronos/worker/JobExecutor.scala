@@ -2,10 +2,11 @@ package io.chronos.worker
 
 import akka.actor.{Actor, ActorLogging, Props}
 import io.chronos.id.ExecutionId
-import io.chronos.protocol.ExecutionFailedCause
+import io.chronos.protocol.{ExecutionFailedCause, ResolutionFailed}
 import io.chronos.resolver.JobModuleResolver
 import io.chronos.{Job, JobClass, Work}
 import org.codehaus.plexus.classworlds.ClassWorld
+import org.codehaus.plexus.classworlds.realm.ClassRealm
 
 import scala.util.{Failure, Success, Try}
 
@@ -30,27 +31,37 @@ class JobExecutor(val classWorld: ClassWorld, val moduleResolver: JobModuleResol
     case Execute(work) =>
       log.info(s"Resolving module ${work.moduleId}")
 
-      val classRealm = classWorld.newRealm(work.moduleId.toString)
-      moduleResolver.resolve(work.moduleId) match {
-        case Left(jobPackage) =>
-          jobPackage.classpath.foreach { classRealm.addURL }
+      findClassRealm(work) match {
+        case Left(classRealm) =>
           val jobClass = classRealm.loadClass(work.jobClass).asInstanceOf[JobClass]
 
           log.info("Executing work. workId={}", work.executionId)
-          val jobInstance = jobClass.newInstance()
-
-          populateJobParams(jobClass, work.params, jobInstance)
-
-          Try[Any](jobInstance.execute()) match {
+          Try(jobClass.newInstance()) map { jobInstance =>
+            populateJobParams(jobClass, work.params, jobInstance)
+            jobInstance
+          } flatMap(job => Try(job.execute())) match {
             case Success(result) =>
               sender() ! Completed(work.executionId, result)
             case Failure(cause) =>
               sender() ! Failed(work.executionId, Right(cause))
           }
 
-        case Right(invalid) =>
-          sender() ! Failed(work.executionId, Left(invalid))
+        case Right(resolutionFailed) =>
+          sender() ! Failed(work.executionId, Left(resolutionFailed))
       }
+  }
+
+  private def findClassRealm(work: Work): Either[ClassRealm, ResolutionFailed] =
+    Try(classWorld.getClassRealm(work.moduleId.toString)).toOption match {
+      case Some(cr) => Left(cr)
+      case None     =>
+        moduleResolver.resolve(work.moduleId) match {
+          case Left(jobPackage) =>
+            val classRealm = classWorld.newRealm(work.moduleId.toString)
+            jobPackage.classpath.foreach { classRealm.addURL }
+            Left(classRealm)
+          case Right(invalid) => _
+    }
   }
 
   private def populateJobParams[T <: Job](jobClass: JobClass, params: Map[String, Any], jobInstance: T): Unit = {
