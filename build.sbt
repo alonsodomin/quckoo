@@ -13,7 +13,7 @@ resolvers in ThisBuild ++= Seq(
 )
 
 lazy val chronos = (project in file(".")).aggregate(
-  common, scheduler, console, http, worker
+  common, resolver, scheduler, examples, console, http, worker
 )
 
 lazy val common = (project in file("common")).

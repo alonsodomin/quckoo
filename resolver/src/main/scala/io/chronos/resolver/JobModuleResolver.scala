@@ -8,6 +8,8 @@ import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.apache.ivy.core.resolve.ResolveOptions
 import org.slf4s.Logging
 
+import scala.collection.JavaConversions._
+
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
@@ -32,18 +34,21 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
       ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact + "-cache", jobModuleId.version)
     )
 
-    val moduleId = ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact, jobModuleId.version)
+    var jobModuleAttrs: Map[String, String] = Map.empty
+    jobModuleId.scalaVersion.foreach { scalaVersion => jobModuleAttrs += ("scalaVersion" -> scalaVersion) }
+
+    val moduleId = ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact, jobModuleId.version, jobModuleAttrs)
     val dependencyDescriptor = new DefaultDependencyDescriptor(moduleDescriptor, moduleId, false, false, true)
     dependencyDescriptor.addDependencyConfiguration("default", "master")
 
-    val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
+    val resolveReport = ivy.resolve(moduleId, resolveOptions, false)
 
     if (resolveReport.hasError) {
       Right(ResolutionFailed(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
     } else {
       val artifactUrls = resolveReport.getAllArtifactsReports.map(_.getLocalFile.toURI.normalize.toURL)
       val artifactUrlsAsStr = artifactUrls.mkString(", ")
-      log.info(s"Resolver artifact URLs: $artifactUrlsAsStr")
+      log.info(s"Resolved artifact URLs: $artifactUrlsAsStr")
       Left(JobModulePackage(jobModuleId, artifactUrls))
     }
   }
