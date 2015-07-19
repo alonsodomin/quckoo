@@ -51,7 +51,7 @@ class ExecutionTest extends FlatSpec with GivenWhenThen with Matchers {
     val executionId: ExecutionId = ((UUID.randomUUID(), 0), 0)
 
     And("an execution in progress")
-    val execution = Execution(executionId) << Started(ZonedDateTime.now(clock), UUID.randomUUID().toString)
+    val execution = Execution(executionId) << Started(ZonedDateTime.now(clock), UUID.randomUUID())
 
     When("Making the execution 'triggered'")
     val thrown = intercept[Exception] {

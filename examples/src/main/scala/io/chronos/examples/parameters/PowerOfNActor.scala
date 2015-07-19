@@ -30,7 +30,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
 
   val jobSpec = JobSpec(id = UUID.randomUUID(),
     displayName = "Power Of N",
-    moduleId = "io.chronos:chronos-examples:0.1.0",
+    moduleId = "io.chronos:examples_2.11:0.1.0",
     jobClass = classOf[PowerOfNJob].toString
   )
   var n = 0

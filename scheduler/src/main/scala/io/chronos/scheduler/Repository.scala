@@ -3,19 +3,19 @@ package io.chronos.scheduler
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
 import io.chronos.protocol.SchedulerProtocol._
-import io.chronos.resolver.JobModuleRepository
+import io.chronos.resolver.IvyJobModuleResolver
 
 /**
  * Created by aalonsodominguez on 10/07/15.
  */
 object Repository {
 
-  def props(jobRepository: JobRepository, moduleResolver: JobModuleRepository): Props =
+  def props(jobRepository: JobRepository, moduleResolver: IvyJobModuleResolver): Props =
     Props(classOf[Repository], jobRepository, moduleResolver)
 
 }
 
-class Repository(jobRepository: JobRepository, moduleResolver: JobModuleRepository) extends Actor with ActorLogging {
+class Repository(jobRepository: JobRepository, moduleResolver: IvyJobModuleResolver) extends Actor with ActorLogging {
 
   ClusterReceptionistExtension(context.system).registerService(self)
 

@@ -7,11 +7,6 @@ object Commons {
 
   val settings: Seq[Def.Setting[_]] = Seq(
     version := chronosVersion,
-    ideaExcludeFolders := ".idea" :: Nil,
-    resolvers ++= Seq(
-      Opts.resolver.mavenLocalFile,
-      "Scalaz Bintray Repo" at "https://dl.bintray.com/scalaz/releases",
-      "ReactiveCouchbase Releases" at "https://raw.github.com/ReactiveCouchbase/repository/master/releases/"
-    )
+    ideaExcludeFolders := ".idea" :: Nil
   )
 }
