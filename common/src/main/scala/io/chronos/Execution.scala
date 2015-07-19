@@ -3,6 +3,7 @@ package io.chronos
 import java.time.{Clock, ZonedDateTime}
 
 import io.chronos.id._
+import io.chronos.protocol.WorkerProtocol.WorkFailedCause
 
 /**
  * Created by aalonsodominguez on 11/07/15.
@@ -37,7 +38,7 @@ object Execution {
 
   sealed trait Outcome
   case class Success(result: Any) extends Outcome with Status
-  case class Failed(cause: Throwable) extends Outcome with Status
+  case class Failed(cause: WorkFailedCause) extends Outcome with Status
   case object TimedOut extends Outcome with Status
 
   type StageType = Class[_ <: Stage]
@@ -55,14 +56,12 @@ object Execution {
 
   implicit def << (stage: Stage)(implicit e: Execution): Execution = implicitly[Execution].<<(stage)
   
-  def compareByDate(stage: StageType): Ordering[Execution] = new Ordering[Execution] {
-    override def compare(x: Execution, y: Execution): Int = {
-      val comparison = for (
-        xStage <- x(stage);
-        yStage <- y(stage)
-      ) yield xStage.when.compareTo(yStage.when)
-      comparison getOrElse 0
-    }
+  def compareByDate(stage: StageType): Ordering[Execution] = (x: Execution, y: Execution) => {
+    val comparison = for (
+      xStage <- x(stage);
+      yStage <- y(stage)
+    ) yield xStage.when.compareTo(yStage.when)
+    comparison getOrElse 0
   }
 
 }

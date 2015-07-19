@@ -65,8 +65,8 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
       context.setReceiveTimeout(5.seconds)
       context.become(waitForWorkDoneAck(result))
 
-    case JobExecutor.Failed(executionId, cause) =>
-      sendToMaster(WorkFailed(workerId, executionId, cause))
+    case JobExecutor.Failed(executionId, reason) =>
+      sendToMaster(WorkFailed(workerId, executionId, reason))
       context.setReceiveTimeout(5.seconds)
       context.become(idle)
 
@@ -94,7 +94,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
     case _: DeathPactException => Stop
     case cause: Exception =>
       currentExecutionId.foreach {
-        executionId => sendToMaster(WorkFailed(workerId, executionId, cause))
+        executionId => sendToMaster(WorkFailed(workerId, executionId, Right(cause)))
       }
       context.become(idle)
       Restart

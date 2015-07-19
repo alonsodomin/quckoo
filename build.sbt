@@ -60,7 +60,8 @@ lazy val worker = (project in file("worker")).
   settings(
     libraryDependencies ++= Dependencies.workerLibs
   ).
-  dependsOn(common)
+  dependsOn(common).
+  dependsOn(resolver)
 
 lazy val examples = (project in file("examples")).
   settings(Commons.settings: _*).

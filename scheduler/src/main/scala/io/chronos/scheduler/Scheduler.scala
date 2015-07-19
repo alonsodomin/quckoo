@@ -131,7 +131,7 @@ class Scheduler(implicit clock: Clock,
       }
 
     case WorkDone(workerId, executionId, result) =>
-      jobRegistry.executionById(executionId).map(e => e.stage) match {
+      jobRegistry.executionById(executionId).map(_.stage) match {
         case Some(_: Execution.Finished) =>
           // previous Ack was lost, confirm again that this is done
           sender() ! WorkDoneAck(executionId)
@@ -149,7 +149,7 @@ class Scheduler(implicit clock: Clock,
       }
 
     case WorkFailed(workerId, executionId, cause) =>
-      jobRegistry.executionById(executionId).map(e => e.stage) match {
+      jobRegistry.executionById(executionId).map(_.stage) match {
         case Some(_: Execution.InProgress) =>
           log.info("Execution {} failed by worker {}", executionId, workerId)
           changeWorkerToIdle(workerId, executionId)

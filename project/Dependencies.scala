@@ -56,14 +56,6 @@ object Dependencies {
   )
 
   val workerLibs: Seq[ModuleID] = sharedLibs ++ Seq(
-    "org.eclipse.aether" % "aether-api"                 % aetherVersion withSources() withJavadoc(),
-    "org.eclipse.aether" % "aether-transport-classpath" % aetherVersion withSources() withJavadoc(),
-    "org.eclipse.aether" % "aether-transport-http"      % aetherVersion withSources() withJavadoc(),
-    "org.eclipse.aether" % "aether-impl"                % aetherVersion withSources() withJavadoc(),
-    "org.eclipse.aether" % "aether-connector-basic"     % aetherVersion withSources() withJavadoc(),
-
-    "org.apache.maven" % "maven-aether-provider" % "3.1.0" withSources() withJavadoc(),
-
     "org.codehaus.plexus" % "plexus-classworlds" % "2.5.2" withSources() withJavadoc()
   )
 

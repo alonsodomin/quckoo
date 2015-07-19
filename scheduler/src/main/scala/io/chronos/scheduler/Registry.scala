@@ -23,6 +23,7 @@ class Registry(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver) exte
     case RegisterJob(job) =>
       moduleResolver.resolve(job.moduleId) match {
         case Left(jobPackage) =>
+          log.info("Job module {} has been successfully resolved.", job.moduleId)
           jobRegistry.registerJobSpec(job)
           log.info("Job spec has been registered. jobId={}, name={}", job.id, job.displayName)
           sender() ! RegisterJobAck

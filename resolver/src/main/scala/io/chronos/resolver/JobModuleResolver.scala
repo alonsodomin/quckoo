@@ -55,10 +55,12 @@ class IvyJobModuleResolver(workDir: Path) extends JobModuleResolver {
     dependencyDescriptor.addDependencyConfiguration("default", "master")
 
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
+
     if (resolveReport.hasError) {
       Right(InvalidJobModule(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
     } else {
-      Left(JobModulePackage())
+      val artifactUrls = resolveReport.getAllArtifactsReports.map(_.getLocalFile.toURI.normalize.toURL)
+      Left(JobModulePackage(jobModuleId, artifactUrls))
     }
   }
 

@@ -2,9 +2,10 @@ package io.chronos.worker
 
 import akka.actor.{Actor, ActorLogging, Props}
 import io.chronos.id.ExecutionId
+import io.chronos.protocol.WorkerProtocol.{ResolutionFailed, WorkFailedCause}
+import io.chronos.resolver.JobModuleResolver
 import io.chronos.{Job, JobClass, Work}
 import org.codehaus.plexus.classworlds.ClassWorld
-import org.codehaus.plexus.classworlds.realm.ClassRealm
 
 import scala.util.{Failure, Success, Try}
 
@@ -14,41 +15,42 @@ import scala.util.{Failure, Success, Try}
 object JobExecutor {
 
   case class Execute(work: Work)
-  case class Failed(executionId: ExecutionId, cause: Throwable)
+
+  case class Failed(executionId: ExecutionId, reason: WorkFailedCause)
   case class Completed(executionId: ExecutionId, result: Any)
-  
-  def props(classWorld: ClassWorld, moduleResolver: ModuleResolver): Props =
+
+  def props(classWorld: ClassWorld, moduleResolver: JobModuleResolver): Props =
     Props(classOf[JobExecutor], classWorld, moduleResolver)
 }
 
-class JobExecutor(val classWorld: ClassWorld, val moduleResolver: ModuleResolver) extends Actor with ActorLogging {
+class JobExecutor(val classWorld: ClassWorld, val moduleResolver: JobModuleResolver) extends Actor with ActorLogging {
   import JobExecutor._
 
   def receive = {
     case Execute(work) =>
       log.info(s"Resolving module ${work.moduleId}")
-      val classRealm = resolveClassRealm(work.moduleId)
-      val jobClass = classRealm.loadClass(work.jobClass).asInstanceOf[JobClass]
 
-      log.info("Executing work. workId={}", work.executionId)
-      val jobInstance = jobClass.newInstance()
+      val classRealm = classWorld.newRealm(work.moduleId.toString)
+      moduleResolver.resolve(work.moduleId) match {
+        case Left(jobPackage) =>
+          jobPackage.classpath.foreach { classRealm.addURL }
+          val jobClass = classRealm.loadClass(work.jobClass).asInstanceOf[JobClass]
 
-      populateJobParams(jobClass, work.params, jobInstance)
+          log.info("Executing work. workId={}", work.executionId)
+          val jobInstance = jobClass.newInstance()
 
-      Try[Any](jobInstance.execute()) match {
-        case Success(result) =>
-          sender() ! Completed(work.executionId, result)
-        case Failure(cause) =>
-          sender() ! Failed(work.executionId, cause)
+          populateJobParams(jobClass, work.params, jobInstance)
+
+          Try[Any](jobInstance.execute()) match {
+            case Success(result) =>
+              sender() ! Completed(work.executionId, result)
+            case Failure(cause) =>
+              sender() ! Failed(work.executionId, Right(cause))
+          }
+
+        case Right(invalid) =>
+          sender() ! Failed(work.executionId, Left(ResolutionFailed(invalid.unresolvedDependencies)))
       }
-  }
-
-  private def resolveClassRealm(moduleId: JobModuleId): ClassRealm = {
-    val realm = classWorld.newRealm(moduleId.toString)
-    moduleResolver.resolveTransitive(moduleId).map(_.getArtifact).foreach { artifact =>
-      realm.addURL(artifact.getFile.toURI.toURL)
-    }
-    realm
   }
 
   private def populateJobParams[T <: Job](jobClass: JobClass, params: Map[String, Any], jobInstance: T): Unit = {
