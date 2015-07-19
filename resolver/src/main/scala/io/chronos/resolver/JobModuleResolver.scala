@@ -13,7 +13,13 @@ import org.apache.ivy.plugins.resolver.{DependencyResolver, URLResolver}
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
-class IvyJobModuleResolver(workDir: Path) {
+trait JobModuleResolver {
+
+  def resolve(jobModuleId: JobModuleId): Either[JobModulePackage, InvalidJobModule]
+
+}
+
+class IvyJobModuleResolver(workDir: Path) extends JobModuleResolver {
 
   private val ivySettings = new IvySettings()
   ivySettings.setBaseDir(workDir.toFile)

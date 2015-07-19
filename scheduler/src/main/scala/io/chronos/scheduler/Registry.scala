@@ -3,19 +3,19 @@ package io.chronos.scheduler
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
 import io.chronos.protocol.SchedulerProtocol._
-import io.chronos.resolver.IvyJobModuleResolver
+import io.chronos.resolver.JobModuleResolver
 
 /**
  * Created by aalonsodominguez on 10/07/15.
  */
-object Repository {
+object Registry {
 
-  def props(jobRepository: JobRepository, moduleResolver: IvyJobModuleResolver): Props =
-    Props(classOf[Repository], jobRepository, moduleResolver)
+  def props(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver): Props =
+    Props(classOf[Registry], jobRegistry, moduleResolver)
 
 }
 
-class Repository(jobRepository: JobRepository, moduleResolver: IvyJobModuleResolver) extends Actor with ActorLogging {
+class Registry(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver) extends Actor with ActorLogging {
 
   ClusterReceptionistExtension(context.system).registerService(self)
 
@@ -23,7 +23,7 @@ class Repository(jobRepository: JobRepository, moduleResolver: IvyJobModuleResol
     case RegisterJob(job) =>
       moduleResolver.resolve(job.moduleId) match {
         case Left(jobPackage) =>
-          jobRepository.registerJobSpec(job)
+          jobRegistry.registerJobSpec(job)
           log.info("Job spec has been registered. jobId={}, name={}", job.id, job.displayName)
           sender() ! RegisterJobAck
         case Right(invalidModule) =>
@@ -33,7 +33,7 @@ class Repository(jobRepository: JobRepository, moduleResolver: IvyJobModuleResol
 
     case GetJobSpecs =>
       log.info("Retrieving the available job specs from the registry.")
-      sender() ! JobSpecs(jobRepository.availableJobSpecs)
+      sender() ! JobSpecs(jobRegistry.availableJobSpecs)
 
   }
 }

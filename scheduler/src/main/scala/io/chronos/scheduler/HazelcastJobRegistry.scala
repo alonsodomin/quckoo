@@ -13,7 +13,7 @@ import scala.concurrent.duration.FiniteDuration
 /**
  * Created by aalonsodominguez on 09/07/15.
  */
-class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends JobRepository with ExecutionPlan with ExecutionQueue {
+class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends JobRegistry with ExecutionPlan with ExecutionQueue {
 
   private val jobRegistry = hazelcastInstance.getMap[JobId, JobSpec]("jobRegistry")
 

@@ -6,7 +6,7 @@ import io.chronos.id._
 /**
   * Created by domingueza on 10/07/15.
   */
-trait JobRepository {
+trait JobRegistry {
 
    def availableJobSpecs: Seq[JobSpec]
 

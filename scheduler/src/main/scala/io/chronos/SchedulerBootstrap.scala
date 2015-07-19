@@ -35,7 +35,7 @@ object SchedulerBootstrap extends App {
   system.actorOf(Props[ExecutionMonitor], "executions")
 
   system.actorOf(Scheduler.props(clock, jobRegistry), "scheduler")
-  system.actorOf(Repository.props(jobRegistry, moduleResolver), "repository")
+  system.actorOf(Registry.props(jobRegistry, moduleResolver), "repository")
 
   system.actorOf(Props[WorkResultConsumer], "consumer")
 
