@@ -20,6 +20,12 @@ class IvyConfiguration private (val baseDir: Path, val ivyHome: Path, val reposi
 object IvyConfiguration {
   val BaseDir = "ivy.workDir"
 
+  val DefaultRepositories = Seq(
+    Repository.mavenCentral,
+    Repository.mavenLocal,
+    Repository.sbtLocal("local")
+  )
+
   def apply(config: Config): IvyConfiguration = {
     val ivyHome = Paths.get(System.getProperty("user.home"), ".ivy2")
     apply(config, ivyHome)

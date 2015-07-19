@@ -4,7 +4,7 @@ import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
 import akka.contrib.pattern.ClusterClient
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
-import io.chronos.resolver.{IvyConfiguration, IvyJobModuleResolver, Repository}
+import io.chronos.resolver.{IvyConfiguration, IvyJobModuleResolver}
 import io.chronos.worker.{JobExecutor, Worker}
 import org.codehaus.plexus.classworlds.ClassWorld
 
@@ -24,12 +24,7 @@ object WorkerBootstrap extends App {
 
   val classWorld = new ClassWorld()
 
-  val repositories = Seq(
-    Repository.mavenCentral,
-    Repository.mavenLocal,
-    Repository.sbtLocal("local")
-  )
-  val ivyConfig = IvyConfiguration(conf) ++ repositories
+  val ivyConfig = IvyConfiguration(conf)
   val moduleResolver = new IvyJobModuleResolver(ivyConfig)
 
   val clusterClient = system.actorOf(ClusterClient.props(initialContacts), "clusterClient")
