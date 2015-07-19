@@ -10,6 +10,7 @@ object Dependencies {
   val aetherVersion = "1.0.2.v20150114"
 
   private val sharedLibs: Seq[ModuleID] = Seq(
+    "org.slf4s"       %% "slf4s-api"     % "1.7.12",
     "org.scala-lang"  % "scala-compiler" % scalaVersion,
     "org.scalatest"   %% "scalatest"     % "2.2.4" % "test"
   )

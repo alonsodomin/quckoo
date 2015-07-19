@@ -10,17 +10,18 @@ import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.apache.ivy.core.resolve.ResolveOptions
 import org.apache.ivy.core.settings.IvySettings
 import org.apache.ivy.plugins.resolver.{DependencyResolver, URLResolver}
+import org.slf4s.Logging
 
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
 trait JobModuleResolver {
 
-  def resolve(jobModuleId: JobModuleId): Either[JobModulePackage, ResolutionFailed]
+  def resolve(jobModuleId: JobModuleId, download: Boolean = false): Either[JobModulePackage, ResolutionFailed]
 
 }
 
-class IvyJobModuleResolver(workDir: Path) extends JobModuleResolver {
+class IvyJobModuleResolver(workDir: Path) extends JobModuleResolver with Logging {
 
   private val ivySettings = new IvySettings()
   ivySettings.setBaseDir(workDir.toFile)
@@ -41,10 +42,10 @@ class IvyJobModuleResolver(workDir: Path) extends JobModuleResolver {
 
   private val ivy = Ivy.newInstance(ivySettings)
 
-  def resolve(jobModuleId: JobModuleId): Either[JobModulePackage, ResolutionFailed] = {
+  def resolve(jobModuleId: JobModuleId, download: Boolean): Either[JobModulePackage, ResolutionFailed] = {
     val resolveOptions = new ResolveOptions()
     resolveOptions.setTransitive(true)
-    resolveOptions.setDownload(false)
+    resolveOptions.setDownload(download)
     resolveOptions.setOutputReport(false)
 
     val moduleDescriptor = DefaultModuleDescriptor.newDefaultInstance(
@@ -52,7 +53,7 @@ class IvyJobModuleResolver(workDir: Path) extends JobModuleResolver {
     )
 
     val moduleId = ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact, jobModuleId.version)
-    val dependencyDescriptor = new DefaultDependencyDescriptor(moduleDescriptor, moduleId, false, false, false)
+    val dependencyDescriptor = new DefaultDependencyDescriptor(moduleDescriptor, moduleId, false, false, true)
     dependencyDescriptor.addDependencyConfiguration("default", "master")
 
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
@@ -61,6 +62,8 @@ class IvyJobModuleResolver(workDir: Path) extends JobModuleResolver {
       Right(ResolutionFailed(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
     } else {
       val artifactUrls = resolveReport.getAllArtifactsReports.map(_.getLocalFile.toURI.normalize.toURL)
+      val artifactUrlsAsStr = artifactUrls.mkString(", ")
+      log.info(s"Resolver artifact URLs: $artifactUrlsAsStr")
       Left(JobModulePackage(jobModuleId, artifactUrls))
     }
   }

@@ -151,7 +151,7 @@ class Scheduler(implicit clock: Clock,
     case WorkFailed(workerId, executionId, cause) =>
       jobRegistry.executionById(executionId).map(_.stage) match {
         case Some(_: Execution.InProgress) =>
-          log.info("Execution {} failed by worker {}", executionId, workerId)
+          log.error("Execution {} failed by worker {}", executionId, workerId, cause)
           changeWorkerToIdle(workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Failed(cause))
           jobRegistry.updateExecution(executionId, executionStatus) { exec =>
@@ -193,7 +193,7 @@ class Scheduler(implicit clock: Clock,
     val now = Deadline.now
     val timeout = jobRegistry.executionTimeout(execution.executionId) match {
       case Some(t) => t
-      case None => maxWorkTimeout
+      case None    => maxWorkTimeout
     }
     now + timeout
   }

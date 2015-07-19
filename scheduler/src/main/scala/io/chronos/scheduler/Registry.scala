@@ -27,8 +27,8 @@ class Registry(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver) exte
           jobRegistry.registerJobSpec(job)
           log.info("Job spec has been registered. jobId={}, name={}", job.id, job.displayName)
           sender() ! RegisterJobAck
-        case Right(invalidModule) =>
-          log.error("Couldn't resolve the jod module {}. Unresolved dependencies: {}", job.moduleId, invalidModule.unresolvedDependencies)
+        case Right(failed) =>
+          log.error("Couldn't resolve the jod module {}. Unresolved dependencies: {}", job.moduleId, failed.unresolvedDependencies)
           sender() ! RegisterJobNAck()
       }
 
