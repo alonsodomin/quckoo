@@ -5,6 +5,7 @@ import io.chronos.protocol._
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor._
 import org.apache.ivy.core.module.id.ModuleRevisionId
+import org.apache.ivy.core.report.DownloadStatus
 import org.apache.ivy.core.resolve.ResolveOptions
 import org.slf4s.Logging
 
@@ -41,7 +42,9 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
     if (resolveReport.hasError) {
       Right(ResolutionFailed(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
     } else {
-      val artifactUrls = resolveReport.getAllArtifactsReports.map(_.getArtifact).map(_.getUrl)
+      val artifactUrls = resolveReport.getAllArtifactsReports.view.
+        filterNot(_.getDownloadStatus == DownloadStatus.FAILED).
+        map(_.getArtifact.getUrl)
       Left(JobModulePackage(jobModuleId, artifactUrls))
     }
   }
