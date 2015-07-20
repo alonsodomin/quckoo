@@ -3,8 +3,8 @@ package io.chronos.resolver
 import io.chronos.id.JobModuleId
 import io.chronos.protocol._
 import org.apache.ivy.Ivy
-import org.apache.ivy.core.module.descriptor.{Artifact, DefaultDependencyDescriptor, DefaultModuleDescriptor}
-import org.apache.ivy.core.module.id.ModuleRevisionId
+import org.apache.ivy.core.module.descriptor.{Artifact, DefaultDependencyDescriptor, DefaultModuleDescriptor, ModuleDescriptor}
+import org.apache.ivy.core.module.id.{ModuleId, ModuleRevisionId}
 import org.apache.ivy.core.resolve.{IvyNode, ResolveOptions}
 import org.slf4s.Logging
 
@@ -31,6 +31,28 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
       setOutputReport(true).
       setConfs(Array("default"))
 
+    val moduleDescriptor = defineIvyModule(jobModuleId)
+    val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
+
+    if (resolveReport.hasError) {
+      Right(ResolutionFailed(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
+    } else {
+      resolveReport.getModuleIds.map(m => m.asInstanceOf[ModuleId]).foreach(mid => {
+        log.info(s"Resolved module id: ${mid.toString}")
+      })
+      val nodes = resolveReport.getDependencies.map ( n => n.asInstanceOf[IvyNode] )
+      val artifacts = resolveReport.getArtifacts.map( a => a.asInstanceOf[Artifact] )
+      //val artifactUrls = resolveReport.getAllArtifactsReports.map(_.getArtifact.getUrl)
+      val artifactUrls = artifacts.map(_.getUrl)
+      val artifactUrlsAsStr = artifactUrls.mkString(", ")
+      log.info(s"Resolved artifact URLs: $artifactUrlsAsStr")
+      Left(JobModulePackage(jobModuleId, artifactUrls))
+    }
+  }
+
+  def retrieve(jobModuleId: JobModuleId): Either[JobModulePackage, ResolutionFailed] = ???
+
+  private def defineIvyModule(jobModuleId: JobModuleId): ModuleDescriptor = {
     val moduleDescriptor = DefaultModuleDescriptor.newDefaultInstance(
       ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact + "-job", jobModuleId.version)
     )
@@ -41,22 +63,10 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
     val moduleId = ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact, jobModuleId.version, jobModuleAttrs)
 
     val dependencyDescriptor = new DefaultDependencyDescriptor(moduleDescriptor, moduleId, false, false, true)
-    dependencyDescriptor.addDependencyConfiguration("default", "master")
+    //dependencyDescriptor.addDependencyConfiguration("default", "master")
     moduleDescriptor.addDependency(dependencyDescriptor)
 
-    val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
-
-    if (resolveReport.hasError) {
-      Right(ResolutionFailed(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
-    } else {
-      val nodes = resolveReport.getDependencies.map ( n => n.asInstanceOf[IvyNode] )
-      val artifacts = resolveReport.getArtifacts.map( a => a.asInstanceOf[Artifact] )
-      //val artifactUrls = resolveReport.getAllArtifactsReports.map(_.getArtifact.getUrl)
-      val artifactUrls = artifacts.map(_.getUrl)
-      val artifactUrlsAsStr = artifactUrls.mkString(", ")
-      log.info(s"Resolved artifact URLs: $artifactUrlsAsStr")
-      Left(JobModulePackage(jobModuleId, artifactUrls))
-    }
+    moduleDescriptor
   }
 
 }
