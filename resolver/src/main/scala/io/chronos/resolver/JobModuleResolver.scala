@@ -32,15 +32,16 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
       setConfs(Array("default"))
 
     val moduleDescriptor = DefaultModuleDescriptor.newDefaultInstance(
-      ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact + "-caller", jobModuleId.version)
+      ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact + "-job", jobModuleId.version)
     )
+    moduleDescriptor.setDefaultConf("default")
 
     var jobModuleAttrs: Map[String, String] = Map.empty
     jobModuleId.scalaVersion.foreach { scalaVersion => jobModuleAttrs += ("scalaVersion" -> scalaVersion) }
     val moduleId = ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact, jobModuleId.version, jobModuleAttrs)
 
     val dependencyDescriptor = new DefaultDependencyDescriptor(moduleDescriptor, moduleId, false, false, true)
-    //dependencyDescriptor.addDependencyConfiguration("default", "master")
+    dependencyDescriptor.addDependencyConfiguration("default", "master")
     moduleDescriptor.addDependency(dependencyDescriptor)
 
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
@@ -48,8 +49,8 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
     if (resolveReport.hasError) {
       Right(ResolutionFailed(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
     } else {
-      val dependencies = resolveReport.getDependencies.asInstanceOf[Seq[IvyNode]]
-      val artifacts = resolveReport.getArtifacts.asInstanceOf[Seq[Artifact]]
+      val nodes = resolveReport.getDependencies.map ( n => n.asInstanceOf[IvyNode] )
+      val artifacts = resolveReport.getArtifacts.map( a => a.asInstanceOf[Artifact] )
       //val artifactUrls = resolveReport.getAllArtifactsReports.map(_.getArtifact.getUrl)
       val artifactUrls = artifacts.map(_.getUrl)
       val artifactUrlsAsStr = artifactUrls.mkString(", ")
