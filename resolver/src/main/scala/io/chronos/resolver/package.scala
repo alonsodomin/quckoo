@@ -11,8 +11,12 @@ package object resolver {
 
   private[resolver] implicit def convertConfig2Settings(config: IvyConfiguration)(implicit log: Logger): IvySettings = {
     implicit val ivySettings = new IvySettings()
+    ivySettings.loadDefault()
     ivySettings.setBaseDir(config.baseDir.toFile)
-    ivySettings.setDefaultIvyUserDir(config.ivyHome.toFile)
+    config.ivyHome match {
+      case Some(home) => ivySettings.setDefaultIvyUserDir(home.toFile)
+      case None       =>
+    }
 
     val defaultResolverChain = buildResolverChain("default", IvyConfiguration.DefaultRepositories)
     val userResolverChain = buildResolverChain("user", config.repositories)

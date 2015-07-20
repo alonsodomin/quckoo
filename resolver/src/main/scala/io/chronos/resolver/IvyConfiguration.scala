@@ -7,7 +7,7 @@ import com.typesafe.config.Config
 /**
  * Created by aalonsodominguez on 19/07/2015.
  */
-class IvyConfiguration private (val baseDir: Path, val ivyHome: Path, val repositories: Seq[Repository] = Nil) {
+class IvyConfiguration private (val baseDir: Path, val ivyHome: Option[Path], val repositories: Seq[Repository] = Nil) {
 
   def :+ (repository: Repository): IvyConfiguration =
     new IvyConfiguration(baseDir, ivyHome, repositories :+ repository)
@@ -19,6 +19,7 @@ class IvyConfiguration private (val baseDir: Path, val ivyHome: Path, val reposi
 
 object IvyConfiguration {
   val BaseDir = "ivy.workDir"
+  val HomeDir = "ivy.home"
 
   val DefaultRepositories = Seq(
     Repository.mavenCentral,
@@ -27,13 +28,12 @@ object IvyConfiguration {
   )
 
   def apply(config: Config): IvyConfiguration = {
-    val ivyHome = Paths.get(System.getProperty("user.home"), ".ivy2")
-    apply(config, ivyHome)
-  }
-
-  def apply(config: Config, ivyHome: Path): IvyConfiguration = {
-    val baseDir = config.getString(BaseDir)
-    new IvyConfiguration(Paths.get(baseDir), ivyHome)
+    val baseDir = Paths.get(config.getString(BaseDir))
+    if (config.hasPath(HomeDir)) {
+      new IvyConfiguration(baseDir, Some(Paths.get(config.getString(HomeDir))))
+    } else {
+      new IvyConfiguration(baseDir, None)
+    }
   }
 
 }
