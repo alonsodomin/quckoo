@@ -52,10 +52,10 @@ object Repository {
     url(name, baseURL)
   }
 
-  def mavenCentral: Repository = mavenRemote("Central", new URL("http://repo1.maven.org/maven2"))
+  def mavenCentral: Repository = mavenRemote("Maven Central", new URL("http://repo1.maven.org/maven2"))
   def mavenLocal: Repository = {
     implicit val patterns: Patterns = mavenStylePatterns
-    file("Local", mavenLocalFolder)
+    file("Maven Local", mavenLocalFolder)
   }
 
   def sbtLocal(name: String): Repository = {

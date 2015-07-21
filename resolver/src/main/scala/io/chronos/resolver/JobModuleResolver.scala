@@ -74,7 +74,7 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
 
   private def artifactLocations(artifactReports: Seq[ArtifactDownloadReport]): Seq[URL] = {
     for (report <- artifactReports) yield {
-      Option(report.getLocalFile) match {
+      Option(report.getUnpackedLocalFile).orElse(Option(report.getLocalFile)) match {
         case Some(file) => Right(file)
         case None       => Left(report.getArtifact.getUrl)
       }
