@@ -7,7 +7,7 @@ import io.chronos.protocol._
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor._
 import org.apache.ivy.core.module.id.ModuleRevisionId
-import org.apache.ivy.core.report.{ArtifactDownloadReport, DownloadStatus}
+import org.apache.ivy.core.report.ArtifactDownloadReport
 import org.apache.ivy.core.resolve.ResolveOptions
 import org.codehaus.plexus.classworlds.ClassWorld
 import org.slf4s.Logging
@@ -32,25 +32,29 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
   private lazy val ivy = Ivy.newInstance(config)
 
   def resolve(jobModuleId: JobModuleId, download: Boolean)(implicit classWorld: ClassWorld): Either[JobModulePackage, ResolutionFailed] = {
-    val moduleDescriptor = defineIvyModule(jobModuleId)
+    val configurations = Array(DefaultConfName, "compile", "runtime")
+
+    val moduleDescriptor = DefaultModuleDescriptor.newCallerInstance(jobModuleId, configurations, true, false)
 
     val resolveOptions = new ResolveOptions().
       setTransitive(true).
       setValidate(true).
-      setDownload(download).
+      setDownload(true).
       setOutputReport(false).
       setResolveId(ResolveOptions.getDefaultResolveId(moduleDescriptor)).
-      setConfs(Array(DefaultConfName))
+      setConfs(configurations)
 
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
     if (resolveReport.hasError) {
       Right(ResolutionFailed(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
     } else {
-      val artifacts = resolveReport.getAllArtifactsReports.view.
-        filterNot(_.getDownloadStatus == DownloadStatus.FAILED)
-      Left(JobModulePackage(jobModuleId, artifactLocations(artifacts)))
+      Left(JobModulePackage(jobModuleId, artifactLocations(resolveReport.getAllArtifactsReports)))
     }
+  }
+
+  private def describeIvyModule(jobModuleId: JobModuleId): ModuleDescriptor = {
+    DefaultModuleDescriptor.newCallerInstance(jobModuleId, Array(DefaultConfName), true, false)
   }
 
   private def defineIvyModule(jobModuleId: JobModuleId): ModuleDescriptor = {
@@ -59,13 +63,7 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
     )
     moduleDescriptor.setDefaultConf(DefaultConfName)
 
-    val jobModuleAttrs: mutable.Map[String, String] = mutable.Map.empty
-    jobModuleId.scalaVersion.foreach { scalaVersion =>
-      jobModuleAttrs.put("scalaVersion", scalaVersion)
-    }
-    val moduleId = ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact, jobModuleId.version, jobModuleAttrs)
-
-    val dependencyDescriptor = new DefaultDependencyDescriptor(moduleDescriptor, moduleId, false, false, true)
+    val dependencyDescriptor = new DefaultDependencyDescriptor(moduleDescriptor, jobModuleId, false, false, true)
     dependencyDescriptor.addDependencyConfiguration(DefaultConfName, "*")
     moduleDescriptor.addDependency(dependencyDescriptor)
 
@@ -79,6 +77,14 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
         case None       => Left(report.getArtifact.getUrl)
       }
     } fold (identity, _.toURI.toURL)
+  }
+
+  private implicit def toModuleRevisionId(jobModuleId: JobModuleId): ModuleRevisionId = {
+    val jobModuleAttrs: mutable.Map[String, String] = mutable.Map.empty
+    jobModuleId.scalaVersion.foreach { scalaVersion =>
+      jobModuleAttrs.put("scalaVersion", scalaVersion)
+    }
+    ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact, jobModuleId.version, jobModuleAttrs)
   }
 
 }

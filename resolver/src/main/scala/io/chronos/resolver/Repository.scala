@@ -39,11 +39,12 @@ final case class FileRepository(name: String, patterns: Patterns) extends Reposi
 
 object Repository {
   private val mavenStyleBasePattern = "[organisation]/[module](_[scalaVersion])(_[sbtVersion])/[revision]/[artifact]-[revision](-[classifier]).[ext]"
-  private val sbtBasePattern = "[organisation]/[module](_[scalaVersion])/[revision]/[type]s/[artifact](_[scalaVersion])(-[classifier]).[ext]"
+  private val sbtIvyPattern = "[organisation]/[module](_[scalaVersion])/[revision]/[type]s/[artifact](-[classifier]).[ext]"
+  private val sbtArtifactPattern = "[organisation]/[module](_[scalaVersion])/[revision]/[type]s/[artifact](_[scalaVersion])(-[classifier]).[ext]"
 
   def mavenStylePatterns = Patterns(Nil, mavenStyleBasePattern :: Nil)
   def ivyStylePatterns: Patterns = {
-    val list = List(sbtBasePattern)
+    val list = List(sbtArtifactPattern)
     Patterns(list, list, mavenCompatible = false)
   }
 
@@ -59,7 +60,7 @@ object Repository {
   }
 
   def sbtLocal(name: String): Repository = {
-    val patternList = ("${ivy.home}/" + name + "/" + sbtBasePattern) :: Nil
+    val patternList = ("${ivy.home}/" + name + "/" + sbtArtifactPattern) :: Nil
     val patterns = Patterns(patternList, patternList, mavenCompatible = false)
     FileRepository(name, patterns)
   }

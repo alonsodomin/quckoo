@@ -28,10 +28,6 @@ class JobExecutor(implicit val classWorld: ClassWorld, val moduleResolver: JobMo
 
   def receive = {
     case Execute(work) =>
-      val classRealmId = work.moduleId.toString
-      val classRealm = Option(classWorld.getClassRealm(classRealmId)).
-        getOrElse(classWorld.newRealm(classRealmId))
-
       moduleResolver.resolve(work.moduleId, download = true) match {
         case Left(jobPackage) =>
           log.info("Executing work. workId={}", work.executionId)
