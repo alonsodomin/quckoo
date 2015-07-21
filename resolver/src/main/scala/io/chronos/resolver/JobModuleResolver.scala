@@ -25,11 +25,13 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
   private implicit val logger = log
 
   private val DefaultConfName = "default"
+  private val CompileConfName = "compile"
+  private val RuntimeConfName = "runtime"
 
   private lazy val ivy = Ivy.newInstance(config)
 
   def resolve(jobModuleId: JobModuleId, download: Boolean)(implicit classWorld: ClassWorld): Either[JobModulePackage, ResolutionFailed] = {
-    val configurations = Array(DefaultConfName, "compile", "runtime")
+    val configurations = Array(DefaultConfName, CompileConfName, RuntimeConfName)
 
     val moduleDescriptor = DefaultModuleDescriptor.newCallerInstance(jobModuleId, configurations, true, false)
 
@@ -38,8 +40,7 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
       setValidate(true).
       setDownload(true).
       setOutputReport(false).
-      setResolveId(ResolveOptions.getDefaultResolveId(moduleDescriptor)).
-      setConfs(configurations)
+      setConfs(Array(RuntimeConfName))
 
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
@@ -50,26 +51,10 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
     }
   }
 
-  private def describeIvyModule(jobModuleId: JobModuleId): ModuleDescriptor = {
-    DefaultModuleDescriptor.newCallerInstance(jobModuleId, Array(DefaultConfName), true, false)
-  }
-
-  private def defineIvyModule(jobModuleId: JobModuleId): ModuleDescriptor = {
-    val moduleDescriptor = DefaultModuleDescriptor.newDefaultInstance(
-      ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact + "-job", "working")
-    )
-    moduleDescriptor.setDefaultConf(DefaultConfName)
-
-    val dependencyDescriptor = new DefaultDependencyDescriptor(moduleDescriptor, jobModuleId, false, false, true)
-    dependencyDescriptor.addDependencyConfiguration(DefaultConfName, "*")
-    moduleDescriptor.addDependency(dependencyDescriptor)
-
-    moduleDescriptor
-  }
-
   private def artifactLocations(artifactReports: Seq[ArtifactDownloadReport]): Seq[URL] = {
     for (report <- artifactReports) yield {
-      Option(report.getUnpackedLocalFile).orElse(Option(report.getLocalFile)) match {
+      Option(report.getUnpackedLocalFile).
+        orElse(Option(report.getLocalFile)) match {
         case Some(file) => Right(file)
         case None       => Left(report.getArtifact.getUrl)
       }

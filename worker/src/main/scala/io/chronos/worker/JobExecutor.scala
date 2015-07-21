@@ -30,6 +30,9 @@ class JobExecutor(implicit val classWorld: ClassWorld, val moduleResolver: JobMo
     case Execute(work) =>
       moduleResolver.resolve(work.moduleId, download = true) match {
         case Left(jobPackage) =>
+          val cp = jobPackage.classpath.mkString(", ")
+          log.info(s"Module ${jobPackage.moduleId} classpath: $cp")
+
           log.info("Executing work. workId={}", work.executionId)
           jobPackage.newJob(work.jobClass, work.params) flatMap { job => Try(job.execute()) } match {
             case Success(result) =>

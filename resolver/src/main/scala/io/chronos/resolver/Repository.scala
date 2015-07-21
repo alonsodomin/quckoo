@@ -48,8 +48,8 @@ object Repository {
     url(name, baseURL)
   }
 
-  def mavenCentral: Repository = mavenRemote("Maven Central", new URL("http://repo1.maven.org/maven2"))
-  def mavenLocal: Repository = {
+  lazy val mavenCentral = mavenRemote("Maven Central", new URL("http://repo1.maven.org/maven2"))
+  lazy val mavenLocal: Repository = {
     implicit val patterns: Patterns = mavenStylePatterns
     file("Maven Local", mavenLocalFolder)
   }

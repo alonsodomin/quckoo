@@ -1,6 +1,6 @@
 package io.chronos.resolver
 
-import java.net.URL
+import java.net.{URL, URLClassLoader}
 
 import io.chronos.id.JobModuleId
 import io.chronos.{Job, JobClass}
@@ -16,10 +16,9 @@ import scala.util.Try
 object JobModulePackage extends Logging {
 
   def apply(moduleId: JobModuleId, classpath: Seq[URL])(implicit classWorld: ClassWorld): JobModulePackage = {
-    log.info(s"Module $moduleId classpath:")
-    classpath.foreach { url =>
-      log.info(url.toString)
-    }
+    val cp = classpath.mkString(", ")
+    log.info(s"Module $moduleId classpath: $cp")
+
     val classRealmId = moduleId.toString
     val classRealm = Option(classWorld.getClassRealm(classRealmId)).
       getOrElse(classWorld.newRealm(classRealmId))
@@ -31,7 +30,9 @@ object JobModulePackage extends Logging {
 
 class JobModulePackage private (val moduleId: JobModuleId, val classpath: Seq[URL], val classRealm: ClassRealm) {
 
-  def jobClass(className: String): Try[JobClass] = Try(classRealm.loadClass(className)).map { _.asInstanceOf[JobClass] }
+  private val classLoader = new URLClassLoader(classpath map { url => new URL("jar:" + url + "!/") } toArray)
+
+  def jobClass(className: String): Try[JobClass] = Try(Class.forName(className, true, classLoader)).map { _.asInstanceOf[JobClass] }
 
   def newJob(className: String, params: Map[String, Any]): Try[Job] = jobClass(className).flatMap { jobClass =>
     Try(jobClass.newInstance()).map { job =>
