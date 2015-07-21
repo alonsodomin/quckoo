@@ -78,31 +78,33 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
       case _                             => true
     }
 
+    @inline
     def underBatchLimit(pair: (ScheduleId, JobSchedule)): Boolean = itemCount < batchSize
 
-    fetchLock.lockInterruptibly()
-    try {
-      for ((scheduleId, schedule) <- scheduleMap.toMap.view filter notInProgress takeWhile underBatchLimit) {
-        referenceExecutionTime(scheduleId) match {
-          case Some(scheduledOrLastExecutedTime) =>
-            val nextExecutionTime = schedule.trigger.nextExecutionTime(clock, scheduledOrLastExecutedTime)
-            val now = ZonedDateTime.now(clock)
+    if(fetchLock.tryLock()) {
+      try {
+        for ((scheduleId, schedule) <- scheduleMap.toMap.view filter notInProgress takeWhile underBatchLimit) {
+          referenceExecutionTime(scheduleId) match {
+            case Some(scheduledOrLastExecutedTime) =>
+              val nextExecutionTime = schedule.trigger.nextExecutionTime(clock, scheduledOrLastExecutedTime)
+              val now = ZonedDateTime.now(clock)
 
-            nextExecutionTime match {
-              case Some(time) if time.isBefore(now) || time.isEqual(now) =>
-                executionById(executionBySchedule.get(scheduleId)).foreach { execution =>
-                  itemCount += 1
-                  consumer(execution)
-                }
-              case Some(_) =>
-              case None =>
-            }
+              nextExecutionTime match {
+                case Some(time) if time.isBefore(now) || time.isEqual(now) =>
+                  executionById(executionBySchedule.get(scheduleId)).foreach { execution =>
+                    itemCount += 1
+                    consumer(execution)
+                  }
+                case Some(_) =>
+                case None =>
+              }
 
-          case _ =>
+            case _ =>
+          }
         }
+      } finally {
+        fetchLock.unlock()
       }
-    } finally {
-      fetchLock.unlock()
     }
   }
   

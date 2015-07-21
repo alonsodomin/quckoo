@@ -7,7 +7,6 @@ scalacOptions in ThisBuild ++= Seq("-Xexperimental", "-language:postfixOps")
 
 resolvers in ThisBuild ++= Seq(
   Opts.resolver.mavenLocalFile,
-  "Scalaz Bintray Repo" at "https://dl.bintray.com/scalaz/releases",
   "ReactiveCouchbase Releases" at "https://raw.github.com/ReactiveCouchbase/repository/master/releases/",
   "Typesafe releases" at "http://repo.typesafe.com/typesafe/releases/"
 )

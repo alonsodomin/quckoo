@@ -16,9 +16,11 @@ object Dependencies {
   )
 
   val commonLibs: Seq[ModuleID] = sharedLibs ++ Seq(
-    "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-remote"  % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc()
+    "org.scalaz"        %% "scalaz-core"  % "7.1.3"     withSources() withJavadoc(),
+
+    "com.typesafe.akka" %% "akka-actor"   % akkaVersion withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-remote"  % akkaVersion withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-contrib" % akkaVersion withSources() withJavadoc()
   )
 
   val resolverLibs: Seq[ModuleID] = sharedLibs ++ Seq(
