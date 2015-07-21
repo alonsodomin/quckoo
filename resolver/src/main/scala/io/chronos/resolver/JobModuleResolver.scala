@@ -12,9 +12,6 @@ import org.apache.ivy.core.resolve.ResolveOptions
 import org.codehaus.plexus.classworlds.ClassWorld
 import org.slf4s.Logging
 
-import scala.collection.JavaConversions._
-import scala.collection.mutable
-
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
@@ -80,11 +77,7 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
   }
 
   private implicit def toModuleRevisionId(jobModuleId: JobModuleId): ModuleRevisionId = {
-    val jobModuleAttrs: mutable.Map[String, String] = mutable.Map.empty
-    jobModuleId.scalaVersion.foreach { scalaVersion =>
-      jobModuleAttrs.put("scalaVersion", scalaVersion)
-    }
-    ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact, jobModuleId.version, jobModuleAttrs)
+    ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact, jobModuleId.version)
   }
 
 }

@@ -39,14 +39,9 @@ final case class FileRepository(name: String, patterns: Patterns) extends Reposi
 
 object Repository {
   private val mavenStyleBasePattern = "[organisation]/[module](_[scalaVersion])(_[sbtVersion])/[revision]/[artifact]-[revision](-[classifier]).[ext]"
-  private val sbtIvyPattern = "[organisation]/[module](_[scalaVersion])/[revision]/[type]s/[artifact](-[classifier]).[ext]"
-  private val sbtArtifactPattern = "[organisation]/[module](_[scalaVersion])/[revision]/[type]s/[artifact](_[scalaVersion])(-[classifier]).[ext]"
+  private val sbtStylePattern = "[organisation]/[module]/[revision]/[type]s/[artifact](-[classifier]).[ext]"
 
   def mavenStylePatterns = Patterns(Nil, mavenStyleBasePattern :: Nil)
-  def ivyStylePatterns: Patterns = {
-    val list = List(sbtArtifactPattern)
-    Patterns(list, list, mavenCompatible = false)
-  }
 
   def mavenRemote(name: String, baseURL: URL): Repository = {
     implicit val patterns: Patterns = mavenStylePatterns
@@ -60,9 +55,8 @@ object Repository {
   }
 
   def sbtLocal(name: String): Repository = {
-    val ivys = ("${ivy.home}/" + name + "/" + sbtIvyPattern) :: Nil
-    val artifacts = ("${ivy.home}/" + name + "/" + sbtArtifactPattern) :: Nil
-    val patterns = Patterns(ivys, artifacts, mavenCompatible = false)
+    val pList = ("${ivy.home}/" + name + "/" + sbtStylePattern) :: Nil
+    val patterns = Patterns(pList, pList, mavenCompatible = false)
     FileRepository(name, patterns)
   }
 
