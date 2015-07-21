@@ -72,8 +72,8 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
     var itemCount: Int = 0
 
     def notInProgress(pair: (ScheduleId, JobSchedule)): Boolean = Option(executionBySchedule.get(pair._1)).
-      map(executionId => executionMap.get(executionId)).
-      map(execution => execution.stage) match {
+      map(executionMap.get).
+      map(_.stage) match {
       case Some(_: Execution.InProgress) => false
       case _                             => true
     }
@@ -82,17 +82,18 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
     fetchLock.lockInterruptibly()
     try {
-      for ((scheduleId, schedule) <- scheduleMap.toMap.filter(notInProgress).takeWhile(underBatchLimit)) {
+      for ((scheduleId, schedule) <- scheduleMap.toMap.view filter notInProgress takeWhile underBatchLimit) {
         referenceExecutionTime(scheduleId) match {
-          case Some(either) =>
-            val nextExecutionTime = schedule.trigger.nextExecutionTime(clock, either)
+          case Some(scheduledOrLastExecutedTime) =>
+            val nextExecutionTime = schedule.trigger.nextExecutionTime(clock, scheduledOrLastExecutedTime)
             val now = ZonedDateTime.now(clock)
 
             nextExecutionTime match {
               case Some(time) if time.isBefore(now) || time.isEqual(now) =>
-                val execution = executionById(executionBySchedule.get(scheduleId)).get
-                itemCount += 1
-                consumer(execution)
+                executionById(executionBySchedule.get(scheduleId)).foreach { execution =>
+                  itemCount += 1
+                  consumer(execution)
+                }
               case Some(_) =>
               case None =>
             }
@@ -165,11 +166,8 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
   @tailrec
   private def collectFrom[T](iterator: Iterator[T], accumulator: Seq[T]): Seq[T] = {
-    if (!iterator.hasNext) {
-      accumulator
-    } else {
-      collectFrom(iterator, accumulator :+ iterator.next())
-    }
+    if (!iterator.hasNext) accumulator
+    else collectFrom(iterator, accumulator :+ iterator.next())
   }
 
 }

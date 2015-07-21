@@ -22,7 +22,7 @@ object WorkerBootstrap extends App {
     case AddressFromURIString(addr) => system.actorSelection(RootActorPath(addr) / "user" / "receptionist")
   }.toSet
 
-  val classWorld = new ClassWorld()
+  val classWorld = new ClassWorld("chronos.worker", Thread.currentThread().getContextClassLoader)
 
   val ivyConfig = IvyConfiguration(conf)
   val moduleResolver = new IvyJobModuleResolver(ivyConfig)

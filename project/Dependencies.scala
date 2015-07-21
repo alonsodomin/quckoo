@@ -22,7 +22,8 @@ object Dependencies {
   )
 
   val resolverLibs: Seq[ModuleID] = sharedLibs ++ Seq(
-    "org.apache.ivy" % "ivy" % "2.4.0"
+    "org.apache.ivy"      % "ivy"                % "2.4.0" withSources() withJavadoc(),
+    "org.codehaus.plexus" % "plexus-classworlds" % "2.5.2" withSources() withJavadoc()
   )
 
   val schedulerLibs: Seq[ModuleID] = sharedLibs ++ Seq(
@@ -57,7 +58,7 @@ object Dependencies {
   )
 
   val workerLibs: Seq[ModuleID] = sharedLibs ++ Seq(
-    "org.codehaus.plexus" % "plexus-classworlds" % "2.5.2" withSources() withJavadoc()
+
   )
 
   val examplesLibs: Seq[ModuleID] = sharedLibs
