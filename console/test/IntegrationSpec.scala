@@ -1,7 +1,7 @@
-import org.junit.runner.RunWith
+import org.junit.runner._
 import org.specs2.mutable._
-import org.specs2.runner.JUnitRunner
-import play.test.WithBrowser
+import org.specs2.runner._
+import play.api.test._
 
 /**
  * add your integration spec here.
