@@ -23,6 +23,8 @@ object JobModulePackage extends Logging {
     val classRealm = Option(classWorld.getClassRealm(classRealmId)).
       getOrElse(classWorld.newRealm(classRealmId))
     classpath.foreach { classRealm.addURL }
+    val classpathArr = classpath.toArray
+    log.info("Classpath array count: " + classpathArr.length)
     new JobModulePackage(moduleId, classpath, classRealm)
   }
 
