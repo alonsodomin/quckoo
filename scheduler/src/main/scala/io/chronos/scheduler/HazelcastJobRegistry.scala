@@ -116,10 +116,10 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
     try {
       val updated = executionById(executionId) map (_ << newStage) get;
       newStage match {
-        case Execution.Triggered(_) =>
+        case _ : Execution.Triggered =>
           executionQueue.put(updated)
 
-        case Execution.Finished(_, _, _) =>
+        case _ : Execution.Finished =>
           scheduleMap.lock(executionId._1)
           try {
             if (!scheduleMap.get(executionId._1).isRecurring) {
