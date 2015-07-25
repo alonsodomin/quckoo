@@ -5,7 +5,6 @@ import io.chronos.Work
 import io.chronos.id.ExecutionId
 import io.chronos.protocol.ExecutionFailedCause
 import io.chronos.resolver.JobModuleResolver
-import org.codehaus.plexus.classworlds.ClassWorld
 
 import scala.util.{Failure, Success, Try}
 
@@ -19,11 +18,11 @@ object JobExecutor {
   case class Failed(executionId: ExecutionId, reason: ExecutionFailedCause)
   case class Completed(executionId: ExecutionId, result: Any)
 
-  def props(classWorld: ClassWorld, moduleResolver: JobModuleResolver): Props =
-    Props(classOf[JobExecutor], classWorld, moduleResolver)
+  def props(moduleResolver: JobModuleResolver): Props =
+    Props(classOf[JobExecutor], moduleResolver)
 }
 
-class JobExecutor(implicit val classWorld: ClassWorld, val moduleResolver: JobModuleResolver) extends Actor with ActorLogging {
+class JobExecutor(val moduleResolver: JobModuleResolver) extends Actor with ActorLogging {
   import JobExecutor._
 
   def receive = {
@@ -34,7 +33,7 @@ class JobExecutor(implicit val classWorld: ClassWorld, val moduleResolver: JobMo
           log.info(s"Module ${jobPackage.moduleId} classpath: $cp")
 
           log.info("Executing work. workId={}", work.executionId)
-          jobPackage.newJob(work.jobClass, work.params) flatMap { job => Try(job.execute()) } match {
+          jobPackage.newJob(work.jobClass, work.params) flatMap { job => Try(job.call()) } match {
             case Success(result) =>
               sender() ! Completed(work.executionId, result)
             case Failure(cause) =>

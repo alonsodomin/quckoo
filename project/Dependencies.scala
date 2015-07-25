@@ -7,10 +7,10 @@ object Dependencies {
   val akkaVersion = "2.3.11"
   val hazelcastVersion = "3.4.4"
   val sprayVersion = "1.3.3"
-  val aetherVersion = "1.0.2.v20150114"
+  val slf4jVersion = "1.7.12"
 
   private val sharedLibs: Seq[ModuleID] = Seq(
-    "org.slf4s"       %% "slf4s-api"     % "1.7.12",
+    "org.slf4s"       %% "slf4s-api"     % slf4jVersion,
     "org.scala-lang"  % "scala-compiler" % scalaVersion,
     "org.scalatest"   %% "scalatest"     % "2.2.4" % "test"
   )
@@ -24,8 +24,8 @@ object Dependencies {
   )
 
   val resolverLibs: Seq[ModuleID] = sharedLibs ++ Seq(
-    "org.apache.ivy"      % "ivy"                % "2.4.0" withSources() withJavadoc(),
-    "org.codehaus.plexus" % "plexus-classworlds" % "2.5.2" withSources() withJavadoc()
+    "org.apache.ivy" % "ivy"          % "2.4.0" withSources() withJavadoc(),
+    "org.slf4j"      % "slf4j-simple" % slf4jVersion % "test"
   )
 
   val schedulerLibs: Seq[ModuleID] = sharedLibs ++ Seq(

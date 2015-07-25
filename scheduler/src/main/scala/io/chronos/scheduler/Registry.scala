@@ -4,19 +4,18 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
 import io.chronos.protocol.SchedulerProtocol._
 import io.chronos.resolver.JobModuleResolver
-import org.codehaus.plexus.classworlds.ClassWorld
 
 /**
  * Created by aalonsodominguez on 10/07/15.
  */
 object Registry {
 
-  def props(jobRegistry: JobRegistry, classWorld: ClassWorld, moduleResolver: JobModuleResolver): Props =
-    Props(classOf[Registry], jobRegistry, classWorld, moduleResolver)
+  def props(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver): Props =
+    Props(classOf[Registry], jobRegistry, moduleResolver)
 
 }
 
-class Registry(jobRegistry: JobRegistry, implicit val classWorld: ClassWorld, moduleResolver: JobModuleResolver) extends Actor with ActorLogging {
+class Registry(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver) extends Actor with ActorLogging {
 
   ClusterReceptionistExtension(context.system).registerService(self)
 

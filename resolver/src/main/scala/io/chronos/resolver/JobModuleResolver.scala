@@ -9,7 +9,6 @@ import org.apache.ivy.core.module.descriptor._
 import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.apache.ivy.core.report.ArtifactDownloadReport
 import org.apache.ivy.core.resolve.ResolveOptions
-import org.codehaus.plexus.classworlds.ClassWorld
 import org.slf4s.Logging
 
 /**
@@ -17,7 +16,7 @@ import org.slf4s.Logging
  */
 trait JobModuleResolver {
 
-  def resolve(jobModuleId: JobModuleId, download: Boolean = false)(implicit classWorld: ClassWorld): Either[JobModulePackage, ResolutionFailed]
+  def resolve(jobModuleId: JobModuleId, download: Boolean = false): Either[JobModulePackage, ResolutionFailed]
 
 }
 
@@ -30,10 +29,10 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
 
   private lazy val ivy = Ivy.newInstance(config)
 
-  def resolve(jobModuleId: JobModuleId, download: Boolean)(implicit classWorld: ClassWorld): Either[JobModulePackage, ResolutionFailed] = {
+  def resolve(jobModuleId: JobModuleId, download: Boolean): Either[JobModulePackage, ResolutionFailed] = {
     val configurations = Array(DefaultConfName, CompileConfName, RuntimeConfName)
 
-    val moduleDescriptor = DefaultModuleDescriptor.newCallerInstance(jobModuleId, configurations, true, false)
+    val moduleDescriptor = DefaultModuleDescriptor.newCallerInstance(jobModuleId, configurations, true, true)
 
     val resolveOptions = new ResolveOptions().
       setTransitive(true).

@@ -1,5 +1,7 @@
 package io
 
+import java.util.concurrent.Callable
+
 import io.chronos.id.JobId
 
 import scala.concurrent.duration.FiniteDuration
@@ -9,7 +11,7 @@ import scala.concurrent.duration.FiniteDuration
  */
 package object chronos {
 
-  type JobClass = Class[_ <: Job]
+  type JobClass = Class[_ <: Callable[_]]
 
   implicit def convertJobIdToSchedule(jobId: JobId): JobSchedule = JobSchedule(jobId)
 

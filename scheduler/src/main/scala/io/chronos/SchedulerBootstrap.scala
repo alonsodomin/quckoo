@@ -7,7 +7,6 @@ import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyJobModuleResolver}
 import io.chronos.scheduler.{Scheduler, _}
-import org.codehaus.plexus.classworlds.ClassWorld
 
 /**
  * Created by domingueza on 09/07/15.
@@ -26,7 +25,6 @@ object SchedulerBootstrap extends App {
   val clock = Clock.systemUTC()
 
   val hazelcastInstance = Hazelcast.newHazelcastInstance()
-  val classWorld = new ClassWorld("chronos.worker", Thread.currentThread().getContextClassLoader)
   val jobRegistry = new HazelcastJobRegistry(hazelcastInstance)
 
   val ivyConfig = IvyConfiguration(conf)
@@ -36,7 +34,7 @@ object SchedulerBootstrap extends App {
   system.actorOf(Props[ExecutionMonitor], "executions")
 
   system.actorOf(Scheduler.props(clock, jobRegistry), "scheduler")
-  system.actorOf(Registry.props(jobRegistry, classWorld, moduleResolver), "repository")
+  system.actorOf(Registry.props(jobRegistry, moduleResolver), "repository")
 
   system.actorOf(Props[WorkResultConsumer], "consumer")
 

@@ -6,7 +6,6 @@ import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyJobModuleResolver}
 import io.chronos.worker.{JobExecutor, Worker}
-import org.codehaus.plexus.classworlds.ClassWorld
 
 /**
  * Created by domingueza on 09/07/15.
@@ -21,8 +20,6 @@ object WorkerBootstrap extends App {
   val initialContacts = immutableSeq(conf.getStringList("contact-points")).map {
     case AddressFromURIString(addr) => system.actorSelection(RootActorPath(addr) / "user" / "receptionist")
   }.toSet
-
-  val classWorld = new ClassWorld("chronos.worker", Thread.currentThread().getContextClassLoader)
 
   val ivyConfig = IvyConfiguration(conf)
   val moduleResolver = new IvyJobModuleResolver(ivyConfig)
