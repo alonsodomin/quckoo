@@ -7,12 +7,12 @@ import java.util.concurrent.Callable
 import io.chronos.id.JobModuleId
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
-import scala.util.{Failure, Success => Successful}
+import scala.util.{Success => Successful}
 
 /**
  * Created by aalonsodominguez on 25/07/15.
  */
-class JobModulePackageTest extends FlatSpec with Matchers with Inside {
+class JobModuleClassLoaderTest extends FlatSpec with Matchers with Inside {
 
   private val ivyCacheDir = new File(System.getProperty("user.home"), ".ivy2/cache")
 
@@ -21,16 +21,17 @@ class JobModulePackageTest extends FlatSpec with Matchers with Inside {
 
   private val TestModuleId = JobModuleId("io.chronos.test", "package-test", "SNAPSHOT")
 
-  "A JobModulePackage" should "load any class from an URL" in {
-    val jobPackage = JobModulePackage(TestModuleId, List(CommonsLoggingURL))
-    val loggerClass = jobPackage.loadClass("org.apache.commons.logging.Log")
-    loggerClass should matchPattern { case Successful(_) => }
+  "A JobModuleClassLoader" should "load any class from an URL" in {
+    val classLoader = new JobModuleClassLoader(Array(CommonsLoggingURL))
+    val loggerClass = classLoader.loadClass("org.apache.commons.logging.Log")
+    loggerClass should not be null
   }
 
-  it should "fail when asked to load a non existent class" in {
-    val jobPackage = JobModulePackage(TestModuleId, List(CommonsLoggingURL))
-    val failedClass = jobPackage.loadClass("com.example.FakeClass")
-    failedClass should matchPattern { case Failure(_) => }
+  it should "throw ClassNotFoundException when asked to load a non existent class" in {
+    val classLoader = new JobModuleClassLoader(Array(CommonsLoggingURL))
+    intercept[ClassNotFoundException] {
+      classLoader.loadClass("com.example.FakeClass")
+    }
   }
 
   it should "load a job class from an URL" in {

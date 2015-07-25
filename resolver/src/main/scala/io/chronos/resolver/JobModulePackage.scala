@@ -1,6 +1,6 @@
 package io.chronos.resolver
 
-import java.net.{URL, URLClassLoader}
+import java.net.URL
 import java.util.concurrent.Callable
 
 import io.chronos.JobClass
@@ -25,7 +25,7 @@ object JobModulePackage extends Logging {
 
 class JobModulePackage private (val moduleId: JobModuleId, val classpath: Seq[URL]) extends Logging {
 
-  private val classLoader = new URLClassLoader(classpath.toArray)
+  private val classLoader = new JobModuleClassLoader(classpath.toArray, Thread.currentThread().getContextClassLoader)
 
   private[resolver] def loadClass(className: String): Try[Class[_]] = Try(classLoader.loadClass(className))
 

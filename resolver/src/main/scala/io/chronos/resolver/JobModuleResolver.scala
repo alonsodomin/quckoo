@@ -37,7 +37,7 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
     val resolveOptions = new ResolveOptions().
       setTransitive(true).
       setValidate(true).
-      setDownload(true).
+      setDownload(download).
       setOutputReport(false).
       setConfs(Array(RuntimeConfName))
 

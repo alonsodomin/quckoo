@@ -46,6 +46,9 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
   def start: Receive = {
     case Tick =>
       receptor ! SchedulerProtocol.RegisterJob(jobSpec)
+
+    case SchedulerProtocol.RegisterJobAck =>
+      log.info("JobSpec has been registered. Moving on to produce job schedules.")
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       context.become(produce)
   }

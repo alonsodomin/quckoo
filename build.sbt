@@ -33,7 +33,7 @@ lazy val scheduler = (project in file("scheduler")).
   settings(
     libraryDependencies ++= Dependencies.schedulerLibs
   ).
-  settings(Revolver.settings: _*).
+  enablePlugins(JavaAppPackaging).
   dependsOn(common).
   dependsOn(resolver)
 
@@ -59,6 +59,7 @@ lazy val worker = (project in file("worker")).
   settings(
     libraryDependencies ++= Dependencies.workerLibs
   ).
+  enablePlugins(JavaAppPackaging).
   dependsOn(common).
   dependsOn(resolver)
 

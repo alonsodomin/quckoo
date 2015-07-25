@@ -31,15 +31,16 @@ class FacadeActor(client: ActorRef) extends Actor with ActorLogging {
   import FacadeActor._
   import SchedulerProtocol._
   import context.dispatcher
-  
+
+  implicit val timeout = Timeout(10.seconds)
+
   def receive = {
     case p: RegisterJob =>
       log.info("Publishing job spec. spec={}", p.job.id)
-      client ! Send(path.Repository, p, localAffinity = false)
+      (client ? Send(path.Repository, p, localAffinity = false)) pipeTo sender()
 
     case s: ScheduleJob =>
       log.info("Scheduling job. jobId={}, desc={}", s.schedule.jobId, s.schedule)
-      implicit val timeout = Timeout(5.seconds)
       (client ? SendToAll(path.Scheduler, s)) map {
         case ScheduleAck(jobId) => JobAccepted
       } recover {

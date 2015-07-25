@@ -25,6 +25,6 @@ object WorkerBootstrap extends App {
   val moduleResolver = new IvyJobModuleResolver(ivyConfig)
 
   val clusterClient = system.actorOf(ClusterClient.props(initialContacts), "clusterClient")
-  system.actorOf(Worker.props(clusterClient, JobExecutor.props(classWorld, moduleResolver)), "worker")
+  system.actorOf(Worker.props(clusterClient, JobExecutor.props(moduleResolver)), "worker")
 
 }

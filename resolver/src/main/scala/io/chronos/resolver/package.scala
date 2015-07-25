@@ -13,6 +13,7 @@ package object resolver {
     implicit val ivySettings = new IvySettings()
     ivySettings.loadDefault()
     ivySettings.setBaseDir(config.baseDir.toFile)
+    ivySettings.setDefaultCache(config.cacheDir.toFile)
     config.ivyHome match {
       case Some(home) => ivySettings.setDefaultIvyUserDir(home.toFile)
       case None       =>
