@@ -55,6 +55,11 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
     createExecution(scheduleId, schedule)
   }
 
+  def reschedule(scheduleId: ScheduleId)(implicit clock: Clock): Execution = {
+    require(scheduleMap.containsKey(scheduleId), s"There is not any job schedule for id: $scheduleId}")
+    createExecution(scheduleId, scheduleMap.get(scheduleId))
+  }
+
   def scheduledJobs: Seq[(ScheduleId, JobSchedule)] =
     collectFrom[(ScheduleId, JobSchedule)](scheduleMap.iterator, Vector[(ScheduleId, JobSchedule)]())
 
@@ -120,13 +125,16 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
           executionQueue.put(updated)
 
         case _ : Execution.Finished =>
-          scheduleMap.lock(executionId._1)
+          val (scheduleId, _) = executionId
+          scheduleMap.lock(scheduleId)
           try {
-            if (!scheduleMap.get(executionId._1).isRecurring) {
-              scheduleMap.remove(executionId._1)
+            val schedule = scheduleMap.get(scheduleId)
+            if (!schedule.isRecurring) {
+              scheduleMap.remove(scheduleId)
             }
+            executionBySchedule.remove(scheduleId)
           } finally {
-            scheduleMap.unlock(executionId._1)
+            scheduleMap.unlock(scheduleId)
           }
           
         case _ =>

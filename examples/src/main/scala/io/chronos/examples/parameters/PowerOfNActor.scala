@@ -8,7 +8,6 @@ import io.chronos.examples.FacadeActor
 import io.chronos.id.JobModuleId
 import io.chronos.protocol.SchedulerProtocol
 
-import scala.collection.immutable.HashMap
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ThreadLocalRandom
 
@@ -57,8 +56,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
     case Tick =>
       n += 1
       log.info("Produced work: {}", n)
-      val delay  = rnd.nextInt(1, 30)
-      val jobDef = JobSchedule(jobSpec.id, HashMap("n" -> n), Trigger.After(delay.seconds))
+      val jobDef = JobSchedule(jobSpec.id, Map("n" -> n), jobTrigger)
       receptor ! SchedulerProtocol.ScheduleJob(jobDef)
       context.become(waitAccepted, discardOld = false)
   }
@@ -75,4 +73,16 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
       scheduler.scheduleOnce(3.seconds, self, Tick)
       context.unbecome()
   }
+
+  private def jobTrigger: Trigger = rnd.nextInt(0, 3) match {
+    case 1 => // After random delay
+      val delay = rnd.nextInt(1, 30)
+      Trigger.After(delay seconds)
+    case 2 => // Every random seconds
+      val freq = rnd.nextInt(5, 10)
+      Trigger.Every(freq seconds)
+    case _ => // Immediate
+      Trigger.Immediate
+  }
+
 }

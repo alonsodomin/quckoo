@@ -67,7 +67,9 @@ case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = N
 
   def << (newStage: Stage): Execution = {
     if (stages.nonEmpty && stage > newStage) {
-      throw new IllegalArgumentException("Can't move the execution status to an earlier stage.")
+      throw new IllegalArgumentException(
+        s"Can't move the execution status to an earlier stage. executionId=$executionId, currentStage=$stage, newStage=$newStage"
+      )
     }
     copy(stages = newStage :: stages)
   }
