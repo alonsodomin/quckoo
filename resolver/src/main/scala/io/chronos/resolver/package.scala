@@ -2,14 +2,16 @@ package io.chronos
 
 import org.apache.ivy.core.settings.IvySettings
 import org.apache.ivy.plugins.resolver.ChainResolver
-import org.slf4s.Logger
+import org.slf4s.Logging
+
+import scala.language.implicitConversions
 
 /**
  * Created by aalonsodominguez on 19/07/2015.
  */
-package object resolver {
+package object resolver extends Logging {
 
-  private[resolver] implicit def convertConfig2Settings(config: IvyConfiguration)(implicit log: Logger): IvySettings = {
+  private[resolver] implicit def convertConfig2Settings(config: IvyConfiguration): IvySettings = {
     implicit val ivySettings = new IvySettings()
     ivySettings.loadDefault()
     ivySettings.setBaseDir(config.baseDir.toFile)

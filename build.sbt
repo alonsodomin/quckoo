@@ -1,9 +1,11 @@
 
 organization in ThisBuild := "io.chronos"
 
+version in ThisBuild := Commons.chronosVersion
+
 scalaVersion in ThisBuild := Dependencies.scalaVersion
 
-scalacOptions in ThisBuild ++= Seq("-Xexperimental", "-language:postfixOps")
+scalacOptions in ThisBuild ++= Seq("-Xexperimental", "-language:postfixOps", "-feature")
 
 resolvers in ThisBuild ++= Seq(
   Opts.resolver.mavenLocalFile,
@@ -12,7 +14,7 @@ resolvers in ThisBuild ++= Seq(
 )
 
 lazy val chronos = (project in file(".")).aggregate(
-  common, resolver, scheduler, examples, console, http, worker
+  common, resolver, scheduler, examples, console, worker
 )
 
 lazy val common = (project in file("common")).
@@ -46,13 +48,6 @@ lazy val console = (project in file("console")).
   ).
   dependsOn(common).
   dependsOn(examples)
-
-lazy val http = (project in file("http")).
-  settings(Commons.settings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.httpLibs
-  ).
-  dependsOn(common)
 
 lazy val worker = (project in file("worker")).
   settings(Commons.settings: _*).

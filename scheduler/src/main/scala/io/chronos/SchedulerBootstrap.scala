@@ -11,31 +11,33 @@ import io.chronos.scheduler.{Scheduler, _}
 /**
  * Created by domingueza on 09/07/15.
  */
-object SchedulerBootstrap extends App {
+object SchedulerBootstrap {
 
   val DefaultPort = 2551
 
-  val port = if (args.length > 0) args(0).toInt else DefaultPort
+  def main(args: Array[String]): Unit = {
+    val port = if (args.length > 0) args(0).toInt else DefaultPort
 
-  val conf = ConfigFactory.parseString("akka.cluster.roles=[scheduler]")
-    .withFallback(ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port))
-    .withFallback(ConfigFactory.load())
+    val conf = ConfigFactory.parseString("akka.cluster.roles=[scheduler]")
+      .withFallback(ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port))
+      .withFallback(ConfigFactory.load())
 
-  val system = ActorSystem("ClusterSystem", conf)
-  val clock = Clock.systemUTC()
+    val system = ActorSystem("ClusterSystem", conf)
+    val clock = Clock.systemUTC()
 
-  val hazelcastInstance = Hazelcast.newHazelcastInstance()
-  val jobRegistry = new HazelcastJobRegistry(hazelcastInstance)
+    val hazelcastInstance = Hazelcast.newHazelcastInstance()
+    val jobRegistry = new HazelcastJobRegistry(hazelcastInstance)
 
-  val ivyConfig = IvyConfiguration(conf)
-  val moduleResolver = new IvyJobModuleResolver(ivyConfig)
+    val ivyConfig = IvyConfiguration(conf)
+    val moduleResolver = new IvyJobModuleResolver(ivyConfig)
 
-  system.actorOf(Props[ClusterMonitor], "monitor")
-  system.actorOf(Props[ExecutionMonitor], "executions")
+    system.actorOf(Props[ClusterMonitor], "monitor")
+    system.actorOf(Props[ExecutionMonitor], "executions")
 
-  system.actorOf(Scheduler.props(clock, jobRegistry), "scheduler")
-  system.actorOf(Registry.props(jobRegistry, moduleResolver), "repository")
+    system.actorOf(Scheduler.props(clock, jobRegistry), "scheduler")
+    system.actorOf(Registry.props(jobRegistry, moduleResolver), "repository")
 
-  system.actorOf(Props[WorkResultConsumer], "consumer")
+    system.actorOf(Props[WorkResultConsumer], "consumer")
+  }
 
 }

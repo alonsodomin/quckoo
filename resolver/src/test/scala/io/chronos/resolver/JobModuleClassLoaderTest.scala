@@ -14,10 +14,11 @@ import scala.util.{Success => Successful}
  */
 class JobModuleClassLoaderTest extends FlatSpec with Matchers with Inside {
 
-  private val ivyCacheDir = new File(System.getProperty("user.home"), ".ivy2/cache")
+  private val SbtLocalDir = new File(System.getProperty("user.home"), ".ivy2/local")
+  private val ChronosVersion = "0.1.0-SNAPSHOT"
 
   private val CommonsLoggingURL = new URL("http://repo1.maven.org/maven2/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar")
-  private val ChronosExamplesURL = new File(ivyCacheDir, "io.chronos/examples_2.11/jars/examples_2.11-0.1.0.jar").toURI.toURL
+  private val ChronosExamplesURL = new File(SbtLocalDir, s"io.chronos/examples_2.11/$ChronosVersion/jars/examples_2.11.jar").toURI.toURL
 
   private val TestModuleId = JobModuleId("io.chronos.test", "package-test", "SNAPSHOT")
 

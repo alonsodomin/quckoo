@@ -5,16 +5,17 @@ import java.time.{Clock, ZonedDateTime}
 import io.chronos.id._
 import io.chronos.protocol.ExecutionFailedCause
 
+import scala.language.implicitConversions
+
 /**
  * Created by aalonsodominguez on 11/07/15.
  */
 object Execution {
 
-  def apply(executionId: ExecutionId)(implicit c: Clock): Execution = {
+  def apply(executionId: ExecutionId)(implicit c: Clock): Execution =
     new Execution(executionId) << Scheduled(ZonedDateTime.now(c))
-  }
   
-  sealed abstract class Stage(val ordinal: Int) extends Ordered[Stage] with Serializable {
+  sealed abstract class Stage(private val ordinal: Int) extends Ordered[Stage] with Serializable {
     implicit val when: ZonedDateTime
 
     override def compare(that: Stage): Int = ordinal compare that.ordinal
@@ -49,21 +50,6 @@ object Execution {
   val StartedStage = classOf[Started]
   val FinishedStage = classOf[Finished]
 
-  implicit def is(status: StatusType)(implicit e: Execution): Boolean =
-    implicitly[Execution].is(status)
-  implicit def at(stage: StageType, between: (ZonedDateTime, ZonedDateTime))(implicit e: Execution): Boolean =
-    implicitly[Execution].at(stage, between)
-
-  implicit def << (stage: Stage)(implicit e: Execution): Execution = implicitly[Execution].<<(stage)
-  
-  def compareByDate(stage: StageType): Ordering[Execution] = (x: Execution, y: Execution) => {
-    val comparison = for (
-      xStage <- x(stage);
-      yStage <- y(stage)
-    ) yield xStage.when.compareTo(yStage.when)
-    comparison getOrElse 0
-  }
-
 }
 
 case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = Nil) extends Serializable {
@@ -81,7 +67,7 @@ case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = N
 
   def << (newStage: Stage): Execution = {
     if (stages.nonEmpty && stage > newStage) {
-      throw new IllegalArgumentException("Can't move the execution to an earlier stage.")
+      throw new IllegalArgumentException("Can't move the execution status to an earlier stage.")
     }
     copy(stages = newStage :: stages)
   }
@@ -93,9 +79,10 @@ case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = N
 
   def at(stage: StageType, between: (ZonedDateTime, ZonedDateTime)): Boolean = {
     def stageFilter(st: Stage): Boolean = {
+      val (startDate, endDate) = between
       stage.isInstance(st) && (
-        (st.when.isEqual(between._1) || st.when.isAfter(between._1)) &&
-          (st.when.isBefore(between._2) || st.when.isEqual(between._2))
+        (st.when.isEqual(startDate) || st.when.isAfter(startDate)) &&
+          (st.when.isBefore(endDate) || st.when.isEqual(endDate))
       )
     }
     stages.count(stageFilter) > 0

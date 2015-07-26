@@ -1,4 +1,4 @@
-package io.chronos.worker
+package io.chronos.scheduler
 
 import akka.actor.ActorRef
 import io.chronos.id.ExecutionId

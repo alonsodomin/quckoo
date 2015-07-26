@@ -21,7 +21,6 @@ trait JobModuleResolver {
 }
 
 class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver with Logging {
-  private implicit val logger = log
 
   private val DefaultConfName = "default"
   private val CompileConfName = "compile"
@@ -30,9 +29,27 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
   private lazy val ivy = Ivy.newInstance(config)
 
   def resolve(jobModuleId: JobModuleId, download: Boolean): Either[JobModulePackage, ResolutionFailed] = {
+    def newCallerInstance(confs: Array[String]): ModuleDescriptor = {
+      val moduleRevisionId: ModuleRevisionId = ModuleRevisionId.newInstance(
+        jobModuleId.group, jobModuleId.artifact, jobModuleId.version
+      )
+
+      val descriptor = new DefaultModuleDescriptor(ModuleRevisionId.newInstance(
+        moduleRevisionId.getOrganisation, moduleRevisionId.getName + "-job", "working"), "execution", null, true
+      )
+      confs.foreach(c => descriptor.addConfiguration(new Configuration(c)))
+      descriptor.setLastModified(System.currentTimeMillis)
+
+      val dependencyDescriptor = new DefaultDependencyDescriptor(descriptor, moduleRevisionId, true, true, true)
+      confs.foreach(c => dependencyDescriptor.addDependencyConfiguration(c, c))
+      descriptor.addDependency(dependencyDescriptor)
+
+      descriptor
+    }
+
     val configurations = Array(DefaultConfName, CompileConfName, RuntimeConfName)
 
-    val moduleDescriptor = DefaultModuleDescriptor.newCallerInstance(jobModuleId, configurations, true, true)
+    val moduleDescriptor = newCallerInstance(configurations)
 
     val resolveOptions = new ResolveOptions().
       setTransitive(true).
@@ -58,10 +75,6 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
         case None       => Left(report.getArtifact.getUrl)
       }
     } fold (identity, _.toURI.toURL)
-  }
-
-  private implicit def toModuleRevisionId(jobModuleId: JobModuleId): ModuleRevisionId = {
-    ModuleRevisionId.newInstance(jobModuleId.group, jobModuleId.artifact, jobModuleId.version)
   }
 
 }

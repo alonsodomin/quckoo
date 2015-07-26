@@ -6,7 +6,6 @@ import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
 import akka.contrib.pattern._
 import io.chronos.id._
 import io.chronos.protocol.{SchedulerProtocol, WorkerProtocol}
-import io.chronos.worker.WorkerState
 import io.chronos.{Execution, Work, WorkResult, topic}
 
 import scala.concurrent.duration._
