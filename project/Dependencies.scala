@@ -13,10 +13,12 @@ object Dependencies {
   val slf4jVersion     = "1.7.12"
 
   private val basicLibs: Seq[ModuleID] = Seq(
-    "org.slf4s"       %% "slf4s-api"     % slf4jVersion           withSources() withJavadoc(),
-    "org.scala-lang"  %  "scala-reflect" % scalaVersion           withSources() withJavadoc(),
-    "org.scalatest"   %% "scalatest"     % "2.2.4"       % "test" withSources() withJavadoc(),
-    "org.slf4j"       % "slf4j-simple"   % slf4jVersion  % "test" withSources() withJavadoc()
+    "org.slf4s"              %% "slf4s-api"                   % slf4jVersion           withSources() withJavadoc(),
+    "org.scala-lang"         %  "scala-reflect"               % scalaVersion           withSources() withJavadoc(),
+    "org.scala-lang.modules" %% "scala-xml"                   % "1.0.4"                withSources() withJavadoc(),
+    "org.scalatest"          %% "scalatest"                   % "2.2.4"       % "test" withSources() withJavadoc(),
+    "org.scalamock"          %% "scalamock-scalatest-support" % "3.2.2"       % "test" withSources() withJavadoc(),
+    "org.slf4j"              % "slf4j-simple"                 % slf4jVersion  % "test" withSources() withJavadoc()
   )
 
   private val akkaLibs: Seq[ModuleID] = Seq(
@@ -30,6 +32,7 @@ object Dependencies {
   )
 
   private val loggingLibs: Seq[ModuleID] = Seq(
+    "org.slf4j"                % "jul-to-slf4j"     % slf4jVersion  % "runtime" withSources() withJavadoc(),
     "org.apache.logging.log4j" % "log4j-api"        % log4j2Version             withSources() withJavadoc(),
     "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4j2Version % "runtime" withSources() withJavadoc()
   )
@@ -37,9 +40,8 @@ object Dependencies {
   val commonLibs: Seq[ModuleID] = basicLibs
 
   val resolverLibs: Seq[ModuleID] = basicLibs ++ Seq(
-    "com.typesafe"           % "config"     % configVersion withSources() withJavadoc(),
-    "org.scala-lang.modules" %% "scala-xml" % "1.0.4"       withSources() withJavadoc(),
-    "org.apache.ivy"         % "ivy"        % "2.4.0"       withSources() withJavadoc()
+    "com.typesafe"   % "config"     % configVersion withSources() withJavadoc(),
+    "org.apache.ivy" % "ivy"        % "2.4.0"       withSources() withJavadoc()
   )
 
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(

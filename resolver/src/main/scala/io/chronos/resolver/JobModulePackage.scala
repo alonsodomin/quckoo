@@ -18,16 +18,17 @@ object JobModulePackage extends Logging {
     val cp = classpath.mkString(":")
     log.info(s"Module $moduleId classpath: $cp")
 
-    new JobModulePackage(moduleId, classpath)
+    val classLoader = new JobModuleClassLoader(classpath.toArray, Thread.currentThread().getContextClassLoader)
+    new JobModulePackage(moduleId, classLoader)
   }
 
 }
 
-class JobModulePackage private (val moduleId: JobModuleId, val classpath: Seq[URL]) extends Logging {
-
-  private val classLoader = new JobModuleClassLoader(classpath.toArray, Thread.currentThread().getContextClassLoader)
+class JobModulePackage private[resolver] (val moduleId: JobModuleId, classLoader: JobModuleClassLoader) extends Logging {
 
   private[resolver] def loadClass(className: String): Try[Class[_]] = Try(classLoader.loadClass(className))
+
+  def classpath: Seq[URL] = classLoader.getURLs
 
   def jobClass(className: String): Try[JobClass] = loadClass(className) map { _.asInstanceOf[JobClass] }
 
