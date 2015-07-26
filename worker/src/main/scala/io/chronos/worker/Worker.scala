@@ -66,11 +66,6 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
       context.become(waitForWorkDoneAck(result))
 
     case JobExecutor.Failed(executionId, reason) =>
-      reason match {
-        case Right(throwable) =>
-          log.error(throwable, "Execution {} has thrown an exception.", executionId)
-        case _ =>
-      }
       sendToMaster(WorkFailed(workerId, executionId, reason))
       context.setReceiveTimeout(5.seconds)
       context.become(idle)

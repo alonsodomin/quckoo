@@ -29,9 +29,6 @@ class JobExecutor(val moduleResolver: JobModuleResolver) extends Actor with Acto
     case Execute(work) =>
       moduleResolver.resolve(work.moduleId, download = true) match {
         case Left(jobPackage) =>
-          val cp = jobPackage.classpath.mkString(", ")
-          log.info(s"Module ${jobPackage.moduleId} classpath: $cp")
-
           log.info("Executing work. workId={}", work.executionId)
           jobPackage.newJob(work.jobClass, work.params) flatMap { job => Try(job.call()) } match {
             case Success(result) =>

@@ -1,9 +1,7 @@
-import akka.actor.{AddressFromURIString, Props, RootActorPath}
+import akka.actor.{AddressFromURIString, RootActorPath}
 import akka.contrib.pattern.ClusterClient
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
-import io.chronos.examples.FacadeActor
-import io.chronos.examples.parameters.PowerOfNActor
 import play.api.{Application, GlobalSettings}
 
 /**
@@ -20,10 +18,7 @@ object Global extends GlobalSettings {
       case AddressFromURIString(addr) => app.actorSystem.actorSelection(RootActorPath(addr) / "user" / "receptionist")
     }.toSet
 
-    val client = app.actorSystem.actorOf(ClusterClient.props(initialContacts), ChronosClient)
-
-    val frontend = app.actorSystem.actorOf(FacadeActor.props(client), "frontend")
-    app.actorSystem.actorOf(Props(classOf[PowerOfNActor], frontend), "producer")
+    app.actorSystem.actorOf(ClusterClient.props(initialContacts), ChronosClient)
   }
 
 }

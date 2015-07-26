@@ -46,8 +46,7 @@ lazy val console = (project in file("console")).
     libraryDependencies ++= Dependencies.consoleLibs,
     routesGenerator := InjectedRoutesGenerator
   ).
-  dependsOn(common).
-  dependsOn(examples)
+  dependsOn(common)
 
 lazy val worker = (project in file("worker")).
   settings(Commons.settings: _*).

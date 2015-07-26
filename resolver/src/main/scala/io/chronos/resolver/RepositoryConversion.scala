@@ -17,20 +17,18 @@ private[resolver] object RepositoryConversion {
 
   lazy val defaultConverter: RepositoryConverter = {
     case (r, settings) => r match {
-      case repo: URLRepository => {
+      case repo: URLRepository =>
         val resolver = new URLResolver
         resolver.setName(repo.name)
         initializePatterns(resolver, repo.patterns, settings)
         resolver
-      }
 
-      case repo: FileRepository => {
+      case repo: FileRepository =>
         val resolver = new FileSystemResolver
         resolver.setName(repo.name)
         initializePatterns(resolver, repo.patterns, settings)
         resolver.setLocal(true)
         resolver
-      }
     }
   }
 

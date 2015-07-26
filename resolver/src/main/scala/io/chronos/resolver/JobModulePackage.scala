@@ -15,16 +15,14 @@ import scala.util.Try
 object JobModulePackage extends Logging {
 
   def apply(moduleId: JobModuleId, classpath: Seq[URL]): JobModulePackage = {
-    val cp = classpath.mkString(":")
-    log.info(s"Module $moduleId classpath: $cp")
-
-    val classLoader = new JobModuleClassLoader(classpath.toArray, Thread.currentThread().getContextClassLoader)
-    new JobModulePackage(moduleId, classLoader)
+    new JobModulePackage(moduleId, new JobModuleClassLoader(classpath.toArray))
   }
 
 }
 
 class JobModulePackage private[resolver] (val moduleId: JobModuleId, classLoader: JobModuleClassLoader) extends Logging {
+
+  logCreation()
 
   private[resolver] def loadClass(className: String): Try[Class[_]] = Try(classLoader.loadClass(className))
 
@@ -45,6 +43,11 @@ class JobModulePackage private[resolver] (val moduleId: JobModuleId, classLoader
       }
       job
     }
+  }
+
+  private def logCreation(): Unit = {
+    val classpathStr = classpath.mkString("::")
+    log.info(s"Job package created for module $moduleId and classpath: $classpathStr")
   }
 
 }

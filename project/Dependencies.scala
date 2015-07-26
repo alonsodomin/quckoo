@@ -34,6 +34,7 @@ object Dependencies {
   private val loggingLibs: Seq[ModuleID] = Seq(
     "org.slf4j"                % "jul-to-slf4j"     % slf4jVersion  % "runtime" withSources() withJavadoc(),
     "org.apache.logging.log4j" % "log4j-api"        % log4j2Version             withSources() withJavadoc(),
+    "org.apache.logging.log4j" % "log4j-core"       % log4j2Version             withSources() withJavadoc(),
     "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4j2Version % "runtime" withSources() withJavadoc()
   )
 
