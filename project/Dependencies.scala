@@ -2,13 +2,15 @@ import play.sbt.PlayImport._
 import sbt._
 
 object Dependencies {
-  val scalaVersion = "2.11.7"
+  val scalaVersion     = "2.11.7"
 
-  val configVersion = "1.2.1"
-  val akkaVersion = "2.3.11"
+  val configVersion    = "1.2.1"
+  val akkaVersion      = "2.3.11"
   val hazelcastVersion = "3.4.4"
-  val sprayVersion = "1.3.3"
-  val slf4jVersion = "1.7.12"
+  val sprayVersion     = "1.3.3"
+
+  val log4j2Version    = "2.3"
+  val slf4jVersion     = "1.7.12"
 
   private val basicLibs: Seq[ModuleID] = Seq(
     "org.slf4s"       %% "slf4s-api"     % slf4jVersion           withSources() withJavadoc(),
@@ -27,6 +29,11 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc()
   )
 
+  private val loggingLibs: Seq[ModuleID] = Seq(
+    "org.apache.logging.log4j" % "log4j-api"        % log4j2Version             withSources() withJavadoc(),
+    "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4j2Version % "runtime" withSources() withJavadoc()
+  )
+
   val commonLibs: Seq[ModuleID] = basicLibs
 
   val resolverLibs: Seq[ModuleID] = basicLibs ++ Seq(
@@ -35,7 +42,7 @@ object Dependencies {
     "org.apache.ivy"         % "ivy"        % "2.4.0"       withSources() withJavadoc()
   )
 
-  val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ Seq(
+  val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
     "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
     "com.hazelcast" % "hazelcast-client" % hazelcastVersion withSources() withJavadoc(),
 
@@ -52,7 +59,7 @@ object Dependencies {
     specs2 % Test  
   )
 
-  val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs
+  val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs
 
   val examplesLibs: Seq[ModuleID] = basicLibs ++ akkaLibs
 
