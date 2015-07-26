@@ -3,42 +3,46 @@ import sbt._
 
 object Dependencies {
   val scalaVersion = "2.11.7"
-  
+
+  val configVersion = "1.2.1"
   val akkaVersion = "2.3.11"
   val hazelcastVersion = "3.4.4"
   val sprayVersion = "1.3.3"
   val slf4jVersion = "1.7.12"
 
-  private val sharedLibs: Seq[ModuleID] = Seq(
-    "org.slf4s"       %% "slf4s-api"     % slf4jVersion,
-    "org.scalatest"   %% "scalatest"     % "2.2.4"       % "test",
-    "org.slf4j"       % "slf4j-simple"   % slf4jVersion  % "test"
+  private val basicLibs: Seq[ModuleID] = Seq(
+    "org.slf4s"       %% "slf4s-api"     % slf4jVersion           withSources() withJavadoc(),
+    "org.scala-lang"  %  "scala-reflect" % scalaVersion           withSources() withJavadoc(),
+    "org.scalatest"   %% "scalatest"     % "2.2.4"       % "test" withSources() withJavadoc(),
+    "org.slf4j"       % "slf4j-simple"   % slf4jVersion  % "test" withSources() withJavadoc()
   )
 
-  val commonLibs: Seq[ModuleID] = sharedLibs
-
-  val resolverLibs: Seq[ModuleID] = sharedLibs ++ Seq(
-    "org.apache.ivy" % "ivy"          % "2.4.0" withSources() withJavadoc()
-  )
-
-  val schedulerLibs: Seq[ModuleID] = sharedLibs ++ Seq(
-    "com.typesafe.akka" %% "akka-actor"   % akkaVersion withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-remote"  % akkaVersion withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-contrib" % akkaVersion withSources() withJavadoc(),
+  private val akkaLibs: Seq[ModuleID] = Seq(
+    "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-remote"  % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-cluster" % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc()
+      exclude ("com.typesafe.akka", "akka-persistence-experimental_2.11"),
     "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc()
+  )
 
+  val commonLibs: Seq[ModuleID] = basicLibs
+
+  val resolverLibs: Seq[ModuleID] = basicLibs ++ Seq(
+    "com.typesafe"           % "config"     % configVersion withSources() withJavadoc(),
+    "org.scala-lang.modules" %% "scala-xml" % "1.0.4"       withSources() withJavadoc(),
+    "org.apache.ivy"         % "ivy"        % "2.4.0"       withSources() withJavadoc()
+  )
+
+  val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ Seq(
     "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
     "com.hazelcast" % "hazelcast-client" % hazelcastVersion withSources() withJavadoc(),
 
     "commons-io"    % "commons-io" % "2.4" % "test"
   )
 
-  val consoleLibs: Seq[ModuleID] = Seq(
-    "com.typesafe.akka" %% "akka-actor"   % akkaVersion withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-remote"  % akkaVersion withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-cluster" % akkaVersion withSources() withJavadoc(),
-
+  val consoleLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ Seq(
     "org.webjars"       %% "webjars-play"      % "2.4.0-1"        withSources() withJavadoc(),
     "org.webjars"       % "font-awesome"       % "4.3.0-3",
     "org.webjars"       % "bootstrap"          % "3.3.5",
@@ -48,14 +52,8 @@ object Dependencies {
     specs2 % Test  
   )
 
-  val workerLibs: Seq[ModuleID] = sharedLibs ++ Seq(
-    "com.typesafe.akka" %% "akka-actor"   % akkaVersion withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-remote"  % akkaVersion withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-cluster" % akkaVersion withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc()
-  )
+  val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs
 
-  val examplesLibs: Seq[ModuleID] = sharedLibs
+  val examplesLibs: Seq[ModuleID] = basicLibs ++ akkaLibs
 
 }

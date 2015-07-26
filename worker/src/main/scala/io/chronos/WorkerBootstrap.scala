@@ -1,6 +1,7 @@
 package io.chronos
 
 import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
+import akka.contrib.pattern.ClusterClient
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyJobModuleResolver}

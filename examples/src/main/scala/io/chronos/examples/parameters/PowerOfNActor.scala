@@ -2,6 +2,7 @@ package io.chronos.examples.parameters
 
 import java.util.UUID
 
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.chronos._
 import io.chronos.examples.FacadeActor
 import io.chronos.id.JobModuleId
@@ -23,6 +24,7 @@ object PowerOfNActor {
 
 class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
   import PowerOfNActor._
+  import context.dispatcher
 
   def scheduler = context.system.scheduler
   def rnd = ThreadLocalRandom.current
