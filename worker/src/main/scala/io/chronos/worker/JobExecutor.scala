@@ -28,7 +28,7 @@ class JobExecutor(val moduleResolver: JobModuleResolver) extends Actor with Acto
   def receive = {
     case Execute(work) =>
       moduleResolver.resolve(work.moduleId, download = true) match {
-        case Left(jobPackage) =>
+        case Right(jobPackage) =>
           log.info("Executing work. workId={}", work.executionId)
           jobPackage.newJob(work.jobClass, work.params) flatMap { job => Try(job.call()) } match {
             case Success(result) =>
@@ -37,7 +37,7 @@ class JobExecutor(val moduleResolver: JobModuleResolver) extends Actor with Acto
               sender() ! Failed(work.executionId, Right(cause))
           }
 
-        case Right(resolutionFailed) =>
+        case Left(resolutionFailed) =>
           sender() ! Failed(work.executionId, Left(resolutionFailed))
       }
   }

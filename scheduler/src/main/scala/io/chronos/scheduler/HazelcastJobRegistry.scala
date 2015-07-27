@@ -9,11 +9,12 @@ import io.chronos.id.{ExecutionId, JobId, ScheduleId}
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
+import scala.util.{Success, Try}
 
 /**
  * Created by aalonsodominguez on 09/07/15.
  */
-class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends JobRegistry with ExecutionPlan with ExecutionQueue {
+class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) {
 
   private val jobRegistry = hazelcastInstance.getMap[JobId, JobSpec]("jobRegistry")
 
@@ -29,11 +30,14 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) extends Job
 
   private val executionQueue = hazelcastInstance.getQueue[Execution]("executionQueue")
 
-  override def availableJobSpecs: Seq[JobSpec] = {
+  def availableJobSpecs: Seq[JobSpec] = {
     collectFrom(jobRegistry.values().iterator(), Vector())
   }
 
-  override def registerJobSpec(jobSpec: JobSpec): Unit = jobRegistry.put(jobSpec.id, jobSpec)
+  def registerJobSpec(jobSpec: JobSpec): Try[JobId] = {
+    jobRegistry.put(jobSpec.id, jobSpec)
+    Success(jobSpec.id)
+  }
 
   def specById(jobId: JobId): Option[JobSpec] = Option(jobRegistry.get(jobId))
 

@@ -10,24 +10,24 @@ import io.chronos.resolver.JobModuleResolver
  */
 object Registry {
 
-  def props(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver): Props =
+  def props(jobRegistry: HazelcastJobRegistry, moduleResolver: JobModuleResolver): Props =
     Props(classOf[Registry], jobRegistry, moduleResolver)
 
 }
 
-class Registry(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver) extends Actor with ActorLogging {
+class Registry(jobRegistry: HazelcastJobRegistry, moduleResolver: JobModuleResolver) extends Actor with ActorLogging {
 
   ClusterReceptionistExtension(context.system).registerService(self)
 
   override def receive: Receive = {
     case RegisterJob(job) =>
       moduleResolver.resolve(job.moduleId) match {
-        case Left(jobPackage) =>
+        case Right(jobPackage) =>
           log.info("Job module {} has been successfully resolved.", job.moduleId)
           jobRegistry.registerJobSpec(job)
           log.info("Job spec has been registered. jobId={}, name={}", job.id, job.displayName)
           sender() ! RegisterJobAck
-        case Right(failed) =>
+        case Left(failed) =>
           log.error("Couldn't resolve the jod module {}. Unresolved dependencies: {}", job.moduleId, failed.unresolvedDependencies)
           sender() ! RegisterJobNAck()
       }

@@ -25,7 +25,7 @@ class ChronosClient @Inject() (system: ActorSystem) {
   def availableJobSpecs: Future[Seq[JobSpec]] = {
     implicit val timeout = Timeout(10.seconds)
 
-    (chronosClient ? Send(path.Repository, GetJobSpecs, localAffinity = false)).
+    (chronosClient ? Send(path.Registry, GetJobSpecs, localAffinity = false)).
       asInstanceOf[Future[JobSpecs]] map { response => response.specs }
   }
 

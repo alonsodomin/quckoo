@@ -18,7 +18,7 @@ trait ExecutionPlan {
 
   def reschedule(scheduleId: ScheduleId)(implicit clock: Clock): Execution
 
-  def fetchOverdueExecutions(batchSize: Int)(consumer: Execution => Unit)(implicit clock: Clock): Unit
+  def forEachOverdueExecution(batchSize: Int)(f: Execution => Unit)(implicit clock: Clock): Unit
 
   def lastExecutionTime(scheduleId: ScheduleId): Option[ZonedDateTime]
 

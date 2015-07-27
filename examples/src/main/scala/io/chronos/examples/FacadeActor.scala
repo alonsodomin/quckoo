@@ -37,7 +37,7 @@ class FacadeActor(client: ActorRef) extends Actor with ActorLogging {
   def receive = {
     case p: RegisterJob =>
       log.info("Publishing job spec. spec={}", p.job.id)
-      (client ? Send(path.Repository, p, localAffinity = false)) pipeTo sender()
+      (client ? Send(path.Registry, p, localAffinity = false)) pipeTo sender()
 
     case s: ScheduleJob =>
       log.info("Scheduling job. jobId={}, desc={}", s.schedule.jobId, s.schedule)

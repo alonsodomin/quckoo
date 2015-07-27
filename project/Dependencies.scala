@@ -7,6 +7,7 @@ object Dependencies {
   val configVersion    = "1.2.1"
   val akkaVersion      = "2.3.11"
   val hazelcastVersion = "3.4.4"
+  val igniteVersion    = "1.3.0-incubating"
   val sprayVersion     = "1.3.3"
 
   val log4j2Version    = "2.3"
@@ -48,6 +49,8 @@ object Dependencies {
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
     "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
     "com.hazelcast" % "hazelcast-client" % hazelcastVersion withSources() withJavadoc(),
+
+    "org.apache.ignite" % "ignite-core" % igniteVersion withSources() withJavadoc(),
 
     "commons-io"    % "commons-io" % "2.4" % "test"
   )
