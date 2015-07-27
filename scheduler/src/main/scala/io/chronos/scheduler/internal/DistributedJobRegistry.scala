@@ -4,11 +4,9 @@ import io.chronos.JobSpec
 import io.chronos.id._
 import io.chronos.scheduler.JobRegistry
 import org.apache.ignite.Ignite
-import org.apache.ignite.lang.{IgniteFuture, IgniteInClosure}
 
 import scala.collection.JavaConversions._
 import scala.concurrent._
-import scala.util.Try
 
 /**
  * Created by aalonsodominguez on 26/07/15.
@@ -26,12 +24,6 @@ trait DistributedJobRegistry extends JobRegistry {
   override def registerJobSpec(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[JobId] = {
     jobSpecCache.put(jobSpec.id, jobSpec)
     Future { jobSpec.id }
-  }
-
-  private class IgniteFutureListener[A, B](promise: Promise[B], f: A => B) extends IgniteInClosure[IgniteFuture[A]] {
-    override def apply(e: IgniteFuture[A]): Unit = {
-      promise.complete(Try(e.get()).map(f(_)))
-    }
   }
 
 }
