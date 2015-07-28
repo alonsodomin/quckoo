@@ -21,6 +21,8 @@ trait DistributedJobRegistry extends JobRegistry {
 
   override def specById(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] = Future { Option(jobSpecCache.get(jobId)) }
 
+  def hasJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Boolean] = Future { jobSpecCache.containsKey(jobId) }
+
   override def registerJobSpec(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[JobId] = {
     jobSpecCache.put(jobSpec.id, jobSpec)
     Future { jobSpec.id }

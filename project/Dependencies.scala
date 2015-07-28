@@ -50,7 +50,8 @@ object Dependencies {
     "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
     "com.hazelcast" % "hazelcast-client" % hazelcastVersion withSources() withJavadoc(),
 
-    "org.apache.ignite" % "ignite-core" % igniteVersion withSources() withJavadoc(),
+    "com.jsuereth"      %% "scala-arm"   % "2.0.0-M1"    withSources() withJavadoc(),
+    "org.apache.ignite"  % "ignite-core" % igniteVersion withSources() withJavadoc(),
 
     "commons-io"    % "commons-io" % "2.4" % "test"
   )

@@ -75,7 +75,7 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) {
   def nextExecution = executionQueue.take()
 
   def executionTimeout(executionId: ExecutionId): Option[FiniteDuration] =
-    scheduleById(executionId._1).flatMap(job => job.timeout)
+    scheduleById(executionId._1).flatMap(_.timeout)
 
   def fetchOverdueExecutions(batchSize: Int)(consumer: Execution => Unit)(implicit clock: Clock): Unit = {
     var itemCount: Int = 0

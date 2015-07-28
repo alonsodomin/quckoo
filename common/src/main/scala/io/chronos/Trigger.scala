@@ -9,14 +9,24 @@ import scala.concurrent.duration._
  * Created by aalonsodominguez on 08/07/15.
  */
 trait Trigger extends Serializable {
+  import Trigger.ReferenceTime
 
+  @deprecated
   def nextExecutionTime(clock: Clock, referenceTime: Either[ZonedDateTime, ZonedDateTime]): Option[ZonedDateTime]
+
+  def nextExecutionTime(referenceTime: ReferenceTime)(implicit clock: Clock): Option[ZonedDateTime] = ???
 
   def isRecurring: Boolean = false
 
 }
 
 object Trigger {
+
+  sealed trait ReferenceTime {
+    implicit val when: ZonedDateTime
+  }
+  case class ScheduledTime(when: ZonedDateTime) extends ReferenceTime
+  case class LastExecutionTime(when: ZonedDateTime) extends ReferenceTime
 
   case object Immediate extends Trigger {
 
