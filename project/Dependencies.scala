@@ -47,6 +47,8 @@ object Dependencies {
   )
 
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
+    "com.typesafe.akka" %% "akka-stream-experimental" % "1.0",
+
     "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
     "com.hazelcast" % "hazelcast-client" % hazelcastVersion withSources() withJavadoc(),
 

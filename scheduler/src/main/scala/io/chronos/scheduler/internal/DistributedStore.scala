@@ -24,7 +24,7 @@ class DistributedStore(val ignite: Ignite, val queueCapacity: Int) extends Distr
 
   def sweepOverdue(f: Execution => Unit)(implicit clock: Clock, ec: ExecutionContext): Unit = {
     val now = ZonedDateTime.now(clock)
-    scanSchedules((scheduleId, schedule) => {
+    scanSchedules(_ => true, (scheduleId, schedule) => {
       referenceTime(scheduleId) map {
         case Some(refTime) => schedule.trigger.nextExecutionTime(refTime)
         case _             => None

@@ -4,6 +4,8 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
 import io.chronos.protocol.RegistryProtocol
 import io.chronos.resolver.JobModuleResolver
+import io.chronos.scheduler.internal.DistributedJobRegistry
+import org.apache.ignite.Ignite
 
 import scala.util.{Failure, Success}
 
@@ -12,12 +14,12 @@ import scala.util.{Failure, Success}
  */
 object RegistryActor {
 
-  def props(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver): Props =
-    Props(classOf[RegistryActor], jobRegistry, moduleResolver)
+  def props(ignite: Ignite, moduleResolver: JobModuleResolver): Props =
+    Props(classOf[RegistryActor], ignite, moduleResolver)
 
 }
 
-class RegistryActor(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver) extends Actor with ActorLogging {
+class RegistryActor(val ignite: Ignite, moduleResolver: JobModuleResolver) extends Actor with ActorLogging with DistributedJobRegistry {
   import RegistryProtocol._
   import context.dispatcher
 
@@ -36,7 +38,7 @@ class RegistryActor(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver)
 
         case Right(modulePackage) =>
           log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
-          jobRegistry.registerJobSpec(jobSpec).onComplete {
+          registerJobSpec(jobSpec).onComplete {
             case Success(jobId) =>
               log.info("Job spec has been registered. jobId={}, name={}", jobId, jobSpec.displayName)
               sender() ! JobAccepted(jobId)
@@ -48,7 +50,7 @@ class RegistryActor(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver)
       }
 
     case GetRegisteredJobs =>
-      jobRegistry.availableJobSpecs.onComplete {
+      availableJobSpecs.onComplete {
         case Success(jobSpecs) =>
           sender() ! RegisteredJobs(jobSpecs)
         case Failure(cause) =>

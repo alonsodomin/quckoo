@@ -29,10 +29,13 @@ trait DistributedExecutionCache {
     Future { Option(executionMap.get(executionId)).map(_.stage) }
 
   protected def referenceTime(scheduleId: ScheduleId)(implicit ec: ExecutionContext): Future[Option[ReferenceTime]] =
-    executionBySchedule(scheduleId).map(_.flatMap(execId => Option(executionMap.get(execId))).map(_.stage).map {
-      case Execution.Scheduled(when)      => ScheduledTime(when)
-      case Execution.Finished(when, _, _) => LastExecutionTime(when)
-    })
+    Future {
+      Option(executionBySchedule.get(scheduleId)).flatMap(execId => Option(executionMap.get(execId))).map(_.stage).flatMap {
+        case Execution.Scheduled(when)      => Some(ScheduledTime(when))
+        case Execution.Finished(when, _, _) => Some(LastExecutionTime(when))
+        case _                              => None
+      }
+    }
 
   protected def newExecution(scheduleId: ScheduleId)(implicit clock: Clock, ec: ExecutionContext): Future[Execution] = Future {
     val executionId = (scheduleId, executionCounter.incrementAndGet())
