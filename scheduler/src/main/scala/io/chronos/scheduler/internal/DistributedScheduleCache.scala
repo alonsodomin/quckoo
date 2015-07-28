@@ -19,7 +19,7 @@ trait DistributedScheduleCache {
   protected implicit val ignite: Ignite
 
   private val scheduleCounter = ignite.atomicSequence("scheduleCounter", 0, true)
-  private val scheduleMap = ignite.getOrCreateCache[ScheduleId, JobSchedule]("scheduleMap")
+  protected val scheduleMap = ignite.getOrCreateCache[ScheduleId, JobSchedule]("scheduleMap")
   
   def scheduleById(scheduleId: ScheduleId)(implicit ec: ExecutionContext): Future[Option[JobSchedule]] =
     Future { Option(scheduleMap.get(scheduleId)) }

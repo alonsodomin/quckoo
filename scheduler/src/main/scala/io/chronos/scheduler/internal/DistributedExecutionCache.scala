@@ -16,8 +16,8 @@ trait DistributedExecutionCache {
   protected implicit val ignite: Ignite
 
   private val executionCounter = ignite.atomicSequence("executionCounter", 0, true)
-  private val executionMap = ignite.getOrCreateCache[ExecutionId, Execution]("executions")
-  private val executionBySchedule = ignite.getOrCreateCache[ScheduleId, ExecutionId]("executionBySchedule")
+  protected val executionMap = ignite.getOrCreateCache[ExecutionId, Execution]("executions")
+  protected val executionBySchedule = ignite.getOrCreateCache[ScheduleId, ExecutionId]("executionBySchedule")
 
   def executionById(executionId: ExecutionId)(implicit ec: ExecutionContext): Future[Option[Execution]] =
     Future { Option(executionMap.get(executionId)) }

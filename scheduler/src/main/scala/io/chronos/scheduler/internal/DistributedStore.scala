@@ -43,24 +43,21 @@ class DistributedStore(val ignite: Ignite, val queueCapacity: Int) extends Distr
     })
   }
 
-  def executionUpdated(executionId: ExecutionId, newStage: Execution.Stage)(f: Execution => Unit)(implicit ec: ExecutionContext): Unit = {
-    // Returns a future flagging whether we need to invoke the consumer function or not
-    def updateCache(execution: Execution): Future[Boolean] = {
-      newStage match {
-        case _: Execution.Triggered =>
-          enqueue(execution).map { _ => true }
-        case _: Execution.Finished =>
-          // TODO add the ability to re-schedule recurring jobs
-          Future.successful(true)
-        case _ => Future.successful(false)
-      }
+  def executionUpdated(executionId: ExecutionId, newStage: Execution.Stage)
+                      (f: Execution => Unit)(implicit ec: ExecutionContext): Future[Unit] = {
+    // Executes the received function only if the new stage is triggered or finished
+    def updateCache(execution: Execution): Future[Unit] = newStage match {
+      case _: Execution.Triggered =>
+        enqueue(execution).map { _ => f(execution) }
+      case _: Execution.Finished =>
+        // TODO add the ability to re-schedule recurring jobs
+        Future { f(execution) }
+      case _ => Future.successful()
     }
 
     executionById(executionId) map {
       case Some(exec) => exec << newStage
-    } map { exec =>
-      updateCache(exec) map { invoke => if (invoke) f(exec) }
-    }
+    } flatMap updateCache
   }
 
 }

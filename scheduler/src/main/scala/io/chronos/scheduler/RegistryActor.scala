@@ -2,12 +2,13 @@ package io.chronos.scheduler
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
-import io.chronos.protocol.RegistryProtocol
+import io.chronos.JobSpec
+import io.chronos.id._
+import io.chronos.protocol._
 import io.chronos.resolver.JobModuleResolver
-import io.chronos.scheduler.internal.DistributedJobRegistry
 import org.apache.ignite.Ignite
 
-import scala.util.{Failure, Success}
+import scala.collection.JavaConversions._
 
 /**
  * Created by aalonsodominguez on 26/07/15.
@@ -19,9 +20,10 @@ object RegistryActor {
 
 }
 
-class RegistryActor(val ignite: Ignite, moduleResolver: JobModuleResolver) extends Actor with ActorLogging with DistributedJobRegistry {
-  import RegistryProtocol._
-  import context.dispatcher
+class RegistryActor(val ignite: Ignite, moduleResolver: JobModuleResolver)
+  extends Actor with ActorLogging {
+
+  private val jobSpecCache = ignite.getOrCreateCache[JobId, JobSpec]("jobSpecCache")
 
   ClusterReceptionistExtension(context.system).registerService(self)
 
@@ -38,24 +40,18 @@ class RegistryActor(val ignite: Ignite, moduleResolver: JobModuleResolver) exten
 
         case Right(modulePackage) =>
           log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
-          registerJobSpec(jobSpec).onComplete {
-            case Success(jobId) =>
-              log.info("Job spec has been registered. jobId={}, name={}", jobId, jobSpec.displayName)
-              sender() ! JobAccepted(jobId)
-
-            case Failure(cause) =>
-              log.error("Couldn't register job spec for given module. moduleId={}", jobSpec.moduleId)
-              sender() ! JobRejected(Right(cause))
-          }
+          jobSpecCache.put(jobSpec.id, jobSpec)
+          log.info("Job spec has been registered. jobId={}, name={}", jobSpec.id, jobSpec.displayName)
+          sender() ! JobAccepted(jobSpec.id)
       }
+
+    case GetJobSpec(jobId) =>
+      sender() ! Option(jobSpecCache.get(jobId))
 
     case GetRegisteredJobs =>
-      availableJobSpecs.onComplete {
-        case Success(jobSpecs) =>
-          sender() ! RegisteredJobs(jobSpecs)
-        case Failure(cause) =>
-          log.error(cause, "Error obtaining available job specs from the registry.")
-      }
+      sender() ! RegisteredJobs(
+        jobSpecCache.localEntries().map(_.getValue).toSeq
+      )
 
   }
 

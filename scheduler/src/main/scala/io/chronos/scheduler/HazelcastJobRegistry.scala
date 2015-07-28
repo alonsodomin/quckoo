@@ -87,7 +87,6 @@ class HazelcastJobRegistry(val hazelcastInstance: HazelcastInstance) {
       case _                             => true
     }
 
-    @inline
     def underBatchLimit(pair: (ScheduleId, JobSchedule)): Boolean = itemCount < batchSize
 
     if(fetchLock.tryLock()) {
