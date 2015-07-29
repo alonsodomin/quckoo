@@ -1,12 +1,13 @@
 package io.chronos.scheduler
 
-import java.time.Clock
-
 import akka.actor.{Actor, ActorLogging}
 import akka.contrib.pattern.{DistributedPubSubExtension, DistributedPubSubMediator}
-import io.chronos.Execution
 import io.chronos.id.ExecutionId
+import io.chronos.protocol.SchedulerProtocol.ExecutionEvent
+import io.chronos.{Execution, topic}
 import org.apache.ignite.Ignite
+
+import scala.collection.JavaConversions._
 
 /**
  * Created by aalonsodominguez on 29/07/15.
@@ -14,11 +15,12 @@ import org.apache.ignite.Ignite
 object ExecutionQueueActor {
 
   case class Enqueue(execution: Execution)
-  case class Dequeue()
+  case object Dequeue
 
+  case object PendingExecutionsCount
 }
 
-class ExecutionQueueActor(ignite: Ignite, capacity: Int)(implicit clock: Clock) extends Actor with ActorLogging {
+class ExecutionQueueActor(ignite: Ignite, capacity: Int) extends Actor with ActorLogging {
   import ExecutionQueueActor._
 
   val mediator = DistributedPubSubExtension(context.system).mediator
@@ -28,7 +30,18 @@ class ExecutionQueueActor(ignite: Ignite, capacity: Int)(implicit clock: Clock) 
   def receive = {
     case Enqueue(exec) =>
       executionQueue.put(exec.executionId)
-      mediator ! DistributedPubSubMediator.Publish
+      mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
+
+    case Dequeue =>
+      sender ! (
+        if (executionQueue.nonEmpty)
+          Some(executionQueue.take())
+        else
+          None
+      )
+
+    case PendingExecutionsCount =>
+      sender ! executionQueue.size()
   }
   
 }

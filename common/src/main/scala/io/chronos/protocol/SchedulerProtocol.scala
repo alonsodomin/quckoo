@@ -24,7 +24,7 @@ object SchedulerProtocol {
   case class Executions(executions: Seq[Execution]) extends Response
 
   case class ScheduleJob(schedule: JobSchedule) extends Request
-  case class ScheduleJobAck(execution: Execution)
+  case class ScheduleJobAck(executionId: ExecutionId)
   case class ScheduleJobFailed(cause: ScheduleFailedCause)
   
   @deprecated

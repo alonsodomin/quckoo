@@ -49,7 +49,7 @@ class ExecutionPlanActor(ignite: Ignite, heartbeatInterval: FiniteDuration, swee
         case Some(jobSpec) =>
           val scheduleId = (schedule.jobId, scheduleCounter.incrementAndGet())
           scheduleMap.put(scheduleId, schedule)
-          ScheduleJobAck(newExecution(scheduleId))
+          ScheduleJobAck(defineExecutionFor(scheduleId).executionId)
 
         case _ => ScheduleJobFailed(Left(JobNotRegistered(schedule.jobId)))
       } recover {
@@ -103,7 +103,7 @@ class ExecutionPlanActor(ignite: Ignite, heartbeatInterval: FiniteDuration, swee
       case _                              => None
     }
 
-  private def newExecution(scheduleId: ScheduleId): Execution = {
+  private def defineExecutionFor(scheduleId: ScheduleId): Execution = {
     val executionId = (scheduleId, executionCounter.incrementAndGet())
     val execution = Execution(executionId)
     executionMap.put(executionId, execution)
