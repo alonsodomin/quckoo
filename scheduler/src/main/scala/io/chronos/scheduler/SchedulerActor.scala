@@ -10,9 +10,10 @@ import akka.util.Timeout
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos._
 import io.chronos.id._
-import io.chronos.protocol.WorkerProtocol.{RegisterWorker, RequestWork, WorkReady}
+import io.chronos.protocol.WorkerProtocol._
 import io.chronos.protocol.{SchedulerProtocol, _}
 import org.apache.ignite.Ignite
+import org.apache.ignite.configuration.CollectionConfiguration
 
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
@@ -23,10 +24,19 @@ import scala.concurrent.duration._
  */
 object SchedulerActor {
 
-  def props(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int,
-            queueCapacity: Int, role: Option[String] = None)(implicit clock: Clock): Props =
+  val DefaultHearbeatInterval = 100 millis
+  val DefaultWorkTimeout      = 5 minutes
+  val DefaultSweepBatchLimit  = 100
+  val DefaultQueueCapacity    = 50
+
+  def props(ignite: Ignite,
+            heartbeatInterval: FiniteDuration = DefaultHearbeatInterval,
+            maxWorkTimeout: FiniteDuration = DefaultWorkTimeout,
+            sweepBatchLimit: Int = DefaultSweepBatchLimit,
+            queueCapacity: Int = DefaultQueueCapacity,
+            role: Option[String] = None)(implicit clock: Clock): Props =
     ClusterSingletonManager.props(
-      Props(classOf[SchedulerActor], ignite, heartbeatInterval, maxWorkTimeout, sweepBatchLimit, queueCapacity),
+      Props(classOf[SchedulerActor], ignite, heartbeatInterval, maxWorkTimeout, sweepBatchLimit, queueCapacity, clock),
       "active", PoisonPill, role
     )
 
@@ -35,7 +45,8 @@ object SchedulerActor {
 
 }
 
-class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int, queueCapacity: Int)(implicit clock: Clock)
+class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkTimeout: FiniteDuration,
+                     sweepBatchLimit: Int, queueCapacity: Int)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import SchedulerActor._
@@ -58,7 +69,7 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
   private val executionMap = ignite.getOrCreateCache[ExecutionId, Execution]("executions")
   private val executionBySchedule = ignite.getOrCreateCache[ScheduleId, ExecutionId]("executionBySchedule")
 
-  private val executionQueue = ignite.queue[ExecutionId]("executionQueue", queueCapacity, null)
+  private val executionQueue = ignite.queue[ExecutionId]("executionQueue", queueCapacity, new CollectionConfiguration)
 
   // Tasks
   private val cleanupTask = context.system.scheduler.schedule(maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupBeat)
@@ -120,7 +131,7 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
               def workTimeout: Deadline = Deadline.now + schedule.timeout.getOrElse(maxWorkTimeout)
 
               val executionStage = Execution.Started(ZonedDateTime.now(clock), workerId)
-              updateExecutionAndApply(executionId, executionStage) { execution =>
+              updateExecutionAndApply(executionId, executionStage) { _ =>
                 log.info("Delivering execution to worker. executionId={}, workerId={}", executionId, workerId)
                 sender ! Work(executionId, schedule.params, jobSpec.moduleId, jobSpec.jobClass)
 
@@ -136,6 +147,38 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
               log.error(cause, "Couldn't send execution to worker. Execution will be put back in the queue and retried later. executionId={}, workerId={}", executionId, workerId)
               executionQueue.put(executionId)
               notifyWorkers()
+          }
+      }
+
+    case WorkDone(workerId, executionId, result) =>
+      Option(executionMap.get(executionId)).map(_.stage) match {
+        case Some(_: Execution.Finished) =>
+          // previous Ack was lost, confirm again that this is done
+          sender ! WorkDoneAck(executionId)
+        case Some(_: Execution.InProgress) =>
+          log.info("Execution {} is done by worker {}", executionId, workerId)
+          val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
+          updateExecutionAndApply(executionId, executionStatus) { _ =>
+            sender ! WorkDoneAck(executionId)
+            changeWorkerToIdle(workerId, executionId)
+            mediator ! DistributedPubSubMediator.Publish(topic.AllResults, WorkResult(executionId, result))
+            mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
+          }
+
+        case _ =>
+          log.warning("Received a WorkDone notification for non in-progress execution. executionId={}, workerId={}", executionId, workerId)
+      }
+
+    case WorkFailed(workerId, executionId, cause) =>
+      Option(executionMap.get(executionId)).map(_.stage) match {
+        case Some(_: Execution.InProgress) =>
+          log.error("Execution {} failed by worker {}", executionId, workerId)
+          val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Failed(cause))
+          updateExecutionAndApply(executionId, executionStatus) { execution =>
+            // TODO implement a retry logic
+            changeWorkerToIdle(workerId, executionId)
+            mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
+            notifyWorkers()
           }
       }
 
@@ -160,15 +203,15 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
         (scheduleId, schedule) <- localSchedules
         nextTime <- nextExecutionTime(scheduleId, schedule) if nextTime.isBefore(now) || nextTime.isEqual(now)
         execId   <- Option(executionBySchedule.get(scheduleId))
-        exec     <- Option(executionMap.get(execId))
       } {
-        log.info("Placing execution into work queue. executionId={}", exec.executionId)
-        val updatedExec = exec << Execution.Triggered(ZonedDateTime.now(clock))
-        executionMap.put(execId, updatedExec)
-        executionQueue.put(execId)
-        mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execId, updatedExec.stage))
+        log.info("Placing execution into work queue. executionId={}", execId)
+        updateExecutionAndApply(execId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
+          executionMap.put(execId, exec)
+          executionQueue.put(execId)
+          mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execId, exec.stage))
 
-        itemCount += 1  // This awful statement is there to help the upper helper functions to build the batch
+          itemCount += 1  // This awful statement is there to help the upper helper functions to build the batch
+        }
       }
 
       // Reset the atomic boolean flag to allow for more "beats"

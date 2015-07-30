@@ -17,7 +17,7 @@ object WorkerBootstrap {
   def main(args: Array[String]): Unit = {
     val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + DefaultPort)
       .withFallback(ConfigFactory.load("worker"))
-    val system = ActorSystem("WorkerSystem", conf)
+    val system = ActorSystem("ChronosWorkerSystem", conf)
     val initialContacts = immutableSeq(conf.getStringList("contact-points")).map {
       case AddressFromURIString(addr) => system.actorSelection(RootActorPath(addr) / "user" / "receptionist")
     }.toSet

@@ -3,10 +3,10 @@ package io.chronos
 import java.time.Clock
 
 import akka.actor._
-import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyJobModuleResolver}
-import io.chronos.scheduler.{Scheduler, _}
+import io.chronos.scheduler._
+import org.apache.ignite.Ignition
 
 /**
  * Created by domingueza on 09/07/15.
@@ -22,20 +22,18 @@ object SchedulerBootstrap {
       .withFallback(ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port))
       .withFallback(ConfigFactory.load())
 
-    val system = ActorSystem("ClusterSystem", conf)
-    val clock = Clock.systemUTC()
+    val system = ActorSystem("ChronosClusterSystem", conf)
+    implicit val clock = Clock.systemUTC()
 
-    val hazelcastInstance = Hazelcast.newHazelcastInstance()
-    val jobRegistry = new HazelcastJobRegistry(hazelcastInstance)
-
+    val ignite = Ignition.start()
     val ivyConfig = IvyConfiguration(conf)
     val moduleResolver = new IvyJobModuleResolver(ivyConfig)
 
     system.actorOf(Props[ClusterMonitor], "monitor")
     system.actorOf(Props[ExecutionMonitor], "executions")
 
-    system.actorOf(Scheduler.props(clock, jobRegistry), "scheduler")
-    system.actorOf(Registry.props(jobRegistry, moduleResolver), "repository")
+    system.actorOf(RegistryActor.props(ignite, moduleResolver), "registry")
+    system.actorOf(SchedulerActor.props(ignite), "scheduler")
 
     system.actorOf(Props[WorkResultConsumer], "consumer")
   }

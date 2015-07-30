@@ -11,9 +11,9 @@ import io.chronos.examples.parameters.PowerOfNActor
  */
 object ExamplesMain extends App {
 
-  val chronosConf = ConfigFactory.load("chronos")
+  val chronosConf = ConfigFactory.load()
 
-  val system = ActorSystem("ExamplesSystem", chronosConf)
+  val system = ActorSystem("ChronosExamplesSystem", chronosConf)
 
   val initialContacts = immutableSeq(chronosConf.getStringList("chronos.seed-nodes")).map {
     case AddressFromURIString(addr) => system.actorSelection(RootActorPath(addr) / "user" / "receptionist")

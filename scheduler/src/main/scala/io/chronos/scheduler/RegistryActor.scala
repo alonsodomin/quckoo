@@ -20,7 +20,7 @@ object RegistryActor {
 
 }
 
-class RegistryActor(val ignite: Ignite, moduleResolver: JobModuleResolver)
+class RegistryActor(ignite: Ignite, moduleResolver: JobModuleResolver)
   extends Actor with ActorLogging {
 
   private val jobSpecCache = ignite.getOrCreateCache[JobId, JobSpec]("jobSpecCache")
