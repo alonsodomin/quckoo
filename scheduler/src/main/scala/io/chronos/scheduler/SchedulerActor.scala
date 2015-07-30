@@ -3,8 +3,8 @@ package io.chronos.scheduler
 import java.time.{Clock, ZonedDateTime}
 import javax.cache.processor.{EntryProcessor, MutableEntry}
 
-import akka.actor.{Actor, ActorLogging}
-import akka.contrib.pattern.{DistributedPubSubExtension, DistributedPubSubMediator}
+import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
+import akka.contrib.pattern.{ClusterReceptionistExtension, ClusterSingletonManager, DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.pattern._
 import akka.util.Timeout
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
@@ -21,20 +21,29 @@ import scala.concurrent.duration._
 /**
  * Created by aalonsodominguez on 26/07/15.
  */
-object ExecutionPlanActor {
+object SchedulerActor {
+
+  def props(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int,
+            queueCapacity: Int, role: Option[String] = None)(implicit clock: Clock): Props =
+    ClusterSingletonManager.props(
+      Props(classOf[SchedulerActor], ignite, heartbeatInterval, maxWorkTimeout, sweepBatchLimit, queueCapacity),
+      "active", PoisonPill, role
+    )
 
   private case object Heartbeat
   private case object CleanupBeat
 
 }
 
-class ExecutionPlanActor(ignite: Ignite, heartbeatInterval: FiniteDuration, sweepBatchLimit: Int, queueCapacity: Int, maxWorkTimeout: FiniteDuration)(implicit clock: Clock)
+class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int, queueCapacity: Int)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
-  import ExecutionPlanActor._
+  import SchedulerActor._
   import SchedulerProtocol._
   import context.dispatcher
 
+  ClusterReceptionistExtension(context.system).registerService(self)
+  
   // References to other actors in the system
   private val mediator = DistributedPubSubExtension(context.system).mediator
   private val registry = context.system.actorSelection(context.system / "registry")
