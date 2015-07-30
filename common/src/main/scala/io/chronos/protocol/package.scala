@@ -1,6 +1,6 @@
 package io.chronos
 
-import io.chronos.id.JobId
+import io.chronos.id.{JobId, ScheduleId}
 
 /**
  * Created by aalonsodominguez on 19/07/2015.
@@ -22,5 +22,5 @@ package object protocol {
   case class RegisteredJobs(specs: Seq[JobSpec])
 
   case class GetJobSpec(jobId: JobId)
-
+  case class GetSchedule(scheduleId: ScheduleId)
 }

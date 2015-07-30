@@ -1,14 +1,16 @@
 package io.chronos.scheduler
 
 import java.time.{Clock, ZonedDateTime}
+import javax.cache.processor.{EntryProcessor, MutableEntry}
 
 import akka.actor.{Actor, ActorLogging}
+import akka.contrib.pattern.{DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.pattern._
 import akka.util.Timeout
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos.id._
 import io.chronos.protocol.{SchedulerProtocol, _}
-import io.chronos.{Execution, JobSchedule, JobSpec}
+import io.chronos.{Execution, JobSchedule, JobSpec, topic}
 import org.apache.ignite.Ignite
 
 import scala.collection.JavaConversions._
@@ -29,6 +31,9 @@ class ExecutionPlanActor(ignite: Ignite, heartbeatInterval: FiniteDuration, swee
   import ExecutionPlanActor._
   import SchedulerProtocol._
   import context.dispatcher
+
+  val mediator = DistributedPubSubExtension(context.system).mediator
+  mediator ! DistributedPubSubMediator.Subscribe(topic.Executions, self)
 
   private val beating = ignite.atomicReference("beating", false, true)
 
@@ -55,6 +60,19 @@ class ExecutionPlanActor(ignite: Ignite, heartbeatInterval: FiniteDuration, swee
       } recover {
         case e: Throwable => ScheduleJobFailed(Right(e))
       } pipeTo sender()
+
+    case GetSchedule(scheduleId) =>
+      sender ! Option(scheduleMap.get(scheduleId))
+
+    case ExecutionEvent(executionId, stage: Execution.Started) =>
+      val execution = executionMap.invoke(executionId, new EntryProcessor[ExecutionId, Execution, Execution] {
+        override def process(entry: MutableEntry[((JobId, Long), Long), Execution], arguments: AnyRef*): Execution = {
+          val execution = entry.getValue << stage
+          entry.setValue(execution)
+          execution
+        }
+      })
+      mediator ! DistributedPubSubMediator.Publish(topic.Executions, stage)
 
     case Heartbeat if beating.compareAndSet(false, true) =>
       var itemCount = 0

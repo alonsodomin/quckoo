@@ -13,7 +13,7 @@ object Dependencies {
   val log4j2Version    = "2.3"
   val slf4jVersion     = "1.7.12"
 
-  private val basicLibs: Seq[ModuleID] = Seq(
+  private val basicLibs: Seq[ModuleID] = Vector(
     "org.slf4s"              %% "slf4s-api"                   % slf4jVersion           withSources() withJavadoc(),
     "org.scala-lang"         %  "scala-reflect"               % scalaVersion           withSources() withJavadoc(),
     "org.scala-lang.modules" %% "scala-xml"                   % "1.0.4"                withSources() withJavadoc(),
@@ -22,7 +22,7 @@ object Dependencies {
     "org.slf4j"              % "slf4j-simple"                 % slf4jVersion  % "test" withSources() withJavadoc()
   )
 
-  private val akkaLibs: Seq[ModuleID] = Seq(
+  private val akkaLibs: Seq[ModuleID] = Vector(
     "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-remote"  % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-cluster" % akkaVersion          withSources() withJavadoc(),
@@ -32,7 +32,7 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc()
   )
 
-  private val loggingLibs: Seq[ModuleID] = Seq(
+  private val loggingLibs: Seq[ModuleID] = Vector(
     "org.slf4j"                % "jul-to-slf4j"     % slf4jVersion  % "runtime" withSources() withJavadoc(),
     "org.apache.logging.log4j" % "log4j-api"        % log4j2Version             withSources() withJavadoc(),
     "org.apache.logging.log4j" % "log4j-core"       % log4j2Version             withSources() withJavadoc(),
@@ -48,6 +48,7 @@ object Dependencies {
 
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
     "com.typesafe.akka" %% "akka-stream-experimental" % "1.0",
+    "org.scalaz" %% "scalaz-core" % "7.1.3",
 
     "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
     "com.hazelcast" % "hazelcast-client" % hazelcastVersion withSources() withJavadoc(),
