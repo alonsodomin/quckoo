@@ -3,7 +3,7 @@ package io.chronos.scheduler
 import java.time.{Clock, ZonedDateTime}
 import javax.cache.processor.{EntryProcessor, MutableEntry}
 
-import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
+import akka.actor._
 import akka.contrib.pattern.{ClusterReceptionistExtension, ClusterSingletonManager, DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.pattern._
 import akka.util.Timeout
@@ -28,14 +28,14 @@ object SchedulerActor {
   val DefaultSweepBatchLimit  = 100
   val DefaultQueueCapacity    = 50
 
-  def props(ignite: Ignite,
+  def props(ignite: Ignite, registry: ActorRef,
             heartbeatInterval: FiniteDuration = DefaultHearbeatInterval,
             maxWorkTimeout: FiniteDuration = DefaultWorkTimeout,
             sweepBatchLimit: Int = DefaultSweepBatchLimit,
             queueCapacity: Int = DefaultQueueCapacity,
             role: Option[String] = None)(implicit clock: Clock): Props =
     ClusterSingletonManager.props(
-      Props(classOf[SchedulerActor], ignite, heartbeatInterval, maxWorkTimeout, sweepBatchLimit, queueCapacity, clock),
+      Props(classOf[SchedulerActor], ignite, registry, heartbeatInterval, maxWorkTimeout, sweepBatchLimit, queueCapacity, clock),
       "active", PoisonPill, role
     )
 
@@ -44,8 +44,8 @@ object SchedulerActor {
 
 }
 
-class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkTimeout: FiniteDuration,
-                     sweepBatchLimit: Int, queueCapacity: Int)(implicit clock: Clock)
+class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: FiniteDuration,
+                     maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int, queueCapacity: Int)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import SchedulerActor._
@@ -56,7 +56,6 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
   
   // References to other actors in the system
   private val mediator = DistributedPubSubExtension(context.system).mediator
-  private val registry = context.system.actorSelection(context.system / "registry")
 
   // Distributed data structures
   private val beating = ignite.atomicReference("beating", false, true)
@@ -132,7 +131,7 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
               val executionStage = Execution.Started(ZonedDateTime.now(clock), workerId)
               updateExecutionAndApply(executionId, executionStage) { _ =>
                 log.info("Delivering execution to worker. executionId={}, workerId={}", executionId, workerId)
-                sender ! Work(executionId, schedule.params, jobSpec.moduleId, jobSpec.jobClass)
+                workerState.ref ! Work(executionId, schedule.params, jobSpec.moduleId, jobSpec.jobClass)
 
                 workers += (workerId -> workerState.copy(status = WorkerState.Busy(executionId, workTimeout)))
                 mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStage))

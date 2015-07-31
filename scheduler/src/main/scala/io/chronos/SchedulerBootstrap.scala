@@ -32,8 +32,8 @@ object SchedulerBootstrap {
     system.actorOf(Props[ClusterMonitor], "monitor")
     system.actorOf(Props[ExecutionMonitor], "executions")
 
-    system.actorOf(RegistryActor.props(ignite, moduleResolver), "registry")
-    system.actorOf(SchedulerActor.props(ignite), "scheduler")
+    val registry = system.actorOf(RegistryActor.props(ignite, moduleResolver), "registry")
+    system.actorOf(SchedulerActor.props(ignite, registry), "scheduler")
 
     system.actorOf(Props[WorkResultConsumer], "consumer")
   }
