@@ -113,9 +113,9 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
         mediator ! DistributedPubSubMediator.Publish(topic.Workers, WorkerRegistered(workerId))
       }
 
-    case RequestWork(workerId) if !executionQueue.isEmpty =>
+    case RequestWork(workerId) =>
       workers.get(workerId) match {
-        case Some(workerState@WorkerState(_, WorkerState.Idle)) =>
+        case Some(workerState @ WorkerState(_, WorkerState.Idle)) =>
           val executionId = executionQueue.take()
 
           def futureJobSpec: Future[Option[JobSpec]] = {
@@ -214,6 +214,7 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
           executionMap.put(execId, exec)
           executionQueue.put(execId)
           mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execId, exec.stage))
+          notifyWorkers()
 
           itemCount += 1  // This awful statement is there to help the upper helper functions to build the batch
         }
@@ -259,7 +260,9 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
 
   private def notifyWorkers(): Unit = {
     if (!executionQueue.isEmpty) {
-      workers.foreach {
+      def randomWorkers: Seq[(WorkerId, WorkerState)] = workers.toSeq
+
+      randomWorkers.foreach {
         case (_, WorkerState(ref, WorkerState.Idle)) => ref ! WorkReady
         case _ => // busy
       }

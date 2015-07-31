@@ -49,6 +49,16 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
       log.info("JobSpec has been registered. Moving on to produce job schedules.")
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       context.become(produce)
+
+    case JobRejected(cause) =>
+      cause match {
+        case Left(resolutionFailed) =>
+          log.error("Resolution of job spec failed. unresolvedDependencies={}", resolutionFailed.unresolvedDependencies.mkString(", "))
+
+        case Right(thrown) =>
+          log.error(thrown, "Registration of job spec failed due to an exception. Retrying...")
+          scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
+      }
   }
 
   def produce: Receive = {
