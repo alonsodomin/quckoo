@@ -16,8 +16,8 @@ import scala.concurrent.duration._
  */
 object Worker {
 
-  def props(clusterClient: ActorRef, jobExecutorProps: Props, registerInteval: FiniteDuration = 10.seconds): Props =
-    Props(classOf[Worker], clusterClient, jobExecutorProps, registerInteval)
+  def props(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval: FiniteDuration = 10.seconds): Props =
+    Props(classOf[Worker], clusterClient, jobExecutorProps, registerInterval)
 
   case class WorkerDone(executionId: String, result: Any)
 
