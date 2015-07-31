@@ -148,6 +148,9 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
               executionQueue.put(executionId)
               notifyWorkers()
           }
+
+        case _ =>
+          log.warning("Received a request of work from a worker that is not in idle state. workerId={}", workerId)
       }
 
     case WorkDone(workerId, executionId, result) =>
@@ -180,6 +183,9 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
             notifyWorkers()
           }
+
+        case _ =>
+          log.warning("Received a WorkFailed notification for a non in-progress execution. executionId={}, workerId={}", executionId, workerId)
       }
 
     case Heartbeat if beating.compareAndSet(false, true) =>
