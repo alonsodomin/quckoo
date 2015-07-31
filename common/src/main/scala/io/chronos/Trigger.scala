@@ -11,10 +11,7 @@ import scala.concurrent.duration._
 trait Trigger extends Serializable {
   import Trigger.ReferenceTime
 
-  @deprecated
-  def nextExecutionTime(clock: Clock, referenceTime: Either[ZonedDateTime, ZonedDateTime]): Option[ZonedDateTime]
-
-  def nextExecutionTime(referenceTime: ReferenceTime)(implicit clock: Clock): Option[ZonedDateTime] = ???
+  def nextExecutionTime(referenceTime: ReferenceTime)(implicit clock: Clock): Option[ZonedDateTime]
 
   def isRecurring: Boolean = false
 
@@ -30,36 +27,35 @@ object Trigger {
 
   case object Immediate extends Trigger {
 
-    override def nextExecutionTime(clock: Clock, referenceTime: Either[ZonedDateTime, ZonedDateTime]): Option[ZonedDateTime] =
-      referenceTime match {
-        case Left(scheduledTime)      => Some(ZonedDateTime.now(clock))
-        case Right(lastExecutionTime) => None
-      }
+    override def nextExecutionTime(referenceTime: ReferenceTime)(implicit clock: Clock): Option[ZonedDateTime] = referenceTime match {
+      case ScheduledTime(time)  => Some(ZonedDateTime.now(clock))
+      case LastExecutionTime(_) => None
+    }
 
   }
 
   case class After(delay: FiniteDuration) extends Trigger {
 
-    override def nextExecutionTime(clock: Clock, referenceTime: Either[ZonedDateTime, ZonedDateTime]): Option[ZonedDateTime] =
+    override def nextExecutionTime(referenceTime: ReferenceTime)(implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
-        case Left(scheduledTime) =>
+        case ScheduledTime(time) =>
           val nanos = delay.toNanos
-          Some(scheduledTime.plus(nanos, ChronoUnit.NANOS))
-        case Right(lastExecutionTime) => None
+          Some(time.plus(nanos, ChronoUnit.NANOS))
+        case LastExecutionTime(_) => None
       }
 
   }
 
   case class Every(frequency: FiniteDuration, startingIn: Option[FiniteDuration] = None) extends Trigger {
 
-    override def nextExecutionTime(clock: Clock, referenceTime: Either[ZonedDateTime, ZonedDateTime]): Option[ZonedDateTime] =
+    override def nextExecutionTime(referenceTime: ReferenceTime)(implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
-        case Left(scheduledTime) =>
+        case ScheduledTime(time) =>
           val nanosDelay = (startingIn getOrElse 0.seconds).toNanos
-          Some(scheduledTime.plus(nanosDelay, ChronoUnit.NANOS))
-        case Right(lastExecutionTime) =>
+          Some(time.plus(nanosDelay, ChronoUnit.NANOS))
+        case LastExecutionTime(time) =>
           val nanosDelay = frequency.toNanos
-          Some(lastExecutionTime.plus(nanosDelay, ChronoUnit.NANOS))
+          Some(time.plus(nanosDelay, ChronoUnit.NANOS))
       }
 
     override def isRecurring: Boolean = true
