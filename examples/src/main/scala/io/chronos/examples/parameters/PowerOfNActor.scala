@@ -4,9 +4,8 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.chronos._
-import io.chronos.examples.FacadeActor
 import io.chronos.id.JobModuleId
-import io.chronos.protocol.SchedulerProtocol
+import io.chronos.protocol._
 
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ThreadLocalRandom
@@ -44,9 +43,9 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
 
   def start: Receive = {
     case Tick =>
-      receptor ! SchedulerProtocol.RegisterJob(jobSpec)
+      receptor ! RegisterJob(jobSpec)
 
-    case SchedulerProtocol.RegisterJobAck =>
+    case JobAccepted(_) =>
       log.info("JobSpec has been registered. Moving on to produce job schedules.")
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       context.become(produce)
@@ -56,22 +55,28 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
     case Tick =>
       n += 1
       log.info("Produced work: {}", n)
-      val jobDef = JobSchedule(jobSpec.id, Map("n" -> n), jobTrigger)
-      receptor ! SchedulerProtocol.ScheduleJob(jobDef)
+      val jobSchedule = JobSchedule(jobSpec.id, Map("n" -> n), jobTrigger)
+      receptor ! ScheduleJob(jobSchedule)
       context.become(waitAccepted, discardOld = false)
   }
 
   def waitAccepted: Receive = {
-    case FacadeActor.JobAccepted =>
+    case ScheduleJobAck(executionId) =>
+      log.info("Job schedule has been accepted by the cluster. executionId={}", executionId)
       if (n < 25) {
         scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       }
       context.unbecome()
 
-    case FacadeActor.JobRejected =>
-      log.info("Work not accepted, retry after a while")
-      scheduler.scheduleOnce(3.seconds, self, Tick)
-      context.unbecome()
+    case ScheduleJobFailed(cause) =>
+      cause match {
+        case Left(notRegistered) =>
+          log.error("Job scheduling has failed because the job hasn't been registered in the first place. jobId={}", notRegistered.jobId)
+        case Right(thrown) =>
+          log.error(thrown, "Job scheduling has thrown an error. Will retry after a while.")
+          scheduler.scheduleOnce(3.seconds, self, Tick)
+          context.unbecome()
+      }
   }
 
   private def jobTrigger: Trigger = rnd.nextInt(0, 3) match {

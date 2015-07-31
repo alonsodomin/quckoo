@@ -3,7 +3,7 @@ package io.chronos.scheduler
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
 import io.chronos.protocol.ListenerProtocol._
-import io.chronos.protocol.SchedulerProtocol.ExecutionEvent
+import io.chronos.protocol._
 import io.chronos.topic
 
 /**

@@ -5,7 +5,7 @@ import akka.contrib.pattern.ClusterClient.{Send, SendToAll}
 import akka.pattern._
 import akka.util.Timeout
 import common.MessageTypes
-import io.chronos.protocol.{ListenerProtocol, SchedulerProtocol}
+import io.chronos.protocol.{ListenerProtocol, _}
 import io.chronos.{Execution, path}
 import model.ExecutionModel
 import play.api.libs.functional.syntax._

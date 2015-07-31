@@ -11,7 +11,6 @@ import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos._
 import io.chronos.id._
 import io.chronos.protocol.WorkerProtocol._
-import io.chronos.protocol.{SchedulerProtocol, _}
 import org.apache.ignite.Ignite
 import org.apache.ignite.configuration.CollectionConfiguration
 
@@ -50,8 +49,8 @@ class SchedulerActor(ignite: Ignite, heartbeatInterval: FiniteDuration, maxWorkT
   extends Actor with ActorLogging {
 
   import SchedulerActor._
-  import SchedulerProtocol._
   import context.dispatcher
+  import io.chronos.protocol._
 
   ClusterReceptionistExtension(context.system).registerService(self)
   
