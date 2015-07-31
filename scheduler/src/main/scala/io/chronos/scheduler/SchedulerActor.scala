@@ -114,7 +114,7 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
 
     case RequestWork(workerId) =>
       workers.get(workerId) match {
-        case Some(workerState @ WorkerState(_, WorkerState.Idle)) =>
+        case Some(worker @ WorkerState(_, WorkerState.Idle)) =>
           val executionId = executionQueue.take()
 
           def futureJobSpec: Future[Option[JobSpec]] = {
@@ -131,9 +131,9 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
               val executionStage = Execution.Started(ZonedDateTime.now(clock), workerId)
               updateExecutionAndApply(executionId, executionStage) { _ =>
                 log.info("Delivering execution to worker. executionId={}, workerId={}", executionId, workerId)
-                workerState.ref ! Work(executionId, schedule.params, jobSpec.moduleId, jobSpec.jobClass)
+                worker.ref ! Work(executionId, schedule.params, jobSpec.moduleId, jobSpec.jobClass)
 
-                workers += (workerId -> workerState.copy(status = WorkerState.Busy(executionId, workTimeout)))
+                workers += (workerId -> worker.copy(status = WorkerState.Busy(executionId, workTimeout)))
                 mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStage))
               }
 
