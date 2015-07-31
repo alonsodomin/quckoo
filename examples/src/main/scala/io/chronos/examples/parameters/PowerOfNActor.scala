@@ -56,7 +56,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
           log.error("Resolution of job spec failed. unresolvedDependencies={}", resolutionFailed.unresolvedDependencies.mkString(", "))
 
         case Right(thrown) =>
-          log.error(thrown, "Registration of job spec failed due to an exception. Retrying...")
+          log.error("Registration of job spec failed due to an exception. Retrying...")
           scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       }
   }
@@ -65,7 +65,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
     case Tick =>
       n += 1
       log.info("Produced work: {}", n)
-      val jobSchedule = JobSchedule(jobSpec.id, Map("n" -> n), jobTrigger)
+      val jobSchedule = JobSchedule(jobSpec.id, Map("n" -> n), Trigger.Every(20 seconds, Option(5 seconds)))
       receptor ! ScheduleJob(jobSchedule)
       context.become(waitAccepted, discardOld = false)
   }
@@ -73,7 +73,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
   def waitAccepted: Receive = {
     case ScheduleJobAck(executionId) =>
       log.info("Job schedule has been accepted by the cluster. executionId={}", executionId)
-      if (n < 25) {
+      if (n < 1) {
         scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       }
       context.unbecome()
@@ -83,7 +83,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
         case Left(notRegistered) =>
           log.error("Job scheduling has failed because the job hasn't been registered in the first place. jobId={}", notRegistered.jobId)
         case Right(thrown) =>
-          log.error(thrown, "Job scheduling has thrown an error. Will retry after a while.")
+          log.error("Job scheduling has thrown an error. Will retry after a while.")
           scheduler.scheduleOnce(3.seconds, self, Tick)
           context.unbecome()
       }
@@ -95,7 +95,8 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
       Trigger.After(delay seconds)
     case 2 => // Every random seconds
       val freq = rnd.nextInt(5, 10)
-      Trigger.Every(freq seconds)
+      val delay = rnd.nextInt(5, 30)
+      Trigger.Every(freq seconds, Option(delay seconds))
     case _ => // Immediate
       Trigger.Immediate
   }

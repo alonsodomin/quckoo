@@ -47,7 +47,7 @@ class JobModulePackage private[resolver] (val moduleId: JobModuleId, classLoader
 
   private def logCreation(): Unit = {
     val classpathStr = classpath.mkString("::")
-    log.info(s"Job package created for module $moduleId and classpath: $classpathStr")
+    log.debug(s"Job package created for module $moduleId and classpath: $classpathStr")
   }
 
 }

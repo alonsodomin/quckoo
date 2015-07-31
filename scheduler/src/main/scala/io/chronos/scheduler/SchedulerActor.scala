@@ -65,7 +65,7 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
 
   private val executionCounter = ignite.atomicSequence("executionCounter", 0, true)
   private val executionMap = ignite.getOrCreateCache[ExecutionId, Execution]("executions")
-  private val executionBySchedule = ignite.getOrCreateCache[ScheduleId, ExecutionId]("executionBySchedule")
+  private val executionsBySchedule = ignite.getOrCreateCache[ScheduleId, List[ExecutionId]]("executionsBySchedule")
 
   private val executionQueue = ignite.queue[ExecutionId]("executionQueue", queueCapacity, new CollectionConfiguration)
 
@@ -97,6 +97,11 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
         case e: Throwable => ScheduleJobFailed(Right(e))
       } pipeTo sender
 
+    case RescheduleJob(scheduleId) =>
+      val execution = defineExecutionFor(scheduleId)
+      mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.stage))
+      sender ! ScheduleJobAck(execution.executionId)
+
     case GetSchedule(scheduleId) =>
       sender ! Option(scheduleMap.get(scheduleId))
 
@@ -112,7 +117,7 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
         mediator ! DistributedPubSubMediator.Publish(topic.Workers, WorkerRegistered(workerId))
       }
 
-    case RequestWork(workerId) =>
+    case RequestWork(workerId) if !executionQueue.isEmpty =>
       workers.get(workerId) match {
         case Some(worker @ WorkerState(_, WorkerState.Idle)) =>
           val executionId = executionQueue.take()
@@ -143,7 +148,7 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
           } recover {
             case cause: Throwable =>
               log.error(cause, "Couldn't send execution to worker. Execution will be put back in the queue and retried later. executionId={}, workerId={}", executionId, workerId)
-              executionQueue.put(executionId)
+              executionQueue.offer(executionId)
               notifyWorkers()
           }
 
@@ -160,10 +165,16 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
           log.info("Execution {} is done by worker {}", executionId, workerId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
           updateExecutionAndApply(executionId, executionStatus) { _ =>
-            sender ! WorkDoneAck(executionId)
+            workers(workerId).ref ! WorkDoneAck(executionId)
             changeWorkerToIdle(workerId, executionId)
+
             mediator ! DistributedPubSubMediator.Publish(topic.AllResults, WorkResult(executionId, result))
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
+
+            val (scheduleId, _) = executionId
+            if (scheduleMap.get(scheduleId).isRecurring) {
+              self ! RescheduleJob(scheduleId)
+            }
           }
 
         case _ =>
@@ -190,15 +201,19 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
       var itemCount = 0
       def underBatchLimit: Boolean = itemCount < sweepBatchLimit
 
-      def notInProgress(scheduleId: ScheduleId): Boolean =
-        Option(executionBySchedule.get(scheduleId)).map(executionMap.get).map(_.stage) match {
-        case Some(_: Execution.InProgress) => false
-        case _                             => true
+      def ready(scheduleId: ScheduleId): Boolean = {
+        (for {
+          schedule <- Option(scheduleMap.get(scheduleId))
+          execution <- currentExecutionOf(scheduleId)
+        } yield execution.stage match {
+          case _: Execution.Scheduled => true
+          case _                      => false
+        }).getOrElse(false)
       }
 
       def localSchedules: Iterable[(ScheduleId, JobSchedule)] =
         scheduleMap.localEntries().view.
-          filter(entry => notInProgress(entry.getKey)).
+          filter(entry => ready(entry.getKey)).
           takeWhile(_ => underBatchLimit).
           map(entry => (entry.getKey, entry.getValue))
 
@@ -206,13 +221,13 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
       for {
         (scheduleId, schedule) <- localSchedules
         nextTime <- nextExecutionTime(scheduleId, schedule) if nextTime.isBefore(now) || nextTime.isEqual(now)
-        execId   <- Option(executionBySchedule.get(scheduleId))
+        exec     <- currentExecutionOf(scheduleId)
       } {
-        log.info("Placing execution into work queue. executionId={}", execId)
-        updateExecutionAndApply(execId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
-          executionMap.put(execId, exec)
-          executionQueue.put(execId)
-          mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execId, exec.stage))
+        log.info("Placing execution into work queue. executionId={}", exec.executionId)
+        updateExecutionAndApply(exec.executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
+          executionMap.put(exec.executionId, exec)
+          executionQueue.offer(exec.executionId)
+          mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
           notifyWorkers()
 
           itemCount += 1  // This awful statement is there to help the upper helper functions to build the batch
@@ -240,20 +255,39 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
   private def nextExecutionTime(scheduleId: ScheduleId, schedule: JobSchedule): Option[ZonedDateTime] =
     (for (time <- referenceTime(scheduleId)) yield schedule.trigger.nextExecutionTime(time)).flatten
 
+  private def currentExecutionOf(scheduleId: ScheduleId): Option[Execution] =
+    Option(executionsBySchedule.get(scheduleId)) flatMap { _.headOption } map executionMap.get
+
+  private def executionAtStatus[T <: Execution.Status](scheduleId: ScheduleId): Option[Execution] =
+    Option(executionsBySchedule.get(scheduleId)) flatMap { execIds =>
+      execIds.find { execId =>
+        Option(executionMap.get(execId)).exists(exec => exec.stage match {
+          case _: T => true
+          case _   => false
+        })
+      }
+    } map executionMap.get
+
   private def referenceTime(scheduleId: ScheduleId): Option[ReferenceTime] =
-    Option(executionBySchedule.get(scheduleId)).
-      flatMap(execId => Option(executionMap.get(execId))).
-      map(_.stage).flatMap {
-      case Execution.Scheduled(when)      => Some(ScheduledTime(when))
-      case Execution.Finished(when, _, _) => Some(LastExecutionTime(when))
-      case _                              => None
+    executionAtStatus[Execution.Complete](scheduleId).flatMap { exec =>
+      Some(LastExecutionTime(exec.stage.when))
+    } orElse {
+      executionAtStatus[Execution.Scheduled](scheduleId).flatMap { exec =>
+        Some(ScheduledTime(exec.stage.when))
+      }
     }
 
   private def defineExecutionFor(scheduleId: ScheduleId): Execution = {
     val executionId = (scheduleId, executionCounter.incrementAndGet())
     val execution = Execution(executionId)
     executionMap.put(executionId, execution)
-    executionBySchedule.put(scheduleId, executionId)
+    if(!executionsBySchedule.putIfAbsent(scheduleId, List(executionId))) {
+      executionsBySchedule.invoke(scheduleId, new EntryProcessor[ScheduleId, List[ExecutionId], Unit] {
+        override def process(entry: MutableEntry[ScheduleId, List[ExecutionId]], arguments: AnyRef*): Unit = {
+          entry.setValue(executionId :: entry.getValue)
+        }
+      })
+    }
     execution
   }
 
@@ -276,7 +310,7 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
 
   private def updateExecutionAndApply[T](executionId: ExecutionId, stage: Execution.Stage)(f: Execution => T): Future[T] = Future {
     executionMap.invoke(executionId, new EntryProcessor[ExecutionId, Execution, T] {
-      override def process(entry: MutableEntry[((JobId, Long), Long), Execution], arguments: AnyRef*): T = {
+      override def process(entry: MutableEntry[ExecutionId, Execution], arguments: AnyRef*): T = {
         val execution = entry.getValue << stage
         entry.setValue(execution)
         f(execution)
