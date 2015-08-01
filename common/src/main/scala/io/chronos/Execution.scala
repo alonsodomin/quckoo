@@ -34,10 +34,14 @@ object Execution {
 
   }
 
+  sealed trait WorkerStage {
+    implicit val where: WorkerId
+  }
+
   case class Scheduled(when: ZonedDateTime) extends Stage(1)
   case class Triggered(when: ZonedDateTime) extends Stage(2)
-  case class Started(when: ZonedDateTime, where: WorkerId) extends Stage(3)
-  case class Finished(when: ZonedDateTime, where: WorkerId, outcome: Outcome) extends Stage(4)
+  case class Started(when: ZonedDateTime, where: WorkerId) extends Stage(3) with WorkerStage
+  case class Finished(when: ZonedDateTime, where: WorkerId, outcome: Outcome) extends Stage(4) with WorkerStage
 
   case object Ready extends StageLike[Scheduled] {
     override def matches[S <: Stage](stage: S): Boolean = stage match {

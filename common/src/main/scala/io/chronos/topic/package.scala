@@ -5,7 +5,7 @@ package io.chronos
  */
 package object topic {
 
-  val AllResults = "/chronos/results"
+  val Results = "/chronos/results"
 
   val Executions = "/chronos/scheduler/execution"
   

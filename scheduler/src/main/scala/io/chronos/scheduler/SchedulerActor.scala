@@ -161,7 +161,7 @@ class SchedulerActor(hazelcastInstance: HazelcastInstance, registry: ActorRef, h
       Option(executionMap.get(executionId)).map(_.stage) match {
         case Some(_: Execution.Finished) =>
           // previous Ack was lost, confirm again that this is done
-          sender ! WorkDoneAck(executionId)
+          workers(workerId).ref ! WorkDoneAck(executionId)
         case Some(_: Execution.Started) =>
           log.info("Execution {} is done by worker {}", executionId, workerId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
@@ -169,7 +169,7 @@ class SchedulerActor(hazelcastInstance: HazelcastInstance, registry: ActorRef, h
             workers(workerId).ref ! WorkDoneAck(executionId)
             changeWorkerToIdle(workerId, executionId)
 
-            mediator ! DistributedPubSubMediator.Publish(topic.AllResults, WorkResult(executionId, result))
+            mediator ! DistributedPubSubMediator.Publish(topic.Results, WorkResult(executionId, result))
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
 
             val (scheduleId, _) = executionId
@@ -221,15 +221,13 @@ class SchedulerActor(hazelcastInstance: HazelcastInstance, registry: ActorRef, h
         (scheduleId, schedule) <- schedules
         nextTime <- nextExecutionTime(scheduleId, schedule) if nextTime.isBefore(now) || nextTime.isEqual(now)
         exec     <- currentExecutionOf(scheduleId)
-      } {
+      } updateExecutionAndApply(exec.executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
         log.info("Placing execution into work queue. executionId={}", exec.executionId)
-        updateExecutionAndApply(exec.executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
-          executionQueue.offer(exec.executionId)
-          mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
-          notifyWorkers()
+        executionQueue.offer(exec.executionId)
+        mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
+        notifyWorkers()
 
-          itemCount += 1  // This awful statement is there to help the upper helper functions to build the batch
-        }
+        itemCount += 1  // This awful statement is there to help the upper helper functions to build the batch
       }
 
       // Reset the atomic boolean flag to allow for more "beats"
@@ -244,7 +242,6 @@ class SchedulerActor(hazelcastInstance: HazelcastInstance, registry: ActorRef, h
             workers -= workerId
             mediator ! DistributedPubSubMediator.Publish(topic.Workers, WorkerUnregistered(workerId))
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
-            notifyWorkers()
           }
         }
       }
