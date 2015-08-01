@@ -1,12 +1,11 @@
 package actors
 
 import akka.actor._
-import akka.contrib.pattern.ClusterClient.{Send, SendToAll}
-import akka.pattern._
+import akka.contrib.pattern.ClusterClient.Send
 import akka.util.Timeout
 import common.MessageTypes
+import io.chronos.path
 import io.chronos.protocol.{ListenerProtocol, _}
-import io.chronos.{Execution, path}
 import model.ExecutionModel
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -68,10 +67,7 @@ object ExecutionsActor {
 }
 
 class ExecutionsActor(upstream: ActorRef) extends Actor with ActorLogging {
-  import Execution._
   import ExecutionsActor._
-  import SchedulerProtocol._
-  import context.dispatcher
 
   private val chronosClient = context.actorSelection(context.system / "chronosClient")
 
@@ -94,10 +90,10 @@ class ExecutionsActor(upstream: ActorRef) extends Actor with ActorLogging {
   def ready: Receive = {
     case GetFinishedExecutions =>
       implicit val timeout = Timeout(10.seconds)
-      val req = GetExecutions(_ is Done)
+      /*val req = GetExecutions(_ is Done)
       ( chronosClient ? SendToAll(path.Scheduler, req)) map {
         case e: Execution => ExecutionModel(e.executionId.toString(), e.stage.toString)
-      } pipeTo sender()
+      } pipeTo sender()*/
     
     case ExecutionEvent(executionId, status) =>
       val execution = ExecutionModel(executionId.toString(), status.toString)

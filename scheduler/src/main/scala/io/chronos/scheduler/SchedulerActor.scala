@@ -1,18 +1,18 @@
 package io.chronos.scheduler
 
 import java.time.{Clock, ZonedDateTime}
-import javax.cache.processor.{EntryProcessor, MutableEntry}
+import java.util.function.BiFunction
 
 import akka.actor._
 import akka.contrib.pattern.{ClusterReceptionistExtension, ClusterSingletonManager, DistributedPubSubExtension, DistributedPubSubMediator}
 import akka.pattern._
 import akka.util.Timeout
+import com.hazelcast.core.HazelcastInstance
+import io.chronos.Execution._
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos._
 import io.chronos.id._
 import io.chronos.protocol.WorkerProtocol._
-import org.apache.ignite.Ignite
-import org.apache.ignite.configuration.CollectionConfiguration
 
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
@@ -28,14 +28,14 @@ object SchedulerActor {
   val DefaultSweepBatchLimit  = 100
   val DefaultQueueCapacity    = 50
 
-  def props(ignite: Ignite, registry: ActorRef,
+  def props(hazelcastInstance: HazelcastInstance, registry: ActorRef,
             heartbeatInterval: FiniteDuration = DefaultHearbeatInterval,
             maxWorkTimeout: FiniteDuration = DefaultWorkTimeout,
             sweepBatchLimit: Int = DefaultSweepBatchLimit,
             queueCapacity: Int = DefaultQueueCapacity,
             role: Option[String] = None)(implicit clock: Clock): Props =
     ClusterSingletonManager.props(
-      Props(classOf[SchedulerActor], ignite, registry, heartbeatInterval, maxWorkTimeout, sweepBatchLimit, queueCapacity, clock),
+      Props(classOf[SchedulerActor], hazelcastInstance, registry, heartbeatInterval, maxWorkTimeout, sweepBatchLimit, queueCapacity, clock),
       "active", PoisonPill, role
     )
 
@@ -44,7 +44,7 @@ object SchedulerActor {
 
 }
 
-class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: FiniteDuration,
+class SchedulerActor(hazelcastInstance: HazelcastInstance, registry: ActorRef, heartbeatInterval: FiniteDuration,
                      maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int, queueCapacity: Int)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
@@ -58,16 +58,17 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
   private val mediator = DistributedPubSubExtension(context.system).mediator
 
   // Distributed data structures
-  private val beating = ignite.atomicReference("beating", false, true)
+  private val beating = hazelcastInstance.getAtomicReference[Boolean]("beating")
+  beating.set(false)
 
-  private val scheduleCounter = ignite.atomicSequence("scheduleCounter", 0, true)
-  private val scheduleMap = ignite.getOrCreateCache[ScheduleId, JobSchedule]("scheduleMap")
+  private val scheduleCounter = hazelcastInstance.getAtomicLong("scheduleCounter")
+  private val scheduleMap = hazelcastInstance.getMap[ScheduleId, JobSchedule]("scheduleMap")
 
-  private val executionCounter = ignite.atomicSequence("executionCounter", 0, true)
-  private val executionMap = ignite.getOrCreateCache[ExecutionId, Execution]("executions")
-  private val executionsBySchedule = ignite.getOrCreateCache[ScheduleId, List[ExecutionId]]("executionsBySchedule")
+  private val executionCounter = hazelcastInstance.getAtomicLong("executionCounter")
+  private val executionMap = hazelcastInstance.getMap[ExecutionId, Execution]("executions")
+  private val executionsBySchedule = hazelcastInstance.getMap[ScheduleId, List[ExecutionId]]("executionsBySchedule")
 
-  private val executionQueue = ignite.queue[ExecutionId]("executionQueue", queueCapacity, new CollectionConfiguration)
+  private val executionQueue = hazelcastInstance.getQueue[ExecutionId]("executionQueue")
 
   // Tasks
   private val cleanupTask = context.system.scheduler.schedule(maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupBeat)
@@ -161,7 +162,7 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
         case Some(_: Execution.Finished) =>
           // previous Ack was lost, confirm again that this is done
           sender ! WorkDoneAck(executionId)
-        case Some(_: Execution.InProgress) =>
+        case Some(_: Execution.Started) =>
           log.info("Execution {} is done by worker {}", executionId, workerId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
           updateExecutionAndApply(executionId, executionStatus) { _ =>
@@ -183,7 +184,7 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
 
     case WorkFailed(workerId, executionId, cause) =>
       Option(executionMap.get(executionId)).map(_.stage) match {
-        case Some(_: Execution.InProgress) =>
+        case Some(_: Execution.Started) =>
           log.error("Execution {} failed by worker {}", executionId, workerId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Failed(cause))
           updateExecutionAndApply(executionId, executionStatus) { execution =>
@@ -201,31 +202,28 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
       var itemCount = 0
       def underBatchLimit: Boolean = itemCount < sweepBatchLimit
 
-      def ready(scheduleId: ScheduleId): Boolean = {
-        (for {
-          schedule <- Option(scheduleMap.get(scheduleId))
-          execution <- currentExecutionOf(scheduleId)
-        } yield execution.stage match {
-          case _: Execution.Scheduled => true
-          case _                      => false
-        }).getOrElse(false)
-      }
+      def ready(scheduleId: ScheduleId): Boolean = (for {
+        schedule <- Option(scheduleMap.get(scheduleId))
+        execution <- currentExecutionOf(scheduleId)
+      } yield execution is Execution.Ready).getOrElse(false)
 
-      def localSchedules: Iterable[(ScheduleId, JobSchedule)] =
-        scheduleMap.localEntries().view.
+      def schedules: Iterable[(ScheduleId, JobSchedule)] =
+        scheduleMap.entrySet().view.
           filter(entry => ready(entry.getKey)).
           takeWhile(_ => underBatchLimit).
           map(entry => (entry.getKey, entry.getValue))
 
+      def nextExecutionTime(scheduleId: ScheduleId, schedule: JobSchedule): Option[ZonedDateTime] =
+        (for (time <- referenceTime(scheduleId)) yield schedule.trigger.nextExecutionTime(time)).flatten
+
       val now = ZonedDateTime.now(clock)
       for {
-        (scheduleId, schedule) <- localSchedules
+        (scheduleId, schedule) <- schedules
         nextTime <- nextExecutionTime(scheduleId, schedule) if nextTime.isBefore(now) || nextTime.isEqual(now)
         exec     <- currentExecutionOf(scheduleId)
       } {
         log.info("Placing execution into work queue. executionId={}", exec.executionId)
         updateExecutionAndApply(exec.executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
-          executionMap.put(exec.executionId, exec)
           executionQueue.offer(exec.executionId)
           mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
           notifyWorkers()
@@ -252,42 +250,33 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
       }
   }
 
-  private def nextExecutionTime(scheduleId: ScheduleId, schedule: JobSchedule): Option[ZonedDateTime] =
-    (for (time <- referenceTime(scheduleId)) yield schedule.trigger.nextExecutionTime(time)).flatten
-
   private def currentExecutionOf(scheduleId: ScheduleId): Option[Execution] =
     Option(executionsBySchedule.get(scheduleId)) flatMap { _.headOption } map executionMap.get
 
-  private def executionAtStatus[T <: Execution.Status](scheduleId: ScheduleId): Option[Execution] =
-    Option(executionsBySchedule.get(scheduleId)) flatMap { execIds =>
-      execIds.find { execId =>
-        Option(executionMap.get(execId)).exists(exec => exec.stage match {
-          case _: T => true
-          case _   => false
-        })
-      }
-    } map executionMap.get
+  private def referenceTime(scheduleId: ScheduleId): Option[ReferenceTime] = {
+    def executionAt(scheduleId: ScheduleId, stage: StageLike[_]): Option[Execution] =
+      Option(executionsBySchedule.get(scheduleId)) flatMap { execIds =>
+        execIds.find { execId =>
+          Option(executionMap.get(execId)).exists(stage.currentIn)
+        }
+      } map executionMap.get
 
-  private def referenceTime(scheduleId: ScheduleId): Option[ReferenceTime] =
-    executionAtStatus[Execution.Complete](scheduleId).flatMap { exec =>
-      Some(LastExecutionTime(exec.stage.when))
-    } orElse {
-      executionAtStatus[Execution.Scheduled](scheduleId).flatMap { exec =>
-        Some(ScheduledTime(exec.stage.when))
-      }
+    executionAt(scheduleId, Execution.Done).map { exec =>
+      LastExecutionTime(exec.stage.when)
+    } orElse executionAt(scheduleId, Execution.Ready).map { exec =>
+      ScheduledTime(exec.stage.when)
     }
+  }
 
   private def defineExecutionFor(scheduleId: ScheduleId): Execution = {
     val executionId = (scheduleId, executionCounter.incrementAndGet())
     val execution = Execution(executionId)
     executionMap.put(executionId, execution)
-    if(!executionsBySchedule.putIfAbsent(scheduleId, List(executionId))) {
-      executionsBySchedule.invoke(scheduleId, new EntryProcessor[ScheduleId, List[ExecutionId], Unit] {
-        override def process(entry: MutableEntry[ScheduleId, List[ExecutionId]], arguments: AnyRef*): Unit = {
-          entry.setValue(executionId :: entry.getValue)
-        }
-      })
-    }
+    executionsBySchedule.merge(scheduleId, List(executionId), new BiFunction[List[ExecutionId], List[ExecutionId], List[ExecutionId]] {
+      override def apply(oldValue: List[ExecutionId], newValue: List[ExecutionId]): List[ExecutionId] =
+        if (oldValue == null || oldValue.isEmpty) newValue
+        else newValue ::: oldValue
+    })
     execution
   }
 
@@ -309,13 +298,14 @@ class SchedulerActor(ignite: Ignite, registry: ActorRef, heartbeatInterval: Fini
   }
 
   private def updateExecutionAndApply[T](executionId: ExecutionId, stage: Execution.Stage)(f: Execution => T): Future[T] = Future {
-    executionMap.invoke(executionId, new EntryProcessor[ExecutionId, Execution, T] {
-      override def process(entry: MutableEntry[ExecutionId, Execution], arguments: AnyRef*): T = {
-        val execution = entry.getValue << stage
-        entry.setValue(execution)
-        f(execution)
-      }
-    })
+    executionMap.lock(executionId)
+    try {
+      val execution = executionMap.get(executionId) << stage
+      executionMap.put(executionId, execution)
+      f(execution)
+    } finally {
+      executionMap.unlock(executionId)
+    }
   }
 
 }

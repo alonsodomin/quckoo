@@ -65,7 +65,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
     case Tick =>
       n += 1
       log.info("Produced work: {}", n)
-      val jobSchedule = JobSchedule(jobSpec.id, Map("n" -> n), Trigger.Every(20 seconds, Option(5 seconds)))
+      val jobSchedule = JobSchedule(jobSpec.id, Map("n" -> n), jobTrigger)
       receptor ! ScheduleJob(jobSchedule)
       context.become(waitAccepted, discardOld = false)
   }
@@ -73,7 +73,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
   def waitAccepted: Receive = {
     case ScheduleJobAck(executionId) =>
       log.info("Job schedule has been accepted by the cluster. executionId={}", executionId)
-      if (n < 1) {
+      if (n < 25) {
         scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       }
       context.unbecome()

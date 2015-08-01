@@ -2,11 +2,11 @@ package io.chronos.scheduler
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
+import com.hazelcast.core.HazelcastInstance
 import io.chronos.JobSpec
 import io.chronos.id._
 import io.chronos.protocol._
 import io.chronos.resolver.JobModuleResolver
-import org.apache.ignite.Ignite
 
 import scala.collection.JavaConversions._
 
@@ -15,15 +15,15 @@ import scala.collection.JavaConversions._
  */
 object RegistryActor {
 
-  def props(ignite: Ignite, moduleResolver: JobModuleResolver): Props =
-    Props(classOf[RegistryActor], ignite, moduleResolver)
+  def props(hazelcastInstance: HazelcastInstance, moduleResolver: JobModuleResolver): Props =
+    Props(classOf[RegistryActor], hazelcastInstance, moduleResolver)
 
 }
 
-class RegistryActor(ignite: Ignite, moduleResolver: JobModuleResolver)
+class RegistryActor(hazelcastInstance: HazelcastInstance, moduleResolver: JobModuleResolver)
   extends Actor with ActorLogging {
 
-  private val jobSpecCache = ignite.getOrCreateCache[JobId, JobSpec]("jobSpecCache")
+  private val jobSpecCache = hazelcastInstance.getMap[JobId, JobSpec]("jobSpecCache")
 
   ClusterReceptionistExtension(context.system).registerService(self)
 
@@ -50,7 +50,7 @@ class RegistryActor(ignite: Ignite, moduleResolver: JobModuleResolver)
 
     case GetRegisteredJobs =>
       sender() ! RegisteredJobs(
-        jobSpecCache.localEntries().map(_.getValue).toSeq
+        jobSpecCache.entrySet().map(_.getValue).toSeq
       )
 
   }

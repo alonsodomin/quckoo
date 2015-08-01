@@ -14,7 +14,7 @@ object Execution {
 
   def apply(executionId: ExecutionId)(implicit c: Clock): Execution =
     new Execution(executionId) << Scheduled(ZonedDateTime.now(c))
-  
+
   sealed abstract class Stage(private val ordinal: Int) extends Ordered[Stage] with Serializable {
     implicit val when: ZonedDateTime
 
@@ -22,40 +22,57 @@ object Execution {
 
   }
 
-  sealed trait Status
+  sealed trait StageLike[T <: Stage] { self =>
 
-  sealed trait Waiting extends Stage with Status
-  sealed trait InProgress extends Stage with Status
-  sealed trait Complete extends Stage with Status
+     def matches[S <: Stage](stage: S): Boolean
 
-  val Pending = classOf[Waiting]
-  val Running = classOf[InProgress]
-  val Done = classOf[Complete]
+    final def currentIn(execution: Execution): Boolean = self.matches(execution.stage)
 
-  case class Scheduled(when: ZonedDateTime) extends Stage(1) with Waiting
-  case class Triggered(when: ZonedDateTime) extends Stage(2) with Waiting with InProgress
-  case class Started(when: ZonedDateTime, where: WorkerId) extends Stage(3) with InProgress
-  case class Finished(when: ZonedDateTime, where: WorkerId, outcome: Outcome) extends Stage(4) with Complete
+    final def grab(execution: Execution): Option[T] = execution.stages.
+      find(self.matches).
+      map { _.asInstanceOf[T] }
+
+  }
+
+  case class Scheduled(when: ZonedDateTime) extends Stage(1)
+  case class Triggered(when: ZonedDateTime) extends Stage(2)
+  case class Started(when: ZonedDateTime, where: WorkerId) extends Stage(3)
+  case class Finished(when: ZonedDateTime, where: WorkerId, outcome: Outcome) extends Stage(4)
+
+  case object Ready extends StageLike[Scheduled] {
+    override def matches[S <: Stage](stage: S): Boolean = stage match {
+      case _: Scheduled => true
+      case _            => false
+    }
+  }
+  case object Waiting extends StageLike[Triggered] {
+    override def matches[S <: Stage](stage: S): Boolean = stage match {
+      case _: Triggered => true
+      case _            => false
+    }
+  }
+  case object InProgress extends StageLike[Started] {
+    override def matches[S <: Stage](stage: S): Boolean = stage match {
+      case _: Started => true
+      case _          => false
+    }
+  }
+  case object Done extends StageLike[Finished] {
+    override def matches[S <: Stage](stage: S): Boolean = stage match {
+      case _: Finished => true
+      case _           => false
+    }
+  }
 
   sealed trait Outcome
-  case class Success(result: Any) extends Outcome with Status
-  case class Failed(cause: ExecutionFailedCause) extends Outcome with Status
-  case object TimedOut extends Outcome with Status
-
-  type StageType = Class[_ <: Stage]
-  type StatusType = Class[_ <: Status]
-
-  val ScheduledStage = classOf[Scheduled]
-  val TriggeredStage = classOf[Triggered]
-  val StartedStage = classOf[Started]
-  val FinishedStage = classOf[Finished]
+  case class Success(result: Any) extends Outcome
+  case class Failed(cause: ExecutionFailedCause) extends Outcome
+  case object TimedOut extends Outcome
 
 }
 
 case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = Nil) extends Serializable {
   import Execution._
-
-  def apply(stageType: StageType): Option[Stage] = stages.find(st => stageType.isInstance(st))
 
   def executionId = id
 
@@ -65,7 +82,7 @@ case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = N
 
   def lastStatusChange: ZonedDateTime = stage.when
 
-  def << (newStage: Stage): Execution = {
+  def <<(newStage: Stage): Execution = {
     if (stages.nonEmpty && stage > newStage) {
       throw new IllegalArgumentException(
         s"Can't move the execution status to an earlier stage. executionId=$executionId, currentStage=$stage, newStage=$newStage"
@@ -74,22 +91,10 @@ case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = N
     copy(stages = newStage :: stages)
   }
 
-  def is(status: StatusType): Boolean = outcome match {
-    case Some(o) => status.isInstance(o) || status.isInstance(stage)
-    case None    => status.isInstance(stage)
-  }
+  def |>>[T <: Stage](stageLike: StageLike[T]): Option[T] = stageLike.grab(this)
 
-  def at(stage: StageType, between: (ZonedDateTime, ZonedDateTime)): Boolean = {
-    def stageFilter(st: Stage): Boolean = {
-      val (startDate, endDate) = between
-      stage.isInstance(st) && (
-        (st.when.isEqual(startDate) || st.when.isAfter(startDate)) &&
-          (st.when.isBefore(endDate) || st.when.isEqual(endDate))
-      )
-    }
-    stages.count(stageFilter) > 0
-  }
-
+  def is[T <: Stage](stageLike: StageLike[T]): Boolean = stageLike.currentIn(this)
+  
   def outcome: Option[Outcome] = stage match {
     case Finished(_, _, outcome) => Some(outcome)
     case _                       => None

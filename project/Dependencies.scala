@@ -6,7 +6,7 @@ object Dependencies {
 
   val configVersion    = "1.2.1"
   val akkaVersion      = "2.3.11"
-  val hazelcastVersion = "3.4.4"
+  val hazelcastVersion = "3.5.1"
   val igniteVersion    = "1.3.0-incubating"
   val sprayVersion     = "1.3.3"
 
