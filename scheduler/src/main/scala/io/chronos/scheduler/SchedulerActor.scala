@@ -27,17 +27,15 @@ object SchedulerActor {
 
   val DefaultHearbeatInterval = 100 millis
   val DefaultWorkTimeout      = 5 minutes
-  val DefaultSweepBatchLimit  = 100
-  val DefaultQueueCapacity    = 50
+  val DefaultSweepBatchLimit  = 50
 
   def props(hazelcastInstance: HazelcastInstance, registry: ActorRef,
             heartbeatInterval: FiniteDuration = DefaultHearbeatInterval,
             maxWorkTimeout: FiniteDuration = DefaultWorkTimeout,
             sweepBatchLimit: Int = DefaultSweepBatchLimit,
-            queueCapacity: Int = DefaultQueueCapacity,
             role: Option[String] = None)(implicit clock: Clock): Props =
     ClusterSingletonManager.props(
-      Props(classOf[SchedulerActor], hazelcastInstance, registry, heartbeatInterval, maxWorkTimeout, sweepBatchLimit, queueCapacity, clock),
+      Props(classOf[SchedulerActor], hazelcastInstance, registry, heartbeatInterval, maxWorkTimeout, sweepBatchLimit, clock),
       "active", PoisonPill, role
     )
 
@@ -47,7 +45,7 @@ object SchedulerActor {
 }
 
 class SchedulerActor(hazelcastInstance: HazelcastInstance, registry: ActorRef, heartbeatInterval: FiniteDuration,
-                     maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int, queueCapacity: Int)(implicit clock: Clock)
+                     maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import SchedulerActor._

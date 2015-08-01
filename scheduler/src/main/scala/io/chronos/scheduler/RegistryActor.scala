@@ -2,28 +2,21 @@ package io.chronos.scheduler
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
-import com.hazelcast.core.HazelcastInstance
-import io.chronos.JobSpec
-import io.chronos.id._
 import io.chronos.protocol._
 import io.chronos.resolver.JobModuleResolver
-
-import scala.collection.JavaConversions._
 
 /**
  * Created by aalonsodominguez on 26/07/15.
  */
 object RegistryActor {
 
-  def props(hazelcastInstance: HazelcastInstance, moduleResolver: JobModuleResolver): Props =
-    Props(classOf[RegistryActor], hazelcastInstance, moduleResolver)
+  def props(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver): Props =
+    Props(classOf[RegistryActor], jobRegistry, moduleResolver)
 
 }
 
-class RegistryActor(hazelcastInstance: HazelcastInstance, moduleResolver: JobModuleResolver)
+class RegistryActor(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver)
   extends Actor with ActorLogging {
-
-  private val jobSpecCache = hazelcastInstance.getMap[JobId, JobSpec]("jobSpecCache")
 
   ClusterReceptionistExtension(context.system).registerService(self)
 
@@ -40,16 +33,16 @@ class RegistryActor(hazelcastInstance: HazelcastInstance, moduleResolver: JobMod
 
         case Right(modulePackage) =>
           log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
-          jobSpecCache.put(jobSpec.id, jobSpec)
+          jobRegistry.registerJob(jobSpec)
           log.info("Job spec has been registered. jobId={}, name={}", jobSpec.id, jobSpec.displayName)
           sender() ! JobAccepted(jobSpec.id)
       }
 
     case GetJob(jobId) =>
-      sender() ! Option(jobSpecCache.get(jobId))
+      sender() ! jobRegistry.getJob(jobId)
 
     case GetJobs =>
-      sender() ! jobSpecCache.entrySet().map(_.getValue).toSeq
+      sender() ! jobRegistry.getJobs
 
   }
 
