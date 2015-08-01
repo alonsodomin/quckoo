@@ -36,7 +36,7 @@ object SchedulerBootstrap {
     system.actorOf(Props[ExecutionMonitor], "executions")
 
     val registry = system.actorOf(RegistryActor.props(store, moduleResolver), "registry")
-    system.actorOf(SchedulerActor.props(hazelcastInstance, registry), "scheduler")
+    system.actorOf(SchedulerActor.props(store, registry), "scheduler")
   }
 
 }
