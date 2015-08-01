@@ -6,6 +6,7 @@ object Dependencies {
 
   val configVersion    = "1.2.1"
   val akkaVersion      = "2.3.11"
+  val akkaHttpVersion  = "1.0"
   val hazelcastVersion = "3.5.1"
   val igniteVersion    = "1.3.0-incubating"
   val sprayVersion     = "1.3.3"
@@ -47,14 +48,12 @@ object Dependencies {
   )
 
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
-    "com.typesafe.akka" %% "akka-stream-experimental" % "1.0",
-    "org.scalaz" %% "scalaz-core" % "7.1.3",
-
-    "com.hazelcast" % "hazelcast"        % hazelcastVersion withSources() withJavadoc(),
-    "com.hazelcast" % "hazelcast-client" % hazelcastVersion withSources() withJavadoc(),
-
-    "com.jsuereth"      %% "scala-arm"   % "2.0.0-M1"    withSources() withJavadoc(),
-    "org.apache.ignite"  % "ignite-core" % igniteVersion withSources() withJavadoc(),
+    "org.scalaz"        %% "scalaz-core"   % "7.1.3"          withSources() withJavadoc(),
+    "io.spray"          %% "spray-can"     % sprayVersion     withSources() withJavadoc(),
+    "io.spray"          %% "spray-routing" % sprayVersion     withSources() withJavadoc(),
+    "com.hazelcast"      % "hazelcast"     % hazelcastVersion withSources() withJavadoc(),
+    "com.jsuereth"      %% "scala-arm"     % "2.0.0-M1"       withSources() withJavadoc(),
+    "org.apache.ignite"  % "ignite-core"   % igniteVersion    withSources() withJavadoc(),
 
     "commons-io"    % "commons-io" % "2.4" % "test"
   )

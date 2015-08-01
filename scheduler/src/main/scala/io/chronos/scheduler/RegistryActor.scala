@@ -45,13 +45,11 @@ class RegistryActor(hazelcastInstance: HazelcastInstance, moduleResolver: JobMod
           sender() ! JobAccepted(jobSpec.id)
       }
 
-    case GetJobSpec(jobId) =>
+    case GetJob(jobId) =>
       sender() ! Option(jobSpecCache.get(jobId))
 
-    case GetRegisteredJobs =>
-      sender() ! RegisteredJobs(
-        jobSpecCache.entrySet().map(_.getValue).toSeq
-      )
+    case GetJobs =>
+      sender() ! jobSpecCache.entrySet().map(_.getValue).toSeq
 
   }
 

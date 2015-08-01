@@ -1,6 +1,7 @@
 package io.chronos.scheduler
 
 import java.time.{Clock, ZonedDateTime}
+import java.util.Map.Entry
 import java.util.function.BiFunction
 
 import akka.actor._
@@ -8,6 +9,7 @@ import akka.contrib.pattern.{ClusterReceptionistExtension, ClusterSingletonManag
 import akka.pattern._
 import akka.util.Timeout
 import com.hazelcast.core.HazelcastInstance
+import com.hazelcast.query.Predicate
 import io.chronos.Execution._
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos._
@@ -85,7 +87,7 @@ class SchedulerActor(hazelcastInstance: HazelcastInstance, registry: ActorRef, h
   def receive = {
     case ScheduleJob(schedule) =>
       implicit val timeout = Timeout(5 seconds)
-      (registry ? GetJobSpec(schedule.jobId)).mapTo[Option[JobSpec]].map {
+      (registry ? GetJob(schedule.jobId)).mapTo[Option[JobSpec]].map {
         case Some(jobSpec) =>
           val scheduleId = (schedule.jobId, scheduleCounter.incrementAndGet())
           scheduleMap.put(scheduleId, schedule)
@@ -106,12 +108,20 @@ class SchedulerActor(hazelcastInstance: HazelcastInstance, registry: ActorRef, h
     case GetSchedule(scheduleId) =>
       sender ! Option(scheduleMap.get(scheduleId))
 
+    case GetScheduledJobs =>
+      sender ! scheduleMap.entrySet().map(entry => (entry.getKey, entry.getValue)).toSeq
+
+    case req: GetExecutions =>
+      sender ! executionMap.values(new Predicate[ExecutionId, Execution] {
+        override def apply(mapEntry: Entry[((JobId, Long), Long), Execution]): Boolean = req.filter(mapEntry.getValue)
+      }).toSeq
+
     case RegisterWorker(workerId) =>
       if (workers.contains(workerId)) {
         workers += (workerId -> workers(workerId).copy(ref = sender()))
       } else {
         workers += (workerId -> WorkerState(sender(), status = WorkerState.Idle))
-        log.info("Worker registered: {}", workerId)
+        log.info("Worker registered: workerId={}", workerId)
         if (!executionQueue.isEmpty) {
           sender ! WorkReady
         }
@@ -125,7 +135,7 @@ class SchedulerActor(hazelcastInstance: HazelcastInstance, registry: ActorRef, h
 
           def futureJobSpec: Future[Option[JobSpec]] = {
             implicit val timeout = Timeout(5 seconds)
-            (registry ? GetJobSpec(executionId._1._1)).mapTo[Option[JobSpec]]
+            (registry ? GetJob(executionId._1._1)).mapTo[Option[JobSpec]]
           }
 
           def futureSchedule: Future[Option[JobSchedule]] = Future { Option(scheduleMap.get(executionId._1)) }

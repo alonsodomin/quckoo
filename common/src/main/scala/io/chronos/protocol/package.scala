@@ -7,6 +7,17 @@ import io.chronos.id._
  */
 package object protocol {
 
+  case class GetJob(jobId: JobId)
+  case object GetJobs
+
+  case class GetSchedule(scheduleId: ScheduleId)
+  case object GetScheduledJobs
+
+  case class GetExecution(executionId: ExecutionId)
+  case class GetExecutions(filter: Execution => Boolean)
+
+  // --------- Commands
+
   case class JobNotRegistered(jobId: JobId)
   case class ResolutionFailed(unresolvedDependencies: Seq[String])
 
@@ -22,12 +33,6 @@ package object protocol {
   case class RescheduleJob(scheduleId: ScheduleId)
   case class ScheduleJobAck(executionId: ExecutionId)
   case class ScheduleJobFailed(cause: ScheduleFailedCause)
-
-  case object GetRegisteredJobs
-  case class RegisteredJobs(specs: Seq[JobSpec])
-
-  case class GetJobSpec(jobId: JobId)
-  case class GetSchedule(scheduleId: ScheduleId)
 
   // ---------- Events
 
