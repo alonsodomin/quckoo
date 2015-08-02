@@ -51,13 +51,13 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
   override def getExecutions(f: Execution => Boolean): Seq[Execution] =
     collectFrom(executionMap.values().filter(f).iterator, Vector())
 
-  override def schedule(jobSchedule: JobSchedule): Execution = {
+  override def schedule(jobSchedule: JobSchedule)(implicit clock: Clock): Execution = {
     val scheduleId = (jobSchedule.jobId, scheduleCounter.incrementAndGet())
     scheduleMap.put(scheduleId, jobSchedule)
     defineExecutionFor(scheduleId)
   }
   
-  override def reschedule(scheduleId: ScheduleId): Execution = defineExecutionFor(scheduleId)
+  override def reschedule(scheduleId: ScheduleId)(implicit clock: Clock): Execution = defineExecutionFor(scheduleId)
 
   override def hasPendingExecutions: Boolean = !executionQueue.isEmpty
 
@@ -111,6 +111,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
       stage match {
         case _: Execution.Triggered =>
           executionQueue.offer(executionId)
+        case _ =>
       }
 
       f(execution)
@@ -119,10 +120,10 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
     }
   }
 
-  def nextExecutionTime(scheduleId: ScheduleId): Option[ZonedDateTime] =
+  def nextExecutionTime(scheduleId: ScheduleId)(implicit clock: Clock): Option[ZonedDateTime] =
     Option(scheduleMap.get(scheduleId)).flatMap(s => nextExecutionTime(scheduleId, s))
 
-  private def nextExecutionTime(scheduleId: ScheduleId, schedule: JobSchedule): Option[ZonedDateTime] =
+  private def nextExecutionTime(scheduleId: ScheduleId, schedule: JobSchedule)(implicit clock: Clock): Option[ZonedDateTime] =
     referenceTime(scheduleId).flatMap(time => schedule.trigger.nextExecutionTime(time))
 
   private def referenceTime(scheduleId: ScheduleId): Option[ReferenceTime] = {
@@ -140,7 +141,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
     }
   }
 
-  private def defineExecutionFor(scheduleId: ScheduleId): Execution = {
+  private def defineExecutionFor(scheduleId: ScheduleId)(implicit clock: Clock): Execution = {
     val executionId = (scheduleId, executionCounter.incrementAndGet())
     val execution = Execution(executionId)
     executionMap.put(executionId, execution)

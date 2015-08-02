@@ -18,9 +18,9 @@ trait ExecutionPlan {
 
   def getExecutions(filter: Execution => Boolean): Seq[Execution]
 
-  def schedule(jobSchedule: JobSchedule): Execution
+  def schedule(jobSchedule: JobSchedule)(implicit clock: Clock): Execution
 
-  def reschedule(scheduleId: ScheduleId): Execution
+  def reschedule(scheduleId: ScheduleId)(implicit clock: Clock): Execution
 
   def hasPendingExecutions: Boolean
 
