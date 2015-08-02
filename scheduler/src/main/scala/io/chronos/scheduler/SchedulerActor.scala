@@ -63,7 +63,7 @@ class SchedulerActor(executionPlan: ExecutionPlan, registry: ActorRef, heartbeat
     case ScheduleJob(schedule) =>
       val execution = executionPlan.schedule(schedule)
       mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.stage))
-      ScheduleJobAck(execution.executionId)
+      sender ! ScheduleJobAck(execution.executionId)
 
     case RescheduleJob(scheduleId) =>
       val execution = executionPlan.reschedule(scheduleId)

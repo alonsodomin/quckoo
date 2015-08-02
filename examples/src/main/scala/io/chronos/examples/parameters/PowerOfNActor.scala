@@ -83,7 +83,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
         case Left(notRegistered) =>
           log.error("Job scheduling has failed because the job hasn't been registered in the first place. jobId={}", notRegistered.jobId)
         case Right(thrown) =>
-          log.error("Job scheduling has thrown an error. Will retry after a while.")
+          log.error("Job scheduling has thrown an error. Will retry after a while. message={}", thrown.getMessage)
           scheduler.scheduleOnce(3.seconds, self, Tick)
           context.unbecome()
       }
