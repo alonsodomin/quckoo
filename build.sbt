@@ -14,7 +14,7 @@ resolvers in ThisBuild ++= Seq(
 )
 
 lazy val chronos = (project in file(".")).aggregate(
-  common, resolver, scheduler, examples, console, worker
+  common, resolver, scheduler, examples, worker
 )
 
 lazy val common = (project in file("common")).
@@ -38,15 +38,6 @@ lazy val scheduler = (project in file("scheduler")).
   enablePlugins(JavaAppPackaging).
   dependsOn(common).
   dependsOn(resolver)
-
-lazy val console = (project in file("console")).
-  settings(Commons.settings: _*).
-  enablePlugins(PlayScala).
-  settings(
-    libraryDependencies ++= Dependencies.consoleLibs,
-    routesGenerator := InjectedRoutesGenerator
-  ).
-  dependsOn(common)
 
 lazy val worker = (project in file("worker")).
   settings(Commons.settings: _*).

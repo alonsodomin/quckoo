@@ -1,4 +1,3 @@
-import play.sbt.PlayImport._
 import sbt._
 
 object Dependencies {
@@ -54,16 +53,6 @@ object Dependencies {
     "com.jsuereth"      %% "scala-arm"                % "2.0.0-M1"         withSources() withJavadoc(),
 
     "commons-io"    % "commons-io" % "2.4" % "test"
-  )
-
-  val consoleLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ Seq(
-    "org.webjars"       %% "webjars-play"      % "2.4.0-1"        withSources() withJavadoc(),
-    "org.webjars"       % "font-awesome"       % "4.3.0-3",
-    "org.webjars"       % "bootstrap"          % "3.3.5",
-    "org.webjars"       % "knockout"           % "3.3.0",
-    "org.webjars"       % "requirejs-domready" % "2.0.1-2",
-
-    specs2 % Test  
   )
 
   val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs
