@@ -15,18 +15,19 @@ import scala.concurrent.duration._
  */
 object SchedulerActor {
 
-  val DefaultHearbeatInterval = 100 millis
-  val DefaultWorkTimeout      = 5 minutes
-  val DefaultSweepBatchLimit  = 50
+  val DefaultHeartbeatInterval = 50 millis
+  val DefaultWorkTimeout       = 5 minutes
+  val DefaultSweepBatchLimit   = 50
 
-  def props(executionPlan: ExecutionPlan, registry: ActorRef,
-            heartbeatInterval: FiniteDuration = DefaultHearbeatInterval,
+  def props(executionPlan: ExecutionPlan, executionPlanner: ActorRef,
+            heartbeatInterval: FiniteDuration = DefaultHeartbeatInterval,
             maxWorkTimeout: FiniteDuration = DefaultWorkTimeout,
             sweepBatchLimit: Int = DefaultSweepBatchLimit,
             role: Option[String] = None)(implicit clock: Clock): Props =
     ClusterSingletonManager.props(
-      Props(classOf[SchedulerActor], executionPlan, registry, heartbeatInterval, maxWorkTimeout, sweepBatchLimit, clock),
-      "active", PoisonPill, role
+      Props(classOf[SchedulerActor], executionPlan, executionPlanner, heartbeatInterval, maxWorkTimeout,
+        sweepBatchLimit, clock
+      ), "active", PoisonPill, role
     )
 
   private case object Heartbeat
@@ -34,7 +35,7 @@ object SchedulerActor {
 
 }
 
-class SchedulerActor(executionPlan: ExecutionPlan, registry: ActorRef, heartbeatInterval: FiniteDuration,
+class SchedulerActor(executionPlan: ExecutionPlan, executionPlanner: ActorRef, heartbeatInterval: FiniteDuration,
                      maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
@@ -58,25 +59,6 @@ class SchedulerActor(executionPlan: ExecutionPlan, registry: ActorRef, heartbeat
   }
 
   def receive = {
-    case ScheduleJob(schedule) =>
-      val execution = executionPlan.schedule(schedule)
-      mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.stage))
-      sender ! ScheduleJobAck(execution.executionId)
-
-    case RescheduleJob(scheduleId) =>
-      val execution = executionPlan.reschedule(scheduleId)
-      mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.stage))
-      sender ! ScheduleJobAck(execution.executionId)
-
-    case GetSchedule(scheduleId) =>
-      sender ! executionPlan.getSchedule(scheduleId)
-
-    case GetScheduledJobs =>
-      sender ! executionPlan.getScheduledJobs
-
-    case req: GetExecutions =>
-      sender ! executionPlan.getExecutions(req.filter)
-
     case RegisterWorker(workerId) =>
       if (workers.contains(workerId)) {
         workers += (workerId -> workers(workerId).copy(ref = sender()))
@@ -124,8 +106,8 @@ class SchedulerActor(executionPlan: ExecutionPlan, registry: ActorRef, heartbeat
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
 
             val (scheduleId, _) = executionId
-            executionPlan.getSchedule(scheduleId).filter(_.isRecurring).foreach { _ =>
-              self ! RescheduleJob(scheduleId)
+            for (schedule <- executionPlan.getSchedule(scheduleId); if schedule.isRecurring) {
+              executionPlanner ! RescheduleJob(scheduleId)
             }
           }
 

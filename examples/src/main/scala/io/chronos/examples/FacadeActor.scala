@@ -32,7 +32,7 @@ class FacadeActor(client: ActorRef) extends Actor with ActorLogging {
 
     case s: ScheduleJob =>
       log.info("Scheduling job. jobId={}, desc={}", s.schedule.jobId, s.schedule)
-      (client ? SendToAll(path.Scheduler, s)) recover {
+      (client ? SendToAll(path.ExecutionPlan, s)) recover {
         case e: Throwable => ScheduleJobFailed(Right(e))
       } pipeTo sender()
 
