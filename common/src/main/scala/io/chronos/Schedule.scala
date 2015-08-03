@@ -8,7 +8,7 @@ import scala.concurrent.duration.FiniteDuration
 /**
  * Created by aalonsodominguez on 09/07/15.
  */
-case class JobSchedule(jobId: JobId,
+case class Schedule(jobId: JobId,
                        params: Map[String, Any] = Map.empty,
                        trigger: Trigger = Immediate,
                        timeout: Option[FiniteDuration] = None) {

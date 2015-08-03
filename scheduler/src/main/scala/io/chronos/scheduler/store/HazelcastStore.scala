@@ -8,7 +8,7 @@ import io.chronos.Execution.StageLike
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos.id._
 import io.chronos.scheduler.{ExecutionPlan, JobRegistry}
-import io.chronos.{Execution, JobSchedule, JobSpec}
+import io.chronos.{Execution, JobSpec, Schedule}
 import org.slf4s.Logging
 
 import scala.collection.JavaConversions._
@@ -25,7 +25,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
   beating.set(false)
 
   private val scheduleCounter = hazelcastInstance.getAtomicLong("scheduleCounter")
-  private val scheduleMap = hazelcastInstance.getMap[ScheduleId, JobSchedule]("scheduleMap")
+  private val scheduleMap = hazelcastInstance.getMap[ScheduleId, Schedule]("scheduleMap")
 
   private val executionCounter = hazelcastInstance.getAtomicLong("executionCounter")
   private val executionMap = hazelcastInstance.getMap[ExecutionId, Execution]("executions")
@@ -39,10 +39,10 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
 
   override def getJobs: Seq[JobSpec] = collectFrom(jobSpecCache.values().iterator(), Vector())
 
-  override def getSchedule(scheduleId: ScheduleId): Option[JobSchedule] =
+  override def getSchedule(scheduleId: ScheduleId): Option[Schedule] =
     Option(scheduleMap.get(scheduleId))
 
-  override def getScheduledJobs: Seq[(ScheduleId, JobSchedule)] =
+  override def getScheduledJobs: Seq[(ScheduleId, Schedule)] =
     collectFrom(scheduleMap.entrySet().map(entry => (entry.getKey, entry.getValue)).iterator, Vector())
 
   override def getExecution(executionId: ExecutionId): Option[Execution] =
@@ -51,7 +51,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
   override def getExecutions(f: Execution => Boolean): Seq[Execution] =
     collectFrom(executionMap.values().filter(f).iterator, Vector())
 
-  override def schedule(jobSchedule: JobSchedule)(implicit clock: Clock): Execution = {
+  override def schedule(jobSchedule: Schedule)(implicit clock: Clock): Execution = {
     val scheduleId = (jobSchedule.jobId, scheduleCounter.incrementAndGet())
     scheduleMap.put(scheduleId, jobSchedule)
     defineExecutionFor(scheduleId)
@@ -61,7 +61,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
 
   override def hasPendingExecutions: Boolean = !executionQueue.isEmpty
 
-  override def takePending(f: (ExecutionId, JobSchedule, JobSpec) => Unit): Unit = if (!executionQueue.isEmpty) {
+  override def takePending(f: (ExecutionId, Schedule, JobSpec) => Unit): Unit = if (!executionQueue.isEmpty) {
     val executionId = executionQueue.take()
     for {
       jobSpec <- Option(jobSpecCache.get(executionId._1._1))
@@ -82,7 +82,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
         execution <- currentExecutionOf(scheduleId).map(executionMap.get)
       } yield execution is Execution.Ready).getOrElse(false)
 
-      def schedules: Iterable[(ScheduleId, JobSchedule)] =
+      def schedules: Iterable[(ScheduleId, Schedule)] =
         scheduleMap.entrySet().view.
           filter(entry => ready(entry.getKey)).
           takeWhile(_ => underBatchLimit).
@@ -123,7 +123,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
   def nextExecutionTime(scheduleId: ScheduleId)(implicit clock: Clock): Option[ZonedDateTime] =
     Option(scheduleMap.get(scheduleId)).flatMap(s => nextExecutionTime(scheduleId, s))
 
-  private def nextExecutionTime(scheduleId: ScheduleId, schedule: JobSchedule)(implicit clock: Clock): Option[ZonedDateTime] =
+  private def nextExecutionTime(scheduleId: ScheduleId, schedule: Schedule)(implicit clock: Clock): Option[ZonedDateTime] =
     referenceTime(scheduleId).flatMap(time => schedule.trigger.nextExecutionTime(time))
 
   private def referenceTime(scheduleId: ScheduleId): Option[ReferenceTime] = {

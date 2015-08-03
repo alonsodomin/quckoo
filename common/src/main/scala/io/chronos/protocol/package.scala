@@ -29,7 +29,7 @@ package object protocol {
   case class JobAccepted(jobId: JobId)
   case class JobRejected(cause: JobRejectedCause)
 
-  case class ScheduleJob(schedule: JobSchedule)
+  case class ScheduleJob(schedule: Schedule)
   case class RescheduleJob(scheduleId: ScheduleId)
   case class ScheduleJobAck(executionId: ExecutionId)
   case class ScheduleJobFailed(cause: ScheduleFailedCause)

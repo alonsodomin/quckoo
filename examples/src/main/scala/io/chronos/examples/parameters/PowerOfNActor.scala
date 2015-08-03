@@ -65,7 +65,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
     case Tick =>
       n += 1
       log.info("Produced work: {}", n)
-      val jobSchedule = JobSchedule(jobSpec.id, Map("n" -> n), jobTrigger)
+      val jobSchedule = Schedule(jobSpec.id, Map("n" -> n), jobTrigger)
       receptor ! ScheduleJob(jobSchedule)
       context.become(waitAccepted, discardOld = false)
   }
