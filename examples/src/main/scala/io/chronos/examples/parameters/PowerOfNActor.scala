@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.chronos._
+import io.chronos.id.ModuleId
 import io.chronos.protocol._
 
 import scala.concurrent.duration._

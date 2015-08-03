@@ -2,6 +2,7 @@ package io.chronos.resolver
 
 import java.net.URL
 
+import io.chronos.id.ModuleId
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpec, Inside, Matchers}
 

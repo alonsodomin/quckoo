@@ -3,14 +3,15 @@ package io.chronos.scheduler
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.cluster.Cluster
-import akka.testkit.TestKit
-import com.typesafe.config.ConfigFactory
+import akka.pattern._
+import akka.testkit.{TestActorRef, TestKit}
+import akka.util.Timeout
 import io.chronos.JobSpec
 import io.chronos.id.ModuleId
 import io.chronos.resolver.ModuleResolver
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, WordSpecLike}
+import org.scalatest._
+import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
 
@@ -19,52 +20,50 @@ import scala.concurrent.duration._
  */
 object RegistryActorTest {
 
-  val ClusterConfig = ConfigFactory.load("test-cluster")
-  val ClientConfig = ConfigFactory.parseString(
-    """
-      |akka.actor.provider = "akka.remote.RemoteActorRefProvider"
-      |akka.remote.netty.tcp.port=0
-    """.stripMargin)
-
   val TestModuleId = ModuleId("io.chronos", "test", "latest")
 
 }
 
-class RegistryActorTest(_system: ActorSystem) extends TestKit(_system) with WordSpecLike with BeforeAndAfter
-  with BeforeAndAfterAll with MockFactory {
+class RegistryActorTest extends TestKit(ActorSystem("RegistryActorTest")) with FlatSpecLike with Matchers
+  with MockFactory with ScalaFutures with BeforeAndAfterAll {
 
+  import RegistryActorTest._
   import io.chronos.protocol._
 
-  def this() = this(ActorSystem("RegistryActorTest", RegistryActorTest.ClusterConfig))
+  val mockRegistry = mock[Registry]
+  val mockModuleResolver = mock[ModuleResolver]
+  val registry = TestActorRef(RegistryActor.props(mockRegistry, mockModuleResolver))
 
-  override def afterAll: Unit = {
-    system.shutdown()
-    system.awaitTermination()
+  implicit val timeout = Timeout(1 second)
+
+  override protected def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
   }
 
-  "A Registry actor" must {
-    import RegistryActorTest._
+  "A Registry actor" must "retrieve a job from the registry" in {
+    val jobId = UUID.randomUUID()
+    val expectedJobSpec = JobSpec(jobId, "foo", "", TestModuleId, "foo.JobClass")
 
-    val mockRegistry = mock[Registry]
-    val mockModuleResolver = mock[ModuleResolver]
+    (mockRegistry.getJob _).expects(jobId).returning(Option(expectedJobSpec))
 
-    val clusterAddress = Cluster(system).selfAddress
-    Cluster(system).join(clusterAddress)
+    val result = (registry ? GetJob(jobId)).mapTo[Option[JobSpec]]
 
-    val registry = system.actorOf(RegistryActor.props(mockRegistry, mockModuleResolver), "registry")
+    whenReady(result) {
+      case Some(spec) => spec should be (expectedJobSpec)
+      case None       => fail("Expected some result from the registry actor.")
+    }
+  }
 
-    "retrieve a job from the registry" in {
-      val jobId = UUID.randomUUID()
-      val expectedJobSpec = JobSpec(jobId, "foo", "", TestModuleId, "foo.JobClass")
+  it must "retrieve the list of specs from the registry" in {
+    val jobId = UUID.randomUUID()
+    val expectedJobSpecs = List(JobSpec(jobId, "foo", "", TestModuleId, "foo.JobClass"))
 
-      (mockRegistry.getJob _).expects(jobId).returning(Option(expectedJobSpec))
+    (mockRegistry.getJobs _).expects().returning(expectedJobSpecs)
 
-      within(10.seconds) {
-        awaitAssert {
-          registry ! GetJob(jobId)
-          expectMsg(Option(expectedJobSpec))
-        }
-      }
+    val result = (registry ? GetJobs).mapTo[Seq[JobSpec]]
+
+    whenReady(result) {
+      res => res should be (expectedJobSpecs)
     }
   }
 
