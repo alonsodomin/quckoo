@@ -19,8 +19,7 @@ object Dependencies {
     "org.scala-lang.modules" %% "scala-xml"                   % "1.0.4"                withSources() withJavadoc(),
     "org.scalaz"             %% "scalaz-core"                 % "7.1.3"                withSources() withJavadoc(),
     "org.scalatest"          %% "scalatest"                   % "2.2.4"       % "test" withSources() withJavadoc(),
-    "org.scalamock"          %% "scalamock-scalatest-support" % "3.2.2"       % "test" withSources() withJavadoc(),
-    "org.slf4j"              % "slf4j-simple"                 % slf4jVersion  % "test" withSources() withJavadoc()
+    "org.scalamock"          %% "scalamock-scalatest-support" % "3.2.2"       % "test" withSources() withJavadoc()
   )
 
   private val akkaLibs: Seq[ModuleID] = Vector(
