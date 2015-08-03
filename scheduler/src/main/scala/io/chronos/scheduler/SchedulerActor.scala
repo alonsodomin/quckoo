@@ -43,8 +43,6 @@ class SchedulerActor(executionPlan: ExecutionPlan, registry: ActorRef, heartbeat
   import io.chronos.protocol._
 
   ClusterReceptionistExtension(context.system).registerService(self)
-  
-  // References to other actors in the system
   private val mediator = DistributedPubSubExtension(context.system).mediator
 
   // Tasks

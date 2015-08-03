@@ -3,7 +3,6 @@ package io.chronos.scheduler
 import java.net.URL
 import java.util.UUID
 
-import akka.actor.ActorSystem
 import akka.pattern._
 import akka.testkit.{TestActorRef, TestKit}
 import akka.util.Timeout
@@ -27,7 +26,7 @@ object RegistryActorTest {
 
 }
 
-class RegistryActorTest extends TestKit(ActorSystem("RegistryActorTest")) with FlatSpecLike with Matchers
+class RegistryActorTest extends TestKit(TestActorSystem("RegistryActorTest")) with FlatSpecLike with Matchers
   with MockFactory with ScalaFutures with BeforeAndAfterAll {
 
   import RegistryActorTest._
