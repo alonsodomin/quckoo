@@ -8,5 +8,5 @@ import io.chronos.id._
 case class JobSpec(id: JobId,
                    displayName: String,
                    description: String = "",
-                   moduleId: JobModuleId,
+                   moduleId: ModuleId,
                    jobClass: String)

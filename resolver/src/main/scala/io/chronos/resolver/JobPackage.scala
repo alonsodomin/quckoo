@@ -4,7 +4,6 @@ import java.net.URL
 import java.util.concurrent.Callable
 
 import io.chronos.JobClass
-import io.chronos.id.JobModuleId
 import org.slf4s.Logging
 
 import scala.util.Try
@@ -14,13 +13,13 @@ import scala.util.Try
  */
 object JobPackage extends Logging {
 
-  def apply(moduleId: JobModuleId, classpath: Seq[URL]): JobPackage = {
+  def apply(moduleId: ModuleId, classpath: Seq[URL]): JobPackage = {
     new JobPackage(moduleId, new PackageClassLoader(classpath.toArray))
   }
 
 }
 
-class JobPackage private[resolver] (val moduleId: JobModuleId, classLoader: PackageClassLoader) extends Logging {
+class JobPackage private[resolver] (val moduleId: ModuleId, classLoader: PackageClassLoader) extends Logging {
 
   logCreation()
 

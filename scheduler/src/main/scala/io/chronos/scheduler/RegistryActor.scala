@@ -3,19 +3,19 @@ package io.chronos.scheduler
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
 import io.chronos.protocol._
-import io.chronos.resolver.JobModuleResolver
+import io.chronos.resolver.ModuleResolver
 
 /**
  * Created by aalonsodominguez on 26/07/15.
  */
 object RegistryActor {
 
-  def props(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver): Props =
+  def props(jobRegistry: JobRegistry, moduleResolver: ModuleResolver): Props =
     Props(classOf[RegistryActor], jobRegistry, moduleResolver)
 
 }
 
-class RegistryActor(jobRegistry: JobRegistry, moduleResolver: JobModuleResolver)
+class RegistryActor(jobRegistry: JobRegistry, moduleResolver: ModuleResolver)
   extends Actor with ActorLogging {
 
   ClusterReceptionistExtension(context.system).registerService(self)

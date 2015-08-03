@@ -2,11 +2,11 @@ package io.chronos.resolver
 
 import java.net.URL
 
-import io.chronos.id.JobModuleId
+import io.chronos.id.ModuleId
 import io.chronos.protocol._
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor._
-import org.apache.ivy.core.module.id.ModuleRevisionId
+import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
 import org.apache.ivy.core.report.ArtifactDownloadReport
 import org.apache.ivy.core.resolve.ResolveOptions
 import org.slf4s.Logging
@@ -14,13 +14,13 @@ import org.slf4s.Logging
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
-trait JobModuleResolver {
+trait ModuleResolver {
 
-  def resolve(jobModuleId: JobModuleId, download: Boolean = false): Either[ResolutionFailed, JobPackage]
+  def resolve(jobModuleId: ModuleId, download: Boolean = false): Either[ResolutionFailed, JobPackage]
 
 }
 
-class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver with Logging {
+class IvyModuleResolver(config: IvyConfiguration) extends ModuleResolver with Logging {
 
   private val DefaultConfName = "default"
   private val CompileConfName = "compile"
@@ -28,13 +28,13 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
 
   private lazy val ivy = Ivy.newInstance(config)
 
-  def resolve(jobModuleId: JobModuleId, download: Boolean): Either[ResolutionFailed, JobPackage] = {
+  def resolve(jobModuleId: ModuleId, download: Boolean): Either[ResolutionFailed, JobPackage] = {
     def newCallerInstance(confs: Array[String]): ModuleDescriptor = {
-      val moduleRevisionId: ModuleRevisionId = ModuleRevisionId.newInstance(
+      val moduleRevisionId: IvyModuleId = IvyModuleId.newInstance(
         jobModuleId.group, jobModuleId.artifact, jobModuleId.version
       )
 
-      val descriptor = new DefaultModuleDescriptor(ModuleRevisionId.newInstance(
+      val descriptor = new DefaultModuleDescriptor(IvyModuleId.newInstance(
         moduleRevisionId.getOrganisation, moduleRevisionId.getName + "-job", "working"), "execution", null, true
       )
       confs.foreach(c => descriptor.addConfiguration(new Configuration(c)))

@@ -4,7 +4,6 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.chronos._
-import io.chronos.id.JobModuleId
 import io.chronos.protocol._
 
 import scala.concurrent.duration._
@@ -29,7 +28,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
 
   val jobSpec = JobSpec(id = UUID.randomUUID(),
     displayName = "Power Of N",
-    moduleId = JobModuleId("io.chronos", "examples_2.11", "0.1.0-SNAPSHOT"),
+    moduleId = ModuleId("io.chronos", "examples_2.11", "0.1.0-SNAPSHOT"),
     jobClass = classOf[PowerOfNJob].getName
   )
   var n = 0
