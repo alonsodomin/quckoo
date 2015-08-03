@@ -3,8 +3,6 @@ package io.chronos
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, ZonedDateTime}
 
-import io.chronos.cron.CronExpr
-
 import scala.concurrent.duration._
 
 /**
@@ -59,17 +57,6 @@ object Trigger {
           val nanosDelay = frequency.toNanos
           Some(time.plus(nanosDelay, ChronoUnit.NANOS))
       }
-
-    override def isRecurring: Boolean = true
-
-  }
-
-  case class Cron(expr: String) extends Trigger {
-    val cronExpr = CronExpr(expr)
-
-    override def nextExecutionTime(referenceTime: ReferenceTime)(implicit clock: Clock): Option[ZonedDateTime] = {
-      Some(cronExpr.next(referenceTime.when))
-    }
 
     override def isRecurring: Boolean = true
 
