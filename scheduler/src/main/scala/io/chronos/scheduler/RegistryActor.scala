@@ -10,12 +10,12 @@ import io.chronos.resolver.ModuleResolver
  */
 object RegistryActor {
 
-  def props(jobRegistry: JobRegistry, moduleResolver: ModuleResolver): Props =
+  def props(jobRegistry: Registry, moduleResolver: ModuleResolver): Props =
     Props(classOf[RegistryActor], jobRegistry, moduleResolver)
 
 }
 
-class RegistryActor(jobRegistry: JobRegistry, moduleResolver: ModuleResolver)
+class RegistryActor(jobRegistry: Registry, moduleResolver: ModuleResolver)
   extends Actor with ActorLogging {
 
   ClusterReceptionistExtension(context.system).registerService(self)

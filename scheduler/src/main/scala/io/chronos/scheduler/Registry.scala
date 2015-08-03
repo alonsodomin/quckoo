@@ -6,7 +6,7 @@ import io.chronos.id._
 /**
  * Created by aalonsodominguez on 01/08/15.
  */
-trait JobRegistry {
+trait Registry {
 
   def getJob(jobId: JobId): Option[JobSpec]
 

@@ -7,7 +7,7 @@ import com.hazelcast.core.HazelcastInstance
 import io.chronos.Execution.StageLike
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos.id._
-import io.chronos.scheduler.{ExecutionPlan, JobRegistry}
+import io.chronos.scheduler.{ExecutionPlan, Registry}
 import io.chronos.{Execution, JobSpec, Schedule}
 import org.slf4s.Logging
 
@@ -16,7 +16,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by aalonsodominguez on 01/08/15.
  */
-class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan with JobRegistry with Logging {
+class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan with Registry with Logging {
 
   // Distributed data structures
   private val jobSpecCache = hazelcastInstance.getMap[JobId, JobSpec]("jobSpecCache")
