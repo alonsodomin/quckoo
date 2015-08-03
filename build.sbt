@@ -9,8 +9,7 @@ scalacOptions in ThisBuild ++= Seq("-Xexperimental", "-language:postfixOps", "-f
 
 resolvers in ThisBuild ++= Seq(
   Opts.resolver.mavenLocalFile,
-  "ReactiveCouchbase Releases" at "https://raw.github.com/ReactiveCouchbase/repository/master/releases/",
-  "Typesafe releases" at "http://repo.typesafe.com/typesafe/releases/"
+  "ReactiveCouchbase Releases" at "https://raw.github.com/ReactiveCouchbase/repository/master/releases/"
 )
 
 lazy val chronos = (project in file(".")).aggregate(
