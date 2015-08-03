@@ -60,9 +60,7 @@ class RegistryActorTest extends TestKit(TestActorSystem("RegistryActorTest")) wi
 
     val result = (registry ? GetJobs).mapTo[Seq[JobSpec]]
 
-    whenReady(result) {
-      res => res should be (expectedJobSpecs)
-    }
+    whenReady(result) { _ should be (expectedJobSpecs) }
   }
 
   it must "reject the job if the dependency resolution fails" in {
@@ -87,7 +85,7 @@ class RegistryActorTest extends TestKit(TestActorSystem("RegistryActorTest")) wi
 
     val result = (registry ? RegisterJob(TestJobSpec)).mapTo[JobAccepted]
 
-    whenReady(result) { res => res.jobId should be (TestJobId) }
+    whenReady(result) { _.jobId should be (TestJobId) }
   }
 
 }

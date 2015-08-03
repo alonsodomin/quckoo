@@ -3,8 +3,8 @@ package io.chronos.scheduler
 import java.time.Clock
 
 import akka.actor.{Actor, ActorLogging, Props}
-import akka.contrib.pattern.{ClusterReceptionistExtension, DistributedPubSubExtension, DistributedPubSubMediator}
-import io.chronos.protocol.{ExecutionEvent, ScheduleJob, ScheduleJobAck}
+import akka.contrib.pattern._
+import io.chronos.protocol._
 import io.chronos.topic
 
 /**
@@ -27,6 +27,23 @@ class ExecutionPlanActor(executionPlan: ExecutionPlan)(implicit clock: Clock) ex
       val execution = executionPlan.schedule(schedule)
       mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.stage))
       sender ! ScheduleJobAck(execution.executionId)
+
+    case RescheduleJob(scheduleId) =>
+      val execution = executionPlan.reschedule(scheduleId)
+      mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.stage))
+      sender ! ScheduleJobAck(execution.executionId)
+
+    case GetSchedule(scheduleId) =>
+      sender ! executionPlan.getSchedule(scheduleId)
+
+    case GetScheduledJobs =>
+      sender ! executionPlan.getScheduledJobs
+
+    case GetExecution(executionId) =>
+      sender ! executionPlan.getExecution(executionId)
+
+    case req: GetExecutions =>
+      sender ! executionPlan.getExecutions(req.filter)
   }
 
 }
