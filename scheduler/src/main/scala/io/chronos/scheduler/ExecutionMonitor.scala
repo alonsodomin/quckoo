@@ -41,7 +41,7 @@ class ExecutionMonitor extends Actor with ActorLogging {
       sender() ! SubscribeAck
 
     case event: ExecutionEvent =>
-      log.info("Received execution event: " + event)
+      log.debug("Received execution event: " + event)
       subscribers.foreach { subscriber =>
         subscriber ! event
       }
