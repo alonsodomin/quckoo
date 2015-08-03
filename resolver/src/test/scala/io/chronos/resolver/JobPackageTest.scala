@@ -12,7 +12,7 @@ import scala.util.Success
 /**
  * Created by aalonsodominguez on 26/07/15.
  */
-class JobModulePackageTest extends FlatSpec with Matchers with MockFactory with Inside {
+class JobPackageTest extends FlatSpec with Matchers with MockFactory with Inside {
 
   class StubPackageClassLoader(urls: Array[URL]) extends PackageClassLoader(Array.empty) {
     private val classMap = mutable.Map.empty[String, Class[_]]
@@ -35,7 +35,7 @@ class JobModulePackageTest extends FlatSpec with Matchers with MockFactory with 
     val expectedUrls = Array(new URL("http://www.example.com"))
 
     val stubClassLoader = new StubPackageClassLoader(expectedUrls)
-    val jobModulePackage = new JobModulePackage(TestModuleId, stubClassLoader)
+    val jobModulePackage = new JobPackage(TestModuleId, stubClassLoader)
 
     val returnedUrls = jobModulePackage.classpath
 
@@ -48,7 +48,7 @@ class JobModulePackageTest extends FlatSpec with Matchers with MockFactory with 
     val expectedClassName = expectedClass.getName
     stubClassLoader.addClass(expectedClassName, expectedClass)
 
-    val jobModulePackage = new JobModulePackage(TestModuleId, stubClassLoader)
+    val jobModulePackage = new JobPackage(TestModuleId, stubClassLoader)
 
     val returnedClass = jobModulePackage.jobClass(expectedClassName)
 
@@ -67,7 +67,7 @@ class JobModulePackageTest extends FlatSpec with Matchers with MockFactory with 
     val expectedJobInstance = new DummyJavaJob
     expectedJobInstance.value = parameterValue
 
-    val jobModulePackage = new JobModulePackage(TestModuleId, stubClassLoader)
+    val jobModulePackage = new JobPackage(TestModuleId, stubClassLoader)
 
     val returnedInstance = jobModulePackage.newJob(expectedClassName, Map("value" -> parameterValue))
 

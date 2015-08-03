@@ -12,15 +12,15 @@ import scala.util.Try
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
-object JobModulePackage extends Logging {
+object JobPackage extends Logging {
 
-  def apply(moduleId: JobModuleId, classpath: Seq[URL]): JobModulePackage = {
-    new JobModulePackage(moduleId, new PackageClassLoader(classpath.toArray))
+  def apply(moduleId: JobModuleId, classpath: Seq[URL]): JobPackage = {
+    new JobPackage(moduleId, new PackageClassLoader(classpath.toArray))
   }
 
 }
 
-class JobModulePackage private[resolver] (val moduleId: JobModuleId, classLoader: PackageClassLoader) extends Logging {
+class JobPackage private[resolver] (val moduleId: JobModuleId, classLoader: PackageClassLoader) extends Logging {
 
   logCreation()
 

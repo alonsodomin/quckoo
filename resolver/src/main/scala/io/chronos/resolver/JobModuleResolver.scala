@@ -16,7 +16,7 @@ import org.slf4s.Logging
  */
 trait JobModuleResolver {
 
-  def resolve(jobModuleId: JobModuleId, download: Boolean = false): Either[ResolutionFailed, JobModulePackage]
+  def resolve(jobModuleId: JobModuleId, download: Boolean = false): Either[ResolutionFailed, JobPackage]
 
 }
 
@@ -28,7 +28,7 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
 
   private lazy val ivy = Ivy.newInstance(config)
 
-  def resolve(jobModuleId: JobModuleId, download: Boolean): Either[ResolutionFailed, JobModulePackage] = {
+  def resolve(jobModuleId: JobModuleId, download: Boolean): Either[ResolutionFailed, JobPackage] = {
     def newCallerInstance(confs: Array[String]): ModuleDescriptor = {
       val moduleRevisionId: ModuleRevisionId = ModuleRevisionId.newInstance(
         jobModuleId.group, jobModuleId.artifact, jobModuleId.version
@@ -63,7 +63,7 @@ class IvyJobModuleResolver(config: IvyConfiguration) extends JobModuleResolver w
     if (resolveReport.hasError) {
       Left(ResolutionFailed(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
     } else {
-      Right(JobModulePackage(jobModuleId, artifactLocations(resolveReport.getAllArtifactsReports)))
+      Right(JobPackage(jobModuleId, artifactLocations(resolveReport.getAllArtifactsReports)))
     }
   }
 
