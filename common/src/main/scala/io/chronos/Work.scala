@@ -1,6 +1,6 @@
 package io.chronos
 
-import io.chronos.id.ExecutionId
+import io.chronos.id.{ExecutionId, ModuleId}
 
 /**
  * Created by aalonsodominguez on 05/07/15.

@@ -4,6 +4,7 @@ import java.net.URL
 import java.util.concurrent.Callable
 
 import io.chronos.JobClass
+import io.chronos.id.ModuleId
 import org.slf4s.Logging
 
 import scala.util.Try
