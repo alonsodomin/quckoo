@@ -123,7 +123,6 @@ class SchedulerActor(executionPlan: ExecutionPlan, registry: ActorRef, heartbeat
             workers(workerId).ref ! WorkDoneAck(executionId)
             changeWorkerToIdle(workerId, executionId)
 
-            mediator ! DistributedPubSubMediator.Publish(topic.Results, WorkResult(executionId, result))
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
 
             val (scheduleId, _) = executionId
