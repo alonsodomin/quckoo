@@ -14,7 +14,7 @@ import scala.util.Success
  */
 class JobModulePackageTest extends FlatSpec with Matchers with MockFactory with Inside {
 
-  class StubJobModuleClassLoader(urls: Array[URL]) extends JobModuleClassLoader(Array.empty) {
+  class StubPackageClassLoader(urls: Array[URL]) extends PackageClassLoader(Array.empty) {
     private val classMap = mutable.Map.empty[String, Class[_]]
 
     def this() = this(Array.empty)
@@ -34,7 +34,7 @@ class JobModulePackageTest extends FlatSpec with Matchers with MockFactory with 
   "A JobModulePackage" should "return the URLs of its classpath from the class loader" in {
     val expectedUrls = Array(new URL("http://www.example.com"))
 
-    val stubClassLoader = new StubJobModuleClassLoader(expectedUrls)
+    val stubClassLoader = new StubPackageClassLoader(expectedUrls)
     val jobModulePackage = new JobModulePackage(TestModuleId, stubClassLoader)
 
     val returnedUrls = jobModulePackage.classpath
@@ -43,7 +43,7 @@ class JobModulePackageTest extends FlatSpec with Matchers with MockFactory with 
   }
 
   it should "load a job class from the class loader" in {
-    val stubClassLoader   = new StubJobModuleClassLoader
+    val stubClassLoader   = new StubPackageClassLoader
     val expectedClass     = classOf[DummyJavaJob]
     val expectedClassName = expectedClass.getName
     stubClassLoader.addClass(expectedClassName, expectedClass)
@@ -58,7 +58,7 @@ class JobModulePackageTest extends FlatSpec with Matchers with MockFactory with 
   }
 
   it should "inject parameters into the job instance" in {
-    val stubClassLoader   = new StubJobModuleClassLoader
+    val stubClassLoader   = new StubPackageClassLoader
     val expectedClass     = classOf[DummyJavaJob]
     val expectedClassName = expectedClass.getName
     stubClassLoader.addClass(expectedClassName, expectedClass)

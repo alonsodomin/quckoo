@@ -9,7 +9,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by aalonsodominguez on 25/07/15.
  */
-object JobModuleClassLoader {
+object PackageClassLoader {
 
   private val allPermissions = new PermissionCollection {
 
@@ -24,8 +24,8 @@ object JobModuleClassLoader {
 
 }
 
-class JobModuleClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
-  import JobModuleClassLoader._
+class PackageClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+  import PackageClassLoader._
 
   private val systemClassLoader = ClassLoader.getSystemClassLoader
 
