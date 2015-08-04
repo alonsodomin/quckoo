@@ -2,6 +2,7 @@ package io.chronos.scheduler.store
 
 import java.time.{Clock, ZonedDateTime}
 import java.util.function.BiFunction
+import java.util.{Collection => JCollection, Map => JMap}
 
 import com.hazelcast.core.HazelcastInstance
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
@@ -29,19 +30,23 @@ class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends Execution
   private val executionMap = hazelcastInstance.getMap[ExecutionId, Execution]("executions")
   private val executionsBySchedule = hazelcastInstance.getMap[ScheduleId, List[ExecutionId]]("executionsBySchedule")
 
-  private val executionQueue = hazelcastInstance.getQueue[ExecutionId]("executionQueue")
-
   override def getSchedule(scheduleId: ScheduleId): Option[Schedule] =
     Option(scheduleMap.get(scheduleId))
 
-  override def getScheduledJobs: Seq[(ScheduleId, Schedule)] =
-    collectFrom(scheduleMap.entrySet().map(entry => (entry.getKey, entry.getValue)).iterator, Vector())
+  override def getScheduledJobs: Seq[(ScheduleId, Schedule)] = {
+    val clock = Clock.systemUTC()
+    val ordering: Ordering[(ScheduleId, Schedule)] = Ordering.by(p => nextExecutionTime(p._1, p._2).orNull)
+    HazelcastTraversable(scheduleMap, ordering, 50).toStream
+  }
 
   override def getExecution(executionId: ExecutionId): Option[Execution] =
     Option(executionMap.get(executionId))
 
-  override def getExecutions(f: Execution => Boolean): Seq[Execution] =
-    collectFrom(executionMap.values().filter(f).iterator, Vector())
+  override def getExecutions(f: Execution => Boolean): Seq[Execution] = {
+    val ordering: Ordering[(ExecutionId, Execution)] = Ordering.by(_._2.lastStatusChange)
+    def filter(executionId: ExecutionId, execution: Execution): Boolean = f(execution)
+    HazelcastTraversable(executionMap, ordering, 50, filter).map(_._2).toStream
+  }
 
   override def schedule(jobSchedule: Schedule)(implicit clock: Clock): Execution = {
     val scheduleId = (jobSchedule.jobId, scheduleCounter.incrementAndGet())
@@ -51,11 +56,11 @@ class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends Execution
   
   override def reschedule(scheduleId: ScheduleId)(implicit clock: Clock): Execution = defineExecutionFor(scheduleId)
 
+  def currentExecutionOf(scheduleId: ScheduleId): Option[ExecutionId] =
+    Option(executionsBySchedule.get(scheduleId)) flatMap { _.headOption }
+
   override def sweepOverdueExecutions(batchLimit: Int)(f: ExecutionId => Unit)(implicit clock: Clock): Unit =
     if (beating.compareAndSet(false, true)) {
-      def currentExecutionOf(scheduleId: ScheduleId): Option[ExecutionId] =
-        Option(executionsBySchedule.get(scheduleId)) flatMap { _.headOption }
-
       var itemCount = 0
       def underBatchLimit: Boolean = itemCount < batchLimit
 

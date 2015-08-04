@@ -75,7 +75,7 @@ object Execution {
 
 }
 
-case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = Nil) extends Serializable {
+case class Execution private (id: ExecutionId, stages: List[Execution.Stage] = Nil) {
   import Execution._
 
   def executionId = id

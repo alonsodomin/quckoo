@@ -1,6 +1,6 @@
 package io.chronos.scheduler
 
-import java.time.Clock
+import java.time.{Clock, ZonedDateTime}
 
 import io.chronos.id._
 import io.chronos.{Execution, Schedule}
@@ -21,6 +21,8 @@ trait ExecutionCache {
   def schedule(jobSchedule: Schedule)(implicit clock: Clock): Execution
 
   def reschedule(scheduleId: ScheduleId)(implicit clock: Clock): Execution
+
+  def nextExecutionTime(scheduleId: ScheduleId)(implicit clock: Clock): Option[ZonedDateTime]
 
   def sweepOverdueExecutions(batchLimit: Int)(f: ExecutionId => Unit)(implicit clock: Clock): Unit
 
