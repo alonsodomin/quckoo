@@ -42,7 +42,7 @@ class RegistryActor(jobRegistry: Registry, moduleResolver: ModuleResolver)
       sender() ! jobRegistry.getJob(jobId)
 
     case GetJobs =>
-      sender() ! jobRegistry.getJobs
+      jobRegistry.getJobs.foreach { sender ! _ }
 
   }
 

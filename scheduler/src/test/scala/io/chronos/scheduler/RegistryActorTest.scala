@@ -44,13 +44,15 @@ class RegistryActorTest extends TestKit(TestActorSystem("RegistryActorTest")) wi
   }
 
   it must "retrieve the list of specs from the registry" in {
-    val expectedJobSpecs = List(TestJobSpec)
+    val anotherJobSpec = JobSpec(UUID.randomUUID(), "bar", "", TestModuleId, "bar.JobClass")
+    val expectedJobSpecs = List(TestJobSpec, anotherJobSpec)
 
     (mockRegistry.getJobs _).expects().returning(expectedJobSpecs)
 
     registry ! GetJobs
 
-    expectMsg(expectedJobSpecs)
+    val jobIds = receiveN(2).map { case JobSpec(id, _, _, _, _) => id }
+    jobIds should contain allOf (expectedJobSpecs.head.id, expectedJobSpecs(1).id)
   }
 
   it must "reject the job if the dependency resolution fails" in {

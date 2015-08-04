@@ -21,7 +21,7 @@ object HazelcastRegistryCacheTest extends HazelcastRegistryCache {
 
 }
 
-class HazelcastRegistryCacheTest$ extends FlatSpec with BeforeAndAfter with Matchers {
+class HazelcastRegistryCacheTest extends FlatSpec with BeforeAndAfter with Matchers {
 
   import HazelcastRegistryCacheTest._
 
