@@ -3,15 +3,13 @@ package io.chronos.scheduler
 import java.net.URL
 import java.util.UUID
 
-import akka.pattern._
-import akka.testkit.{TestActorRef, TestKit}
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import akka.util.Timeout
 import io.chronos.JobSpec
 import io.chronos.id.ModuleId
 import io.chronos.resolver.{JobPackage, ModuleResolver}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
-import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
 
@@ -27,7 +25,7 @@ object RegistryActorTest {
 }
 
 class RegistryActorTest extends TestKit(TestActorSystem("RegistryActorTest")) with FlatSpecLike with Matchers
-  with MockFactory with ScalaFutures with BeforeAndAfterAll {
+  with MockFactory with BeforeAndAfterAll with ImplicitSender {
 
   import RegistryActorTest._
   import io.chronos.protocol._
@@ -45,12 +43,9 @@ class RegistryActorTest extends TestKit(TestActorSystem("RegistryActorTest")) wi
   "A Registry actor" must "retrieve a job from the registry" in {
     (mockRegistry.getJob _).expects(TestJobId).returning(Option(TestJobSpec))
 
-    val result = (registry ? GetJob(TestJobId)).mapTo[Option[JobSpec]]
+    registry ! GetJob(TestJobId)
 
-    whenReady(result) {
-      case Some(spec) => spec should be (TestJobSpec)
-      case None       => fail("Expected some result from the registry actor.")
-    }
+    expectMsg(Some(TestJobSpec))
   }
 
   it must "retrieve the list of specs from the registry" in {
@@ -58,9 +53,9 @@ class RegistryActorTest extends TestKit(TestActorSystem("RegistryActorTest")) wi
 
     (mockRegistry.getJobs _).expects().returning(expectedJobSpecs)
 
-    val result = (registry ? GetJobs).mapTo[Seq[JobSpec]]
+    registry ! GetJobs
 
-    whenReady(result) { _ should be (expectedJobSpecs) }
+    expectMsg(expectedJobSpecs)
   }
 
   it must "reject the job if the dependency resolution fails" in {
@@ -68,13 +63,9 @@ class RegistryActorTest extends TestKit(TestActorSystem("RegistryActorTest")) wi
 
     (mockModuleResolver.resolve _).expects(TestJobSpec.moduleId, false).returning(Left(expectedResolutionFailed))
 
-    val result = (registry ? RegisterJob(TestJobSpec)).mapTo[JobRejected]
+    registry ! RegisterJob(TestJobSpec)
 
-    whenReady(result) { res => res.cause match {
-        case Left(failure) => failure should be(expectedResolutionFailed)
-        case _ => fail("Expected resolution failed response from the registry.")
-      }
-    }
+    expectMsg(JobRejected(Left(expectedResolutionFailed)))
   }
 
   it must "accept the job if dependency resolution succeeds" in {
@@ -83,9 +74,9 @@ class RegistryActorTest extends TestKit(TestActorSystem("RegistryActorTest")) wi
     (mockModuleResolver.resolve _).expects(TestJobSpec.moduleId, false).returning(Right(expectedJobPackage))
     (mockRegistry.registerJob _).expects(TestJobSpec)
 
-    val result = (registry ? RegisterJob(TestJobSpec)).mapTo[JobAccepted]
+    registry ! RegisterJob(TestJobSpec)
 
-    whenReady(result) { _.jobId should be (TestJobId) }
+    expectMsg(JobAccepted(TestJobId))
   }
 
 }
