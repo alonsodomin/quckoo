@@ -41,6 +41,7 @@ class IvyConfigurationTest extends FlatSpec with Matchers {
     configuration.baseDir should be (ExpectedWorkDir)
     configuration.cacheDir should be (ExpectedCacheDir)
     configuration.ivyHome should be (None)
+    assert(configuration.repositories.isEmpty)
   }
 
   it should "give an instance with a home folder if specified" in {
@@ -49,6 +50,7 @@ class IvyConfigurationTest extends FlatSpec with Matchers {
     configuration.baseDir should be (ExpectedWorkDir)
     configuration.cacheDir should be (ExpectedCacheDir)
     configuration.ivyHome should be (Some(ExpectedHomeDir))
+    assert(configuration.repositories.isEmpty)
   }
 
 }

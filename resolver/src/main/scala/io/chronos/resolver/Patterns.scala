@@ -29,4 +29,6 @@ final class Patterns private (val ivyPatterns: Seq[String], val artifactPatterns
   def withArtifacts(patterns: String*): Patterns = Patterns(ivyPatterns, patterns ++ artifactPatterns, mavenCompatible)
   def withIvys(patterns: String*): Patterns = Patterns(ivyPatterns ++ patterns, artifactPatterns, mavenCompatible)
 
+  override def toString: String = s"Patterns(ivyPatterns = $ivyPatterns, artifactPatterns = $artifactPatterns, mavenCompatible = $mavenCompatible)"
+
 }
