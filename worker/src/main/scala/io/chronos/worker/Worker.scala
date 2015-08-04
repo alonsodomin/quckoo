@@ -86,7 +86,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
       sendToMaster(WorkDone(workerId, executionId, result))
   }
 
-  def sendToMaster(msg: Any): Unit = {
+  private def sendToMaster(msg: Any): Unit = {
     clusterClient ! SendToAll(path.Scheduler, msg)
   }
 
