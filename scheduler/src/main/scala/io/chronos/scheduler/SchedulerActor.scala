@@ -64,7 +64,7 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
         workers += (workerId -> workers(workerId).copy(ref = sender()))
       } else {
         workers += (workerId -> WorkerState(sender(), status = WorkerState.Idle))
-        log.info("Worker registered: workerId={}", workerId)
+        log.info("Worker registered. workerId={}", workerId)
         if (executionQueue.hasPending) {
           sender ! WorkReady
         }
@@ -79,7 +79,7 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
 
             val executionStage = Execution.Started(ZonedDateTime.now(clock), workerId)
             executionPlan.updateExecution(executionId, executionStage) { exec =>
-              log.info("Delivering execution to worker. executionId={}, workerId={}", executionId, workerId)
+              log.debug("Delivering execution to worker. executionId={}, workerId={}", executionId, workerId)
               worker.ref ! Work(executionId, jobSchedule.params, jobSpec.moduleId, jobSpec.jobClass)
 
               workers += (workerId -> worker.copy(status = WorkerState.Busy(executionId, workTimeout)))
@@ -97,7 +97,7 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
           // previous Ack was lost, confirm again that this is done
           workers(workerId).ref ! WorkDoneAck(executionId)
         case Some(_: Execution.Started) =>
-          log.info("Execution {} is done by worker {}", executionId, workerId)
+          log.debug("Worker has finished given execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
           executionPlan.updateExecution(executionId, executionStatus) { _ =>
             workers(workerId).ref ! WorkDoneAck(executionId)
@@ -118,7 +118,7 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
     case WorkFailed(workerId, executionId, cause) =>
       executionPlan.getExecution(executionId).map(_.stage) match {
         case Some(_: Execution.Started) =>
-          log.error("Execution {} failed by worker {}", executionId, workerId)
+          log.error("Worker has failed given execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Failed(cause))
           executionPlan.updateExecution(executionId, executionStatus) { execution =>
             // TODO implement a retry logic
@@ -133,8 +133,8 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
 
     case Heartbeat =>
       executionPlan.sweepOverdueExecutions(sweepBatchLimit) { executionId =>
-        log.info("Placing execution into work queue. executionId={}", executionId)
         executionPlan.updateExecution(executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
+          log.debug("Placing execution into pending queue. executionId={}", executionId)
           executionQueue.enqueue(exec.executionId)
           mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
           notifyWorkers()
@@ -144,7 +144,7 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
     case CleanupBeat =>
       for ((workerId, workerState @ WorkerState(_, WorkerState.Busy(executionId, timeout))) <- workers) {
         if (timeout.isOverdue()) {
-          log.info("Execution {} at worker {} timed out!", executionId, workerId)
+          log.warning("Worker has timed out whilst running giving execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.TimedOut)
           executionPlan.updateExecution(executionId, executionStatus) { _ =>
             workers -= workerId
