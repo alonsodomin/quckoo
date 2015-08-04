@@ -74,7 +74,7 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
     case RequestWork(workerId) if executionQueue.hasPending =>
       workers.get(workerId) match {
         case Some(worker @ WorkerState(_, WorkerState.Idle)) =>
-          executionQueue.takePending { (executionId, jobSchedule, jobSpec) =>
+          executionQueue.dequeue { (executionId, jobSchedule, jobSpec) =>
             def workTimeout: Deadline = Deadline.now + jobSchedule.timeout.getOrElse(maxWorkTimeout)
 
             val executionStage = Execution.Started(ZonedDateTime.now(clock), workerId)
@@ -135,7 +135,7 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
       executionPlan.sweepOverdueExecutions(sweepBatchLimit) { executionId =>
         log.info("Placing execution into work queue. executionId={}", executionId)
         executionPlan.updateExecution(executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
-          executionQueue.offer(exec.executionId)
+          executionQueue.enqueue(exec.executionId)
           mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
           notifyWorkers()
         }

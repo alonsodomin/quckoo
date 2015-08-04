@@ -10,8 +10,8 @@ trait ExecutionQueue {
 
   def hasPending: Boolean
 
-  def takePending(f: (ExecutionId, Schedule, JobSpec) => Unit): Unit
+  def dequeue(f: (ExecutionId, Schedule, JobSpec) => Unit): Unit
   
-  def offer(executionId: ExecutionId): Unit
+  def enqueue(executionId: ExecutionId): Unit
   
 }

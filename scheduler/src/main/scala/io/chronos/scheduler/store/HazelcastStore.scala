@@ -61,7 +61,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
 
   override def hasPending: Boolean = !executionQueue.isEmpty
 
-  override def takePending(f: (ExecutionId, Schedule, JobSpec) => Unit): Unit = if (!executionQueue.isEmpty) {
+  override def dequeue(f: (ExecutionId, Schedule, JobSpec) => Unit): Unit = if (!executionQueue.isEmpty) {
     val executionId = executionQueue.take()
     for {
       jobSpec <- Option(jobSpecCache.get(executionId._1._1))
@@ -69,7 +69,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
     } f(executionId, jobSchedule, jobSpec)
   }
 
-  override def offer(executionId: ExecutionId): Unit = {
+  override def enqueue(executionId: ExecutionId): Unit = {
     executionQueue.offer(executionId)
   }
 
