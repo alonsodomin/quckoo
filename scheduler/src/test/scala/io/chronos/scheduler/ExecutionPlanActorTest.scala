@@ -23,7 +23,7 @@ object ExecutionPlanActorTest {
   val FixedZoneId  = ZoneId.systemDefault()
 }
 
-class ExecutionPlanActorTest extends TestKit(TestActorSystem("ExecutionPlanActorTest")) with FlatSpecLike 
+class ExecutionPlanActorTest extends TestKit(TestActorSystem("ExecutionPlanActorTest")) with FlatSpecLike
   with Matchers with MockFactory with BeforeAndAfterAll with ScalaFutures {
 
   import ExecutionPlanActorTest._
@@ -31,7 +31,7 @@ class ExecutionPlanActorTest extends TestKit(TestActorSystem("ExecutionPlanActor
   implicit val clock = Clock.fixed(FixedInstant, FixedZoneId)
   implicit val timeout = Timeout(1 second)
 
-  val mockExecutionPlan = mock[ExecutionPlan]
+  val mockExecutionPlan = mock[ExecutionCache]
   val actor = TestActorRef(ExecutionPlanActor.props(mockExecutionPlan))
   
   override protected def afterAll(): Unit = {

@@ -19,11 +19,11 @@ trait HazelcastRegistryCache extends Registry {
 
   private lazy val jobSpecCache = hazelcastInstance.getMap[JobId, JobSpec]("jobSpecCache")
 
-  override def getJob(jobId: JobId): Option[JobSpec] = Option(jobSpecCache.get(jobId))
+  override final def getJob(jobId: JobId): Option[JobSpec] = Option(jobSpecCache.get(jobId))
 
-  override def registerJob(jobSpec: JobSpec): Unit = jobSpecCache.put(jobSpec.id, jobSpec)
+  override final def registerJob(jobSpec: JobSpec): Unit = jobSpecCache.put(jobSpec.id, jobSpec)
 
-  override def getJobs: Seq[JobSpec] = {
+  override final def getJobs: Seq[JobSpec] = {
     val size = jobSpecCache.size()
     val totalPages = size / 10
     // TODO need to find a better way to perform the ordering in here

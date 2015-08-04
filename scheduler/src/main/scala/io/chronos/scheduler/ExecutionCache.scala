@@ -8,7 +8,7 @@ import io.chronos.{Execution, Schedule}
 /**
  * Created by aalonsodominguez on 01/08/15.
  */
-trait ExecutionPlan {
+trait ExecutionCache {
 
   def getSchedule(scheduleId: ScheduleId): Option[Schedule]
 

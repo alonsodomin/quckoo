@@ -19,13 +19,14 @@ object SchedulerActor {
   val DefaultWorkTimeout       = 5 minutes
   val DefaultSweepBatchLimit   = 50
 
-  def props(executionPlanner: ActorRef, executionPlan: ExecutionPlan, executionQueue: ExecutionQueue,
-            heartbeatInterval: FiniteDuration = DefaultHeartbeatInterval,
+  def props(executionPlan: ActorRef, executionCache: ExecutionCache, executionQueue: ExecutionQueue,
+            registry: Registry, heartbeatInterval: FiniteDuration = DefaultHeartbeatInterval,
             maxWorkTimeout: FiniteDuration = DefaultWorkTimeout,
             sweepBatchLimit: Int = DefaultSweepBatchLimit,
             role: Option[String] = None)(implicit clock: Clock): Props =
     ClusterSingletonManager.props(
-      Props(classOf[SchedulerActor], executionPlanner, executionPlan, executionQueue, heartbeatInterval, maxWorkTimeout,
+      Props(classOf[SchedulerActor], executionPlan, executionCache, executionQueue, registry,
+        heartbeatInterval, maxWorkTimeout,
         sweepBatchLimit, clock
       ), "active", PoisonPill, role
     )
@@ -35,8 +36,9 @@ object SchedulerActor {
 
 }
 
-class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, executionQueue: ExecutionQueue,
-                     heartbeatInterval: FiniteDuration, maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int)(implicit clock: Clock)
+class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, executionQueue: ExecutionQueue,
+                     registry: Registry, heartbeatInterval: FiniteDuration, maxWorkTimeout: FiniteDuration, 
+                     sweepBatchLimit: Int)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import SchedulerActor._
@@ -74,40 +76,44 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
     case RequestWork(workerId) if executionQueue.hasPending =>
       workers.get(workerId) match {
         case Some(worker @ WorkerState(_, WorkerState.Idle)) =>
-          executionQueue.dequeue { (executionId, jobSchedule, jobSpec) =>
-            def workTimeout: Deadline = Deadline.now + jobSchedule.timeout.getOrElse(maxWorkTimeout)
-
+          for {
+            executionId <- Some(executionQueue.dequeue)
+            schedule <- executionCache.getSchedule(executionId._1)
+            jobSpec <- registry.getJob(executionId._1._1)
+          } {
             val executionStage = Execution.Started(ZonedDateTime.now(clock), workerId)
-            executionPlan.updateExecution(executionId, executionStage) { exec =>
+            executionCache.updateExecution(executionId, executionStage) { exec =>
+              def workTimeout: Deadline = Deadline.now + schedule.timeout.getOrElse(maxWorkTimeout)
+              
               log.debug("Delivering execution to worker. executionId={}, workerId={}", executionId, workerId)
-              worker.ref ! Work(executionId, jobSchedule.params, jobSpec.moduleId, jobSpec.jobClass)
+              worker.ref ! Work(executionId, schedule.params, jobSpec.moduleId, jobSpec.jobClass)
 
               workers += (workerId -> worker.copy(status = WorkerState.Busy(executionId, workTimeout)))
               mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStage))
             }
           }
-
+          
         case _ =>
           log.warning("Received a request of work from a worker that is not in idle state. workerId={}", workerId)
       }
 
     case WorkDone(workerId, executionId, result) =>
-      executionPlan.getExecution(executionId).map(_.stage) match {
+      executionCache.getExecution(executionId).map(_.stage) match {
         case Some(_: Execution.Finished) =>
           // previous Ack was lost, confirm again that this is done
           workers(workerId).ref ! WorkDoneAck(executionId)
         case Some(_: Execution.Started) =>
           log.debug("Worker has finished given execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
-          executionPlan.updateExecution(executionId, executionStatus) { _ =>
+          executionCache.updateExecution(executionId, executionStatus) { _ =>
             workers(workerId).ref ! WorkDoneAck(executionId)
             changeWorkerToIdle(workerId, executionId)
 
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
 
             val (scheduleId, _) = executionId
-            for (schedule <- executionPlan.getSchedule(scheduleId); if schedule.isRecurring) {
-              executionPlanner ! RescheduleJob(scheduleId)
+            for (schedule <- executionCache.getSchedule(scheduleId); if schedule.isRecurring) {
+              executionPlan ! RescheduleJob(scheduleId)
             }
           }
 
@@ -116,11 +122,11 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
       }
 
     case WorkFailed(workerId, executionId, cause) =>
-      executionPlan.getExecution(executionId).map(_.stage) match {
+      executionCache.getExecution(executionId).map(_.stage) match {
         case Some(_: Execution.Started) =>
           log.error("Worker has failed given execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Failed(cause))
-          executionPlan.updateExecution(executionId, executionStatus) { execution =>
+          executionCache.updateExecution(executionId, executionStatus) { execution =>
             // TODO implement a retry logic
             changeWorkerToIdle(workerId, executionId)
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
@@ -132,8 +138,8 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
       }
 
     case Heartbeat =>
-      executionPlan.sweepOverdueExecutions(sweepBatchLimit) { executionId =>
-        executionPlan.updateExecution(executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
+      executionCache.sweepOverdueExecutions(sweepBatchLimit) { executionId =>
+        executionCache.updateExecution(executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
           log.debug("Placing execution into pending queue. executionId={}", executionId)
           executionQueue.enqueue(exec.executionId)
           mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
@@ -146,7 +152,7 @@ class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, e
         if (timeout.isOverdue()) {
           log.warning("Worker has timed out whilst running giving execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.TimedOut)
-          executionPlan.updateExecution(executionId, executionStatus) { _ =>
+          executionCache.updateExecution(executionId, executionStatus) { _ =>
             workers -= workerId
             mediator ! DistributedPubSubMediator.Publish(topic.Workers, WorkerUnregistered(workerId))
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))

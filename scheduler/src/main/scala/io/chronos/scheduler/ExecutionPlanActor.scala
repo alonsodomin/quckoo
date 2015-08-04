@@ -12,12 +12,12 @@ import io.chronos.topic
  */
 object ExecutionPlanActor {
 
-  def props(executionPlan: ExecutionPlan)(implicit clock: Clock): Props =
+  def props(executionPlan: ExecutionCache)(implicit clock: Clock): Props =
     Props(classOf[ExecutionPlanActor], executionPlan, clock)
 
 }
 
-class ExecutionPlanActor(executionPlan: ExecutionPlan)(implicit clock: Clock) extends Actor with ActorLogging {
+class ExecutionPlanActor(executionPlan: ExecutionCache)(implicit clock: Clock) extends Actor with ActorLogging {
 
   ClusterReceptionistExtension(context.system).registerService(self)
   private val mediator = DistributedPubSubExtension(context.system).mediator

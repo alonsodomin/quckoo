@@ -7,8 +7,8 @@ import com.hazelcast.core.HazelcastInstance
 import io.chronos.Execution.StageLike
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos.id._
-import io.chronos.scheduler.{ExecutionPlan, ExecutionQueue}
-import io.chronos.{Execution, JobSpec, Schedule}
+import io.chronos.scheduler.ExecutionCache
+import io.chronos.{Execution, Schedule}
 import org.slf4s.Logging
 
 import scala.collection.JavaConversions._
@@ -16,7 +16,8 @@ import scala.collection.JavaConversions._
 /**
  * Created by aalonsodominguez on 01/08/15.
  */
-class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends ExecutionPlan with HazelcastRegistryCache with ExecutionQueue with Logging {
+class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends ExecutionCache with HazelcastRegistryCache
+  with HazelcastExecutionQueue with Logging {
 
   // Distributed data structures
   private val beating = hazelcastInstance.getAtomicReference[Boolean]("beating")
@@ -50,20 +51,6 @@ class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends Execution
   }
   
   override def reschedule(scheduleId: ScheduleId)(implicit clock: Clock): Execution = defineExecutionFor(scheduleId)
-
-  override def hasPending: Boolean = !executionQueue.isEmpty
-
-  override def dequeue(f: (ExecutionId, Schedule, JobSpec) => Unit): Unit = if (!executionQueue.isEmpty) {
-    val executionId = executionQueue.take()
-    for {
-      jobSpec <- getJob(executionId._1._1)
-      jobSchedule <- Option(scheduleMap.get(executionId._1))
-    } f(executionId, jobSchedule, jobSpec)
-  }
-
-  override def enqueue(executionId: ExecutionId): Unit = {
-    executionQueue.offer(executionId)
-  }
 
   override def sweepOverdueExecutions(batchLimit: Int)(f: ExecutionId => Unit)(implicit clock: Clock): Unit =
     if (beating.compareAndSet(false, true)) {
