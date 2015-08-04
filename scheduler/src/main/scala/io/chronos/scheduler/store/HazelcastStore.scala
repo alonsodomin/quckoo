@@ -7,7 +7,7 @@ import com.hazelcast.core.HazelcastInstance
 import io.chronos.Execution.StageLike
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos.id._
-import io.chronos.scheduler.{ExecutionPlan, ExecutionQueue, Registry}
+import io.chronos.scheduler.{ExecutionPlan, ExecutionQueue}
 import io.chronos.{Execution, JobSpec, Schedule}
 import org.slf4s.Logging
 
@@ -16,11 +16,9 @@ import scala.collection.JavaConversions._
 /**
  * Created by aalonsodominguez on 01/08/15.
  */
-class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan with Registry with ExecutionQueue with Logging {
+class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends ExecutionPlan with HazelcastRegistry with ExecutionQueue with Logging {
 
   // Distributed data structures
-  private val jobSpecCache = hazelcastInstance.getMap[JobId, JobSpec]("jobSpecCache")
-
   private val beating = hazelcastInstance.getAtomicReference[Boolean]("beating")
   beating.set(false)
 
@@ -32,12 +30,6 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
   private val executionsBySchedule = hazelcastInstance.getMap[ScheduleId, List[ExecutionId]]("executionsBySchedule")
 
   private val executionQueue = hazelcastInstance.getQueue[ExecutionId]("executionQueue")
-
-  override def getJob(jobId: JobId): Option[JobSpec] = Option(jobSpecCache.get(jobId))
-
-  override def registerJob(jobSpec: JobSpec): Unit = jobSpecCache.put(jobSpec.id, jobSpec)
-
-  override def getJobs: Seq[JobSpec] = collectFrom(jobSpecCache.values().iterator(), Vector())
 
   override def getSchedule(scheduleId: ScheduleId): Option[Schedule] =
     Option(scheduleMap.get(scheduleId))
@@ -64,7 +56,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
   override def dequeue(f: (ExecutionId, Schedule, JobSpec) => Unit): Unit = if (!executionQueue.isEmpty) {
     val executionId = executionQueue.take()
     for {
-      jobSpec <- Option(jobSpecCache.get(executionId._1._1))
+      jobSpec <- getJob(executionId._1._1)
       jobSchedule <- Option(scheduleMap.get(executionId._1))
     } f(executionId, jobSchedule, jobSpec)
   }
