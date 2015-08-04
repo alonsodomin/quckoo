@@ -26,6 +26,7 @@ trait HazelcastRegistry extends Registry {
   override def getJobs: Seq[JobSpec] = {
     val size = jobSpecCache.size()
     val totalPages = size / 10
+    // TODO need to find a better way to perform the ordering in here
     val ordering: Ordering[JMap.Entry[JobId, JobSpec]] = Ordering.by(_.getValue.displayName)
     val pagingPredicate = new PagingPredicate(ordering.asInstanceOf[Comparator[JMap.Entry[_, _]]], 10)
 
