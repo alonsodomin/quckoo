@@ -4,7 +4,6 @@ import java.time.{Clock, ZonedDateTime}
 import java.util.function.BiFunction
 
 import com.hazelcast.core.HazelcastInstance
-import io.chronos.Execution.StageLike
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos.id._
 import io.chronos.scheduler.ExecutionCache
@@ -103,16 +102,18 @@ class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends Execution
     referenceTime(scheduleId).flatMap(time => schedule.trigger.nextExecutionTime(time))
 
   private def referenceTime(scheduleId: ScheduleId): Option[ReferenceTime] = {
-    def executionAt(scheduleId: ScheduleId, stage: StageLike[_]): Option[Execution] =
+    import Execution._
+
+    def executionAt[T <: Stage](scheduleId: ScheduleId)(implicit stage: StageLike[T]): Option[Execution] =
       Option(executionsBySchedule.get(scheduleId)) flatMap { execIds =>
         execIds.find { execId =>
           Option(executionMap.get(execId)).exists(stage.currentIn)
         }
       } map executionMap.get
 
-    executionAt(scheduleId, Execution.Done).map { exec =>
+    executionAt[Finished](scheduleId).map { exec =>
       LastExecutionTime(exec.stage.when)
-    } orElse executionAt(scheduleId, Execution.Ready).map { exec =>
+    } orElse executionAt[Scheduled](scheduleId).map { exec =>
       ScheduledTime(exec.stage.when)
     }
   }

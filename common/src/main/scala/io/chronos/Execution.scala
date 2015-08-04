@@ -43,25 +43,25 @@ object Execution {
   case class Started(when: ZonedDateTime, where: WorkerId) extends Stage(3) with WorkerStage
   case class Finished(when: ZonedDateTime, where: WorkerId, outcome: Outcome) extends Stage(4) with WorkerStage
 
-  case object Ready extends StageLike[Scheduled] {
+  implicit case object Ready extends StageLike[Scheduled] {
     override def matches[S <: Stage](stage: S): Boolean = stage match {
       case _: Scheduled => true
       case _            => false
     }
   }
-  case object Waiting extends StageLike[Triggered] {
+  implicit case object Waiting extends StageLike[Triggered] {
     override def matches[S <: Stage](stage: S): Boolean = stage match {
       case _: Triggered => true
       case _            => false
     }
   }
-  case object InProgress extends StageLike[Started] {
+  implicit case object InProgress extends StageLike[Started] {
     override def matches[S <: Stage](stage: S): Boolean = stage match {
       case _: Started => true
       case _          => false
     }
   }
-  case object Done extends StageLike[Finished] {
+  implicit case object Done extends StageLike[Finished] {
     override def matches[S <: Stage](stage: S): Boolean = stage match {
       case _: Finished => true
       case _           => false
