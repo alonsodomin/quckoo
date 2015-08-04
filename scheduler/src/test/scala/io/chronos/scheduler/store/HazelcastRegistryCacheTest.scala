@@ -10,7 +10,7 @@ import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 /**
  * Created by domingueza on 04/08/15.
  */
-object HazelcastRegistryTest extends HazelcastRegistry {
+object HazelcastRegistryCacheTest extends HazelcastRegistryCache {
 
   val TestModuleId = ModuleId("io.chronos", "test", "latest")
   val TestJobClass = "com.example.Job"
@@ -21,9 +21,9 @@ object HazelcastRegistryTest extends HazelcastRegistry {
 
 }
 
-class HazelcastRegistryTest extends FlatSpec with BeforeAndAfter with Matchers {
+class HazelcastRegistryCacheTest$ extends FlatSpec with BeforeAndAfter with Matchers {
 
-  import HazelcastRegistryTest._
+  import HazelcastRegistryCacheTest._
 
   var jobIds: List[JobId] = Nil
 
@@ -31,7 +31,7 @@ class HazelcastRegistryTest extends FlatSpec with BeforeAndAfter with Matchers {
     // Generate a lot of Job Specs and populate the registry
     for (count <- 1 to TotalJobs) {
       val jobId = UUID.randomUUID()
-      HazelcastRegistryTest.registerJob(
+      HazelcastRegistryCacheTest.registerJob(
         JobSpec(jobId, s"job-$count", "", TestModuleId, TestJobClass)
       )
       jobIds = jobId :: jobIds
@@ -40,7 +40,7 @@ class HazelcastRegistryTest extends FlatSpec with BeforeAndAfter with Matchers {
 
   "A HazelcastRegistry" should "stream registered jobs on demand" in {
     val amountToTake = 15
-    HazelcastRegistryTest.getJobs.take(amountToTake).count(_ => true) should be (amountToTake)
+    HazelcastRegistryCacheTest.getJobs.take(amountToTake).count(_ => true) should be (amountToTake)
   }
 
 }

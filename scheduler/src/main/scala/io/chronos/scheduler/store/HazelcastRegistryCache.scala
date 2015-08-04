@@ -13,7 +13,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by domingueza on 04/08/15.
  */
-trait HazelcastRegistry extends Registry {
+trait HazelcastRegistryCache extends Registry {
 
   val hazelcastInstance: HazelcastInstance
 

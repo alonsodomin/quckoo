@@ -16,7 +16,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by aalonsodominguez on 01/08/15.
  */
-class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends ExecutionPlan with HazelcastRegistry with ExecutionQueue with Logging {
+class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends ExecutionPlan with HazelcastRegistryCache with ExecutionQueue with Logging {
 
   // Distributed data structures
   private val beating = hazelcastInstance.getAtomicReference[Boolean]("beating")
