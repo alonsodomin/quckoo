@@ -46,6 +46,14 @@ object Trigger {
 
   }
 
+  case class At(when: ZonedDateTime) extends Trigger {
+    override def nextExecutionTime(referenceTime: ReferenceTime)(implicit clock: Clock): Option[ZonedDateTime] =
+      referenceTime match {
+        case ScheduledTime(_)     => Some(when)
+        case LastExecutionTime(_) => None
+      }
+  }
+
   case class Every(frequency: FiniteDuration, startingIn: Option[FiniteDuration] = None) extends Trigger {
 
     override def nextExecutionTime(referenceTime: ReferenceTime)(implicit clock: Clock): Option[ZonedDateTime] =
