@@ -4,14 +4,11 @@ import java.net.URL
 import java.util.UUID
 
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
-import akka.util.Timeout
 import io.chronos.JobSpec
 import io.chronos.id.ModuleId
 import io.chronos.resolver.{JobPackage, ModuleResolver}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
-
-import scala.concurrent.duration._
 
 /**
  * Created by domingueza on 03/08/15.
@@ -33,8 +30,6 @@ class RegistryActorTest extends TestKit(TestActorSystem("RegistryActorTest")) wi
   val mockRegistry = mock[Registry]
   val mockModuleResolver = mock[ModuleResolver]
   val registry = TestActorRef(RegistryActor.props(mockRegistry, mockModuleResolver))
-
-  implicit val timeout = Timeout(1 second)
 
   override protected def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
