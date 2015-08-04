@@ -3,7 +3,7 @@ package io.chronos.scheduler
 import java.time.Clock
 
 import io.chronos.id._
-import io.chronos.{Execution, JobSpec, Schedule}
+import io.chronos.{Execution, Schedule}
 
 /**
  * Created by aalonsodominguez on 01/08/15.
@@ -21,10 +21,6 @@ trait ExecutionPlan {
   def schedule(jobSchedule: Schedule)(implicit clock: Clock): Execution
 
   def reschedule(scheduleId: ScheduleId)(implicit clock: Clock): Execution
-
-  def hasPendingExecutions: Boolean
-
-  def takePending(f: (ExecutionId, Schedule, JobSpec) => Unit): Unit
 
   def sweepOverdueExecutions(batchLimit: Int)(f: ExecutionId => Unit)(implicit clock: Clock): Unit
 

@@ -37,7 +37,7 @@ object SchedulerBootstrap {
 
     system.actorOf(RegistryActor.props(store, moduleResolver), "registry")
     val executionPlanner = system.actorOf(ExecutionPlanActor.props(store), "plan")
-    system.actorOf(SchedulerActor.props(store, executionPlanner), "scheduler")
+    system.actorOf(SchedulerActor.props(executionPlanner, store, store), "scheduler")
   }
 
 }

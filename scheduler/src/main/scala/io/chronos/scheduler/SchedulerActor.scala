@@ -19,13 +19,13 @@ object SchedulerActor {
   val DefaultWorkTimeout       = 5 minutes
   val DefaultSweepBatchLimit   = 50
 
-  def props(executionPlan: ExecutionPlan, executionPlanner: ActorRef,
+  def props(executionPlanner: ActorRef, executionPlan: ExecutionPlan, executionQueue: ExecutionQueue,
             heartbeatInterval: FiniteDuration = DefaultHeartbeatInterval,
             maxWorkTimeout: FiniteDuration = DefaultWorkTimeout,
             sweepBatchLimit: Int = DefaultSweepBatchLimit,
             role: Option[String] = None)(implicit clock: Clock): Props =
     ClusterSingletonManager.props(
-      Props(classOf[SchedulerActor], executionPlan, executionPlanner, heartbeatInterval, maxWorkTimeout,
+      Props(classOf[SchedulerActor], executionPlanner, executionPlan, executionQueue, heartbeatInterval, maxWorkTimeout,
         sweepBatchLimit, clock
       ), "active", PoisonPill, role
     )
@@ -35,8 +35,8 @@ object SchedulerActor {
 
 }
 
-class SchedulerActor(executionPlan: ExecutionPlan, executionPlanner: ActorRef, heartbeatInterval: FiniteDuration,
-                     maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int)(implicit clock: Clock)
+class SchedulerActor(executionPlanner: ActorRef, executionPlan: ExecutionPlan, executionQueue: ExecutionQueue,
+                     heartbeatInterval: FiniteDuration, maxWorkTimeout: FiniteDuration, sweepBatchLimit: Int)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import SchedulerActor._
@@ -65,16 +65,16 @@ class SchedulerActor(executionPlan: ExecutionPlan, executionPlanner: ActorRef, h
       } else {
         workers += (workerId -> WorkerState(sender(), status = WorkerState.Idle))
         log.info("Worker registered: workerId={}", workerId)
-        if (executionPlan.hasPendingExecutions) {
+        if (executionQueue.hasPending) {
           sender ! WorkReady
         }
         mediator ! DistributedPubSubMediator.Publish(topic.Workers, WorkerRegistered(workerId))
       }
 
-    case RequestWork(workerId) if executionPlan.hasPendingExecutions =>
+    case RequestWork(workerId) if executionQueue.hasPending =>
       workers.get(workerId) match {
         case Some(worker @ WorkerState(_, WorkerState.Idle)) =>
-          executionPlan.takePending { (executionId, jobSchedule, jobSpec) =>
+          executionQueue.takePending { (executionId, jobSchedule, jobSpec) =>
             def workTimeout: Deadline = Deadline.now + jobSchedule.timeout.getOrElse(maxWorkTimeout)
 
             val executionStage = Execution.Started(ZonedDateTime.now(clock), workerId)
@@ -135,6 +135,7 @@ class SchedulerActor(executionPlan: ExecutionPlan, executionPlanner: ActorRef, h
       executionPlan.sweepOverdueExecutions(sweepBatchLimit) { executionId =>
         log.info("Placing execution into work queue. executionId={}", executionId)
         executionPlan.updateExecution(executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
+          executionQueue.offer(exec.executionId)
           mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
           notifyWorkers()
         }
@@ -155,7 +156,7 @@ class SchedulerActor(executionPlan: ExecutionPlan, executionPlanner: ActorRef, h
   }
 
   private def notifyWorkers(): Unit = {
-    if (executionPlan.hasPendingExecutions) {
+    if (executionQueue.hasPending) {
       def randomWorkers: Seq[(WorkerId, WorkerState)] = workers.toSeq
 
       randomWorkers.foreach {

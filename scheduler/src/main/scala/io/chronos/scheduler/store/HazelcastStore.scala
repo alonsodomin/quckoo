@@ -7,7 +7,7 @@ import com.hazelcast.core.HazelcastInstance
 import io.chronos.Execution.StageLike
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos.id._
-import io.chronos.scheduler.{ExecutionPlan, Registry}
+import io.chronos.scheduler.{ExecutionPlan, ExecutionQueue, Registry}
 import io.chronos.{Execution, JobSpec, Schedule}
 import org.slf4s.Logging
 
@@ -16,7 +16,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by aalonsodominguez on 01/08/15.
  */
-class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan with Registry with Logging {
+class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan with Registry with ExecutionQueue with Logging {
 
   // Distributed data structures
   private val jobSpecCache = hazelcastInstance.getMap[JobId, JobSpec]("jobSpecCache")
@@ -59,7 +59,7 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
   
   override def reschedule(scheduleId: ScheduleId)(implicit clock: Clock): Execution = defineExecutionFor(scheduleId)
 
-  override def hasPendingExecutions: Boolean = !executionQueue.isEmpty
+  override def hasPending: Boolean = !executionQueue.isEmpty
 
   override def takePending(f: (ExecutionId, Schedule, JobSpec) => Unit): Unit = if (!executionQueue.isEmpty) {
     val executionId = executionQueue.take()
@@ -67,6 +67,10 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
       jobSpec <- Option(jobSpecCache.get(executionId._1._1))
       jobSchedule <- Option(scheduleMap.get(executionId._1))
     } f(executionId, jobSchedule, jobSpec)
+  }
+
+  override def offer(executionId: ExecutionId): Unit = {
+    executionQueue.offer(executionId)
   }
 
   override def sweepOverdueExecutions(batchLimit: Int)(f: ExecutionId => Unit)(implicit clock: Clock): Unit =
@@ -107,13 +111,6 @@ class HazelcastStore(hazelcastInstance: HazelcastInstance) extends ExecutionPlan
     try {
       val execution = executionMap.get(executionId) << stage
       executionMap.put(executionId, execution)
-
-      stage match {
-        case _: Execution.Triggered =>
-          executionQueue.offer(executionId)
-        case _ =>
-      }
-
       f(execution)
     } finally {
       executionMap.unlock(executionId)
