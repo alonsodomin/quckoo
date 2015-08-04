@@ -57,8 +57,15 @@ class JobExecutorTest extends TestKit(ActorSystem("JobExecutorTest")) with FlatS
 
     val result = (jobExecutor ? JobExecutor.Execute(work)).mapTo[JobExecutor.Failed]
 
-    whenReady(result) {
-      _.executionId should be (TestExecutionId)
+    whenReady(result) { res =>
+      res.executionId should be (TestExecutionId)
+      res.reason match {
+        case Right(x) =>
+          x.getClass should be (expectedException.getClass)
+          x.getMessage should be (expectedException.getMessage)
+        case _ =>
+          fail("Expected a ClassNotFoundException as the cause of the failure.")
+      }
     }
   }
 
