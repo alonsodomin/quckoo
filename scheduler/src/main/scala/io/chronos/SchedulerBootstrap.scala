@@ -7,7 +7,7 @@ import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyModuleResolver}
 import io.chronos.scheduler._
-import io.chronos.scheduler.store.HazelcastStore
+import io.chronos.scheduler.internal.cache.HazelcastStore
 
 /**
  * Created by domingueza on 09/07/15.

@@ -1,8 +1,8 @@
-package io.chronos.scheduler.store
+package io.chronos.scheduler.internal.cache
 
 import java.time.{Clock, ZonedDateTime}
 import java.util.function.BiFunction
-import java.util.{Collection => JCollection, Map => JMap}
+import java.util.{Map => JMap}
 
 import com.hazelcast.core.HazelcastInstance
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
@@ -16,36 +16,18 @@ import scala.collection.JavaConversions._
 /**
  * Created by aalonsodominguez on 01/08/15.
  */
-class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends ExecutionCache with HazelcastRegistryCache
+class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends HazelcastExecutionCache
+  with HazelcastRegistryCache with ExecutionCache
   with HazelcastExecutionQueue with Logging {
 
   // Distributed data structures
-  private val beating = hazelcastInstance.getAtomicReference[Boolean]("beating")
-  beating.set(false)
-
-  private val scheduleCounter = hazelcastInstance.getAtomicLong("scheduleCounter")
-  private val scheduleMap = hazelcastInstance.getMap[ScheduleId, Schedule]("scheduleMap")
-
-  private val executionCounter = hazelcastInstance.getAtomicLong("executionCounter")
-  private val executionMap = hazelcastInstance.getMap[ExecutionId, Execution]("executions")
-  private val executionsBySchedule = hazelcastInstance.getMap[ScheduleId, List[ExecutionId]]("executionsBySchedule")
-
-  override def getSchedule(scheduleId: ScheduleId): Option[Schedule] =
-    Option(scheduleMap.get(scheduleId))
+  private val sweeping = hazelcastInstance.getAtomicReference[Boolean]("sweeping")
+  sweeping.set(false)
 
   override def getScheduledJobs: Seq[(ScheduleId, Schedule)] = {
     val clock = Clock.systemUTC()
     val ordering: Ordering[(ScheduleId, Schedule)] = Ordering.by(p => nextExecutionTime(p._1, p._2).orNull)
     HazelcastTraversable(scheduleMap, ordering, 50).toStream
-  }
-
-  override def getExecution(executionId: ExecutionId): Option[Execution] =
-    Option(executionMap.get(executionId))
-
-  override def getExecutions(f: Execution => Boolean): Seq[Execution] = {
-    val ordering: Ordering[(ExecutionId, Execution)] = Ordering.by(_._2.lastStatusChange)
-    def filter(executionId: ExecutionId, execution: Execution): Boolean = f(execution)
-    HazelcastTraversable(executionMap, ordering, 50, filter).map(_._2).toStream
   }
 
   override def schedule(jobSchedule: Schedule)(implicit clock: Clock): Execution = {
@@ -56,11 +38,8 @@ class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends Execution
   
   override def reschedule(scheduleId: ScheduleId)(implicit clock: Clock): Execution = defineExecutionFor(scheduleId)
 
-  def currentExecutionOf(scheduleId: ScheduleId): Option[ExecutionId] =
-    Option(executionsBySchedule.get(scheduleId)) flatMap { _.headOption }
-
   override def sweepOverdueExecutions(batchLimit: Int)(f: ExecutionId => Unit)(implicit clock: Clock): Unit =
-    if (beating.compareAndSet(false, true)) {
+    if (sweeping.compareAndSet(false, true)) {
       var itemCount = 0
       def underBatchLimit: Boolean = itemCount < batchLimit
 
@@ -86,19 +65,8 @@ class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends Execution
       }
       
       // Reset the atomic boolean flag to allow for more "sweeps"
-      beating.set(false)
+      sweeping.set(false)
     }
-
-  override def updateExecution[T](executionId: ExecutionId, stage: Execution.Stage)(f: Execution => T): T = {
-    executionMap.lock(executionId)
-    try {
-      val execution = executionMap.get(executionId) << stage
-      executionMap.put(executionId, execution)
-      f(execution)
-    } finally {
-      executionMap.unlock(executionId)
-    }
-  }
 
   def nextExecutionTime(scheduleId: ScheduleId)(implicit clock: Clock): Option[ZonedDateTime] =
     Option(scheduleMap.get(scheduleId)).flatMap(s => nextExecutionTime(scheduleId, s))
@@ -134,9 +102,5 @@ class HazelcastStore(val hazelcastInstance: HazelcastInstance) extends Execution
     })
     execution
   }
-  
-  private def collectFrom[T](iterator: Iterator[T], acc: Vector[T]): Vector[T] =
-    if (iterator.isEmpty) acc
-    else collectFrom(iterator, iterator.next() +: acc)
   
 }

@@ -5,6 +5,7 @@ import java.util.UUID
 import com.hazelcast.core.Hazelcast
 import io.chronos.JobSpec
 import io.chronos.id.{JobId, ModuleId}
+import io.chronos.scheduler.internal.cache.HazelcastRegistryCache
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 
 /**

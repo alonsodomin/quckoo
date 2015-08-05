@@ -1,4 +1,4 @@
-package io.chronos.scheduler.store
+package io.chronos.scheduler.internal.cache
 
 import com.hazelcast.core.HazelcastInstance
 import io.chronos.id._
@@ -11,7 +11,7 @@ trait HazelcastExecutionQueue extends ExecutionQueue {
 
   val hazelcastInstance: HazelcastInstance
 
-  private val executionQueue = hazelcastInstance.getQueue[ExecutionId]("executionQueue")
+  private lazy val executionQueue = hazelcastInstance.getQueue[ExecutionId]("executionQueue")
 
   override final def hasPending: Boolean = !executionQueue.isEmpty
 

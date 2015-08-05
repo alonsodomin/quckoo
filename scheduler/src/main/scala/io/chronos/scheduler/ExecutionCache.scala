@@ -14,9 +14,13 @@ trait ExecutionCache {
 
   def getScheduledJobs: Seq[(ScheduleId, Schedule)]
 
+  def aliveSchedules(f: (ScheduleId, Schedule, ZonedDateTime) => Boolean): Traversable[(ScheduleId, Schedule)]
+
   def getExecution(executionId: ExecutionId): Option[Execution]
 
-  def getExecutions(filter: Execution => Boolean): Seq[Execution]
+  def getExecutions(filter: Execution => Boolean): Traversable[Execution]
+
+  def currentExecutionOf(scheduleId: ScheduleId): Option[ExecutionId]
 
   def schedule(jobSchedule: Schedule)(implicit clock: Clock): Execution
 

@@ -1,6 +1,4 @@
-package io.chronos.scheduler.store
-
-import java.util.{Collection => JCollection, Map => JMap}
+package io.chronos.scheduler.internal.cache
 
 import com.hazelcast.core.HazelcastInstance
 import io.chronos.JobSpec
