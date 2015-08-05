@@ -12,6 +12,6 @@ trait Registry {
 
   def registerJob(jobSpec: JobSpec): Unit
 
-  def getJobs: Seq[JobSpec]
+  def getJobs: Traversable[JobSpec]
 
 }

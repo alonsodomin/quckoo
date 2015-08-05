@@ -2,18 +2,20 @@ package io.chronos.scheduler.internal.cache
 
 import java.util.{Collection => JCollection, Comparator, Map => JMap}
 
-import com.hazelcast.core.IMap
+import com.hazelcast.core.{IMap => DMap}
 import com.hazelcast.query.{PagingPredicate, Predicate}
+
+import scala.collection.JavaConversions._
 
 /**
  * Created by aalonsodominguez on 04/08/15.
  */
-object HazelcastTraversable {
+object DistributedTraversable {
 
-  def apply[K, V](source: IMap[K, V], ordering: Ordering[(K, V)], pageSize: Int): Traversable[(K, V)] =
-    apply(source, ordering, pageSize, (_, _) => true)
+  def apply[K, V](source: DMap[K, V], ordering: Ordering[(K, V)], pageSize: Int): Traversable[(K, V)] =
+    apply(source, ordering, pageSize, (_: K, _: V) => true)
 
-  def apply[K, V](source: IMap[K, V], ordering: Ordering[(K, V)], pageSize: Int, f: (K, V) => Boolean): Traversable[(K, V)] = {
+  def apply[K, V](source: DMap[K, V], ordering: Ordering[(K, V)], pageSize: Int, f: (K, V) => Boolean): Traversable[(K, V)] = {
     val filter = new Predicate[K, V] {
       override def apply(entry: JMap.Entry[K, V]): Boolean =
         f(entry.getKey, entry.getValue)
@@ -31,7 +33,7 @@ object HazelcastTraversable {
     apply(source, paging)
   }
 
-  def apply[K, V](source: IMap[K, V], paging: PagingPredicate): Traversable[(K, V)] = {
+  def apply[K, V](source: DMap[K, V], paging: PagingPredicate): Traversable[(K, V)] = {
     val pageCount = source.size() / paging.getPageSize
     val traversable = new Traversable[(K, V)] {
       override def foreach[U](f: ((K, V)) => U): Unit = do {

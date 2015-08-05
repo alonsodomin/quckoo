@@ -18,7 +18,7 @@ object HazelcastRegistryCacheTest extends HazelcastRegistryCache {
 
   val TotalJobs = 30
 
-  val hazelcastInstance = Hazelcast.newHazelcastInstance()
+  val grid = Hazelcast.newHazelcastInstance()
 
 }
 

@@ -9,9 +9,9 @@ import io.chronos.scheduler.ExecutionQueue
  */
 trait HazelcastExecutionQueue extends ExecutionQueue {
 
-  val hazelcastInstance: HazelcastInstance
+  val grid: HazelcastInstance
 
-  private lazy val executionQueue = hazelcastInstance.getQueue[ExecutionId]("executionQueue")
+  private lazy val executionQueue = grid.getQueue[ExecutionId]("executionQueue")
 
   override final def hasPending: Boolean = !executionQueue.isEmpty
 

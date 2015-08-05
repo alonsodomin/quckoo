@@ -7,6 +7,7 @@ import akka.contrib.pattern._
 import io.chronos._
 import io.chronos.id._
 import io.chronos.protocol.WorkerProtocol._
+import io.chronos.scheduler.internal.cluster.ClusterSync
 
 import scala.concurrent.duration._
 
@@ -15,19 +16,20 @@ import scala.concurrent.duration._
  */
 object SchedulerActor {
 
-  val DefaultHeartbeatInterval = 50 millis
+  val DefaultHeartbeatInterval = 1 seconds
   val DefaultWorkTimeout       = 5 minutes
-  val DefaultSweepBatchLimit   = 50
 
-  def props(executionPlan: ActorRef, executionCache: ExecutionCache, executionQueue: ExecutionQueue,
-            registry: Registry, heartbeatInterval: FiniteDuration = DefaultHeartbeatInterval,
+  def props(executionPlan: ActorRef,
+            executionCache: ExecutionCache,
+            executionQueue: ExecutionQueue,
+            registry: Registry,
+            clusterSync: ClusterSync,
+            heartbeatInterval: FiniteDuration = DefaultHeartbeatInterval,
             maxWorkTimeout: FiniteDuration = DefaultWorkTimeout,
-            sweepBatchLimit: Int = DefaultSweepBatchLimit,
             role: Option[String] = None)(implicit clock: Clock): Props =
     ClusterSingletonManager.props(
-      Props(classOf[SchedulerActor], executionPlan, executionCache, executionQueue, registry,
-        heartbeatInterval, maxWorkTimeout,
-        sweepBatchLimit, clock
+      Props(classOf[SchedulerActor], executionPlan, executionCache, executionQueue, registry, clusterSync,
+        heartbeatInterval, maxWorkTimeout, clock
       ), "active", PoisonPill, role
     )
 
@@ -37,8 +39,8 @@ object SchedulerActor {
 }
 
 class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, executionQueue: ExecutionQueue,
-                     registry: Registry, heartbeatInterval: FiniteDuration, maxWorkTimeout: FiniteDuration, 
-                     sweepBatchLimit: Int)(implicit clock: Clock)
+                     registry: Registry, clusterSync: ClusterSync, heartbeatInterval: FiniteDuration,
+                     maxWorkTimeout: FiniteDuration)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import SchedulerActor._
@@ -137,8 +139,8 @@ class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, ex
           log.warning("Received a WorkFailed notification for a non in-progress execution. executionId={}, workerId={}", executionId, workerId)
       }
 
-    case Heartbeat =>
-      executionCache.sweepOverdueExecutions(sweepBatchLimit) { executionId =>
+    case Heartbeat => clusterSync.synchronize {
+      executionCache.overdueExecutions.foreach { executionId =>
         executionCache.updateExecution(executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
           log.debug("Placing execution into pending queue. executionId={}", executionId)
           executionQueue.enqueue(exec.executionId)
@@ -146,6 +148,7 @@ class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, ex
           notifyWorkers()
         }
       }
+    }
 
     case CleanupBeat =>
       for ((workerId, workerState @ WorkerState(_, WorkerState.Busy(executionId, timeout))) <- workers) {

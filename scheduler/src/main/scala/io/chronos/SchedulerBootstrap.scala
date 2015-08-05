@@ -8,6 +8,7 @@ import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyModuleResolver}
 import io.chronos.scheduler._
 import io.chronos.scheduler.internal.cache.HazelcastStore
+import io.chronos.scheduler.internal.cluster.NonBlockingSync
 
 /**
  * Created by domingueza on 09/07/15.
@@ -28,6 +29,7 @@ object SchedulerBootstrap {
 
     val hazelcastInstance = Hazelcast.newHazelcastInstance()
     val store = new HazelcastStore(hazelcastInstance)
+    val clusterSync = new NonBlockingSync(hazelcastInstance, "sweep")
 
     val ivyConfig = IvyConfiguration(conf)
     val moduleResolver = new IvyModuleResolver(ivyConfig)
@@ -37,7 +39,7 @@ object SchedulerBootstrap {
 
     system.actorOf(RegistryActor.props(store, moduleResolver), "registry")
     val executionPlanner = system.actorOf(ExecutionPlanActor.props(store), "plan")
-    system.actorOf(SchedulerActor.props(executionPlanner, store, store, store), "scheduler")
+    system.actorOf(SchedulerActor.props(executionPlanner, store, store, store, clusterSync), "scheduler")
   }
 
 }

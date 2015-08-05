@@ -24,11 +24,12 @@ object Execution {
 
   sealed trait StageLike[T <: Stage] { self =>
 
-     def matches[S <: Stage](stage: S): Boolean
+    def matches[S <: Stage](stage: S): Boolean
 
-    final def currentIn(execution: Execution): Boolean = self.matches(execution.stage)
+    def currentIn(execution: Execution): Boolean = self.matches(execution.stage)
+    def <@(execution: Execution): Boolean = self.currentIn(execution)
 
-    final def grab(execution: Execution): Option[T] = execution.stages.
+    def grab(execution: Execution): Option[T] = execution.stages.
       find(self.matches).
       map { _.asInstanceOf[T] }
 

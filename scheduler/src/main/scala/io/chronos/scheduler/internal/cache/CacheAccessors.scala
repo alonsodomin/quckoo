@@ -11,7 +11,7 @@ import io.chronos.{Execution, Schedule}
  * Created by aalonsodominguez on 05/08/15.
  */
 trait CacheAccessors extends CacheStructures {
-  val hazelcastInstance: HazelcastInstance
+  def grid: HazelcastInstance
 
   final def getSchedule(scheduleId: ScheduleId): Option[Schedule] =
     Option(scheduleMap.get(scheduleId))
@@ -35,7 +35,7 @@ trait CacheAccessors extends CacheStructures {
     def executionAt[T <: Stage](scheduleId: ScheduleId)(implicit stage: StageLike[T]): Option[Execution] =
       Option(executionsBySchedule.get(scheduleId)) flatMap { execIds =>
         execIds.find { execId =>
-          Option(executionMap.get(execId)).exists(stage.currentIn)
+          Option(executionMap.get(execId)).exists(stage <@ _)
         }
       } map executionMap.get
 

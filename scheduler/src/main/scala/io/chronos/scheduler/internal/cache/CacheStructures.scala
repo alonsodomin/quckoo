@@ -8,13 +8,13 @@ import io.chronos.{Execution, Schedule}
  * Created by aalonsodominguez on 04/08/15.
  */
 trait CacheStructures {
-  val hazelcastInstance: HazelcastInstance
+  def grid: HazelcastInstance
 
-  protected lazy val scheduleCounter = hazelcastInstance.getAtomicLong("scheduleCounter")
-  protected lazy val scheduleMap = hazelcastInstance.getMap[ScheduleId, Schedule]("scheduleMap")
+  protected lazy val scheduleCounter = grid.getAtomicLong("scheduleCounter")
+  protected lazy val scheduleMap = grid.getMap[ScheduleId, Schedule]("scheduleMap")
 
-  protected lazy val executionCounter = hazelcastInstance.getAtomicLong("executionCounter")
-  protected lazy val executionMap = hazelcastInstance.getMap[ExecutionId, Execution]("executions")
-  protected lazy val executionsBySchedule = hazelcastInstance.getMap[ScheduleId, List[ExecutionId]]("executionsBySchedule")
+  protected lazy val executionCounter = grid.getAtomicLong("executionCounter")
+  protected lazy val executionMap = grid.getMap[ExecutionId, Execution]("executions")
+  protected lazy val executionsBySchedule = grid.getMap[ScheduleId, List[ExecutionId]]("executionsBySchedule")
 
 }
