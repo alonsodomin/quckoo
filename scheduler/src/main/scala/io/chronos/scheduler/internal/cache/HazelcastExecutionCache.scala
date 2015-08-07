@@ -24,14 +24,14 @@ trait HazelcastExecutionCache extends ExecutionCache with CacheStructures with C
       50
     )
 
-    DistributedTraversable(scheduleMap, paging).
+    DistributedQueryTraversable(scheduleMap, paging).
       map(schedulePair => currentExecutionOf(schedulePair._1).get)
   }
 
   override def getExecutions(f: Execution => Boolean): Traversable[Execution] = {
     val ordering: Ordering[(ExecutionId, Execution)] = Ordering.by(_._2.lastStatusChange)
     def filter(executionId: ExecutionId, execution: Execution): Boolean = f(execution)
-    DistributedTraversable(executionMap, ordering, 50, filter).map(_._2)
+    DistributedQueryTraversable(executionMap, ordering, 50, filter).map(_._2)
   }
 
   override def updateExecution[T](executionId: ExecutionId, stage: Execution.Stage)(f: Execution => T): T = {

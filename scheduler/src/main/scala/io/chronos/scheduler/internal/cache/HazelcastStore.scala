@@ -20,7 +20,7 @@ class HazelcastStore(val grid: HazelcastInstance) extends HazelcastExecutionCach
   override def getScheduledJobs: Seq[(ScheduleId, Schedule)] = {
     implicit val clock = Clock.systemUTC()
     val ordering: Ordering[(ScheduleId, Schedule)] = Ordering.by(p => p._2.jobId)
-    DistributedTraversable(scheduleMap, ordering, 50).toStream
+    DistributedQueryTraversable(scheduleMap, ordering, 50).toStream
   }
 
   override def schedule(jobSchedule: Schedule)(implicit clock: Clock): Execution = {

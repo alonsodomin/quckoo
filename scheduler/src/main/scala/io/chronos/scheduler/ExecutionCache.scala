@@ -11,7 +11,7 @@ import io.chronos.{Execution, Schedule}
  */
 trait ExecutionCache extends CacheStructures with CacheAccessors {
 
-  def getScheduledJobs: Seq[(ScheduleId, Schedule)]
+  def getScheduledJobs: Traversable[(ScheduleId, Schedule)]
 
   def getExecutions(filter: Execution => Boolean): Traversable[Execution]
 

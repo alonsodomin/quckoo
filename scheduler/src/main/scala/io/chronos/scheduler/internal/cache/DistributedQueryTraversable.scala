@@ -10,7 +10,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by aalonsodominguez on 04/08/15.
  */
-object DistributedTraversable {
+object DistributedQueryTraversable {
 
   def apply[K, V](source: DMap[K, V], ordering: Ordering[(K, V)], pageSize: Int): Traversable[(K, V)] =
     apply(source, ordering, pageSize, (_: K, _: V) => true)

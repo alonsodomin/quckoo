@@ -27,7 +27,7 @@ object Execution {
     def matches[S <: Stage](stage: S): Boolean
 
     def currentIn(execution: Execution): Boolean = self.matches(execution.stage)
-    def <@(execution: Execution): Boolean = self.currentIn(execution)
+    def @:(execution: Execution): Boolean = self.currentIn(execution)
 
     def grab(execution: Execution): Option[T] = execution.stages.
       find(self.matches).

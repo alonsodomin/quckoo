@@ -21,7 +21,7 @@ trait HazelcastRegistryCache extends Registry {
   override final def getJobs: Traversable[JobSpec] = {
     // TODO need to find a better way to perform the ordering in here
     val ordering: Ordering[(JobId, JobSpec)] = Ordering.by(_._2.displayName)
-    DistributedTraversable(jobSpecCache, ordering, 50).map(_._2)
+    DistributedQueryTraversable(jobSpecCache, ordering, 50).map(_._2)
   }
 
 }

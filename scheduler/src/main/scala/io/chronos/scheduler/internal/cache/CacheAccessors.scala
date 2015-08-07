@@ -35,7 +35,7 @@ trait CacheAccessors extends CacheStructures {
     def executionAt[T <: Stage](scheduleId: ScheduleId)(implicit stage: StageLike[T]): Option[Execution] =
       Option(executionsBySchedule.get(scheduleId)) flatMap { execIds =>
         execIds.find { execId =>
-          Option(executionMap.get(execId)).exists(stage <@ _)
+          Option(executionMap.get(execId)).exists(_ @: stage)
         }
       } map executionMap.get
 
