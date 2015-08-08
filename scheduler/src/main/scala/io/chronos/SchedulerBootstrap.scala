@@ -7,7 +7,7 @@ import com.hazelcast.core.Hazelcast
 import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyModuleResolver}
 import io.chronos.scheduler._
-import io.chronos.scheduler.internal.cache.HazelcastStore
+import io.chronos.scheduler.internal.cache._
 import io.chronos.scheduler.internal.cluster.NonBlockingSync
 
 /**
@@ -20,15 +20,18 @@ object SchedulerBootstrap {
   def main(args: Array[String]): Unit = {
     val port = if (args.length > 0) args(0).toInt else DefaultPort
 
-    val conf = ConfigFactory.parseString("akka.cluster.roles=[scheduler]")
-      .withFallback(ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port))
-      .withFallback(ConfigFactory.load())
+    val conf = ConfigFactory.parseString("akka.cluster.roles=[scheduler]").
+      withFallback(ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port)).
+      withFallback(ConfigFactory.load())
 
     val system = ActorSystem("ChronosClusterSystem", conf)
     implicit val clock = Clock.systemUTC()
 
     val hazelcastInstance = Hazelcast.newHazelcastInstance()
-    val store = new HazelcastStore(hazelcastInstance)
+    val jobCache = new JobCache(hazelcastInstance)
+    val scheduleCache = new ScheduleCache(hazelcastInstance)
+    val executionCache = new ExecutionCache(hazelcastInstance)
+    val executionQueue = new ExecutionQueue(hazelcastInstance)
     val clusterSync = new NonBlockingSync(hazelcastInstance, "sweep")
 
     val ivyConfig = IvyConfiguration(conf)
@@ -37,9 +40,9 @@ object SchedulerBootstrap {
     system.actorOf(Props[ClusterMonitor], "monitor")
     system.actorOf(Props[ExecutionMonitor], "executions")
 
-    system.actorOf(RegistryActor.props(store, moduleResolver), "registry")
-    val executionPlanner = system.actorOf(ExecutionPlanActor.props(store), "plan")
-    system.actorOf(SchedulerActor.props(executionPlanner, store, store, store, clusterSync), "scheduler")
+    system.actorOf(RegistryActor.props(jobCache, moduleResolver), "registry")
+    val executionPlanner = system.actorOf(ExecutionPlanActor.props(scheduleCache, executionCache), "plan")
+    system.actorOf(SchedulerActor.props(executionPlanner, jobCache, scheduleCache, executionCache, executionQueue, clusterSync), "scheduler")
   }
 
 }

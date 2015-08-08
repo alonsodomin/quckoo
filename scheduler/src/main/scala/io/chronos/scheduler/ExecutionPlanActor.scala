@@ -5,6 +5,7 @@ import java.time.Clock
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern._
 import io.chronos.protocol._
+import io.chronos.scheduler.internal.cache.{ExecutionCache, ScheduleCache}
 import io.chronos.topic
 
 /**
@@ -12,38 +13,39 @@ import io.chronos.topic
  */
 object ExecutionPlanActor {
 
-  def props(executionPlan: ExecutionCache)(implicit clock: Clock): Props =
-    Props(classOf[ExecutionPlanActor], executionPlan, clock)
+  def props(scheduleCache: ScheduleCache, executionCache: ExecutionCache)(implicit clock: Clock): Props =
+    Props(classOf[ExecutionPlanActor], scheduleCache, executionCache, clock)
 
 }
 
-class ExecutionPlanActor(executionPlan: ExecutionCache)(implicit clock: Clock) extends Actor with ActorLogging {
+class ExecutionPlanActor(scheduleCache: ScheduleCache, executionCache: ExecutionCache)(implicit clock: Clock) extends Actor with ActorLogging {
 
   ClusterReceptionistExtension(context.system).registerService(self)
   private val mediator = DistributedPubSubExtension(context.system).mediator
 
   def receive = {
     case ScheduleJob(schedule) =>
-      val execution = executionPlan.schedule(schedule)
+      val scheduleId = scheduleCache += schedule
+      val execution = executionCache += scheduleId
       mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.stage))
       sender ! ScheduleJobAck(execution.executionId)
 
     case RescheduleJob(scheduleId) =>
-      val execution = executionPlan.reschedule(scheduleId)
+      val execution = executionCache += scheduleId
       mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(execution.executionId, execution.stage))
       sender ! ScheduleJobAck(execution.executionId)
 
     case GetSchedule(scheduleId) =>
-      sender ! executionPlan.getSchedule(scheduleId)
+      sender ! scheduleCache(scheduleId)
 
     case GetScheduledJobs =>
-      sender ! executionPlan.getScheduledJobs
+      sender ! scheduleCache.toTraversable
 
     case GetExecution(executionId) =>
-      sender ! executionPlan.getExecution(executionId)
+      sender ! executionCache(executionId)
 
     case req: GetExecutions =>
-      sender ! executionPlan.getExecutions(req.filter)
+      sender ! executionCache.toTraversable.filter(entry => req.filter(entry._2))
   }
 
 }

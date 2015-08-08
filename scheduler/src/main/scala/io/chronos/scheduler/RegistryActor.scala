@@ -4,18 +4,19 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
 import io.chronos.protocol._
 import io.chronos.resolver.ModuleResolver
+import io.chronos.scheduler.internal.cache.JobCache
 
 /**
  * Created by aalonsodominguez on 26/07/15.
  */
 object RegistryActor {
 
-  def props(jobRegistry: Registry, moduleResolver: ModuleResolver): Props =
+  def props(jobRegistry: JobCache, moduleResolver: ModuleResolver): Props =
     Props(classOf[RegistryActor], jobRegistry, moduleResolver)
 
 }
 
-class RegistryActor(jobRegistry: Registry, moduleResolver: ModuleResolver)
+class RegistryActor(jobRegistry: JobCache, moduleResolver: ModuleResolver)
   extends Actor with ActorLogging {
 
   ClusterReceptionistExtension(context.system).registerService(self)
@@ -33,16 +34,16 @@ class RegistryActor(jobRegistry: Registry, moduleResolver: ModuleResolver)
 
         case Right(modulePackage) =>
           log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
-          jobRegistry.registerJob(jobSpec)
+          jobRegistry += jobSpec
           log.info("Job spec has been registered. jobId={}, name={}", jobSpec.id, jobSpec.displayName)
           sender() ! JobAccepted(jobSpec.id)
       }
 
     case GetJob(jobId) =>
-      sender() ! jobRegistry.getJob(jobId)
+      sender() ! jobRegistry(jobId)
 
     case GetJobs =>
-      jobRegistry.getJobs.foreach { sender ! _ }
+      jobRegistry.toTraversable.foreach { sender ! _ }
 
   }
 

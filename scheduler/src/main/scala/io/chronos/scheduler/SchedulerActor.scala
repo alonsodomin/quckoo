@@ -4,9 +4,11 @@ import java.time.{Clock, ZonedDateTime}
 
 import akka.actor._
 import akka.contrib.pattern._
+import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos._
 import io.chronos.id._
 import io.chronos.protocol.WorkerProtocol._
+import io.chronos.scheduler.internal.cache.{ExecutionCache, JobCache, ScheduleCache}
 import io.chronos.scheduler.internal.cluster.ClusterSync
 
 import scala.concurrent.duration._
@@ -19,16 +21,14 @@ object SchedulerActor {
   val DefaultHeartbeatInterval = 1 seconds
   val DefaultWorkTimeout       = 5 minutes
 
-  def props(executionPlan: ActorRef,
-            executionCache: ExecutionCache,
-            executionQueue: ExecutionQueue,
-            registry: Registry,
+  def props(executionPlan: ActorRef, jobCache: JobCache, scheduleCache: ScheduleCache,
+            executionCache: ExecutionCache, executionQueue: ExecutionQueue,
             clusterSync: ClusterSync,
             heartbeatInterval: FiniteDuration = DefaultHeartbeatInterval,
             maxWorkTimeout: FiniteDuration = DefaultWorkTimeout,
             role: Option[String] = None)(implicit clock: Clock): Props =
     ClusterSingletonManager.props(
-      Props(classOf[SchedulerActor], executionPlan, executionCache, executionQueue, registry, clusterSync,
+      Props(classOf[SchedulerActor], executionPlan, jobCache, scheduleCache, executionCache, executionQueue, clusterSync,
         heartbeatInterval, maxWorkTimeout, clock
       ), "active", PoisonPill, role
     )
@@ -38,8 +38,9 @@ object SchedulerActor {
 
 }
 
-class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, executionQueue: ExecutionQueue,
-                     registry: Registry, clusterSync: ClusterSync, heartbeatInterval: FiniteDuration,
+class SchedulerActor(executionPlan: ActorRef, jobCache: JobCache, scheduleCache: ScheduleCache,
+                     executionCache: ExecutionCache, executionQueue: ExecutionQueue,
+                     clusterSync: ClusterSync, heartbeatInterval: FiniteDuration,
                      maxWorkTimeout: FiniteDuration)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
@@ -80,13 +81,13 @@ class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, ex
         case Some(worker @ WorkerState(_, WorkerState.Idle)) =>
           for {
             executionId <- Some(executionQueue.dequeue)
-            schedule <- executionCache.getSchedule(executionId._1)
-            jobSpec <- registry.getJob(executionId._1._1)
+            schedule <- scheduleCache.get(executionId._1)
+            jobSpec <- jobCache.get(executionId._1._1)
           } {
             val executionStage = Execution.Started(ZonedDateTime.now(clock), workerId)
-            executionCache.updateExecution(executionId, executionStage) { exec =>
+            executionCache.update(executionId) { _ << executionStage } onSuccess { case Some(exec) =>
               def workTimeout: Deadline = Deadline.now + schedule.timeout.getOrElse(maxWorkTimeout)
-              
+
               log.debug("Delivering execution to worker. executionId={}, workerId={}", executionId, workerId)
               worker.ref ! Work(executionId, schedule.params, jobSpec.moduleId, jobSpec.jobClass)
 
@@ -100,21 +101,21 @@ class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, ex
       }
 
     case WorkDone(workerId, executionId, result) =>
-      executionCache.getExecution(executionId).map(_.stage) match {
+      executionCache.get(executionId).map(_.stage) match {
         case Some(_: Execution.Finished) =>
           // previous Ack was lost, confirm again that this is done
           workers(workerId).ref ! WorkDoneAck(executionId)
         case Some(_: Execution.Started) =>
           log.debug("Worker has finished given execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
-          executionCache.updateExecution(executionId, executionStatus) { _ =>
+          executionCache.update(executionId) { _ << executionStatus } onSuccess { case Some(_) =>
             workers(workerId).ref ! WorkDoneAck(executionId)
             changeWorkerToIdle(workerId, executionId)
 
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
 
             val (scheduleId, _) = executionId
-            for (schedule <- executionCache.getSchedule(scheduleId); if schedule.isRecurring) {
+            for (schedule <- scheduleCache.get(scheduleId); if schedule.isRecurring) {
               executionPlan ! RescheduleJob(scheduleId)
             }
           }
@@ -124,11 +125,11 @@ class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, ex
       }
 
     case WorkFailed(workerId, executionId, cause) =>
-      executionCache.getExecution(executionId).map(_.stage) match {
+      executionCache.get(executionId).map(_.stage) match {
         case Some(_: Execution.Started) =>
           log.error("Worker has failed given execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Failed(cause))
-          executionCache.updateExecution(executionId, executionStatus) { execution =>
+          executionCache.update(executionId) { _ << executionStatus } onSuccess { case Some(execution) =>
             // TODO implement a retry logic
             changeWorkerToIdle(workerId, executionId)
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
@@ -140,8 +141,19 @@ class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, ex
       }
 
     case Heartbeat => clusterSync.synchronize {
-      executionCache.overdueExecutions.foreach { executionId =>
-        executionCache.updateExecution(executionId, Execution.Triggered(ZonedDateTime.now(clock))) { exec =>
+      def ready(scheduleId: ScheduleId): Boolean = (for {
+        schedule <- scheduleCache.get(scheduleId)
+        execution <- executionCache.current(scheduleId).map(executionCache)
+      } yield execution is Execution.Ready).getOrElse(false)
+
+      val now = ZonedDateTime.now(clock)
+      scheduleCache.active.filter { case (scheduleId, schedule) =>
+          nextExecutionTime(scheduleId) match {
+            case Some(time) if time.isBefore(now) || time.isEqual(now) => ready(scheduleId)
+            case _ => false
+          }
+      } map { entry => executionCache.current(entry._1).get } foreach { executionId =>
+        executionCache.update(executionId) { _ << Execution.Triggered(ZonedDateTime.now(clock)) } onSuccess { case Some(exec) =>
           log.debug("Placing execution into pending queue. executionId={}", executionId)
           executionQueue.enqueue(exec.executionId)
           mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
@@ -155,7 +167,7 @@ class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, ex
         if (timeout.isOverdue()) {
           log.warning("Worker has timed out whilst running giving execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.TimedOut)
-          executionCache.updateExecution(executionId, executionStatus) { _ =>
+          executionCache.update(executionId) { _ << executionStatus } onSuccess { case Some(_) =>
             workers -= workerId
             mediator ! DistributedPubSubMediator.Publish(topic.Workers, WorkerUnregistered(workerId))
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
@@ -179,6 +191,23 @@ class SchedulerActor(executionPlan: ActorRef, executionCache: ExecutionCache, ex
     case Some(workerState @ WorkerState(_, WorkerState.Busy(`executionId`, _))) =>
       workers += (workerId -> workerState.copy(status = WorkerState.Idle))
     case _ => // might happen after standby recovery, worker state is not persisted
+  }
+
+  private def nextExecutionTime(scheduleId: ScheduleId): Option[ZonedDateTime] =
+    for {
+      refTime <- referenceTime(scheduleId)
+      schedule <- scheduleCache.get(scheduleId)
+      nextExec <- schedule.trigger.nextExecutionTime(refTime)
+    } yield nextExec
+
+  private def referenceTime(scheduleId: ScheduleId): Option[ReferenceTime] = {
+    import Execution._
+
+    executionCache.which[Finished](scheduleId).map { exec =>
+      LastExecutionTime(exec.stage.when)
+    } orElse executionCache.which[Scheduled](scheduleId).map { exec =>
+      ScheduledTime(exec.stage.when)
+    }
   }
 
 }

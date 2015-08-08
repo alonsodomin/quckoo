@@ -17,7 +17,8 @@ object ScheduleCache {
 
 }
 
-class ScheduleCache(grid: HazelcastInstance) extends (ScheduleId => Schedule) {
+class ScheduleCache(grid: HazelcastInstance) extends DistributedCache[ScheduleId, Schedule] {
+
   import ScheduleCache._
 
   private lazy val scheduleCounter = grid.getAtomicLong("scheduleCounter")
@@ -38,9 +39,10 @@ class ScheduleCache(grid: HazelcastInstance) extends (ScheduleId => Schedule) {
   def apply(scheduleId: ScheduleId): Schedule =
     get(scheduleId).get
 
-  def +=(schedule: Schedule): Unit = {
+  def +=(schedule: Schedule): ScheduleId = {
     val scheduleId = (schedule.jobId, scheduleCounter.incrementAndGet())
     activeScheduleMap.put(scheduleId, schedule)
+    scheduleId
   }
 
   def deactivate(scheduleId: ScheduleId): Unit = {
