@@ -8,8 +8,8 @@ import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos._
 import io.chronos.id._
 import io.chronos.protocol.WorkerProtocol._
-import io.chronos.scheduler.internal.cache.{ExecutionCache, JobCache, ScheduleCache}
-import io.chronos.scheduler.internal.cluster.ClusterSync
+import io.chronos.scheduler.cache.{ExecutionCache, JobCache, ScheduleCache}
+import io.chronos.scheduler.concurrent.ClusterSync
 
 import scala.concurrent.duration._
 

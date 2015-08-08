@@ -1,4 +1,4 @@
-package io.chronos.scheduler.internal.cache
+package io.chronos.scheduler.cache
 
 import java.time.Clock
 import java.util

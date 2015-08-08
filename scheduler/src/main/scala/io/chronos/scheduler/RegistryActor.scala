@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern.ClusterReceptionistExtension
 import io.chronos.protocol._
 import io.chronos.resolver.ModuleResolver
-import io.chronos.scheduler.internal.cache.JobCache
+import io.chronos.scheduler.cache.JobCache
 
 /**
  * Created by aalonsodominguez on 26/07/15.

@@ -1,4 +1,4 @@
-package io.chronos.scheduler.internal.cache
+package io.chronos.scheduler.cache
 
 /**
  * Created by aalonsodominguez on 08/08/15.

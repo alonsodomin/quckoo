@@ -1,4 +1,4 @@
-package io.chronos.scheduler.internal.cluster
+package io.chronos.scheduler.concurrent
 
 import com.hazelcast.core.HazelcastInstance
 

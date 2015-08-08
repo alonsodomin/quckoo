@@ -1,4 +1,4 @@
-package io.chronos.scheduler.internal.cache
+package io.chronos.scheduler.cache
 
 import com.hazelcast.core.HazelcastInstance
 import io.chronos.id._

@@ -1,4 +1,4 @@
-package io.chronos.scheduler.internal.cluster
+package io.chronos.scheduler.concurrent
 
 /**
  * Created by aalonsodominguez on 04/08/15.

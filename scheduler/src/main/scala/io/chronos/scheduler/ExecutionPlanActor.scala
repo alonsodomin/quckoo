@@ -5,7 +5,7 @@ import java.time.Clock
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.contrib.pattern._
 import io.chronos.protocol._
-import io.chronos.scheduler.internal.cache.{ExecutionCache, ScheduleCache}
+import io.chronos.scheduler.cache.{ExecutionCache, ScheduleCache}
 import io.chronos.topic
 
 /**
