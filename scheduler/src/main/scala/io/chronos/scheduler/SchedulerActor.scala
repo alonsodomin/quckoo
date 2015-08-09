@@ -115,8 +115,10 @@ class SchedulerActor(executionPlan: ActorRef, jobCache: JobCache, scheduleCache:
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
 
             val (scheduleId, _) = executionId
-            for (schedule <- scheduleCache.get(scheduleId); if schedule.isRecurring) {
+            if (scheduleCache(scheduleId).isRecurring) {
               executionPlan ! RescheduleJob(scheduleId)
+            } else {
+              scheduleCache.deactivate(scheduleId)
             }
           }
 

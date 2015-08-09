@@ -10,7 +10,7 @@ import io.chronos.Execution.{Stage, StageLike}
 import io.chronos.id._
 
 import scala.collection.JavaConversions._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Created by aalonsodominguez on 08/08/15.
@@ -56,7 +56,7 @@ class ExecutionCache(grid: HazelcastInstance) extends DistributedCache[Execution
       }
     } map executionMap.get
 
-  def update(executionId: ExecutionId)(f: Execution => Execution): Future[Option[Execution]] = Future {
+  def update(executionId: ExecutionId)(f: Execution => Execution)(implicit ec: ExecutionContext): Future[Option[Execution]] = Future {
     executionMap.lock(executionId)
     try {
       get(executionId).map { exec =>
