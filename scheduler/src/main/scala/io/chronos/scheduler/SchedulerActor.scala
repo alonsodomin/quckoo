@@ -85,7 +85,7 @@ class SchedulerActor(executionPlan: ActorRef, jobCache: JobCache, scheduleCache:
             jobSpec <- jobCache.get(executionId._1._1)
           } {
             val executionStage = Execution.Started(ZonedDateTime.now(clock), workerId)
-            executionCache.update(executionId) { _ << executionStage } onSuccess { case Some(exec) =>
+            executionCache.update(executionId) { _ << executionStage } foreach { exec =>
               def workTimeout: Deadline = Deadline.now + schedule.timeout.getOrElse(maxWorkTimeout)
 
               log.debug("Delivering execution to worker. executionId={}, workerId={}", executionId, workerId)
@@ -108,7 +108,7 @@ class SchedulerActor(executionPlan: ActorRef, jobCache: JobCache, scheduleCache:
         case Some(_: Execution.Started) =>
           log.debug("Worker has finished given execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Success(result))
-          executionCache.update(executionId) { _ << executionStatus } onSuccess { case Some(_) =>
+          executionCache.update(executionId) { _ << executionStatus } foreach { _ =>
             workers(workerId).ref ! WorkDoneAck(executionId)
             changeWorkerToIdle(workerId, executionId)
 
@@ -131,7 +131,7 @@ class SchedulerActor(executionPlan: ActorRef, jobCache: JobCache, scheduleCache:
         case Some(_: Execution.Started) =>
           log.error("Worker has failed given execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.Failed(cause))
-          executionCache.update(executionId) { _ << executionStatus } onSuccess { case Some(execution) =>
+          executionCache.update(executionId) { _ << executionStatus } foreach { execution =>
             // TODO implement a retry logic
             changeWorkerToIdle(workerId, executionId)
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
@@ -155,7 +155,7 @@ class SchedulerActor(executionPlan: ActorRef, jobCache: JobCache, scheduleCache:
             case _ => false
           }
       } map { entry => executionCache.current(entry._1).get } foreach { executionId =>
-        executionCache.update(executionId) { _ << Execution.Triggered(ZonedDateTime.now(clock)) } onSuccess { case Some(exec) =>
+        executionCache.update(executionId) { _ << Execution.Triggered(ZonedDateTime.now(clock)) } foreach { exec =>
           log.debug("Placing execution into pending queue. executionId={}", executionId)
           executionQueue.enqueue(exec.executionId)
           mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(exec.executionId, exec.stage))
@@ -169,7 +169,7 @@ class SchedulerActor(executionPlan: ActorRef, jobCache: JobCache, scheduleCache:
         if (timeout.isOverdue()) {
           log.warning("Worker has timed out whilst running giving execution. workerId={}, executionId={}", workerId, executionId)
           val executionStatus = Execution.Finished(ZonedDateTime.now(clock), workerId, Execution.TimedOut)
-          executionCache.update(executionId) { _ << executionStatus } onSuccess { case Some(_) =>
+          executionCache.update(executionId) { _ << executionStatus } foreach { _ =>
             workers -= workerId
             mediator ! DistributedPubSubMediator.Publish(topic.Workers, WorkerUnregistered(workerId))
             mediator ! DistributedPubSubMediator.Publish(topic.Executions, ExecutionEvent(executionId, executionStatus))
