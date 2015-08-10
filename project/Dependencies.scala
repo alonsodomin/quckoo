@@ -26,8 +26,6 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-remote"  % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-cluster" % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc()
-      exclude ("com.typesafe.akka", "akka-persistence-experimental_2.11"),
     "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion          withSources() withJavadoc(),
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc()
   )
@@ -48,6 +46,7 @@ object Dependencies {
 
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
     "com.typesafe.akka" %% "akka-stream-experimental" % akkaStreamsVersion withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-contrib"             % akkaVersion        withSources() withJavadoc(),
     "com.hazelcast"      % "hazelcast"                % hazelcastVersion   withSources() withJavadoc(),
     "com.hazelcast"      % "hazelcast-client"         % hazelcastVersion   withSources() withJavadoc(),
     "com.jsuereth"      %% "scala-arm"                % "2.0.0-M1"         withSources() withJavadoc(),
@@ -55,8 +54,14 @@ object Dependencies {
     "commons-io"    % "commons-io" % "2.4" % "test"
   )
 
-  val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs
+  val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
+    "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc()
+      exclude ("com.typesafe.akka", "akka-persistence-experimental_2.11")
+  )
 
-  val examplesLibs: Seq[ModuleID] = basicLibs ++ akkaLibs
+  val examplesLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ Seq(
+    "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc()
+      exclude ("com.typesafe.akka", "akka-persistence-experimental_2.11")
+  )
 
 }

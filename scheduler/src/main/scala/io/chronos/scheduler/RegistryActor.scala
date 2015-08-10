@@ -36,7 +36,7 @@ class RegistryActor(jobRegistry: JobCache, moduleResolver: ModuleResolver)
           log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
           jobRegistry += jobSpec
           log.info("Job spec has been registered. jobId={}, name={}", jobSpec.id, jobSpec.displayName)
-          sender() ! JobAccepted(jobSpec.id)
+          sender() ! JobAccepted(jobSpec.id, jobSpec)
       }
 
     case GetJob(jobId) =>

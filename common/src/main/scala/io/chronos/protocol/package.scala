@@ -25,9 +25,10 @@ package object protocol {
   type ScheduleFailedCause = Either[JobNotRegistered, Throwable]
   type ExecutionFailedCause = Either[ResolutionFailed, Throwable]
 
+  sealed trait RegistryEvent
   case class RegisterJob(job: JobSpec)
-  case class JobAccepted(jobId: JobId)
-  case class JobRejected(cause: JobRejectedCause)
+  case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryEvent
+  case class JobRejected(cause: JobRejectedCause) extends RegistryEvent
 
   case class ScheduleJob(schedule: Schedule)
   case class RescheduleJob(scheduleId: ScheduleId)
