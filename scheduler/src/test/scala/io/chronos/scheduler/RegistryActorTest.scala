@@ -6,6 +6,7 @@ import java.util.UUID
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import io.chronos.JobSpec
 import io.chronos.id.ModuleId
+import io.chronos.registry.Registry
 import io.chronos.resolver.{JobPackage, ModuleResolver}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._

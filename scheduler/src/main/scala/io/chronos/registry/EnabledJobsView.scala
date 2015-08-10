@@ -1,4 +1,4 @@
-package io.chronos.scheduler
+package io.chronos.registry
 
 import akka.cluster.Cluster
 import akka.persistence.PersistentView
