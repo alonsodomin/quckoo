@@ -1,6 +1,9 @@
 package io.chronos
 
+import io.chronos.Trigger.Immediate
 import io.chronos.id._
+
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * Created by aalonsodominguez on 19/07/2015.
@@ -35,6 +38,10 @@ package object protocol {
   case class JobDisabled(jobId: JobId) extends RegistryEvent
   
   case class ScheduleJob(schedule: Schedule)
+  case class ScheduleJob2(jobId: JobId,
+                          params: Map[String, Any] = Map.empty,
+                          trigger: Trigger = Immediate,
+                          timeout: Option[FiniteDuration] = None)
   case class RescheduleJob(scheduleId: ScheduleId)
   case class ScheduleJobAck(executionId: ExecutionId)
   case class ScheduleJobFailed(cause: ScheduleFailedCause)
