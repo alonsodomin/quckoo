@@ -6,7 +6,7 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.pattern._
 import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit}
-import io.chronos.Work
+import io.chronos.cluster.Work
 import io.chronos.id.{ExecutionId, ModuleId}
 import io.chronos.protocol._
 import io.chronos.resolver.{JobPackage, ModuleResolver}

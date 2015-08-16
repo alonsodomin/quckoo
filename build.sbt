@@ -9,11 +9,11 @@ scalacOptions in ThisBuild ++= Seq("-Xexperimental", "-language:postfixOps", "-f
 
 resolvers in ThisBuild ++= Seq(
   Opts.resolver.mavenLocalFile,
-  "ReactiveCouchbase Releases" at "https://raw.github.com/ReactiveCouchbase/repository/master/releases/"
+  "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/"
 )
 
 lazy val chronos = (project in file(".")).aggregate(
-  common, resolver, scheduler, examples, worker
+  common, resolver, cluster, scheduler, examples, worker
 )
 
 lazy val common = (project in file("common")).
@@ -29,6 +29,13 @@ lazy val resolver = (project in file("resolver")).
   ).
   dependsOn(common)
 
+lazy val cluster = (project in file("cluster")).
+  settings(Commons.settings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.clusterLibs
+  ).
+  dependsOn(common)
+
 lazy val scheduler = (project in file("scheduler")).
   settings(Commons.settings: _*).
   settings(
@@ -36,7 +43,8 @@ lazy val scheduler = (project in file("scheduler")).
   ).
   enablePlugins(JavaAppPackaging).
   dependsOn(common).
-  dependsOn(resolver)
+  dependsOn(resolver).
+  dependsOn(cluster)
 
 lazy val worker = (project in file("worker")).
   settings(Commons.settings: _*).
@@ -45,7 +53,8 @@ lazy val worker = (project in file("worker")).
   ).
   enablePlugins(JavaAppPackaging).
   dependsOn(common).
-  dependsOn(resolver)
+  dependsOn(resolver).
+  dependsOn(cluster)
 
 lazy val examples = (project in file("examples")).
   settings(Commons.settings: _*).

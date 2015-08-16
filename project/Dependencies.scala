@@ -4,7 +4,7 @@ object Dependencies {
   val scalaVersion        = "2.11.7"
 
   val configVersion       = "1.2.1"
-  val akkaVersion         = "2.3.11"
+  val akkaVersion         = "2.4-M3"
   val akkaStreamsVersion  = "1.0"
   val hazelcastVersion    = "3.5.1"
   val igniteVersion       = "1.3.0-incubating"
@@ -23,11 +23,12 @@ object Dependencies {
   )
 
   private val akkaLibs: Seq[ModuleID] = Vector(
-    "com.typesafe.akka" %% "akka-actor"   % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-remote"  % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-cluster" % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-slf4j"   % akkaVersion          withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test" withSources() withJavadoc()
+    "com.typesafe.akka" %% "akka-actor"         % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-remote"        % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-cluster"       % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-slf4j"         % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion          withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-testkit"       % akkaVersion % "test" withSources() withJavadoc()
   )
 
   private val loggingLibs: Seq[ModuleID] = Vector(
@@ -44,26 +45,19 @@ object Dependencies {
     "org.apache.ivy" % "ivy"        % "2.4.0"       withSources() withJavadoc()
   )
 
+  val clusterLibs: Seq[ModuleID] = basicLibs
+
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
-    "com.typesafe.akka" %% "akka-stream-experimental" % akkaStreamsVersion withSources() withJavadoc(),
-    "com.typesafe.akka" %% "akka-contrib"             % akkaVersion        withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-persistence"         % akkaVersion        withSources() withJavadoc(),
     "com.hazelcast"      % "hazelcast"                % hazelcastVersion   withSources() withJavadoc(),
     "com.hazelcast"      % "hazelcast-client"         % hazelcastVersion   withSources() withJavadoc(),
     "com.jsuereth"      %% "scala-arm"                % "2.0.0-M1"         withSources() withJavadoc(),
 
-    "com.geteventstore" %% "akka-persistence-eventstore" % "1.1.0",
-
     "commons-io"    % "commons-io" % "2.4" % "test"
   )
 
-  val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
-    "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc()
-      exclude ("com.typesafe.akka", "akka-persistence-experimental_2.11")
-  )
+  val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs
 
-  val examplesLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ Seq(
-    "com.typesafe.akka" %% "akka-contrib" % akkaVersion          withSources() withJavadoc()
-      exclude ("com.typesafe.akka", "akka-persistence-experimental_2.11")
-  )
+  val examplesLibs: Seq[ModuleID] = basicLibs ++ akkaLibs
 
 }

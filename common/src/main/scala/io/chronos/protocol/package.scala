@@ -39,7 +39,7 @@ package object protocol {
   
   case class ScheduleJob(schedule: Schedule)
   case class ScheduleJob2(jobId: JobId,
-                          params: Map[String, Any] = Map.empty,
+                          params: Map[String, AnyVal] = Map.empty,
                           trigger: Trigger = Immediate,
                           timeout: Option[FiniteDuration] = None)
   case class RescheduleJob(scheduleId: ScheduleId)

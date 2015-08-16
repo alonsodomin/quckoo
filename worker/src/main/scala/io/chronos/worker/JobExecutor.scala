@@ -1,7 +1,7 @@
 package io.chronos.worker
 
 import akka.actor.{Actor, ActorLogging, Props}
-import io.chronos.Work
+import io.chronos.cluster.Work
 import io.chronos.id.ExecutionId
 import io.chronos.protocol.ExecutionFailedCause
 import io.chronos.resolver.ModuleResolver

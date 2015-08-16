@@ -3,11 +3,13 @@ package io.chronos.scheduler
 import java.time.{Clock, ZonedDateTime}
 
 import akka.actor._
-import akka.contrib.pattern._
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import akka.cluster.singleton.ClusterSingletonManager
 import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
 import io.chronos._
+import io.chronos.cluster.WorkerProtocol._
+import io.chronos.cluster.{Work, WorkerProtocol}
 import io.chronos.id._
-import io.chronos.protocol.WorkerProtocol._
 import io.chronos.scheduler.cache._
 import io.chronos.scheduler.concurrent.ClusterSync
 
@@ -48,8 +50,7 @@ class SchedulerActor(executionPlan: ActorRef, jobCache: JobCache, scheduleCache:
   import context.dispatcher
   import io.chronos.protocol._
 
-  ClusterReceptionistExtension(context.system).registerService(self)
-  private val mediator = DistributedPubSubExtension(context.system).mediator
+  private val mediator = DistributedPubSub(context.system).mediator
 
   // Tasks
   private val cleanupTask = context.system.scheduler.schedule(maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupBeat)

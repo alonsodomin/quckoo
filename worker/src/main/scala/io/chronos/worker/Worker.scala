@@ -4,10 +4,9 @@ import java.util.UUID
 
 import akka.actor.SupervisorStrategy._
 import akka.actor._
-import akka.contrib.pattern.ClusterClient.SendToAll
+import io.chronos.cluster.{Work, WorkerProtocol}
 import io.chronos.id.ExecutionId
-import io.chronos.protocol.WorkerProtocol
-import io.chronos.{Work, path}
+import io.chronos.path
 
 import scala.concurrent.duration._
 

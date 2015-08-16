@@ -1,6 +1,7 @@
-package io.chronos.protocol
+package io.chronos.cluster
 
-import io.chronos.id.{ExecutionId, WorkerId}
+import io.chronos.id.ExecutionId
+import io.chronos.protocol._
 
 /**
  * Created by aalonsodominguez on 05/07/15.
