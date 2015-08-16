@@ -12,13 +12,7 @@ package object protocol {
 
   case class GetJob(jobId: JobId)
   case object GetJobs
-
-  case class GetSchedule(scheduleId: ScheduleId)
-  case object GetScheduledJobs
-
-  case class GetExecution(executionId: ExecutionId)
-  case class GetExecutions(filter: Execution => Boolean)
-
+  
   // --------- Commands
 
   case class JobNotEnabled(jobId: JobId)
@@ -37,20 +31,9 @@ package object protocol {
   case class DisableJob(jobId: JobId) extends RegistryCommand
   case class JobDisabled(jobId: JobId) extends RegistryEvent
   
-  case class ScheduleJob(schedule: Schedule)
-  case class ScheduleJob2(jobId: JobId,
-                          params: Map[String, AnyVal] = Map.empty,
-                          trigger: Trigger = Immediate,
-                          timeout: Option[FiniteDuration] = None)
-  case class RescheduleJob(scheduleId: ScheduleId)
-  case class ScheduleJobAck(executionId: ExecutionId)
-  case class ScheduleJobFailed(cause: ScheduleFailedCause)
+  case class ScheduleJob(jobId: JobId,
+                         params: Map[String, AnyVal] = Map.empty,
+                         trigger: Trigger = Immediate,
+                         timeout: Option[FiniteDuration] = None)
 
-  // ---------- Events
-
-  case class ExecutionEvent(executionId: ExecutionId, status: Execution.Stage)
-
-  sealed trait WorkerEvent
-  case class WorkerRegistered(workerId: WorkerId) extends WorkerEvent
-  case class WorkerUnregistered(workerId: WorkerId) extends WorkerEvent
 }

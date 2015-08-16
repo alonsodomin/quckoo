@@ -1,6 +1,7 @@
 package io.chronos.cluster
 
-import io.chronos.id.ExecutionId
+import java.util.UUID
+
 import io.chronos.protocol._
 
 /**
@@ -10,10 +11,10 @@ object WorkerProtocol {
   // Messages from workers
   case class RegisterWorker(workerId: WorkerId)
   case class RequestWork(workerId: WorkerId)
-  case class WorkDone(workerId: WorkerId, executionId: ExecutionId, result: Any)
-  case class WorkFailed(workerId: WorkerId, executionId: ExecutionId, cause: ExecutionFailedCause)
+  case class WorkDone(workerId: WorkerId, executionId: UUID, result: Any)
+  case class WorkFailed(workerId: WorkerId, executionId: UUID, cause: ExecutionFailedCause)
 
   // Messages to workers
   case object WorkReady
-  case class WorkDoneAck(executionId: ExecutionId)
+  case class WorkDoneAck(executionId: UUID)
 }
