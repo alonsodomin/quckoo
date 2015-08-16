@@ -5,7 +5,7 @@ import java.util.UUID
 
 import akka.actor._
 import io.chronos.Trigger._
-import io.chronos.id.JobId
+import io.chronos.id.{JobId, ScheduleId}
 import io.chronos.protocol.{JobDisabled, JobNotEnabled}
 import io.chronos.{JobSpec, Trigger}
 
@@ -26,7 +26,7 @@ object Schedule {
 class Schedule(params: Map[String, AnyVal], trigger: Trigger, timeout: Option[FiniteDuration])(implicit clock: Clock)
   extends Actor with ActorLogging {
 
-  private val scheduleId = UUID.randomUUID()
+  private val scheduleId: ScheduleId = UUID.randomUUID()
   private var triggerTask: Option[Cancellable] = None
   private var lastExecutionTime: Option[ZonedDateTime] = None
 

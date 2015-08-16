@@ -6,7 +6,8 @@ import java.util.UUID
 import akka.actor.{ActorLogging, Props}
 import akka.persistence.PersistentActor
 import io.chronos.JobSpec
-import io.chronos.id.WorkerId
+import io.chronos.cluster.WorkerId
+import io.chronos.id.{ExecutionId, ScheduleId}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -15,9 +16,7 @@ import scala.concurrent.duration.FiniteDuration
  */
 object Execution {
 
-  type ExecutionId = UUID
-  
-  def props(scheduleId: UUID, jobSpec: JobSpec, params: Map[String, AnyVal], timeout: Option[FiniteDuration])(implicit clock: Clock) =
+  def props(scheduleId: ScheduleId, jobSpec: JobSpec, params: Map[String, AnyVal], timeout: Option[FiniteDuration])(implicit clock: Clock) =
     Props(classOf[Execution], scheduleId, jobSpec, params, timeout, clock)
 
   case object ScheduleNow
@@ -34,7 +33,7 @@ object Execution {
 
 }
 
-class Execution(scheduleId: UUID,
+class Execution(scheduleId: ScheduleId,
                 jobSpec: JobSpec,
                 params: Map[String, AnyVal],
                 timeout: Option[FiniteDuration])(implicit clock: Clock)
