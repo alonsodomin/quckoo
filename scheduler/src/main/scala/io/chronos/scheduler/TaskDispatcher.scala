@@ -1,4 +1,4 @@
-package io.chronos.scheduler2
+package io.chronos.scheduler
 
 import java.util.UUID
 
@@ -9,7 +9,6 @@ import io.chronos.JobClass
 import io.chronos.cluster.WorkerId
 import io.chronos.cluster.WorkerProtocol.{RegisterWorker, RequestWork, WorkReady}
 import io.chronos.id.ModuleId
-import io.chronos.scheduler.WorkerState
 
 import scala.collection.immutable.Queue
 import scala.concurrent.duration.{Deadline, FiniteDuration}

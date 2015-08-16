@@ -10,8 +10,6 @@ import scala.language.implicitConversions
 package object id {
 
   type JobId = UUID
-  type ScheduleId = (JobId, Long)
-  type ExecutionId = (ScheduleId, Long)
   type WorkerId = UUID
 
 }

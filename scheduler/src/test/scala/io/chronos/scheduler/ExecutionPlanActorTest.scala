@@ -3,12 +3,9 @@ package io.chronos.scheduler
 import java.time.{Clock, Instant, ZoneId}
 import java.util.UUID
 
-import akka.pattern._
 import akka.testkit.{TestActorRef, TestKit}
 import akka.util.Timeout
-import io.chronos.id.{ExecutionId, ScheduleId}
 import io.chronos.protocol._
-import io.chronos.{Execution, Schedule}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}

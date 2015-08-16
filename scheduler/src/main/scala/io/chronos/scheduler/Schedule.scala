@@ -1,4 +1,4 @@
-package io.chronos.scheduler2
+package io.chronos.scheduler
 
 import java.time.{Clock, Duration => JDuration, ZonedDateTime}
 import java.util.UUID

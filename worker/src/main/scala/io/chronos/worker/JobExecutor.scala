@@ -1,8 +1,9 @@
 package io.chronos.worker
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorLogging, Props}
 import io.chronos.cluster.Work
-import io.chronos.id.ExecutionId
 import io.chronos.protocol.ExecutionFailedCause
 import io.chronos.resolver.ModuleResolver
 
@@ -15,8 +16,8 @@ object JobExecutor {
 
   case class Execute(work: Work)
 
-  case class Failed(executionId: ExecutionId, reason: ExecutionFailedCause)
-  case class Completed(executionId: ExecutionId, result: Any)
+  case class Failed(executionId: UUID, reason: ExecutionFailedCause)
+  case class Completed(executionId: UUID, result: Any)
 
   def props(moduleResolver: ModuleResolver): Props =
     Props(classOf[JobExecutor], moduleResolver)

@@ -1,17 +1,8 @@
 package io.chronos.scheduler
 
-import java.time.{Clock, ZonedDateTime}
+import java.time.Clock
 
 import akka.actor._
-import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import akka.cluster.singleton.ClusterSingletonManager
-import io.chronos.Trigger.{LastExecutionTime, ReferenceTime, ScheduledTime}
-import io.chronos._
-import io.chronos.cluster.WorkerProtocol._
-import io.chronos.cluster.{Work, WorkerProtocol}
-import io.chronos.id._
-import io.chronos.scheduler.cache._
-import io.chronos.scheduler.concurrent.ClusterSync
 
 import scala.concurrent.duration._
 
@@ -20,7 +11,7 @@ import scala.concurrent.duration._
  */
 object SchedulerActor {
 
-  val DefaultHeartbeatInterval = 1 seconds
+  /*val DefaultHeartbeatInterval = 1 seconds
   val DefaultWorkTimeout       = 5 minutes
 
   def props(executionPlan: ActorRef, jobCache: JobCache, scheduleCache: ScheduleCache,
@@ -36,7 +27,7 @@ object SchedulerActor {
     )
 
   private case object Heartbeat
-  private case object CleanupBeat
+  private case object CleanupBeat*/
 
 }
 
@@ -44,13 +35,9 @@ class SchedulerActor(executionPlan: ActorRef, jobCache: JobCache, scheduleCache:
                      executionCache: ExecutionCache, executionQueue: ExecutionQueue,
                      clusterSync: ClusterSync, heartbeatInterval: FiniteDuration,
                      maxWorkTimeout: FiniteDuration)(implicit clock: Clock)
-  extends Actor with ActorLogging {
+   {
 
-  import SchedulerActor._
-  import context.dispatcher
-  import io.chronos.protocol._
-
-  private val mediator = DistributedPubSub(context.system).mediator
+  /*private val mediator = DistributedPubSub(context.system).mediator
 
   // Tasks
   private val cleanupTask = context.system.scheduler.schedule(maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupBeat)
@@ -211,6 +198,6 @@ class SchedulerActor(executionPlan: ActorRef, jobCache: JobCache, scheduleCache:
     } orElse executionCache.which[Scheduled](scheduleId).map { exec =>
       ScheduledTime(exec.stage.when)
     }
-  }
+  }*/
 
 }

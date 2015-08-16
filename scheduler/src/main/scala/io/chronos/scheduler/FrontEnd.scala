@@ -1,4 +1,4 @@
-package io.chronos.scheduler2
+package io.chronos.scheduler
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import io.chronos.protocol.{GetJob, ScheduleJob2}

@@ -4,8 +4,8 @@ import java.util.UUID
 
 import akka.actor.SupervisorStrategy._
 import akka.actor._
+import akka.cluster.client.ClusterClient.SendToAll
 import io.chronos.cluster.{Work, WorkerProtocol}
-import io.chronos.id.ExecutionId
 import io.chronos.path
 
 import scala.concurrent.duration._
@@ -35,9 +35,9 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
 
   val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "executor"))
   
-  private var currentExecutionId: Option[ExecutionId] = None
+  private var currentExecutionId: Option[UUID] = None
 
-  def executionId: ExecutionId = currentExecutionId match {
+  def executionId: UUID = currentExecutionId match {
     case Some(id) => id
     case None     => throw new IllegalStateException("Not working")
   }
