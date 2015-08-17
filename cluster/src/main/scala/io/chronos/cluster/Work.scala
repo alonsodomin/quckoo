@@ -1,14 +1,12 @@
 package io.chronos.cluster
 
-import java.util.UUID
-
 import io.chronos.id._
 
 /**
  * Created by aalonsodominguez on 05/07/15.
  */
 
-case class Work(executionId: UUID,
-                params: Map[String, Any] = Map.empty,
+case class Work(executionId: ExecutionId,
                 moduleId: ModuleId,
+                params: Map[String, AnyVal] = Map.empty,
                 jobClass: String)
