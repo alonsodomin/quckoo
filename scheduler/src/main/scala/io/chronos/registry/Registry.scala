@@ -18,20 +18,37 @@ object Registry {
   def props(moduleResolver: ModuleResolver): Props =
     Props(classOf[Registry], moduleResolver)
 
-  private object RegistryStore {
+  sealed trait RegistryCommand
+  sealed trait RegistryEvent
+
+  case class GetJob(jobId: JobId) extends RegistryCommand
+  case object GetJobs extends RegistryCommand
+  case class JobNotEnabled(jobId: JobId)
+
+  case class RegisterJob(job: JobSpec) extends RegistryCommand
+  case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryEvent
+  case class JobRejected(cause: JobRejectedCause) extends RegistryEvent
+
+  case class DisableJob(jobId: JobId) extends RegistryCommand
+  case class JobDisabled(jobId: JobId) extends RegistryEvent
+
+  object RegistryStore {
 
     def empty: RegistryStore = new RegistryStore(Map.empty, Map.empty)
 
   }
 
-  private case class RegistryStore private (private val enabledJobs: Map[JobId, JobSpec],
-                                    private val disabledJobs: Map[JobId, JobSpec]) {
+  case class RegistryStore private (
+    private val enabledJobs: Map[JobId, JobSpec],
+    private val disabledJobs: Map[JobId, JobSpec]) {
 
     def get(id: JobId): Option[JobSpec] =
       enabledJobs.get(id)
 
     def isEnabled(jobId: JobId): Boolean =
       enabledJobs.contains(jobId)
+
+    def listEnabled: Seq[JobSpec] = enabledJobs.values.toSeq
 
     def updated(event: RegistryEvent): RegistryStore = event match {
       case JobAccepted(jobId, jobSpec) =>
@@ -92,6 +109,16 @@ class Registry(moduleResolver: ModuleResolver) extends PersistentActor with Acto
           sender() ! event
         }
       }
+
+    case GetJob(jobId) =>
+      if (store.isEnabled(jobId)) {
+        sender() ! store.get(jobId)
+      } else {
+        sender() ! JobNotEnabled(jobId)
+      }
+
+    case GetJobs =>
+      sender() ! store.listEnabled
   }
 
 }

@@ -6,8 +6,8 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.pattern._
 import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit}
-import io.chronos.cluster.Work
-import io.chronos.id.{ExecutionId, ModuleId}
+import io.chronos.cluster.Task
+import io.chronos.id.{ModuleId, TaskId}
 import io.chronos.protocol._
 import io.chronos.resolver.{JobPackage, ModuleResolver}
 import org.scalamock.scalatest.MockFactory
@@ -18,7 +18,7 @@ import org.scalatest.concurrent.ScalaFutures
  * Created by aalonsodominguez on 04/08/15.
  */
 object JobExecutorTest {
-  val TestExecutionId: ExecutionId = ((UUID.randomUUID(), 1), 1)
+  val TestExecutionId: TaskId = ((UUID.randomUUID(), 1), 1)
   val TestJobClass = "com.example.FooClass"
   val TestModuleId = ModuleId("io.chronos", "test", "latest")
 }
@@ -36,7 +36,7 @@ class JobExecutorTest extends TestKit(ActorSystem("JobExecutorTest")) with FlatS
   }
 
   "A job executor actor" must "fail an execution if the dependency resolution fails" in {
-    val work = Work(TestExecutionId, moduleId = TestModuleId, jobClass = TestJobClass)
+    val work = Task(TestExecutionId, moduleId = TestModuleId, jobClass = TestJobClass)
     val expectedResolutionFailed = ResolutionFailed(Seq("com.bar.foo"))
 
     (mockModuleResolver.resolve _).expects(TestModuleId, true).returning(Left(expectedResolutionFailed))
@@ -48,7 +48,7 @@ class JobExecutorTest extends TestKit(ActorSystem("JobExecutorTest")) with FlatS
 
   it must "fail if instantiation of the job failed" in {
     val params = Map("a" -> 7)
-    val work = Work(TestExecutionId, params, TestModuleId, TestJobClass)
+    val work = Task(TestExecutionId, params, TestModuleId, TestJobClass)
 
     val expectedException = new ClassNotFoundException(TestJobClass)
     val failingPackage = JobPackage(TestModuleId, Seq(new URL("http://www.example.com")))

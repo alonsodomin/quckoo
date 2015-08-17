@@ -3,8 +3,7 @@ package io.chronos.worker
 import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, Props}
-import io.chronos.cluster.Work
-import io.chronos.protocol.ExecutionFailedCause
+import io.chronos.cluster.Task
 import io.chronos.resolver.ModuleResolver
 
 import scala.util.{Failure, Success, Try}
@@ -14,9 +13,9 @@ import scala.util.{Failure, Success, Try}
  */
 object JobExecutor {
 
-  case class Execute(work: Work)
+  case class Execute(work: Task)
 
-  case class Failed(executionId: UUID, reason: ExecutionFailedCause)
+  case class Failed(executionId: UUID, reason: TaskFailedCause)
   case class Completed(executionId: UUID, result: Any)
 
   def props(moduleResolver: ModuleResolver): Props =

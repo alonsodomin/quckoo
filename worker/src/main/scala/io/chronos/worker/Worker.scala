@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.cluster.client.ClusterClient.SendToAll
-import io.chronos.cluster.{Work, WorkerProtocol}
+import io.chronos.cluster.{Task, WorkerProtocol}
 import io.chronos.path
 
 import scala.concurrent.duration._
@@ -47,11 +47,11 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   def receive = idle
 
   def idle: Receive = {
-    case WorkReady =>
+    case TaskReady =>
       log.info("Requesting work to master.")
-      sendToMaster(RequestWork(workerId))
+      sendToMaster(RequestTask(workerId))
 
-    case work: Work =>
+    case work: Task =>
       log.info("Received work for execution {}", work.executionId)
       currentExecutionId = Some(work.executionId)
       jobExecutor ! JobExecutor.Execute(work)
@@ -61,28 +61,28 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   def working: Receive = {
     case JobExecutor.Completed(executionId, result) =>
       log.info("Work is complete. Result {}.", result)
-      sendToMaster(WorkDone(workerId, executionId, result))
+      sendToMaster(TaskDone(workerId, executionId, result))
       context.setReceiveTimeout(5 seconds)
       context.become(waitForWorkDoneAck(result))
 
     case JobExecutor.Failed(executionId, reason) =>
-      sendToMaster(WorkFailed(workerId, executionId, reason))
+      sendToMaster(TaskFailed(workerId, executionId, reason))
       context.setReceiveTimeout(5 seconds)
       context.become(idle)
 
-    case _: Work =>
+    case _: Task =>
       log.info("Yikes. Master told me to do work, while I'm working.")
   }
 
   def waitForWorkDoneAck(result: Any): Receive = {
-    case WorkDoneAck(id) if id == executionId =>
-      sendToMaster(RequestWork(workerId))
+    case TaskDoneAck(id) if id == executionId =>
+      sendToMaster(RequestTask(workerId))
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 
     case ReceiveTimeout =>
       log.info("No ack from master, retrying")
-      sendToMaster(WorkDone(workerId, executionId, result))
+      sendToMaster(TaskDone(workerId, executionId, result))
   }
 
   private def sendToMaster(msg: Any): Unit = {
@@ -94,7 +94,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
     case _: DeathPactException => Stop
     case cause: Exception =>
       currentExecutionId.foreach {
-        executionId => sendToMaster(WorkFailed(workerId, executionId, Right(cause)))
+        executionId => sendToMaster(TaskFailed(workerId, executionId, Right(cause)))
       }
       context.become(idle)
       Restart
@@ -102,7 +102,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
 
   override def unhandled(message: Any): Unit = message match {
     case Terminated(`jobExecutor`) => context.stop(self)
-    case WorkReady =>
+    case TaskReady =>
     case _ => super.unhandled(message)
   }
 
