@@ -8,6 +8,7 @@ import akka.persistence.PersistentActor
 import io.chronos.JobSpec
 import io.chronos.cluster.WorkerId
 import io.chronos.id.{ExecutionId, ScheduleId}
+import io.chronos.protocol.ExecutionFailedCause
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -22,15 +23,19 @@ object Execution {
   case object ScheduleNow
   case object TriggerNow
 
-  sealed trait LifecycleState {
+  sealed trait LifecycleEvent {
     val when: ZonedDateTime
   }
 
-  case class Scheduled(when: ZonedDateTime) extends LifecycleState
-  case class Triggered(when: ZonedDateTime) extends LifecycleState
-  case class Started(when: ZonedDateTime, workerId: WorkerId) extends LifecycleState
+  case class Scheduled(when: ZonedDateTime) extends LifecycleEvent
+  case class Triggered(when: ZonedDateTime) extends LifecycleEvent
+  case class Started(when: ZonedDateTime, workerId: WorkerId) extends LifecycleEvent
+  case class Finished(when: ZonedDateTime, workerId: WorkerId, outcome: Outcome) extends LifecycleEvent
   
-
+  sealed trait Outcome
+  case class Success(result: AnyVal) extends Outcome
+  case class Failed(cause: ExecutionFailedCause) extends Outcome
+  case object TimedOut extends Outcome
 }
 
 class Execution(scheduleId: ScheduleId,
@@ -42,7 +47,7 @@ class Execution(scheduleId: ScheduleId,
   import Execution._
 
   private val executionId: ExecutionId = UUID.randomUUID()
-  private var lifecycle: List[LifecycleState] = Nil
+  private var lifecycle: List[LifecycleEvent] = Nil
 
   override def persistenceId: String = ???
 
