@@ -1,4 +1,4 @@
-package io.chronos.registry
+package io.chronos.scheduler
 
 import java.util.UUID
 

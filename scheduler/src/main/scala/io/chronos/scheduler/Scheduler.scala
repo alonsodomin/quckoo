@@ -4,7 +4,6 @@ import akka.actor.{Actor, ActorLogging, Props}
 import io.chronos.Trigger
 import io.chronos.Trigger.Immediate
 import io.chronos.id._
-import io.chronos.registry.Registry
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -30,7 +29,7 @@ class Scheduler(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     case cmd: ScheduleJob =>
       val taskDef = TaskMeta(cmd.params, cmd.trigger, cmd.timeout)
       val schedule = context.actorOf(ExecutionPlan.props(taskDef, taskDispatcher))
-      jobRegistry.tell(GetJob(cmd.jobId), schedule)
+      jobRegistry.tell(Registry.GetJob(cmd.jobId), schedule)
   }
 
 }
