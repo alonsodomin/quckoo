@@ -5,8 +5,8 @@ import java.util.UUID
 import akka.actor.Address
 import akka.pattern._
 import akka.testkit._
-import io.chronos.cluster.Task
 import io.chronos.cluster.WorkerProtocol._
+import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.ModuleId
 import io.chronos.scheduler.TestActorSystem
 import io.chronos.scheduler.execution.Execution
@@ -26,7 +26,7 @@ object TaskQueueSpec {
 
 }
 
-class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with ImplicitSender with DefaultTimeout
+class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with DefaultTimeout
   with WordSpecLike with BeforeAndAfterAll with ScalaFutures with Matchers {
 
   import TaskQueue._
@@ -34,46 +34,48 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
 
   override def afterAll(): Unit = TestKit.shutdownActorSystem(system)
 
-  val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
-  val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout))
+  "A TaskQueue" should {
+    val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
 
-  "An empty TaskQueue" should {
+    val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout))
     val workerId = UUID.randomUUID()
-    val workerProbe = TestProbe("workerProbe")
-    taskQueue.tell(RegisterWorker(workerId), workerProbe.ref)
+    val executionProbe = TestProbe()
+    val workerProbe = TestProbe()
 
     "register workers and return their address" in {
+      taskQueue.tell(RegisterWorker(workerId), workerProbe.ref)
+
       whenReady((taskQueue ? GetWorkers).mapTo[Seq[Address]]) { addresses =>
         addresses should contain (workerProbe.ref.path.address)
       }
     }
 
     "notify the workers when a task is enqueued" in {
-      taskQueue ! Enqueue(task)
+      taskQueue.tell(Enqueue(task), executionProbe.ref)
 
       workerProbe.expectMsg(TaskReady)
-      expectMsgType[EnqueueAck].taskId should be (task.id)
+      executionProbe.expectMsgType[EnqueueAck].taskId should be (task.id)
     }
 
     "just return ack when the same task is enqueued" in {
-      taskQueue ! Enqueue(task)
+      taskQueue.tell(Enqueue(task), executionProbe.ref)
 
       workerProbe.expectNoMsg()
-      expectMsgType[EnqueueAck].taskId should be (task.id)
+      executionProbe.expectMsgType[EnqueueAck].taskId should be (task.id)
     }
 
     "dispatch task to worker on successful request and notify execution" in {
       taskQueue.tell(RequestTask(workerId), workerProbe.ref)
 
       workerProbe.expectMsg(task)
-      expectMsg(Execution.Start)
+      executionProbe.expectMsg(Execution.Start)
     }
 
     "ignore a task request from a busy worker" in {
       taskQueue.tell(RequestTask(workerId), workerProbe.ref)
 
       workerProbe.expectNoMsg()
-      expectNoMsg()
+      executionProbe.expectNoMsg()
     }
 
     "not dispatch work to another worker when there is no more pending" in {
@@ -84,7 +86,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
       taskQueue.tell(RequestTask(otherWorkerId), otherWorkerProbe.ref)
 
       otherWorkerProbe.expectNoMsg()
-      expectNoMsg()
+      executionProbe.expectNoMsg()
     }
 
     "resend task result to execution when worker finishes" in {
@@ -92,7 +94,30 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
       taskQueue.tell(TaskDone(workerId, task.id, taskResult), workerProbe.ref)
 
       workerProbe.expectMsgType[TaskDoneAck].taskId should be (task.id)
-      expectMsgType[Execution.Finish].result should be (Right(taskResult))
+      executionProbe.expectMsgType[Execution.Finish].result should be (Right(taskResult))
+    }
+  }
+
+  "A TaskQueue with an execution in progress" should {
+    val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
+
+    val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout))
+    val workerId = UUID.randomUUID()
+    val executionProbe = TestProbe()
+    val workerProbe = TestProbe()
+
+    taskQueue.tell(RegisterWorker(workerId), workerProbe.ref)
+    taskQueue.tell(Enqueue(task), executionProbe.ref)
+    taskQueue.tell(RequestTask(workerId), workerProbe.ref)
+
+    workerProbe.ignoreMsg { case TaskReady | _: Task => true }
+    executionProbe.ignoreMsg { case _: EnqueueAck | Execution.Start => true }
+
+    "notify the execution when the worker fails" in {
+      val cause: TaskFailureCause = Right(new Exception("TEST EXCEPTION"))
+      taskQueue.tell(TaskFailed(workerId, task.id, cause), workerProbe.ref)
+
+      executionProbe.expectMsgType[Execution.Finish].result should be (Left(cause))
     }
   }
 
