@@ -1,7 +1,7 @@
 package io.chronos
 
 import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
-import akka.contrib.pattern.ClusterClient
+import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyModuleResolver}
@@ -19,13 +19,14 @@ object WorkerBootstrap {
       .withFallback(ConfigFactory.load("worker"))
     val system = ActorSystem("ChronosWorkerSystem", conf)
     val initialContacts = immutableSeq(conf.getStringList("contact-points")).map {
-      case AddressFromURIString(addr) => system.actorSelection(RootActorPath(addr) / "user" / "receptionist")
+      case AddressFromURIString(addr) => RootActorPath(addr) / "user" / "receptionist"
     }.toSet
 
     val ivyConfig = IvyConfiguration(conf)
     val moduleResolver = new IvyModuleResolver(ivyConfig)
 
-    val clusterClient = system.actorOf(ClusterClient.props(initialContacts), "clusterClient")
+    val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
+    val clusterClient = system.actorOf(ClusterClient.props(clientSettings), "clusterClient")
     system.actorOf(Worker.props(clusterClient, JobExecutor.props(moduleResolver)), "worker")
   }
 
