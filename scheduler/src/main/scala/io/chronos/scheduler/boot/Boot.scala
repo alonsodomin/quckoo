@@ -1,16 +1,17 @@
-package io.chronos
+package io.chronos.scheduler.boot
 
 import java.time.Clock
 
 import akka.actor._
 import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyModuleResolver}
-import io.chronos.scheduler.{Registry, Scheduler, TaskQueue}
+import io.chronos.scheduler.queue.TaskQueue
+import io.chronos.scheduler.{Registry, Scheduler}
 
 /**
  * Created by domingueza on 09/07/15.
  */
-object SchedulerBootstrap {
+object Boot {
 
   val DefaultPort = 2551
 

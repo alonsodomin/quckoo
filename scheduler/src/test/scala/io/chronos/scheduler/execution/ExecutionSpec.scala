@@ -1,10 +1,12 @@
-package io.chronos.scheduler
+package io.chronos.scheduler.execution
 
 import java.util.UUID
 
 import akka.testkit._
 import io.chronos.cluster.Task
 import io.chronos.id.ModuleId
+import io.chronos.scheduler.TestActorSystem
+import io.chronos.scheduler.queue.TaskQueue
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
 /**

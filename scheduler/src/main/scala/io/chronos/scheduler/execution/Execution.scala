@@ -1,4 +1,4 @@
-package io.chronos.scheduler
+package io.chronos.scheduler.execution
 
 import java.util.UUID
 
@@ -6,6 +6,8 @@ import akka.actor.{ActorRef, Props}
 import akka.persistence.fsm.PersistentFSM
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.PlanId
+import io.chronos.scheduler._
+import io.chronos.scheduler.queue.TaskQueue
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag

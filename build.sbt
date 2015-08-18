@@ -39,6 +39,7 @@ lazy val cluster = (project in file("cluster")).
 
 lazy val scheduler = (project in file("scheduler")).
   settings(Commons.settings: _*).
+  settings(Revolver.settings: _*).
   settings(
     libraryDependencies ++= Dependencies.schedulerLibs
   ).

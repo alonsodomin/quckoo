@@ -1,4 +1,4 @@
-package io.chronos.scheduler
+package io.chronos.scheduler.execution
 
 import java.time.{Clock, Duration => JDuration, ZonedDateTime}
 import java.util.UUID
@@ -9,6 +9,7 @@ import io.chronos.Trigger._
 import io.chronos.cluster.Task
 import io.chronos.id._
 import io.chronos.scheduler.Registry.{JobDisabled, JobNotEnabled}
+import io.chronos.scheduler.TaskMeta
 
 import scala.concurrent.duration._
 

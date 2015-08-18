@@ -1,4 +1,4 @@
-package io.chronos.scheduler
+package io.chronos.scheduler.queue
 
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.PersistentActor

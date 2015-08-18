@@ -1,4 +1,4 @@
-package io.chronos.scheduler
+package io.chronos.scheduler.queue
 
 import akka.actor.ActorRef
 import io.chronos.cluster.{Task, TaskFailureCause}

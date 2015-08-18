@@ -8,7 +8,7 @@ object Dependencies {
   val akkaStreamsVersion  = "1.0"
   val hazelcastVersion    = "3.5.1"
   val igniteVersion       = "1.3.0-incubating"
-  val sprayVersion        = "1.3.3"
+  val sprayVersion        = "1.3.2"
 
   val log4j2Version       = "2.3"
   val slf4jVersion        = "1.7.12"
@@ -38,6 +38,13 @@ object Dependencies {
     "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4j2Version % "runtime" withSources() withJavadoc()
   )
 
+  private val sprayLibs: Seq[ModuleID] = Vector(
+    "io.spray" %% "spray-can"     % sprayVersion          withSources() withJavadoc(),
+    "io.spray" %% "spray-routing" % sprayVersion          withSources() withJavadoc(),
+    "io.spray" %% "spray-json"    % sprayVersion          withSources() withJavadoc(),
+    "io.spray" %% "spray-testkit" % sprayVersion % "test" withSources() withJavadoc()
+  )
+
   val commonLibs: Seq[ModuleID] = basicLibs
 
   val resolverLibs: Seq[ModuleID] = basicLibs ++ Seq(
@@ -47,7 +54,7 @@ object Dependencies {
 
   val clusterLibs: Seq[ModuleID] = basicLibs
 
-  val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
+  val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ sprayLibs ++ Seq(
     "com.typesafe.akka" %% "akka-persistence"         % akkaVersion        withSources() withJavadoc(),
     "com.hazelcast"      % "hazelcast"                % hazelcastVersion   withSources() withJavadoc(),
     "com.hazelcast"      % "hazelcast-client"         % hazelcastVersion   withSources() withJavadoc(),

@@ -1,4 +1,4 @@
-package io.chronos
+package io.chronos.worker.boot
 
 import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
@@ -10,7 +10,7 @@ import io.chronos.worker.{JobExecutor, Worker}
 /**
  * Created by domingueza on 09/07/15.
  */
-object WorkerBootstrap {
+object Boot {
 
   val DefaultPort = 0
 

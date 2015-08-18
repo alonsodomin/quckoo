@@ -6,6 +6,7 @@ import akka.actor.{Actor, ActorLogging, Props}
 import io.chronos.Trigger
 import io.chronos.Trigger.Immediate
 import io.chronos.id._
+import io.chronos.scheduler.execution.ExecutionPlan
 
 import scala.concurrent.duration._
 
