@@ -91,6 +91,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
           }
 
         case _ =>
+          log.info("Receiver a request for tasks from a busy Worker. workerId={}", workerId)
       }
 
     case TaskDone(workerId, taskId, result) =>
