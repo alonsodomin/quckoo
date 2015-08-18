@@ -9,7 +9,7 @@ import com.typesafe.config.ConfigFactory
 object TestActorSystem {
 
   def apply(name: String): ActorSystem = {
-    val config = ConfigFactory.load("test-cluster")
+    val config = ConfigFactory.load()
     ActorSystem(name, config)
   }
 

@@ -17,9 +17,11 @@ object SchedulerBootstrap {
   def main(args: Array[String]): Unit = {
     val port = if (args.length > 0) args(0).toInt else DefaultPort
 
+    val defaultConf = ConfigFactory.load("reference.conf")
     val conf = ConfigFactory.parseString("akka.cluster.roles=[scheduler]").
       withFallback(ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port)).
-      withFallback(ConfigFactory.load())
+      withFallback(ConfigFactory.load()).
+      withFallback(defaultConf)
 
     val system = ActorSystem("ChronosClusterSystem", conf)
     implicit val clock = Clock.systemUTC()
