@@ -117,7 +117,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
 
   initialize()
 
-  override def persistenceId: String = UUID.randomUUID().toString
+  override val persistenceId: String = UUID.randomUUID().toString
 
   override def domainEventClassTag: ClassTag[DomainEvent] = ClassTag(classOf[DomainEvent])
 

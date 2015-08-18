@@ -1,10 +1,12 @@
 package io.chronos.scheduler.queue
 
 import akka.actor.{ActorLogging, ActorRef, Props}
+import akka.cluster.Cluster
 import akka.persistence.PersistentActor
 import io.chronos.cluster.WorkerProtocol._
 import io.chronos.cluster.{Task, WorkerId}
 import io.chronos.id.TaskId
+import io.chronos.scheduler.execution.Execution
 
 import scala.concurrent.duration._
 
@@ -18,6 +20,7 @@ object TaskQueue {
 
   case class Enqueue(task: Task)
   case class EnqueueAck(taskId: TaskId)
+  case object GetWorkers
 
   private object WorkerState {
 
@@ -41,13 +44,15 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
   // Persistent state
   private var state = TaskQueueState.empty
 
-  override def persistenceId: String = ???
+  override def persistenceId: String = Cluster(context.system).selfRoles.find(_.startsWith("backend-")) match {
+    case Some(role) => role + "-queue"
+    case None       => "queue"
+  }
 
   // Non-persistent state
   private var workers = Map.empty[WorkerId, WorkerState]
 
   import context.dispatcher
-
   private val cleanupTask = context.system.scheduler.schedule(maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupTick)
 
   override def postStop(): Unit = cleanupTask.cancel()
@@ -58,6 +63,9 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
   }
 
   override def receiveCommand: Receive = {
+    case GetWorkers =>
+      sender ! workers.values.map(_.ref.path.address)
+
     case RegisterWorker(workerId) =>
       if (workers.contains(workerId)) {
         workers += (workerId -> workers(workerId).copy(ref = sender()))
@@ -81,6 +89,8 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
             workerState.ref ! task
             execution ! Execution.Start
           }
+
+        case _ =>
       }
 
     case TaskDone(workerId, taskId, result) =>
