@@ -7,12 +7,15 @@ import io.chronos.Trigger
 import io.chronos.Trigger.Immediate
 import io.chronos.id._
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 16/08/15.
  */
 object Scheduler {
+
+  def props(registryProps: Props, queueProps: Props)(implicit clock: Clock) =
+    Props(classOf[Scheduler], registryProps, queueProps, clock)
 
   case class ScheduleJob(jobId: JobId,
                          params: Map[String, AnyVal] = Map.empty,
@@ -21,17 +24,17 @@ object Scheduler {
 
 }
 
-class Scheduler(maxWorkTimeout: FiniteDuration)(implicit clock: Clock) extends Actor with ActorLogging {
+class Scheduler(registryProps: Props, queueProps: Props)(implicit clock: Clock) extends Actor with ActorLogging {
   import Scheduler._
 
-  private val jobRegistry = context.actorOf(Props[Registry])
-  private val taskDispatcher = context.actorOf(TaskQueue.props(maxWorkTimeout))
+  private val jobRegistry = context.actorOf(registryProps, "registry")
+  private val taskQueue = context.actorOf(queueProps, "queue")
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>
       val taskDef = TaskMeta(cmd.params, cmd.trigger, cmd.timeout)
-      val schedule = context.actorOf(ExecutionPlan.props(taskDef, taskDispatcher))
-      jobRegistry.tell(Registry.GetJob(cmd.jobId), schedule)
+      val plan = context.actorOf(ExecutionPlan.props(taskDef, taskQueue))
+      jobRegistry.tell(Registry.GetJob(cmd.jobId), plan)
   }
 
 }

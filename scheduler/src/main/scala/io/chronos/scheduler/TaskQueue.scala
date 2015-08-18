@@ -6,14 +6,14 @@ import io.chronos.cluster.WorkerProtocol._
 import io.chronos.cluster.{Task, WorkerId}
 import io.chronos.id.TaskId
 
-import scala.concurrent.duration.{Deadline, FiniteDuration}
+import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 16/08/15.
  */
 object TaskQueue {
 
-  def props(maxWorkTimeout: FiniteDuration) =
+  def props(maxWorkTimeout: FiniteDuration = 10 minutes) =
     Props(classOf[TaskQueue], maxWorkTimeout)
 
   case class Enqueue(task: Task)

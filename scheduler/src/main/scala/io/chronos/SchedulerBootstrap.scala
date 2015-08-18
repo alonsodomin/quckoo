@@ -5,6 +5,7 @@ import java.time.Clock
 import akka.actor._
 import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyModuleResolver}
+import io.chronos.scheduler.{Registry, Scheduler, TaskQueue}
 
 /**
  * Created by domingueza on 09/07/15.
@@ -26,6 +27,9 @@ object SchedulerBootstrap {
     val ivyConfig = IvyConfiguration(conf)
     val moduleResolver = new IvyModuleResolver(ivyConfig)
 
+    val registryProps = Registry.props(moduleResolver)
+    val queueProps    = TaskQueue.props()
+    system.actorOf(Scheduler.props(registryProps, queueProps), "scheduler")
   }
 
 }
