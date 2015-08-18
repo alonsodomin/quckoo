@@ -57,6 +57,9 @@ object Registry {
       case JobDisabled(jobId) =>
         val job = enabledJobs(jobId)
         copy(enabledJobs = enabledJobs - jobId, disabledJobs = disabledJobs + (jobId -> job))
+
+      // Any event other than the previous ones have no impact in the state
+      case _ => this
     }
 
   }

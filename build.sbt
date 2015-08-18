@@ -9,7 +9,8 @@ scalacOptions in ThisBuild ++= Seq("-Xexperimental", "-language:postfixOps", "-f
 
 resolvers in ThisBuild ++= Seq(
   Opts.resolver.mavenLocalFile,
-  "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/"
+  "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/",
+  "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
 )
 
 lazy val chronos = (project in file(".")).aggregate(

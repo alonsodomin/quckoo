@@ -1,5 +1,7 @@
 package io.chronos.scheduler
 
+import java.time.Clock
+
 import akka.actor.{Actor, ActorLogging, Props}
 import io.chronos.Trigger
 import io.chronos.Trigger.Immediate
@@ -19,7 +21,7 @@ object Scheduler {
 
 }
 
-class Scheduler(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging {
+class Scheduler(maxWorkTimeout: FiniteDuration)(implicit clock: Clock) extends Actor with ActorLogging {
   import Scheduler._
 
   private val jobRegistry = context.actorOf(Props[Registry])

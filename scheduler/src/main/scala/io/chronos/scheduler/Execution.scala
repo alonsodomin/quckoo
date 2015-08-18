@@ -44,7 +44,7 @@ object Execution {
   case object TimedOut extends DomainEvent
 
   sealed trait Outcome
-  case class Success(result: AnyVal) extends Outcome
+  case class Success(result: Any) extends Outcome
   case class Failure(cause: TaskFailureCause) extends Outcome
   case class NeverRun(reason: String) extends Outcome
   case object NeverEnding extends Outcome
@@ -72,8 +72,6 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
       goto(Waiting) applying Triggered andThen sendToQueue
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
-    case Event(TaskQueue.EnqueueAck(taskId)) if taskId == task.id =>
-      goto(Waiting) applying Triggered
     case Event(GetOutcome, data) =>
       stay replying data
   }

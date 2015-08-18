@@ -53,6 +53,8 @@ object Dependencies {
     "com.hazelcast"      % "hazelcast-client"         % hazelcastVersion   withSources() withJavadoc(),
     "com.jsuereth"      %% "scala-arm"                % "2.0.0-M1"         withSources() withJavadoc(),
 
+    "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.1.0-M3" % "test" withSources() withJavadoc(),
+
     "commons-io"    % "commons-io" % "2.4" % "test"
   )
 

@@ -64,6 +64,10 @@ class ExecutionPlan(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clo
         outcome match {
           case _: Execution.Success =>
             context.become(scheduleTrigger(jobId, task))
+
+          case _ =>
+            // Plan is no longer needed
+            self ! PoisonPill
         }
       }
   }
@@ -74,6 +78,7 @@ class ExecutionPlan(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clo
 
   private def scheduleTrigger(jobId: JobId, task: Task): Receive = triggerDelay match {
     case Some(delay) =>
+      import context.dispatcher
       // Create a new execution
       val execution = context.actorOf(Execution.props(planId, task, taskQueue))
       triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
