@@ -9,7 +9,7 @@ import scala.concurrent.duration.FiniteDuration
  */
 package object scheduler {
 
-  type TaskResult = Either[TaskFailureCause, AnyVal]
+  type TaskResult = Either[TaskFailureCause, Any]
 
   case class TaskMeta(params: Map[String, AnyVal], trigger: Trigger, timeout: Option[FiniteDuration])
 

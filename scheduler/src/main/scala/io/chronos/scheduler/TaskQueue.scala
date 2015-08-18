@@ -96,6 +96,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
           state = state.updated(event)
           state.executionOf(taskId) ! Execution.Finish(Right(result))
           sender ! TaskDoneAck(taskId)
+          notifyWorkers()
         }
       }
 

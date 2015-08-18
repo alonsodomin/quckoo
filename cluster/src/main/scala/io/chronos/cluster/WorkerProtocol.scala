@@ -9,7 +9,7 @@ object WorkerProtocol {
   // Messages from workers
   case class RegisterWorker(workerId: WorkerId)
   case class RequestTask(workerId: WorkerId)
-  case class TaskDone(workerId: WorkerId, taskId: TaskId, result: AnyVal)
+  case class TaskDone(workerId: WorkerId, taskId: TaskId, result: Any)
   case class TaskFailed(workerId: WorkerId, taskId: TaskId, cause: TaskFailureCause)
 
   // Messages to workers

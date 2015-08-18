@@ -18,7 +18,7 @@ object TaskQueueState {
   sealed trait TaskQueueEvent
   case class TaskAccepted(task: Task, execution: ActorRef) extends TaskQueueEvent
   case class TaskStarted(taskId: TaskId) extends TaskQueueEvent
-  case class TaskCompleted(taskId: TaskId, result: AnyVal) extends TaskQueueEvent
+  case class TaskCompleted(taskId: TaskId, result: Any) extends TaskQueueEvent
   case class TaskFailed(taskId: TaskId, cause: TaskFailureCause) extends TaskQueueEvent
   case class TaskTimedOut(taskId: TaskId) extends TaskQueueEvent
 

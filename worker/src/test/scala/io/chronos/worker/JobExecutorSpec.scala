@@ -17,16 +17,16 @@ import org.scalatest.concurrent.ScalaFutures
 /**
  * Created by aalonsodominguez on 04/08/15.
  */
-object JobExecutorTest {
-  val TestExecutionId: TaskId = ((UUID.randomUUID(), 1), 1)
+object JobExecutorSpec {
+  val TestExecutionId: TaskId = UUID.randomUUID()
   val TestJobClass = "com.example.FooClass"
   val TestModuleId = ModuleId("io.chronos", "test", "latest")
 }
 
-class JobExecutorTest extends TestKit(ActorSystem("JobExecutorTest")) with FlatSpecLike with Matchers
+class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatSpecLike with Matchers
   with BeforeAndAfterAll with ImplicitSender with MockFactory with DefaultTimeout with ScalaFutures {
 
-  import JobExecutorTest._
+  import JobExecutorSpec._
 
   val mockModuleResolver = mock[ModuleResolver]
   val jobExecutor = TestActorRef(JobExecutor.props(mockModuleResolver))
@@ -48,7 +48,7 @@ class JobExecutorTest extends TestKit(ActorSystem("JobExecutorTest")) with FlatS
 
   it must "fail if instantiation of the job failed" in {
     val params = Map("a" -> 7)
-    val work = Task(TestExecutionId, params, TestModuleId, TestJobClass)
+    val work = Task(TestExecutionId, TestModuleId, params, TestJobClass)
 
     val expectedException = new ClassNotFoundException(TestJobClass)
     val failingPackage = JobPackage(TestModuleId, Seq(new URL("http://www.example.com")))
