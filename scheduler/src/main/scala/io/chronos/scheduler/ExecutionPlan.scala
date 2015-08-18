@@ -8,6 +8,7 @@ import io.chronos.JobSpec
 import io.chronos.Trigger._
 import io.chronos.cluster.Task
 import io.chronos.id._
+import io.chronos.scheduler.Registry.{JobDisabled, JobNotEnabled}
 
 import scala.concurrent.duration._
 
@@ -26,6 +27,7 @@ class ExecutionPlan(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clo
 
   private val planId: PlanId = UUID.randomUUID()
   private var triggerTask: Option[Cancellable] = None
+  private val scheduledTime = ZonedDateTime.now(clock)
   private var lastExecutionTime: Option[ZonedDateTime] = None
 
   @throws[Exception](classOf[Exception])
@@ -97,7 +99,7 @@ class ExecutionPlan(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clo
 
   private def nextExecutionTime: Option[ZonedDateTime] = taskMeta.trigger.nextExecutionTime(lastExecutionTime match {
     case Some(time) => LastExecutionTime(time)
-    case None       => ScheduledTime(ZonedDateTime.now(clock))
+    case None       => ScheduledTime(scheduledTime)
   })
 
 }
