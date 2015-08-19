@@ -86,7 +86,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
             state = state.updated(event)
             val timeout = Deadline.now + task.timeout.getOrElse(maxWorkTimeout)
             workers += (workerId -> workerState.copy(status = Busy(task.id, timeout)))
-            log.debug("Delivering execution to worker. taskId={}, workerId={}", task.id, workerId)
+            log.info("Delivering execution to worker. taskId={}, workerId={}", task.id, workerId)
             workerState.ref ! task
             execution ! Execution.Start
           }
@@ -125,7 +125,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
       if (state.isAccepted(task.id)) {
         sender ! EnqueueAck(task.id)
       } else {
-        log.debug("Accepted task. taskId={}", task.id)
+        log.info("Accepted task. taskId={}", task.id)
         persist(TaskQueueState.TaskAccepted(task, sender())) { event =>
           state = state.updated(event)
           sender ! EnqueueAck(task.id)

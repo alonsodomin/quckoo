@@ -37,10 +37,10 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
   "A TaskQueue" should {
     val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
 
-    val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout))
+    val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "happyQueue")
     val workerId = UUID.randomUUID()
-    val executionProbe = TestProbe()
-    val workerProbe = TestProbe()
+    val executionProbe = TestProbe("happyExec")
+    val workerProbe = TestProbe("happyWorker")
 
     "register workers and return their address" in {
       taskQueue.tell(RegisterWorker(workerId), workerProbe.ref)
@@ -99,40 +99,33 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
   }
 
   "A TaskQueue with an execution in progress" should {
-    val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
+    val taskTimeout = 3 seconds
+    val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass, timeout = Some(taskTimeout))
 
-    val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout))
-    val workerId = UUID.randomUUID()
-    val executionProbe = TestProbe()
-    val workerProbe = TestProbe()
+    val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "failureQueue")
 
-    /*workerProbe.ignoreMsg {
-      case TaskReady | _: Task => true
-      case _ => false
-    }
-    executionProbe.ignoreMsg {
-      case _: EnqueueAck | Execution.Start => true
-      case _ => false
-    }*/
+    "notify an error in the execution when the worker fails" in {
+      val failingWorkerId = UUID.randomUUID()
+      val failingExec = TestProbe("failingExec")
+      val failingWorker = TestProbe("failingWorker")
 
-    "notify the execution when the worker fails" in {
-      workerProbe.ignoreMsg {
-        case TaskReady | _: Task => true
-        case _ => false
-      }
-      executionProbe.ignoreMsg {
-        case _: EnqueueAck | Execution.Start => true
-        case _ => false
-      }
+      taskQueue.tell(RegisterWorker(failingWorkerId), failingWorker.ref)
+      taskQueue.tell(Enqueue(task), failingExec.ref)
 
-      taskQueue.tell(RegisterWorker(workerId), workerProbe.ref)
-      taskQueue.tell(Enqueue(task), executionProbe.ref)
-      taskQueue.tell(RequestTask(workerId), workerProbe.ref)
+      failingExec.expectMsgType[EnqueueAck]
+      failingWorker.expectMsg(TaskReady)
+
+      taskQueue.tell(RequestTask(failingWorkerId), failingWorker.ref)
+      failingExec.expectMsg(Execution.Start)
 
       val cause: TaskFailureCause = Right(new Exception("TEST EXCEPTION"))
-      taskQueue.tell(TaskFailed(workerId, task.id, cause), workerProbe.ref)
+      taskQueue.tell(TaskFailed(failingWorkerId, task.id, cause), failingWorker.ref)
 
-      executionProbe.expectMsgType[Execution.Finish].result should be (Left(cause))
+      failingExec.expectMsgType[Execution.Finish].result should be (Left(cause))
+    }
+
+    "notify a timeout if the worker doesn't reply in between the task timeout" in {
+
     }
   }
 
