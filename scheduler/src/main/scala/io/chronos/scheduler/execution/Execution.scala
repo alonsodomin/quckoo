@@ -112,7 +112,10 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
   onTransition {
     case _ -> Done =>
       // Bubble up the outcome of the execution
-      context.parent ! Result(stateData.get)
+      context.parent ! (stateData match {
+        case Some(outcome) => outcome
+        case _             => None
+      })
   }
 
   initialize()
