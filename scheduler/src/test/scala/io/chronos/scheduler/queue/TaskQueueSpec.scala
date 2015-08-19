@@ -11,7 +11,6 @@ import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.ModuleId
 import io.chronos.scheduler.TestActorSystem
 import io.chronos.scheduler.execution.Execution
-import io.chronos.scheduler.execution.Execution.TimedOut
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
@@ -147,7 +146,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
 
       blocking {
         TimeUnit.SECONDS.sleep(1)
-        timingOutExec.expectMsg(TimedOut)
+        timingOutExec.expectMsg(Execution.TimeOut)
       }
     }
   }

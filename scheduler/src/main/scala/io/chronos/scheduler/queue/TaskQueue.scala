@@ -15,6 +15,8 @@ import scala.concurrent.duration._
  */
 object TaskQueue {
 
+  final val CleanupTickFrequency = 500 millis
+
   def props(maxWorkTimeout: FiniteDuration = 10 minutes) =
     Props(classOf[TaskQueue], maxWorkTimeout)
 
@@ -53,7 +55,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
   private var workers = Map.empty[WorkerId, WorkerState]
 
   import context.dispatcher
-  private val cleanupTask = context.system.scheduler.schedule(maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupTick)
+  private val cleanupTask = context.system.scheduler.schedule(CleanupTickFrequency, CleanupTickFrequency, self, CleanupTick)
 
   override def postStop(): Unit = cleanupTask.cancel()
 
