@@ -106,12 +106,18 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
     val executionProbe = TestProbe()
     val workerProbe = TestProbe()
 
+    workerProbe.ignoreMsg {
+      case TaskReady | _: Task => true
+      case _ => false
+    }
+    executionProbe.ignoreMsg {
+      case _: EnqueueAck | Execution.Start => true
+      case _ => false
+    }
+
     taskQueue.tell(RegisterWorker(workerId), workerProbe.ref)
     taskQueue.tell(Enqueue(task), executionProbe.ref)
     taskQueue.tell(RequestTask(workerId), workerProbe.ref)
-
-    workerProbe.ignoreMsg { case TaskReady | _: Task => true }
-    executionProbe.ignoreMsg { case _: EnqueueAck | Execution.Start => true }
 
     "notify the execution when the worker fails" in {
       val cause: TaskFailureCause = Right(new Exception("TEST EXCEPTION"))

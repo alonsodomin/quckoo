@@ -59,6 +59,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
 
   override def receiveRecover: Receive = {
     case event: TaskQueueState.TaskQueueEvent =>
+      log.info("Replaying event: {}", event)
       state = state.updated(event)
   }
 
