@@ -1,6 +1,7 @@
 package io.chronos.scheduler.queue
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import akka.actor.Address
 import akka.pattern._
@@ -10,9 +11,11 @@ import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.ModuleId
 import io.chronos.scheduler.TestActorSystem
 import io.chronos.scheduler.execution.Execution
+import io.chronos.scheduler.execution.Execution.TimedOut
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
+import scala.concurrent._
 import scala.concurrent.duration._
 
 /**
@@ -99,12 +102,11 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
   }
 
   "A TaskQueue with an execution in progress" should {
-    val taskTimeout = 3 seconds
-    val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass, timeout = Some(taskTimeout))
-
-    val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "failureQueue")
+    val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "willFailQueue")
 
     "notify an error in the execution when the worker fails" in {
+      val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
+
       val failingWorkerId = UUID.randomUUID()
       val failingExec = TestProbe("failingExec")
       val failingWorker = TestProbe("failingWorker")
@@ -116,6 +118,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
       failingWorker.expectMsg(TaskReady)
 
       taskQueue.tell(RequestTask(failingWorkerId), failingWorker.ref)
+      failingWorker.expectMsg(task)
       failingExec.expectMsg(Execution.Start)
 
       val cause: TaskFailureCause = Right(new Exception("TEST EXCEPTION"))
@@ -125,7 +128,27 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
     }
 
     "notify a timeout if the worker doesn't reply in between the task timeout" in {
+      val taskTimeout = 1 seconds
+      val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass, timeout = Some(taskTimeout))
 
+      val timingOutWorkerId = UUID.randomUUID()
+      val timingOutExec = TestProbe("failingExec")
+      val timingOutWorker = TestProbe("failingWorker")
+
+      taskQueue.tell(RegisterWorker(timingOutWorkerId), timingOutWorker.ref)
+      taskQueue.tell(Enqueue(task), timingOutExec.ref)
+
+      timingOutExec.expectMsgType[EnqueueAck]
+      timingOutWorker.expectMsg(TaskReady)
+
+      taskQueue.tell(RequestTask(timingOutWorkerId), timingOutWorker.ref)
+      timingOutWorker.expectMsg(task)
+      timingOutExec.expectMsg(Execution.Start)
+
+      blocking {
+        TimeUnit.SECONDS.sleep(1)
+        timingOutExec.expectMsg(TimedOut)
+      }
     }
   }
 
