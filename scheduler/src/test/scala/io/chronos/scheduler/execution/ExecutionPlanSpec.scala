@@ -48,7 +48,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
 
   "An execution plan" should "kill itself if job is not enabled" in {
     val trigger = mock[Trigger]
-    val executionProps: ExecutionPlan.ExecutionProps =
+    val executionProps: ExecutionProps =
       (planId, jobSpec) => TestActors.echoActorProps
 
     val receiver = TestProbe()
@@ -63,7 +63,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
   it should "create an execution from a job specification" in {
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
-    val executionProps: ExecutionPlan.ExecutionProps =
+    val executionProps: ExecutionProps =
       (planId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
     val expectedScheduleTime = ZonedDateTime.now(clock)

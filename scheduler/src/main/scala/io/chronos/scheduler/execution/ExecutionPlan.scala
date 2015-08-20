@@ -16,14 +16,12 @@ import scala.concurrent.duration._
  */
 object ExecutionPlan {
 
-  type ExecutionProps = (PlanId, JobSpec) => Props
-
   def props(trigger: Trigger)(executionProps: ExecutionProps)(implicit clock: Clock) =
     Props(classOf[ExecutionPlan], trigger, executionProps, clock)
 
 }
 
-class ExecutionPlan(trigger: Trigger, executionProps: ExecutionPlan.ExecutionProps)(implicit clock: Clock)
+class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   private val planId: PlanId = UUID.randomUUID()
