@@ -43,66 +43,72 @@ class ExecutionPlan(trigger: Trigger, executionProps: ExecutionPlan.ExecutionPro
 
   override def receive: Receive = {
     case jobSpec: JobSpec =>
-      context.become(scheduleTrigger(jobSpec.id, jobSpec))
+      context.become(schedule(jobSpec.id, jobSpec))
 
-    case JobNotEnabled(_) =>
-      log.info("Job can't be scheduled")
-      self ! PoisonPill
+    case JobNotEnabled(jobId) =>
+      log.info("Given job can't be scheduled as it is not enabled. jobId={}", jobId)
+      context.become(shutdown)
   }
 
   private def active(jobId: JobId, jobSpec: JobSpec): Receive = {
     case JobDisabled(id) if id == jobId =>
       log.info("Job has been disabled. jobId={}", id)
-      triggerTask.foreach { _.cancel() }
-      triggerTask = None
-      self ! PoisonPill
-      context.become(inactive)
+      context.become(shutdown)
 
     case Execution.Result(outcome) =>
       lastExecutionTime = Some(ZonedDateTime.now(clock))
       if (trigger.isRecurring) {
         outcome match {
           case _: Execution.Success =>
-            context.become(scheduleTrigger(jobId, jobSpec))
+            context.become(schedule(jobId, jobSpec))
 
           case _ =>
             // Plan is no longer needed
-            self ! PoisonPill
+            context.become(shutdown)
         }
       }
   }
 
-  private def inactive: Receive = {
-    case _ => self ! PoisonPill
+  private def shutdown: Receive = {
+    if (triggerTask.isDefined) {
+      log.info("Stopping trigger for current execution plan. planId={}", planId)
+      triggerTask.foreach( _.cancel() )
+      triggerTask = None
+    }
+
+    log.info("Stopping execution plan. planId={}", planId)
+    self ! PoisonPill
+
+    { case _ => log.error("Execution plan unavailable, shutting down.") }
   }
 
-  private def scheduleTrigger(jobId: JobId, jobSpec: JobSpec): Receive = triggerDelay match {
-    case Some(delay) =>
-      import context.dispatcher
-      // Create a new execution
-      val execution = context.actorOf(executionProps(planId, jobSpec))
-      triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
-      active(jobId, jobSpec)
-    case _ =>
-      self ! PoisonPill
-      inactive
-  }
+  private def schedule(jobId: JobId, jobSpec: JobSpec): Receive = {
+    def nextExecutionTime: Option[ZonedDateTime] = trigger.nextExecutionTime(lastExecutionTime match {
+      case Some(time) => LastExecutionTime(time)
+      case None       => ScheduledTime(scheduledTime)
+    })
 
-  private def triggerDelay: Option[FiniteDuration] = {
-    val now = ZonedDateTime.now(clock)
-    nextExecutionTime match {
-      case Some(time) if time.isBefore(now) || time.isEqual(now) =>
-        Some(0 millis)
-      case Some(time) =>
-        val delay = JDuration.between(now, time)
-        Some(delay.toMillis millis)
-      case None => None
+    def triggerDelay: Option[FiniteDuration] = {
+      val now = ZonedDateTime.now(clock)
+      nextExecutionTime match {
+        case Some(time) if time.isBefore(now) || time.isEqual(now) =>
+          Some(0 millis)
+        case Some(time) =>
+          val delay = JDuration.between(now, time)
+          Some(delay.toMillis millis)
+        case None => None
+      }
+    }
+
+    triggerDelay match {
+      case Some(delay) =>
+        import context.dispatcher
+        // Create a new execution
+        val execution = context.actorOf(executionProps(planId, jobSpec))
+        triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
+        active(jobId, jobSpec)
+      case _ => shutdown
     }
   }
-
-  private def nextExecutionTime: Option[ZonedDateTime] = trigger.nextExecutionTime(lastExecutionTime match {
-    case Some(time) => LastExecutionTime(time)
-    case None       => ScheduledTime(scheduledTime)
-  })
 
 }
