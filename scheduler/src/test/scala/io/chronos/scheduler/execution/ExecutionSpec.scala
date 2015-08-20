@@ -36,23 +36,13 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
-  "A sleeping execution" should {
-    val executionRef = TestActorRef(Execution.props(planId, task, taskQueue.ref), parent.ref, "SleepyExecution")
+  "A full running execution" should {
+    val executionRef = TestActorRef(Execution.props(planId, task, taskQueue.ref), parent.ref, "FullPathExecution")
 
     "return an empty outcome" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Option[Outcome]]
       whenReady(outcome) { _ should be (None) }
     }
-
-    "return None if it's cancelled" in {
-      executionRef ! Cancel("foo")
-
-      parent.expectMsg(None)
-    }
-  }
-
-  "A new execution" should {
-    val executionRef = TestActorRef(Execution.props(planId, task, taskQueue.ref), parent.ref, "WaitingExecution")
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       executionRef ! WakeUp
@@ -60,10 +50,30 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
     }
 
-    "return None if it's cancelled" in {
-      executionRef ! Cancel("foo")
+    "return an empty outcome again" in {
+      val outcome = (executionRef ? GetOutcome).mapTo[Option[Outcome]]
+      whenReady(outcome) { _ should be (None) }
+    }
 
-      parent.expectMsg(None)
+    "become in progress when notified to start" in {
+      executionRef ! Start
+    }
+
+    "return an empty outcome once again" in {
+      val outcome = (executionRef ? GetOutcome).mapTo[Option[Outcome]]
+      whenReady(outcome) { _ should be (None) }
+    }
+
+    val result: Int = 8392
+    "send result to parent when is finished" in {
+      executionRef ! Finish(Right(result))
+
+      parent.expectMsg(Success(result))
+    }
+
+    "return last result when asked for" in {
+      val outcome = (executionRef ? GetOutcome).mapTo[Option[Outcome]]
+      whenReady(outcome) { _ should be (Some(Success(result))) }
     }
   }
 

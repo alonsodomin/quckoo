@@ -55,7 +55,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
   private var workers = Map.empty[WorkerId, WorkerState]
 
   import context.dispatcher
-  private val cleanupTask = context.system.scheduler.schedule(CleanupTickFrequency, CleanupTickFrequency, self, CleanupTick)
+  private val cleanupTask = context.system.scheduler.schedule(maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupTick)
 
   override def postStop(): Unit = cleanupTask.cancel()
 

@@ -9,7 +9,6 @@ import io.chronos.id.PlanId
 import io.chronos.scheduler._
 import io.chronos.scheduler.queue.TaskQueue
 
-import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
 /**
@@ -65,8 +64,6 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
 
   import Execution._
 
-  private var enqueueAttempts: Int = 0
-
   startWith(Sleeping, None)
 
   when(Sleeping) {
@@ -78,20 +75,13 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
       stay replying data
   }
 
-  when(Waiting, stateTimeout = 10 seconds) {
+  when(Waiting) {
     case Event(Start, _) =>
       goto(InProgress) applying Started
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
     case Event(GetOutcome, data) =>
       stay replying data
-    case Event(StateTimeout, _) =>
-      enqueueAttempts += 1
-      if (enqueueAttempts < 5) {
-        stay andThen sendToQueue
-      } else {
-        goto(Done) applying TimedOut
-      }
   }
 
   when(InProgress) {
@@ -103,16 +93,17 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
       stay replying data
   }
 
-  when(Done, stateTimeout = 1 second) {
-    case Event(GetOutcome, data) =>
-      stay replying data
-    case Event(StateTimeout, _) => stop()
+  when(Done) {
+    case Event(_, data) => stay replying data
   }
 
   onTransition {
-    case _ -> Done =>
-      // Bubble up the outcome of the execution
-      context.parent ! (stateData match {
+    case _ -> Done => stop()
+  }
+
+  onTermination {
+    case StopEvent(_, state, data) =>
+      context.parent ! (data match {
         case Some(outcome) => outcome
         case _             => None
       })
