@@ -39,9 +39,9 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
-  "An execution plan" should {
+  "An execution plan for a disabled job" should {
 
-    "terminate itself if job is not enabled" in {
+    "terminate itself immediately" in {
       val trigger = mock[Trigger]
       val executionProps: ExecutionProps =
         (planId, jobSpec) => TestActors.echoActorProps
@@ -56,7 +56,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
 
   }
 
-  "An execution plan" should  {
+  "An execution plan with recurring trigger" should  {
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
     val executionProps: ExecutionProps =
@@ -76,7 +76,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       executionProbe.expectMsg(Execution.WakeUp)
     }
 
-    "re-schedule the execution if the trigger is recurring" in {
+    "re-schedule the execution once it finishes" in {
       val expectedLastExecutionTime = ZonedDateTime.now(clock)
       val expectedExecutionTime = expectedLastExecutionTime
 
@@ -98,6 +98,64 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
 
       //expectTerminated(executionPlan)
     }
+  }
+
+  "An execution plan with non recurring trigger" should {
+    val triggerMock = mock[Trigger]
+    val executionProbe = TestProbe()
+    val executionProps: ExecutionProps =
+      (planId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
+
+    val executionPlan = TestActorRef(ExecutionPlan.props(triggerMock)(executionProps))
+    TestActorRef(Props(classOf[WatchAndForwardActor], executionPlan, self))
+
+    "create an execution from a job specification" in {
+      val expectedScheduleTime = ZonedDateTime.now(clock)
+      val expectedExecutionTime = expectedScheduleTime
+
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(ScheduledTime(expectedScheduleTime), clock).returning(Some(expectedExecutionTime))
+
+      executionPlan ! TestJobSpec
+
+      executionProbe.expectMsg(Execution.WakeUp)
+    }
+
+    "terminate once the execution finishes" in {
+      (triggerMock.isRecurring _).expects().returning(false)
+
+      executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
+
+      executionProbe.expectNoMsg()
+    }
+  }
+
+  "An execution plan that gets disabled" should {
+    val triggerMock = mock[Trigger]
+    val executionProbe = TestProbe()
+    val executionProps: ExecutionProps =
+      (planId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
+
+    val executionPlan = TestActorRef(ExecutionPlan.props(triggerMock)(executionProps))
+    TestActorRef(Props(classOf[WatchAndForwardActor], executionPlan, self))
+
+    "create an execution from a job specification" in {
+      val expectedScheduleTime = ZonedDateTime.now(clock)
+      val expectedExecutionTime = expectedScheduleTime
+
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(ScheduledTime(expectedScheduleTime), clock).returning(Some(expectedExecutionTime))
+
+      executionPlan ! TestJobSpec
+
+      executionProbe.expectMsg(Execution.WakeUp)
+    }
+
+    "not re-schedule the execution after the job is disabled" in {
+      system.eventStream.publish(Registry.JobDisabled(TestJobSpec.id))
+      executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
+
+      executionProbe.expectNoMsg()
+    }
+
   }
 
 }
