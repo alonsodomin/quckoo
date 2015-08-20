@@ -22,7 +22,7 @@ object TaskQueue {
   case class EnqueueAck(taskId: TaskId)
   case object GetWorkers
 
-  case class TimeOut(taskId: TaskId)
+  final case class TimeOut(taskId: TaskId)
 
   private object WorkerState {
 

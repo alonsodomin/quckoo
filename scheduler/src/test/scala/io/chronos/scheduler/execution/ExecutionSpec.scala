@@ -1,6 +1,7 @@
 package io.chronos.scheduler.execution
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import akka.pattern._
 import akka.testkit._
@@ -10,6 +11,9 @@ import io.chronos.scheduler.TestActorSystem
 import io.chronos.scheduler.queue.TaskQueue
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+
+import scala.concurrent._
+import scala.concurrent.duration._
 
 /**
  * Created by domingueza on 18/08/15.
@@ -30,14 +34,16 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
   val planId = UUID.randomUUID()
   val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
 
-  val parent = TestProbe()
-  val taskQueue = TestProbe()
-
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
   "A full running execution" should {
-    val executionRef = TestActorRef(Execution.props(planId, task, taskQueue.ref, None), parent.ref, "FullPathExecution")
+    val parent = TestProbe()
+    val taskQueue = TestProbe()
+    val executionRef = TestActorRef(
+      Execution.props(planId, task, taskQueue.ref),
+      parent.ref, "FullPathExecution"
+    )
 
     "return an empty outcome" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
@@ -59,11 +65,48 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       executionRef ! Start
     }
 
-    val result: Int = 8392
     "send result to parent when is finished" in {
+      val result: Int = 8392
       executionRef ! Finish(Right(result))
 
       parent.expectMsg(Success(result))
+    }
+  }
+
+  "A timing out execution" should {
+    val parent = TestProbe()
+    val taskQueue = TestProbe()
+    val executionRef = TestActorRef(
+      Execution.props(planId, task, taskQueue.ref, Some(50 millis)),
+      parent.ref, "TimingOutExecution"
+    )
+
+    "return an empty outcome" in {
+      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      whenReady(outcome) { _ should be (NoOutcomeYet) }
+    }
+
+    "become Waiting and send enqueue to the task queue on a WakeUp event" in {
+      executionRef ! WakeUp
+
+      taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+    }
+
+    "return an empty outcome again" in {
+      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      whenReady(outcome) { _ should be (NoOutcomeYet) }
+    }
+
+    "timeout right after notified to start" in {
+      executionRef ! Start
+      blocking {
+        TimeUnit.MILLISECONDS.sleep(50)
+
+        //taskQueue.expectMsgType[TaskQueue.TimeOut].taskId should be (task.id)
+        executionRef.tell(TimeOut, taskQueue.ref)
+
+        parent.expectMsg(NeverEnding)
+      }
     }
   }
 

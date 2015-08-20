@@ -55,7 +55,7 @@ object Execution {
 
   case class Result(outcome: Outcome)
 
-  def props(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option[FiniteDuration]) =
+  def props(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option[FiniteDuration] = None) =
     Props(classOf[Execution], planId, task, taskQueue, timeout)
 
 }
@@ -96,9 +96,12 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option
       goto(Done) applying Completed(result)
     case Event(TimeOut, _) =>
       goto(Done) applying TimedOut
+    case Event(StateTimeout, _) =>
+      log.info("Execution progress timing out...")
+      stay andThen notifyTimeout
   }
 
-  when(Done, stateTimeout = 500 millis) {
+  when(Done, stateTimeout = 10 millis) {
     case Event(GetOutcome, data) =>
       stay replying data
     case Event(StateTimeout, _) => stop()
@@ -126,10 +129,14 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option
   }
 
   private def startExecution() = {
-    val state = goto(InProgress) applying Started
-    timeout.map( duration => state forMax duration ).getOrElse(state)
+    val st = goto(InProgress) applying Started
+    timeout.map( duration => st forMax duration ).getOrElse(st)
   }
 
-  private def sendToQueue(potentialOutcome: Outcome): Unit = taskQueue ! TaskQueue.Enqueue(task)
+  private def sendToQueue(outcome: Outcome): Unit =
+    taskQueue ! TaskQueue.Enqueue(task)
+
+  private def notifyTimeout(outcome: Outcome): Unit =
+    taskQueue ! TaskQueue.TimeOut(task.id)
 
 }
