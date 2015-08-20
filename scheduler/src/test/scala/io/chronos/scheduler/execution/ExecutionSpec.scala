@@ -66,7 +66,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       executionRef ! Start
     }
 
-    "and send result to parent when is finished" in {
+    "send result to parent when is finished" in {
       val result: Int = 8392
       executionRef ! Finish(Right(result))
 
@@ -103,7 +103,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       whenReady(outcome) { _ should be (NoOutcomeYet) }
     }
 
-    "and return a never run outcome with the cancellation reason" in {
+    "return a never run outcome with the cancellation reason" in {
       val reason = "bar"
       executionRef ! Cancel(reason)
 
@@ -139,8 +139,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       executionRef ! Start
     }
 
-    "and return an interrupted outcome with the cancellation reason" in {
-      val reason = "bar"
+    "return an interrupted outcome with the cancellation reason" in {
+      val reason = "whatever"
       executionRef ! Cancel(reason)
 
       parent.expectMsgType[Interrupted].reason should be (reason)
@@ -175,7 +175,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       executionRef ! Start
     }
 
-    "and return an never ending outcome when task notifies time out" in {
+    "return an never ending outcome when task notifies time out" in {
       executionRef.tell(TimeOut, taskQueue.ref)
 
       parent.expectMsg(NeverEnding)
