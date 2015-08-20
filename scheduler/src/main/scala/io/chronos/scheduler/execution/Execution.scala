@@ -2,13 +2,15 @@ package io.chronos.scheduler.execution
 
 import java.util.UUID
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.fsm.PersistentFSM
+import akka.persistence.fsm.PersistentFSM.Normal
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.PlanId
 import io.chronos.scheduler._
 import io.chronos.scheduler.queue.TaskQueue
 
+import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
 /**
@@ -45,6 +47,7 @@ object Execution {
   case object TimedOut extends DomainEvent
 
   sealed trait Outcome
+  case object NoOutcomeYet extends Outcome
   case class Success(result: Any) extends Outcome
   case class Failure(cause: TaskFailureCause) extends Outcome
   case class NeverRun(reason: String) extends Outcome
@@ -52,22 +55,21 @@ object Execution {
 
   case class Result(outcome: Outcome)
 
-  type PotentialOutcome = Option[Outcome]
-
   def props(planId: PlanId, task: Task, taskQueue: ActorRef) =
     Props(classOf[Execution], planId, task, taskQueue)
 
 }
 
 class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
-  extends PersistentFSM[Execution.Phase, Execution.PotentialOutcome, Execution.DomainEvent] {
+  extends PersistentFSM[Execution.Phase, Execution.Outcome, Execution.DomainEvent] with ActorLogging {
 
   import Execution._
 
-  startWith(Sleeping, None)
+  startWith(Sleeping, NoOutcomeYet)
 
   when(Sleeping) {
     case Event(WakeUp, _) =>
+      log.info("Execution waking up...")
       goto(Waiting) applying Triggered andThen sendToQueue
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
@@ -77,6 +79,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
 
   when(Waiting) {
     case Event(Start, _) =>
+      log.info("Execution starting...")
       goto(InProgress) applying Started
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
@@ -85,28 +88,25 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
   }
 
   when(InProgress) {
+    case Event(GetOutcome, data) =>
+      log.info("Returning outcome: {}", data)
+      stay replying data
     case Event(Finish(result), _) =>
+      log.info("Execution finishing...")
       goto(Done) applying Completed(result)
     case Event(TimeOut, _) =>
       goto(Done) applying TimedOut
+  }
+
+  when(Done, stateTimeout = 500 millis) {
     case Event(GetOutcome, data) =>
       stay replying data
-  }
-
-  when(Done) {
-    case Event(_, data) => stay replying data
-  }
-
-  onTransition {
-    case _ -> Done => stop()
+    case Event(StateTimeout, _) => stop()
+    case Event(_, _) => stay()
   }
 
   onTermination {
-    case StopEvent(_, state, data) =>
-      context.parent ! (data match {
-        case Some(outcome) => outcome
-        case _             => None
-      })
+    case StopEvent(Normal, _, data) => context.parent ! data
   }
 
   initialize()
@@ -115,16 +115,16 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
 
   override def domainEventClassTag: ClassTag[DomainEvent] = ClassTag(classOf[DomainEvent])
 
-  override def applyEvent(event: DomainEvent, previousOutcome: PotentialOutcome): PotentialOutcome = event match {
+  override def applyEvent(event: DomainEvent, previousOutcome: Outcome): Outcome = event match {
     case Completed(report) => report match {
-      case Left(cause)   => Some(Failure(cause))
-      case Right(result) => Some(Success(result))
+      case Left(cause)   => Failure(cause)
+      case Right(result) => Success(result)
     }
-    case Cancelled(reason) => Some(NeverRun(reason))
-    case TimedOut          => Some(NeverEnding)
+    case Cancelled(reason) => NeverRun(reason)
+    case TimedOut          => NeverEnding
     case _                 => previousOutcome
   }
 
-  private def sendToQueue(potentialOutcome: PotentialOutcome): Unit = taskQueue ! TaskQueue.Enqueue(task)
+  private def sendToQueue(potentialOutcome: Outcome): Unit = taskQueue ! TaskQueue.Enqueue(task)
 
 }

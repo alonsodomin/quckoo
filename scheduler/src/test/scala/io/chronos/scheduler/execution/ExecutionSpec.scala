@@ -40,8 +40,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     val executionRef = TestActorRef(Execution.props(planId, task, taskQueue.ref), parent.ref, "FullPathExecution")
 
     "return an empty outcome" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Option[Outcome]]
-      whenReady(outcome) { _ should be (None) }
+      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      whenReady(outcome) { _ should be (NoOutcomeYet) }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -51,17 +51,12 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     }
 
     "return an empty outcome again" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Option[Outcome]]
-      whenReady(outcome) { _ should be (None) }
+      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      whenReady(outcome) { _ should be (NoOutcomeYet) }
     }
 
     "become in progress when notified to start" in {
       executionRef ! Start
-    }
-
-    "return an empty outcome once again" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Option[Outcome]]
-      whenReady(outcome) { _ should be (None) }
     }
 
     val result: Int = 8392
@@ -69,11 +64,6 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       executionRef ! Finish(Right(result))
 
       parent.expectMsg(Success(result))
-    }
-
-    "return last result when asked for" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Option[Outcome]]
-      whenReady(outcome) { _ should be (Some(Success(result))) }
     }
   }
 
