@@ -101,11 +101,14 @@ class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit c
     triggerDelay match {
       case Some(delay) =>
         import context.dispatcher
+
         // Create a new execution
         log.info("Scheduling a new execution for job {}", jobId)
         val execution = context.actorOf(executionProps(planId, jobSpec))
         triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
+
         active(jobId, jobSpec)
+
       case _ => shutdown
     }
   }
