@@ -33,6 +33,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
 
   import TaskQueue._
   import TaskQueueSpec._
+  import system.dispatcher
 
   override def afterAll(): Unit = TestKit.shutdownActorSystem(system)
 
@@ -170,8 +171,8 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
       timingOutWorker.expectMsg(task)
       timingOutExec.expectMsg(Execution.Start)
 
-      blocking {
-        TimeUnit.MILLISECONDS.sleep(100)
+      val waitForTimeout = Future { blocking { TimeUnit.MILLISECONDS.sleep(100) } }
+      whenReady(waitForTimeout) { _ =>
         timingOutExec.expectMsg(Execution.TimeOut)
       }
     }

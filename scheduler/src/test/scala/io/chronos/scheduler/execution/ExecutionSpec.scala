@@ -30,6 +30,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
   import Execution._
   import ExecutionSpec._
+  import system.dispatcher
 
   val planId = UUID.randomUUID()
   val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
@@ -99,10 +100,10 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
     "timeout right after notified to start" in {
       executionRef ! Start
-      blocking {
-        TimeUnit.MILLISECONDS.sleep(50)
 
-        //taskQueue.expectMsgType[TaskQueue.TimeOut].taskId should be (task.id)
+      val waitForTimeout = Future { blocking { TimeUnit.MILLISECONDS.sleep(100) } }
+      whenReady(waitForTimeout) { _ =>
+        //taskQueue.expectMsgType[TaskQueue.TimeOut](10 seconds).taskId should be (task.id)
         executionRef.tell(TimeOut, taskQueue.ref)
 
         parent.expectMsg(NeverEnding)
