@@ -15,14 +15,14 @@ import scala.concurrent.duration._
  */
 object TaskQueue {
 
-  final val CleanupTickFrequency = 500 millis
-
   def props(maxWorkTimeout: FiniteDuration = 10 minutes) =
     Props(classOf[TaskQueue], maxWorkTimeout)
 
   case class Enqueue(task: Task)
   case class EnqueueAck(taskId: TaskId)
   case object GetWorkers
+
+  case class TimeOut(taskId: TaskId)
 
   private object WorkerState {
 
@@ -135,16 +135,14 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
         }
       }
 
+    case TimeOut(taskId) =>
+      for ((workerId, s @ WorkerState(_, Busy(`taskId`, _))) <- workers) {
+        timeoutWorker(workerId, taskId)
+      }
+
     case CleanupTick =>
       for ((workerId, s @ WorkerState(_, Busy(taskId, timeout))) <- workers) {
-        if (timeout.isOverdue()) {
-          workers -= workerId
-          persist(TaskQueueState.TaskTimedOut(taskId)) { event =>
-            state = state.updated(event)
-            state.executionOf(taskId) ! Execution.TimeOut
-            notifyWorkers()
-          }
-        }
+        if (timeout.isOverdue()) timeoutWorker(workerId, taskId)
       }
   }
 
@@ -164,5 +162,14 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
       case _ =>
       // ok, might happen after standby recovery, worker state is not persisted
     }
+
+  private def timeoutWorker(workerId: WorkerId, taskId: TaskId): Unit = {
+    workers -= workerId
+    persist(TaskQueueState.TaskTimedOut(taskId)) { event =>
+      state = state.updated(event)
+      state.executionOf(taskId) ! Execution.TimeOut
+      notifyWorkers()
+    }
+  }
 
 }

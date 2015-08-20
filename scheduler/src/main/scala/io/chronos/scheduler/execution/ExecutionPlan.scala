@@ -81,7 +81,7 @@ class ExecutionPlan(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clo
     case Some(delay) =>
       import context.dispatcher
       // Create a new execution
-      val execution = context.actorOf(Execution.props(planId, task, taskQueue))
+      val execution = context.actorOf(Execution.props(planId, task, taskQueue, taskMeta.timeout))
       triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
       active(jobId, task)
     case _ =>

@@ -55,12 +55,12 @@ object Execution {
 
   case class Result(outcome: Outcome)
 
-  def props(planId: PlanId, task: Task, taskQueue: ActorRef) =
-    Props(classOf[Execution], planId, task, taskQueue)
+  def props(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option[FiniteDuration]) =
+    Props(classOf[Execution], planId, task, taskQueue, timeout)
 
 }
 
-class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
+class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option[FiniteDuration])
   extends PersistentFSM[Execution.Phase, Execution.Outcome, Execution.DomainEvent] with ActorLogging {
 
   import Execution._
@@ -80,7 +80,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
   when(Waiting) {
     case Event(Start, _) =>
       log.info("Execution starting...")
-      goto(InProgress) applying Started
+      startExecution()
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
     case Event(GetOutcome, data) =>
@@ -123,6 +123,11 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef)
     case Cancelled(reason) => NeverRun(reason)
     case TimedOut          => NeverEnding
     case _                 => previousOutcome
+  }
+
+  private def startExecution() = {
+    val state = goto(InProgress) applying Started
+    timeout.map( duration => state forMax duration ).getOrElse(state)
   }
 
   private def sendToQueue(potentialOutcome: Outcome): Unit = taskQueue ! TaskQueue.Enqueue(task)

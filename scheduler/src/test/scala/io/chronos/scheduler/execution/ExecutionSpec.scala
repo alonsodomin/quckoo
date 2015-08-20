@@ -37,7 +37,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     TestKit.shutdownActorSystem(system)
 
   "A full running execution" should {
-    val executionRef = TestActorRef(Execution.props(planId, task, taskQueue.ref), parent.ref, "FullPathExecution")
+    val executionRef = TestActorRef(Execution.props(planId, task, taskQueue.ref, None), parent.ref, "FullPathExecution")
 
     "return an empty outcome" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]

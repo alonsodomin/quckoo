@@ -1,6 +1,7 @@
 package io.chronos.scheduler.queue
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import akka.actor.Address
 import akka.pattern._
@@ -13,6 +14,7 @@ import io.chronos.scheduler.execution.Execution
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
+import scala.concurrent._
 import scala.concurrent.duration._
 
 /**
@@ -121,10 +123,10 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
       val cause: TaskFailureCause = Right(new Exception("TEST EXCEPTION"))
       taskQueue.tell(TaskFailed(failingWorkerId, task.id, cause), failingWorker.ref)
 
-      failingExec.expectMsgType[Execution.Finish].result should be (Left(cause))
+      failingExec.expectMsgType[Execution.Finish].result should be(Left(cause))
     }
 
-    /*"notify a timeout if the worker doesn't reply in between the task timeout" in {
+    "perform a timeout if the execution does notify it" in {
       val taskTimeout = 1 seconds
       val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass, timeout = Some(taskTimeout))
 
@@ -142,11 +144,37 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
       timingOutWorker.expectMsg(task)
       timingOutExec.expectMsg(Execution.Start)
 
+      taskQueue.tell(TimeOut(task.id), timingOutExec.ref)
+      timingOutExec.expectMsg(Execution.TimeOut)
+    }
+
+  }
+
+  "A task queue with a short timeout" should {
+    val taskQueue = TestActorRef(TaskQueue.props(100 millis), "willTimeoutQueue")
+
+    "notify a timeout if the worker doesn't reply in between the task timeout" in {
+      val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
+
+      val timingOutWorkerId = UUID.randomUUID()
+      val timingOutExec = TestProbe("failingExec")
+      val timingOutWorker = TestProbe("failingWorker")
+
+      taskQueue.tell(RegisterWorker(timingOutWorkerId), timingOutWorker.ref)
+      taskQueue.tell(Enqueue(task), timingOutExec.ref)
+
+      timingOutExec.expectMsgType[EnqueueAck]
+      timingOutWorker.expectMsg(TaskReady)
+
+      taskQueue.tell(RequestTask(timingOutWorkerId), timingOutWorker.ref)
+      timingOutWorker.expectMsg(task)
+      timingOutExec.expectMsg(Execution.Start)
+
       blocking {
-        TimeUnit.SECONDS.sleep(1)
+        TimeUnit.MILLISECONDS.sleep(100)
         timingOutExec.expectMsg(Execution.TimeOut)
       }
-    }*/
+    }
   }
 
 }
