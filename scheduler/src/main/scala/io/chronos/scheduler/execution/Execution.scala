@@ -52,6 +52,7 @@ object Execution {
   case class Failure(cause: TaskFailureCause) extends Outcome
   case class NeverRun(reason: String) extends Outcome
   case object NeverEnding extends Outcome
+  case class Interrupted(reason: String) extends Outcome
 
   case class Result(outcome: Outcome)
 
@@ -91,6 +92,8 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option
     case Event(GetOutcome, data) =>
       log.info("Returning outcome: {}", data)
       stay replying data
+    case Event(Cancel(reason), _) =>
+      goto(Done) applying Cancelled(reason)
     case Event(Finish(result), _) =>
       log.info("Execution finishing...")
       goto(Done) applying Completed(result)
@@ -123,7 +126,10 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option
       case Left(cause)   => Failure(cause)
       case Right(result) => Success(result)
     }
-    case Cancelled(reason) => NeverRun(reason)
+    case Cancelled(reason) => stateName match {
+      case InProgress => Interrupted(reason)
+      case _          => NeverRun(reason)
+    }
     case TimedOut          => NeverEnding
     case _                 => previousOutcome
   }
