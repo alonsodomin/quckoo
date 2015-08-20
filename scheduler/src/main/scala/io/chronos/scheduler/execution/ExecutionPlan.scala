@@ -4,12 +4,10 @@ import java.time.{Clock, Duration => JDuration, ZonedDateTime}
 import java.util.UUID
 
 import akka.actor._
-import io.chronos.JobSpec
 import io.chronos.Trigger._
-import io.chronos.cluster.Task
 import io.chronos.id._
 import io.chronos.scheduler.Registry.{JobDisabled, JobNotEnabled}
-import io.chronos.scheduler.TaskMeta
+import io.chronos.{JobSpec, Trigger}
 
 import scala.concurrent.duration._
 
@@ -18,12 +16,14 @@ import scala.concurrent.duration._
  */
 object ExecutionPlan {
 
-  def props(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clock) =
-    Props(classOf[ExecutionPlan], taskMeta, clock)
+  type ExecutionProps = (PlanId, JobSpec) => Props
+
+  def props(trigger: Trigger)(executionProps: ExecutionProps)(implicit clock: Clock) =
+    Props(classOf[ExecutionPlan], trigger, executionProps, clock)
 
 }
 
-class ExecutionPlan(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clock)
+class ExecutionPlan(trigger: Trigger, executionProps: ExecutionPlan.ExecutionProps)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   private val planId: PlanId = UUID.randomUUID()
@@ -43,15 +43,14 @@ class ExecutionPlan(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clo
 
   override def receive: Receive = {
     case jobSpec: JobSpec =>
-      val task = Task(newTaskId, jobSpec.moduleId, taskMeta.params, jobSpec.jobClass)
-      context.become(scheduleTrigger(jobSpec.id, task))
+      context.become(scheduleTrigger(jobSpec.id, jobSpec))
 
     case JobNotEnabled(_) =>
       log.info("Job can't be scheduled")
       self ! PoisonPill
   }
 
-  private def active(jobId: JobId, task: Task): Receive = {
+  private def active(jobId: JobId, jobSpec: JobSpec): Receive = {
     case JobDisabled(id) if id == jobId =>
       log.info("Job has been disabled. jobId={}", id)
       triggerTask.foreach { _.cancel() }
@@ -61,10 +60,10 @@ class ExecutionPlan(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clo
 
     case Execution.Result(outcome) =>
       lastExecutionTime = Some(ZonedDateTime.now(clock))
-      if (taskMeta.trigger.isRecurring) {
+      if (trigger.isRecurring) {
         outcome match {
           case _: Execution.Success =>
-            context.become(scheduleTrigger(jobId, task))
+            context.become(scheduleTrigger(jobId, jobSpec))
 
           case _ =>
             // Plan is no longer needed
@@ -77,19 +76,17 @@ class ExecutionPlan(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clo
     case _ => self ! PoisonPill
   }
 
-  private def scheduleTrigger(jobId: JobId, task: Task): Receive = triggerDelay match {
+  private def scheduleTrigger(jobId: JobId, jobSpec: JobSpec): Receive = triggerDelay match {
     case Some(delay) =>
       import context.dispatcher
       // Create a new execution
-      val execution = context.actorOf(Execution.props(planId, task, taskQueue, taskMeta.timeout))
+      val execution = context.actorOf(executionProps(planId, jobSpec))
       triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
-      active(jobId, task)
+      active(jobId, jobSpec)
     case _ =>
       self ! PoisonPill
       inactive
   }
-
-  private def newTaskId: TaskId = UUID.randomUUID()
 
   private def triggerDelay: Option[FiniteDuration] = {
     val now = ZonedDateTime.now(clock)
@@ -103,7 +100,7 @@ class ExecutionPlan(taskMeta: TaskMeta, taskQueue: ActorRef)(implicit clock: Clo
     }
   }
 
-  private def nextExecutionTime: Option[ZonedDateTime] = taskMeta.trigger.nextExecutionTime(lastExecutionTime match {
+  private def nextExecutionTime: Option[ZonedDateTime] = trigger.nextExecutionTime(lastExecutionTime match {
     case Some(time) => LastExecutionTime(time)
     case None       => ScheduledTime(scheduledTime)
   })

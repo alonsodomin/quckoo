@@ -86,7 +86,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
           val (task, execution) = state.nextTask
           persist(TaskQueueState.TaskStarted(task.id)) { event =>
             state = state.updated(event)
-            val timeout = Deadline.now + task.timeout.getOrElse(maxWorkTimeout)
+            val timeout = Deadline.now + maxWorkTimeout
             workers += (workerId -> workerState.copy(status = Busy(task.id, timeout)))
             log.info("Delivering execution to worker. taskId={}, workerId={}", task.id, workerId)
             workerState.ref ! task

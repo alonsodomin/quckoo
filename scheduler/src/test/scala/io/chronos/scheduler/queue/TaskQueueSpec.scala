@@ -129,7 +129,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
 
     "perform a timeout if the execution does notify it" in {
       val taskTimeout = 1 seconds
-      val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass, timeout = Some(taskTimeout))
+      val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
 
       val timingOutWorkerId = UUID.randomUUID()
       val timingOutExec = TestProbe("failingExec")

@@ -1,12 +1,14 @@
 package io.chronos.scheduler
 
 import java.time.Clock
+import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, Props}
 import io.chronos.Trigger
 import io.chronos.Trigger.Immediate
+import io.chronos.cluster.Task
 import io.chronos.id._
-import io.chronos.scheduler.execution.ExecutionPlan
+import io.chronos.scheduler.execution.{Execution, ExecutionPlan}
 
 import scala.concurrent.duration._
 
@@ -33,8 +35,10 @@ class Scheduler(registryProps: Props, queueProps: Props)(implicit clock: Clock) 
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>
-      val taskDef = TaskMeta(cmd.params, cmd.trigger, cmd.timeout)
-      val plan = context.actorOf(ExecutionPlan.props(taskDef, taskQueue))
+      val plan = context.actorOf(ExecutionPlan.props(cmd.trigger) { (planId, jobSpec) =>
+        val task = Task(UUID.randomUUID(), jobSpec.moduleId, cmd.params, jobSpec.jobClass)
+        Execution.props(planId, task, taskQueue, cmd.timeout)
+      })
       jobRegistry.tell(Registry.GetJob(cmd.jobId), plan)
   }
 
