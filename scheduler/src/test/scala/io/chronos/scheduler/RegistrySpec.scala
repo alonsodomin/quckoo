@@ -98,7 +98,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
       expectMsgType[JobNotEnabled].jobId should be (TestJobId)
     }
 
-    "return an empty collection when there a not enabled jobs" in {
+    "return an empty collection when there are not enabled jobs" in {
       registry ! GetJobs
 
       expectMsg(Seq.empty[JobSpec])
