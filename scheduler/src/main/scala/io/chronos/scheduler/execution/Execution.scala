@@ -47,7 +47,7 @@ object Execution {
   case object TimedOut extends DomainEvent
 
   sealed trait Outcome
-  case object NoOutcomeYet extends Outcome
+  case object NotRunYet extends Outcome
   case class Success(result: Any) extends Outcome
   case class Failure(cause: TaskFailureCause) extends Outcome
   case class NeverRun(reason: String) extends Outcome
@@ -66,7 +66,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option
 
   import Execution._
 
-  startWith(Sleeping, NoOutcomeYet)
+  startWith(Sleeping, NotRunYet)
 
   when(Sleeping) {
     case Event(WakeUp, _) =>

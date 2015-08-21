@@ -48,7 +48,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
     "return an empty outcome" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NoOutcomeYet) }
+      whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -59,7 +59,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
     "return an empty outcome again" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NoOutcomeYet) }
+      whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become in progress when notified to start" in {
@@ -100,7 +100,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
     "return an empty outcome" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NoOutcomeYet) }
+      whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "return a never run outcome with the cancellation reason" in {
@@ -121,7 +121,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
     "return an empty outcome" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NoOutcomeYet) }
+      whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -132,7 +132,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
     "return an empty outcome again" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NoOutcomeYet) }
+      whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become in progress when notified to start" in {
@@ -157,7 +157,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
     "return an empty outcome" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NoOutcomeYet) }
+      whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -168,7 +168,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
     "return an empty outcome again" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NoOutcomeYet) }
+      whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become in progress when notified to start" in {
@@ -192,7 +192,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
     "return an empty outcome" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NoOutcomeYet) }
+      whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -203,7 +203,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
     "return an empty outcome again" in {
       val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NoOutcomeYet) }
+      whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "timeout right after notified to start" in {
