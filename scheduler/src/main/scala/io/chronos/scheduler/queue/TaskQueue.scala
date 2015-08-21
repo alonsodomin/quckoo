@@ -3,10 +3,10 @@ package io.chronos.scheduler.queue
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.persistence.PersistentActor
+import io.chronos.cluster.protocol.WorkerProtocol
+import io.chronos.cluster.protocol.WorkerProtocol._
 import io.chronos.cluster.{Task, WorkerId}
 import io.chronos.id.TaskId
-import io.chronos.protocol.WorkerProtocol
-import io.chronos.protocol.WorkerProtocol._
 import io.chronos.scheduler.execution.Execution
 
 import scala.concurrent.duration._

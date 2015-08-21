@@ -32,7 +32,7 @@ class Scheduler(registryProps: Props, queueProps: Props)(implicit clock: Clock) 
   import Scheduler._
 
   private val jobRegistry = context.actorOf(registryProps, "registry")
-  private val taskQueue = context.actorOf(queueProps, "queue")
+  private val taskQueue = context.actorOf(queueProps, "taskQueue")
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>

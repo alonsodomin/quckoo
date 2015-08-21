@@ -1,4 +1,4 @@
-package io.chronos.protocol
+package io.chronos.cluster.protocol
 
 import io.chronos.cluster._
 import io.chronos.id.TaskId

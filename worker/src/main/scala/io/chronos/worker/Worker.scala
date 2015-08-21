@@ -4,11 +4,10 @@ import java.util.UUID
 
 import akka.actor.SupervisorStrategy._
 import akka.actor._
-import akka.cluster.client.ClusterClient.SendToAll
-import io.chronos.cluster.Task
+import akka.cluster.client.ClusterClient.Send
+import io.chronos.cluster.{Task, path}
+import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.id.TaskId
-import io.chronos.path
-import io.chronos.protocol.WorkerProtocol
 
 import scala.concurrent.duration._
 
@@ -30,7 +29,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   
   val registerTask = context.system.scheduler.schedule(
     0.seconds, registerInterval, clusterClient,
-    SendToAll(path.Scheduler, RegisterWorker(workerId))
+    Send(path.TaskQueue, RegisterWorker(workerId), localAffinity = true)
   )
 
   val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "executor"))
@@ -81,12 +80,12 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
       context.become(idle)
 
     case ReceiveTimeout =>
-      log.info("No ack from master, retrying")
+      log.warning("No ack from master, retrying")
       sendToMaster(TaskDone(workerId, taskId, result))
   }
 
   private def sendToMaster(msg: Any): Unit = {
-    clusterClient ! SendToAll(path.Scheduler, msg)
+    clusterClient ! Send(path.TaskQueue, msg, localAffinity = true)
   }
 
   override def supervisorStrategy = OneForOneStrategy() {
