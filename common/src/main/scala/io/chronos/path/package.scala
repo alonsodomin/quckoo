@@ -6,7 +6,6 @@ package io.chronos
 package object path {
 
   val Registry = "/user/registry"
-  val Scheduler = "/user/scheduler/active"
   val ExecutionPlan = "/user/plan"
   val ExecutionMonitor = "/user/executions"
 

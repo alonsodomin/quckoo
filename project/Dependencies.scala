@@ -52,7 +52,7 @@ object Dependencies {
     "org.apache.ivy" % "ivy"        % "2.4.0"       withSources() withJavadoc()
   )
 
-  val clusterLibs: Seq[ModuleID] = basicLibs
+  val clusterLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs
 
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ sprayLibs ++ Seq(
     "com.typesafe.akka" %% "akka-persistence"         % akkaVersion        withSources() withJavadoc(),
