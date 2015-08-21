@@ -43,7 +43,7 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
     jobExecutor ! JobExecutor.Execute(work)
 
-    expectMsg(JobExecutor.Failed(TestExecutionId, Left(expectedResolutionFailed)))
+    expectMsg(JobExecutor.Failed(Left(expectedResolutionFailed)))
   }
 
   it must "fail if instantiation of the job failed" in {
@@ -58,7 +58,6 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
     val result = (jobExecutor ? JobExecutor.Execute(work)).mapTo[JobExecutor.Failed]
 
     whenReady(result) { res =>
-      res.executionId should be (TestExecutionId)
       res.reason match {
         case Right(x) =>
           x.getClass should be (expectedException.getClass)

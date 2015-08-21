@@ -17,13 +17,17 @@ import scala.concurrent.duration._
 object Worker {
 
   final val DefaultRegisterFrequency = 10 seconds
+  final val DefaultQueueAckTimeout = 5 seconds
 
-  def props(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval: FiniteDuration = DefaultRegisterFrequency): Props =
-    Props(classOf[Worker], clusterClient, jobExecutorProps, registerInterval)
+  def props(clusterClient: ActorRef, jobExecutorProps: Props,
+            registerInterval: FiniteDuration = DefaultRegisterFrequency,
+            queueAckTimeout: FiniteDuration = DefaultQueueAckTimeout): Props =
+    Props(classOf[Worker], clusterClient, jobExecutorProps, registerInterval, queueAckTimeout)
 
 }
 
-class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval: FiniteDuration) extends Actor with ActorLogging {
+class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval: FiniteDuration, queueAckTimeout: FiniteDuration)
+  extends Actor with ActorLogging {
   import WorkerProtocol._
   import context.dispatcher
 
@@ -60,29 +64,29 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   }
 
   def working: Receive = {
-    case JobExecutor.Completed(taskId, result) =>
+    case JobExecutor.Completed(result) =>
       log.info("Task execution has completed. Result {}.", result)
       sendToQueue(TaskDone(workerId, taskId, result))
-      context.setReceiveTimeout(5 seconds)
-      context.become(waitForWorkDoneAck(result))
+      context.setReceiveTimeout(queueAckTimeout)
+      context.become(waitForTaskDoneAck(result))
 
-    case JobExecutor.Failed(taskId, reason) =>
+    case JobExecutor.Failed(reason) =>
       sendToQueue(TaskFailed(workerId, taskId, reason))
-      context.setReceiveTimeout(5 seconds)
+      context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 
     case _: Task =>
-      log.info("Yikes. Master told me to do task, while I'm working.")
+      log.info("Yikes. The task queue has sent me another another task while I'm busy.")
   }
 
-  def waitForWorkDoneAck(result: Any): Receive = {
+  def waitForTaskDoneAck(result: Any): Receive = {
     case TaskDoneAck(id) if id == taskId =>
       sendToQueue(RequestTask(workerId))
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 
     case ReceiveTimeout =>
-      log.warning("No ack from master, retrying")
+      log.warning("Didn't receive any ack from task queue in the last {}, retrying", queueAckTimeout)
       sendToQueue(TaskDone(workerId, taskId, result))
   }
 
