@@ -59,6 +59,13 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
 
       executorProbe.expectMsgType[JobExecutor.Execute].task should be (task)
     }
+
+    "not overwhelm the executor with more tasks if we are busy" in {
+      val task = Task(UUID.randomUUID(), TestModuleId, Map.empty, TestJobClass)
+      worker ! task
+
+      executorProbe.expectNoMsg(500 millis)
+    }
   }
 
 }
