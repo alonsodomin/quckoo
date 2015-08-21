@@ -102,7 +102,7 @@ class Registry(moduleResolver: ModuleResolver) extends PersistentActor with Acto
 
     case GetJob(jobId) =>
       if (store.isEnabled(jobId)) {
-        sender() ! store.get(jobId)
+        sender() ! store.get(jobId).get
       } else {
         sender() ! JobNotEnabled(jobId)
       }

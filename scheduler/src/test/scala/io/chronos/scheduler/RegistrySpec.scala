@@ -9,7 +9,7 @@ import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, ResolutionFailed}
 import io.chronos.resolver.{JobPackage, ModuleResolver}
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.scalatest._
 
 /**
  * Created by domingueza on 21/08/15.
@@ -27,13 +27,11 @@ object RegistrySpec {
 }
 
 class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with ImplicitSender
-  with FlatSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers with MockFactory {
+  with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers with MockFactory {
 
   import RegistryProtocol._
   import RegistrySpec._
 
-  val moduleResolverMock = mock[ModuleResolver]
-  val registry = TestActorRef(Registry.props(moduleResolverMock))
   val eventListener = TestProbe()
 
   before {
@@ -47,41 +45,64 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
-  "A job registry" should "reject a job if it fails to resolve its dependencies" in {
-    val expectedResolutionFailed = ResolutionFailed(Seq("com.foo.bar"))
+  "A job registry" should {
+    val moduleResolverMock = mock[ModuleResolver]
+    val registry = TestActorRef(Registry.props(moduleResolverMock))
 
-    (moduleResolverMock.resolve _).expects(TestModuleId, false).returning(Left(expectedResolutionFailed))
+    "reject a job if it fails to resolve its dependencies" in {
+      val expectedResolutionFailed = ResolutionFailed(Seq("com.foo.bar"))
 
-    registry ! RegisterJob(TestJobSpec)
+      (moduleResolverMock.resolve _).expects(TestModuleId, false).returning(Left(expectedResolutionFailed))
 
-    expectMsgType[JobRejected].cause should be (Left(expectedResolutionFailed))
-  }
+      registry ! RegisterJob(TestJobSpec)
 
-  it should "return job accepted if resolution of dependencies succeeds" in {
-    (moduleResolverMock.resolve _).expects(TestModuleId, false).returning(Right(TestJobPackage))
+      expectMsgType[JobRejected].cause should be (Left(expectedResolutionFailed))
+    }
 
-    registry ! RegisterJob(TestJobSpec)
+    "notify that a specific job is not enabled when attempting to disabling it" in {
+      registry ! DisableJob(TestJobId)
 
-    expectMsgType[JobAccepted].job should be (TestJobSpec)
-  }
+      expectMsgType[JobNotEnabled].jobId should be (TestJobId)
+    }
 
-  it should "disable a job that has been previously registered and populate the event to the event stream" in {
-    (moduleResolverMock.resolve _).expects(TestModuleId, false).returning(Right(TestJobPackage))
+    "return job accepted if resolution of dependencies succeeds" in {
+      (moduleResolverMock.resolve _).expects(TestModuleId, false).returning(Right(TestJobPackage))
 
-    registry ! RegisterJob(TestJobSpec)
+      registry ! RegisterJob(TestJobSpec)
 
-    expectMsgType[JobAccepted].job should be (TestJobSpec)
+      expectMsgType[JobAccepted].job should be (TestJobSpec)
+    }
 
-    registry ! DisableJob(TestJobId)
+    "return the registered job spec when asked for it" in {
+      registry ! GetJob(TestJobId)
 
-    expectMsgType[JobDisabled].jobId should be (TestJobId)
-    eventListener.expectMsgType[JobDisabled].jobId should be (TestJobId)
-  }
+      expectMsg(TestJobSpec)
+    }
 
-  it should "notify that a specific job is not enabled when attempting to disabling it" in {
-    registry ! DisableJob(TestJobId)
+    "return a collection of all the registered jobs when asked for it" in {
+      registry ! GetJobs
 
-    expectMsgType[JobNotEnabled].jobId should be (TestJobId)
+      expectMsg(Seq(TestJobSpec))
+    }
+
+    "disable a job that has been previously registered and populate the event to the event stream" in {
+      registry ! DisableJob(TestJobId)
+
+      expectMsgType[JobDisabled].jobId should be (TestJobId)
+      eventListener.expectMsgType[JobDisabled].jobId should be (TestJobId)
+    }
+
+    "return a job not enabled message when asked for a job after disabling it" in {
+      registry ! GetJob(TestJobId)
+
+      expectMsgType[JobNotEnabled].jobId should be (TestJobId)
+    }
+
+    "return an empty collection when there a not enabled jobs" in {
+      registry ! GetJobs
+
+      expectMsg(Seq.empty[JobSpec])
+    }
   }
 
 }
