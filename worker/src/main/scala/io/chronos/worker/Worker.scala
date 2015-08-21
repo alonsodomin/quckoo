@@ -5,8 +5,8 @@ import java.util.UUID
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.cluster.client.ClusterClient.Send
-import io.chronos.cluster.{Task, path}
 import io.chronos.cluster.protocol.WorkerProtocol
+import io.chronos.cluster.{Task, path}
 import io.chronos.id.TaskId
 
 import scala.concurrent.duration._
@@ -16,7 +16,9 @@ import scala.concurrent.duration._
  */
 object Worker {
 
-  def props(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval: FiniteDuration = 10 seconds): Props =
+  final val DefaultRegisterFrequency = 10 seconds
+
+  def props(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval: FiniteDuration = DefaultRegisterFrequency): Props =
     Props(classOf[Worker], clusterClient, jobExecutorProps, registerInterval)
 
 }
@@ -48,7 +50,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   def idle: Receive = {
     case TaskReady =>
       log.info("Requesting task to master.")
-      sendToMaster(RequestTask(workerId))
+      sendToQueue(RequestTask(workerId))
 
     case task: Task =>
       log.info("Received task for execution {}", task.id)
@@ -60,12 +62,12 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   def working: Receive = {
     case JobExecutor.Completed(taskId, result) =>
       log.info("Task execution has completed. Result {}.", result)
-      sendToMaster(TaskDone(workerId, taskId, result))
+      sendToQueue(TaskDone(workerId, taskId, result))
       context.setReceiveTimeout(5 seconds)
       context.become(waitForWorkDoneAck(result))
 
     case JobExecutor.Failed(taskId, reason) =>
-      sendToMaster(TaskFailed(workerId, taskId, reason))
+      sendToQueue(TaskFailed(workerId, taskId, reason))
       context.setReceiveTimeout(5 seconds)
       context.become(idle)
 
@@ -75,16 +77,16 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
 
   def waitForWorkDoneAck(result: Any): Receive = {
     case TaskDoneAck(id) if id == taskId =>
-      sendToMaster(RequestTask(workerId))
+      sendToQueue(RequestTask(workerId))
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 
     case ReceiveTimeout =>
       log.warning("No ack from master, retrying")
-      sendToMaster(TaskDone(workerId, taskId, result))
+      sendToQueue(TaskDone(workerId, taskId, result))
   }
 
-  private def sendToMaster(msg: Any): Unit = {
+  private def sendToQueue(msg: Any): Unit = {
     clusterClient ! Send(path.TaskQueue, msg, localAffinity = true)
   }
 
@@ -93,7 +95,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
     case _: DeathPactException => Stop
     case cause: Exception =>
       currentTaskId.foreach {
-        taskId => sendToMaster(TaskFailed(workerId, taskId, Right(cause)))
+        taskId => sendToQueue(TaskFailed(workerId, taskId, Right(cause)))
       }
       context.become(idle)
       Restart

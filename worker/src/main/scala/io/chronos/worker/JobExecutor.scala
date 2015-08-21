@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
  */
 object JobExecutor {
 
-  case class Execute(work: Task)
+  case class Execute(task: Task)
 
   case class Failed(executionId: UUID, reason: TaskFailureCause)
   case class Completed(executionId: UUID, result: Any)
