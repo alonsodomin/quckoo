@@ -52,6 +52,8 @@ object Dependencies {
     "org.apache.ivy" % "ivy"        % "2.4.0"       withSources() withJavadoc()
   )
 
+  val clientLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs
+
   val clusterLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs
 
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ sprayLibs ++ Seq(

@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.chronos._
 import io.chronos.id.ModuleId
-import io.chronos.protocol._
+import io.chronos.protocol.RegistryProtocol
 
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ThreadLocalRandom
@@ -22,6 +22,7 @@ object PowerOfNActor {
 
 class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
   import PowerOfNActor._
+  import RegistryProtocol._
   import context.dispatcher
 
   def scheduler = context.system.scheduler

@@ -1,4 +1,4 @@
-package io.chronos.cluster
+package io.chronos.client
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.cluster.client.ClusterClient.Send

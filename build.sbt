@@ -14,7 +14,7 @@ resolvers in ThisBuild ++= Seq(
 )
 
 lazy val chronos = (project in file(".")).aggregate(
-  common, resolver, cluster, scheduler, examples, worker
+  common, resolver, client, cluster, scheduler, examples, worker
 )
 
 lazy val common = (project in file("common")).
@@ -27,6 +27,13 @@ lazy val resolver = (project in file("resolver")).
   settings(Commons.settings: _*).
   settings(
     libraryDependencies ++= Dependencies.resolverLibs
+  ).
+  dependsOn(common)
+
+lazy val client = (project in file("client")).
+  settings(Commons.settings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.clientLibs
   ).
   dependsOn(common)
 
@@ -63,4 +70,5 @@ lazy val examples = (project in file("examples")).
   settings(
     libraryDependencies ++= Dependencies.examplesLibs
   ).
-  dependsOn(common)
+  dependsOn(common).
+  dependsOn(client)

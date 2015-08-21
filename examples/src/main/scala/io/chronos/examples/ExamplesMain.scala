@@ -1,9 +1,10 @@
 package io.chronos.examples
 
 import akka.actor.{ActorSystem, AddressFromURIString, Props, RootActorPath}
-import akka.contrib.pattern.ClusterClient
+import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
+import io.chronos.client.ChronosClient
 import io.chronos.examples.parameters.PowerOfNActor
 
 /**
@@ -16,12 +17,15 @@ object ExamplesMain extends App {
   val system = ActorSystem("ChronosExamplesSystem", chronosConf)
 
   val initialContacts = immutableSeq(chronosConf.getStringList("chronos.seed-nodes")).map {
-    case AddressFromURIString(addr) => system.actorSelection(RootActorPath(addr) / "user" / "receptionist")
+    case AddressFromURIString(addr) => RootActorPath(addr) / "user" / "receptionist"
   }.toSet
 
-  val client = system.actorOf(ClusterClient.props(initialContacts), "client")
+  val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
+  val akkaClient = system.actorOf(ClusterClient.props(clientSettings), "akkaClient")
 
-  val frontend = system.actorOf(FacadeActor.props(client), "frontend")
-  system.actorOf(Props(classOf[PowerOfNActor], frontend), "producer")
+  val chronosClient = system.actorOf(Props(classOf[ChronosClient], akkaClient), "chronosClient")
+
+  //val frontend = system.actorOf(FacadeActor.props(client), "frontend")
+  system.actorOf(Props(classOf[PowerOfNActor], chronosClient), "producer")
 
 }
