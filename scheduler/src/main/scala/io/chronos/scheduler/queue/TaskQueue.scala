@@ -3,9 +3,10 @@ package io.chronos.scheduler.queue
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.persistence.PersistentActor
-import io.chronos.cluster.WorkerProtocol._
 import io.chronos.cluster.{Task, WorkerId}
 import io.chronos.id.TaskId
+import io.chronos.protocol.WorkerProtocol
+import io.chronos.protocol.WorkerProtocol._
 import io.chronos.scheduler.execution.Execution
 
 import scala.concurrent.duration._
@@ -25,12 +26,10 @@ object TaskQueue {
   final case class TimeOut(taskId: TaskId)
 
   private object WorkerState {
-
     sealed trait WorkerStatus
 
     case object Idle extends WorkerStatus
     case class Busy(taskId: TaskId, deadline: Deadline) extends WorkerStatus
-
   }
 
   private case class WorkerState(ref: ActorRef, status: WorkerState.WorkerStatus)

@@ -7,38 +7,25 @@ import akka.cluster.Cluster
 import akka.persistence.PersistentActor
 import io.chronos.JobSpec
 import io.chronos.id._
-import io.chronos.protocol._
+import io.chronos.protocol.RegistryProtocol
 import io.chronos.resolver.ModuleResolver
 
 /**
  * Created by aalonsodominguez on 10/08/15.
  */
 object Registry {
+  import RegistryProtocol._
 
   def props(moduleResolver: ModuleResolver): Props =
     Props(classOf[Registry], moduleResolver)
 
-  sealed trait RegistryCommand
-  sealed trait RegistryEvent
-
-  case class GetJob(jobId: JobId) extends RegistryCommand
-  case object GetJobs extends RegistryCommand
-  case class JobNotEnabled(jobId: JobId)
-
-  case class RegisterJob(job: JobSpec) extends RegistryCommand
-  case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryEvent
-  case class JobRejected(cause: JobRejectedCause) extends RegistryEvent
-
-  case class DisableJob(jobId: JobId) extends RegistryCommand
-  case class JobDisabled(jobId: JobId) extends RegistryEvent
-
-  object RegistryStore {
+  private object RegistryStore {
 
     def empty: RegistryStore = new RegistryStore(Map.empty, Map.empty)
 
   }
 
-  case class RegistryStore private (
+  private case class RegistryStore private (
     private val enabledJobs: Map[JobId, JobSpec],
     private val disabledJobs: Map[JobId, JobSpec]) {
 
@@ -68,6 +55,7 @@ object Registry {
 
 class Registry(moduleResolver: ModuleResolver) extends PersistentActor with ActorLogging {
   import Registry._
+  import RegistryProtocol._
 
   private var store = RegistryStore.empty
 

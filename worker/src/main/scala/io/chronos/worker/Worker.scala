@@ -5,9 +5,10 @@ import java.util.UUID
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.cluster.client.ClusterClient.SendToAll
-import io.chronos.cluster.{Task, WorkerProtocol}
+import io.chronos.cluster.Task
 import io.chronos.id.TaskId
 import io.chronos.path
+import io.chronos.protocol.WorkerProtocol
 
 import scala.concurrent.duration._
 

@@ -8,6 +8,7 @@ import io.chronos.Trigger
 import io.chronos.Trigger.Immediate
 import io.chronos.cluster.Task
 import io.chronos.id._
+import io.chronos.protocol.RegistryProtocol
 import io.chronos.scheduler.execution.{Execution, ExecutionPlan}
 
 import scala.concurrent.duration._
@@ -39,7 +40,7 @@ class Scheduler(registryProps: Props, queueProps: Props)(implicit clock: Clock) 
         val task = Task(UUID.randomUUID(), jobSpec.moduleId, cmd.params, jobSpec.jobClass)
         Execution.props(planId, task, taskQueue, cmd.timeout)
       })
-      jobRegistry.tell(Registry.GetJob(cmd.jobId), plan)
+      jobRegistry.tell(RegistryProtocol.GetJob(cmd.jobId), plan)
   }
 
 }

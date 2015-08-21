@@ -1,5 +1,6 @@
-package io.chronos.cluster
+package io.chronos.protocol
 
+import io.chronos.cluster._
 import io.chronos.id.TaskId
 
 /**

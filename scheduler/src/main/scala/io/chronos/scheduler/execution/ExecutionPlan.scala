@@ -6,7 +6,7 @@ import java.util.UUID
 import akka.actor._
 import io.chronos.Trigger._
 import io.chronos.id._
-import io.chronos.scheduler.Registry.{JobDisabled, JobNotEnabled}
+import io.chronos.protocol.RegistryProtocol
 import io.chronos.{JobSpec, Trigger}
 
 import scala.concurrent.duration._
@@ -23,6 +23,8 @@ object ExecutionPlan {
 
 class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit clock: Clock)
   extends Actor with ActorLogging {
+
+  import RegistryProtocol._
 
   private val planId: PlanId = UUID.randomUUID()
   private var triggerTask: Option[Cancellable] = None

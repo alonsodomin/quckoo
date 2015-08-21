@@ -6,9 +6,10 @@ import java.util.concurrent.TimeUnit
 import akka.actor.Address
 import akka.pattern._
 import akka.testkit._
-import io.chronos.cluster.WorkerProtocol._
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.ModuleId
+import io.chronos.protocol.WorkerProtocol
+import io.chronos.protocol.WorkerProtocol._
 import io.chronos.scheduler.TestActorSystem
 import io.chronos.scheduler.execution.Execution
 import org.scalatest.concurrent.ScalaFutures

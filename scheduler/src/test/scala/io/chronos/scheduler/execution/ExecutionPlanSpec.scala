@@ -7,7 +7,7 @@ import akka.actor._
 import akka.testkit.TestActors.ForwardActor
 import akka.testkit._
 import io.chronos.id.ModuleId
-import io.chronos.scheduler.Registry
+import io.chronos.protocol.RegistryProtocol
 import io.chronos.{JobSpec, Trigger}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
@@ -49,7 +49,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       val executionPlan = TestActorRef(ExecutionPlan.props(trigger)(executionProps))
       TestActorRef(Props(classOf[WatchAndForwardActor], executionPlan, self))
 
-      executionPlan ! Registry.JobNotEnabled(UUID.randomUUID())
+      executionPlan ! RegistryProtocol.JobNotEnabled(UUID.randomUUID())
 
       //expectTerminated(executionPlan)
     }
@@ -150,7 +150,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     }
 
     "not re-schedule the execution after the job is disabled" in {
-      system.eventStream.publish(Registry.JobDisabled(TestJobSpec.id))
+      system.eventStream.publish(RegistryProtocol.JobDisabled(TestJobSpec.id))
       executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
 
       executionProbe.expectNoMsg()

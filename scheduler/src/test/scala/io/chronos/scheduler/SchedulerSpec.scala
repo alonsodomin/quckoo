@@ -6,6 +6,7 @@ import java.util.UUID
 import akka.testkit._
 import io.chronos.JobSpec
 import io.chronos.id.ModuleId
+import io.chronos.protocol.RegistryProtocol
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
 /**
@@ -43,7 +44,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
 
     scheduler ! ScheduleJob(TestJobSpec.id)
 
-    registryProbe.expectMsgType[Registry.GetJob].jobId should be (TestJobSpec.id)
+    registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobSpec.id)
   }
 
 }
