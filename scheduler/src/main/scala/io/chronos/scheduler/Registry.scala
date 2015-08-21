@@ -1,7 +1,5 @@
 package io.chronos.scheduler
 
-import java.util.UUID
-
 import akka.actor.{ActorLogging, Props}
 import akka.cluster.Cluster
 import akka.persistence.PersistentActor
@@ -83,8 +81,8 @@ class Registry(moduleResolver: ModuleResolver) extends PersistentActor with Acto
 
         case Right(modulePackage) =>
           log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
-          val jobId = UUID.randomUUID()
-          persist(JobAccepted(jobId, jobSpec)) { event =>
+          //val jobId = UUID.randomUUID()
+          persist(JobAccepted(jobSpec.id, jobSpec)) { event =>
             log.info("Job spec has been registered. jobId={}, name={}", jobSpec.id, jobSpec.displayName)
             store = store.updated(event)
             sender() ! event
@@ -97,6 +95,7 @@ class Registry(moduleResolver: ModuleResolver) extends PersistentActor with Acto
       } else {
         persist(JobDisabled(jobId)) { event =>
           store = store.updated(event)
+          context.system.eventStream.publish(event)
           sender() ! event
         }
       }
