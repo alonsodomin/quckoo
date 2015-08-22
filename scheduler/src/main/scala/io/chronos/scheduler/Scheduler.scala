@@ -47,7 +47,7 @@ class Scheduler(registry: ActorRef, queueProps: Props, registryTimeout: FiniteDu
             val planId = UUID.randomUUID()
             val plan = context.actorOf(ExecutionPlan.props(planId, cmd.trigger) { (taskId, jobSpec) =>
               val task = Task(taskId, jobSpec.moduleId, cmd.params, jobSpec.jobClass)
-              Execution.props(planId, task, taskQueue, cmd.timeout)
+              Execution.props(planId, task, taskQueue, executionTimeout = cmd.timeout)
             }, "plan-" + planId)
             plan.tell(spec, origSender)
 

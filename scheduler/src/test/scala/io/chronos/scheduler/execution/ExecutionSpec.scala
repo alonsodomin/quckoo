@@ -59,7 +59,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
       awaitAssert({
         execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
-      }, 1 second)
+      }, 2 seconds)
     }
 
     "return an empty outcome again" in {
@@ -72,7 +72,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
       awaitAssert({
         execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
-      }, 1 second)
+      }, 2 seconds)
     }
 
     "send result to parent when is finished" in {
@@ -150,7 +150,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
       awaitAssert({
         execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
-      }, 1 second)
+      }, 2 seconds)
     }
 
     "return an empty outcome again" in {
@@ -163,7 +163,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
       awaitAssert({
         execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
-      }, 1 second)
+      }, 2 seconds)
     }
 
     "return an interrupted outcome with the cancellation reason" in {
@@ -198,7 +198,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
       awaitAssert({
         execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
-      }, 1 second)
+      }, 2 seconds)
     }
 
     "return an empty outcome again" in {
@@ -226,7 +226,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     val expectedTimeout = 100 millis
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      Execution.props(planId, task, taskQueue.ref, Some(expectedTimeout)),
+      Execution.props(planId, task, taskQueue.ref, executionTimeout = Some(expectedTimeout)),
       self, "TimingOutExecution"
     )
     watch(execution)
@@ -268,6 +268,35 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
         expectMsg(NeverEnding)
         expectTerminated(execution)
       }
+    }
+  }
+
+  "An execution that is never acked by the queue" should {
+    val expectedTimeout = 100 millis
+    val taskQueue = TestProbe()
+    val execution = TestActorRef(
+      Execution.props(planId, task, taskQueue.ref, expectedTimeout),
+      self, "NeverAckedExecution"
+    )
+    watch(execution)
+
+    "return an empty outcome" in {
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
+
+      val outcome = (execution ? GetOutcome).mapTo[Outcome]
+      whenReady(outcome) { _ should be (NotRunYet) }
+    }
+
+    "become cancelled after the ack timeout" in {
+      execution ! WakeUp
+
+      taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+
+      within(expectedTimeout, 500 millis) {
+        taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+      }
+
+      expectMsgType[NeverRun].reason should be ("Could not enqueue task!")
     }
   }
 

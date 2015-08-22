@@ -19,6 +19,8 @@ import scala.reflect.ClassTag
  */
 object Execution {
 
+  final val DefaultEnqueueTimeout = 10 seconds
+
   case object WakeUp
   case object Start
   case class Finish(result: TaskResult)
@@ -57,29 +59,38 @@ object Execution {
 
   case class Result(outcome: Outcome)
 
-  def props(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option[FiniteDuration] = None) =
-    Props(classOf[Execution], planId, task, taskQueue, timeout)
+  def props(planId: PlanId, task: Task, taskQueue: ActorRef,
+            enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
+            executionTimeout: Option[FiniteDuration] = None) =
+    Props(classOf[Execution], planId, task, taskQueue, enqueueTimeout, executionTimeout)
 
 }
 
-class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option[FiniteDuration])
+class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, 
+                enqueueTimeout: FiniteDuration, 
+                executionTimeout: Option[FiniteDuration])
   extends PersistentFSM[Execution.Phase, Execution.Outcome, Execution.DomainEvent] with ActorLogging {
 
   import Execution._
+
+  private var enqueueAttempts = 0
 
   startWith(Sleeping, NotRunYet)
 
   when(Sleeping) {
     case Event(WakeUp, _) =>
       log.info("Execution waking up...")
-      taskQueue ! TaskQueue.Enqueue(task)
-      stay()
+      sendToQueue()
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
     case Event(GetOutcome, data) =>
       stay replying data
     case Event(EnqueueAck(taskId), _) if taskId == task.id =>
       goto(Waiting) applying Triggered
+    case Event(StateTimeout, _) =>
+      enqueueAttempts += 1
+      if (enqueueAttempts < 2) sendToQueue()
+      else goto(Done) applying Cancelled("Could not enqueue task!")
   }
 
   when(Waiting) {
@@ -141,7 +152,12 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option
 
   private def startExecution() = {
     val st = goto(InProgress) applying Started
-    timeout.map( duration => st forMax duration ).getOrElse(st)
+    executionTimeout.map( duration => st forMax duration ).getOrElse(st)
+  }
+
+  private def sendToQueue() = {
+    taskQueue ! TaskQueue.Enqueue(task)
+    stay forMax enqueueTimeout
   }
 
 }
