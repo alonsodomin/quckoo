@@ -2,8 +2,8 @@ package io.chronos.scheduler.queue
 
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
+import akka.cluster.client.ClusterClientReceptionist
 import akka.persistence.PersistentActor
-import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.cluster.protocol.WorkerProtocol._
 import io.chronos.cluster.{Task, WorkerId}
 import io.chronos.id.TaskId
@@ -41,6 +41,8 @@ object TaskQueue {
 class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
   import TaskQueue._
   import WorkerState._
+
+  ClusterClientReceptionist(context.system).registerService(self)
 
   // Persistent state
   private var state = TaskQueueState.empty
