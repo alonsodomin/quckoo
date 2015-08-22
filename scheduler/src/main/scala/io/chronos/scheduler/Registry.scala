@@ -15,8 +15,8 @@ import io.chronos.resolver.{DependencyResolver, JobPackage, ModuleResolver}
 object Registry {
   import RegistryProtocol._
 
-  def props(moduleResolver: DependencyResolver): Props =
-    Props(classOf[Registry], moduleResolver)
+  def props(dependencyResolver: DependencyResolver): Props =
+    Props(classOf[Registry], dependencyResolver)
 
   private object RegistryStore {
 
@@ -59,6 +59,8 @@ class Registry(dependencyResolver: DependencyResolver) extends PersistentActor w
 
   ClusterClientReceptionist(context.system).registerService(self)
 
+  private val moduleResolver = context.actorOf(ModuleResolver.props(dependencyResolver), "moduleResolver")
+  
   private var store = RegistryStore.empty
 
   override def persistenceId: String = Cluster(context.system).selfRoles.find(_.startsWith("backend-")) match {
@@ -74,7 +76,6 @@ class Registry(dependencyResolver: DependencyResolver) extends PersistentActor w
 
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
-      val moduleResolver = context.actorOf(ModuleResolver.props(dependencyResolver))
       val handler = context.actorOf(Props(classOf[ResolutionHandler], self, sender()))
       moduleResolver.tell(ResolveModule(jobSpec.moduleId, download = false), handler)
 
@@ -142,8 +143,11 @@ private class ResolutionHandler(jobSpec: JobSpec, registry: ActorRef, requestor:
   def receive: Receive = {
     case pkg: JobPackage =>
       registry.tell((jobSpec, pkg), requestor)
+      context.stop(self)
+      
     case failed: ResolutionFailed =>
       registry.tell((jobSpec, failed), requestor)
+      context.stop(self)
   }
 
 }
