@@ -1,7 +1,6 @@
 package io.chronos.scheduler.execution
 
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 
 import akka.pattern._
 import akka.testkit._
@@ -12,7 +11,6 @@ import io.chronos.scheduler.queue.TaskQueue
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
-import scala.concurrent._
 import scala.concurrent.duration._
 
 /**
@@ -30,7 +28,6 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
 
   import Execution._
   import ExecutionSpec._
-  import system.dispatcher
 
   val planId = UUID.randomUUID()
   val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
@@ -39,182 +36,224 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     TestKit.shutdownActorSystem(system)
 
   "A full running execution" should {
-    val parent = TestProbe()
     val taskQueue = TestProbe()
-    val executionRef = TestActorRef(
+    val execution = TestActorRef(
       Execution.props(planId, task, taskQueue.ref),
-      parent.ref, "FullPathExecution"
+      self, "FullPathExecution"
     )
+    watch(execution)
 
     "return an empty outcome" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
+
+      val outcome = (execution ? GetOutcome).mapTo[Outcome]
       whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
-      executionRef ! WakeUp
+      execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
     }
 
     "return an empty outcome again" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      val outcome = (execution ? GetOutcome).mapTo[Outcome]
       whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become in progress when notified to start" in {
-      executionRef ! Start
+      execution ! Start
+
+      within(1 second) {
+        execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
+      }
     }
 
     "send result to parent when is finished" in {
       val result: Int = 8392
-      executionRef ! Finish(Right(result))
+      execution ! Finish(Right(result))
 
-      parent.expectMsg(Success(result))
+      expectMsg(Success(result))
+      expectTerminated(execution)
     }
   }
 
   "An execution cancelled while sleeping" should {
-    val parent = TestProbe()
     val taskQueue = TestProbe()
-    val executionRef = TestActorRef(
+    val execution = TestActorRef(
       Execution.props(planId, task, taskQueue.ref),
-      parent.ref, "SleepingExecution"
+      self, "SleepingExecution"
     )
+    watch(execution)
 
     "return a never run outcome with the cancellation reason" in {
-      val reason = "bar"
-      executionRef ! Cancel(reason)
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      parent.expectMsgType[NeverRun].reason should be (reason)
+      val reason = "bar"
+      execution ! Cancel(reason)
+
+      expectMsgType[NeverRun].reason should be (reason)
+      expectTerminated(execution)
     }
   }
 
   "A waiting execution that is cancelled" should {
-    val parent = TestProbe()
     val taskQueue = TestProbe()
-    val executionRef = TestActorRef(
+    val execution = TestActorRef(
       Execution.props(planId, task, taskQueue.ref),
-      parent.ref, "WaitingExecution"
+      self, "WaitingExecution"
     )
+    watch(execution)
 
     "return an empty outcome" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
+
+      val outcome = (execution ? GetOutcome).mapTo[Outcome]
       whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "return a never run outcome with the cancellation reason" in {
-      val reason = "bar"
-      executionRef ! Cancel(reason)
+      val reason = "bar1"
+      execution ! Cancel(reason)
 
-      parent.expectMsgType[NeverRun].reason should be (reason)
+      expectMsgType[NeverRun].reason should be (reason)
+      expectTerminated(execution)
     }
   }
 
   "An in progress execution that gets cancelled" should {
-    val parent = TestProbe()
     val taskQueue = TestProbe()
-    val executionRef = TestActorRef(
+    val execution = TestActorRef(
       Execution.props(planId, task, taskQueue.ref),
-      parent.ref, "CancelledExecution"
+      self, "CancelledExecution"
     )
+    watch(execution)
 
     "return an empty outcome" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
+
+      val outcome = (execution ? GetOutcome).mapTo[Outcome]
       whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
-      executionRef ! WakeUp
+      execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
     }
 
     "return an empty outcome again" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      val outcome = (execution ? GetOutcome).mapTo[Outcome]
       whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become in progress when notified to start" in {
-      executionRef ! Start
+      execution ! Start
+
+      within(1 second) {
+        execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
+      }
     }
 
     "return an interrupted outcome with the cancellation reason" in {
       val reason = "whatever"
-      executionRef ! Cancel(reason)
+      execution ! Cancel(reason)
 
-      //parent.expectMsgType[Interrupted](5 seconds).reason should be (reason)
+      expectMsgType[Interrupted](5 seconds).reason should be (reason)
+      expectTerminated(execution)
     }
   }
 
-  "An in progress execution that times out" should {
-    val parent = TestProbe()
+  "An in progress execution that times out by the queue" should {
     val taskQueue = TestProbe()
-    val executionRef = TestActorRef(
+    val execution = TestActorRef(
       Execution.props(planId, task, taskQueue.ref),
-      parent.ref, "CancelledExecution"
+      self, "ExecutionTimedOutByQueue"
     )
+    watch(execution)
 
     "return an empty outcome" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
+
+      val outcome = (execution ? GetOutcome).mapTo[Outcome]
       whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
-      executionRef ! WakeUp
+      execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
     }
 
     "return an empty outcome again" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      val outcome = (execution ? GetOutcome).mapTo[Outcome]
       whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become in progress when notified to start" in {
-      executionRef ! Start
+      execution ! Start
+
+      within(1 second) {
+        execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
+      }
     }
 
-    "return an never ending outcome when task notifies time out" in {
-      executionRef.tell(TimeOut, taskQueue.ref)
+    "return an never ending outcome when task queue notifies time out" in {
+      execution.tell(TimeOut, taskQueue.ref)
 
-      parent.expectMsg(NeverEnding)
+      expectMsg(NeverEnding)
+      expectTerminated(execution)
     }
   }
 
   "An execution that times out by itself" should {
-    val parent = TestProbe()
+    val expectedTimeout = 100 millis
     val taskQueue = TestProbe()
-    val executionRef = TestActorRef(
-      Execution.props(planId, task, taskQueue.ref, Some(50 millis)),
-      parent.ref, "TimingOutExecution"
+    val execution = TestActorRef(
+      Execution.props(planId, task, taskQueue.ref, Some(expectedTimeout)),
+      self, "TimingOutExecution"
     )
+    watch(execution)
 
     "return an empty outcome" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
+
+      val outcome = (execution ? GetOutcome).mapTo[Outcome]
       whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
-      executionRef ! WakeUp
+      execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
     }
 
     "return an empty outcome again" in {
-      val outcome = (executionRef ? GetOutcome).mapTo[Outcome]
+      val outcome = (execution ? GetOutcome).mapTo[Outcome]
       whenReady(outcome) { _ should be (NotRunYet) }
     }
 
     "timeout right after notified to start" in {
-      executionRef ! Start
+      execution ! Start
 
-      val waitForTimeout = Future { blocking { TimeUnit.MILLISECONDS.sleep(100) } }
-      whenReady(waitForTimeout) { _ =>
-        //taskQueue.expectMsgType[TaskQueue.TimeOut](10 seconds).taskId should be (task.id)
-        executionRef.tell(TimeOut, taskQueue.ref)
+      within(50 millis) {
+        execution.underlying.actor.asInstanceOf[Execution].stateName should be(InProgress)
+      }
 
-        parent.expectMsg(NeverEnding)
+      within(1 second) {
+        //taskQueue.expectMsgType[TaskQueue.TimeOut].taskId should be (task.id)
+        execution.tell(TimeOut, taskQueue.ref)
+
+        expectMsg(NeverEnding)
+        expectTerminated(execution)
       }
     }
   }
