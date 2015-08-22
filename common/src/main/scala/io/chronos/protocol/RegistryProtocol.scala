@@ -17,7 +17,7 @@ object RegistryProtocol {
 
   case class RegisterJob(job: JobSpec) extends RegistryCommand
   case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryEvent
-  case class JobRejected(cause: JobRejectedCause) extends RegistryEvent
+  case class JobRejected(moduleId: ModuleId, cause: JobRejectedCause) extends RegistryEvent
 
   case class DisableJob(jobId: JobId) extends RegistryCommand
   case class JobDisabled(jobId: JobId) extends RegistryEvent

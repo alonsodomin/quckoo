@@ -52,7 +52,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       context.become(produce)
 
-    case JobRejected(cause) =>
+    case JobRejected(_, cause) =>
       cause match {
         case Left(resolutionFailed) =>
           log.error("Resolution of job spec failed. unresolvedDependencies={}", resolutionFailed.unresolvedDependencies.mkString(", "))

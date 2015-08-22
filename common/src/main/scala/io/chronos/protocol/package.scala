@@ -5,11 +5,6 @@ package io.chronos
  */
 package object protocol {
 
-
-  
-  // --------- Commands
-
-
   case class ResolutionFailed(unresolvedDependencies: Seq[String])
 
   type JobRejectedCause = Either[ResolutionFailed, Throwable]

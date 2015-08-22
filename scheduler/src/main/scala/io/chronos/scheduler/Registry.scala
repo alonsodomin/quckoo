@@ -1,13 +1,13 @@
 package io.chronos.scheduler
 
-import akka.actor.{ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.persistence.PersistentActor
 import io.chronos.JobSpec
 import io.chronos.id._
-import io.chronos.protocol.RegistryProtocol
-import io.chronos.resolver.DependencyResolver
+import io.chronos.protocol._
+import io.chronos.resolver.{DependencyResolver, JobPackage, ModuleResolver}
 
 /**
  * Created by aalonsodominguez on 10/08/15.
@@ -52,7 +52,8 @@ object Registry {
 
 }
 
-class Registry(moduleResolver: DependencyResolver) extends PersistentActor with ActorLogging {
+class Registry(dependencyResolver: DependencyResolver) extends PersistentActor with ActorLogging {
+  import ModuleResolver._
   import Registry._
   import RegistryProtocol._
 
@@ -73,7 +74,27 @@ class Registry(moduleResolver: DependencyResolver) extends PersistentActor with 
 
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
-      moduleResolver.resolve(jobSpec.moduleId) match {
+      val moduleResolver = context.actorOf(ModuleResolver.props(dependencyResolver))
+      val handler = context.actorOf(Props(classOf[ResolutionHandler], self, sender()))
+      moduleResolver.tell(ResolveModule(jobSpec.moduleId, download = false), handler)
+
+    case (jobSpec: JobSpec, _: JobPackage) =>
+      log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
+      //val jobId = UUID.randomUUID()
+      persist(JobAccepted(jobSpec.id, jobSpec)) { event =>
+        log.info("Job spec has been registered. jobId={}, name={}", jobSpec.id, jobSpec.displayName)
+        store = store.updated(event)
+        sender() ! event
+      }
+
+    case (jobSpec: JobSpec, failed: ResolutionFailed) =>
+      log.error(
+        "Couldn't resolve the job module. jobModuleId={}, unresolved={}",
+        jobSpec.moduleId,
+        failed.unresolvedDependencies.mkString(",")
+      )
+      sender() ! JobRejected(jobSpec.moduleId, Left(failed))
+      /*dependencyResolver.resolve(jobSpec.moduleId) match {
         case Left(failed) =>
           log.error(
             "Couldn't resolve the job module. jobModuleId={}, unresolved={}",
@@ -90,7 +111,7 @@ class Registry(moduleResolver: DependencyResolver) extends PersistentActor with 
             store = store.updated(event)
             sender() ! event
           }
-      }
+      }*/
 
     case DisableJob(jobId) =>
       if (!store.isEnabled(jobId)) {
@@ -112,6 +133,17 @@ class Registry(moduleResolver: DependencyResolver) extends PersistentActor with 
 
     case GetJobs =>
       sender() ! store.listEnabled
+  }
+
+}
+
+private class ResolutionHandler(jobSpec: JobSpec, registry: ActorRef, requestor: ActorRef) extends Actor {
+
+  def receive: Receive = {
+    case pkg: JobPackage =>
+      registry.tell((jobSpec, pkg), requestor)
+    case failed: ResolutionFailed =>
+      registry.tell((jobSpec, failed), requestor)
   }
 
 }
