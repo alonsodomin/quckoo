@@ -6,8 +6,11 @@ import java.util.UUID
 import akka.testkit._
 import io.chronos.JobSpec
 import io.chronos.id.ModuleId
+import io.chronos.protocol.RegistryProtocol.JobNotEnabled
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
-import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+
+import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 18/08/15.
@@ -23,28 +26,58 @@ object SchedulerSpec {
 }
 
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender
-  with FlatSpecLike with BeforeAndAfterAll with Matchers {
+  with WordSpecLike with BeforeAndAfterAll with Matchers {
 
   import SchedulerProtocol._
   import SchedulerSpec._
 
   implicit val clock = Clock.fixed(FixedInstant, ZoneUTC)
 
-  val registryProbe = TestProbe()
-  val taskQueueProbe = TestProbe()
+  val registryProbe = TestProbe("registry")
+  val taskQueueProbe = TestProbe("taskQueue")
 
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
-  "A scheduler" should "create an execution plan when asked to schedule a job" in {
+  "A scheduler" should {
+    val timeout = 1 second
+
     val scheduler = TestActorRef(Scheduler.props(
-      TestActors.forwardActorProps(registryProbe.ref),
-      TestActors.forwardActorProps(taskQueueProbe.ref)
-    ))
+      registryProbe.ref,
+      TestActors.forwardActorProps(taskQueueProbe.ref),
+      timeout
+    ), "scheduler")
 
-    scheduler ! ScheduleJob(TestJobSpec.id)
+    "create an execution plan job to schedule is enabled" in {
+      within(timeout + (1 second)) {
+        scheduler ! ScheduleJob(TestJobSpec.id)
 
-    registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobSpec.id)
+        registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobSpec.id)
+        registryProbe.reply(TestJobSpec)
+      }
+
+      expectMsgType[JobScheduled].jobId should be (TestJobSpec.id)
+    }
+
+    "should forward the registry response if the job is not enabled" in {
+      within(timeout + (2 second)) {
+        scheduler ! ScheduleJob(TestJobSpec.id)
+
+        registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobSpec.id)
+        registryProbe.reply(JobNotEnabled(TestJobSpec.id))
+      }
+
+      expectMsgType[JobNotEnabled].jobId should be (TestJobSpec.id)
+    }
+
+    "should inform schedule failed if communication with registry fails" in {
+      // will intentionally throw an exception
+      registryProbe.setAutoPilot(TestActor.KeepRunning)
+
+      scheduler ! ScheduleJob(TestJobSpec.id)
+
+      expectMsgType[JobFailedToSchedule]
+    }
   }
 
 }

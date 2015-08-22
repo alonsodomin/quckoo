@@ -30,9 +30,9 @@ object Boot {
     val ivyConfig = IvyConfiguration(conf)
     val moduleResolver = new IvyModuleResolver(ivyConfig)
 
-    val registryProps = Registry.props(moduleResolver)
-    val queueProps    = TaskQueue.props()
-    system.actorOf(Scheduler.props(registryProps, queueProps), "scheduler")
+    val registry   = system.actorOf(Registry.props(moduleResolver))
+    val queueProps = TaskQueue.props()
+    system.actorOf(Scheduler.props(registry, queueProps), "scheduler")
   }
 
 }
