@@ -27,10 +27,13 @@ class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit c
   import RegistryProtocol._
   import SchedulerProtocol._
 
-  private val planId: PlanId = UUID.randomUUID()
+  val planId: PlanId = UUID.randomUUID()
+
   private var triggerTask: Option[Cancellable] = None
   private val scheduledTime = ZonedDateTime.now(clock)
   private var lastExecutionTime: Option[ZonedDateTime] = None
+
+  private var originalRequestor: Option[ActorRef] = None
 
   @throws[Exception](classOf[Exception])
   override def preStart(): Unit = {
@@ -44,6 +47,7 @@ class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit c
 
   override def receive: Receive = {
     case jobSpec: JobSpec =>
+      originalRequestor = Some(sender())
       context.become(schedule(jobSpec.id, jobSpec))
 
     case JobNotEnabled(jobId) =>
@@ -57,17 +61,19 @@ class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit c
       context.become(shutdown)
 
     case Execution.Result(outcome) =>
-      lastExecutionTime = Some(ZonedDateTime.now(clock))
-      if (trigger.isRecurring) {
+      def nextStage: Receive = if (trigger.isRecurring) {
         outcome match {
           case _: Execution.Success =>
-            context.become(schedule(jobId, jobSpec))
+            schedule(jobId, jobSpec)
 
           case _ =>
             // Plan is no longer needed
-            context.become(shutdown)
+            shutdown
         }
-      }
+      } else shutdown
+
+      lastExecutionTime = Some(ZonedDateTime.now(clock))
+      context.become(nextStage)
   }
 
   private def shutdown: Receive = {
@@ -109,7 +115,7 @@ class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit c
         log.info("Scheduling a new execution for job {}", jobId)
         val execution = context.actorOf(executionProps(planId, jobSpec))
         triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
-        sender() ! JobScheduled(jobId, planId)
+        originalRequestor.foreach { _ ! JobScheduled(jobId, planId) }
 
         active(jobId, jobSpec)
 

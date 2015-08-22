@@ -7,7 +7,7 @@ import akka.actor._
 import akka.testkit.TestActors.ForwardActor
 import akka.testkit._
 import io.chronos.id.ModuleId
-import io.chronos.protocol.RegistryProtocol
+import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.chronos.{JobSpec, Trigger}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
@@ -32,6 +32,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
   with WordSpecLike with BeforeAndAfterAll with Matchers with Inside with MockFactory {
 
   import ExecutionPlanSpec._
+  import SchedulerProtocol._
   import Trigger._
 
   implicit val clock = Clock.fixed(FixedInstant, ZoneUTC)
@@ -47,11 +48,11 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
         (planId, jobSpec) => TestActors.echoActorProps
 
       val executionPlan = TestActorRef(ExecutionPlan.props(trigger)(executionProps))
-      TestActorRef(Props(classOf[WatchAndForwardActor], executionPlan, self))
+      watch(executionPlan)
 
       executionPlan ! RegistryProtocol.JobNotEnabled(UUID.randomUUID())
 
-      //expectTerminated(executionPlan)
+      expectTerminated(executionPlan)
     }
 
   }
@@ -62,8 +63,8 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     val executionProps: ExecutionProps =
       (planId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
-    val executionPlan = TestActorRef(ExecutionPlan.props(triggerMock)(executionProps))
-    TestActorRef(Props(classOf[WatchAndForwardActor], executionPlan, self))
+    val executionPlan = TestActorRef(ExecutionPlan.props(triggerMock)(executionProps), "executionPlan")
+    watch(executionPlan)
 
     "create an execution from a job specification" in {
       val expectedScheduleTime = ZonedDateTime.now(clock)
@@ -72,6 +73,10 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(ScheduledTime(expectedScheduleTime), clock).returning(Some(expectedExecutionTime))
 
       executionPlan ! TestJobSpec
+
+      val scheduledMsg = expectMsgType[JobScheduled]
+      scheduledMsg.jobId should be (TestJobSpec.id)
+      scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
       executionProbe.expectMsg(Execution.WakeUp)
     }
@@ -85,6 +90,10 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
 
       executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
 
+      val scheduledMsg = expectMsgType[JobScheduled]
+      scheduledMsg.jobId should be (TestJobSpec.id)
+      scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
+
       executionProbe.expectMsg(Execution.WakeUp)
     }
 
@@ -96,7 +105,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
 
       executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
 
-      //expectTerminated(executionPlan)
+      expectTerminated(executionPlan)
     }
   }
 
