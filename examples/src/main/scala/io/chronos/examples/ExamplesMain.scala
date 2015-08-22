@@ -1,7 +1,7 @@
 package io.chronos.examples
 
 import akka.actor.{ActorSystem, AddressFromURIString, Props, RootActorPath}
-import akka.cluster.client.{ClusterClient, ClusterClientSettings}
+import akka.cluster.client.ClusterClientSettings
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
 import io.chronos.client.ChronosClient
@@ -21,9 +21,7 @@ object ExamplesMain extends App {
   }.toSet
 
   val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
-  val akkaClient = system.actorOf(ClusterClient.props(clientSettings), "akkaClient")
-
-  val chronosClient = system.actorOf(Props(classOf[ChronosClient], akkaClient), "chronosClient")
+  val chronosClient = system.actorOf(ChronosClient.props(clientSettings), "chronosClient")
 
   //val frontend = system.actorOf(FacadeActor.props(client), "frontend")
   system.actorOf(Props(classOf[PowerOfNActor], chronosClient), "producer")

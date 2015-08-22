@@ -6,7 +6,7 @@ import java.util.UUID
 import akka.testkit._
 import io.chronos.JobSpec
 import io.chronos.id.ModuleId
-import io.chronos.protocol.RegistryProtocol
+import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
 /**
@@ -25,7 +25,7 @@ object SchedulerSpec {
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender
   with FlatSpecLike with BeforeAndAfterAll with Matchers {
 
-  import Scheduler._
+  import SchedulerProtocol._
   import SchedulerSpec._
 
   implicit val clock = Clock.fixed(FixedInstant, ZoneUTC)
