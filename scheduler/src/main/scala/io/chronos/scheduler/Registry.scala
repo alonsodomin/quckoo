@@ -7,6 +7,7 @@ import akka.persistence.PersistentActor
 import io.chronos.JobSpec
 import io.chronos.id._
 import io.chronos.protocol._
+import io.chronos.resolver.ModuleResolver.ErrorResolvingModule
 import io.chronos.resolver.{DependencyResolver, JobPackage, ModuleResolver}
 
 /**
@@ -147,6 +148,10 @@ private class ResolutionHandler(jobSpec: JobSpec, registry: ActorRef, requestor:
       
     case failed: ResolutionFailed =>
       registry.tell((jobSpec, failed), requestor)
+      context.stop(self)
+
+    case error: ErrorResolvingModule =>
+      registry.tell(error, requestor)
       context.stop(self)
   }
 
