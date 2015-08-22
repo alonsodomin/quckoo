@@ -66,9 +66,9 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "become in progress when notified to start" in {
       execution ! Start
 
-      within(1 second) {
+      awaitAssert({
         execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
-      }
+      }, 1 second)
     }
 
     "send result to parent when is finished" in {
@@ -154,9 +154,9 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "become in progress when notified to start" in {
       execution ! Start
 
-      within(1 second) {
+      awaitAssert({
         execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
-      }
+      }, 1 second)
     }
 
     "return an interrupted outcome with the cancellation reason" in {
@@ -199,9 +199,9 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "become in progress when notified to start" in {
       execution ! Start
 
-      within(1 second) {
+      awaitAssert({
         execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
-      }
+      }, 1 second)
     }
 
     "return an never ending outcome when task queue notifies time out" in {
@@ -244,13 +244,12 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "timeout right after notified to start" in {
       execution ! Start
 
-      within(50 millis) {
-        execution.underlying.actor.asInstanceOf[Execution].stateName should be(InProgress)
-      }
+      awaitAssert({
+        execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
+      }, 50 millis)
 
       within(1 second) {
-        //taskQueue.expectMsgType[TaskQueue.TimeOut].taskId should be (task.id)
-        execution.tell(TimeOut, taskQueue.ref)
+        taskQueue.reply(TimeOut)
 
         expectMsg(NeverEnding)
         expectTerminated(execution)
