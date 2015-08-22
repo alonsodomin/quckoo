@@ -23,7 +23,6 @@ object ExamplesMain extends App {
   val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
   val chronosClient = system.actorOf(ChronosClient.props(clientSettings), "chronosClient")
 
-  //val frontend = system.actorOf(FacadeActor.props(client), "frontend")
-  system.actorOf(Props(classOf[PowerOfNActor], chronosClient), "producer")
+  system.actorOf(Props(classOf[PowerOfNActor], chronosClient), "powerOfN")
 
 }
