@@ -47,8 +47,7 @@ object Dependencies {
 
   val commonLibs: Seq[ModuleID] = basicLibs
 
-  val resolverLibs: Seq[ModuleID] = basicLibs ++ Seq(
-    "com.typesafe"   % "config"     % configVersion withSources() withJavadoc(),
+  val resolverLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
     "org.apache.ivy" % "ivy"        % "2.4.0"       withSources() withJavadoc()
   )
 
