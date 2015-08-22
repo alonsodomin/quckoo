@@ -17,4 +17,7 @@ object SchedulerProtocol {
                          trigger: Trigger = Immediate,
                          timeout: Option[FiniteDuration] = None) extends SchedulerCommand
 
+  case class JobScheduled(jobId: JobId, planId: PlanId)
+  case class JobFailedToSchedule(jobId: JobId, cause: Throwable)
+
 }

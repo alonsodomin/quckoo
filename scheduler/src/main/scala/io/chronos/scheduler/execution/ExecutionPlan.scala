@@ -6,7 +6,7 @@ import java.util.UUID
 import akka.actor._
 import io.chronos.Trigger._
 import io.chronos.id._
-import io.chronos.protocol.RegistryProtocol
+import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.chronos.{JobSpec, Trigger}
 
 import scala.concurrent.duration._
@@ -25,6 +25,7 @@ class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit c
   extends Actor with ActorLogging {
 
   import RegistryProtocol._
+  import SchedulerProtocol._
 
   private val planId: PlanId = UUID.randomUUID()
   private var triggerTask: Option[Cancellable] = None
@@ -79,7 +80,7 @@ class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit c
     log.info("Stopping execution plan. planId={}", planId)
     self ! PoisonPill
 
-    { case _ => log.error("Execution plan unavailable, shutting down.") }
+    { case _ => log.error("Execution plan '{}' unavailable, shutting down.", planId) }
   }
 
   private def schedule(jobId: JobId, jobSpec: JobSpec): Receive = {
@@ -108,6 +109,7 @@ class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit c
         log.info("Scheduling a new execution for job {}", jobId)
         val execution = context.actorOf(executionProps(planId, jobSpec))
         triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
+        sender() ! JobScheduled(jobId, planId)
 
         active(jobId, jobSpec)
 

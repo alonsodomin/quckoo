@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.chronos._
 import io.chronos.id.ModuleId
-import io.chronos.protocol.RegistryProtocol
+import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
 
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ThreadLocalRandom
@@ -23,6 +23,7 @@ object PowerOfNActor {
 class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
   import PowerOfNActor._
   import RegistryProtocol._
+  import SchedulerProtocol._
   import context.dispatcher
 
   def scheduler = context.system.scheduler
@@ -66,8 +67,7 @@ class PowerOfNActor(receptor: ActorRef) extends Actor with ActorLogging {
     case Tick =>
       n += 1
       log.info("Produced work: {}", n)
-      val jobSchedule = Schedule(jobSpec.id, Map("n" -> n), jobTrigger)
-      receptor ! ScheduleJob(jobSchedule)
+      receptor ! ScheduleJob(jobSpec.id, Map("n" -> n), jobTrigger)
       context.become(waitAccepted, discardOld = false)
   }
 
