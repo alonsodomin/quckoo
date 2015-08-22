@@ -14,10 +14,9 @@ These are the most common terms used across the documentation to describe the pl
 
 * **JobSpec**: A *JobSpec* is the meta definition of a runnable job. It contains information about the implementation 
  of the job, the artifact in that contains that implementation and the parameters it accepts (among other things).
-* **Schedule**: A *Schedule* is actual definition for a runnable job. It specifies which is the job spec for
- the given *schedule*, the parameter values used to execute the job and the type of trigger that will fire its
- execution.
-* **Execution**: An *Execution* is an instance of a *JobSchedule*. These are managed internally inside Chronos
+* **ExecutionPlan**: An *ExecutionPlan* is the main controller of runnable jobs. It is in charge of creating new
+ execution instances and to trigger them at the appropriate moment in time.
+* **Execution**: An *Execution* is an instance of a runnable job. These are managed internally inside Chronos
  although client applications can access the data they hold in order to get information of the different state
  changes of a given execution or what was the execution outcome (if finished).
 * **Registry**: It's a sort of repository in which all the available *JobSpecs* are kept.
