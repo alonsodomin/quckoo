@@ -16,18 +16,16 @@ import scala.concurrent.duration._
  */
 object ExecutionPlan {
 
-  def props(trigger: Trigger)(executionProps: ExecutionProps)(implicit clock: Clock) =
-    Props(classOf[ExecutionPlan], trigger, executionProps, clock)
+  def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionProps)(implicit clock: Clock) =
+    Props(classOf[ExecutionPlan], planId, trigger, executionProps, clock)
 
 }
 
-class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit clock: Clock)
+class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: ExecutionProps)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import RegistryProtocol._
   import SchedulerProtocol._
-
-  val planId: PlanId = UUID.randomUUID()
 
   private var triggerTask: Option[Cancellable] = None
   private val scheduledTime = ZonedDateTime.now(clock)
@@ -113,7 +111,8 @@ class ExecutionPlan(trigger: Trigger, executionProps: ExecutionProps)(implicit c
 
         // Create a new execution
         log.info("Scheduling a new execution for job {}", jobId)
-        val execution = context.actorOf(executionProps(planId, jobSpec))
+        val taskId = UUID.randomUUID()
+        val execution = context.actorOf(executionProps(taskId, jobSpec), "exec-" + taskId)
         triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
         originalRequestor.foreach { _ ! JobScheduled(jobId, planId) }
 

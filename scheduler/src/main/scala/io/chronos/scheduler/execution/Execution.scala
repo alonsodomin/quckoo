@@ -9,6 +9,7 @@ import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.PlanId
 import io.chronos.scheduler._
 import io.chronos.scheduler.queue.TaskQueue
+import io.chronos.scheduler.queue.TaskQueue.EnqueueAck
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -71,11 +72,14 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option
   when(Sleeping) {
     case Event(WakeUp, _) =>
       log.info("Execution waking up...")
-      goto(Waiting) applying Triggered andThen sendToQueue
+      taskQueue ! TaskQueue.Enqueue(task)
+      stay()
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
     case Event(GetOutcome, data) =>
       stay replying data
+    case Event(EnqueueAck(taskId), _) if taskId == task.id =>
+      goto(Waiting) applying Triggered
   }
 
   when(Waiting) {
@@ -101,7 +105,8 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option
       goto(Done) applying TimedOut
     case Event(StateTimeout, _) =>
       log.info("Execution progress timing out...")
-      stay andThen notifyTimeout
+      taskQueue ! TaskQueue.TimeOut(task.id)
+      stay()
   }
 
   when(Done, stateTimeout = 10 millis) {
@@ -138,11 +143,5 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef, timeout: Option
     val st = goto(InProgress) applying Started
     timeout.map( duration => st forMax duration ).getOrElse(st)
   }
-
-  private def sendToQueue(outcome: Outcome): Unit =
-    taskQueue ! TaskQueue.Enqueue(task)
-
-  private def notifyTimeout(outcome: Outcome): Unit =
-    taskQueue ! TaskQueue.TimeOut(task.id)
 
 }

@@ -8,6 +8,7 @@ import io.chronos.cluster.Task
 import io.chronos.id.ModuleId
 import io.chronos.scheduler.TestActorSystem
 import io.chronos.scheduler.queue.TaskQueue
+import io.chronos.scheduler.queue.TaskQueue.EnqueueAck
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
@@ -54,8 +55,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+      taskQueue.reply(EnqueueAck(task.id))
 
-      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+      awaitAssert({
+        execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+      }, 1 second)
     }
 
     "return an empty outcome again" in {
@@ -142,8 +146,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+      taskQueue.reply(EnqueueAck(task.id))
 
-      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+      awaitAssert({
+        execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+      }, 1 second)
     }
 
     "return an empty outcome again" in {
@@ -187,8 +194,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+      taskQueue.reply(EnqueueAck(task.id))
 
-      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+      awaitAssert({
+        execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+      }, 1 second)
     }
 
     "return an empty outcome again" in {
@@ -232,8 +242,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+      taskQueue.reply(EnqueueAck(task.id))
 
-      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+      awaitAssert({
+        execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+      }, 1 second)
     }
 
     "return an empty outcome again" in {
@@ -249,6 +262,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       }, 50 millis)
 
       within(1 second) {
+        taskQueue.expectMsgType[TaskQueue.TimeOut].taskId should be (task.id)
         taskQueue.reply(TimeOut)
 
         expectMsg(NeverEnding)

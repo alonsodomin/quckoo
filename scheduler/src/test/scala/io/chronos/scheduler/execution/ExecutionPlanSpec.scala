@@ -43,9 +43,10 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     "terminate itself immediately" in {
       val trigger = mock[Trigger]
       val executionProps: ExecutionProps =
-        (planId, jobSpec) => TestActors.echoActorProps
+        (taskId, jobSpec) => TestActors.echoActorProps
 
-      val executionPlan = TestActorRef(ExecutionPlan.props(trigger)(executionProps), "executionPlanForDisabledJob")
+      val planId = UUID.randomUUID()
+      val executionPlan = TestActorRef(ExecutionPlan.props(planId, trigger)(executionProps), "executionPlanForDisabledJob")
       watch(executionPlan)
 
       executionPlan ! RegistryProtocol.JobNotEnabled(UUID.randomUUID())
@@ -59,9 +60,10 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
     val executionProps: ExecutionProps =
-      (planId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
+      (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
-    val executionPlan = TestActorRef(ExecutionPlan.props(triggerMock)(executionProps), "executionPlanWithRecurringTrigger")
+    val planId = UUID.randomUUID()
+    val executionPlan = TestActorRef(ExecutionPlan.props(planId, triggerMock)(executionProps), "executionPlanWithRecurringTrigger")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -112,9 +114,10 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
     val executionProps: ExecutionProps =
-      (planId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
+      (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
-    val executionPlan = TestActorRef(ExecutionPlan.props(triggerMock)(executionProps), "executionPlanWithOneShotTrigger")
+    val planId = UUID.randomUUID()
+    val executionPlan = TestActorRef(ExecutionPlan.props(planId, triggerMock)(executionProps), "executionPlanWithOneShotTrigger")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -146,9 +149,10 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
     val executionProps: ExecutionProps =
-      (planId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
+      (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
-    val executionPlan = TestActorRef(ExecutionPlan.props(triggerMock)(executionProps), "executionPlanForJobThatGetsDisabled")
+    val planId = UUID.randomUUID()
+    val executionPlan = TestActorRef(ExecutionPlan.props(planId, triggerMock)(executionProps), "executionPlanForJobThatGetsDisabled")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
