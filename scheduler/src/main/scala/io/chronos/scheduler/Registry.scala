@@ -2,6 +2,7 @@ package io.chronos.scheduler
 
 import akka.actor.{ActorLogging, Props}
 import akka.cluster.Cluster
+import akka.cluster.client.ClusterClientReceptionist
 import akka.persistence.PersistentActor
 import io.chronos.JobSpec
 import io.chronos.id._
@@ -54,6 +55,8 @@ object Registry {
 class Registry(moduleResolver: ModuleResolver) extends PersistentActor with ActorLogging {
   import Registry._
   import RegistryProtocol._
+
+  ClusterClientReceptionist(context.system).registerService(self)
 
   private var store = RegistryStore.empty
 

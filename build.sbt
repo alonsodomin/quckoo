@@ -57,6 +57,7 @@ lazy val scheduler = (project in file("scheduler")).
 
 lazy val worker = (project in file("worker")).
   settings(Commons.settings: _*).
+  settings(Revolver.settings: _*).
   settings(
     libraryDependencies ++= Dependencies.workerLibs
   ).
@@ -67,6 +68,7 @@ lazy val worker = (project in file("worker")).
 
 lazy val examples = (project in file("examples")).
   settings(Commons.settings: _*).
+  settings(Revolver.settings: _*).
   settings(
     libraryDependencies ++= Dependencies.examplesLibs
   ).

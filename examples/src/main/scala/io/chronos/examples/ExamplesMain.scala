@@ -17,7 +17,7 @@ object ExamplesMain extends App {
   val system = ActorSystem("ChronosExamplesSystem", chronosConf)
 
   val initialContacts = immutableSeq(chronosConf.getStringList("chronos.seed-nodes")).map {
-    case AddressFromURIString(addr) => RootActorPath(addr) / "user" / "receptionist"
+    case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
   }.toSet
 
   val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)

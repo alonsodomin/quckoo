@@ -4,6 +4,7 @@ import java.time.Clock
 import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.cluster.client.ClusterClientReceptionist
 import akka.pattern._
 import akka.util.Timeout
 import io.chronos.JobSpec
@@ -30,6 +31,8 @@ class Scheduler(registry: ActorRef, queueProps: Props, registryTimeout: FiniteDu
   import RegistryProtocol._
   import SchedulerProtocol._
   import context.dispatcher
+
+  ClusterClientReceptionist(context.system).registerService(self)
 
   private val taskQueue = context.actorOf(queueProps, "taskQueue")
 

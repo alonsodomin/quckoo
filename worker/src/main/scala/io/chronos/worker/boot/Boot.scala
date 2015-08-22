@@ -19,7 +19,7 @@ object Boot {
       .withFallback(ConfigFactory.load("worker"))
     val system = ActorSystem("ChronosWorkerSystem", conf)
     val initialContacts = immutableSeq(conf.getStringList("contact-points")).map {
-      case AddressFromURIString(addr) => RootActorPath(addr) / "user" / "receptionist"
+      case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
     }.toSet
 
     val ivyConfig = IvyConfiguration(conf)
