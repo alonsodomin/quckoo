@@ -9,7 +9,7 @@ import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit}
 import io.chronos.cluster.Task
 import io.chronos.id.{ModuleId, TaskId}
 import io.chronos.protocol._
-import io.chronos.resolver.{JobPackage, ModuleResolver}
+import io.chronos.resolver.{DependencyResolver, JobPackage}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
@@ -28,7 +28,7 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
   import JobExecutorSpec._
 
-  val mockModuleResolver = mock[ModuleResolver]
+  val mockModuleResolver = mock[DependencyResolver]
   val jobExecutor = TestActorRef(JobExecutor.props(mockModuleResolver))
 
   override protected def afterAll(): Unit = {

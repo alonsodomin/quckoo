@@ -14,13 +14,13 @@ import org.slf4s.Logging
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
-trait ModuleResolver {
+trait DependencyResolver {
 
   def resolve(jobModuleId: ModuleId, download: Boolean = false): Either[ResolutionFailed, JobPackage]
 
 }
 
-class IvyModuleResolver(config: IvyConfiguration) extends ModuleResolver with Logging {
+class IvyDependencyResolver(config: IvyConfiguration) extends DependencyResolver with Logging {
 
   private val DefaultConfName = "default"
   private val CompileConfName = "compile"

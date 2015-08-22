@@ -7,7 +7,7 @@ import akka.persistence.PersistentActor
 import io.chronos.JobSpec
 import io.chronos.id._
 import io.chronos.protocol.RegistryProtocol
-import io.chronos.resolver.ModuleResolver
+import io.chronos.resolver.DependencyResolver
 
 /**
  * Created by aalonsodominguez on 10/08/15.
@@ -15,7 +15,7 @@ import io.chronos.resolver.ModuleResolver
 object Registry {
   import RegistryProtocol._
 
-  def props(moduleResolver: ModuleResolver): Props =
+  def props(moduleResolver: DependencyResolver): Props =
     Props(classOf[Registry], moduleResolver)
 
   private object RegistryStore {
@@ -52,7 +52,7 @@ object Registry {
 
 }
 
-class Registry(moduleResolver: ModuleResolver) extends PersistentActor with ActorLogging {
+class Registry(moduleResolver: DependencyResolver) extends PersistentActor with ActorLogging {
   import Registry._
   import RegistryProtocol._
 

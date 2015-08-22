@@ -7,7 +7,7 @@ import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import io.chronos.JobSpec
 import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, ResolutionFailed}
-import io.chronos.resolver.{JobPackage, ModuleResolver}
+import io.chronos.resolver.{DependencyResolver, JobPackage}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
@@ -46,7 +46,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     TestKit.shutdownActorSystem(system)
 
   "A job registry" should {
-    val moduleResolverMock = mock[ModuleResolver]
+    val moduleResolverMock = mock[DependencyResolver]
     val registry = TestActorRef(Registry.props(moduleResolverMock))
 
     "reject a job if it fails to resolve its dependencies" in {

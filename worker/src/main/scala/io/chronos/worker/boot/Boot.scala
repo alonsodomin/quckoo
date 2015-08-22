@@ -4,7 +4,7 @@ import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
-import io.chronos.resolver.{IvyConfiguration, IvyModuleResolver}
+import io.chronos.resolver.{IvyConfiguration, IvyDependencyResolver}
 import io.chronos.worker.{JobExecutor, Worker}
 
 /**
@@ -23,7 +23,7 @@ object Boot {
     }.toSet
 
     val ivyConfig = IvyConfiguration(conf)
-    val moduleResolver = new IvyModuleResolver(ivyConfig)
+    val moduleResolver = new IvyDependencyResolver(ivyConfig)
 
     val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
     val clusterClient = system.actorOf(ClusterClient.props(clientSettings), "clusterClient")
