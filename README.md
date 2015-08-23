@@ -1,5 +1,7 @@
 # Chronos
 
+[![Build Status](https://travis-ci.org/alonsodomin/chronos.svg)](https://travis-ci.org/alonsodomin/chronos)
+
 Chronos is a fault-tolerant distributed task scheduler platform that runs on the JVM. The aim of the project is
 the implementation of a reliable system able to run large amount of scheduled tasks without single points of failure.
 
@@ -24,3 +26,7 @@ These are the most common terms used across the documentation to describe the pl
  send them to the worker instances.
 * **Worker**: Ad-hoc node, not member of the scheduling cluster, that performs the actual execution of the job
  that was scheduled in the first place.
+ 
+## Topology
+
+![Topology](docs/img/Topology.jpg)
