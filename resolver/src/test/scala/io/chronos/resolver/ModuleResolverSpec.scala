@@ -1,0 +1,60 @@
+package io.chronos.resolver
+
+import java.net.URL
+
+import akka.actor.ActorSystem
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
+import io.chronos.id.ModuleId
+import io.chronos.protocol.ResolutionFailed
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+
+/**
+ * Created by domingueza on 23/08/15.
+ */
+class ModuleResolverSpec extends TestKit(ActorSystem("ModuleResolverSpec")) with ImplicitSender
+  with WordSpecLike with BeforeAndAfterAll with Matchers with MockFactory {
+
+  import ModuleResolver._
+
+  final val TestModuleId = ModuleId("com.example", "foo", "latest")
+
+  override def afterAll(): Unit =
+    TestKit.shutdownActorSystem(system)
+
+  "A module resolver" should {
+    val dependencyResolverMock = mock[DependencyResolver]
+    val moduleResolver = TestActorRef(ModuleResolver.props(dependencyResolverMock))
+
+    "return the job package on successful resolution of dependencies" in {
+      val jobPackage = JobPackage(TestModuleId, Seq(new URL("http://www.google.com")))
+
+      (dependencyResolverMock.resolve _).expects(TestModuleId, false).returning(Right(jobPackage))
+
+      moduleResolver ! ResolveModule(TestModuleId, download = false)
+
+      expectMsg(jobPackage)
+    }
+
+    "return resolution failed error if it can't resolve dependencies" in {
+      val expectedResolutionFailed = ResolutionFailed(Seq("com.foo.bar"))
+
+      (dependencyResolverMock.resolve _).expects(TestModuleId, false).returning(Left(expectedResolutionFailed))
+
+      moduleResolver ! ResolveModule(TestModuleId, download = false)
+
+      expectMsg(expectedResolutionFailed)
+    }
+
+    "return an error message if an exception happens" in {
+      val expectedException = new RuntimeException("TEST EXCEPTION")
+
+      (dependencyResolverMock.resolve _).expects(TestModuleId, false).throwing(expectedException)
+
+      moduleResolver ! ResolveModule(TestModuleId, download = false)
+
+      expectMsgType[ErrorResolvingModule].cause should be (expectedException)
+    }
+  }
+
+}

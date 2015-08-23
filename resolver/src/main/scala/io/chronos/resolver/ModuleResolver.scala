@@ -31,8 +31,7 @@ class ModuleResolver(dependencyResolver: DependencyResolver) extends Actor with 
         dependencyResolver.resolve(moduleId, download)
       } onComplete {
         case Success(result) =>
-          def sendResponse(value: Any) = origSender ! value
-          result.fold(sendResponse, sendResponse)
+          origSender ! result.fold(identity, identity)
         case Failure(error) =>
           origSender ! ErrorResolvingModule(moduleId, error)
       }

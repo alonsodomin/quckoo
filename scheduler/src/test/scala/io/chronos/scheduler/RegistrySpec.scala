@@ -46,13 +46,13 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     TestKit.shutdownActorSystem(system)
 
   "A job registry" should {
-    val moduleResolverMock = mock[DependencyResolver]
-    val registry = TestActorRef(Registry.props(moduleResolverMock))
+    val dependencyResolverMock = mock[DependencyResolver]
+    val registry = TestActorRef(Registry.props(dependencyResolverMock))
 
     "reject a job if it fails to resolve its dependencies" in {
       val expectedResolutionFailed = ResolutionFailed(Seq("com.foo.bar"))
 
-      (moduleResolverMock.resolve _).expects(TestModuleId, false).returning(Left(expectedResolutionFailed))
+      (dependencyResolverMock.resolve _).expects(TestModuleId, false).returning(Left(expectedResolutionFailed))
 
       registry ! RegisterJob(TestJobSpec)
 
@@ -66,7 +66,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     }
 
     "return job accepted if resolution of dependencies succeeds" in {
-      (moduleResolverMock.resolve _).expects(TestModuleId, false).returning(Right(TestJobPackage))
+      (dependencyResolverMock.resolve _).expects(TestModuleId, false).returning(Right(TestJobPackage))
 
       registry ! RegisterJob(TestJobSpec)
 
