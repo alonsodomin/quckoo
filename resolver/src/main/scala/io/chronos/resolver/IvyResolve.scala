@@ -9,18 +9,11 @@ import org.apache.ivy.core.module.descriptor._
 import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
 import org.apache.ivy.core.report.ArtifactDownloadReport
 import org.apache.ivy.core.resolve.ResolveOptions
-import org.slf4s.Logging
 
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
-trait ChronosResolver {
-
-  def resolve(jobModuleId: ModuleId, download: Boolean = false): Either[ResolutionFailed, JobPackage]
-
-}
-
-class IvyChronosResolver(config: IvyConfiguration) extends ChronosResolver with Logging {
+class IvyResolve(config: IvyConfiguration) extends ((ModuleId, Boolean) => Either[ResolutionFailed, JobPackage]) {
 
   private val DefaultConfName = "default"
   private val CompileConfName = "compile"
@@ -28,7 +21,7 @@ class IvyChronosResolver(config: IvyConfiguration) extends ChronosResolver with 
 
   private lazy val ivy = Ivy.newInstance(config)
 
-  def resolve(jobModuleId: ModuleId, download: Boolean): Either[ResolutionFailed, JobPackage] = {
+  def apply(jobModuleId: ModuleId, download: Boolean): Either[ResolutionFailed, JobPackage] = {
     def newCallerInstance(confs: Array[String]): ModuleDescriptor = {
       val moduleRevisionId: IvyModuleId = IvyModuleId.newInstance(
         jobModuleId.group, jobModuleId.artifact, jobModuleId.version
