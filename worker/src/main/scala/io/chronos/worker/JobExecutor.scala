@@ -32,19 +32,6 @@ class JobExecutor(dependencyResolver: ChronosResolver) extends Actor with ActorL
     case Execute(task) =>
       val runner = context.actorOf(Props(classOf[JobRunner], task, context.parent))
       moduleResolver.tell(ResolveModule(task.moduleId, download = true), runner)
-      /*dependencyResolver.resolve(task.moduleId, download = true) match {
-        case Right(jobPackage) =>
-          log.info("Executing task. taskId={}", task.id)
-          jobPackage.newJob(task.jobClass, task.params) flatMap { job => Try(job.call()) } match {
-            case Success(result) =>
-              sender() ! Completed(result)
-            case Failure(cause) =>
-              sender() ! Failed(Right(cause))
-          }
-
-        case Left(resolutionFailed) =>
-          sender() ! Failed(Left(resolutionFailed))
-      }*/
   }
 
 }

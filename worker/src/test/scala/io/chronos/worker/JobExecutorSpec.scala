@@ -4,7 +4,6 @@ import java.net.URL
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.pattern._
 import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit}
 import io.chronos.cluster.Task
 import io.chronos.id.{ModuleId, TaskId}
@@ -29,42 +28,40 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
   import JobExecutorSpec._
 
   val mockModuleResolver = mock[ChronosResolver]
-  val jobExecutor = TestActorRef(JobExecutor.props(mockModuleResolver))
+  val jobExecutor = TestActorRef(JobExecutor.props(mockModuleResolver), self)
 
   override protected def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
   "A job executor actor" must "fail an execution if the dependency resolution fails" in {
-    val work = Task(TestExecutionId, moduleId = TestModuleId, jobClass = TestJobClass)
+    val task = Task(TestExecutionId, moduleId = TestModuleId, jobClass = TestJobClass)
     val expectedResolutionFailed = ResolutionFailed(Seq("com.bar.foo"))
 
     (mockModuleResolver.resolve _).expects(TestModuleId, true).returning(Left(expectedResolutionFailed))
 
-    jobExecutor ! JobExecutor.Execute(work)
+    jobExecutor ! JobExecutor.Execute(task)
 
     expectMsg(JobExecutor.Failed(Left(expectedResolutionFailed)))
   }
 
   it must "fail if instantiation of the job failed" in {
     val params = Map("a" -> 7)
-    val work = Task(TestExecutionId, TestModuleId, params, TestJobClass)
+    val task = Task(TestExecutionId, TestModuleId, params, TestJobClass)
 
     val expectedException = new ClassNotFoundException(TestJobClass)
     val failingPackage = JobPackage(TestModuleId, Seq(new URL("http://www.example.com")))
 
     (mockModuleResolver.resolve _).expects(TestModuleId, true).returning(Right(failingPackage))
 
-    val result = (jobExecutor ? JobExecutor.Execute(work)).mapTo[JobExecutor.Failed]
+    jobExecutor ! JobExecutor.Execute(task)
 
-    whenReady(result) { res =>
-      res.reason match {
-        case Right(x) =>
-          x.getClass should be (expectedException.getClass)
-          x.getMessage should be (expectedException.getMessage)
-        case _ =>
-          fail("Expected a ClassNotFoundException as the cause of the failure.")
-      }
+    expectMsgType[JobExecutor.Failed].reason match {
+      case Right(x) =>
+        x.getClass should be (expectedException.getClass)
+        x.getMessage should be (expectedException.getMessage)
+      case _ =>
+        fail("Expected a ClassNotFoundException as the cause of the failure.")
     }
   }
 
