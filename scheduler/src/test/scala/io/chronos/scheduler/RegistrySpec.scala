@@ -15,10 +15,8 @@ import org.scalatest._
  */
 object RegistrySpec {
 
-  final val TestJobId: JobId = UUID.randomUUID()
-
   final val TestModuleId = ModuleId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec(TestJobId, "foo", "foo desc", TestModuleId, "com.example.Job")
+  final val TestJobSpec = JobSpec("foo", "foo desc", TestModuleId, "com.example.Job")
 
   final val CommonsLoggingURL = new URL("http://repo1.maven.org/maven2/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar")
   final val TestJobPackage = JobPackage(TestModuleId, Seq(CommonsLoggingURL))
@@ -33,6 +31,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
   import RegistrySpec._
 
   val eventListener = TestProbe()
+  var testJobId: JobId = _
 
   before {
     system.eventStream.subscribe(eventListener.ref, classOf[RegistryEvent])
@@ -64,9 +63,10 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     }
 
     "notify that a specific job is not enabled when attempting to disabling it" in {
-      registry ! DisableJob(TestJobId)
+      val nonExistentJobId: JobId = UUID.randomUUID()
+      registry ! DisableJob(nonExistentJobId)
 
-      expectMsgType[JobNotEnabled].jobId should be (TestJobId)
+      expectMsgType[JobNotEnabled].jobId should be (nonExistentJobId)
     }
 
     "return job accepted if resolution of dependencies succeeds" in {
@@ -78,11 +78,13 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
 
       resolverProbe.reply(TestJobPackage)
 
-      expectMsgType[JobAccepted].job should be (TestJobSpec)
+      val registryResponse = expectMsgType[JobAccepted]
+      registryResponse.job should be (TestJobSpec)
+      testJobId = registryResponse.jobId
     }
 
     "return the registered job spec when asked for it" in {
-      registry ! GetJob(TestJobId)
+      registry ! GetJob(testJobId)
 
       expectMsg(TestJobSpec)
     }
@@ -94,16 +96,16 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     }
 
     "disable a job that has been previously registered and populate the event to the event stream" in {
-      registry ! DisableJob(TestJobId)
+      registry ! DisableJob(testJobId)
 
-      expectMsgType[JobDisabled].jobId should be (TestJobId)
-      eventListener.expectMsgType[JobDisabled].jobId should be (TestJobId)
+      expectMsgType[JobDisabled].jobId should be (testJobId)
+      eventListener.expectMsgType[JobDisabled].jobId should be (testJobId)
     }
 
     "return a job not enabled message when asked for a job after disabling it" in {
-      registry ! GetJob(TestJobId)
+      registry ! GetJob(testJobId)
 
-      expectMsgType[JobNotEnabled].jobId should be (TestJobId)
+      expectMsgType[JobNotEnabled].jobId should be (testJobId)
     }
 
     "return an empty collection when there are not enabled jobs" in {

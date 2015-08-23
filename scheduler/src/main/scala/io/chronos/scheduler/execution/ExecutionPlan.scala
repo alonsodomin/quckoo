@@ -44,9 +44,9 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
   }
 
   override def receive: Receive = {
-    case jobSpec: JobSpec =>
+    case (jobId: JobId, jobSpec: JobSpec) =>
       originalRequestor = Some(sender())
-      context.become(schedule(jobSpec.id, jobSpec))
+      context.become(schedule(jobId, jobSpec))
 
     case JobNotEnabled(jobId) =>
       log.info("Given job can't be scheduled as it is not enabled. jobId={}", jobId)

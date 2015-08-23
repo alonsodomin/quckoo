@@ -2,14 +2,12 @@ package io.chronos.scheduler.execution
 
 import java.util.UUID
 
-import akka.pattern._
 import akka.testkit._
 import io.chronos.cluster.Task
 import io.chronos.id.ModuleId
 import io.chronos.scheduler.TestActorSystem
 import io.chronos.scheduler.queue.TaskQueue
 import io.chronos.scheduler.queue.TaskQueue.EnqueueAck
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent.duration._
@@ -25,7 +23,7 @@ object ExecutionSpec {
 }
 
 class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with ImplicitSender with DefaultTimeout
-  with WordSpecLike with BeforeAndAfterAll with Matchers with ScalaFutures {
+  with WordSpecLike with BeforeAndAfterAll with Matchers {
 
   import Execution._
   import ExecutionSpec._
@@ -47,9 +45,10 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      execution ! GetOutcome
-
-      expectMsg(NotRunYet)
+      within(1 second) {
+        execution ! GetOutcome
+        expectMsg(NotRunYet)
+      }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -64,12 +63,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
           execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
       }
-    }
 
-    "return an empty outcome again" in {
-      execution ! GetOutcome
-
-      expectMsg(NotRunYet)
+      within(1 second) {
+        execution ! GetOutcome
+        expectMsg(NotRunYet)
+      }
     }
 
     "become in progress when notified to start" in {
@@ -121,9 +119,10 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      execution ! GetOutcome
-
-      expectMsg(NotRunYet)
+      within(1 second) {
+        execution ! GetOutcome
+        expectMsg(NotRunYet)
+      }
     }
 
     "return a never run outcome with the cancellation reason" in {
@@ -146,9 +145,10 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      execution ! GetOutcome
-
-      expectMsg(NotRunYet)
+      within(1 second) {
+        execution ! GetOutcome
+        expectMsg(NotRunYet)
+      }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -163,11 +163,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
           execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
       }
-    }
 
-    "return an empty outcome again" in {
-      val outcome = (execution ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NotRunYet) }
+      within(1 second) {
+        execution ! GetOutcome
+        expectMsg(NotRunYet)
+      }
     }
 
     "become in progress when notified to start" in {
@@ -200,9 +200,10 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      execution ! GetOutcome
-
-      expectMsg(NotRunYet)
+      within(1 second) {
+        execution ! GetOutcome
+        expectMsg(NotRunYet)
+      }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -217,11 +218,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
           execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
       }
-    }
 
-    "return an empty outcome again" in {
-      val outcome = (execution ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NotRunYet) }
+      within(1 second) {
+        execution ! GetOutcome
+        expectMsg(NotRunYet)
+      }
     }
 
     "become in progress when notified to start" in {
@@ -252,9 +253,10 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      execution ! GetOutcome
-
-      expectMsg(NotRunYet)
+      within(1 second) {
+        execution ! GetOutcome
+        expectMsg(NotRunYet)
+      }
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -269,11 +271,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
           execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
       }
-    }
 
-    "return an empty outcome again" in {
-      val outcome = (execution ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NotRunYet) }
+      within(1 second) {
+        execution ! GetOutcome
+        expectMsg(NotRunYet)
+      }
     }
 
     "timeout right after notified to start" in {
@@ -307,9 +309,10 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      execution ! GetOutcome
-
-      expectMsg(NotRunYet)
+      within(1 second) {
+        execution ! GetOutcome
+        expectMsg(NotRunYet)
+      }
     }
 
     "become cancelled after the ack timeout" in {

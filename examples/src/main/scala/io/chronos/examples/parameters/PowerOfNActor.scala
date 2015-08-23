@@ -1,10 +1,8 @@
 package io.chronos.examples.parameters
 
-import java.util.UUID
-
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.chronos._
-import io.chronos.id.ModuleId
+import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
 
 import scala.concurrent.duration._
@@ -29,12 +27,14 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
   def scheduler = context.system.scheduler
   def rnd = ThreadLocalRandom.current
 
-  val jobSpec = JobSpec(id = UUID.randomUUID(),
+  val jobSpec = JobSpec(
     displayName = "Power Of N",
     moduleId = ModuleId("io.chronos", "examples_2.11", "0.1.0-SNAPSHOT"),
     jobClass = classOf[PowerOfNJob].getName
   )
+
   var n = 0
+  var jobId: JobId = _
 
   override def preStart(): Unit =
     scheduler.scheduleOnce(5.seconds, self, Tick)
@@ -47,8 +47,9 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
     case Tick =>
       client ! RegisterJob(jobSpec)
 
-    case JobAccepted(jobId, _) if jobId == jobSpec.id =>
-      log.info("JobSpec has been registered. Moving on to produce job schedules.")
+    case JobAccepted(id, _) =>
+      log.info("JobSpec has been registered with id {}. Moving on to produce job schedules.", id)
+      jobId = id
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       context.become(produce)
 
@@ -67,22 +68,22 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
     case Tick =>
       n += 1
       log.info("Produced work: {}", n)
-      client ! ScheduleJob(jobSpec.id, Map("n" -> n), jobTrigger)
+      client ! ScheduleJob(jobId, Map("n" -> n), jobTrigger)
       context.become(waitAccepted, discardOld = false)
   }
 
   def waitAccepted: Receive = {
-    case JobScheduled(jobId, planId) if jobId == jobSpec.id =>
+    case JobScheduled(id, planId) if jobId == id =>
       log.info("Job schedule has been accepted by the cluster. executionPlanId={}", planId)
       if (n < 25) {
         scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       }
       context.unbecome()
 
-    case JobNotEnabled(jobId) if jobId == jobSpec.id =>
+    case JobNotEnabled(id) if jobId == id =>
       log.error("Job scheduling has failed because the job hasn't been registered in the first place. jobId={}", jobId)
 
-    case JobFailedToSchedule(jobId, cause) if jobId == jobSpec.id =>
+    case JobFailedToSchedule(id, cause) if jobId == id =>
       log.error("Job scheduling has thrown an error. Will retry after a while. message={}", cause.getMessage)
       scheduler.scheduleOnce(3.seconds, self, Tick)
       context.unbecome()

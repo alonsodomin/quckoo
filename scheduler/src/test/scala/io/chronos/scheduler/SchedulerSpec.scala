@@ -21,7 +21,8 @@ object SchedulerSpec {
   final val ZoneUTC = ZoneId.of("UTC")
 
   final val TestModuleId = ModuleId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec(UUID.randomUUID(), "foo", "foo desc", TestModuleId, "com.example.Job")
+  final val TestJobId = UUID.randomUUID()
+  final val TestJobSpec = JobSpec("foo", "foo desc", TestModuleId, "com.example.Job")
 
 }
 
@@ -50,31 +51,31 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
 
     "create an execution plan job to schedule is enabled" in {
       within(timeout + (1 second)) {
-        scheduler ! ScheduleJob(TestJobSpec.id)
+        scheduler ! ScheduleJob(TestJobId)
 
-        registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobSpec.id)
+        registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
         registryProbe.reply(TestJobSpec)
       }
 
-      expectMsgType[JobScheduled].jobId should be (TestJobSpec.id)
+      expectMsgType[JobScheduled].jobId should be (TestJobId)
     }
 
     "should forward the registry response if the job is not enabled" in {
       within(timeout + (2 second)) {
-        scheduler ! ScheduleJob(TestJobSpec.id)
+        scheduler ! ScheduleJob(TestJobId)
 
-        registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobSpec.id)
-        registryProbe.reply(JobNotEnabled(TestJobSpec.id))
+        registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
+        registryProbe.reply(JobNotEnabled(TestJobId))
       }
 
-      expectMsgType[JobNotEnabled].jobId should be (TestJobSpec.id)
+      expectMsgType[JobNotEnabled].jobId should be (TestJobId)
     }
 
     "should inform schedule failed if communication with registry fails" in {
       // will intentionally throw an exception
       registryProbe.setAutoPilot(TestActor.KeepRunning)
 
-      scheduler ! ScheduleJob(TestJobSpec.id)
+      scheduler ! ScheduleJob(TestJobId)
 
       expectMsgType[JobFailedToSchedule]
     }

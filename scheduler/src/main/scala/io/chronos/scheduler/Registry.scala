@@ -1,5 +1,7 @@
 package io.chronos.scheduler
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
@@ -82,9 +84,9 @@ class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
 
     case (jobSpec: JobSpec, _: JobPackage) =>
       log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
-      //val jobId = UUID.randomUUID()
-      persist(JobAccepted(jobSpec.id, jobSpec)) { event =>
-        log.info("Job spec has been registered. jobId={}, name={}", jobSpec.id, jobSpec.displayName)
+      val jobId = UUID.randomUUID()
+      persist(JobAccepted(jobId, jobSpec)) { event =>
+        log.info("Job spec has been registered. jobId={}, name={}", jobId, jobSpec.displayName)
         store = store.updated(event)
         sender() ! event
       }
@@ -125,16 +127,18 @@ private class ResolutionHandler(jobSpec: JobSpec, registry: ActorRef, requestor:
 
   def receive: Receive = {
     case pkg: JobPackage =>
-      registry.tell((jobSpec, pkg), requestor)
-      context.stop(self)
-      
+      reply(jobSpec -> pkg)
+
     case failed: ResolutionFailed =>
-      registry.tell((jobSpec, failed), requestor)
-      context.stop(self)
+      reply(jobSpec -> failed)
 
     case error: ErrorResolvingModule =>
-      registry.tell(error, requestor)
-      context.stop(self)
+      reply(error)
+  }
+
+  private def reply(msg: Any): Unit = {
+    registry.tell(msg, requestor)
+    context.stop(self)
   }
 
 }

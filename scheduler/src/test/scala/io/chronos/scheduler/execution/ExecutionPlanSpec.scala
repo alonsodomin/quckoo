@@ -22,7 +22,8 @@ object ExecutionPlanSpec {
   final val ZoneUTC = ZoneId.of("UTC")
 
   final val TestModuleId = ModuleId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec(UUID.randomUUID(), "foo", "foo desc", TestModuleId, "com.example.Job")
+  final val TestJobId = UUID.randomUUID()
+  final val TestJobSpec = JobSpec("foo", "foo desc", TestModuleId, "com.example.Job")
 
 }
 
@@ -72,10 +73,10 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
 
       (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(ScheduledTime(expectedScheduleTime), clock).returning(Some(expectedExecutionTime))
 
-      executionPlan ! TestJobSpec
+      executionPlan ! (TestJobId -> TestJobSpec)
 
       val scheduledMsg = expectMsgType[JobScheduled]
-      scheduledMsg.jobId should be (TestJobSpec.id)
+      scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
       executionProbe.expectMsg(Execution.WakeUp)
@@ -91,7 +92,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
 
       val scheduledMsg = expectMsgType[JobScheduled]
-      scheduledMsg.jobId should be (TestJobSpec.id)
+      scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
       executionProbe.expectMsg(Execution.WakeUp)
@@ -126,10 +127,10 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
 
       (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(ScheduledTime(expectedScheduleTime), clock).returning(Some(expectedExecutionTime))
 
-      executionPlan ! TestJobSpec
+      executionPlan ! (TestJobId -> TestJobSpec)
 
       val scheduledMsg = expectMsgType[JobScheduled]
-      scheduledMsg.jobId should be (TestJobSpec.id)
+      scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
       executionProbe.expectMsg(Execution.WakeUp)
@@ -161,17 +162,17 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
 
       (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(ScheduledTime(expectedScheduleTime), clock).returning(Some(expectedExecutionTime))
 
-      executionPlan ! TestJobSpec
+      executionPlan ! (TestJobId -> TestJobSpec)
 
       val scheduledMsg = expectMsgType[JobScheduled]
-      scheduledMsg.jobId should be (TestJobSpec.id)
+      scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
       executionProbe.expectMsg(Execution.WakeUp)
     }
 
     "not re-schedule the execution after the job is disabled" in {
-      system.eventStream.publish(RegistryProtocol.JobDisabled(TestJobSpec.id))
+      system.eventStream.publish(RegistryProtocol.JobDisabled(TestJobId))
 
       // This message will be sent to the deadletter actor.
       executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
