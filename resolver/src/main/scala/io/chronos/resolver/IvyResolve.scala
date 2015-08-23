@@ -13,7 +13,7 @@ import org.apache.ivy.core.resolve.ResolveOptions
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
-class IvyResolve(config: IvyConfiguration) extends ((ModuleId, Boolean) => Either[ResolutionFailed, JobPackage]) {
+class IvyResolve(config: IvyConfiguration) extends ResolveFun {
 
   private val DefaultConfName = "default"
   private val CompileConfName = "compile"

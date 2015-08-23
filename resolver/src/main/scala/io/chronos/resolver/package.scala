@@ -1,5 +1,7 @@
 package io.chronos
 
+import io.chronos.id.ModuleId
+import io.chronos.protocol.ResolutionFailed
 import org.apache.ivy.core.settings.IvySettings
 import org.apache.ivy.plugins.resolver.ChainResolver
 import org.slf4s.Logging
@@ -11,6 +13,8 @@ import scala.language.implicitConversions
  */
 package object resolver extends Logging {
 
+  type ResolveFun = (ModuleId, Boolean) => Either[ResolutionFailed, JobPackage]
+  
   private[resolver] implicit def convertConfig2Settings(config: IvyConfiguration): IvySettings = {
     implicit val ivySettings = new IvySettings()
     ivySettings.loadDefault()

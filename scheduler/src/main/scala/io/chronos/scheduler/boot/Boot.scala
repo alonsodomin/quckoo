@@ -4,7 +4,7 @@ import java.time.Clock
 
 import akka.actor._
 import com.typesafe.config.ConfigFactory
-import io.chronos.resolver.{IvyConfiguration, IvyResolve, ModuleResolver}
+import io.chronos.resolver.{IvyConfiguration, IvyResolve, Resolver}
 import io.chronos.scheduler.queue.TaskQueue
 import io.chronos.scheduler.{Registry, Scheduler}
 
@@ -30,7 +30,7 @@ object Boot {
     val ivyConfig = IvyConfiguration(conf)
     val ivyResolver = new IvyResolve(ivyConfig)
 
-    val resolverProps = ModuleResolver.props(ivyResolver)
+    val resolverProps = Resolver.props(ivyResolver)
     val registry   = system.actorOf(Registry.props(resolverProps), "registry")
     val queueProps = TaskQueue.props()
     system.actorOf(Scheduler.props(registry, queueProps), "scheduler")

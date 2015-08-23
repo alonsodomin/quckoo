@@ -8,7 +8,7 @@ import akka.testkit._
 import io.chronos.cluster.Task
 import io.chronos.id.{ModuleId, TaskId}
 import io.chronos.protocol._
-import io.chronos.resolver.{JobPackage, ModuleResolver}
+import io.chronos.resolver.{JobPackage, Resolver}
 import org.scalatest._
 
 import scala.concurrent.duration._
@@ -26,7 +26,7 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
   with BeforeAndAfterAll with ImplicitSender with DefaultTimeout {
 
   import JobExecutorSpec._
-  import ModuleResolver._
+  import Resolver._
 
   val resolverProbe = TestProbe()
   val jobExecutor = TestActorRef(JobExecutor.props(TestActors.forwardActorProps(resolverProbe.ref)), self)
@@ -42,9 +42,8 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    val resolveMsg = resolverProbe.expectMsgType[ResolveModule]
+    val resolveMsg = resolverProbe.expectMsgType[Resolve]
     resolveMsg.moduleId should be (TestModuleId)
-    resolveMsg.download should be
 
     within(2 seconds) {
       resolverProbe.reply(expectedResolutionFailed)
@@ -63,9 +62,8 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    val resolveMsg = resolverProbe.expectMsgType[ResolveModule]
+    val resolveMsg = resolverProbe.expectMsgType[Resolve]
     resolveMsg.moduleId should be (TestModuleId)
-    resolveMsg.download should be
 
     resolverProbe.reply(failingPackage)
 

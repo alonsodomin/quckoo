@@ -3,7 +3,7 @@ package io.chronos.worker
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.protocol.ResolutionFailed
-import io.chronos.resolver.{JobPackage, ModuleResolver}
+import io.chronos.resolver.{JobPackage, Resolver}
 import io.chronos.worker.JobExecutor.{Completed, Failed}
 
 import scala.util.{Failure, Success, Try}
@@ -24,20 +24,20 @@ object JobExecutor {
 
 class JobExecutor(resolverProps: Props) extends Actor with ActorLogging {
   import JobExecutor._
-  import ModuleResolver._
+  import Resolver._
 
   private val moduleResolver = context.actorOf(resolverProps, "moduleResolver")
   
   def receive = {
     case Execute(task) =>
       val runner = context.actorOf(Props(classOf[JobRunner], task, context.parent))
-      moduleResolver.tell(ResolveModule(task.moduleId, download = true), runner)
+      moduleResolver.tell(Resolve(task.moduleId), runner)
   }
 
 }
 
 private class JobRunner(task: Task, worker: ActorRef) extends Actor with ActorLogging {
-  import ModuleResolver._
+  import Resolver._
   
   def receive: Receive = {
     case pkg: JobPackage =>

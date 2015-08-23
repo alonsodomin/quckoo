@@ -9,8 +9,8 @@ import akka.persistence.PersistentActor
 import io.chronos.JobSpec
 import io.chronos.id._
 import io.chronos.protocol._
-import io.chronos.resolver.ModuleResolver.ErrorResolvingModule
-import io.chronos.resolver.{JobPackage, ModuleResolver}
+import io.chronos.resolver.Resolver.ErrorResolvingModule
+import io.chronos.resolver.{JobPackage, Resolver}
 
 /**
  * Created by aalonsodominguez on 10/08/15.
@@ -56,9 +56,9 @@ object Registry {
 }
 
 class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
-  import ModuleResolver._
   import Registry._
   import RegistryProtocol._
+  import Resolver._
 
   ClusterClientReceptionist(context.system).registerService(self)
 
@@ -80,7 +80,7 @@ class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
       val handler = context.actorOf(Props(classOf[ResolutionHandler], jobSpec, self, sender()))
-      moduleResolver.tell(ResolveModule(jobSpec.moduleId, download = false), handler)
+      moduleResolver.tell(Validate(jobSpec.moduleId), handler)
 
     case (jobSpec: JobSpec, _: JobPackage) =>
       log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)

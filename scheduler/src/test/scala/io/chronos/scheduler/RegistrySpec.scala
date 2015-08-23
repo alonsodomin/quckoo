@@ -7,7 +7,7 @@ import akka.testkit._
 import io.chronos.JobSpec
 import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, ResolutionFailed}
-import io.chronos.resolver.{JobPackage, ModuleResolver}
+import io.chronos.resolver.{JobPackage, Resolver}
 import org.scalatest._
 
 /**
@@ -26,9 +26,9 @@ object RegistrySpec {
 class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with ImplicitSender
   with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 
-  import ModuleResolver._
   import RegistryProtocol._
   import RegistrySpec._
+  import Resolver._
 
   val eventListener = TestProbe()
   var testJobId: JobId = _
@@ -53,9 +53,8 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
 
       registry ! RegisterJob(TestJobSpec)
 
-      val resolveMsg = resolverProbe.expectMsgType[ResolveModule]
+      val resolveMsg = resolverProbe.expectMsgType[Validate]
       resolveMsg.moduleId should be (TestModuleId)
-      resolveMsg.download should not
 
       resolverProbe.reply(expectedResolutionFailed)
 
@@ -72,9 +71,8 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     "return job accepted if resolution of dependencies succeeds" in {
       registry ! RegisterJob(TestJobSpec)
 
-      val resolveMsg = resolverProbe.expectMsgType[ResolveModule]
+      val resolveMsg = resolverProbe.expectMsgType[Validate]
       resolveMsg.moduleId should be (TestModuleId)
-      resolveMsg.download should not
 
       resolverProbe.reply(TestJobPackage)
 
