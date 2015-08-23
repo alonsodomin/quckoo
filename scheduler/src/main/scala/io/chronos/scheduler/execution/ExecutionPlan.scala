@@ -110,8 +110,8 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
         import context.dispatcher
 
         // Create a new execution
-        log.info("Scheduling a new execution for job {}", jobId)
         val taskId = UUID.randomUUID()
+        log.info("Scheduling a new execution. jobId={}, taskId={}", jobId, taskId)
         val execution = context.actorOf(executionProps(taskId, jobSpec), "exec-" + taskId)
         triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
         originalRequestor.foreach { _ ! JobScheduled(jobId, planId) }

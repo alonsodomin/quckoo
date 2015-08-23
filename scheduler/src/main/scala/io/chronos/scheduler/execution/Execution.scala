@@ -127,7 +127,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
   }
 
   onTermination {
-    case StopEvent(Normal, _, data) => context.parent ! data
+    case StopEvent(Normal, _, data) => context.parent ! Result(data)
   }
 
   initialize()

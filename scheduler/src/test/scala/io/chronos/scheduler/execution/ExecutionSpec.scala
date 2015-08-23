@@ -47,8 +47,9 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      val outcome = (execution ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NotRunYet) }
+      execution ! GetOutcome
+
+      expectMsg(NotRunYet)
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -57,9 +58,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      within(2 seconds) {
-        taskQueue.reply(EnqueueAck(task.id))
-
+      taskQueue.reply(EnqueueAck(task.id))
+      within(3 seconds) {
         awaitAssert {
           execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
@@ -67,23 +67,26 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     }
 
     "return an empty outcome again" in {
-      val outcome = (execution ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NotRunYet) }
+      execution ! GetOutcome
+
+      expectMsg(NotRunYet)
     }
 
     "become in progress when notified to start" in {
       execution ! Start
 
-      awaitAssert({
-        execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
-      }, 2 seconds)
+      within(3 seconds) {
+        awaitAssert {
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
+        }
+      }
     }
 
     "send result to parent when is finished" in {
       val result: Int = 8392
       execution ! Finish(Right(result))
 
-      expectMsg(Success(result))
+      expectMsg(Result(Success(result)))
       expectTerminated(execution)
     }
   }
@@ -102,7 +105,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       val reason = "bar"
       execution ! Cancel(reason)
 
-      expectMsgType[NeverRun].reason should be (reason)
+      expectMsg(Result(NeverRun(reason)))
       expectTerminated(execution)
     }
   }
@@ -118,15 +121,16 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      val outcome = (execution ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NotRunYet) }
+      execution ! GetOutcome
+
+      expectMsg(NotRunYet)
     }
 
     "return a never run outcome with the cancellation reason" in {
       val reason = "bar1"
       execution ! Cancel(reason)
 
-      expectMsgType[NeverRun].reason should be (reason)
+      expectMsg(Result(NeverRun(reason)))
       expectTerminated(execution)
     }
   }
@@ -142,8 +146,9 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      val outcome = (execution ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NotRunYet) }
+      execution ! GetOutcome
+
+      expectMsg(NotRunYet)
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -152,9 +157,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      within(2 seconds) {
-        taskQueue.reply(EnqueueAck(task.id))
-
+      taskQueue.reply(EnqueueAck(task.id))
+      within(3 seconds) {
         awaitAssert {
           execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
@@ -169,16 +173,18 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "become in progress when notified to start" in {
       execution ! Start
 
-      awaitAssert({
-        execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
-      }, 2 seconds)
+      within(3 seconds) {
+        awaitAssert {
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
+        }
+      }
     }
 
     "return an interrupted outcome with the cancellation reason" in {
       val reason = "whatever"
       execution ! Cancel(reason)
 
-      expectMsgType[Interrupted](5 seconds).reason should be (reason)
+      expectMsg(Result(Interrupted(reason)))
       expectTerminated(execution)
     }
   }
@@ -194,8 +200,9 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      val outcome = (execution ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NotRunYet) }
+      execution ! GetOutcome
+
+      expectMsg(NotRunYet)
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -204,9 +211,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
+      taskQueue.reply(EnqueueAck(task.id))
       within(2 seconds) {
-        taskQueue.reply(EnqueueAck(task.id))
-
         awaitAssert {
           execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
@@ -229,7 +235,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an never ending outcome when task queue notifies time out" in {
       execution.tell(TimeOut, taskQueue.ref)
 
-      expectMsg(NeverEnding)
+      expectMsg(Result(NeverEnding))
       expectTerminated(execution)
     }
   }
@@ -246,8 +252,9 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      val outcome = (execution ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NotRunYet) }
+      execution ! GetOutcome
+
+      expectMsg(NotRunYet)
     }
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
@@ -256,9 +263,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
+      taskQueue.reply(EnqueueAck(task.id))
       within(2 seconds) {
-        taskQueue.reply(EnqueueAck(task.id))
-
         awaitAssert {
           execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
@@ -283,7 +289,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
         taskQueue.expectMsgType[TaskQueue.TimeOut].taskId should be (task.id)
         taskQueue.reply(TimeOut)
 
-        expectMsg(NeverEnding)
+        expectMsg(Result(NeverEnding))
         expectTerminated(execution)
       }
     }
@@ -301,8 +307,9 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "return an empty outcome" in {
       execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      val outcome = (execution ? GetOutcome).mapTo[Outcome]
-      whenReady(outcome) { _ should be (NotRunYet) }
+      execution ! GetOutcome
+
+      expectMsg(NotRunYet)
     }
 
     "become cancelled after the ack timeout" in {
@@ -314,7 +321,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       }
 
-      expectMsgType[NeverRun].reason should be (s"Could not enqueue task! taskId=${task.id}")
+      expectMsg(Result(NeverRun(s"Could not enqueue task! taskId=${task.id}")))
     }
   }
 
