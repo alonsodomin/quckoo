@@ -23,7 +23,7 @@ class ModuleResolverSpec extends TestKit(ActorSystem("ModuleResolverSpec")) with
     TestKit.shutdownActorSystem(system)
 
   "A module resolver" should {
-    val dependencyResolverMock = mock[DependencyResolver]
+    val dependencyResolverMock = mock[ChronosResolver]
     val moduleResolver = TestActorRef(ModuleResolver.props(dependencyResolverMock))
 
     "return the job package on successful resolution of dependencies" in {

@@ -11,7 +11,7 @@ import scala.util.{Failure, Success}
  */
 object ModuleResolver {
 
-  def props(dependencyResolver: DependencyResolver) =
+  def props(dependencyResolver: ChronosResolver) =
     Props(classOf[ModuleResolver], dependencyResolver)
 
   case class ResolveModule(moduleId: ModuleId, download: Boolean = false)
@@ -19,7 +19,7 @@ object ModuleResolver {
 
 }
 
-class ModuleResolver(dependencyResolver: DependencyResolver) extends Actor with ActorLogging {
+class ModuleResolver(dependencyResolver: ChronosResolver) extends Actor with ActorLogging {
 
   import ModuleResolver._
   import context.dispatcher

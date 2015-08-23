@@ -14,13 +14,13 @@ import org.slf4s.Logging
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
-trait DependencyResolver {
+trait ChronosResolver {
 
   def resolve(jobModuleId: ModuleId, download: Boolean = false): Either[ResolutionFailed, JobPackage]
 
 }
 
-class IvyDependencyResolver(config: IvyConfiguration) extends DependencyResolver with Logging {
+class IvyChronosResolver(config: IvyConfiguration) extends ChronosResolver with Logging {
 
   private val DefaultConfName = "default"
   private val CompileConfName = "compile"
