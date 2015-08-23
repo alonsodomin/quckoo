@@ -314,7 +314,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       }
 
-      expectMsgType[NeverRun].reason should be ("Could not enqueue task!")
+      expectMsgType[NeverRun].reason should be (s"Could not enqueue task! taskId=${task.id}")
     }
   }
 

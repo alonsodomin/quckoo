@@ -44,6 +44,7 @@ class Scheduler(registry: ActorRef, queueProps: Props, registryTimeout: FiniteDu
       (registry ? GetJob(cmd.jobId)) onComplete {
         case Success(response) => response match {
           case spec: JobSpec => // create execution plan
+            log.info("Scheduling job {} with following details: {}", spec.id, cmd)
             val planId = UUID.randomUUID()
             val plan = context.actorOf(ExecutionPlan.props(planId, cmd.trigger) { (taskId, jobSpec) =>
               val task = Task(taskId, jobSpec.moduleId, cmd.params, jobSpec.jobClass)

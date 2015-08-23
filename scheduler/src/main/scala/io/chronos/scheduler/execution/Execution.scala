@@ -79,7 +79,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
 
   when(Sleeping) {
     case Event(WakeUp, _) =>
-      log.info("Execution waking up...")
+      log.debug("Execution waking up. taskId={}", task.id)
       sendToQueue()
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
@@ -90,12 +90,12 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
     case Event(StateTimeout, _) =>
       enqueueAttempts += 1
       if (enqueueAttempts < 2) sendToQueue()
-      else goto(Done) applying Cancelled("Could not enqueue task!")
+      else goto(Done) applying Cancelled(s"Could not enqueue task! taskId=${task.id}")
   }
 
   when(Waiting) {
     case Event(Start, _) =>
-      log.info("Execution starting...")
+      log.debug("Execution starting. taskId={}", task.id)
       startExecution()
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
@@ -105,17 +105,16 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
 
   when(InProgress) {
     case Event(GetOutcome, data) =>
-      log.info("Returning outcome: {}", data)
       stay replying data
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
     case Event(Finish(result), _) =>
-      log.info("Execution finishing...")
+      log.debug("Execution finishing. taskId={}", task.id)
       goto(Done) applying Completed(result)
     case Event(TimeOut, _) =>
       goto(Done) applying TimedOut
     case Event(StateTimeout, _) =>
-      log.info("Execution progress timing out...")
+      log.debug("Execution has timed out, notifying queue. taskId={}", task.id)
       taskQueue ! TaskQueue.TimeOut(task.id)
       stay()
   }
