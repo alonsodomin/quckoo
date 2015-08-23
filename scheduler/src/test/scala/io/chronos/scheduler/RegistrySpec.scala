@@ -1,7 +1,6 @@
 package io.chronos.scheduler
 
 import java.net.URL
-import java.util.UUID
 
 import akka.testkit._
 import io.chronos.JobSpec
@@ -62,7 +61,10 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     }
 
     "notify that a specific job is not enabled when attempting to disabling it" in {
-      val nonExistentJobId: JobId = UUID.randomUUID()
+      val otherModuleId = ModuleId("com.example", "foo", "latest")
+      val otherJobSpec = JobSpec("foo", "foo desc", otherModuleId, "com.example.Job")
+
+      val nonExistentJobId = JobId(otherJobSpec)
       registry ! DisableJob(nonExistentJobId)
 
       expectMsgType[JobNotEnabled].jobId should be (nonExistentJobId)

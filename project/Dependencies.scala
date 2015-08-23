@@ -6,8 +6,6 @@ object Dependencies {
   val configVersion       = "1.2.1"
   val akkaVersion         = "2.4-M3"
   val akkaStreamsVersion  = "1.0"
-  val hazelcastVersion    = "3.5.1"
-  val igniteVersion       = "1.3.0-incubating"
   val sprayVersion        = "1.3.2"
 
   val log4j2Version       = "2.3"
@@ -57,8 +55,7 @@ object Dependencies {
 
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ sprayLibs ++ Seq(
     "com.typesafe.akka" %% "akka-persistence"         % akkaVersion        withSources() withJavadoc(),
-    "com.hazelcast"      % "hazelcast"                % hazelcastVersion   withSources() withJavadoc(),
-    "com.hazelcast"      % "hazelcast-client"         % hazelcastVersion   withSources() withJavadoc(),
+    "com.typesafe.akka" %% "akka-cluster-sharding"    % akkaVersion        withSources() withJavadoc(),
     "com.jsuereth"      %% "scala-arm"                % "2.0.0-M1"         withSources() withJavadoc(),
 
     "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.1.0-M3"  withSources() withJavadoc(),

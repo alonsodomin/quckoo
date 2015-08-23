@@ -1,11 +1,10 @@
 package io.chronos.scheduler
 
 import java.time.{Clock, Instant, ZoneId}
-import java.util.UUID
 
 import akka.testkit._
 import io.chronos.JobSpec
-import io.chronos.id.ModuleId
+import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.RegistryProtocol.JobNotEnabled
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -21,8 +20,8 @@ object SchedulerSpec {
   final val ZoneUTC = ZoneId.of("UTC")
 
   final val TestModuleId = ModuleId("com.example", "bar", "test")
-  final val TestJobId = UUID.randomUUID()
   final val TestJobSpec = JobSpec("foo", "foo desc", TestModuleId, "com.example.Job")
+  final val TestJobId = JobId(TestJobSpec)
 
 }
 

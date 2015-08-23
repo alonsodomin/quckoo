@@ -9,7 +9,6 @@ import scala.language.implicitConversions
  */
 package object id {
 
-  type JobId = UUID
   type PlanId = UUID
   type TaskId = UUID
 

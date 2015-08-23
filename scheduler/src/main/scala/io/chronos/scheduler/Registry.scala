@@ -1,7 +1,5 @@
 package io.chronos.scheduler
 
-import java.util.UUID
-
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
@@ -20,6 +18,9 @@ object Registry {
 
   def props(resolverProps: Props): Props =
     Props(classOf[Registry], resolverProps)
+
+  val shardName      = "Registry"
+  val numberOfShards = 100
 
   private object RegistryStore {
 
@@ -84,7 +85,7 @@ class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
 
     case (jobSpec: JobSpec, _: JobPackage) =>
       log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
-      val jobId = UUID.randomUUID()
+      val jobId = JobId(jobSpec)
       persist(JobAccepted(jobId, jobSpec)) { event =>
         log.info("Job spec has been registered. jobId={}, name={}", jobId, jobSpec.displayName)
         store = store.updated(event)

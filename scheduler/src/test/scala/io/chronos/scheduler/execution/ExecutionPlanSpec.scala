@@ -5,7 +5,7 @@ import java.util.UUID
 
 import akka.actor._
 import akka.testkit._
-import io.chronos.id.ModuleId
+import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.chronos.{JobSpec, Trigger}
 import org.scalamock.scalatest.MockFactory
@@ -22,8 +22,8 @@ object ExecutionPlanSpec {
   final val ZoneUTC = ZoneId.of("UTC")
 
   final val TestModuleId = ModuleId("com.example", "bar", "test")
-  final val TestJobId = UUID.randomUUID()
   final val TestJobSpec = JobSpec("foo", "foo desc", TestModuleId, "com.example.Job")
+  final val TestJobId = JobId(TestJobSpec)
 
 }
 
@@ -50,7 +50,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       val executionPlan = TestActorRef(ExecutionPlan.props(planId, trigger)(executionProps), "executionPlanForDisabledJob")
       watch(executionPlan)
 
-      executionPlan ! RegistryProtocol.JobNotEnabled(UUID.randomUUID())
+      executionPlan ! RegistryProtocol.JobNotEnabled(TestJobId)
 
       expectTerminated(executionPlan)
     }
@@ -71,7 +71,9 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       val expectedScheduleTime = ZonedDateTime.now(clock)
       val expectedExecutionTime = expectedScheduleTime
 
-      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(ScheduledTime(expectedScheduleTime), clock).returning(Some(expectedExecutionTime))
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).
+        expects(ScheduledTime(expectedScheduleTime), clock).
+        returning(Some(expectedExecutionTime))
 
       executionPlan ! (TestJobId -> TestJobSpec)
 
@@ -87,7 +89,9 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       val expectedExecutionTime = expectedLastExecutionTime
 
       (triggerMock.isRecurring _).expects().returning(true)
-      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(LastExecutionTime(expectedLastExecutionTime), clock).returning(Some(expectedExecutionTime))
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).
+        expects(LastExecutionTime(expectedLastExecutionTime), clock).
+        returning(Some(expectedExecutionTime))
 
       executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
 
@@ -102,7 +106,9 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       val expectedLastExecutionTime = ZonedDateTime.now(clock)
 
       (triggerMock.isRecurring _).expects().returning(true)
-      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(LastExecutionTime(expectedLastExecutionTime), clock).returning(None)
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).
+        expects(LastExecutionTime(expectedLastExecutionTime), clock).
+        returning(None)
 
       executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
 
@@ -125,7 +131,9 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       val expectedScheduleTime = ZonedDateTime.now(clock)
       val expectedExecutionTime = expectedScheduleTime
 
-      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(ScheduledTime(expectedScheduleTime), clock).returning(Some(expectedExecutionTime))
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).
+        expects(ScheduledTime(expectedScheduleTime), clock).
+        returning(Some(expectedExecutionTime))
 
       executionPlan ! (TestJobId -> TestJobSpec)
 
@@ -160,7 +168,9 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       val expectedScheduleTime = ZonedDateTime.now(clock)
       val expectedExecutionTime = expectedScheduleTime
 
-      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).expects(ScheduledTime(expectedScheduleTime), clock).returning(Some(expectedExecutionTime))
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).
+        expects(ScheduledTime(expectedScheduleTime), clock).
+        returning(Some(expectedExecutionTime))
 
       executionPlan ! (TestJobId -> TestJobSpec)
 
