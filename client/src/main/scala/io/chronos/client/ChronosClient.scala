@@ -10,8 +10,8 @@ import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
  */
 object ChronosClient {
 
-  final val RegistryPath = "/user/registry"
   final val SchedulerPath = "/user/scheduler"
+  final val RegistryPath =  SchedulerPath + "/registry"
 
   def props(clientSettings: ClusterClientSettings) =
     Props(classOf[ChronosClient], clientSettings)

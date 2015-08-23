@@ -3,7 +3,7 @@ package io.chronos.scheduler
 import java.time.Clock
 import java.util.UUID
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, Props}
 import akka.cluster.client.ClusterClientReceptionist
 import akka.pattern._
 import akka.util.Timeout
@@ -20,12 +20,12 @@ import scala.util.{Failure, Success}
  */
 object Scheduler {
 
-  def props(registry: ActorRef, queueProps: Props, registryTimeout: FiniteDuration = 2 seconds)(implicit clock: Clock) =
-    Props(classOf[Scheduler], registry, queueProps, registryTimeout, clock)
+  def props(registryProps: Props, queueProps: Props, registryTimeout: FiniteDuration = 2 seconds)(implicit clock: Clock) =
+    Props(classOf[Scheduler], registryProps, queueProps, registryTimeout, clock)
 
 }
 
-class Scheduler(registry: ActorRef, queueProps: Props, registryTimeout: FiniteDuration)(implicit clock: Clock)
+class Scheduler(registryProps: Props, queueProps: Props, registryTimeout: FiniteDuration)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import RegistryProtocol._
@@ -34,6 +34,7 @@ class Scheduler(registry: ActorRef, queueProps: Props, registryTimeout: FiniteDu
 
   ClusterClientReceptionist(context.system).registerService(self)
 
+  private val registry = context.actorOf(registryProps, "registry")
   private val taskQueue = context.actorOf(queueProps, "taskQueue")
 
   override def receive: Receive = {

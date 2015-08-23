@@ -44,7 +44,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
     val timeout = 1 second
 
     val scheduler = TestActorRef(Scheduler.props(
-      registryProbe.ref,
+      TestActors.forwardActorProps(registryProbe.ref),
       TestActors.forwardActorProps(taskQueueProbe.ref),
       timeout
     ), "scheduler")
