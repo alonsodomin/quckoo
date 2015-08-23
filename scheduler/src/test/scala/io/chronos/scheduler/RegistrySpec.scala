@@ -3,12 +3,11 @@ package io.chronos.scheduler
 import java.net.URL
 import java.util.UUID
 
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
+import akka.testkit._
 import io.chronos.JobSpec
 import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, ResolutionFailed}
-import io.chronos.resolver.{ChronosResolver, JobPackage}
-import org.scalamock.scalatest.MockFactory
+import io.chronos.resolver.{JobPackage, ModuleResolver}
 import org.scalatest._
 
 /**
@@ -27,8 +26,9 @@ object RegistrySpec {
 }
 
 class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with ImplicitSender
-  with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers with MockFactory {
+  with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 
+  import ModuleResolver._
   import RegistryProtocol._
   import RegistrySpec._
 
@@ -46,15 +46,19 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     TestKit.shutdownActorSystem(system)
 
   "A job registry" should {
-    val dependencyResolverMock = mock[ChronosResolver]
-    val registry = TestActorRef(Registry.props(dependencyResolverMock))
+    val resolverProbe = TestProbe()
+    val registry = TestActorRef(Registry.props(TestActors.forwardActorProps(resolverProbe.ref)))
 
     "reject a job if it fails to resolve its dependencies" in {
       val expectedResolutionFailed = ResolutionFailed(Seq("com.foo.bar"))
 
-      (dependencyResolverMock.resolve _).expects(TestModuleId, false).returning(Left(expectedResolutionFailed))
-
       registry ! RegisterJob(TestJobSpec)
+
+      val resolveMsg = resolverProbe.expectMsgType[ResolveModule]
+      resolveMsg.moduleId should be (TestModuleId)
+      resolveMsg.download should not
+
+      resolverProbe.reply(expectedResolutionFailed)
 
       expectMsgType[JobRejected].cause should be (Left(expectedResolutionFailed))
     }
@@ -66,9 +70,13 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     }
 
     "return job accepted if resolution of dependencies succeeds" in {
-      (dependencyResolverMock.resolve _).expects(TestModuleId, false).returning(Right(TestJobPackage))
-
       registry ! RegisterJob(TestJobSpec)
+
+      val resolveMsg = resolverProbe.expectMsgType[ResolveModule]
+      resolveMsg.moduleId should be (TestModuleId)
+      resolveMsg.download should not
+
+      resolverProbe.reply(TestJobPackage)
 
       expectMsgType[JobAccepted].job should be (TestJobSpec)
     }

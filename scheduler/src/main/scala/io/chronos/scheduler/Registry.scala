@@ -8,7 +8,7 @@ import io.chronos.JobSpec
 import io.chronos.id._
 import io.chronos.protocol._
 import io.chronos.resolver.ModuleResolver.ErrorResolvingModule
-import io.chronos.resolver.{ChronosResolver, JobPackage, ModuleResolver}
+import io.chronos.resolver.{JobPackage, ModuleResolver}
 
 /**
  * Created by aalonsodominguez on 10/08/15.
@@ -16,8 +16,8 @@ import io.chronos.resolver.{ChronosResolver, JobPackage, ModuleResolver}
 object Registry {
   import RegistryProtocol._
 
-  def props(dependencyResolver: ChronosResolver): Props =
-    Props(classOf[Registry], dependencyResolver)
+  def props(resolverProps: Props): Props =
+    Props(classOf[Registry], resolverProps)
 
   private object RegistryStore {
 
@@ -53,14 +53,14 @@ object Registry {
 
 }
 
-class Registry(dependencyResolver: ChronosResolver) extends PersistentActor with ActorLogging {
+class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
   import ModuleResolver._
   import Registry._
   import RegistryProtocol._
 
   ClusterClientReceptionist(context.system).registerService(self)
 
-  private val moduleResolver = context.actorOf(ModuleResolver.props(dependencyResolver), "moduleResolver")
+  private val moduleResolver = context.actorOf(resolverProps, "moduleResolver")
   
   private var store = RegistryStore.empty
 
