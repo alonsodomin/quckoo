@@ -3,7 +3,7 @@ package io.chronos.worker
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.protocol.ResolutionFailed
-import io.chronos.resolver.{ChronosResolver, JobPackage, ModuleResolver}
+import io.chronos.resolver.{JobPackage, ModuleResolver}
 import io.chronos.worker.JobExecutor.{Completed, Failed}
 
 import scala.util.{Failure, Success, Try}
@@ -18,15 +18,15 @@ object JobExecutor {
   case class Failed(reason: TaskFailureCause)
   case class Completed(result: Any)
 
-  def props(dependencyResolver: ChronosResolver): Props =
-    Props(classOf[JobExecutor], dependencyResolver)
+  def props(resolverProps: Props): Props =
+    Props(classOf[JobExecutor], resolverProps)
 }
 
-class JobExecutor(dependencyResolver: ChronosResolver) extends Actor with ActorLogging {
+class JobExecutor(resolverProps: Props) extends Actor with ActorLogging {
   import JobExecutor._
   import ModuleResolver._
 
-  private val moduleResolver = context.actorOf(ModuleResolver.props(dependencyResolver), "moduleResolver")
+  private val moduleResolver = context.actorOf(resolverProps, "moduleResolver")
   
   def receive = {
     case Execute(task) =>

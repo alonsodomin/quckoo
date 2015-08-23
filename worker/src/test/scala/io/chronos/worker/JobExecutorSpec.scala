@@ -4,14 +4,14 @@ import java.net.URL
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit}
+import akka.testkit._
 import io.chronos.cluster.Task
 import io.chronos.id.{ModuleId, TaskId}
 import io.chronos.protocol._
-import io.chronos.resolver.{ChronosResolver, JobPackage}
-import org.scalamock.scalatest.MockFactory
+import io.chronos.resolver.{JobPackage, ModuleResolver}
 import org.scalatest._
-import org.scalatest.concurrent.ScalaFutures
+
+import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 04/08/15.
@@ -23,12 +23,13 @@ object JobExecutorSpec {
 }
 
 class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatSpecLike with Matchers
-  with BeforeAndAfterAll with ImplicitSender with MockFactory with DefaultTimeout with ScalaFutures {
+  with BeforeAndAfterAll with ImplicitSender with DefaultTimeout {
 
   import JobExecutorSpec._
+  import ModuleResolver._
 
-  val mockModuleResolver = mock[ChronosResolver]
-  val jobExecutor = TestActorRef(JobExecutor.props(mockModuleResolver), self)
+  val resolverProbe = TestProbe()
+  val jobExecutor = TestActorRef(JobExecutor.props(TestActors.forwardActorProps(resolverProbe.ref)), self)
 
   override protected def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
@@ -37,12 +38,20 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
   "A job executor actor" must "fail an execution if the dependency resolution fails" in {
     val task = Task(TestExecutionId, moduleId = TestModuleId, jobClass = TestJobClass)
     val expectedResolutionFailed = ResolutionFailed(Seq("com.bar.foo"))
-
-    (mockModuleResolver.resolve _).expects(TestModuleId, true).returning(Left(expectedResolutionFailed))
+    val expectedResolverResponse = Left(expectedResolutionFailed)
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    expectMsg(JobExecutor.Failed(Left(expectedResolutionFailed)))
+    val resolveMsg = resolverProbe.expectMsgType[ResolveModule]
+    resolveMsg.moduleId should be (TestModuleId)
+    resolveMsg.download should be
+
+    within(2 seconds) {
+      resolverProbe.reply(expectedResolutionFailed)
+      awaitAssert {
+        expectMsg(JobExecutor.Failed(expectedResolverResponse))
+      }
+    }
   }
 
   it must "fail if instantiation of the job failed" in {
@@ -52,9 +61,13 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
     val expectedException = new ClassNotFoundException(TestJobClass)
     val failingPackage = JobPackage(TestModuleId, Seq(new URL("http://www.example.com")))
 
-    (mockModuleResolver.resolve _).expects(TestModuleId, true).returning(Right(failingPackage))
-
     jobExecutor ! JobExecutor.Execute(task)
+
+    val resolveMsg = resolverProbe.expectMsgType[ResolveModule]
+    resolveMsg.moduleId should be (TestModuleId)
+    resolveMsg.download should be
+
+    resolverProbe.reply(failingPackage)
 
     expectMsgType[JobExecutor.Failed].reason match {
       case Right(x) =>
