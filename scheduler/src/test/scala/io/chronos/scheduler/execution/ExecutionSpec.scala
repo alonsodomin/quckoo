@@ -55,11 +55,15 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
-      taskQueue.reply(EnqueueAck(task.id))
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      awaitAssert({
-        execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
-      }, 2 seconds)
+      within(2 seconds) {
+        taskQueue.reply(EnqueueAck(task.id))
+
+        awaitAssert {
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+        }
+      }
     }
 
     "return an empty outcome again" in {
@@ -146,11 +150,15 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
-      taskQueue.reply(EnqueueAck(task.id))
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      awaitAssert({
-        execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
-      }, 2 seconds)
+      within(2 seconds) {
+        taskQueue.reply(EnqueueAck(task.id))
+
+        awaitAssert {
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+        }
+      }
     }
 
     "return an empty outcome again" in {
@@ -194,11 +202,15 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
-      taskQueue.reply(EnqueueAck(task.id))
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      awaitAssert({
-        execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
-      }, 2 seconds)
+      within(2 seconds) {
+        taskQueue.reply(EnqueueAck(task.id))
+
+        awaitAssert {
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+        }
+      }
     }
 
     "return an empty outcome again" in {
@@ -242,11 +254,15 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
       execution ! WakeUp
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
-      taskQueue.reply(EnqueueAck(task.id))
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Sleeping)
 
-      awaitAssert({
-        execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
-      }, 1 second)
+      within(2 seconds) {
+        taskQueue.reply(EnqueueAck(task.id))
+
+        awaitAssert {
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
+        }
+      }
     }
 
     "return an empty outcome again" in {
@@ -257,9 +273,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Impli
     "timeout right after notified to start" in {
       execution ! Start
 
-      awaitAssert({
-        execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
-      }, 50 millis)
+      within(10 millis) {
+        awaitAssert {
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
+        }
+      }
 
       within(1 second) {
         taskQueue.expectMsgType[TaskQueue.TimeOut].taskId should be (task.id)

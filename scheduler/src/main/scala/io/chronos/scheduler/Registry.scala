@@ -77,7 +77,7 @@ class Registry(dependencyResolver: ChronosResolver) extends PersistentActor with
 
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
-      val handler = context.actorOf(Props(classOf[ResolutionHandler], self, sender()))
+      val handler = context.actorOf(Props(classOf[ResolutionHandler], jobSpec, self, sender()))
       moduleResolver.tell(ResolveModule(jobSpec.moduleId, download = false), handler)
 
     case (jobSpec: JobSpec, _: JobPackage) =>
@@ -96,24 +96,6 @@ class Registry(dependencyResolver: ChronosResolver) extends PersistentActor with
         failed.unresolvedDependencies.mkString(",")
       )
       sender() ! JobRejected(jobSpec.moduleId, Left(failed))
-      /*dependencyResolver.resolve(jobSpec.moduleId) match {
-        case Left(failed) =>
-          log.error(
-            "Couldn't resolve the job module. jobModuleId={}, unresolved={}",
-            jobSpec.moduleId,
-            failed.unresolvedDependencies.mkString(",")
-          )
-          sender() ! JobRejected(Left(failed))
-
-        case Right(modulePackage) =>
-          log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
-          //val jobId = UUID.randomUUID()
-          persist(JobAccepted(jobSpec.id, jobSpec)) { event =>
-            log.info("Job spec has been registered. jobId={}, name={}", jobSpec.id, jobSpec.displayName)
-            store = store.updated(event)
-            sender() ! event
-          }
-      }*/
 
     case DisableJob(jobId) =>
       if (!store.isEnabled(jobId)) {
