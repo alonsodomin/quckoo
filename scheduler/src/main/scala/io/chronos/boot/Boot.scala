@@ -4,6 +4,7 @@ import java.time.Clock
 
 import akka.actor._
 import akka.cluster.sharding.ClusterShardingSettings
+import akka.routing.RoundRobinPool
 import com.typesafe.config.ConfigFactory
 import io.chronos.cluster.Chronos
 import io.chronos.resolver.{IvyConfiguration, IvyResolve, Resolver}
@@ -33,7 +34,8 @@ object Boot {
 
     val shardSettings = ClusterShardingSettings(system)
 
-    val resolverProps = Resolver.props(ivyResolver)
+    val resolverProps = Resolver.props(ivyResolver).
+      withRouter(RoundRobinPool(3))
 
     val queueProps    = TaskQueue.props()
     val chronosProps  = Chronos.props(shardSettings, resolverProps, queueProps) { Registry.props }
