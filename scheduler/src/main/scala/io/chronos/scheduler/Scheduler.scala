@@ -5,13 +5,14 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.client.ClusterClientReceptionist
-import akka.cluster.sharding.ClusterShardingSettings
+import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import io.chronos.JobSpec
-import io.chronos.cluster.Task
+import io.chronos.cluster.{ForwadingReceptionist, Task}
 import io.chronos.id.{JobId, PlanId}
 import io.chronos.protocol.RegistryProtocol.JobNotEnabled
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.chronos.scheduler.execution.{Execution, ExecutionPlan}
+import io.chronos.scheduler.queue.TaskQueue
 
 /**
  * Created by aalonsodominguez on 16/08/15.
@@ -31,7 +32,14 @@ class Scheduler(shardSettings: ClusterShardingSettings, registry: ActorRef, queu
 
   ClusterClientReceptionist(context.system).registerService(self)
 
-  private val taskQueue = context.actorOf(queueProps, "taskQueue")
+  private val taskQueue = ClusterSharding(context.system).start(
+    typeName        = TaskQueue.shardName,
+    entityProps     = queueProps,
+    settings        = shardSettings,
+    extractEntityId = TaskQueue.idExtractor,
+    extractShardId  = TaskQueue.shardResolver
+  )
+  context.actorOf(Props(classOf[ForwadingReceptionist], taskQueue), "taskQueue")
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>

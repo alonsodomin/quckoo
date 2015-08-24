@@ -29,11 +29,11 @@ class Chronos(shardSettings: ClusterShardingSettings,
 
   private val resolver = context.watch(context.actorOf(resolverProps, "resolver"))
   private val registry = ClusterSharding(context.system).start(
-    typeName = Registry.shardName,
-    entityProps = registryProps(resolver),
-    settings = shardSettings,
+    typeName        = Registry.shardName,
+    entityProps     = registryProps(resolver),
+    settings        = shardSettings,
     extractEntityId = Registry.idExtractor,
-    extractShardId = Registry.shardResolver
+    extractShardId  = Registry.shardResolver
   )
   context.actorOf(Props(classOf[ForwadingReceptionist], registry), "registry")
 

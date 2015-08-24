@@ -3,6 +3,7 @@ package io.chronos.scheduler.queue
 import akka.actor.{ActorLogging, ActorRef, Address, Props}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
+import akka.cluster.sharding.ShardRegion
 import akka.persistence.PersistentActor
 import io.chronos.cluster.protocol.WorkerProtocol._
 import io.chronos.cluster.{Task, WorkerId}
@@ -25,6 +26,17 @@ object TaskQueue {
   case class Workers(locations: Seq[Address])
 
   final case class TimeOut(taskId: TaskId)
+
+  val shardName      = "TaskQueue"
+  val numberOfShards = 100
+
+  val idExtractor: ShardRegion.ExtractEntityId = {
+    case e: Enqueue => (e.task.id.toString, e)
+  }
+
+  val shardResolver: ShardRegion.ExtractShardId = {
+    case Enqueue(task) => (task.id.hashCode % numberOfShards).toString
+  }
 
   private object WorkerState {
     sealed trait WorkerStatus

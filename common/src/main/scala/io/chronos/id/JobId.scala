@@ -16,15 +16,15 @@ object JobId {
 
 }
 
-final class JobId private (private val hash: String) extends Serializable {
+final class JobId private (private val id: String) extends Serializable {
 
   override def equals(other: Any): Boolean = other match {
-    case that: JobId => that.hash equals this.hash
+    case that: JobId => that.id equals this.id
     case _           => false
   }
 
-  override def hashCode = 41 * hash.hashCode
+  override def hashCode = id.hashCode
 
-  override def toString = hash
+  override def toString = id
 
 }
