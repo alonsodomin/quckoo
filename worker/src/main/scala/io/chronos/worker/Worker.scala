@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor.SupervisorStrategy._
 import akka.actor._
-import akka.cluster.client.ClusterClient.Send
+import akka.cluster.client.ClusterClient.{Send, SendToAll}
 import io.chronos.cluster.Task
 import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.id.TaskId
@@ -19,7 +19,7 @@ object Worker {
   final val DefaultRegisterFrequency = 10 seconds
   final val DefaultQueueAckTimeout = 5 seconds
 
-  private final val TaskQueuePath = "/user/chronos/scheduler/taskQueue"
+  protected[worker] final val TaskQueuePath = "/user/chronos/scheduler/taskQueue"
 
   def props(clusterClient: ActorRef, jobExecutorProps: Props,
             registerInterval: FiniteDuration = DefaultRegisterFrequency,
@@ -39,7 +39,7 @@ class Worker(clusterClient: ActorRef, jobExecutorProps: Props, registerInterval:
   
   val registerTask = context.system.scheduler.schedule(
     0.seconds, registerInterval, clusterClient,
-    Send(path.TaskQueue, RegisterWorker(workerId), localAffinity = true)
+    SendToAll(TaskQueuePath, RegisterWorker(workerId))
   )
 
   val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "executor"))

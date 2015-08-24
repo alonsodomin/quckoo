@@ -4,10 +4,10 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
-import akka.cluster.client.ClusterClient.Send
+import akka.cluster.client.ClusterClient.{Send, SendToAll}
 import akka.testkit._
+import io.chronos.cluster.Task
 import io.chronos.cluster.protocol.WorkerProtocol
-import io.chronos.cluster.{Task, path}
 import io.chronos.id.ModuleId
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
@@ -30,6 +30,7 @@ object WorkerSpec {
 class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
   with WordSpecLike with BeforeAndAfterAll with Matchers with ScalaFutures {
 
+  import Worker._
   import WorkerProtocol._
   import WorkerSpec._
   import system.dispatcher
@@ -48,8 +49,8 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
     val worker = TestActorRef(Worker.props(clusterClientProbe.ref, executorProps, 1 day, 1 second))
 
     "auto-register itself with the task queue" in {
-      val registration = clusterClientProbe.expectMsgType[Send]
-      registration.path should be (path.TaskQueue)
+      val registration = clusterClientProbe.expectMsgType[SendToAll]
+      registration.path should be (TaskQueuePath)
       registration.msg should matchPattern { case RegisterWorker(_) => }
     }
 
@@ -57,7 +58,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       worker ! TaskReady
 
       val queueMsg = clusterClientProbe.expectMsgType[Send]
-      queueMsg.path should be (path.TaskQueue)
+      queueMsg.path should be (TaskQueuePath)
       queueMsg.msg should matchPattern { case RequestTask(_) => }
     }
 
@@ -80,7 +81,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       executorProbe.send(worker, JobExecutor.Completed(result))
 
       val queueMsg = clusterClientProbe.expectMsgType[Send]
-      queueMsg.path should be (path.TaskQueue)
+      queueMsg.path should be (TaskQueuePath)
       queueMsg.msg should matchPattern { case TaskDone(_, `taskId`, `result`) => }
     }
 
@@ -90,7 +91,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       val waitingForTimeout = Future { blocking { TimeUnit.SECONDS.sleep(1) } }
       whenReady(waitingForTimeout, Timeout(Span(1, Seconds))) { _ =>
         val queueMsg = clusterClientProbe.expectMsgType[Send]
-        queueMsg.path should be (path.TaskQueue)
+        queueMsg.path should be (TaskQueuePath)
         queueMsg.msg should matchPattern { case TaskDone(_, `taskId`, _) => }
       }
     }
@@ -104,7 +105,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       val waitingForTimeout = Future { blocking { TimeUnit.SECONDS.sleep(1) } }
       whenReady(waitingForTimeout, Timeout(Span(1, Seconds))) { _ =>
         val queueMsg = clusterClientProbe.expectMsgType[Send]
-        queueMsg.path should be (path.TaskQueue)
+        queueMsg.path should be (TaskQueuePath)
         queueMsg.msg should matchPattern { case TaskDone(_, `taskId`, _) => }
       }
     }
@@ -115,7 +116,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       worker ! TaskDoneAck(taskId)
 
       val queueMsg = clusterClientProbe.expectMsgType[Send]
-      queueMsg.path should be (path.TaskQueue)
+      queueMsg.path should be (TaskQueuePath)
       queueMsg.msg should matchPattern { case RequestTask(_) => }
     }
 
@@ -132,7 +133,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       executorProbe.send(worker, JobExecutor.Failed(Right(cause)))
 
       val queueMsg = clusterClientProbe.expectMsgType[Send]
-      queueMsg.path should be (path.TaskQueue)
+      queueMsg.path should be (TaskQueuePath)
       queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, Right(`cause`)) => }
     }
 
