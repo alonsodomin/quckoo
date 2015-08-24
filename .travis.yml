@@ -14,6 +14,9 @@ jdk:
 scala:
    - 2.11.7
 
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION test
+
 branches:
  only:
    - master
