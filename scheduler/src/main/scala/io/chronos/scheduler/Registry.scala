@@ -3,6 +3,7 @@ package io.chronos.scheduler
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
+import akka.cluster.sharding.ShardRegion
 import akka.persistence.PersistentActor
 import io.chronos.JobSpec
 import io.chronos.id._
@@ -21,6 +22,18 @@ object Registry {
 
   val shardName      = "Registry"
   val numberOfShards = 100
+
+  val idExtractor: ShardRegion.ExtractEntityId = {
+    case r: RegisterJob => (JobId(r.job).toString, r)
+    case g: GetJob      => (g.jobId.toString, g)
+    case d: DisableJob  => (d.jobId.toString, d)
+  }
+
+  val shardResolver: ShardRegion.ExtractShardId = {
+    case RegisterJob(jobSpec) => (JobId(jobSpec).hashCode % numberOfShards).toString
+    case GetJob(jobId)        => (jobId.hashCode % numberOfShards).toString
+    case DisableJob(jobId)    => (jobId.hashCode % numberOfShards).toString
+  }
 
   private object RegistryStore {
 

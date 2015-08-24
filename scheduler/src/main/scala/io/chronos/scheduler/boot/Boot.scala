@@ -3,6 +3,7 @@ package io.chronos.scheduler.boot
 import java.time.Clock
 
 import akka.actor._
+import akka.cluster.sharding.ClusterShardingSettings
 import com.typesafe.config.ConfigFactory
 import io.chronos.resolver.{IvyConfiguration, IvyResolve, Resolver}
 import io.chronos.scheduler.queue.TaskQueue
@@ -33,7 +34,9 @@ object Boot {
     val resolverProps = Resolver.props(ivyResolver)
     val registryProps = Registry.props(resolverProps)
     val queueProps    = TaskQueue.props()
-    system.actorOf(Scheduler.props(registryProps, queueProps), "scheduler")
+
+    val shardSettings = ClusterShardingSettings(system)
+    system.actorOf(Scheduler.props(shardSettings, registryProps, queueProps), "scheduler")
   }
 
 }
