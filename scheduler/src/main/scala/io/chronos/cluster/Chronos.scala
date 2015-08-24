@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.cluster.ClusterEvent._
 import akka.cluster.Member
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
-import io.chronos.protocol.{Connect, Connected, Disconnect, Disconnected}
+import io.chronos.protocol._
 import io.chronos.scheduler.{Registry, Scheduler}
 
 /**
@@ -65,20 +65,28 @@ class Chronos(shardSettings: ClusterShardingSettings,
 
     case MemberUp(member) =>
       healthyMembers += member
+      sendStatusToClients()
 
     case MemberExited(member) =>
       healthyMembers -= member
+      sendStatusToClients()
 
     case UnreachableMember(member) =>
       healthyMembers -= member
       unreachableMembers += member
+      sendStatusToClients()
 
     case ReachableMember(member) =>
       unreachableMembers -= member
       healthyMembers += member
+      sendStatusToClients()
 
     case Shutdown =>
       // Perform graceful shutdown of the cluster
+  }
+
+  private def sendStatusToClients(): Unit = clients.foreach { client =>
+    client ! ClusterStatus(healthyMembers, unreachableMembers)
   }
 
 }

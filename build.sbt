@@ -14,7 +14,7 @@ resolvers in ThisBuild ++= Seq(
 )
 
 lazy val chronos = (project in file(".")).aggregate(
-  common, resolver, client, cluster, scheduler, examples, worker
+  common, network, resolver, client, cluster, scheduler, examples, worker
 )
 
 lazy val examples = (project in file("examples")).aggregate(
@@ -27,26 +27,36 @@ lazy val common = (project in file("common")).
     libraryDependencies ++= Dependencies.commonLibs
   )
 
+lazy val network = (project in file("network")).
+  settings(Commons.settings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.networkLibs
+  ).
+  dependsOn(common)
+
 lazy val resolver = (project in file("resolver")).
   settings(Commons.settings: _*).
   settings(
     libraryDependencies ++= Dependencies.resolverLibs
   ).
-  dependsOn(common)
+  dependsOn(common).
+  dependsOn(network)
 
 lazy val client = (project in file("client")).
   settings(Commons.settings: _*).
   settings(
     libraryDependencies ++= Dependencies.clientLibs
   ).
-  dependsOn(common)
+  dependsOn(common).
+  dependsOn(network)
 
 lazy val cluster = (project in file("cluster")).
   settings(Commons.settings: _*).
   settings(
     libraryDependencies ++= Dependencies.clusterLibs
   ).
-  dependsOn(common)
+  dependsOn(common).
+  dependsOn(network)
 
 lazy val scheduler = (project in file("scheduler")).
   settings(Commons.settings: _*).
@@ -57,6 +67,7 @@ lazy val scheduler = (project in file("scheduler")).
   ).
   enablePlugins(JavaAppPackaging).
   dependsOn(common).
+  dependsOn(network).
   dependsOn(resolver).
   dependsOn(cluster)
 
@@ -68,6 +79,7 @@ lazy val worker = (project in file("worker")).
   ).
   enablePlugins(JavaAppPackaging).
   dependsOn(common).
+  dependsOn(network).
   dependsOn(resolver).
   dependsOn(cluster)
 

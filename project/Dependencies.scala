@@ -45,6 +45,8 @@ object Dependencies {
 
   val commonLibs: Seq[ModuleID] = basicLibs
 
+  val networkLibs: Seq[ModuleID] = basicLibs ++ akkaLibs
+
   val resolverLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
     "org.apache.ivy" % "ivy"        % "2.4.0"       withSources() withJavadoc()
   )

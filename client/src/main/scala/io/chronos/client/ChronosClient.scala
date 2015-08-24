@@ -37,8 +37,9 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
   def receive = disconnected
 
   private def disconnected: Receive = {
-    case Connected =>
+    case msg @ Connected =>
       log.info("Connected to Chronos cluster at: {}", sender().path.address)
+      context.system.eventStream.publish(msg)
       context.become(connected)
 
     case ReceiveTimeout =>
@@ -55,8 +56,9 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
     case msg @ Disconnect =>
       clusterClient ! Send(ChronosPath, msg, localAffinity = true)
 
-    case Disconnected =>
+    case msg @ Disconnected =>
       log.info("Disconnected from Chronos cluster.")
+      context.system.eventStream.publish(msg)
       context.become(disconnected)
 
     case cmd: RegistryCommand =>
@@ -66,6 +68,9 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
     case cmd: SchedulerCommand =>
       val handler = context.actorOf(Props(classOf[RequestHandler], sender()))
       clusterClient.tell(Send(SchedulerPath, cmd, localAffinity = true), handler)
+
+    case status: ClusterStatus =>
+      context.system.eventStream.publish(status)
   }
 
   private def attemptConnect(): Unit = {
