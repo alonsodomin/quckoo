@@ -1,4 +1,4 @@
-package io.chronos.scheduler.queue
+package io.chronos.scheduler
 
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist

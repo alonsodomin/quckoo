@@ -7,9 +7,8 @@ import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.Normal
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.PlanId
+import io.chronos.scheduler.TaskQueue.EnqueueAck
 import io.chronos.scheduler._
-import io.chronos.scheduler.queue.TaskQueue
-import io.chronos.scheduler.queue.TaskQueue.EnqueueAck
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag

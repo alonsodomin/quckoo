@@ -1,4 +1,4 @@
-package io.chronos.scheduler.queue
+package io.chronos.scheduler
 
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -7,7 +7,6 @@ import akka.testkit._
 import io.chronos.cluster.protocol.WorkerProtocol._
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.ModuleId
-import io.chronos.scheduler.TestActorSystem
 import io.chronos.scheduler.execution.Execution
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}

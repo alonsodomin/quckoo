@@ -5,9 +5,8 @@ import java.util.UUID
 import akka.testkit._
 import io.chronos.cluster.Task
 import io.chronos.id.ModuleId
-import io.chronos.scheduler.TestActorSystem
-import io.chronos.scheduler.queue.TaskQueue
-import io.chronos.scheduler.queue.TaskQueue.EnqueueAck
+import io.chronos.scheduler.TaskQueue.EnqueueAck
+import io.chronos.scheduler.{TaskQueue, TestActorSystem}
 import org.scalatest.{BeforeAndAfterAll, Ignore, Matchers, WordSpecLike}
 
 import scala.concurrent.duration._
