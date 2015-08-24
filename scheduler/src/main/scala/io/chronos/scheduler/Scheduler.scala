@@ -38,6 +38,7 @@ class Scheduler(shardSettings: ClusterShardingSettings, registryProps: Props, qu
     extractEntityId = Registry.idExtractor,
     extractShardId = Registry.shardResolver
   )
+  context.actorOf(Props(classOf[RegistryReceptionist], registry), "registry")
 
   private val taskQueue = context.actorOf(queueProps, "taskQueue")
 

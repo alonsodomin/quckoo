@@ -2,7 +2,6 @@ package io.chronos.scheduler
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
-import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, SnapshotOffer}
 import io.chronos.JobSpec
@@ -78,10 +77,9 @@ class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
   import RegistryProtocol._
   import Resolver._
 
-  ClusterClientReceptionist(context.system).registerService(self)
-
   private val moduleResolver = context.actorOf(resolverProps, "moduleResolver")
 
+  import context.dispatcher
   private val snapshotTask = context.system.scheduler.schedule(15 minutes, 15 minutes, self, Snap)
 
   private var store = RegistryStore.empty
