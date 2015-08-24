@@ -1,6 +1,6 @@
 package io.chronos.id
 
-import java.security.MessageDigest
+import java.util.UUID
 
 import io.chronos.JobSpec
 
@@ -10,14 +10,9 @@ import io.chronos.JobSpec
 object JobId {
 
   def apply(jobSpec: JobSpec): JobId = {
-    val md = MessageDigest.getInstance("MD5")
-    md.update(jobSpec.moduleId.toString.getBytes("UTF-8"))
-    new JobId(new String(md.digest(), "UTF-8"))
+    val id = UUID.nameUUIDFromBytes(jobSpec.moduleId.toString.getBytes("UTF-8"))
+    new JobId(id.toString)
   }
-
-  def unapply(hash: String): Option[JobId] =
-    if (hash.matches("[a-fA-F0-9]{32}")) Some(new JobId(hash))
-    else None
 
 }
 
