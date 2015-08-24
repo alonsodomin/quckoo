@@ -2,8 +2,7 @@ package io.chronos.scheduler.queue
 
 import akka.actor.{ActorLogging, ActorRef, Address, Props}
 import akka.cluster.Cluster
-import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import akka.cluster.sharding.ShardRegion
+import akka.cluster.client.ClusterClientReceptionist
 import akka.persistence.PersistentActor
 import io.chronos.cluster.protocol.WorkerProtocol._
 import io.chronos.cluster.{Task, WorkerId}
@@ -27,21 +26,6 @@ object TaskQueue {
 
   case class TimeOut(taskId: TaskId)
 
-  case class HeyJo(taskId: TaskId)
-
-  val shardName      = "TaskQueue"
-  val numberOfShards = 100
-
-  val idExtractor: ShardRegion.ExtractEntityId = {
-    case e: Enqueue => (e.task.id.toString, e)
-    case h: HeyJo   => (h.taskId.toString, h)
-  }
-
-  val shardResolver: ShardRegion.ExtractShardId = {
-    case Enqueue(task) => (task.id.hashCode % numberOfShards).toString
-    case HeyJo(taskId) => (taskId.hashCode % numberOfShards).toString
-  }
-
   private object WorkerState {
     sealed trait WorkerStatus
 
@@ -56,11 +40,10 @@ object TaskQueue {
 }
 
 class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with ActorLogging {
-  import DistributedPubSubMediator._
   import TaskQueue._
   import WorkerState._
 
-  private val mediator = DistributedPubSub(context.system).mediator
+  ClusterClientReceptionist(context.system).registerService(self)
 
   // Persistent state
   private var state = TaskQueueState.empty
@@ -85,12 +68,6 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
   }
 
   override def receiveCommand: Receive = {
-    case HeyJo(_) =>
-      log.info("HEY JO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
-    case SubscribeAck(Subscribe(`shardName`, _, `self`)) =>
-      log.info("Task queue ready to receive messages.")
-
     case GetWorkers =>
       sender ! Workers(workers.values.map(_.ref.path.address).toSeq)
 
@@ -99,7 +76,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
         workers += (workerId -> workers(workerId).copy(ref = sender()))
       } else {
         workers += (workerId -> WorkerState(sender(), status = WorkerState.Idle))
-        log.info("Worker registered. workerId={}, location={}", workerId, sender().path)
+        log.info("Worker registered. workerId={}, location={}", workerId, sender().path.address)
         if (state.hasPendingTasks) {
           sender ! TaskReady
         }
