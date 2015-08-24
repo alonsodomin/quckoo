@@ -4,6 +4,7 @@ import java.net.URL
 import java.util.UUID
 
 import akka.actor.ActorSystem
+import akka.cluster.client.ClusterClient.Send
 import akka.testkit._
 import io.chronos.cluster.Task
 import io.chronos.id.{ModuleId, TaskId}
@@ -25,11 +26,12 @@ object JobExecutorSpec {
 class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatSpecLike with Matchers
   with BeforeAndAfterAll with ImplicitSender with DefaultTimeout {
 
+  import JobExecutor._
   import JobExecutorSpec._
   import Resolver._
 
   val resolverProbe = TestProbe()
-  val jobExecutor = TestActorRef(JobExecutor.props(TestActors.forwardActorProps(resolverProbe.ref)), self)
+  val jobExecutor = TestActorRef(JobExecutor.props(resolverProbe.ref), self)
 
   override protected def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
@@ -42,8 +44,7 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    val resolveMsg = resolverProbe.expectMsgType[Resolve]
-    resolveMsg.moduleId should be (TestModuleId)
+    resolverProbe.expectMsg(Send(ResolverPath, Resolve(TestModuleId), localAffinity = true))
 
     within(2 seconds) {
       resolverProbe.reply(expectedResolutionFailed)
@@ -62,8 +63,7 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    val resolveMsg = resolverProbe.expectMsgType[Resolve]
-    resolveMsg.moduleId should be (TestModuleId)
+    resolverProbe.expectMsg(Send(ResolverPath, Resolve(TestModuleId), localAffinity = true))
 
     resolverProbe.reply(failingPackage)
 

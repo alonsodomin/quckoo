@@ -4,7 +4,6 @@ import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
-import io.chronos.resolver.{IvyConfiguration, IvyResolve, Resolver}
 import io.chronos.worker.{JobExecutor, Worker}
 
 /**
@@ -15,20 +14,19 @@ object Boot {
   val DefaultPort = 0
 
   def main(args: Array[String]): Unit = {
-    val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + DefaultPort)
-      .withFallback(ConfigFactory.load("worker"))
+    val defaultConf = ConfigFactory.load("reference.conf")
+    val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + DefaultPort).
+      withFallback(ConfigFactory.load()).
+      withFallback(defaultConf)
+
     val system = ActorSystem("ChronosWorkerSystem", conf)
-    val initialContacts = immutableSeq(conf.getStringList("contact-points")).map {
+    val initialContacts = immutableSeq(conf.getStringList("chronos.contact-points")).map {
       case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
     }.toSet
 
-    val ivyConfig = IvyConfiguration(conf)
-    val ivyResolver = new IvyResolve(ivyConfig)
-
     val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
-    val clusterClient = system.actorOf(ClusterClient.props(clientSettings), "clusterClient")
-    val resolverProps = Resolver.props(ivyResolver)
-    system.actorOf(Worker.props(clusterClient, JobExecutor.props(resolverProps)), "worker")
+    val clusterClient = system.actorOf(ClusterClient.props(clientSettings), "client")
+    system.actorOf(Worker.props(clusterClient, JobExecutor.props(clusterClient)), "worker")
   }
 
 }
