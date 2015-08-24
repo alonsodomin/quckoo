@@ -45,7 +45,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
 
   "A job registry" should {
     val resolverProbe = TestProbe()
-    val registry = TestActorRef(Registry.props(TestActors.forwardActorProps(resolverProbe.ref)))
+    val registry = TestActorRef(Registry.props(resolverProbe.ref))
 
     "reject a job if it fails to resolve its dependencies" in {
       val expectedResolutionFailed = ResolutionFailed(Seq("com.foo.bar"))

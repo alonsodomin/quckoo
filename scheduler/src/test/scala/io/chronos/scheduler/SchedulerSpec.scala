@@ -43,7 +43,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
   "A scheduler" should {
     val scheduler = TestActorRef(Scheduler.props(
       shardSettings,
-      TestActors.forwardActorProps(registryProbe.ref),
+      registryProbe.ref,
       TestActors.forwardActorProps(taskQueueProbe.ref)
     ), "scheduler")
 

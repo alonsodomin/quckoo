@@ -5,7 +5,7 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.client.ClusterClientReceptionist
-import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
+import akka.cluster.sharding.ClusterShardingSettings
 import io.chronos.JobSpec
 import io.chronos.cluster.Task
 import io.chronos.id.{JobId, PlanId}
@@ -18,27 +18,18 @@ import io.chronos.scheduler.execution.{Execution, ExecutionPlan}
  */
 object Scheduler {
 
-  def props(shardSettings: ClusterShardingSettings, registryProps: Props, queueProps: Props)(implicit clock: Clock) =
-    Props(classOf[Scheduler], shardSettings, registryProps, queueProps, clock)
+  def props(shardSettings: ClusterShardingSettings, registry: ActorRef, queueProps: Props)(implicit clock: Clock) =
+    Props(classOf[Scheduler], shardSettings, registry, queueProps, clock)
 
 }
 
-class Scheduler(shardSettings: ClusterShardingSettings, registryProps: Props, queueProps: Props)(implicit clock: Clock)
+class Scheduler(shardSettings: ClusterShardingSettings, registry: ActorRef, queueProps: Props)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import RegistryProtocol._
   import SchedulerProtocol._
 
   ClusterClientReceptionist(context.system).registerService(self)
-
-  private val registry = ClusterSharding(context.system).start(
-    typeName = Registry.shardName,
-    entityProps = registryProps,
-    settings = shardSettings,
-    extractEntityId = Registry.idExtractor,
-    extractShardId = Registry.shardResolver
-  )
-  context.actorOf(Props(classOf[RegistryReceptionist], registry), "registry")
 
   private val taskQueue = context.actorOf(queueProps, "taskQueue")
 

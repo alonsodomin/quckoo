@@ -18,8 +18,8 @@ import scala.concurrent.duration._
 object Registry {
   import RegistryProtocol._
 
-  def props(resolverProps: Props): Props =
-    Props(classOf[Registry], resolverProps)
+  def props(resolver: ActorRef): Props =
+    Props(classOf[Registry], resolver)
 
   val shardName      = "Registry"
   val numberOfShards = 100
@@ -72,13 +72,10 @@ object Registry {
 
 }
 
-class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
+class Registry(resolver: ActorRef) extends PersistentActor with ActorLogging {
   import Registry._
   import RegistryProtocol._
   import Resolver._
-
-  private val moduleResolver = context.actorOf(resolverProps, "moduleResolver")
-
   import context.dispatcher
   private val snapshotTask = context.system.scheduler.schedule(15 minutes, 15 minutes, self, Snap)
 
@@ -102,7 +99,7 @@ class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
       val handler = context.actorOf(Props(classOf[ResolutionHandler], jobSpec, self, sender()))
-      moduleResolver.tell(Validate(jobSpec.moduleId), handler)
+      resolver.tell(Validate(jobSpec.moduleId), handler)
 
     case (jobSpec: JobSpec, _: JobPackage) =>
       log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)

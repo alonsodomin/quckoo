@@ -1,13 +1,14 @@
-package io.chronos.scheduler.boot
+package io.chronos.boot
 
 import java.time.Clock
 
 import akka.actor._
 import akka.cluster.sharding.ClusterShardingSettings
 import com.typesafe.config.ConfigFactory
+import io.chronos.cluster.Chronos
 import io.chronos.resolver.{IvyConfiguration, IvyResolve, Resolver}
+import io.chronos.scheduler.Registry
 import io.chronos.scheduler.queue.TaskQueue
-import io.chronos.scheduler.{Registry, Scheduler}
 
 /**
  * Created by domingueza on 09/07/15.
@@ -31,12 +32,13 @@ object Boot {
     val ivyConfig = IvyConfiguration(conf)
     val ivyResolver = new IvyResolve(ivyConfig)
 
-    val resolverProps = Resolver.props(ivyResolver)
-    val registryProps = Registry.props(resolverProps)
-    val queueProps    = TaskQueue.props()
-
     val shardSettings = ClusterShardingSettings(system)
-    system.actorOf(Scheduler.props(shardSettings, registryProps, queueProps), "scheduler")
+
+    val resolverProps = Resolver.props(ivyResolver)
+
+    val queueProps    = TaskQueue.props()
+    val chronosProps  = Chronos.props(shardSettings, resolverProps, queueProps) { Registry.props }
+    system.actorOf(chronosProps, "chronos")
   }
 
 }
