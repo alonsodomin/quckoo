@@ -1,6 +1,6 @@
 package io.chronos.scheduler.queue
 
-import akka.actor.{ActorLogging, ActorRef, Props}
+import akka.actor.{ActorLogging, ActorRef, Address, Props}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.persistence.PersistentActor
@@ -22,6 +22,7 @@ object TaskQueue {
   case class Enqueue(task: Task)
   case class EnqueueAck(taskId: TaskId)
   case object GetWorkers
+  case class Workers(locations: Seq[Address])
 
   final case class TimeOut(taskId: TaskId)
 
@@ -68,7 +69,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends PersistentActor with Act
 
   override def receiveCommand: Receive = {
     case GetWorkers =>
-      sender ! workers.values.map(_.ref.path.address)
+      sender ! Workers(workers.values.map(_.ref.path.address).toSeq)
 
     case RegisterWorker(workerId) =>
       if (workers.contains(workerId)) {

@@ -3,10 +3,7 @@ package io.chronos.scheduler.queue
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-import akka.actor.Address
-import akka.pattern._
 import akka.testkit._
-import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.cluster.protocol.WorkerProtocol._
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.ModuleId
@@ -29,8 +26,8 @@ object TaskQueueSpec {
 
 }
 
-class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with DefaultTimeout
-  with WordSpecLike with BeforeAndAfterAll with ScalaFutures with Matchers {
+class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with ImplicitSender
+  with WordSpecLike with BeforeAndAfterAll with Matchers with ScalaFutures {
 
   import TaskQueue._
   import TaskQueueSpec._
@@ -49,8 +46,13 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Defau
     "register workers and return their address" in {
       taskQueue.tell(RegisterWorker(workerId), workerProbe.ref)
 
-      whenReady((taskQueue ? GetWorkers).mapTo[Seq[Address]]) { addresses =>
-        addresses should contain (workerProbe.ref.path.address)
+      within(5 seconds) {
+        taskQueue ! GetWorkers
+
+        awaitAssert {
+          val msg = expectMsgType[Workers]
+          msg.locations should contain (workerProbe.ref.path.address)
+        }
       }
     }
 
