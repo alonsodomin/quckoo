@@ -59,7 +59,8 @@ class Scheduler(shardSettings: ClusterShardingSettings, registry: ActorRef, queu
 
 }
 
-private class ScheduleHandler(jobId: JobId, requestor: ActorRef, executionPlan: () => ActorRef) extends Actor with ActorLogging {
+private class ScheduleHandler(jobId: JobId, requestor: ActorRef, executionPlan: () => ActorRef)
+  extends Actor with ActorLogging {
 
   def receive: Receive = {
     case spec: JobSpec => // create execution plan
