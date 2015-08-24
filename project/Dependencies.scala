@@ -65,6 +65,7 @@ object Dependencies {
 
   val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs
 
-  val examplesLibs: Seq[ModuleID] = basicLibs ++ akkaLibs
+  val exampleJobsLibs: Seq[ModuleID] = basicLibs
+  val exampleProducersLibs: Seq[ModuleID] = basicLibs ++ akkaLibs
 
 }

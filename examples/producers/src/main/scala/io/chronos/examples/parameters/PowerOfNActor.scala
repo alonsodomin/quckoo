@@ -29,7 +29,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
 
   val jobSpec = JobSpec(
     displayName = "Power Of N",
-    moduleId = ModuleId("io.chronos", "examples_2.11", "0.1.0-SNAPSHOT"),
+    moduleId = ModuleId("io.chronos", "example-jobs_2.11", "0.1.0-SNAPSHOT"),
     jobClass = classOf[PowerOfNJob].getName
   )
 

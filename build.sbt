@@ -17,6 +17,10 @@ lazy val chronos = (project in file(".")).aggregate(
   common, resolver, client, cluster, scheduler, examples, worker
 )
 
+lazy val examples = (project in file("examples")).aggregate(
+  exampleJobs, exampleProducers
+)
+
 lazy val common = (project in file("common")).
   settings(Commons.settings: _*).
   settings(
@@ -67,11 +71,19 @@ lazy val worker = (project in file("worker")).
   dependsOn(resolver).
   dependsOn(cluster)
 
-lazy val examples = (project in file("examples")).
+lazy val exampleJobs = Project("example-jobs", file("examples/jobs")).
+  settings(Commons.settings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.exampleJobsLibs
+  ).
+  dependsOn(common)
+
+lazy val exampleProducers = Project("example-producers", file("examples/producers")).
   settings(Commons.settings: _*).
   settings(Revolver.settings: _*).
   settings(
-    libraryDependencies ++= Dependencies.examplesLibs
+    libraryDependencies ++= Dependencies.exampleProducersLibs
   ).
   dependsOn(common).
+  dependsOn(exampleJobs).
   dependsOn(client)
