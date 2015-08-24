@@ -27,7 +27,7 @@ class Chronos(shardSettings: ClusterShardingSettings,
 
   import Chronos._
 
-  private val resolver = context.actorOf(resolverProps, "resolver")
+  private val resolver = context.watch(context.actorOf(resolverProps, "resolver"))
   private val registry = ClusterSharding(context.system).start(
     typeName = Registry.shardName,
     entityProps = registryProps(resolver),
@@ -37,7 +37,7 @@ class Chronos(shardSettings: ClusterShardingSettings,
   )
   context.actorOf(Props(classOf[ForwadingReceptionist], registry), "registry")
 
-  private val scheduler = context.actorOf(Scheduler.props(shardSettings, registry, queueProps), "scheduler")
+  private val scheduler = context.watch(context.actorOf(Scheduler.props(shardSettings, registry, queueProps), "scheduler"))
 
   def receive: Receive = {
     case Shutdown =>
