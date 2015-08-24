@@ -4,12 +4,14 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.ShardRegion
-import akka.persistence.PersistentActor
+import akka.persistence.{PersistentActor, SnapshotOffer}
 import io.chronos.JobSpec
 import io.chronos.id._
 import io.chronos.protocol._
 import io.chronos.resolver.Resolver.ErrorResolvingModule
 import io.chronos.resolver.{JobPackage, Resolver}
+
+import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 10/08/15.
@@ -67,6 +69,8 @@ object Registry {
 
   }
 
+  private case object Snap
+
 }
 
 class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
@@ -77,18 +81,24 @@ class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
   ClusterClientReceptionist(context.system).registerService(self)
 
   private val moduleResolver = context.actorOf(resolverProps, "moduleResolver")
-  
+
+  private val snapshotTask = context.system.scheduler.schedule(15 minutes, 15 minutes, self, Snap)
+
   private var store = RegistryStore.empty
 
-  override def persistenceId: String = Cluster(context.system).selfRoles.find(_.startsWith("backend-")) match {
+  override val persistenceId: String = Cluster(context.system).selfRoles.find(_.startsWith("backend-")) match {
     case Some(role) => role + "-registry"
     case None       => "registry"
   }
+
+  override def postStop(): Unit = snapshotTask.cancel()
 
   override def receiveRecover: Receive = {
     case event: RegistryEvent =>
       store = store.updated(event)
       log.info("Replayed registry event. event={}", event)
+    case SnapshotOffer(_, snapshot: RegistryStore) =>
+      store = snapshot
   }
 
   override def receiveCommand: Receive = {
@@ -133,6 +143,9 @@ class Registry(resolverProps: Props) extends PersistentActor with ActorLogging {
 
     case GetJobs =>
       sender() ! store.listEnabled
+
+    case Snap =>
+      saveSnapshot(store)
   }
 
 }
