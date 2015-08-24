@@ -3,7 +3,10 @@ package io.chronos.cluster
 import java.time.Clock
 
 import akka.actor.{Actor, ActorRef, Props}
+import akka.cluster.ClusterEvent._
+import akka.cluster.Member
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
+import io.chronos.protocol.{Connect, Connected, Disconnect, Disconnected}
 import io.chronos.scheduler.{Registry, Scheduler}
 
 /**
@@ -39,7 +42,41 @@ class Chronos(shardSettings: ClusterShardingSettings,
 
   private val scheduler = context.watch(context.actorOf(Scheduler.props(shardSettings, registry, queueProps), "scheduler"))
 
+  private var clients = Set.empty[ActorRef]
+  private var healthyMembers = Set.empty[Member]
+  private var unreachableMembers = Set.empty[Member]
+
+  override def preStart(): Unit = {
+    context.system.eventStream.subscribe(self, classOf[MemberEvent])
+    context.system.eventStream.subscribe(self, classOf[ReachabilityEvent])
+  }
+
+  override def postStop(): Unit =
+    context.system.eventStream.unsubscribe(self)
+
   def receive: Receive = {
+    case Connect =>
+      clients += sender()
+      sender() ! Connected
+
+    case Disconnect =>
+      clients -= sender()
+      sender() ! Disconnected
+
+    case MemberUp(member) =>
+      healthyMembers += member
+
+    case MemberExited(member) =>
+      healthyMembers -= member
+
+    case UnreachableMember(member) =>
+      healthyMembers -= member
+      unreachableMembers += member
+
+    case ReachableMember(member) =>
+      unreachableMembers -= member
+      healthyMembers += member
+
     case Shutdown =>
       // Perform graceful shutdown of the cluster
   }
