@@ -1,8 +1,7 @@
 package io.chronos.scheduler
 
 import akka.actor._
-import akka.cluster.client.ClusterClientReceptionist
-import io.chronos.cluster.protocol.WorkerProtocol._
+import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.cluster.{Task, WorkerId}
 import io.chronos.id.TaskId
 import io.chronos.scheduler.execution.Execution
@@ -42,9 +41,8 @@ object TaskQueue {
 
 class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging {
   import TaskQueue._
+  import WorkerProtocol._
   import WorkerState._
-
-  ClusterClientReceptionist(context.system).registerService(self)
 
   private var workers = Map.empty[WorkerId, WorkerState]
   private var pendingTasks = Queue.empty[AcceptedTask]

@@ -8,10 +8,11 @@ import io.chronos.id.TaskId
  */
 object WorkerProtocol {
   // Messages from workers
-  case class RegisterWorker(workerId: WorkerId)
-  case class RequestTask(workerId: WorkerId)
-  case class TaskDone(workerId: WorkerId, taskId: TaskId, result: Any)
-  case class TaskFailed(workerId: WorkerId, taskId: TaskId, cause: TaskFailureCause)
+  sealed trait WorkerMessage
+  case class RegisterWorker(workerId: WorkerId) extends WorkerMessage
+  case class RequestTask(workerId: WorkerId) extends WorkerMessage
+  case class TaskDone(workerId: WorkerId, taskId: TaskId, result: Any) extends WorkerMessage
+  case class TaskFailed(workerId: WorkerId, taskId: TaskId, cause: TaskFailureCause) extends WorkerMessage
 
   // Messages to workers
   case object TaskReady

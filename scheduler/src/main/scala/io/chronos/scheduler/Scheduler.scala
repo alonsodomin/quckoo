@@ -8,8 +8,8 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.ClusterShardingSettings
 import io.chronos.JobSpec
 import io.chronos.cluster._
+import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.id._
-import io.chronos.protocol.RegistryProtocol.JobNotEnabled
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.chronos.scheduler.execution.{Execution, ExecutionPlan}
 
@@ -28,6 +28,7 @@ class Scheduler(shardSettings: ClusterShardingSettings, registry: ActorRef, queu
 
   import RegistryProtocol._
   import SchedulerProtocol._
+  import WorkerProtocol._
 
   ClusterClientReceptionist(context.system).registerService(self)
 
@@ -44,6 +45,9 @@ class Scheduler(shardSettings: ClusterShardingSettings, registry: ActorRef, queu
         context.actorOf(executionPlanProps(planId), "plan-" + planId)
       })
       registry.tell(GetJob(cmd.jobId), handler)
+
+    case msg: WorkerMessage =>
+      taskQueue.tell(msg, sender())
   }
 
   private def handlerProps(jobId: JobId, requestor: ActorRef)(executionPlan: () => ActorRef): Props =
@@ -53,6 +57,8 @@ class Scheduler(shardSettings: ClusterShardingSettings, registry: ActorRef, queu
 
 private class ScheduleHandler(jobId: JobId, requestor: ActorRef, executionPlan: () => ActorRef)
   extends Actor with ActorLogging {
+
+  import RegistryProtocol._
 
   def receive: Receive = {
     case spec: JobSpec => // create execution plan
