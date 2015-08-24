@@ -1,7 +1,6 @@
 package io.chronos.resolver
 
 import akka.actor.{Actor, ActorLogging, Props}
-import akka.cluster.client.ClusterClientReceptionist
 import io.chronos.id.ModuleId
 import io.chronos.protocol.ResolutionFailed
 
@@ -25,8 +24,6 @@ class Resolver(resolve: ResolveFun) extends Actor with ActorLogging {
 
   import Resolver._
   import context.dispatcher
-
-  ClusterClientReceptionist(context.system).registerService(self)
 
   def receive: Receive = {
     case Validate(moduleId) =>

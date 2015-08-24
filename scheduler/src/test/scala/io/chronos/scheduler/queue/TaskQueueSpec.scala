@@ -63,13 +63,6 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
       executionProbe.expectMsgType[EnqueueAck].taskId should be (task.id)
     }
 
-    "just return ack when the same task is enqueued" in {
-      taskQueue.tell(Enqueue(task), executionProbe.ref)
-
-      workerProbe.expectNoMsg()
-      executionProbe.expectMsgType[EnqueueAck].taskId should be (task.id)
-    }
-
     "dispatch task to worker on successful request and notify execution" in {
       taskQueue.tell(RequestTask(workerId), workerProbe.ref)
 

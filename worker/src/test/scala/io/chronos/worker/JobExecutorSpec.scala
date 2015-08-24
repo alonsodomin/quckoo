@@ -4,7 +4,6 @@ import java.net.URL
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.cluster.client.ClusterClient.Send
 import akka.testkit._
 import io.chronos.cluster.Task
 import io.chronos.id.{ModuleId, TaskId}
@@ -26,7 +25,6 @@ object JobExecutorSpec {
 class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatSpecLike with Matchers
   with BeforeAndAfterAll with ImplicitSender with DefaultTimeout {
 
-  import JobExecutor._
   import JobExecutorSpec._
   import Resolver._
 
@@ -44,7 +42,7 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    resolverProbe.expectMsg(Send(ResolverPath, Resolve(TestModuleId), localAffinity = true))
+    resolverProbe.expectMsg(Resolve(TestModuleId))
 
     within(2 seconds) {
       resolverProbe.reply(expectedResolutionFailed)
@@ -63,7 +61,7 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    resolverProbe.expectMsg(Send(ResolverPath, Resolve(TestModuleId), localAffinity = true))
+    resolverProbe.expectMsg(Resolve(TestModuleId))
 
     resolverProbe.reply(failingPackage)
 

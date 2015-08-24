@@ -1,7 +1,6 @@
 package io.chronos.worker
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.cluster.client.ClusterClient.Send
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.protocol.ResolutionFailed
 import io.chronos.resolver.{JobPackage, Resolver}
@@ -14,25 +13,23 @@ import scala.util.{Failure, Success, Try}
  */
 object JobExecutor {
 
-  protected[worker] final val ResolverPath = "/user/chronos/resolver"
-
   case class Execute(task: Task)
 
   case class Failed(reason: TaskFailureCause)
   case class Completed(result: Any)
 
-  def props(clusterClient: ActorRef): Props =
-    Props(classOf[JobExecutor], clusterClient)
+  def props(resolver: ActorRef): Props =
+    Props(classOf[JobExecutor], resolver)
 }
 
-class JobExecutor(clusterClient: ActorRef) extends Actor with ActorLogging {
+class JobExecutor(resolver: ActorRef) extends Actor with ActorLogging {
   import JobExecutor._
   import Resolver._
 
   def receive = {
     case Execute(task) =>
       val runner = context.actorOf(Props(classOf[JobRunner], task, context.parent))
-      clusterClient.tell(Send(ResolverPath, Resolve(task.moduleId), localAffinity = true), runner)
+      resolver.tell(Resolve(task.moduleId), runner)
   }
 
 }
