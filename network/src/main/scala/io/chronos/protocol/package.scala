@@ -13,6 +13,8 @@ package object protocol {
   case object Disconnect
   case object Disconnected extends ClientEvent
 
+  case object UnableToConnect extends ClientEvent
+
   case object GetClusterStatus
 
   case class ResolutionFailed(unresolvedDependencies: Seq[String])

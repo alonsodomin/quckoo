@@ -29,7 +29,6 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
   import SchedulerProtocol._
 
   private val connectTimeout = 3 seconds
-  private var connectionAttempts = 0
 
   private val clusterClient = context.watch(context.actorOf(ClusterClient.props(clientSettings), "client"))
 
@@ -37,21 +36,18 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
 
   private def standby: Receive = {
     case Connect =>
-      attemptConnect()
+      context.actorOf(Props(classOf[ConnectHandler], clusterClient, sender(), connectTimeout, maxConnectionAttempts))
+      context.become(connecting, discardOld = false)
+  }
 
-    case ReceiveTimeout =>
-      if (connectionAttempts < maxConnectionAttempts) {
-        log.warning("Couldn't connect with the cluster after {}. Retrying...", connectTimeout)
-        attemptConnect()
-      } else {
-        log.error("Couldn't connect with the cluster after {} attempts. Giving up!", connectionAttempts)
-        context.system.terminate()
-      }
-
+  private def connecting: Receive = {
     case msg @ Connected =>
-      log.info("Connected to Chronos cluster at: {}", sender().path.address)
-      context.system.eventStream.publish(msg)
+      sender() ! msg
       context.become(connected)
+
+    case msg @ UnableToConnect =>
+      sender() ! msg
+      context.unbecome()
   }
 
   private def connected: Receive = {
@@ -79,9 +75,35 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
       context.system.eventStream.publish(status)
   }
 
+}
+
+private class ConnectHandler(clusterClient: ActorRef, requestor: ActorRef, timeout: FiniteDuration, maxConnectionAttempts: Int)
+  extends Actor with ActorLogging {
+  import ChronosClient._
+
+  private var connectionAttempts = 0
+  attemptConnect()
+
+  def receive: Receive = {
+    case ReceiveTimeout =>
+      if (connectionAttempts < maxConnectionAttempts) {
+        log.warning("Couldn't connect with the cluster after {}. Retrying...", timeout)
+        attemptConnect()
+      } else {
+        log.error("Couldn't connect with the cluster after {} attempts. Giving up!", connectionAttempts)
+        context.parent.tell(UnableToConnect, requestor)
+        context.stop(self)
+      }
+
+    case msg @ Connected =>
+      log.info("Connected to Chronos cluster at: {}", sender().path.address)
+      context.parent.tell(msg, requestor)
+      context.stop(self)
+  }
+
   private def attemptConnect(): Unit = {
     clusterClient ! Send(ChronosPath, Connect, localAffinity = true)
-    context.setReceiveTimeout(connectTimeout)
+    context.setReceiveTimeout(timeout)
     connectionAttempts += 1
   }
 
