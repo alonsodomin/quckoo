@@ -62,22 +62,22 @@ Following diagram tries to depict this process:
 
 The set of steps of this process are as follows:
 
- 1. A client request to schedule a previously registered job specification (as per a trigger definition).
- 2. The Scheduler ask the Registry about the job details of that specific job.
+ 1. A client requests to schedule a previously registered job specification (as per a trigger definition).
+ 2. The Scheduler asks the Registry about the job details of that specific job.
  3. The Registry replies back with the previously requested job details.
  4. The Scheduler then creates a new instance of an Execution Plan. Which is responsible to manage the the triggering
   of the job itself.
  5. The Execution Plan creates a new Execution in `Scheduled` state.
  6. At the triggered specific time, the Execution Plan notifies the Execution to wake up
- 7. The Execution attempts to enqueue in the *pending tasks* queue.
+ 7. The Execution attempts to enqueue a task in the *pending tasks* queue.
  8. The Task Queue notifies the Worker nodes that there are tasks pending to be executed.
  9. Non busy Worker nodes reply back asking for new tasks to work on
  10. The Task Queue delivers one of the pending tasks to a Worker node.
- 11. The Worker sends the task itself to an executor, which understands how to execute the task.
+ 11. The Worker sends the task itself to an executor, which knows how to execute the task.
  12. The Executor asks the Resolver for all the dependencies needed to run the task.
  13. The Resolver replies back with the previously requested dependencies.
  14. The Executor replies to the Worker with result of that specific task.
  15. The Worker sends the execution result to the Task Queue. At this point, the Task Queue will get back to point
-  number 10 if there are more pending tasks.
+  number 8 if there are more pending tasks.
  16. The Task Queue notifies the Execution instance that the execution job has been finished. At this point, the
-  Execution Plan can create and trigger more Executions according to it's trigger rules.
+  Execution Plan can create and trigger more Executions according to its trigger rules.
