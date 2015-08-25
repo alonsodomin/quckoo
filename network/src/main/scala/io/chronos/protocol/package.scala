@@ -5,11 +5,15 @@ package io.chronos
  */
 package object protocol {
 
+  trait ClientEvent
+
   case object Connect
-  case object Connected
+  case object Connected extends ClientEvent
 
   case object Disconnect
-  case object Disconnected
+  case object Disconnected extends ClientEvent
+
+  case object GetClusterStatus
 
   case class ResolutionFailed(unresolvedDependencies: Seq[String])
 

@@ -44,7 +44,7 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
 
     case ReceiveTimeout =>
       if (connectionAttempts < maxConnectionAttempts) {
-        log.warning("Couldn't connect with the cluster after {}. Retrying...")
+        log.warning("Couldn't connect with the cluster after {}. Retrying...", connectTimeout)
         attemptConnect()
       } else {
         log.error("Couldn't connect with the cluster after {} attempts. Giving up!", connectionAttempts)
@@ -60,6 +60,10 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
       log.info("Disconnected from Chronos cluster.")
       context.system.eventStream.publish(msg)
       context.become(disconnected)
+
+    case msg @ GetClusterStatus =>
+      val handler = context.actorOf(Props(classOf[RequestHandler], sender()))
+      clusterClient.tell(Send(ChronosPath, msg, localAffinity = true), handler)
 
     case cmd: RegistryCommand =>
       val handler = context.actorOf(Props(classOf[RequestHandler], sender()))

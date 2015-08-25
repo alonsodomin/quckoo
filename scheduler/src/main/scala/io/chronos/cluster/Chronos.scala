@@ -2,10 +2,11 @@ package io.chronos.cluster
 
 import java.time.Clock
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.ClusterEvent._
-import akka.cluster.Member
+import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
+import akka.cluster.{Cluster, Member}
 import io.chronos.protocol._
 import io.chronos.scheduler.{Registry, Scheduler}
 
@@ -26,9 +27,12 @@ object Chronos {
 class Chronos(shardSettings: ClusterShardingSettings,
               resolverProps: Props,
               queueProps: Props,
-              registryProps: ActorRef => Props)(implicit clock: Clock) extends Actor {
+              registryProps: ActorRef => Props)(implicit clock: Clock) extends Actor with ActorLogging {
 
   import Chronos._
+
+  private val cluster = Cluster(context.system)
+  ClusterClientReceptionist(context.system).registerService(self)
 
   private val resolver = context.watch(context.actorOf(resolverProps, "resolver"))
   private val registry = ClusterSharding(context.system).start(
@@ -46,22 +50,30 @@ class Chronos(shardSettings: ClusterShardingSettings,
   private var healthyMembers = Set.empty[Member]
   private var unreachableMembers = Set.empty[Member]
 
-  override def preStart(): Unit = {
-    context.system.eventStream.subscribe(self, classOf[MemberEvent])
-    context.system.eventStream.subscribe(self, classOf[ReachabilityEvent])
-  }
+  override def preStart(): Unit =
+    cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[ReachabilityEvent])
 
   override def postStop(): Unit =
-    context.system.eventStream.unsubscribe(self)
+    cluster.unsubscribe(self)
+
+  def clusterStatus: ClusterStatus = ClusterStatus(
+    healthyMembers.map(_.uniqueAddress),
+    unreachableMembers.map(_.uniqueAddress)
+  )
 
   def receive: Receive = {
     case Connect =>
       clients += sender()
+      log.info("Chronos client connected to cluster node. address={}", sender().path.address)
       sender() ! Connected
 
     case Disconnect =>
       clients -= sender()
+      log.info("Chronos client disconnected from cluster node. address={}", sender().path.address)
       sender() ! Disconnected
+
+    case GetClusterStatus =>
+      sender() ! clusterStatus
 
     case MemberUp(member) =>
       healthyMembers += member
@@ -85,8 +97,9 @@ class Chronos(shardSettings: ClusterShardingSettings,
       // Perform graceful shutdown of the cluster
   }
 
-  private def sendStatusToClients(): Unit = clients.foreach { client =>
-    client ! ClusterStatus(healthyMembers, unreachableMembers)
+  private def sendStatusToClients(): Unit = {
+    val status = clusterStatus
+    clients.foreach { _ ! status }
   }
 
 }
