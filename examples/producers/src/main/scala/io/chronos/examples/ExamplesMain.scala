@@ -6,6 +6,7 @@ import akka.japi.Util._
 import com.typesafe.config.ConfigFactory
 import io.chronos.client.ChronosClient
 import io.chronos.examples.parameters.PowerOfNActor
+import io.chronos.protocol.Connect
 
 /**
  * Created by aalonsodominguez on 26/07/15.
@@ -22,6 +23,7 @@ object ExamplesMain extends App {
 
   val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
   val chronosClient = system.actorOf(ChronosClient.props(clientSettings), "chronosClient")
+  chronosClient ! Connect
 
   system.actorOf(Props(classOf[PowerOfNActor], chronosClient), "powerOfN")
 

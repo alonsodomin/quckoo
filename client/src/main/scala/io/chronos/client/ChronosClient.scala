@@ -32,15 +32,12 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
   private var connectionAttempts = 0
 
   private val clusterClient = context.watch(context.actorOf(ClusterClient.props(clientSettings), "client"))
-  attemptConnect()
 
-  def receive = disconnected
+  def receive = standby
 
-  private def disconnected: Receive = {
-    case msg @ Connected =>
-      log.info("Connected to Chronos cluster at: {}", sender().path.address)
-      context.system.eventStream.publish(msg)
-      context.become(connected)
+  private def standby: Receive = {
+    case Connect =>
+      attemptConnect()
 
     case ReceiveTimeout =>
       if (connectionAttempts < maxConnectionAttempts) {
@@ -50,6 +47,11 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
         log.error("Couldn't connect with the cluster after {} attempts. Giving up!", connectionAttempts)
         context.system.terminate()
       }
+
+    case msg @ Connected =>
+      log.info("Connected to Chronos cluster at: {}", sender().path.address)
+      context.system.eventStream.publish(msg)
+      context.become(connected)
   }
 
   private def connected: Receive = {
@@ -59,7 +61,7 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
     case msg @ Disconnected =>
       log.info("Disconnected from Chronos cluster.")
       context.system.eventStream.publish(msg)
-      context.become(disconnected)
+      context.become(standby)
 
     case msg @ GetClusterStatus =>
       val handler = context.actorOf(Props(classOf[RequestHandler], sender()))
