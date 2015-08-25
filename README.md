@@ -35,7 +35,21 @@ These are the most common terms used across the documentation to describe the pl
 
 ### Registering Jobs
 
+Chronos doesn't know anything about jobs that haven't been registered in withing the system yet. So before being able
+to schedule any kind of task, we first need to tell Chronos what are the specific details of that kind of task
+implementation.
+ 
+Following diagram shows how this process works: 
+
 ![RegisterJobWorkdlow](docs/img/RegisterJobWorkflow.jpg)
+
+It is itself quite self-explanatory and compound of the following steps:
+
+ 1. A client sends a request to the Registry saying that it wants to register job **A**.
+ 2. The Registry communicates with the Resolver to validate the job details it has received.
+ 3. The Resolver replies back saying that the specification looks right.
+ 4. The Registry stores the job specification in within itself and replies back to the client saying that the job
+ has been accepted.
 
 ### Scheduling Jobs
 
