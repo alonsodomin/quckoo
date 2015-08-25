@@ -30,3 +30,13 @@ These are the most common terms used across the documentation to describe the pl
 ## Topology
 
 ![Topology](docs/img/Topology.jpg)
+
+## How does it work?
+
+### Registering Jobs
+
+![RegisterJobWorkdlow](docs/img/RegisterJobWorkflow.jpg)
+
+### Scheduling Jobs
+
+![ScheduleJobWorkdlow](docs/img/ScheduleJobWorkflow.jpg)
