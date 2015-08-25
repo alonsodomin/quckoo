@@ -12,9 +12,9 @@ import scala.concurrent.duration._
  */
 object ChronosClient {
 
-  final val ChronosPath   = "/user/chronos"
-  final val SchedulerPath = ChronosPath + "/scheduler"
-  final val RegistryPath =  ChronosPath + "/registry"
+  private[client] final val ChronosPath   = "/user/chronos"
+  private[client] final val SchedulerPath = ChronosPath + "/scheduler"
+  private[client] final val RegistryPath =  ChronosPath + "/registry"
 
   def props(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int = 3) =
     Props(classOf[ChronosClient], clientSettings, maxConnectionAttempts)
