@@ -36,17 +36,19 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
 
   private def standby: Receive = {
     case Connect =>
-      context.actorOf(Props(classOf[ConnectHandler], clusterClient, sender(), connectTimeout, maxConnectionAttempts))
+      context.actorOf(Props(classOf[ConnectHandler], clusterClient, sender(),
+        connectTimeout, maxConnectionAttempts), "connector"
+      )
       context.become(connecting, discardOld = false)
   }
 
   private def connecting: Receive = {
     case msg @ Connected =>
-      sender() ! msg
+      context.system.eventStream.publish(msg)
       context.become(connected)
 
     case msg @ UnableToConnect =>
-      sender() ! msg
+      context.system.eventStream.publish(msg)
       context.unbecome()
   }
 
