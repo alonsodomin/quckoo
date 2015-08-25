@@ -1,4 +1,4 @@
-package io.chronos.scheduler
+package io.chronos.registry
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster

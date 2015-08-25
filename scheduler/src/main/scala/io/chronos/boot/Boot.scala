@@ -7,8 +7,9 @@ import akka.cluster.sharding.ClusterShardingSettings
 import akka.routing.RoundRobinPool
 import com.typesafe.config.ConfigFactory
 import io.chronos.cluster.Chronos
+import io.chronos.registry.Registry
 import io.chronos.resolver.{IvyConfiguration, IvyResolve, Resolver}
-import io.chronos.scheduler.{Registry, TaskQueue}
+import io.chronos.scheduler.TaskQueue
 
 /**
  * Created by domingueza on 09/07/15.

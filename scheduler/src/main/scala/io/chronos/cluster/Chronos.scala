@@ -8,7 +8,8 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.{Cluster, Member}
 import io.chronos.protocol._
-import io.chronos.scheduler.{Registry, Scheduler}
+import io.chronos.registry.Registry
+import io.chronos.scheduler.Scheduler
 
 /**
  * Created by domingueza on 24/08/15.

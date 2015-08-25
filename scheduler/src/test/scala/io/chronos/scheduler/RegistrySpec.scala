@@ -6,6 +6,7 @@ import akka.testkit._
 import io.chronos.JobSpec
 import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, ResolutionFailed}
+import io.chronos.registry.Registry
 import io.chronos.resolver.{JobPackage, Resolver}
 import org.scalatest._
 
