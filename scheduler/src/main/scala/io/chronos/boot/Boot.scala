@@ -22,8 +22,7 @@ object Boot {
     val port = if (args.length > 0) args(0).toInt else DefaultPort
 
     val defaultConf = ConfigFactory.load("reference.conf")
-    val conf = ConfigFactory.parseString("akka.cluster.roles=[scheduler]").
-      withFallback(ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port)).
+    val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).
       withFallback(ConfigFactory.load()).
       withFallback(defaultConf)
 

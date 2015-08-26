@@ -5,7 +5,7 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.cluster.{Task, WorkerId}
 import io.chronos.id.TaskId
-import io.chronos.scheduler.execution.Execution
+import io.chronos.scheduler.execution.ExecutionFSM
 
 import scala.collection.immutable.Queue
 import scala.concurrent.duration._
@@ -80,7 +80,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
             workers += (workerId -> workerState.copy(status = Busy(task.id, timeout)))
             log.info("Delivering execution to worker. taskId={}, workerId={}", task.id, workerId)
             workerState.ref ! task
-            executionActor ! Execution.Start
+            executionActor ! ExecutionFSM.Start
             inProgressTasks += (task.id -> executionActor)
           }
 
@@ -103,7 +103,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       } else {
         log.info("Execution finished by worker. workerId={}, taskId={}", workerId, taskId)
         changeWorkerToIdle(workerId, taskId)
-        inProgressTasks(taskId) ! Execution.Finish(Right(result))
+        inProgressTasks(taskId) ! ExecutionFSM.Finish(Right(result))
         inProgressTasks -= taskId
         sender ! TaskDoneAck(taskId)
         notifyWorkers()
@@ -112,7 +112,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     case TaskFailed(workerId, taskId, cause) if inProgressTasks.contains(taskId) =>
       log.error("Worker failed executing given task. workerId={}, taskId={}", workerId, taskId)
       changeWorkerToIdle(workerId, taskId)
-      inProgressTasks(taskId) ! Execution.Finish(Left(cause))
+      inProgressTasks(taskId) ! ExecutionFSM.Finish(Left(cause))
       inProgressTasks -= taskId
       notifyWorkers()
 
@@ -152,7 +152,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
   private def timeoutWorker(workerId: WorkerId, taskId: TaskId): Unit = if (inProgressTasks.contains(taskId)) {
     workers -= workerId
-    inProgressTasks(taskId) ! Execution.TimeOut
+    inProgressTasks(taskId) ! ExecutionFSM.TimeOut
     inProgressTasks -= taskId
     mediator ! DistributedPubSubMediator.Publish(WorkerTopic, WorkerRemoved(workerId))
     notifyWorkers()

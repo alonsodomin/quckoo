@@ -81,7 +81,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
-      executionProbe.expectMsg(Execution.WakeUp)
+      executionProbe.expectMsg(ExecutionFSM.WakeUp)
     }
 
     "re-schedule the execution once it finishes" in {
@@ -93,13 +93,13 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
         expects(LastExecutionTime(expectedLastExecutionTime), clock).
         returning(Some(expectedExecutionTime))
 
-      executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
+      executionProbe.send(executionPlan, ExecutionFSM.Result(ExecutionFSM.Success("bar")))
 
       val scheduledMsg = expectMsgType[JobScheduled]
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
-      executionProbe.expectMsg(Execution.WakeUp)
+      executionProbe.expectMsg(ExecutionFSM.WakeUp)
     }
 
     "stop the execution plan if trigger returns None" in {
@@ -110,7 +110,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
         expects(LastExecutionTime(expectedLastExecutionTime), clock).
         returning(None)
 
-      executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
+      executionProbe.send(executionPlan, ExecutionFSM.Result(ExecutionFSM.Success("bar")))
 
       executionProbe.expectNoMsg(1 second)
       expectTerminated(executionPlan)
@@ -141,13 +141,13 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
-      executionProbe.expectMsg(Execution.WakeUp)
+      executionProbe.expectMsg(ExecutionFSM.WakeUp)
     }
 
     "terminate once the execution finishes" in {
       (triggerMock.isRecurring _).expects().returning(false)
 
-      executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
+      executionProbe.send(executionPlan, ExecutionFSM.Result(ExecutionFSM.Success("bar")))
 
       executionProbe.expectNoMsg(1 second)
       expectTerminated(executionPlan)
@@ -178,14 +178,14 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
-      executionProbe.expectMsg(Execution.WakeUp)
+      executionProbe.expectMsg(ExecutionFSM.WakeUp)
     }
 
     "not re-schedule the execution after the job is disabled" in {
       system.eventStream.publish(RegistryProtocol.JobDisabled(TestJobId))
 
       // This message will be sent to the deadletter actor.
-      executionProbe.send(executionPlan, Execution.Result(Execution.Success("bar")))
+      executionProbe.send(executionPlan, ExecutionFSM.Result(ExecutionFSM.Success("bar")))
 
       executionProbe.expectNoMsg(1 second)
       expectTerminated(executionPlan)
