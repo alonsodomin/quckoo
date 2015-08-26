@@ -58,7 +58,7 @@ lazy val cluster = (project in file("cluster")).
   dependsOn(common).
   dependsOn(network)
 
-lazy val scheduler = (project in file("scheduler")).
+lazy val scheduler = MultiNode(project in file("scheduler")).
   settings(Commons.settings: _*).
   settings(Revolver.settings: _*).
   settings(
