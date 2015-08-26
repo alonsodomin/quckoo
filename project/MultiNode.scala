@@ -1,3 +1,4 @@
+import com.typesafe.sbt.SbtMultiJvm
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import sbt.Keys._
 import sbt._
@@ -5,10 +6,11 @@ import sbt._
 object MultiNode {
   import Libraries._
 
-  lazy val settings: Seq[Def.Setting[_]] = Seq(
+  lazy val settings: Seq[Def.Setting[_]] = SbtMultiJvm.multiJvmSettings ++ Seq(
     libraryDependencies ++= Seq(
-      Akka("multi-node-testkit") % Test
+      Akka("remote"), Akka("multi-node-testkit")
     ),
+    libraryDependencies in MultiJvm <<= (libraryDependencies in Test),
     compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
     parallelExecution in Test := false,
     executeTests in Test <<= (executeTests in Test, executeTests in MultiJvm) map {
