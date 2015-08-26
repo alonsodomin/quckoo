@@ -5,8 +5,10 @@ import java.time.Clock
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.{Cluster, Member}
+import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.protocol._
 import io.chronos.registry.Registry
 import io.chronos.scheduler.Scheduler
@@ -32,8 +34,10 @@ class Chronos(shardSettings: ClusterShardingSettings,
 
   import Chronos._
 
-  private val cluster = Cluster(context.system)
   ClusterClientReceptionist(context.system).registerService(self)
+
+  private val cluster = Cluster(context.system)
+  private val mediator = DistributedPubSub(context.system).mediator
 
   private val resolver = context.watch(context.actorOf(resolverProps, "resolver"))
   private val registry = ClusterSharding(context.system).start(
@@ -51,11 +55,15 @@ class Chronos(shardSettings: ClusterShardingSettings,
   private var healthyMembers = Set.empty[Member]
   private var unreachableMembers = Set.empty[Member]
 
-  override def preStart(): Unit =
+  override def preStart(): Unit = {
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[ReachabilityEvent])
+    mediator ! DistributedPubSubMediator.Subscribe(WorkerProtocol.WorkerTopic, self)
+  }
 
-  override def postStop(): Unit =
+  override def postStop(): Unit = {
     cluster.unsubscribe(self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(WorkerProtocol.WorkerTopic, self)
+  }
 
   def clusterStatus: ClusterStatus = ClusterStatus(
     healthyMembers.map(_.uniqueAddress),

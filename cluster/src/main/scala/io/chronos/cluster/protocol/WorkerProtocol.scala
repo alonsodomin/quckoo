@@ -17,4 +17,11 @@ object WorkerProtocol {
   // Messages to workers
   case object TaskReady
   case class TaskDoneAck(taskId: TaskId)
+
+  // Worker related events
+  final val WorkerTopic = "Workers"
+
+  sealed trait WorkerEvent
+  case class WorkerJoined(workerId: WorkerId) extends WorkerEvent
+  case class WorkerRemoved(workerId: WorkerId) extends WorkerEvent
 }

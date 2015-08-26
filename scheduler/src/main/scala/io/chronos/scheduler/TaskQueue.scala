@@ -1,6 +1,7 @@
 package io.chronos.scheduler
 
 import akka.actor._
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.cluster.{Task, WorkerId}
 import io.chronos.id.TaskId
@@ -44,6 +45,8 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
   import WorkerProtocol._
   import WorkerState._
 
+  private val mediator = DistributedPubSub(context.system).mediator
+
   private var workers = Map.empty[WorkerId, WorkerState]
   private var pendingTasks = Queue.empty[AcceptedTask]
   private var inProgressTasks = Map.empty[TaskId, ActorRef]
@@ -63,6 +66,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       } else {
         workers += (workerId -> WorkerState(sender(), status = WorkerState.Idle))
         log.info("Worker registered. workerId={}, location={}", workerId, sender().path.address)
+        mediator ! DistributedPubSubMediator.Publish(WorkerTopic, WorkerJoined(workerId))
         if (pendingTasks.nonEmpty) {
           sender ! TaskReady
         }
@@ -150,6 +154,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     workers -= workerId
     inProgressTasks(taskId) ! Execution.TimeOut
     inProgressTasks -= taskId
+    mediator ! DistributedPubSubMediator.Publish(WorkerTopic, WorkerRemoved(workerId))
     notifyWorkers()
   }
 
