@@ -1,4 +1,4 @@
-package io.chronos.scheduler
+package io.chronos.registry
 
 import java.net.URL
 
@@ -6,8 +6,8 @@ import akka.testkit._
 import io.chronos.JobSpec
 import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, ResolutionFailed}
-import io.chronos.registry.Registry
 import io.chronos.resolver.{JobPackage, Resolver}
+import io.chronos.scheduler.TestActorSystem
 import org.scalatest._
 
 /**
