@@ -11,7 +11,7 @@ import io.chronos.cluster._
 import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.id._
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
-import io.chronos.scheduler.execution.{Execution, ExecutionPlan}
+import io.chronos.scheduler.execution.{ExecutionFSM, ExecutionPlan}
 
 /**
  * Created by aalonsodominguez on 16/08/15.
@@ -38,7 +38,7 @@ class Scheduler(shardSettings: ClusterShardingSettings, registry: ActorRef, queu
     case cmd: ScheduleJob =>
       def executionPlanProps(planId: PlanId): Props = ExecutionPlan.props(planId, cmd.trigger) { (taskId, jobSpec) =>
         val task = Task(taskId, jobSpec.moduleId, cmd.params, jobSpec.jobClass)
-        Execution.props(planId, task, taskQueue, executionTimeout = cmd.timeout)
+        ExecutionFSM.props(planId, task, taskQueue, executionTimeout = cmd.timeout)
       }
       val handler = context.actorOf(handlerProps(cmd.jobId, sender()) { () =>
         val planId = UUID.randomUUID()

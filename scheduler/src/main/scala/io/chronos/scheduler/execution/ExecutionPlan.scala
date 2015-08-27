@@ -16,12 +16,12 @@ import scala.concurrent.duration._
  */
 object ExecutionPlan {
 
-  def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionProps)(implicit clock: Clock) =
+  def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionFSMProps)(implicit clock: Clock) =
     Props(classOf[ExecutionPlan], planId, trigger, executionProps, clock)
 
 }
 
-class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: ExecutionProps)(implicit clock: Clock)
+class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: ExecutionFSMProps)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import RegistryProtocol._
@@ -58,7 +58,7 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
       log.info("Job has been disabled. jobId={}", id)
       context.become(shutdown)
 
-    case Execution.Result(outcome) =>
+    case ExecutionFSM.Result(outcome) =>
       def nextStage: Receive = if (trigger.isRecurring) {
         outcome match {
           case _: Execution.Success =>
@@ -113,7 +113,7 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
         val taskId = UUID.randomUUID()
         log.info("Scheduling a new execution. jobId={}, taskId={}", jobId, taskId)
         val execution = context.actorOf(executionProps(taskId, jobSpec), "exec-" + taskId)
-        triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
+        triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, ExecutionFSM.WakeUp))
         originalRequestor.foreach { _ ! JobScheduled(jobId, planId) }
 
         active(jobId, jobSpec)

@@ -7,7 +7,7 @@ import akka.testkit._
 import io.chronos.cluster.protocol.WorkerProtocol._
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.ModuleId
-import io.chronos.scheduler.execution.Execution
+import io.chronos.scheduler.execution.ExecutionFSM
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
@@ -66,7 +66,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
       taskQueue.tell(RequestTask(workerId), workerProbe.ref)
 
       workerProbe.expectMsg(task)
-      executionProbe.expectMsg(Execution.Start)
+      executionProbe.expectMsg(ExecutionFSM.Start)
     }
 
     "ignore a task request from a busy worker" in {
@@ -92,7 +92,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
       taskQueue.tell(TaskDone(workerId, task.id, taskResult), workerProbe.ref)
 
       workerProbe.expectMsgType[TaskDoneAck].taskId should be (task.id)
-      executionProbe.expectMsgType[Execution.Finish].result should be (Right(taskResult))
+      executionProbe.expectMsgType[ExecutionFSM.Finish].result should be (Right(taskResult))
     }
   }
 
@@ -114,12 +114,12 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
 
       taskQueue.tell(RequestTask(failingWorkerId), failingWorker.ref)
       failingWorker.expectMsg(task)
-      failingExec.expectMsg(Execution.Start)
+      failingExec.expectMsg(ExecutionFSM.Start)
 
       val cause: TaskFailureCause = Right(new Exception("TEST EXCEPTION"))
       taskQueue.tell(TaskFailed(failingWorkerId, task.id, cause), failingWorker.ref)
 
-      failingExec.expectMsgType[Execution.Finish].result should be(Left(cause))
+      failingExec.expectMsgType[ExecutionFSM.Finish].result should be(Left(cause))
     }
 
     "perform a timeout if the execution does notify it" in {
@@ -138,10 +138,10 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
 
       taskQueue.tell(RequestTask(timingOutWorkerId), timingOutWorker.ref)
       timingOutWorker.expectMsg(task)
-      timingOutExec.expectMsg(Execution.Start)
+      timingOutExec.expectMsg(ExecutionFSM.Start)
 
       taskQueue.tell(TimeOut(task.id), timingOutExec.ref)
-      timingOutExec.expectMsg(Execution.TimeOut)
+      timingOutExec.expectMsg(ExecutionFSM.TimeOut)
     }
 
   }
@@ -164,11 +164,11 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
 
       taskQueue.tell(RequestTask(timingOutWorkerId), timingOutWorker.ref)
       timingOutWorker.expectMsg(task)
-      timingOutExec.expectMsg(Execution.Start)
+      timingOutExec.expectMsg(ExecutionFSM.Start)
 
       val waitForTimeout = Future { blocking { TimeUnit.MILLISECONDS.sleep(100) } }
       whenReady(waitForTimeout) { _ =>
-        timingOutExec.expectMsg(Execution.TimeOut)
+        timingOutExec.expectMsg(ExecutionFSM.TimeOut)
       }
     }
   }
