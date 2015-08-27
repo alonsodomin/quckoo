@@ -25,6 +25,7 @@ object ExecutionFSMSpec {
 class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with ImplicitSender with DefaultTimeout
   with WordSpecLike with BeforeAndAfterAll with Matchers {
 
+  import Execution._
   import ExecutionFSM._
   import ExecutionFSMSpec._
 
@@ -44,7 +45,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
-        execution ! GetOutcome
+        execution ! GetExecution
         expectMsg(NotRunYet)
       }
 
@@ -78,7 +79,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
     watch(execution)
 
     "return a never run outcome with the cancellation reason" in {
-      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Sleeping)
+      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Scheduled)
 
       val reason = "bar"
       execution ! Cancel(reason)
@@ -98,7 +99,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
 
     "return a never run outcome with the cancellation reason" in {
       within(1 second) {
-        execution ! GetOutcome
+        execution ! GetExecution
         expectMsg(NotRunYet)
       }
 
@@ -122,7 +123,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
-        execution ! GetOutcome
+        execution ! GetExecution
         expectMsg(NotRunYet)
       }
 
@@ -131,7 +132,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       }
 
-      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Sleeping)
+      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Scheduled)
 
       within(5 seconds) {
         taskQueue.reply(EnqueueAck(task.id))
@@ -142,7 +143,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
       }
 
       within(1 second) {
-        execution ! GetOutcome
+        execution ! GetExecution
         expectMsg(NotRunYet)
       }
     }
@@ -176,7 +177,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
-        execution ! GetOutcome
+        execution ! GetExecution
         expectMsg(NotRunYet)
       }
 
@@ -185,7 +186,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       }
 
-      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Sleeping)
+      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Scheduled)
 
       within(5 seconds) {
         taskQueue.reply(EnqueueAck(task.id))
@@ -196,7 +197,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
       }
 
       within(1 second) {
-        execution ! GetOutcome
+        execution ! GetExecution
         expectMsg(NotRunYet)
       }
     }
@@ -230,7 +231,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
-        execution ! GetOutcome
+        execution ! GetExecution
         expectMsg(NotRunYet)
       }
 
@@ -239,7 +240,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       }
 
-      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Sleeping)
+      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Scheduled)
 
       within(5 seconds) {
         taskQueue.reply(EnqueueAck(task.id))
@@ -250,7 +251,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
       }
 
       within(1 second) {
-        execution ! GetOutcome
+        execution ! GetExecution
         expectMsg(NotRunYet)
       }
     }
@@ -285,7 +286,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with Im
 
     "become cancelled after the ack timeout" in {
       within(1 second) {
-        execution ! GetOutcome
+        execution ! GetExecution
         expectMsg(NotRunYet)
       }
 

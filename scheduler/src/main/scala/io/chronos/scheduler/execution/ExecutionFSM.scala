@@ -5,10 +5,11 @@ import java.util.UUID
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.Normal
-import io.chronos.cluster.{Task, TaskFailureCause}
+import io.chronos.cluster.Task
 import io.chronos.id.PlanId
 import io.chronos.scheduler.TaskQueue.EnqueueAck
 import io.chronos.scheduler._
+import io.chronos.scheduler.execution.Execution.Outcome
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -25,11 +26,11 @@ object ExecutionFSM {
   case class Finish(result: TaskResult)
   case class Cancel(reason: String)
   case object TimeOut
-  case object GetOutcome
+  case object GetExecution
 
   sealed trait Phase extends PersistentFSM.FSMState
-  object Sleeping extends Phase {
-    override def identifier = "Sleeping"
+  object Scheduled extends Phase {
+    override def identifier = "Scheduled"
   }
   object Waiting extends Phase {
     override def identifier = "Waiting"
@@ -48,14 +49,6 @@ object ExecutionFSM {
   case class Completed(result: TaskResult) extends DomainEvent
   case object TimedOut extends DomainEvent
 
-  sealed trait Outcome
-  case object NotRunYet extends Outcome
-  case class Success(result: Any) extends Outcome
-  case class Failure(cause: TaskFailureCause) extends Outcome
-  case class NeverRun(reason: String) extends Outcome
-  case object NeverEnding extends Outcome
-  case class Interrupted(reason: String) extends Outcome
-
   case class Result(outcome: Outcome)
 
   def props(planId: PlanId, task: Task, taskQueue: ActorRef,
@@ -68,21 +61,22 @@ object ExecutionFSM {
 class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
                    enqueueTimeout: FiniteDuration,
                    executionTimeout: Option[FiniteDuration])
-  extends PersistentFSM[ExecutionFSM.Phase, ExecutionFSM.Outcome, ExecutionFSM.DomainEvent] with ActorLogging {
+  extends PersistentFSM[ExecutionFSM.Phase, Execution, ExecutionFSM.DomainEvent] with ActorLogging {
 
+  import Execution._
   import ExecutionFSM._
 
   private var enqueueAttempts = 0
 
-  startWith(Sleeping, NotRunYet)
+  startWith(Scheduled, Execution(planId, task))
 
-  when(Sleeping) {
+  when(Scheduled) {
     case Event(WakeUp, _) =>
       log.debug("Execution waking up. taskId={}", task.id)
       sendToQueue()
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
-    case Event(GetOutcome, data) =>
+    case Event(GetExecution, data) =>
       stay replying data
     case Event(EnqueueAck(taskId), _) if taskId == task.id =>
       goto(Waiting) applying Triggered
@@ -98,12 +92,12 @@ class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
       startExecution()
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
-    case Event(GetOutcome, data) =>
+    case Event(GetExecution, data) =>
       stay replying data
   }
 
   when(InProgress) {
-    case Event(GetOutcome, data) =>
+    case Event(GetExecution, data) =>
       stay replying data
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
@@ -119,14 +113,14 @@ class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
   }
 
   when(Done, stateTimeout = 10 millis) {
-    case Event(GetOutcome, data) =>
+    case Event(GetExecution, data) =>
       stay replying data
     case Event(StateTimeout, _) => stop()
     case Event(_, _) => stay()
   }
 
   onTermination {
-    case StopEvent(Normal, _, data) => context.parent ! Result(data)
+    case StopEvent(Normal, _, data) => context.parent ! Result(data.outcome)
   }
 
   initialize()
@@ -135,17 +129,17 @@ class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
 
   override def domainEventClassTag: ClassTag[DomainEvent] = ClassTag(classOf[DomainEvent])
 
-  override def applyEvent(event: DomainEvent, previousOutcome: Outcome): Outcome = event match {
+  override def applyEvent(event: DomainEvent, previous: Execution): Execution = event match {
     case Completed(report) => report match {
-      case Left(cause)   => Failure(cause)
-      case Right(result) => Success(result)
+      case Left(cause)   => previous <<= Failure(cause)
+      case Right(result) => previous <<= Success(result)
     }
     case Cancelled(reason) => stateName match {
-      case InProgress => Interrupted(reason)
-      case _          => NeverRun(reason)
+      case InProgress => previous <<= Interrupted(reason)
+      case _          => previous <<= NeverRun(reason)
     }
-    case TimedOut          => NeverEnding
-    case _                 => previousOutcome
+    case TimedOut          => previous <<= NeverEnding
+    case _                 => previous
   }
 
   private def startExecution() = {

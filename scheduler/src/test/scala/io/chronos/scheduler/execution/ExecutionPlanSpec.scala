@@ -93,7 +93,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
         expects(LastExecutionTime(expectedLastExecutionTime), clock).
         returning(Some(expectedExecutionTime))
 
-      executionProbe.send(executionPlan, ExecutionFSM.Result(ExecutionFSM.Success("bar")))
+      executionProbe.send(executionPlan, ExecutionFSM.Result(Execution.Success("bar")))
 
       val scheduledMsg = expectMsgType[JobScheduled]
       scheduledMsg.jobId should be (TestJobId)
@@ -110,7 +110,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
         expects(LastExecutionTime(expectedLastExecutionTime), clock).
         returning(None)
 
-      executionProbe.send(executionPlan, ExecutionFSM.Result(ExecutionFSM.Success("bar")))
+      executionProbe.send(executionPlan, ExecutionFSM.Result(Execution.Success("bar")))
 
       executionProbe.expectNoMsg(1 second)
       expectTerminated(executionPlan)
@@ -147,7 +147,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     "terminate once the execution finishes" in {
       (triggerMock.isRecurring _).expects().returning(false)
 
-      executionProbe.send(executionPlan, ExecutionFSM.Result(ExecutionFSM.Success("bar")))
+      executionProbe.send(executionPlan, ExecutionFSM.Result(Execution.Success("bar")))
 
       executionProbe.expectNoMsg(1 second)
       expectTerminated(executionPlan)
@@ -185,7 +185,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       system.eventStream.publish(RegistryProtocol.JobDisabled(TestJobId))
 
       // This message will be sent to the deadletter actor.
-      executionProbe.send(executionPlan, ExecutionFSM.Result(ExecutionFSM.Success("bar")))
+      executionProbe.send(executionPlan, ExecutionFSM.Result(Execution.Success("bar")))
 
       executionProbe.expectNoMsg(1 second)
       expectTerminated(executionPlan)

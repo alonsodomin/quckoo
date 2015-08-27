@@ -61,7 +61,7 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
     case ExecutionFSM.Result(outcome) =>
       def nextStage: Receive = if (trigger.isRecurring) {
         outcome match {
-          case _: ExecutionFSM.Success =>
+          case _: Execution.Success =>
             schedule(jobId, jobSpec)
 
           case _ =>
