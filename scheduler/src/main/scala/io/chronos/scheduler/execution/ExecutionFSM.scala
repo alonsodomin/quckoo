@@ -1,5 +1,6 @@
 package io.chronos.scheduler.execution
 
+import java.time.Clock
 import java.util.UUID
 
 import akka.actor.{ActorLogging, ActorRef, Props}
@@ -53,14 +54,14 @@ object ExecutionFSM {
 
   def props(planId: PlanId, task: Task, taskQueue: ActorRef,
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
-            executionTimeout: Option[FiniteDuration] = None) =
-    Props(classOf[ExecutionFSM], planId, task, taskQueue, enqueueTimeout, executionTimeout)
+            executionTimeout: Option[FiniteDuration] = None)(implicit clock: Clock) =
+    Props(classOf[ExecutionFSM], planId, task, taskQueue, enqueueTimeout, executionTimeout, clock)
 
 }
 
 class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
                    enqueueTimeout: FiniteDuration,
-                   executionTimeout: Option[FiniteDuration])
+                   executionTimeout: Option[FiniteDuration])(implicit clock: Clock)
   extends PersistentFSM[ExecutionFSM.Phase, Execution, ExecutionFSM.DomainEvent] with ActorLogging {
 
   import Execution._

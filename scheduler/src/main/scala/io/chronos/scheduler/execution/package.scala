@@ -9,6 +9,6 @@ import io.chronos.id._
  */
 package object execution {
 
-  type ExecutionProps = (TaskId, JobSpec) => Props
+  type ExecutionFSMProps = (TaskId, JobSpec) => Props
 
 }

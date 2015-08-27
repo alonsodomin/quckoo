@@ -7,6 +7,7 @@ import io.chronos.cluster.Task
 import io.chronos.id.ModuleId
 import io.chronos.scheduler.TaskQueue.EnqueueAck
 import io.chronos.scheduler.{TaskQueue, TestActorSystem}
+import io.chronos.test.ImplicitClock
 import org.scalatest.{BeforeAndAfterAll, Ignore, Matchers, WordSpecLike}
 
 import scala.concurrent.duration._
@@ -23,7 +24,7 @@ object ExecutionFSMSpec {
 
 @Ignore
 class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with ImplicitSender with DefaultTimeout
-  with WordSpecLike with BeforeAndAfterAll with Matchers {
+  with WordSpecLike with BeforeAndAfterAll with Matchers with ImplicitClock {
 
   import Execution._
   import ExecutionFSM._

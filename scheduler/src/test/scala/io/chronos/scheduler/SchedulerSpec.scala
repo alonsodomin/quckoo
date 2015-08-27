@@ -1,13 +1,12 @@
 package io.chronos.scheduler
 
-import java.time.{Clock, Instant, ZoneId}
-
 import akka.cluster.sharding.ClusterShardingSettings
 import akka.testkit._
 import io.chronos.JobSpec
 import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.RegistryProtocol.JobNotEnabled
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
+import io.chronos.test.ImplicitClock
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
@@ -15,22 +14,17 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
  */
 object SchedulerSpec {
 
-  final val FixedInstant = Instant.ofEpochMilli(893273L)
-  final val ZoneUTC = ZoneId.of("UTC")
-
   final val TestModuleId = ModuleId("com.example", "bar", "test")
   final val TestJobSpec = JobSpec("foo", "foo desc", TestModuleId, "com.example.Job")
   final val TestJobId = JobId(TestJobSpec)
 
 }
 
-class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender
+class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender with ImplicitClock
   with WordSpecLike with BeforeAndAfterAll with Matchers {
 
   import SchedulerProtocol._
   import SchedulerSpec._
-
-  implicit val clock = Clock.fixed(FixedInstant, ZoneUTC)
 
   val shardSettings = ClusterShardingSettings(system)
 

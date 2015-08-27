@@ -16,12 +16,12 @@ import scala.concurrent.duration._
  */
 object ExecutionPlan {
 
-  def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionProps)(implicit clock: Clock) =
+  def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionFSMProps)(implicit clock: Clock) =
     Props(classOf[ExecutionPlan], planId, trigger, executionProps, clock)
 
 }
 
-class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: ExecutionProps)(implicit clock: Clock)
+class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: ExecutionFSMProps)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import RegistryProtocol._

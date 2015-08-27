@@ -1,12 +1,13 @@
 package io.chronos.scheduler.execution
 
-import java.time.{Clock, Instant, ZoneId, ZonedDateTime}
+import java.time.{Clock, ZonedDateTime}
 import java.util.UUID
 
 import akka.actor._
 import akka.testkit._
 import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
+import io.chronos.test.ImplicitClock
 import io.chronos.{JobSpec, Trigger}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
@@ -18,23 +19,18 @@ import scala.concurrent.duration._
  */
 object ExecutionPlanSpec {
 
-  final val FixedInstant = Instant.ofEpochMilli(893273L)
-  final val ZoneUTC = ZoneId.of("UTC")
-
   final val TestModuleId = ModuleId("com.example", "bar", "test")
   final val TestJobSpec = JobSpec("foo", "foo desc", TestModuleId, "com.example.Job")
   final val TestJobId = JobId(TestJobSpec)
 
 }
 
-class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with ImplicitSender
+class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with ImplicitSender with ImplicitClock
   with WordSpecLike with BeforeAndAfterAll with Matchers with Inside with MockFactory {
 
   import ExecutionPlanSpec._
   import SchedulerProtocol._
   import Trigger._
-
-  implicit val clock = Clock.fixed(FixedInstant, ZoneUTC)
 
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
@@ -43,7 +39,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
 
     "terminate itself immediately" in {
       val trigger = mock[Trigger]
-      val executionProps: ExecutionProps =
+      val executionProps: ExecutionFSMProps =
         (taskId, jobSpec) => TestActors.echoActorProps
 
       val planId = UUID.randomUUID()
@@ -60,7 +56,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
   "An execution plan with recurring trigger" should  {
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
-    val executionProps: ExecutionProps =
+    val executionProps: ExecutionFSMProps =
       (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
@@ -120,7 +116,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
   "An execution plan with non recurring trigger" should {
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
-    val executionProps: ExecutionProps =
+    val executionProps: ExecutionFSMProps =
       (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
@@ -157,7 +153,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
   "An execution plan that gets disabled" should {
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
-    val executionProps: ExecutionProps =
+    val executionProps: ExecutionFSMProps =
       (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
