@@ -13,6 +13,8 @@ resolvers in ThisBuild ++= Seq(
   "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
 )
 
+coverageHighlighting in ThisBuild := true
+
 lazy val chronos = (project in file(".")).aggregate(
   common, network, resolver, client, cluster, scheduler, examples, worker
 )

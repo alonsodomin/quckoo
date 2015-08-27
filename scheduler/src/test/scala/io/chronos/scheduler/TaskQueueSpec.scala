@@ -8,6 +8,7 @@ import io.chronos.cluster.protocol.WorkerProtocol._
 import io.chronos.cluster.{Task, TaskFailureCause}
 import io.chronos.id.ModuleId
 import io.chronos.scheduler.execution.ExecutionFSM
+import io.chronos.test.TestActorSystem
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 

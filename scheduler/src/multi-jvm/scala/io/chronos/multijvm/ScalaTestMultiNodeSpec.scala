@@ -1,12 +1,12 @@
 package io.chronos.multijvm
 
 import akka.remote.testkit.MultiNodeSpecCallbacks
-import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
  * Created by aalonsodominguez on 27/08/15.
  */
-trait ScalaTestMultiNodeSpec extends MultiNodeSpecCallbacks with WordSpecLike with BeforeAndAfterAll {
+trait ScalaTestMultiNodeSpec extends MultiNodeSpecCallbacks with WordSpecLike with BeforeAndAfterAll with Matchers {
 
    override def beforeAll() = multiNodeSpecBeforeAll()
 

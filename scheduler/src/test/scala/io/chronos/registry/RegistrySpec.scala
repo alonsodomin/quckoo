@@ -7,7 +7,7 @@ import io.chronos.JobSpec
 import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, ResolutionFailed}
 import io.chronos.resolver.{JobPackage, Resolver}
-import io.chronos.scheduler.TestActorSystem
+import io.chronos.test.TestActorSystem
 import org.scalatest._
 
 /**

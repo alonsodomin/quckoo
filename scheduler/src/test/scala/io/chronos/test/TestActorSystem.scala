@@ -1,4 +1,4 @@
-package io.chronos.scheduler
+package io.chronos.test
 
 import akka.actor.ActorSystem
 import akka.cluster.Cluster
@@ -10,7 +10,7 @@ import com.typesafe.config.ConfigFactory
 object TestActorSystem {
 
   def apply(name: String): ActorSystem = {
-    val config = ConfigFactory.load()
+    val config = ConfigFactory.load("test-application")
     val system = ActorSystem(name, config)
 
     val address = Cluster(system).selfAddress

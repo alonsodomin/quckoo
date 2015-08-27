@@ -5,7 +5,7 @@ import io.chronos.JobSpec
 import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.RegistryProtocol.JobNotEnabled
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
-import io.chronos.test.ImplicitClock
+import io.chronos.test.{ImplicitClock, TestActorSystem}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
