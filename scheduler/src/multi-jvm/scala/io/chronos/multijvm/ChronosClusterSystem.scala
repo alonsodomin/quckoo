@@ -2,10 +2,9 @@ package io.chronos.multijvm
 
 import akka.cluster.sharding.ClusterShardingSettings
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
-import akka.testkit.{ImplicitSender, TestActors}
+import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
 import io.chronos.cluster.Chronos
-import io.chronos.registry.Registry
 import io.chronos.scheduler.TaskQueue
 import io.chronos.test.ImplicitClock
 
@@ -54,12 +53,12 @@ class ChronosClusterSystem extends MultiNodeSpec(ChronosNodesConfig) with Implic
 
     "registry jobs in one node and fetch them from the other one" in {
       runOn(scheduler) {
-        system.actorOf(Chronos.props(shardSettings, TestActors.echoActorProps, TaskQueue.props())(Registry.props))
+        system.actorOf(Chronos.props(TaskQueue.props()))
         enterBarrier("deployed")
       }
 
       runOn(registry) {
-        system.actorOf(Chronos.props(shardSettings, TestActors.echoActorProps, TaskQueue.props())(Registry.props))
+        system.actorOf(Chronos.props(TaskQueue.props()))
         enterBarrier("deployed")
       }
     }
