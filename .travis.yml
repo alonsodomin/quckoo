@@ -21,3 +21,4 @@ branches:
  only:
    - master
    - cron-support
+   - multijvm

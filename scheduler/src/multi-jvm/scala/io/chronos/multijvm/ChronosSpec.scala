@@ -13,6 +13,9 @@ object ChronosNodesConfig extends MultiNodeConfig {
   val registry2  = role("registry")
 }
 
+class ChronosSpecNode1 extends ChronosSpec
+class ChronosSpecNode2 extends ChronosSpec
+
 class ChronosSpec extends MultiNodeSpec(ChronosNodesConfig) with ImplicitSender
   with ScalaTestMultiNodeSpec {
 
