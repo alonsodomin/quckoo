@@ -1,6 +1,7 @@
 # Chronos
 
 [![Build Status](https://travis-ci.org/alonsodomin/chronos.svg)](https://travis-ci.org/alonsodomin/chronos)
+[![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 Chronos is a fault-tolerant distributed task scheduler platform that runs on the JVM. The aim of the project is
 the implementation of a reliable system able to run large amount of scheduled tasks without single points of failure.
