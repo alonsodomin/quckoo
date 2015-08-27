@@ -3,12 +3,8 @@ package io.chronos.boot
 import java.time.Clock
 
 import akka.actor._
-import akka.cluster.sharding.ClusterShardingSettings
-import akka.routing.RoundRobinPool
 import com.typesafe.config.ConfigFactory
 import io.chronos.cluster.Chronos
-import io.chronos.registry.Registry
-import io.chronos.resolver.{IvyConfiguration, IvyResolve, Resolver}
 import io.chronos.scheduler.TaskQueue
 
 /**
@@ -29,16 +25,8 @@ object Boot {
     val system = ActorSystem("ChronosClusterSystem", conf)
     implicit val clock = Clock.systemUTC()
 
-    val ivyConfig = IvyConfiguration(conf)
-    val ivyResolver = new IvyResolve(ivyConfig)
-
-    val shardSettings = ClusterShardingSettings(system)
-
-    val resolverProps = Resolver.props(ivyResolver).
-      withRouter(RoundRobinPool(3))
-
     val queueProps    = TaskQueue.props()
-    val chronosProps  = Chronos.props(shardSettings, resolverProps, queueProps) { Registry.props }
+    val chronosProps  = Chronos.props(queueProps)
     system.actorOf(chronosProps, "chronos")
   }
 

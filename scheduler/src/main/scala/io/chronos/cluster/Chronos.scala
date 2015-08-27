@@ -11,6 +11,7 @@ import akka.cluster.{Cluster, Member}
 import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.protocol._
 import io.chronos.registry.Registry
+import io.chronos.resolver.{IvyResolve, Resolver}
 import io.chronos.scheduler.Scheduler
 
 /**
@@ -18,19 +19,14 @@ import io.chronos.scheduler.Scheduler
  */
 object Chronos {
 
-  def props(shardSettings: ClusterShardingSettings,
-            resolverProps: Props,
-            queueProps: Props)(registryProps: ActorRef => Props)(implicit clock: Clock) =
-    Props(classOf[Chronos], shardSettings, resolverProps, queueProps, registryProps, clock)
+  def props(queueProps: Props)(implicit clock: Clock) =
+    Props(classOf[Chronos], queueProps, clock)
 
   case object Shutdown
 
 }
 
-class Chronos(shardSettings: ClusterShardingSettings,
-              resolverProps: Props,
-              queueProps: Props,
-              registryProps: ActorRef => Props)(implicit clock: Clock) extends Actor with ActorLogging {
+class Chronos(queueProps: Props)(implicit clock: Clock) extends Actor with ActorLogging {
 
   import Chronos._
 
@@ -39,17 +35,11 @@ class Chronos(shardSettings: ClusterShardingSettings,
   private val cluster = Cluster(context.system)
   private val mediator = DistributedPubSub(context.system).mediator
 
-  private val resolver = context.watch(context.actorOf(resolverProps, "resolver"))
-  private val registry = ClusterSharding(context.system).start(
-    typeName        = Registry.shardName,
-    entityProps     = registryProps(resolver),
-    settings        = shardSettings,
-    extractEntityId = Registry.idExtractor,
-    extractShardId  = Registry.shardResolver
-  )
+  private val resolver = context.watch(context.actorOf(Resolver.props(IvyResolve(context.system)), "resolver"))
+  private val registry = startRegistry
   context.actorOf(Props(classOf[ForwadingReceptionist], registry), "registry")
 
-  private val scheduler = context.watch(context.actorOf(Scheduler.props(shardSettings, registry, queueProps), "scheduler"))
+  private val scheduler = context.watch(context.actorOf(Scheduler.props(registry, queueProps), "scheduler"))
 
   private var clients = Set.empty[ActorRef]
   private var healthyMembers = Set.empty[Member]
@@ -85,6 +75,7 @@ class Chronos(shardSettings: ClusterShardingSettings,
       sender() ! clusterStatus
 
     case MemberUp(member) =>
+
       healthyMembers += member
       sendStatusToClients()
 
@@ -104,6 +95,23 @@ class Chronos(shardSettings: ClusterShardingSettings,
 
     case Shutdown =>
       // Perform graceful shutdown of the cluster
+  }
+
+  private def startRegistry: ActorRef = if (cluster.selfRoles.contains("registry")) {
+    ClusterSharding(context.system).start(
+      typeName        = Registry.shardName,
+      entityProps     = Registry.props(resolver),
+      settings        = ClusterShardingSettings(context.system).withRole("registry"),
+      extractEntityId = Registry.idExtractor,
+      extractShardId  = Registry.shardResolver
+    )
+  } else {
+    ClusterSharding(context.system).startProxy(
+      typeName        = Registry.shardName,
+      role            = None,
+      extractEntityId = Registry.idExtractor,
+      extractShardId  = Registry.shardResolver
+    )
   }
 
   private def sendStatusToClients(): Unit = {

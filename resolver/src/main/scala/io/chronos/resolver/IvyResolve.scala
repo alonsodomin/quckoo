@@ -2,6 +2,7 @@ package io.chronos.resolver
 
 import java.net.URL
 
+import akka.actor.ActorSystem
 import io.chronos.id.ModuleId
 import io.chronos.protocol._
 import org.apache.ivy.Ivy
@@ -13,6 +14,15 @@ import org.apache.ivy.core.resolve.ResolveOptions
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
+object IvyResolve {
+
+  def apply(system: ActorSystem): IvyResolve = {
+    val settings = IvyConfiguration(system.settings.config)
+    new IvyResolve(settings)
+  }
+
+}
+
 class IvyResolve(config: IvyConfiguration) extends ResolveFun {
 
   private val DefaultConfName = "default"

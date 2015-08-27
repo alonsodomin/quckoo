@@ -3,9 +3,8 @@ package io.chronos.scheduler
 import java.time.Clock
 import java.util.UUID
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
-import akka.cluster.sharding.ClusterShardingSettings
 import io.chronos.JobSpec
 import io.chronos.cluster._
 import io.chronos.cluster.protocol.WorkerProtocol
@@ -18,12 +17,12 @@ import io.chronos.scheduler.execution.{ExecutionFSM, ExecutionPlan}
  */
 object Scheduler {
 
-  def props(shardSettings: ClusterShardingSettings, registry: ActorRef, queueProps: Props)(implicit clock: Clock) =
-    Props(classOf[Scheduler], shardSettings, registry, queueProps, clock)
+  def props(registry: ActorRef, queueProps: Props)(implicit clock: Clock) =
+    Props(classOf[Scheduler], registry, queueProps, clock)
 
 }
 
-class Scheduler(shardSettings: ClusterShardingSettings, registry: ActorRef, queueProps: Props)(implicit clock: Clock)
+class Scheduler(registry: ActorRef, queueProps: Props)(implicit clock: Clock)
   extends Actor with ActorLogging {
 
   import RegistryProtocol._

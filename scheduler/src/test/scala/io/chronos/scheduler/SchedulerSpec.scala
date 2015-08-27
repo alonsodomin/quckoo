@@ -1,6 +1,5 @@
 package io.chronos.scheduler
 
-import akka.cluster.sharding.ClusterShardingSettings
 import akka.testkit._
 import io.chronos.JobSpec
 import io.chronos.id.{JobId, ModuleId}
@@ -26,8 +25,6 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
   import SchedulerProtocol._
   import SchedulerSpec._
 
-  val shardSettings = ClusterShardingSettings(system)
-
   val registryProbe = TestProbe("registry")
   val taskQueueProbe = TestProbe("taskQueue")
 
@@ -36,7 +33,6 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
 
   "A scheduler" should {
     val scheduler = TestActorRef(Scheduler.props(
-      shardSettings,
       registryProbe.ref,
       TestActors.forwardActorProps(taskQueueProbe.ref)
     ), "scheduler")
