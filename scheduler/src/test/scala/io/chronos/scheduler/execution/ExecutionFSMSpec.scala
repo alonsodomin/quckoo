@@ -23,7 +23,7 @@ object ExecutionFSMSpec {
 }
 
 @Ignore
-class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionSpec")) with ImplicitSender with DefaultTimeout
+class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with ImplicitSender with DefaultTimeout
   with WordSpecLike with BeforeAndAfterAll with Matchers with ImplicitClock {
 
   import Execution._
