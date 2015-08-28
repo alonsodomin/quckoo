@@ -41,9 +41,14 @@ object MultiNodeClusterSpec {
       journal.plugin = "inmemory-journal"
       snapshot-store.plugin = "inmemory-snapshot-store"
     }
-    ivy {
-      cacheDir = "target/ivy-cache"
-      workDir = "target/ivy"
+    chronos {
+      ivy {
+        cacheDir = "target/ivy-cache"
+        workDir = "target/ivy"
+      }
+      task-queue {
+        max-work-timeout = 10m
+      }
     }
     """)
 

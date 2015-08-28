@@ -6,7 +6,6 @@ import com.typesafe.config.ConfigFactory
 import io.chronos.id.ModuleId
 import io.chronos.multijvm.MultiNodeClusterSpec
 import io.chronos.protocol.{Connect, Connected}
-import io.chronos.scheduler.TaskQueue
 import io.chronos.test.ImplicitClock
 
 /**
@@ -41,12 +40,13 @@ abstract class ChronosMultiNodeCluster extends MultiNodeSpec(ChronosNodesConfig)
   override def initialParticipants: Int = roles.size
 
   "A Chronos cluster" must {
+    val settings = ChronosClusterSettings(system)
 
     "send connect commands from one node to the other one" in {
       awaitClusterUp(registry, scheduler)
 
       runOn(registry) {
-        system.actorOf(ChronosCluster.props(TaskQueue.props()), "chronos")
+        system.actorOf(ChronosCluster.props(settings), "chronos")
         enterBarrier("deployed")
 
         val schedulerGuardian = system.actorSelection(node(scheduler) / "user" / "chronos")
@@ -58,7 +58,7 @@ abstract class ChronosMultiNodeCluster extends MultiNodeSpec(ChronosNodesConfig)
       }
 
       runOn(scheduler) {
-        system.actorOf(ChronosCluster.props(TaskQueue.props()), "chronos")
+        system.actorOf(ChronosCluster.props(settings), "chronos")
         enterBarrier("deployed")
 
         val registryGuardian = system.actorSelection(node(registry) / "user" / "chronos")

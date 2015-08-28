@@ -12,21 +12,21 @@ import io.chronos.cluster.protocol.WorkerProtocol
 import io.chronos.protocol._
 import io.chronos.registry.Registry
 import io.chronos.resolver.{IvyResolve, Resolver}
-import io.chronos.scheduler.Scheduler
+import io.chronos.scheduler.{Scheduler, TaskQueue}
 
 /**
  * Created by domingueza on 24/08/15.
  */
 object ChronosCluster {
 
-  def props(queueProps: Props)(implicit clock: Clock) =
-    Props(classOf[ChronosCluster], queueProps, clock)
+  def props(settings: ChronosClusterSettings)(implicit clock: Clock) =
+    Props(classOf[ChronosCluster], settings, clock)
 
   case object Shutdown
 
 }
 
-class ChronosCluster(queueProps: Props)(implicit clock: Clock) extends Actor with ActorLogging {
+class ChronosCluster(settings: ChronosClusterSettings)(implicit clock: Clock) extends Actor with ActorLogging {
 
   import ChronosCluster._
 
@@ -35,11 +35,11 @@ class ChronosCluster(queueProps: Props)(implicit clock: Clock) extends Actor wit
   private val cluster = Cluster(context.system)
   private val mediator = DistributedPubSub(context.system).mediator
 
-  private val resolver = context.watch(context.actorOf(Resolver.props(IvyResolve(context.system)), "resolver"))
+  private val resolver = context.watch(context.actorOf(Resolver.props(new IvyResolve(settings.ivyConfiguration)), "resolver"))
   private val registry = startRegistry
   context.actorOf(Props(classOf[ForwadingReceptionist], registry), "registry")
 
-  private val scheduler = context.watch(context.actorOf(Scheduler.props(registry, queueProps), "scheduler"))
+  private val scheduler = context.watch(context.actorOf(Scheduler.props(registry, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
 
   private var clients = Set.empty[ActorRef]
   private var healthyMembers = Set.empty[Member]
