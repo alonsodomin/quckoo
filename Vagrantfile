@@ -6,6 +6,7 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.env.enable
   config.vm.box = "phusion/ubuntu-14.04-amd64"
+  config.vm.hostname = "chronos-vagrant"
 
   if Vagrant.has_plugin?("vagrant-proxyconf")
     config.proxy.http     = ENV['HTTP_PROXY']
