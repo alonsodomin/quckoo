@@ -32,7 +32,7 @@ object ChronosCluster {
 
 }
 
-class ChronosCluster extends MultiNodeSpec(ChronosNodesConfig) with ImplicitSender
+abstract class ChronosCluster extends MultiNodeSpec(ChronosNodesConfig) with ImplicitSender
   with MultiNodeClusterSpec with ImplicitClock {
 
   import ChronosCluster._
@@ -42,32 +42,23 @@ class ChronosCluster extends MultiNodeSpec(ChronosNodesConfig) with ImplicitSend
   override def initialParticipants: Int = roles.size
 
   "A Chronos cluster" must {
-    "wait for all the nodes to be ready" in {
-      runOn(scheduler) {
-        startClusterNode()
-        enterBarrier("startup")
-      }
-
-      runOn(registry) {
-        startClusterNode()
-        enterBarrier("startup")
-      }
-    }
 
     "registry jobs in one node and fetch them from the other one" in {
+      awaitClusterUp(registry, scheduler)
+
+      runOn(registry) {
+        system.actorOf(Chronos.props(TaskQueue.props()), "chronos")
+        enterBarrier("deployed")
+      }
+
       runOn(scheduler) {
-        system.actorOf(Chronos.props(TaskQueue.props()))
+        //system.actorOf(Chronos.props(TaskQueue.props()), "chronos")
         enterBarrier("deployed")
 
-        val registryRef = system.actorSelection(node(scheduler) / "user" / "chronos" / "registry")
+        val registryRef = system.actorSelection(node(registry) / "user" / "chronos" / "registry")
         registryRef ! RegisterJob(JobSpec("examples", "examples", TestModuleId, "invalid.class.Name"))
 
         //expectMsgType[JobAccepted].job.moduleId should be (TestModuleId)
-      }
-
-      runOn(registry) {
-        system.actorOf(Chronos.props(TaskQueue.props()))
-        enterBarrier("deployed")
       }
     }
 

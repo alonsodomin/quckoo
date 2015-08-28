@@ -20,6 +20,7 @@ object MultiNodeClusterSpec {
   def clusterConfig: Config = ConfigFactory.parseString("""
     akka.actor.provider = akka.cluster.ClusterActorRefProvider
     akka.cluster {
+      seed-nodes                          = []
       jmx.enabled                         = off
       gossip-interval                     = 200 ms
       leader-actions-interval             = 200 ms
@@ -35,6 +36,14 @@ object MultiNodeClusterSpec {
     akka.loggers = ["akka.testkit.TestEventListener"]
     akka.test {
       single-expect-default = 5 s
+    }
+    persistence {
+      journal.plugin = "inmemory-journal"
+      snapshot-store.plugin = "inmemory-snapshot-store"
+    }
+    ivy {
+      cacheDir = "target/ivy-cache"
+      workDir = "target/ivy"
     }
     """)
 

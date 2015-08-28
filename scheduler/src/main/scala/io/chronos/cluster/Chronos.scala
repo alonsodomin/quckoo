@@ -98,6 +98,7 @@ class Chronos(queueProps: Props)(implicit clock: Clock) extends Actor with Actor
   }
 
   private def startRegistry: ActorRef = if (cluster.selfRoles.contains("registry")) {
+    log.info("Strating registry shards...")
     ClusterSharding(context.system).start(
       typeName        = Registry.shardName,
       entityProps     = Registry.props(resolver),
@@ -106,6 +107,7 @@ class Chronos(queueProps: Props)(implicit clock: Clock) extends Actor with Actor
       extractShardId  = Registry.shardResolver
     )
   } else {
+    log.info("Strating registry proxy...")
     ClusterSharding(context.system).startProxy(
       typeName        = Registry.shardName,
       role            = None,
