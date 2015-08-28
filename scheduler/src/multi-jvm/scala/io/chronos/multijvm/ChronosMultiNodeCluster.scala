@@ -5,6 +5,7 @@ import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
 import io.chronos.cluster.ChronosCluster
 import io.chronos.id.ModuleId
+import io.chronos.protocol.{Connect, Connected}
 import io.chronos.scheduler.TaskQueue
 import io.chronos.test.ImplicitClock
 
@@ -47,19 +48,30 @@ abstract class ChronosMultiNodeCluster extends MultiNodeSpec(ChronosNodesConfig)
       runOn(registry) {
         system.actorOf(ChronosCluster.props(TaskQueue.props()), "chronos")
         enterBarrier("deployed")
+
+        val schedulerGuardian = system.actorSelection(node(registry) / "user" / "chronos")
+        schedulerGuardian ! Connect
+
+        expectMsg(Connected)
+
+        enterBarrier("finished")
       }
 
       runOn(scheduler) {
         system.actorOf(ChronosCluster.props(TaskQueue.props()), "chronos")
         enterBarrier("deployed")
 
+        val registryGuardian = system.actorSelection(node(registry) / "user" / "chronos")
+        registryGuardian ! Connect
+
+        expectMsg(Connected)
+
         /*val registryRef = system.actorSelection(node(registry) / "user" / "chronos" / "registry")
         registryRef ! RegisterJob(JobSpec("examples", "examples", TestModuleId, "invalid.class.Name"))
 
         expectMsgType[JobAccepted].job.moduleId should be (TestModuleId)*/
+        enterBarrier("finished")
       }
-
-      enterBarrier("finished")
     }
 
   }
