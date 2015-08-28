@@ -42,19 +42,19 @@ abstract class ChronosMultiNodeCluster extends MultiNodeSpec(ChronosNodesConfig)
 
   "A Chronos cluster" must {
 
-    "registry jobs in one node and fetch them from the other one" in {
+    "send connect commands from one node to the other one" in {
       awaitClusterUp(registry, scheduler)
 
       runOn(registry) {
         system.actorOf(ChronosCluster.props(TaskQueue.props()), "chronos")
         enterBarrier("deployed")
 
-        val schedulerGuardian = system.actorSelection(node(registry) / "user" / "chronos")
+        val schedulerGuardian = system.actorSelection(node(scheduler) / "user" / "chronos")
         schedulerGuardian ! Connect
 
         expectMsg(Connected)
 
-        enterBarrier("finished")
+        enterBarrier("connected")
       }
 
       runOn(scheduler) {
@@ -66,12 +66,10 @@ abstract class ChronosMultiNodeCluster extends MultiNodeSpec(ChronosNodesConfig)
 
         expectMsg(Connected)
 
-        /*val registryRef = system.actorSelection(node(registry) / "user" / "chronos" / "registry")
-        registryRef ! RegisterJob(JobSpec("examples", "examples", TestModuleId, "invalid.class.Name"))
-
-        expectMsgType[JobAccepted].job.moduleId should be (TestModuleId)*/
-        enterBarrier("finished")
+        enterBarrier("connected")
       }
+
+      enterBarrier("finished")
     }
 
   }
