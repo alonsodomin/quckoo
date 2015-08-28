@@ -3,10 +3,8 @@ package io.chronos.multijvm
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
-import io.chronos.JobSpec
-import io.chronos.cluster.Chronos
+import io.chronos.cluster.ChronosCluster
 import io.chronos.id.ModuleId
-import io.chronos.protocol.RegistryProtocol
 import io.chronos.scheduler.TaskQueue
 import io.chronos.test.ImplicitClock
 
@@ -17,27 +15,27 @@ object ChronosNodesConfig extends MultiNodeConfig {
   val scheduler = role("scheduler")
   val registry  = role("registry")
 
-  commonConfig(debugConfig(on = false).withFallback(MultiNodeClusterSpec.clusterConfig))
+  commonConfig(debugConfig(on = false))
 
-  nodeConfig(scheduler)(ConfigFactory.parseString("akka.cluster.roles=[scheduler]"))
-  nodeConfig(registry)(ConfigFactory.parseString("akka.cluster.roles=[registry]"))
+  nodeConfig(scheduler)(ConfigFactory.parseString("akka.cluster.roles=[scheduler]").
+    withFallback(MultiNodeClusterSpec.clusterConfig))
+  nodeConfig(registry)(ConfigFactory.parseString("akka.cluster.roles=[registry]").
+    withFallback(MultiNodeClusterSpec.clusterConfig))
 }
 
-class ChronosClusterSpecMultiJvmNode1 extends ChronosCluster
-class ChronosClusterSpecMultiJvmNode2 extends ChronosCluster
+class ChronosMultiNodeClusterSpecMultiJvmNode1 extends ChronosMultiNodeCluster
+class ChronosMultiNodeClusterSpecMultiJvmNode2 extends ChronosMultiNodeCluster
 
-object ChronosCluster {
+object ChronosMultiNodeCluster {
 
   val TestModuleId = ModuleId("io.chronos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
 
 }
 
-abstract class ChronosCluster extends MultiNodeSpec(ChronosNodesConfig) with ImplicitSender
+abstract class ChronosMultiNodeCluster extends MultiNodeSpec(ChronosNodesConfig) with ImplicitSender
   with MultiNodeClusterSpec with ImplicitClock {
 
-  import ChronosCluster._
   import ChronosNodesConfig._
-  import RegistryProtocol._
 
   override def initialParticipants: Int = roles.size
 
@@ -47,19 +45,21 @@ abstract class ChronosCluster extends MultiNodeSpec(ChronosNodesConfig) with Imp
       awaitClusterUp(registry, scheduler)
 
       runOn(registry) {
-        system.actorOf(Chronos.props(TaskQueue.props()), "chronos")
+        system.actorOf(ChronosCluster.props(TaskQueue.props()), "chronos")
         enterBarrier("deployed")
       }
 
       runOn(scheduler) {
-        //system.actorOf(Chronos.props(TaskQueue.props()), "chronos")
+        system.actorOf(ChronosCluster.props(TaskQueue.props()), "chronos")
         enterBarrier("deployed")
 
-        val registryRef = system.actorSelection(node(registry) / "user" / "chronos" / "registry")
+        /*val registryRef = system.actorSelection(node(registry) / "user" / "chronos" / "registry")
         registryRef ! RegisterJob(JobSpec("examples", "examples", TestModuleId, "invalid.class.Name"))
 
-        //expectMsgType[JobAccepted].job.moduleId should be (TestModuleId)
+        expectMsgType[JobAccepted].job.moduleId should be (TestModuleId)*/
       }
+
+      enterBarrier("finished")
     }
 
   }

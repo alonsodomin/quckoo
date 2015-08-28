@@ -17,18 +17,18 @@ import io.chronos.scheduler.Scheduler
 /**
  * Created by domingueza on 24/08/15.
  */
-object Chronos {
+object ChronosCluster {
 
   def props(queueProps: Props)(implicit clock: Clock) =
-    Props(classOf[Chronos], queueProps, clock)
+    Props(classOf[ChronosCluster], queueProps, clock)
 
   case object Shutdown
 
 }
 
-class Chronos(queueProps: Props)(implicit clock: Clock) extends Actor with ActorLogging {
+class ChronosCluster(queueProps: Props)(implicit clock: Clock) extends Actor with ActorLogging {
 
-  import Chronos._
+  import ChronosCluster._
 
   ClusterClientReceptionist(context.system).registerService(self)
 
@@ -98,7 +98,7 @@ class Chronos(queueProps: Props)(implicit clock: Clock) extends Actor with Actor
   }
 
   private def startRegistry: ActorRef = if (cluster.selfRoles.contains("registry")) {
-    log.info("Strating registry shards...")
+    log.info("Starting registry shards...")
     ClusterSharding(context.system).start(
       typeName        = Registry.shardName,
       entityProps     = Registry.props(resolver),
@@ -107,7 +107,7 @@ class Chronos(queueProps: Props)(implicit clock: Clock) extends Actor with Actor
       extractShardId  = Registry.shardResolver
     )
   } else {
-    log.info("Strating registry proxy...")
+    log.info("Starting registry proxy...")
     ClusterSharding(context.system).startProxy(
       typeName        = Registry.shardName,
       role            = None,

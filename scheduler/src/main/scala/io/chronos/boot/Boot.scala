@@ -4,7 +4,7 @@ import java.time.Clock
 
 import akka.actor._
 import com.typesafe.config.ConfigFactory
-import io.chronos.cluster.Chronos
+import io.chronos.cluster.ChronosCluster
 import io.chronos.scheduler.TaskQueue
 
 /**
@@ -26,7 +26,7 @@ object Boot {
     implicit val clock = Clock.systemUTC()
 
     val queueProps    = TaskQueue.props()
-    val chronosProps  = Chronos.props(queueProps)
+    val chronosProps  = ChronosCluster.props(queueProps)
     system.actorOf(chronosProps, "chronos")
   }
 
