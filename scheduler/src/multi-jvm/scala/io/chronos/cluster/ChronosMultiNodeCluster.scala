@@ -1,10 +1,10 @@
-package io.chronos.multijvm
+package io.chronos.cluster
 
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
-import io.chronos.cluster.ChronosCluster
 import io.chronos.id.ModuleId
+import io.chronos.multijvm.MultiNodeClusterSpec
 import io.chronos.protocol.{Connect, Connected}
 import io.chronos.scheduler.TaskQueue
 import io.chronos.test.ImplicitClock
