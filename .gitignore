@@ -81,6 +81,7 @@ drivers
 build
 !gradle-wrapper.jar
 
-# Activator #
-#############
+# Activator & SBT #
+###################
+.history
 !activator-launch-*.jar
