@@ -37,8 +37,6 @@ abstract class ChronosMultiNodeCluster extends MultiNodeSpec(ChronosNodesConfig)
 
   import ChronosNodesConfig._
 
-  override def initialParticipants: Int = roles.size
-
   "A Chronos cluster" must {
     val settings = ChronosClusterSettings(system)
 
