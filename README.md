@@ -36,7 +36,7 @@ These are the most common terms used across the documentation to describe the pl
 
 ### Registering Jobs
 
-Chronos doesn't know anything about jobs that haven't been registered in withing the system yet. So before being able
+Chronos doesn't know anything about jobs that haven't been registered in within the system yet. So before being able
 to schedule any kind of task, we first need to tell Chronos what are the specific details of that kind of task
 implementation.
  
@@ -83,6 +83,34 @@ The set of steps of this process are as follows:
  16. The Task Queue notifies the Execution instance that the execution job has been finished. At this point, the
   Execution Plan can create and trigger more Executions according to its trigger rules.
   
+## Fault-tolerant
+
+Of course in previous diagram flows there are many components that can go wrong at any specific moment in time. To
+be resilient to failures the following decisions have been taking so far:
+
+ 1. The job registry and live executions are written to disk whilst keeping a copy of the data in memory.
+ 2. The job registry is as well sharded across the cluster.
+ 3. Task queues are only in memory. The idea behind it is that the execution instances themselves are the ones
+  that know they have been scheduled, what it's their timeout, etc. Executions themselves supervise the task queue
+  which was associated with them and in case the queue is lost they must be able to re-enqueue themselves in another
+  instance of the queue somewhere else in the cluster.
+ 4. Execution plans are not persisted to disk yet, but some research is being done to be able to do so and store
+  them in shards along with the execution instances under their supervision. This will allow to recover scheduled
+  executions (and re-schedule them) in case of a node failure.
+ 5. Workers live outside the cluster as ad hoc nodes. They register themselves to all the scheduler instances
+  available in the cluster and when they are idle they request new work to any of those instances.
+ 6. Still not available in current implementation is an execution retry process (this kind of processes are usually
+  quite complex) but some research is being done. The purpose of this retry process is to be able to identify worker
+  node failures and distinguish them from _task execution failures_ to help making proper judgement of whether a 
+  specific task must be retried or not.
+
+## Contributing
+
+Chronos is still right now in _experimental_ phase, current codebase will be evolving until it reaches the level of
+robustness necessary to be able to trust on the system to be able to handle the big load we are aiming for. Feel
+free to fork this repository and contribute with your knowledge to make this project a reliable and really
+fault-tolerant task scheduling platform.
+
 ## License
 
 Copyright 2015 Antonio Alonso Dominguez
