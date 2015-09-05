@@ -68,6 +68,7 @@ class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
   import ExecutionFSM._
 
   private var enqueueAttempts = 0
+  context.watch(taskQueue)
 
   startWith(Scheduled, Execution(planId, task))
 
