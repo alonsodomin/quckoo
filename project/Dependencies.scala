@@ -27,7 +27,7 @@ object Dependencies {
     Akka("persistence"), Akka("cluster-sharding"),
     "com.jsuereth"      %% "scala-arm"                % "2.0.0-M1"         withSources() withJavadoc(),
 
-    "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.1.0-M3"  withSources() withJavadoc(),
+    "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.1.0-RC2"  withSources() withJavadoc(),
 
     "commons-io"    % "commons-io" % "2.4" % "test"
   )
