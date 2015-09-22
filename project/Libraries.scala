@@ -25,7 +25,7 @@ object Libraries {
   object Akka extends Lib {
     val groupId = "com.typesafe.akka"
     override val prefix = Some("akka")
-    val version = "2.4.0-RC2"
+    val version = "2.4.0-RC3"
   }
 
   lazy val akkaLibs: Seq[ModuleID] = Seq(
