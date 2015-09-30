@@ -25,7 +25,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.network "private_network", ip: "192.168.33.25"
 
-  config.vm.provision :docker, version: "latest"
-  config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yml"
+  #config.vm.provision :docker, version: "latest"
+  #config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yml"
+
+  config.vm.provision :shell, path: "vagrant/provision.sh"
 
 end
