@@ -16,7 +16,8 @@ scalacOptions in ThisBuild ++= Seq(
 resolvers in ThisBuild ++= Seq(
   Opts.resolver.mavenLocalFile,
   "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/",
-  "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
+  "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven",
+  "OJO Snapshots" at "https://oss.jfrog.org/oss-snapshot-local"
 )
 
 coverageHighlighting in ThisBuild := true

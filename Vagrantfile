@@ -23,11 +23,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # fix "stdin: is not a tty" error
   config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
 
-  config.vm.network "private_network", ip: "192.168.33.25"
+  config.vm.define "store" do |store|
+    store.vm.network "private_network", ip: "192.168.33.25"
 
-  #config.vm.provision :docker, version: "latest"
-  #config.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yml"
+    store.vm.provision :docker, version: "latest"
+    store.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yml"
+  end
 
-  config.vm.provision :shell, path: "vagrant/provision.sh"
+  config.vm.define "mesos" do |mesos|
+    mesos.vm.network "private_network", ip: "192.168.33.26"
+    mesos.vm.provision :shell, path: "vagrant/provision_mesos.sh"
+  end
 
 end
