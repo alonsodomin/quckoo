@@ -26,8 +26,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "store" do |store|
     store.vm.network "private_network", ip: "192.168.33.25"
 
+    # Setting up docker provisioner in a separate line to allow for the proxy configuration
     store.vm.provision :docker, version: "latest"
-    store.vm.provision :docker_compose, yml: "/vagrant/docker-compose.yml"
+    store.vm.provision :docker do |d|
+      d.run "cassandra", args: "-p 7000:7000 -p 9042:9042 -p 9160:9160"
+    end
   end
 
   config.vm.define "mesos" do |mesos|
