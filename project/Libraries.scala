@@ -32,13 +32,6 @@ object Libraries {
     Akka("actor"), Akka("remote"), Akka("cluster"), Akka("slf4j"), Akka("cluster-tools"), Akka("testkit") % Test
   )
 
-  object Spray extends Lib {
-    val groupId = "io.spray"
-    override val prefix = Some("spray")
-    val version = "1.3.2"
-  }
-  lazy val sprayLibs = Seq(Spray("can"), Spray("routing"), Spray("json"), Spray("testkit") % Test)
-
   // Logging Libraries ---------------------------------------
 
   object Log4j extends Lib {

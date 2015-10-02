@@ -5,7 +5,13 @@ version in ThisBuild := Commons.chronosVersion
 
 scalaVersion in ThisBuild := Dependencies.scalaVersion
 
-scalacOptions in ThisBuild ++= Seq("-Xexperimental", "-language:postfixOps", "-feature")
+scalacOptions in ThisBuild ++= Seq(
+  "-Xexperimental",
+  "-language:postfixOps",
+  "-feature",
+  "-unchecked",
+  "-deprecation"
+)
 
 resolvers in ThisBuild ++= Seq(
   Opts.resolver.mavenLocalFile,
