@@ -10,7 +10,6 @@ import io.chronos.cluster.Task
 import io.chronos.id.PlanId
 import io.chronos.scheduler.TaskQueue.EnqueueAck
 import io.chronos.scheduler._
-import io.chronos.scheduler.execution.Execution.Outcome
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -20,14 +19,17 @@ import scala.reflect.ClassTag
  */
 object ExecutionFSM {
 
+  import Execution._
+
   final val DefaultEnqueueTimeout = 10 seconds
 
-  case object WakeUp
-  case object Start
-  case class Finish(result: TaskResult)
-  case class Cancel(reason: String)
-  case object TimeOut
-  case object GetExecution
+  sealed trait Command
+  case object WakeUp extends Command
+  case object Start extends Command
+  case class Finish(result: TaskResult) extends Command
+  case class Cancel(reason: String) extends Command
+  case object TimeOut extends Command
+  case object GetExecution extends Command
 
   sealed trait Phase extends PersistentFSM.FSMState
   object Scheduled extends Phase {
