@@ -1,8 +1,7 @@
-import com.typesafe.sbt.SbtNativePackager.autoImport._
-import com.typesafe.sbt.SbtNativePackager.{Docker, Linux, Universal}
+import com.typesafe.sbt.SbtNativePackager.{Docker, Universal}
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging.autoImport._
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport._
-import com.typesafe.sbt.packager.rpm.RpmPlugin.autoImport._
+import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
 import sbt.Keys._
 import sbt._
 
@@ -18,16 +17,11 @@ object Packaging {
     }
   )
 
-  lazy val linuxSettings = Seq(
-    maintainer in Linux := "Antonio Alonso Dominguez <alonso.domin@gmail.com>",
-    rpmVendor := "Chronos",
-    rpmLicense := Some("Apache 2.0")
-  )
-
   lazy val dockerSettings = Seq(
     dockerRepository in Docker := Some("chronos"),
     dockerExposedPorts in Docker := Seq(8090),
-    dockerExposedVolumes in Docker := Seq("/opt/docker/conf")
+    dockerExposedVolumes in Docker := Seq("/opt/chronos/conf"),
+    defaultLinuxInstallLocation in Docker := "/opt/chronos"
   )
 
 }
