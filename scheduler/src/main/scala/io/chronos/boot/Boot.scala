@@ -17,6 +17,9 @@ object Boot extends App {
     opt[String]('h', "host") valueName "<host>" action { (h, options) =>
       options.copy(host = h)
     } text "Scheduler node hostname"
+    opt[String]('b', "bind") valueName "<bind address>" action { (b, options) =>
+      options.copy(bindHost = b)
+    } text "Address to which the scheduler will be bound. Default is 0.0.0.0"
     opt[Int]('p', "port") valueName "<port>" action { (p, options) =>
       options.copy(port = p)
     } text "Scheduler node port"

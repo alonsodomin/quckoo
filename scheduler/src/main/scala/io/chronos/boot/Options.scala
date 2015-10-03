@@ -13,6 +13,7 @@ object Options {
 
   final val AkkaRemoteNettyHost = "akka.remote.netty.tcp.hostname"
   final val AkkaRemoteNettyPort = "akka.remote.netty.tcp.port"
+  final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
 
   final val AkkaClusterSeedNodes = "akka.cluster.seed-nodes"
 
@@ -21,7 +22,8 @@ object Options {
 
 }
 
-case class Options(host: String = "127.0.0.1",
+case class Options(host: String = "",
+                   bindHost: String = "0.0.0.0",
                    port: Int = Options.DefaultPort,
                    seedNodes: Seq[String] = Seq(),
                    cassandraSeedNodes: Seq[String] = Seq()) {
@@ -31,6 +33,7 @@ case class Options(host: String = "127.0.0.1",
     val map = new JHashMap[String, Object]()
     map.put(AkkaRemoteNettyHost, host)
     map.put(AkkaRemoteNettyPort, Int.box(port))
+    map.put(AkkaRemoteNettyBindHost, bindHost)
 
     if (seedNodes.nonEmpty) {
       map.put(AkkaClusterSeedNodes, seqAsJavaList(seedNodes.map { node =>

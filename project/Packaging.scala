@@ -20,19 +20,13 @@ object Packaging {
   )
 
   lazy val dockerSettings = Seq(
-    dockerRepository in Docker := Some("chronos"),
-    dockerExposedVolumes in Docker := Seq("/opt/chronos/conf"),
+    dockerRepository := Some("chronos"),
+    dockerExposedVolumes := Seq("/opt/chronos/conf"),
     defaultLinuxInstallLocation in Docker := "/opt/chronos"
   )
 
-  lazy val schedulerUniversalSettings = universalSettings ++ Seq(
-    bashScriptExtraDefines ++= Seq(
-      """if [ ! -z "$CASSANDRA_PORT_9042_TCP_ADDR" -a ! -z "$CASSANDRA_PORT_9042_TCP_PORT" ]; then addApp --cs; addApp $CASSANDRA_PORT_9042_TCP_ADDR:$CASSANDRA_PORT_9042_TCP_PORT; fi"""
-    )
-  )
-
   lazy val schedulerDockerSettings = dockerSettings ++ Seq(
-    dockerExposedPorts in Docker := Seq(2551)
+    dockerExposedPorts := Seq(2551)
   )
 
 }
