@@ -24,8 +24,10 @@ object Dependencies {
   val schedulerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
     Akka("persistence"), Akka("cluster-sharding"),
 
+    "com.github.scopt"    %% "scopt" % "3.3.0",
+
     "com.github.krasserm" %% "akka-persistence-cassandra" % "0.4-SNAPSHOT",
-    "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.1.3"  withSources() withJavadoc(),
+    "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.1.3" % Test  withSources() withJavadoc(),
 
     "commons-io"    % "commons-io" % "2.4" % "test"
   )
