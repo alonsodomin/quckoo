@@ -32,7 +32,9 @@ object Dependencies {
     "commons-io"    % "commons-io" % "2.4" % "test"
   )
 
-  val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs
+  val workerLibs: Seq[ModuleID] = basicLibs ++ akkaLibs ++ loggingLibs ++ Seq(
+    "com.github.scopt"    %% "scopt" % "3.3.0"
+  )
 
   val exampleJobsLibs: Seq[ModuleID] = basicLibs
   val exampleProducersLibs: Seq[ModuleID] = basicLibs ++ akkaLibs

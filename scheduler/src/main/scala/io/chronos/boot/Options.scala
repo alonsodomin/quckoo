@@ -22,7 +22,7 @@ object Options {
 }
 
 case class Options(host: String = "127.0.0.1",
-                   port: Int = 2551,
+                   port: Int = Options.DefaultPort,
                    seedNodes: Seq[String] = Seq(),
                    cassandraSeedNodes: Seq[String] = Seq()) {
   import Options._
