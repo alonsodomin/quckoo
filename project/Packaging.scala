@@ -8,7 +8,9 @@ import sbt._
 object Packaging {
 
   lazy val universalSettings = Seq(
-    bashScriptExtraDefines += """addJava "-Dconfig.file=${app_home}/../conf/application.conf"""",
+    bashScriptExtraDefines ++= Seq(
+      """addJava "-Dconfig.file=${app_home}/../conf/application.conf""""
+    ),
     mappings in Universal <++= sourceDirectory map { src =>
       val resources = src / "main" / "resources"
       val log4j = resources / "log4j2.xml"
@@ -19,9 +21,18 @@ object Packaging {
 
   lazy val dockerSettings = Seq(
     dockerRepository in Docker := Some("chronos"),
-    dockerExposedPorts in Docker := Seq(8090),
     dockerExposedVolumes in Docker := Seq("/opt/chronos/conf"),
     defaultLinuxInstallLocation in Docker := "/opt/chronos"
+  )
+
+  lazy val schedulerUniversalSettings = universalSettings ++ Seq(
+    bashScriptExtraDefines ++= Seq(
+      """if [ ! -z "$CASSANDRA_PORT_9042_TCP_ADDR" -a ! -z "$CASSANDRA_PORT_9042_TCP_PORT" ]; then addApp --cs; addApp $CASSANDRA_PORT_9042_TCP_ADDR:$CASSANDRA_PORT_9042_TCP_PORT; fi"""
+    )
+  )
+
+  lazy val schedulerDockerSettings = dockerSettings ++ Seq(
+    dockerExposedPorts in Docker := Seq(2551)
   )
 
 }

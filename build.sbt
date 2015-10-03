@@ -75,9 +75,9 @@ lazy val scheduler = MultiNode(project in file("scheduler")).
     parallelExecution in Test := false
   ).
   enablePlugins(JavaServerAppPackaging).
-  settings(Packaging.universalSettings: _*).
+  settings(Packaging.schedulerUniversalSettings: _*).
   enablePlugins(DockerPlugin).
-  settings(Packaging.dockerSettings: _*).
+  settings(Packaging.schedulerDockerSettings: _*).
   dependsOn(common).
   dependsOn(network).
   dependsOn(resolver).
