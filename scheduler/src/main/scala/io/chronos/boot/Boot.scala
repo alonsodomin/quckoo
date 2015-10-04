@@ -14,15 +14,12 @@ object Boot extends App {
 
   val parser = new OptionParser[Options]("scheduler") {
     head("scheduler", "0.1.0")
-    opt[String]('h', "host") valueName "<host>" action { (h, options) =>
-      options.copy(host = h)
-    } text "Scheduler node hostname"
-    opt[String]('b', "bind") valueName "<bind address>" action { (b, options) =>
-      options.copy(bindHost = b)
-    } text "Address to which the scheduler will be bound. Default is 0.0.0.0"
-    opt[Int]('p', "port") valueName "<port>" action { (p, options) =>
-      options.copy(port = p)
-    } text "Scheduler node port"
+    opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
+      options.copy(bindAddress = b)
+    } text "Bind to this external host and port. Useful when using inside Docker containers"
+    opt[Unit]("seed") action { (_, options) =>
+      options.copy(seed = true)
+    } text "Flag that indicates that this node will be a seed node. Defaults to true if the list of seed nodes is empty."
     opt[Seq[String]]("nodes") valueName "<host:port>,<host:port>" action { (nodes, options) =>
       options.copy(seedNodes = nodes)
     } text "Comma separated list of Chronos cluster seed nodes"
