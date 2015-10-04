@@ -15,13 +15,13 @@ object Boot extends App {
 
   val parser = new OptionParser[Options]("worker") {
     head("worker", "0.1.0")
-    opt[String]('h', "host") valueName "<host>" action { (h, options) =>
-      options.copy(host = h)
-    } text "Worker node hostname"
+    opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
+      options.copy(bindAddress = b)
+    } text "Bind to this external host and port. Useful when using inside Docker containers"
     opt[Int]('p', "port") valueName "<port>" action { (p, options) =>
       options.copy(port = p)
     } text "Worker node port"
-    opt[Seq[String]]("master") valueName "<host:port>,<host:port>" action { (nodes, options) =>
+    opt[Seq[String]]("master") required() valueName "<host:port>,<host:port>" action { (nodes, options) =>
       options.copy(masterNodes = nodes)
     } text "Comma separated list of Chronos cluster master nodes"
   }

@@ -92,7 +92,7 @@ lazy val worker = (project in file("worker")).
   enablePlugins(JavaServerAppPackaging).
   settings(Packaging.universalSettings: _*).
   enablePlugins(DockerPlugin).
-  settings(Packaging.dockerSettings: _*).
+  settings(Packaging.workerDockerSettings: _*).
   dependsOn(common).
   dependsOn(network).
   dependsOn(resolver).

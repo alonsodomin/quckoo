@@ -19,9 +19,6 @@ object Options {
 
   final val AkkaClusterSeedNodes = "akka.cluster.seed-nodes"
 
-  final val ExternalHostname = "chronos.network.external.hostname"
-  final val ExternalPort = "chronos.network.external.port"
-
   final val CassandraJournalContactPoints = "cassandra-journal.contact-points"
   final val CassandraSnapshotContactPoints = "cassandra-snapshot-store.contact-points"
 

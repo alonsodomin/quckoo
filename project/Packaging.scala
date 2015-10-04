@@ -9,7 +9,8 @@ object Packaging {
 
   lazy val universalSettings = Seq(
     bashScriptExtraDefines ++= Seq(
-      """addJava "-Dconfig.file=${app_home}/../conf/application.conf""""
+      """addJava "-Dconfig.file=${app_home}/../conf/application.conf"""",
+      """addJava "-Dlog4j.configurationFile=${app_home}/../conf/log4j2.xml""""
     ),
     mappings in Universal <++= sourceDirectory map { src =>
       val resources = src / "main" / "resources"
@@ -27,6 +28,10 @@ object Packaging {
 
   lazy val schedulerDockerSettings = dockerSettings ++ Seq(
     dockerExposedPorts := Seq(2551)
+  )
+
+  lazy val workerDockerSettings = dockerSettings ++ Seq(
+    dockerExposedPorts := Seq(5001)
   )
 
 }
