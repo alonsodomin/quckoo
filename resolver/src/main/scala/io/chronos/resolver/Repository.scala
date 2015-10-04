@@ -15,6 +15,11 @@ sealed trait Repository {
 
   def name: String
 
+}
+
+sealed trait GenericRepository extends Repository {
+  type RepositoryType <: GenericRepository
+
   def patterns: Patterns
 
   protected def copy(patterns: Patterns): RepositoryType
@@ -24,22 +29,25 @@ sealed trait Repository {
   def ivys(ivyPatterns: String*): RepositoryType = copy(patterns.withIvys(ivyPatterns: _*))
 }
 
+final case class MavenRepository(name: String, url: URL) extends Repository {
+  type RepositoryType = MavenRepository
+}
 
-final case class URLRepository(name: String, patterns: Patterns) extends Repository {
+final case class URLRepository(name: String, patterns: Patterns) extends GenericRepository {
   type RepositoryType = URLRepository
 
   override protected def copy(patterns: Patterns): RepositoryType = URLRepository(name, patterns)
 }
 
-final case class FileRepository(name: String, patterns: Patterns) extends Repository {
+final case class FileRepository(name: String, patterns: Patterns) extends GenericRepository {
   type RepositoryType = FileRepository
 
   override protected def copy(patterns: Patterns): RepositoryType = FileRepository(name, patterns)
 }
 
 object Repository {
-  private val mavenStyleBasePattern = "[organisation]/[module](_[scalaVersion])(_[sbtVersion])/[revision]/[artifact]-[revision](-[classifier]).[ext]"
-  private val sbtStylePattern = "[organisation]/[module]/[revision]/[type]s/[artifact](-[classifier]).[ext]"
+  private[resolver] val mavenStyleBasePattern = "[organisation]/[module](_[scalaVersion])(_[sbtVersion])/[revision]/[artifact]-[revision](-[classifier]).[ext]"
+  private[resolver] val sbtStylePattern = "[organisation]/[module]/[revision]/[type]s/[artifact](-[classifier]).[ext]"
 
   def mavenStylePatterns = Patterns(Nil, mavenStyleBasePattern :: Nil)
 
@@ -70,7 +78,7 @@ object Repository {
       repositoryFactory(baseURL.toURI.normalize.toURL.toString)(URLRepository(name, _))
   }
 
-  private def repositoryFactory[T](base: String)(constructor: Patterns => T)(implicit patterns: Patterns): T = {
+  private def repositoryFactory[T <: GenericRepository](base: String)(constructor: Patterns => T)(implicit patterns: Patterns): T = {
     constructor(Patterns.resolvePatterns(base, patterns))
   }
 

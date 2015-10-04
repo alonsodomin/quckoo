@@ -17,7 +17,7 @@ package object resolver extends Logging {
   
   private[resolver] implicit def convertConfig2Settings(config: IvyConfiguration): IvySettings = {
     implicit val ivySettings = new IvySettings()
-    ivySettings.loadDefault()
+    //ivySettings.loadDefault()
     ivySettings.setBaseDir(config.baseDir.toFile)
     ivySettings.setDefaultCache(config.cacheDir.toFile)
     config.ivyHome match {
@@ -25,12 +25,12 @@ package object resolver extends Logging {
       case None       =>
     }
 
-    val defaultResolverChain = buildResolverChain("default", IvyConfiguration.DefaultRepositories)
-    val userResolverChain = buildResolverChain("user", config.repositories)
-
-    ivySettings.addResolver(defaultResolverChain)
-    ivySettings.addResolver(userResolverChain)
-    ivySettings.setDefaultResolver(defaultResolverChain.getName)
+    val mainResolverChain = buildResolverChain(
+      name = "main",
+      config.repositories ++ IvyConfiguration.DefaultRepositories
+    )
+    ivySettings.addResolver(mainResolverChain)
+    ivySettings.setDefaultResolver(mainResolverChain.getName)
 
     log.info("Apache Ivy initialized")
     ivySettings

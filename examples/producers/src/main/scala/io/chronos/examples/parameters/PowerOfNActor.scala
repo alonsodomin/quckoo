@@ -1,6 +1,6 @@
 package io.chronos.examples.parameters
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor._
 import io.chronos._
 import io.chronos.id.{JobId, ModuleId}
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
@@ -46,6 +46,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
   def start: Receive = {
     case Tick =>
       client ! RegisterJob(jobSpec)
+      context.setReceiveTimeout(30 seconds)
 
     case JobAccepted(id, _) =>
       log.info("JobSpec has been registered with id {}. Moving on to produce job schedules.", id)
@@ -62,6 +63,11 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
           log.error("Registration of job spec failed due to an exception. Retrying...")
           scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       }
+      context.setReceiveTimeout(Duration.Undefined)
+
+    case ReceiveTimeout =>
+      log.warning("Timeout waiting for a response when registering a job specification. Retrying...")
+      scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
   }
 
   def produce: Receive = {
