@@ -75,7 +75,7 @@ lazy val scheduler = MultiNode(project in file("scheduler")).
     parallelExecution in Test := false
   ).
   enablePlugins(JavaServerAppPackaging).
-  settings(Packaging.universalSettings: _*).
+  settings(Packaging.universalServerSettings: _*).
   enablePlugins(DockerPlugin).
   settings(Packaging.schedulerDockerSettings: _*).
   dependsOn(common).
@@ -90,7 +90,7 @@ lazy val worker = (project in file("worker")).
     libraryDependencies ++= Dependencies.workerLibs
   ).
   enablePlugins(JavaServerAppPackaging).
-  settings(Packaging.universalSettings: _*).
+  settings(Packaging.universalServerSettings: _*).
   enablePlugins(DockerPlugin).
   settings(Packaging.workerDockerSettings: _*).
   dependsOn(common).
@@ -111,6 +111,10 @@ lazy val exampleProducers = Project("example-producers", file("examples/producer
   settings(
     libraryDependencies ++= Dependencies.exampleProducersLibs
   ).
+  enablePlugins(JavaAppPackaging).
+  settings(Packaging.universalSettings: _*).
+  enablePlugins(DockerPlugin).
+  settings(Packaging.dockerSettings: _*).
   dependsOn(common).
   dependsOn(exampleJobs).
   dependsOn(client)

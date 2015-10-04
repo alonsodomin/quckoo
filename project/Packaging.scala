@@ -9,6 +9,17 @@ object Packaging {
 
   lazy val universalSettings = Seq(
     bashScriptExtraDefines ++= Seq(
+      """addJava "-Dlog4j.configurationFile=${app_home}/../conf/log4j2.xml""""
+    ),
+    mappings in Universal <++= sourceDirectory map { src =>
+      val resources = src / "main" / "resources"
+      val log4j = resources / "log4j2.xml"
+      Seq(log4j -> "conf/log4j2.xml")
+    }
+  )
+
+  lazy val universalServerSettings = Seq(
+    bashScriptExtraDefines ++= Seq(
       """addJava "-Dconfig.file=${app_home}/../conf/application.conf"""",
       """addJava "-Dlog4j.configurationFile=${app_home}/../conf/log4j2.xml""""
     ),
