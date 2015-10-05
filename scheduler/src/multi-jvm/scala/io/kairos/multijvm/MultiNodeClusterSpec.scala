@@ -33,6 +33,8 @@ object MultiNodeClusterSpec {
     akka.log-dead-letters = off
     akka.log-dead-letters-during-shutdown = off
     akka.remote.log-remote-lifecycle-events = off
+    akka.remote.netty.tcp.port = 0
+    akka.remote.netty.tcp.bind-port = 0
     akka.loggers = ["akka.testkit.TestEventListener"]
     akka.test {
       single-expect-default = 5 s
@@ -41,7 +43,7 @@ object MultiNodeClusterSpec {
       journal.plugin = "inmemory-journal"
       snapshot-store.plugin = "inmemory-snapshot-store"
     }
-    chronos {
+    kairos {
       ivy {
         cacheDir = "target/ivy-cache"
         workDir = "target/ivy"
