@@ -4,6 +4,7 @@ import akka.actor.{ActorSystem, AddressFromURIString, Props, RootActorPath}
 import akka.cluster.client.ClusterClientSettings
 import akka.japi.Util._
 import com.typesafe.config.{Config, ConfigFactory}
+import io.kairos.client.KairosClient
 import io.kairos.examples.parameters.PowerOfNActor
 import io.kairos.protocol.Connect
 import scopt.OptionParser
@@ -25,17 +26,17 @@ object ExamplesMain extends App {
       withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
-    val system = ActorSystem("ChronosExamplesSystem", config)
+    val system = ActorSystem("KairosExamplesSystem", config)
 
-    val initialContacts = immutableSeq(config.getStringList("chronos.contact-points")).map {
+    val initialContacts = immutableSeq(config.getStringList(CliOptions.KairosContactPoints)).map {
       case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
     }.toSet
 
     val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
-    val chronosClient = system.actorOf(KairosClient.props(clientSettings), "chronosClient")
-    chronosClient ! Connect
+    val kairosClient = system.actorOf(KairosClient.props(clientSettings), "kairosClient")
+    kairosClient ! Connect
 
-    system.actorOf(Props(classOf[PowerOfNActor], chronosClient), "powerOfN")
+    system.actorOf(Props(classOf[PowerOfNActor], kairosClient), "powerOfN")
   }
 
   parser.parse(args, CliOptions()).foreach { opts =>

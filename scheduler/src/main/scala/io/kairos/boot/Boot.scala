@@ -4,7 +4,7 @@ import java.time.Clock
 
 import akka.actor._
 import com.typesafe.config.{Config, ConfigFactory}
-import io.kairos.cluster.KairosClusterSettings
+import io.kairos.cluster.{KairosCluster, KairosClusterSettings}
 import scopt.OptionParser
 
 /**
@@ -22,7 +22,7 @@ object Boot extends App {
     } text "Flag that indicates that this node will be a seed node. Defaults to true if the list of seed nodes is empty."
     opt[Seq[String]]("nodes") valueName "<host:port>,<host:port>" action { (nodes, options) =>
       options.copy(seedNodes = nodes)
-    } text "Comma separated list of Chronos cluster seed nodes"
+    } text "Comma separated list of Kairos cluster seed nodes"
     opt[Seq[String]]("cs") valueName "<host:port>,<host:port>" action { (seedNodes, options) =>
       options.copy(cassandraSeedNodes = seedNodes)
     } text "Comma separated list of Cassandra seed nodes (same for Journal and Snapshots)"
@@ -37,12 +37,12 @@ object Boot extends App {
   }
 
   def start(config: Config): Unit = {
-    val system = ActorSystem("ChronosClusterSystem", config)
+    val system = ActorSystem("KairosClusterSystem", config)
     implicit val clock = Clock.systemUTC()
 
     val settings = KairosClusterSettings(system)
-    val chronosProps  = KairosCluster.props(settings)
-    system.actorOf(chronosProps, "chronos")
+    val kairosProps  = KairosCluster.props(settings)
+    system.actorOf(kairosProps, "kairos")
   }
 
   parser.parse(args, Options()).foreach { opts =>

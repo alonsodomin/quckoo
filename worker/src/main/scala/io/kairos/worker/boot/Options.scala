@@ -17,7 +17,7 @@ object Options {
   final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
   final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
 
-  final val ChronosContactPoints = "chronos.contact-points"
+  final val KairosContactPoints = "kairos.contact-points"
 
   private final val HostAndPort = """(.+?):(\d+)""".r
 
@@ -40,8 +40,8 @@ case class Options(bindAddress: String = s"localhost:${Options.DefaultPort}",
     map.put(AkkaRemoteNettyBindPort, Int.box(port))
 
     if (masterNodes.nonEmpty) {
-      map.put(ChronosContactPoints, seqAsJavaList(masterNodes.map { node =>
-        s"akka.tcp://ChronosClusterSystem@$node"
+      map.put(KairosContactPoints, seqAsJavaList(masterNodes.map { node =>
+        s"akka.tcp://KairosClusterSystem@$node"
       }))
     }
     map

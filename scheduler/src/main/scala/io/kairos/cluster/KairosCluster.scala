@@ -63,12 +63,12 @@ class KairosCluster(settings: KairosClusterSettings)(implicit clock: Clock) exte
   def receive: Receive = {
     case Connect =>
       clients += sender()
-      log.info("Chronos client connected to cluster node. address={}", sender().path.address)
+      log.info("Kairos client connected to cluster node. address={}", sender().path.address)
       sender() ! Connected
 
     case Disconnect =>
       clients -= sender()
-      log.info("Chronos client disconnected from cluster node. address={}", sender().path.address)
+      log.info("Kairos client disconnected from cluster node. address={}", sender().path.address)
       sender() ! Disconnected
 
     case GetClusterStatus =>

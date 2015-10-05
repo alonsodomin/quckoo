@@ -9,7 +9,7 @@ import scala.collection.JavaConversions._
  */
 object CliOptions {
 
-  final val ChronosContactPoints = "chronos.contact-points"
+  final val KairosContactPoints = "kairos.contact-points"
 
 }
 
@@ -18,8 +18,8 @@ case class CliOptions(clusterNodes: Seq[String] = Seq()) {
 
   def asJavaMap: JMap[String, Object] = {
     val map = new JHashMap[String, Object]()
-    map.put(ChronosContactPoints, seqAsJavaList(clusterNodes.map { node =>
-      s"akka.tcp://ChronosClusterSystem@$node"
+    map.put(KairosContactPoints, seqAsJavaList(clusterNodes.map { node =>
+      s"akka.tcp://KairosClusterSystem@$node"
     }))
     map
   }

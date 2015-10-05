@@ -12,9 +12,9 @@ import scala.concurrent.duration._
  */
 object KairosClient {
 
-  private[client] final val ChronosPath   = "/user/chronos"
-  private[client] final val SchedulerPath = ChronosPath + "/scheduler"
-  private[client] final val RegistryPath =  ChronosPath + "/registry"
+  private[client] final val KairosPath   = "/user/kairos"
+  private[client] final val SchedulerPath = KairosPath + "/scheduler"
+  private[client] final val RegistryPath =  KairosPath + "/registry"
 
   def props(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int = 3) =
     Props(classOf[KairosClient], clientSettings, maxConnectionAttempts)
@@ -54,16 +54,16 @@ class KairosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts:
 
   private def connected: Receive = {
     case msg @ Disconnect =>
-      clusterClient ! Send(ChronosPath, msg, localAffinity = true)
+      clusterClient ! Send(KairosPath, msg, localAffinity = true)
 
     case msg @ Disconnected =>
-      log.info("Disconnected from Chronos cluster.")
+      log.info("Disconnected from Kaitos cluster.")
       context.system.eventStream.publish(msg)
       context.become(standby)
 
     case msg @ GetClusterStatus =>
       val handler = context.actorOf(Props(classOf[RequestHandler], sender()))
-      clusterClient.tell(Send(ChronosPath, msg, localAffinity = true), handler)
+      clusterClient.tell(Send(KairosPath, msg, localAffinity = true), handler)
 
     case cmd: RegistryCommand =>
       val handler = context.actorOf(Props(classOf[RequestHandler], sender()))
@@ -98,13 +98,13 @@ private class ConnectHandler(clusterClient: ActorRef, requestor: ActorRef, timeo
       }
 
     case msg @ Connected =>
-      log.info("Connected to Chronos cluster at: {}", sender().path.address)
+      log.info("Connected to Kairos cluster at: {}", sender().path.address)
       context.parent.tell(msg, requestor)
       context.stop(self)
   }
 
   private def attemptConnect(): Unit = {
-    clusterClient ! Send(ChronosPath, Connect, localAffinity = true)
+    clusterClient ! Send(KairosPath, Connect, localAffinity = true)
     context.setReceiveTimeout(timeout)
     connectionAttempts += 1
   }

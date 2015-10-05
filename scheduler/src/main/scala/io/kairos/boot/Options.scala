@@ -46,11 +46,11 @@ case class Options(bindAddress: String = s"localhost:${Options.DefaultPort}",
 
     val clusterSeedNodes: Seq[String] = {
       if (seed || seedNodes.isEmpty)
-        List(s"akka.tcp://ChronosClusterSystem@$externalHost:$externalPort")
+        List(s"akka.tcp://KairosClusterSystem@$externalHost:$externalPort")
       else
         List.empty[String]
     } ::: seedNodes.map({ node =>
-      s"akka.tcp://ChronosClusterSystem@$node"
+      s"akka.tcp://KairosClusterSystem@$node"
     }).toList
 
     map.put(AkkaClusterSeedNodes, seqAsJavaList(clusterSeedNodes))

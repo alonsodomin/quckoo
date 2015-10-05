@@ -16,7 +16,7 @@ object WorkerSettings {
   final val DefaultQueueAckTimeout = 5 seconds
 
   def apply(system: ActorSystem): WorkerSettings = {
-    val config = system.settings.config.getConfig("chronos")
+    val config = system.settings.config.getConfig("kairos")
     val initialContacts = immutableSeq(config.getStringList("contact-points")).map {
       case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
     }.toSet

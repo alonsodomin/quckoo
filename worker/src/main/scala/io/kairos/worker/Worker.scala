@@ -19,7 +19,7 @@ object Worker {
   final val DefaultRegisterFrequency = 10 seconds
   final val DefaultQueueAckTimeout = 5 seconds
 
-  protected[worker] final val SchedulerPath = "/user/chronos/scheduler"
+  protected[worker] final val SchedulerPath = "/user/kairos/scheduler"
 
   def props(clusterClient: ActorRef, jobExecutorProps: Props,
             registerInterval: FiniteDuration = DefaultRegisterFrequency,

@@ -23,7 +23,7 @@ object Boot extends App {
     } text "Worker node port"
     opt[Seq[String]]("master") required() valueName "<host:port>,<host:port>" action { (nodes, options) =>
       options.copy(masterNodes = nodes)
-    } text "Comma separated list of Chronos cluster master nodes"
+    } text "Comma separated list of Kairos cluster master nodes"
   }
 
   def loadConfig(opts: Options): Config = {
@@ -35,7 +35,7 @@ object Boot extends App {
 
   def start(config: Config): Unit = {
     val system = ActorSystem("ChronosWorkerSystem", config)
-    val initialContacts = immutableSeq(config.getStringList("chronos.contact-points")).map {
+    val initialContacts = immutableSeq(config.getStringList(Options.KairosContactPoints)).map {
       case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
     }.toSet
 
