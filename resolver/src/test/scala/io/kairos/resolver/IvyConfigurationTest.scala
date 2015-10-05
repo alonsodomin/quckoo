@@ -12,22 +12,24 @@ object IvyConfigurationTest {
 
   val ConfigWithoutHome = ConfigFactory.parseString(
     """
-      |ivy {
+      |resolver {
       | workDir = "target/work"
       | cacheDir = "target/cache"
+      |
+      | repositories = []
       |}
     """.stripMargin)
 
   val ConfigWithHome = ConfigFactory.parseString(
     """
-      |ivy {
+      |resolver {
       | home = "target/home"
       |}
     """.stripMargin).withFallback(ConfigWithoutHome)
 
-  val ExpectedWorkDir  = Paths.get("target/work").toAbsolutePath
-  val ExpectedCacheDir = Paths.get("target/cache").toAbsolutePath
-  val ExpectedHomeDir  = Paths.get("target/home").toAbsolutePath
+  val ExpectedWorkDir  = Paths.get("target/work").toAbsolutePath.toFile
+  val ExpectedCacheDir = Paths.get("target/cache").toAbsolutePath.toFile
+  val ExpectedHomeDir  = Paths.get("target/home").toAbsolutePath.toFile
 
 }
 
