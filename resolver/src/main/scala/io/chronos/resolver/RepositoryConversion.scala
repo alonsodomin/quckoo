@@ -29,7 +29,7 @@ private[resolver] object RepositoryConversion extends Logging {
         resolver.setName(name)
         resolver.setRoot(root)
         resolver.setM2compatible(true)
-        resolver.setPattern(Repository.mavenStyleBasePattern)
+        //resolver.setPattern(Repository.mavenStyleBasePattern)
         log.info(s"Configured Maven repository $name at $url")
         resolver
 

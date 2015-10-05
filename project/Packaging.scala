@@ -1,34 +1,21 @@
-import com.typesafe.sbt.SbtNativePackager.{Docker, Universal}
+import com.typesafe.sbt.SbtNativePackager.Docker
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging.autoImport._
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport._
 import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
-import sbt.Keys._
-import sbt._
 
 object Packaging {
 
   lazy val universalSettings = Seq(
     bashScriptExtraDefines ++= Seq(
       """addJava "-Dlog4j.configurationFile=${app_home}/../conf/log4j2.xml""""
-    ),
-    mappings in Universal <++= sourceDirectory map { src =>
-      val resources = src / "main" / "resources"
-      val log4j = resources / "log4j2.xml"
-      Seq(log4j -> "conf/log4j2.xml")
-    }
+    )
   )
 
   lazy val universalServerSettings = Seq(
     bashScriptExtraDefines ++= Seq(
       """addJava "-Dconfig.file=${app_home}/../conf/application.conf"""",
       """addJava "-Dlog4j.configurationFile=${app_home}/../conf/log4j2.xml""""
-    ),
-    mappings in Universal <++= sourceDirectory map { src =>
-      val resources = src / "main" / "resources"
-      val log4j = resources / "log4j2.xml"
-      val referenceConf = resources / "reference.conf"
-      Seq(log4j -> "conf/log4j2.xml", referenceConf -> "conf/application.conf")
-    }
+    )
   )
 
   lazy val dockerSettings = Seq(
@@ -38,7 +25,7 @@ object Packaging {
   )
 
   lazy val schedulerDockerSettings = dockerSettings ++ Seq(
-    dockerExposedPorts := Seq(2551)
+    dockerExposedPorts := Seq(2551, 8095)
   )
 
   lazy val workerDockerSettings = dockerSettings ++ Seq(
