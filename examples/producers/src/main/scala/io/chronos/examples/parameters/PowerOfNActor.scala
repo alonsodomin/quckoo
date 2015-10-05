@@ -46,7 +46,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
   def start: Receive = {
     case Tick =>
       client ! RegisterJob(jobSpec)
-      context.setReceiveTimeout(30 seconds)
+      context.setReceiveTimeout(60 seconds)
 
     case JobAccepted(id, _) =>
       log.info("JobSpec has been registered with id {}. Moving on to produce job schedules.", id)

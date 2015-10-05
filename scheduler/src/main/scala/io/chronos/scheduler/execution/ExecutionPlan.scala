@@ -5,6 +5,7 @@ import java.util.UUID
 
 import akka.actor._
 import io.chronos.Trigger._
+import io.chronos.cluster.TaskFailureCause
 import io.chronos.id._
 import io.chronos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.chronos.{JobSpec, Trigger}
@@ -64,6 +65,11 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
           case _: Execution.Success =>
             schedule(jobId, jobSpec)
 
+          case Execution.Failure(cause) =>
+            if (shouldRetry(cause))
+              schedule(jobId, jobSpec)
+            else shutdown
+
           case _ =>
             // Plan is no longer needed
             shutdown
@@ -72,6 +78,16 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
 
       lastExecutionTime = Some(ZonedDateTime.now(clock))
       context.become(nextStage)
+  }
+
+  private def shouldRetry(cause: TaskFailureCause): Boolean = cause match {
+    case Left(resolutionFailed) =>
+      log.error("Worker node could not resolve dependencies for the execution. jobId={}, unresolvedDependencies={}")
+      true
+
+    case Right(exception) =>
+      log.error(exception, "Execution threw exception on worker. planId={}", planId)
+      false
   }
 
   private def shutdown: Receive = {

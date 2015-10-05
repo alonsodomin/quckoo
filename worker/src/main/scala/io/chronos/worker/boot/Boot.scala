@@ -42,7 +42,7 @@ object Boot extends App {
     val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
     val clusterClient  = system.actorOf(ClusterClient.props(clientSettings), "client")
 
-    val ivyConfig  = IvyConfiguration(config)
+    val ivyConfig  = IvyConfiguration(config.getConfig("chronos"))
     val ivyResolve = new IvyResolve(ivyConfig)
     val resolver   = system.actorOf(Resolver.props(ivyResolve), "resolver")
 

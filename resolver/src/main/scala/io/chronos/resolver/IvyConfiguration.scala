@@ -1,7 +1,8 @@
 package io.chronos.resolver
 
+import java.io.File
 import java.net.URL
-import java.nio.file.{Path, Paths}
+import java.nio.file.Paths
 
 import com.typesafe.config.Config
 
@@ -10,9 +11,9 @@ import scala.collection.JavaConversions._
 /**
  * Created by aalonsodominguez on 19/07/2015.
  */
-class IvyConfiguration private (val baseDir: Path,
-                                val cacheDir: Path,
-                                val ivyHome: Option[Path],
+class IvyConfiguration private (val baseDir: File,
+                                val cacheDir: File,
+                                val ivyHome: Option[File],
                                 val repositories: Seq[Repository] = Nil) {
 
 }
@@ -30,19 +31,25 @@ object IvyConfiguration {
   )
 
   def apply(config: Config): IvyConfiguration = {
-    val baseDir = Paths.get(config.getString(BaseDir)).toAbsolutePath
-    val cacheDir = Paths.get(config.getString(CacheDir)).toAbsolutePath
+    val baseDir = createPathIfNotExists(config.getString(BaseDir))
+    val cacheDir = createPathIfNotExists(config.getString(CacheDir))
     val repositories = config.getConfigList(Repositories).map { repoConf =>
       MavenRepository(repoConf.getString("name"), new URL(repoConf.getString("url")))
     }
     if (config.hasPath(HomeDir)) {
       new IvyConfiguration(baseDir, cacheDir,
-        Some(Paths.get(config.getString(HomeDir)).toAbsolutePath),
+        Some(createPathIfNotExists(config.getString(HomeDir))),
         repositories
       )
     } else {
       new IvyConfiguration(baseDir, cacheDir, None, repositories)
     }
+  }
+
+  private[this] def createPathIfNotExists(pathName: String): File = {
+    val file = Paths.get(pathName).toAbsolutePath.toFile
+    file.mkdirs()
+    file
   }
 
 }

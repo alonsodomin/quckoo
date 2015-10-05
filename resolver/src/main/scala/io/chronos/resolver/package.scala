@@ -18,10 +18,10 @@ package object resolver extends Logging {
   private[resolver] implicit def convertConfig2Settings(config: IvyConfiguration): IvySettings = {
     implicit val ivySettings = new IvySettings()
     //ivySettings.loadDefault()
-    ivySettings.setBaseDir(config.baseDir.toFile)
-    ivySettings.setDefaultCache(config.cacheDir.toFile)
+    ivySettings.setBaseDir(config.baseDir)
+    ivySettings.setDefaultCache(config.cacheDir)
     config.ivyHome match {
-      case Some(home) => ivySettings.setDefaultIvyUserDir(home.toFile)
+      case Some(home) => ivySettings.setDefaultIvyUserDir(home)
       case None       =>
     }
 
