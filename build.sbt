@@ -1,9 +1,9 @@
 
-organization in ThisBuild := "io.chronos"
+organization in ThisBuild := "io.kairos"
 
-version in ThisBuild := Commons.chronosVersion
+version in ThisBuild := Commons.kairosVersion
 
-scalaVersion in ThisBuild := Dependencies.scalaVersion
+scalaVersion in ThisBuild := "2.11.7"
 
 scalacOptions in ThisBuild ++= Seq(
   "-Xexperimental",
@@ -22,7 +22,7 @@ resolvers in ThisBuild ++= Seq(
 
 coverageHighlighting in ThisBuild := true
 
-lazy val chronos = (project in file(".")).aggregate(
+lazy val kairos = (project in file(".")).aggregate(
   common, network, resolver, client, cluster, scheduler, examples, worker
 )
 

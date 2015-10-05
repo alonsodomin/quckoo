@@ -3,10 +3,10 @@ import sbt.Keys._
 import sbt._
 
 object Commons {
-  val chronosVersion = "0.1.0-SNAPSHOT"
+  val kairosVersion = "0.1.0-SNAPSHOT"
 
   val settings: Seq[Def.Setting[_]] = Seq(
-    version := chronosVersion,
+    version := kairosVersion,
     ideaExcludeFolders := ".idea" :: Nil
   )
 }

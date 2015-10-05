@@ -1,23 +1,23 @@
-# Chronos
+# Kairos
 
-[![Build Status](https://travis-ci.org/alonsodomin/chronos.svg)](https://travis-ci.org/alonsodomin/chronos)
+[![Build Status](https://travis-ci.org/alonsodomin/kairos.svg)](https://travis-ci.org/alonsodomin/kairos)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-Chronos is a fault-tolerant distributed task scheduler platform that runs on the JVM. The aim of the project is
+Kairos is a fault-tolerant distributed task scheduler platform that runs on the JVM. The aim of the project is
 the implementation of a reliable system able to run large amount of scheduled tasks without single points of failure.
 
-To achieve that, Chronos is composed of a cluster of scheduler nodes and ad hoc worker nodes that connect to this
+To achieve that, Kairos is composed of a cluster of scheduler nodes and ad hoc worker nodes that connect to this
 cluster and request for work to be sent to them. It's basically a generalization of the [distributed worker
 pattern](http://letitcrash.com/post/29044669086/balancing-workload-across-nodes-with-akka-2) (and in fact the
 implementation owes a lot to the previous post).
 
 ## Documentation
 
- * [Wiki](https://github.com/alonsodomin/chronos/wiki/Introduction)
+ * [Wiki](https://github.com/alonsodomin/kairos/wiki/Introduction)
 
 ## Contributing
 
-Chronos is still right now in _experimental_ phase, current codebase will be evolving until it reaches the level of
+Kairos is still right now in _experimental_ phase, current codebase will be evolving until it reaches the level of
 robustness necessary to be able to trust on the system to be able to handle the big load we are aiming for. Feel
 free to fork this repository and contribute with your knowledge to make this project a reliable and really
 fault-tolerant task scheduling platform.

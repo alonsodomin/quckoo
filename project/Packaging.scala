@@ -6,7 +6,7 @@ import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
 
 object Packaging {
 
-  private val linuxHomeLocation = "/opt/chronos"
+  private val linuxHomeLocation = "/opt/kairos"
 
   lazy val universalSettings = Seq(
     bashScriptExtraDefines ++= Seq(
@@ -22,10 +22,10 @@ object Packaging {
   )
 
   lazy val dockerSettings = Seq(
-    dockerRepository := Some("chronos"),
-    dockerExposedVolumes := Seq("/opt/chronos/conf"),
+    dockerRepository := Some("kairos"),
+    dockerExposedVolumes := Seq("/opt/kairos/conf"),
     defaultLinuxInstallLocation in Docker := linuxHomeLocation,
-    dockerCommands += Cmd("ENV", "CHRONOS_HOME", linuxHomeLocation)
+    dockerCommands += Cmd("ENV", "KAIROS_HOME", linuxHomeLocation)
   )
 
   lazy val schedulerDockerSettings = dockerSettings ++ Seq(

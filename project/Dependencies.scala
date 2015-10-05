@@ -3,8 +3,6 @@ import sbt._
 object Dependencies {
   import Libraries._
 
-  val scalaVersion        = "2.11.7"
-
   private val basicLibs: Seq[ModuleID] = Vector(
     "org.scala-lang.modules" %% "scala-xml" % "1.0.5" withSources() withJavadoc()
   ) ++ testingLibs
