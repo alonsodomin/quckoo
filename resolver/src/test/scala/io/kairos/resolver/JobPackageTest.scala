@@ -29,7 +29,7 @@ class JobPackageTest extends FlatSpec with Matchers with MockFactory with Inside
 
   }
 
-  private val TestModuleId = ModuleId("io.chronos.test", "package-test", "SNAPSHOT")
+  private val TestModuleId = ModuleId("io.kairos.test", "package-test", "SNAPSHOT")
 
   "A JobModulePackage" should "return the URLs of its classpath from the class loader" in {
     val expectedUrls = Array(new URL("http://www.example.com"))

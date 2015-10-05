@@ -1,8 +1,8 @@
 package io.kairos.registry
 
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
-import akka.remote.testkit.{MultiNodeSpec, MultiNodeConfig}
-import akka.testkit.{TestProbe, ImplicitSender}
+import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
+import akka.testkit.{ImplicitSender, TestProbe}
 import io.kairos.id.ModuleId
 import io.kairos.multijvm.MultiNodeClusterSpec
 
@@ -20,7 +20,7 @@ class RegistryMultiNodeSpecMultiJvmNode1 extends RegistryMultiNode
 class RegistryMultiNodeSpecMultiJvmNode2 extends RegistryMultiNode
 
 object RegistryMultiNode {
-  val TestModuleId = ModuleId("io.chronos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
+  val TestModuleId = ModuleId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
 }
 
 abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with ImplicitSender with MultiNodeClusterSpec {

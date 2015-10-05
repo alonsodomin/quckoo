@@ -11,7 +11,7 @@ import io.kairos.test.ImplicitClock
 /**
  * Created by domingueza on 26/08/15.
  */
-object ChronosNodesConfig extends MultiNodeConfig {
+object KairosNodesConfig extends MultiNodeConfig {
   val scheduler = role("scheduler")
   val registry  = role("registry")
 
@@ -23,28 +23,28 @@ object ChronosNodesConfig extends MultiNodeConfig {
     withFallback(MultiNodeClusterSpec.clusterConfig))
 }
 
-class ChronosMultiNodeClusterSpecMultiJvmNode1 extends ChronosMultiNodeCluster
-class ChronosMultiNodeClusterSpecMultiJvmNode2 extends ChronosMultiNodeCluster
+class KairosMultiNodeClusterSpecMultiJvmNode1 extends KairosMultiNodeCluster
+class KairosMultiNodeClusterSpecMultiJvmNode2 extends KairosMultiNodeCluster
 
-object ChronosMultiNodeCluster {
+object KairosMultiNodeCluster {
 
-  val TestModuleId = ModuleId("io.chronos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
+  val TestModuleId = ModuleId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
 
 }
 
-abstract class ChronosMultiNodeCluster extends MultiNodeSpec(ChronosNodesConfig) with ImplicitSender
+abstract class KairosMultiNodeCluster extends MultiNodeSpec(KairosNodesConfig) with ImplicitSender
   with MultiNodeClusterSpec with ImplicitClock {
 
-  import ChronosNodesConfig._
+  import KairosNodesConfig._
 
   "A Chronos cluster" must {
-    val settings = ChronosClusterSettings(system)
+    val settings = KairosClusterSettings(system)
 
     "send connect commands from one node to the other one" in {
       awaitClusterUp(registry, scheduler)
 
       runOn(registry) {
-        system.actorOf(ChronosCluster.props(settings), "chronos")
+        system.actorOf(KairosCluster.props(settings), "chronos")
         enterBarrier("deployed")
 
         val schedulerGuardian = system.actorSelection(node(scheduler) / "user" / "chronos")
@@ -56,7 +56,7 @@ abstract class ChronosMultiNodeCluster extends MultiNodeSpec(ChronosNodesConfig)
       }
 
       runOn(scheduler) {
-        system.actorOf(ChronosCluster.props(settings), "chronos")
+        system.actorOf(KairosCluster.props(settings), "chronos")
         enterBarrier("deployed")
 
         val registryGuardian = system.actorSelection(node(registry) / "user" / "chronos")

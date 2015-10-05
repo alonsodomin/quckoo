@@ -10,21 +10,21 @@ import scala.concurrent.duration._
 /**
  * Created by aalonsodominguez on 21/08/15.
  */
-object ChronosClient {
+object KairosClient {
 
   private[client] final val ChronosPath   = "/user/chronos"
   private[client] final val SchedulerPath = ChronosPath + "/scheduler"
   private[client] final val RegistryPath =  ChronosPath + "/registry"
 
   def props(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int = 3) =
-    Props(classOf[ChronosClient], clientSettings, maxConnectionAttempts)
+    Props(classOf[KairosClient], clientSettings, maxConnectionAttempts)
 
 }
 
-class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int)
+class KairosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int)
   extends Actor with ActorLogging {
 
-  import ChronosClient._
+  import KairosClient._
   import RegistryProtocol._
   import SchedulerProtocol._
 
@@ -81,7 +81,7 @@ class ChronosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts
 
 private class ConnectHandler(clusterClient: ActorRef, requestor: ActorRef, timeout: FiniteDuration, maxConnectionAttempts: Int)
   extends Actor with ActorLogging {
-  import ChronosClient._
+  import KairosClient._
 
   private var connectionAttempts = 0
   attemptConnect()

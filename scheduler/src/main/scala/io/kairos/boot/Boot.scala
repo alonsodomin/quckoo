@@ -4,7 +4,7 @@ import java.time.Clock
 
 import akka.actor._
 import com.typesafe.config.{Config, ConfigFactory}
-import io.kairos.cluster.{ChronosCluster, ChronosClusterSettings}
+import io.kairos.cluster.KairosClusterSettings
 import scopt.OptionParser
 
 /**
@@ -40,8 +40,8 @@ object Boot extends App {
     val system = ActorSystem("ChronosClusterSystem", config)
     implicit val clock = Clock.systemUTC()
 
-    val settings = ChronosClusterSettings(system)
-    val chronosProps  = ChronosCluster.props(settings)
+    val settings = KairosClusterSettings(system)
+    val chronosProps  = KairosCluster.props(settings)
     system.actorOf(chronosProps, "chronos")
   }
 

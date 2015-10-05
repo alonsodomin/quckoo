@@ -4,7 +4,6 @@ import akka.actor.{ActorSystem, AddressFromURIString, Props, RootActorPath}
 import akka.cluster.client.ClusterClientSettings
 import akka.japi.Util._
 import com.typesafe.config.{Config, ConfigFactory}
-import io.kairos.client.ChronosClient
 import io.kairos.examples.parameters.PowerOfNActor
 import io.kairos.protocol.Connect
 import scopt.OptionParser
@@ -33,7 +32,7 @@ object ExamplesMain extends App {
     }.toSet
 
     val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
-    val chronosClient = system.actorOf(ChronosClient.props(clientSettings), "chronosClient")
+    val chronosClient = system.actorOf(KairosClient.props(clientSettings), "chronosClient")
     chronosClient ! Connect
 
     system.actorOf(Props(classOf[PowerOfNActor], chronosClient), "powerOfN")

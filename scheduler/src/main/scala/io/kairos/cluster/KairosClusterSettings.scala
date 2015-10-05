@@ -8,11 +8,11 @@ import scala.concurrent.duration._
 /**
  * Created by domingueza on 28/08/15.
  */
-object ChronosClusterSettings {
+object KairosClusterSettings {
 
-  def apply(system: ActorSystem): ChronosClusterSettings = {
+  def apply(system: ActorSystem): KairosClusterSettings = {
     val config = system.settings.config.getConfig("kairos")
-    ChronosClusterSettings(
+    KairosClusterSettings(
       IvyConfiguration(config),
       config.getDuration("task-queue.max-work-timeout").toMillis millis
     )
@@ -20,5 +20,5 @@ object ChronosClusterSettings {
 
 }
 
-case class ChronosClusterSettings private (ivyConfiguration: IvyConfiguration,
-                                           queueMaxWorkTimeout: FiniteDuration)
+case class KairosClusterSettings private(ivyConfiguration: IvyConfiguration,
+                                         queueMaxWorkTimeout: FiniteDuration)

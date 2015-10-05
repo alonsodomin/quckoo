@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 object JobExecutorSpec {
   val TestExecutionId: TaskId = UUID.randomUUID()
   val TestJobClass = "com.example.FooClass"
-  val TestModuleId = ModuleId("io.chronos", "test", "latest")
+  val TestModuleId = ModuleId("io.kairos", "test", "latest")
 }
 
 class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatSpecLike with Matchers
