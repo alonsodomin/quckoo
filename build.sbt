@@ -39,7 +39,8 @@ lazy val kairosUI = crossProject.crossType(CrossType.Full).in(file(".")).
   )
 ).jsSettings(
   libraryDependencies ++= Seq(
-    "com.github.japgolly.scalajs-react" %%% "core" % "0.9.2"
+    "com.github.japgolly.scalajs-react" %%% "core" % "0.9.2",
+    "com.github.japgolly.scalajs-react" %%% "extra" % "0.9.2"
   ),
   jsDependencies ++= Seq(
     "org.webjars" % "react" % "0.12.2" / "react-with-addons.js" commonJSName "React"
