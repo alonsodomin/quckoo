@@ -1,0 +1,59 @@
+package io.kairos.ui
+
+import java.util.UUID
+
+import akka.actor.ActorSystem
+import akka.event.LoggingAdapter
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.{ValidationRejection, RejectionHandler, ExceptionHandler, Route}
+import akka.http.scaladsl.server.Directives._
+import akka.stream.ActorMaterializer
+import de.heikoseeberger.akkahttpupickle.UpickleSupport
+import io.kairos.ui.protocol._
+
+trait KairosHttpService extends UpickleSupport {
+
+  import StatusCodes._
+
+  private[this] def api(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+    get {
+      pathSingleSlash {
+        complete {
+          HttpEntity(MediaTypes.`text/html`, IndexPage.skeleton.render)
+        }
+      } ~ getFromResourceDirectory("")
+    } ~ path("login") {
+      post {
+        entity(as[LoginRequest]) { req =>
+          val token = UUID.randomUUID().toString
+          complete(LoginResponse(token))
+        }
+      }
+    }
+
+  private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {
+    case exception =>
+      extractUri { uri =>
+        log.error(exception, s"Request to URI '$uri' threw exception.")
+        complete(HttpResponse(InternalServerError, entity = exception.getMessage))
+      }
+  }
+
+  private[this] def rejectionHandler(log: LoggingAdapter) = RejectionHandler.newBuilder().
+    handle { case ValidationRejection(msg, cause) =>
+        log.error(s"$msg - reason: $cause")
+        complete(Unauthorized, msg)
+    } result()
+
+  def router(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+    logRequest("HTTPRequest") {
+      logResult("HTTPResponse") {
+        handleExceptions(exceptionHandler(system.log)) {
+          handleRejections(rejectionHandler(system.log)) {
+            api
+          }
+        }
+      }
+    }
+
+}
