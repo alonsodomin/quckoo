@@ -5,8 +5,8 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.{ValidationRejection, RejectionHandler, ExceptionHandler, Route}
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import io.kairos.ui.protocol._
@@ -22,7 +22,7 @@ trait KairosHttpService extends UpickleSupport {
           HttpEntity(MediaTypes.`text/html`, IndexPage.skeleton.render)
         }
       } ~ getFromResourceDirectory("")
-    } ~ path("login") {
+    } ~ path("api" / "login") {
       post {
         entity(as[LoginRequest]) { req =>
           val token = UUID.randomUUID().toString

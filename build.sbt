@@ -1,5 +1,5 @@
+import sbt.Keys._
 import sbt._
-import Keys._
 
 val defaultSettings = Seq(
   organization := "io.kairos",
@@ -48,6 +48,7 @@ lazy val kairosUI = crossProject.crossType(CrossType.Full).in(file(".")).
 ).jvmSettings(
   libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor" % "2.4.0",
+    "com.typesafe.akka" %% "akka-slf4j" % "2.4.0",
     "com.typesafe.akka" %% "akka-http-core-experimental" % "1.0",
     "com.typesafe.akka" %% "akka-http-experimental" % "1.0",
     "de.heikoseeberger" %% "akka-http-upickle" % "1.1.0"

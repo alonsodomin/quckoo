@@ -1,22 +1,25 @@
 package io.kairos.ui
 
-import io.kairos.ui.protocol.{LoginResponse, LoginRequest}
+import io.kairos.ui.protocol.{LoginRequest, LoginResponse}
 import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{ReactComponentB, ReactEventAliases, BackendScope}
+import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactEventAliases}
 import org.scalajs.dom.ext.Ajax
-import scalajs.concurrent.JSExecutionContext.Implicits.runNow
 import upickle.default._
+
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
 /**
  * Created by aalonsodominguez on 12/10/2015.
  */
 object LoginForm {
 
-  private[this] class LoginBackend($: BackendScope[_, Unit]) extends ReactEventAliases {
+  case class State(username: String, password: String)
+
+  private[this] class LoginBackend($: BackendScope[_, State]) extends ReactEventAliases {
 
     def handleSubmit(event: ReactEventI) = {
       event.preventDefault()
-      Ajax.post("/ap/login", write(LoginRequest("balbal", "hidasid"))).foreach { res =>
+      Ajax.post("/api/login", write(LoginRequest("hkkdjs", "hidasid"))).foreach { res =>
         val response = read[LoginResponse](res.responseText)
         println(s"Token: ${response.token}")
       }
@@ -25,7 +28,7 @@ object LoginForm {
   }
 
   private[this] val Factory = ReactComponentB[Unit]("LoginForm").
-    initialState(()).
+    initialState(State("", "")).
     backend(new LoginBackend(_)).
     render((_, _, b) =>
       <.form(^.`class` := "pure-form pure-form-aligned", ^.onSubmit ==> b.handleSubmit,
