@@ -6,7 +6,7 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.env.enable
   config.vm.box = "phusion/ubuntu-14.04-amd64"
-  config.vm.hostname = "chronos-vagrant"
+  config.vm.hostname = "kairos-vagrant"
 
   if Vagrant.has_plugin?("vagrant-proxyconf")
     config.proxy.http     = ENV['HTTP_PROXY']
@@ -23,12 +23,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # fix "stdin: is not a tty" error
   config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
 
-  config.vm.define "store" do |store|
-    store.vm.network "private_network", ip: "192.168.33.25"
+  config.vm.define "support" do |support|
+    support.vm.network "private_network", ip: "192.168.33.25"
 
     # Setting up docker provisioner in a separate line to allow for the proxy configuration
-    store.vm.provision :docker, version: "latest"
-    store.vm.provision :docker do |d|
+    support.vm.provision :docker, version: "latest"
+    support.vm.provision :docker do |d|
       d.run "cassandra", args: "-p 7000:7000 -p 9042:9042 -p 9160:9160"
     end
   end
