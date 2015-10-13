@@ -19,7 +19,7 @@ object ClientApi extends Api {
     import upickle.default._
 
     val request = LoginRequest(username, password)
-    Ajax.post(LoginURI, write(request), headers = JsonRequestHeaders ++ auth.headers).map { xhr =>
+    Ajax.post(LoginURI, write(request), headers = JsonRequestHeaders).map { xhr =>
       read[LoginResponse](xhr.responseText)
     } map { res => res.token }
   }

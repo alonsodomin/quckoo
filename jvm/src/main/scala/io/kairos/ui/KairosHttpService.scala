@@ -5,6 +5,7 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
@@ -20,7 +21,9 @@ trait KairosHttpService extends UpickleSupport {
       post {
         entity(as[LoginRequest]) { req =>
           val token = UUID.randomUUID().toString
-          complete(LoginResponse(token))
+          setCookie(HttpCookie(Cookies.AuthTokenName, token)) {
+            complete(LoginResponse(token))
+          }
         }
       }
     } ~ path("cluster") {
