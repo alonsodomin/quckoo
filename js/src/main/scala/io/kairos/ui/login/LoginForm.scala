@@ -1,5 +1,6 @@
-package io.kairos.ui
+package io.kairos.ui.login
 
+import io.kairos.ui.{Api, ClientApi}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactEventAliases}
 
