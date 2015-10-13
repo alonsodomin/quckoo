@@ -1,10 +1,7 @@
 package io.kairos.ui
 
-import io.kairos.ui.protocol.{LoginRequest, LoginResponse}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactEventAliases}
-import org.scalajs.dom.ext.Ajax
-import upickle.default._
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
@@ -15,44 +12,39 @@ object LoginForm {
 
   case class State(username: String, password: String)
 
-  private[this] class LoginBackend($: BackendScope[_, State]) extends ReactEventAliases {
+  class LoginBackend($: BackendScope[Api, State]) extends ReactEventAliases {
 
     def handleSubmit(event: ReactEventI) = {
       event.preventDefault()
-      Ajax.post("/api/login", write(LoginRequest("hkkdjs", "hidasid"))).foreach { res =>
-        val response = read[LoginResponse](res.responseText)
-        println(s"Token: ${response.token}")
+      $.props.login($.get().username, $.get().password).onSuccess { case token: String =>
+        println("Token: " + token)
       }
     }
 
   }
 
-  private[this] val Factory = ReactComponentB[Unit]("LoginForm").
+  private[this] val Factory = ReactComponentB[Api]("LoginForm").
     initialState(State("", "")).
     backend(new LoginBackend(_)).
     render((_, _, b) =>
-      <.form(^.`class` := "pure-form pure-form-aligned", ^.onSubmit ==> b.handleSubmit,
-        <.fieldset(
-          <.div(^.`class` := "pure-control-group",
-            <.label(^.`for` := "username", "Username"),
-            <.input(^.name := "username", ^.placeholder := "Username")
-          )
+      <.form(^.onSubmit ==> b.handleSubmit,
+        <.div(^.`class` := "form-group",
+          <.label(^.`for` := "username", "Username"),
+          <.input(^.id := "username", ^.`class` := "form-control", ^.placeholder := "Username")
         ),
-        <.fieldset(
-          <.div(^.`class` := "pure-control-group",
-            <.label(^.`for` := "password", "Password"),
-            <.input(^.name := "password", ^.`type` := "password", ^.placeholder := "Password")
-          )
+        <.div(^.`class` := "form-group",
+          <.label(^.`for` := "password", "Password"),
+          <.input(^.id := "password", ^.`type` := "password", ^.`class` := "form-control", ^.placeholder := "Password")
         ),
-        <.div(^.`class` := "pure-controls",
-          <.label(^.`for` := "rememberMe", ^.`class` := "pure-checkbox",
+        <.div(^.`class` := "checkbox",
+          <.label(^.`for` := "rememberMe",
             <.input(^.id := "rememberMe", ^.`type` := "checkbox", "Remember me")
-          ),
-          <.button(^.`class` := "pure-button pure-button-primary", "Sign in")
-        )
+          )
+        ),
+        <.button(^.`class` := "btn btn-default", "Sign in")
       )
-    ).buildU
+    ).build
 
-  def apply() = Factory()
+  def apply() = Factory(ClientApi)
 
 }

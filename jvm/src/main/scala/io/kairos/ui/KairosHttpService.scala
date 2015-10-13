@@ -16,19 +16,24 @@ trait KairosHttpService extends UpickleSupport {
   import StatusCodes._
 
   private[this] def api(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
-    get {
-      pathSingleSlash {
-        complete {
-          HttpEntity(MediaTypes.`text/html`, IndexPage.skeleton.render)
-        }
-      } ~ getFromResourceDirectory("")
-    } ~ path("api" / "login") {
+    path("login") {
       post {
         entity(as[LoginRequest]) { req =>
           val token = UUID.randomUUID().toString
           complete(LoginResponse(token))
         }
       }
+    } ~ path("cluster") {
+      complete(ClusterDetails())
+    }
+
+  private[this] def static: Route =
+    get {
+      pathSingleSlash {
+        complete {
+          HttpEntity(MediaTypes.`text/html`, ClientBootstrap.skeleton.render)
+        }
+      } ~ getFromResourceDirectory("")
     }
 
   private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {
@@ -50,7 +55,9 @@ trait KairosHttpService extends UpickleSupport {
       logResult("HTTPResponse") {
         handleExceptions(exceptionHandler(system.log)) {
           handleRejections(rejectionHandler(system.log)) {
-            api
+            static ~ pathPrefix("api") {
+              api
+            }
           }
         }
       }

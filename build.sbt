@@ -38,21 +38,32 @@ lazy val kairosUI = crossProject.crossType(CrossType.Full).in(file(".")).
     "com.lihaoyi" %%% "upickle" % "0.3.6"
   )
 ).jsSettings(
-  libraryDependencies ++= Seq(
-    "com.github.japgolly.scalajs-react" %%% "core" % "0.9.2",
-    "com.github.japgolly.scalajs-react" %%% "extra" % "0.9.2"
-  ),
+  libraryDependencies ++= {
+    val scalaJSReactVersion = "0.9.2"
+    val scalaCssVersion = "0.3.0"
+
+    Seq(
+      "com.github.japgolly.scalajs-react" %%% "core" % scalaJSReactVersion,
+      "com.github.japgolly.scalajs-react" %%% "extra" % scalaJSReactVersion,
+      "com.github.japgolly.scalacss" %%% "core" % scalaCssVersion,
+      "com.github.japgolly.scalacss" %%% "ext-react" % scalaCssVersion
+  )},
   jsDependencies ++= Seq(
     "org.webjars" % "react" % "0.12.2" / "react-with-addons.js" commonJSName "React"
   )
 ).jvmSettings(
-  libraryDependencies ++= Seq(
-    "com.typesafe.akka" %% "akka-actor" % "2.4.0",
-    "com.typesafe.akka" %% "akka-slf4j" % "2.4.0",
-    "com.typesafe.akka" %% "akka-http-core-experimental" % "1.0",
-    "com.typesafe.akka" %% "akka-http-experimental" % "1.0",
-    "de.heikoseeberger" %% "akka-http-upickle" % "1.1.0"
-  )
+  libraryDependencies ++= {
+    val akkaVersion = "2.4.0"
+    val akkaHttpVersion = "1.0"
+
+    Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
+      "com.typesafe.akka" %% "akka-http-core-experimental" % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-http-experimental" % akkaHttpVersion,
+      "de.heikoseeberger" %% "akka-http-upickle" % "1.1.0",
+      "com.typesafe.slick" %% "slick" % "3.1.0"
+  )}
 )
 
 lazy val kairosUIJS = kairosUI.js
