@@ -62,7 +62,8 @@ lazy val kairosUI = crossProject.crossType(CrossType.Full).in(file(".")).
       "com.typesafe.akka" %% "akka-http-core-experimental" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-http-experimental" % akkaHttpVersion,
       "de.heikoseeberger" %% "akka-http-upickle" % "1.1.0",
-      "com.typesafe.slick" %% "slick" % "3.1.0"
+      "com.typesafe.slick" %% "slick" % "3.1.0",
+      "org.scalaz" %% "scalaz-core" % "7.1.4"
   )}
 )
 
