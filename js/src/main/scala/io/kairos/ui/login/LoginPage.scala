@@ -1,6 +1,8 @@
 package io.kairos.ui.login
 
+import io.kairos.ui.SiteMap.ConsolePage
 import japgolly.scalajs.react.ReactComponentB
+import japgolly.scalajs.react.extra.router2.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scalacss.Defaults._
@@ -25,15 +27,19 @@ object LoginPage {
     )
   }
 
-  private[this] val component = ReactComponentB.static("LoginPage",
-    <.div(Style.content,
-      <.div(^.`class` := "panel panel-default",
-        <.div(^.`class` := "panel-heading", "Sign in into Kairos Console"),
-        <.div(^.`class` := "panel-body", LoginForm())
+  private[this] val component = ReactComponentB[RouterCtl[ConsolePage]]("LoginPage").
+    stateless.
+    noBackend.
+    render((p, _, _) => {
+      <.div(Style.content,
+        <.div(^.`class` := "panel panel-default",
+          <.div(^.`class` := "panel-heading", "Sign in into Kairos Console"),
+          <.div(^.`class` := "panel-body", LoginForm(p))
+        )
       )
-    )
-  ).buildU
+    }
+  ).build
 
-  def apply() = component()
+  def apply(router: RouterCtl[ConsolePage]) = component(router)
 
 }

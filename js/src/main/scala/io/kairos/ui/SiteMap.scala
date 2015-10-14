@@ -18,8 +18,8 @@ object SiteMap {
     import dsl._
 
     (emptyRule
-    | staticRoute(root, Welcome) ~> render(WelcomePage())
-    | staticRoute("#login", Login) ~> render(LoginPage())
+    | staticRoute(root, Welcome) ~> redirectToPage(Home)(Redirect.Push)
+    | staticRoute("#login", Login) ~> renderR(LoginPage(_))
     )
   }
 

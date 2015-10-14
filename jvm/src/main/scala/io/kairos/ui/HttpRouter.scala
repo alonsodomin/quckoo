@@ -12,7 +12,7 @@ import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import io.kairos.ui.protocol._
 
-trait KairosHttpService extends UpickleSupport {
+trait HttpRouter extends UpickleSupport {
 
   import StatusCodes._
 
@@ -21,7 +21,7 @@ trait KairosHttpService extends UpickleSupport {
       post {
         entity(as[LoginRequest]) { req =>
           val token = UUID.randomUUID().toString
-          setCookie(HttpCookie(Cookies.AuthTokenName, token)) {
+          setCookie(HttpCookie(Cookies.AuthTokenName, token, path = Some("/"))) {
             complete(LoginResponse(token))
           }
         }

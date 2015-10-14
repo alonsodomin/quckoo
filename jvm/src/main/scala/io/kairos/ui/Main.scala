@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 /**
  * Created by aalonsodominguez on 11/10/2015.
  */
-object Main extends App with KairosHttpService {
+object Main extends App with HttpRouter {
 
   implicit val system = ActorSystem("KairosBackend")
   implicit val materializer = ActorMaterializer()
