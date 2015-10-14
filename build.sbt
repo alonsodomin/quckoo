@@ -71,6 +71,7 @@ lazy val kairosUIJS = kairosUI.js
 lazy val kairosUIJVM = kairosUI.jvm.settings(
   (resources in Compile) ++= Seq(
     (fastOptJS in (kairosUIJS, Compile)).value.data,
+    file((fastOptJS in (kairosUIJS, Compile)).value.data.getAbsolutePath + ".map"),
     (packageJSDependencies in (kairosUIJS, Compile)).value
   )
 ).settings(Revolver.settings: _*)
