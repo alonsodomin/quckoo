@@ -8,12 +8,12 @@ import scalaz.effect.IO
 package object auth {
 
   def isAuthenticated: IO[Boolean] = IO {
-    RootScope.cookie(Cookies.AuthTokenName).isDefined
+    RootScope.cookie(Auth.XSRFTokenCookie).isDefined
   }
 
   def headers: Map[String, String] =
-    RootScope.cookie(Cookies.AuthTokenName).
-      map(token => Map(Cookies.AuthTokenName -> token)).
+    RootScope.cookie(Auth.XSRFTokenCookie).
+      map(token => Map(Auth.XSRFTokenHeader -> token)).
       getOrElse(Map())
 
 }

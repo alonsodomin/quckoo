@@ -1,6 +1,6 @@
 package io.kairos.ui
 
-import io.kairos.ui.protocol.{LoginRequest, LoginResponse}
+import io.kairos.ui.protocol.LoginRequest
 import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -15,13 +15,11 @@ object ClientApi extends Api {
 
   private[this] val JsonRequestHeaders = Map("Content-Type" -> "application/json")
 
-  override def login(username: String, password: String)(implicit ec: ExecutionContext): Future[String] = {
+  override def login(username: String, password: String)(implicit ec: ExecutionContext): Future[Unit] = {
     import upickle.default._
 
     val request = LoginRequest(username, password)
-    Ajax.post(LoginURI, write(request), headers = JsonRequestHeaders).map { xhr =>
-      read[LoginResponse](xhr.responseText)
-    } map { res => res.token }
+    Ajax.post(LoginURI, write(request), headers = JsonRequestHeaders).map { xhr => () }
   }
 
 }

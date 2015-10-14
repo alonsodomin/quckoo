@@ -7,6 +7,6 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait Api {
 
-  def login(username: String, password: String)(implicit ec: ExecutionContext): Future[String]
+  def login(username: String, password: String)(implicit ec: ExecutionContext): Future[Unit]
 
 }

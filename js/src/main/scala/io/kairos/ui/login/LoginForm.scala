@@ -6,7 +6,6 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactEventAliases}
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
-import scalaz.effect.IO
 
 /**
  * Created by aalonsodominguez on 12/10/2015.
@@ -21,9 +20,8 @@ object LoginForm {
 
     def handleSubmit(event: ReactEventI) = {
       event.preventDefault()
-      $.props.api.login($.get().username, $.get().password).onSuccess {
-        case token: String =>
-          IO { println("Token: " + token) } flatMap { _ => $.props.router.set(Home) } unsafePerformIO()
+      $.props.api.login($.get().username, $.get().password).onSuccess { case _ =>
+        $.props.router.set(Home) unsafePerformIO()
       }
     }
 

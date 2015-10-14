@@ -1,15 +1,13 @@
 package io.kairos.ui
 
-import java.util.UUID
-
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
+import io.kairos.ui.auth._
 import io.kairos.ui.protocol._
 
 trait HttpRouter extends UpickleSupport {
@@ -20,9 +18,8 @@ trait HttpRouter extends UpickleSupport {
     path("login") {
       post {
         entity(as[LoginRequest]) { req =>
-          val token = UUID.randomUUID().toString
-          setCookie(HttpCookie(Cookies.AuthTokenName, token, path = Some("/"))) {
-            complete(LoginResponse(token))
+          addAuthCookie {
+            complete(OK)
           }
         }
       }
