@@ -8,11 +8,11 @@ import scalaz.effect.IO
 package object auth {
 
   def isAuthenticated: IO[Boolean] = IO {
-    Cookie.forName(Cookies.AuthTokenName).isDefined
+    RootScope.cookie(Cookies.AuthTokenName).isDefined
   }
 
   def headers: Map[String, String] =
-    Cookie.forName(Cookies.AuthTokenName).
+    RootScope.cookie(Cookies.AuthTokenName).
       map(token => Map(Cookies.AuthTokenName -> token)).
       getOrElse(Map())
 

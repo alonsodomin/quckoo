@@ -6,6 +6,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactEventAliases}
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scalaz.effect.IO
 
 /**
  * Created by aalonsodominguez on 12/10/2015.
@@ -22,10 +23,7 @@ object LoginForm {
       event.preventDefault()
       $.props.api.login($.get().username, $.get().password).onSuccess {
         case token: String =>
-          $.props.router.refresh.map { _ =>
-            $.props.router.set(Home)
-          }
-          println("Token: " + token)
+          IO { println("Token: " + token) } flatMap { _ => $.props.router.set(Home) } unsafePerformIO()
       }
     }
 
