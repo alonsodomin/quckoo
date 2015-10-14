@@ -1,11 +1,14 @@
-package io.kairos.ui.login
+package io.kairos.ui.client.login
 
-import io.kairos.ui.{Api, ClientApi, SiteMap}
+import io.kairos.ui.Api
+import io.kairos.ui.client.{ClientApi, SiteMap}
 import japgolly.scalajs.react.extra.router2._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactEventAliases}
 
+import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scalaz.effect.IO
 
 /**
  * Created by aalonsodominguez on 12/10/2015.
@@ -18,11 +21,25 @@ object LoginForm {
 
   class LoginBackend($: BackendScope[Props, State]) extends ReactEventAliases {
 
+    def updateUsername(event: ReactEventI) = {
+      $.modState(_.copy(username = event.target.value))
+    }
+
+    def updatePassword(event: ReactEventI) = {
+      $.modState(_.copy(password = event.target.value))
+    }
+
     def handleSubmit(event: ReactEventI) = {
       event.preventDefault()
-      $.props.api.login($.get().username, $.get().password).onSuccess { case _ =>
-        $.props.router.set(Home) unsafePerformIO()
-      }
+
+      def performLogin(): Future[IO[Unit]] =
+        $.props.api.login($.get().username, $.get().password).map { _ =>
+          $.props.router.set(Home)
+        } recover { case _ =>
+          $.props.router.set(Login)
+        }
+
+      performLogin() onSuccess { case io => io.unsafePerformIO() }
     }
 
   }
@@ -34,11 +51,15 @@ object LoginForm {
       <.form(^.onSubmit ==> b.handleSubmit,
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "username", "Username"),
-          <.input(^.id := "username", ^.`class` := "form-control", ^.placeholder := "Username", ^.required := true)
+          <.input(^.id := "username", ^.`class` := "form-control", ^.placeholder := "Username", ^.required := true,
+            ^.onChange ==> b.updateUsername
+          )
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "password", "Password"),
-          <.input(^.id := "password", ^.`type` := "password", ^.`class` := "form-control", ^.placeholder := "Password", ^.required := true)
+          <.input(^.id := "password", ^.`type` := "password", ^.`class` := "form-control", ^.placeholder := "Password",
+            ^.required := true, ^.onChange ==> b.updatePassword
+          )
         ),
         <.div(^.`class` := "checkbox",
           <.label(^.`for` := "rememberMe",

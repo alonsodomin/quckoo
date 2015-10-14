@@ -1,4 +1,4 @@
-package io.kairos.ui
+package io.kairos.ui.client.layout
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._

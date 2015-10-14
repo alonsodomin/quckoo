@@ -1,4 +1,4 @@
-package io.kairos.ui
+package io.kairos.ui.server.boot
 
 import scalatags.Text.all._
 
@@ -7,7 +7,7 @@ import scalatags.Text.all._
  */
 object ClientBootstrap {
 
-  val boot = "io.kairos.ui.App().main(document.getElementById('contents'))"
+  val boot = "io.kairos.ui.client.App().main(document.getElementById('contents'))"
 
   val skeleton = html(
     head(

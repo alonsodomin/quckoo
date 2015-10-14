@@ -35,7 +35,8 @@ lazy val kairosUI = crossProject.crossType(CrossType.Full).in(file(".")).
   name := "kairos-ui",
   libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "scalatags" % "0.4.6",
-    "com.lihaoyi" %%% "upickle" % "0.3.6"
+    "com.lihaoyi" %%% "upickle" % "0.3.6",
+    "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
   )
 ).jsSettings(
   libraryDependencies ++= {
@@ -43,6 +44,7 @@ lazy val kairosUI = crossProject.crossType(CrossType.Full).in(file(".")).
     val scalaCssVersion = "0.3.0"
 
     Seq(
+      "biz.enef" %%% "slogging" % "0.3",
       "com.github.japgolly.scalajs-react" %%% "core" % scalaJSReactVersion,
       "com.github.japgolly.scalajs-react" %%% "extra" % scalaJSReactVersion,
       "com.github.japgolly.scalacss" %%% "core" % scalaCssVersion,

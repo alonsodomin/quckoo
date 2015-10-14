@@ -1,11 +1,14 @@
-package io.kairos.ui
+package io.kairos.ui.client.security
+
+import io.kairos.ui.auth.Auth
+import io.kairos.ui.client.RootScope
 
 import scalaz.effect.IO
 
 /**
- * Created by alonsodomin on 13/10/2015.
+ * Created by alonsodomin on 14/10/2015.
  */
-package object auth {
+trait ClientAuth {
 
   def isAuthenticated: IO[Boolean] = IO {
     RootScope.cookie(Auth.XSRFTokenCookie).isDefined

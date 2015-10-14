@@ -1,5 +1,6 @@
-package io.kairos.ui
+package io.kairos.ui.client
 
+import io.kairos.ui.Api
 import io.kairos.ui.protocol.LoginRequest
 import org.scalajs.dom.ext.Ajax
 
@@ -18,8 +19,8 @@ object ClientApi extends Api {
   override def login(username: String, password: String)(implicit ec: ExecutionContext): Future[Unit] = {
     import upickle.default._
 
-    val request = LoginRequest(username, password)
-    Ajax.post(LoginURI, write(request), headers = JsonRequestHeaders).map { xhr => () }
+    Ajax.post(LoginURI, write(LoginRequest(username, password)), headers = JsonRequestHeaders).
+      map { xhr => () }
   }
 
 }

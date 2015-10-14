@@ -1,12 +1,14 @@
-package io.kairos.ui
+package io.kairos.ui.client
 
-import io.kairos.ui.login.LoginPage
+import io.kairos.ui.client.login.LoginPage
+import io.kairos.ui.client.pages.HomePage
+import io.kairos.ui.client.security.ClientAuth
 import japgolly.scalajs.react.extra.router2.{BaseUrl, Redirect, Router, RouterConfigDsl}
 
 /**
  * Created by aalonsodominguez on 12/10/2015.
  */
-object SiteMap {
+object SiteMap extends ClientAuth {
 
   sealed trait ConsolePage
 
@@ -30,7 +32,7 @@ object SiteMap {
 
     (emptyRule
     | staticRoute("#home", Home) ~> render(HomePage())
-    ).addConditionIO(auth.isAuthenticated)(_ => Some(redirectToPage(Login)))
+    ).addConditionIO(isAuthenticated)(_ => Some(redirectToPage(Login)))
   }
 
   private[this] val config = RouterConfigDsl[ConsolePage].buildConfig { dsl =>

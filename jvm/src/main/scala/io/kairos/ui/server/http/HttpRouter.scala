@@ -1,4 +1,4 @@
-package io.kairos.ui
+package io.kairos.ui.server.http
 
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
@@ -7,22 +7,18 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-import io.kairos.ui.auth._
 import io.kairos.ui.protocol._
+import io.kairos.ui.server.ServerFacade
+import io.kairos.ui.server.boot.ClientBootstrap
 
-trait HttpRouter extends UpickleSupport {
+trait HttpRouter extends UpickleSupport with AuthDirectives {
+  this: ServerFacade =>
 
   import StatusCodes._
 
-  private[this] def api(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+  private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     path("login") {
-      post {
-        entity(as[LoginRequest]) { req =>
-          addAuthCookie {
-            complete(OK)
-          }
-        }
-      }
+      post { authenticateUser }
     } ~ path("cluster") {
       complete(ClusterDetails())
     }
@@ -56,7 +52,7 @@ trait HttpRouter extends UpickleSupport {
         handleExceptions(exceptionHandler(system.log)) {
           handleRejections(rejectionHandler(system.log)) {
             static ~ pathPrefix("api") {
-              api
+              defineApi
             }
           }
         }

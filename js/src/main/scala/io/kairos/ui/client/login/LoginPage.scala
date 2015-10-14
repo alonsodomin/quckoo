@@ -1,6 +1,7 @@
-package io.kairos.ui.login
+package io.kairos.ui.client.login
 
-import io.kairos.ui.SiteMap.ConsolePage
+import io.kairos.ui.client.SiteMap
+import io.kairos.ui.client.SiteMap.ConsolePage
 import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.extra.router2.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
