@@ -27,7 +27,7 @@ trait HttpRouter extends UpickleSupport with AuthDirectives {
       }
     }
 
-  private[this] def static: Route =
+  private[this] def staticResources: Route =
     get {
       pathSingleSlash {
         complete {
@@ -55,7 +55,7 @@ trait HttpRouter extends UpickleSupport with AuthDirectives {
       logResult("HTTPResponse") {
         handleExceptions(exceptionHandler(system.log)) {
           handleRejections(rejectionHandler(system.log)) {
-            static ~ pathPrefix("api") {
+            staticResources ~ pathPrefix("api") {
               defineApi
             }
           }

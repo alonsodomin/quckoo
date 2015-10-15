@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.pattern._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import io.kairos.ui.server.core.UserManager
+import io.kairos.ui.server.core.UserAuthenticator
 import io.kairos.ui.server.http.HttpRouter
 import io.kairos.ui.server.security.AuthInfo
 
@@ -23,9 +23,9 @@ object Server {
 class Server(implicit system: ActorSystem, materializer: ActorMaterializer)
   extends HttpRouter with ServerFacade {
   import Server._
-  import UserManager._
+  import UserAuthenticator._
 
-  val userAuth = system.actorOf(UserManager.props(DefaultSessionTimeout))
+  val userAuth = system.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
   def authenticate(username: String, password: Array[Char]): Future[Option[AuthInfo]] = {
     import system.dispatcher

@@ -5,7 +5,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import akka.http.scaladsl.server.directives.RouteDirectives._
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import io.kairos.ui.auth.Auth
@@ -17,6 +16,11 @@ import io.kairos.ui.server.security.{AuthInfo, SecurityFacade}
  */
 trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
   import StatusCodes._
+
+  def extractAuthInfo: Directive1[AuthInfo] =
+    headerValueByName(Auth.XSRFTokenHeader).flatMap { header =>
+      provide(AuthInfo(header))
+    }
 
   def authenticateRequest(implicit system: ActorSystem, materizalizer: ActorMaterializer): Route =
     entity(as[LoginRequest]) { req =>
@@ -45,11 +49,12 @@ trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
     }
   }
 
-  def addAuthCookies(auth: AuthInfo): Directive0 = {
-    setCookie(
-      HttpCookie(Auth.UsernameCookie, auth.userId, path = Some("/")),
-      HttpCookie(Auth.XSRFTokenCookie, auth.token, path = Some("/"))
-    )
-  }
+  def refreshAuthInfo: Directive0 =
+    extractAuthInfo.flatMap { authInfo =>
+      addAuthCookies(authInfo.refresh())
+    }
+
+  private[this] def addAuthCookies(auth: AuthInfo): Directive0 =
+    setCookie(HttpCookie(Auth.XSRFTokenCookie, auth.token, path = Some("/")))
 
 }
