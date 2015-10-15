@@ -1,7 +1,6 @@
 package io.kairos.ui.client
 
-import io.kairos.ui.client.login.LoginPage
-import io.kairos.ui.client.pages.HomePage
+import io.kairos.ui.client.pages.{HomePage, LoginPage}
 import io.kairos.ui.client.security.ClientAuth
 import japgolly.scalajs.react.extra.router2.{BaseUrl, Redirect, Router, RouterConfigDsl}
 

@@ -18,9 +18,13 @@ trait HttpRouter extends UpickleSupport with AuthDirectives {
 
   private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     path("login") {
-      post { authenticateUser }
-    } ~ path("cluster") {
-      complete(ClusterDetails())
+      post { authenticateRequest }
+    } ~ authorizeRequest {
+      path("cluster") {
+        get {
+          complete(ClusterDetails())
+        }
+      }
     }
 
   private[this] def static: Route =

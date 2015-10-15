@@ -1,4 +1,4 @@
-package io.kairos.ui.client.login
+package io.kairos.ui.client.security
 
 import io.kairos.ui.Api
 import io.kairos.ui.client.{ClientApi, SiteMap}
