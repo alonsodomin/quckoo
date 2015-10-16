@@ -1,6 +1,7 @@
 package io.kairos.ui.client
 
-import io.kairos.ui.client.pages.{HomePage, LoginPage, WelcomePage}
+import io.kairos.ui.client.layout.Footer
+import io.kairos.ui.client.pages.{HomePage, LoginPage}
 import org.scalajs.dom
 
 import scala.scalajs.js.annotation.JSExport
@@ -13,7 +14,7 @@ object App extends {
 
   def styles() = {
     GlobalRegistry.register(
-      WelcomePage.Style,
+      Footer.Style,
       LoginPage.Style,
       HomePage.Style
     )

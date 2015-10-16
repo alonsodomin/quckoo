@@ -51,6 +51,13 @@ trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
     }
   }
 
+  def invalidateAuth: Directive0 =
+    extractAuthInfo.flatMap { authInfo =>
+      setCookie(HttpCookie(
+        Auth.XSRFTokenCookie, authInfo.expire().toString, path = Some("/"), expires = Some(DateTime.now)
+      ))
+    }
+
   def refreshAuthInfo: Directive0 =
     extractAuthInfo.flatMap { authInfo =>
       addAuthCookies(authInfo.refresh())
@@ -58,7 +65,7 @@ trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
 
   private[this] def addAuthCookies(auth: AuthInfo): Directive0 =
     setCookie(HttpCookie(
-      Auth.XSRFTokenCookie, auth.token, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
+      Auth.XSRFTokenCookie, auth.toString, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
     ))
 
 }

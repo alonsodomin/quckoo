@@ -23,13 +23,13 @@ object LoginPage {
     import dsl._
 
     val formPlacement = style(
-      width(300 px),
+      width(350 px),
       height(300 px),
       position.absolute,
       left(50 %%),
       top(50 %%),
       marginLeft(-150 px),
-      marginTop(-150 px)
+      marginTop(-180 px)
     )
   }
 

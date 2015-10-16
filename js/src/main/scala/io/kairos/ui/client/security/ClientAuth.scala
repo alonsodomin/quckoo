@@ -10,11 +10,14 @@ import scalaz.effect.IO
  */
 trait ClientAuth {
 
-  def isAuthenticated: IO[Boolean] = IO {
+  def isAuthenticated: Boolean =
+    RootScope.cookie(Auth.XSRFTokenCookie).isDefined
+
+  def isAuthenticatedIO: IO[Boolean] = IO {
     RootScope.cookie(Auth.XSRFTokenCookie).isDefined
   }
 
-  def headers: Map[String, String] =
+  def authHeaders: Map[String, String] =
     RootScope.cookie(Auth.XSRFTokenCookie).
       map(token => Map(Auth.XSRFTokenHeader -> token)).
       getOrElse(Map())

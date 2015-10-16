@@ -20,7 +20,13 @@ trait HttpRouter extends UpickleSupport with AuthDirectives {
     path("login") {
       post { authenticateRequest }
     } ~ authorizeRequest {
-      path("cluster") {
+      path("logout") {
+        post {
+          invalidateAuth {
+            complete(OK)
+          }
+        }
+      } ~ path("cluster") {
         get {
           complete(ClusterDetails())
         }

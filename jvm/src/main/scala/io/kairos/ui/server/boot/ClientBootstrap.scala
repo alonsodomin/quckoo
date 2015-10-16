@@ -29,7 +29,7 @@ object ClientBootstrap {
       base(href := "/")
     ),
     body(
-      `class` := "container",
+      `class` := "container", style := "padding-top: 70px;",
       onload := boot,
       div(id := "contents")
     )

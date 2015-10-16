@@ -12,6 +12,8 @@ object AuthInfo {
 
   private[this] val TokenPattern = "(.+?):(.+)".r
 
+  private val ExpiredToken = "EXPIRED"
+
   def apply(encoded: String): AuthInfo = {
     val TokenPattern(userId, token) = new String(encoded.toByteArray, "UTF-8")
     new AuthInfo(userId, token)
@@ -26,10 +28,15 @@ class AuthInfo private (val userId: UserId, val token: String) {
 
   def this(userId: String) = this(userId, AuthInfo.newToken())
 
-  def hasPermission(permission: Permission): Boolean = ???
+  def hasPermission(permission: Permission): Boolean =
+    if (ExpiredToken == token) false
+    else ???
 
   def refresh(): AuthInfo =
     new AuthInfo(userId, newToken())
+
+  def expire(): AuthInfo =
+    new AuthInfo(userId, ExpiredToken)
 
   override def toString: String =
     (userId + ":" + token).getBytes("UTF-8").toBase64
