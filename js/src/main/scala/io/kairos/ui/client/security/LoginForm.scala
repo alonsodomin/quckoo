@@ -1,25 +1,18 @@
 package io.kairos.ui.client.security
 
-import io.kairos.ui.Api
-import io.kairos.ui.client.{ClientApi, SiteMap}
-import japgolly.scalajs.react.extra.router2._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactEventAliases}
-
-import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
-import scalaz.effect.IO
+import japgolly.scalajs.react.{BackendScope, ReactComponentB, _}
 
 /**
  * Created by aalonsodominguez on 12/10/2015.
  */
 object LoginForm {
-  import SiteMap._
+  
+  case class LoginInfo(username: String, password: String)
 
-  case class Props(api: Api, router: RouterCtl[ConsolePage])
-  case class State(username: String, password: String)
+  type LoginHandler = LoginInfo => Unit
 
-  class LoginBackend($: BackendScope[Props, State]) extends ReactEventAliases {
+  class LoginBackend($: BackendScope[LoginHandler, LoginInfo]) {
 
     def updateUsername(event: ReactEventI) = {
       $.modState(_.copy(username = event.target.value))
@@ -31,34 +24,26 @@ object LoginForm {
 
     def handleSubmit(event: ReactEventI) = {
       event.preventDefault()
-
-      def performLogin(): Future[IO[Unit]] =
-        $.props.api.login($.get().username, $.get().password).map { _ =>
-          $.props.router.set(Home)
-        } recover { case _ =>
-          $.props.router.set(Login)
-        }
-
-      performLogin() onSuccess { case io => io.unsafePerformIO() }
+      $.props($.get())
     }
 
   }
 
-  private[this] val Factory = ReactComponentB[Props]("LoginForm").
-    initialState(State("", "")).
+  private[this] val component = ReactComponentB[LoginHandler]("LoginForm").
+    initialState(LoginInfo("", "")).
     backend(new LoginBackend(_)).
-    render((_, _, b) =>
+    render((_, info, b) =>
       <.form(^.onSubmit ==> b.handleSubmit,
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "username", "Username"),
-          <.input(^.id := "username", ^.`class` := "form-control", ^.placeholder := "Username", ^.required := true,
-            ^.onChange ==> b.updateUsername
+          <.input(^.id := "username", ^.`class` := "form-control", ^.placeholder := "Username",
+            ^.required := true, ^.onChange ==> b.updateUsername, ^.value := info.username
           )
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "password", "Password"),
           <.input(^.id := "password", ^.`type` := "password", ^.`class` := "form-control", ^.placeholder := "Password",
-            ^.required := true, ^.onChange ==> b.updatePassword
+            ^.required := true, ^.onChange ==> b.updatePassword, ^.value := info.password
           )
         ),
         <.div(^.`class` := "checkbox",
@@ -70,6 +55,6 @@ object LoginForm {
       )
     ).build
 
-  def apply(router: RouterCtl[ConsolePage]) = Factory(Props(ClientApi, router))
+  def apply(loginHandler: LoginHandler) = component(loginHandler)
 
 }

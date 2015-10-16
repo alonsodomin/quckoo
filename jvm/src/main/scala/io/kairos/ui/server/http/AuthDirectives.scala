@@ -11,6 +11,8 @@ import io.kairos.ui.auth.Auth
 import io.kairos.ui.protocol.LoginRequest
 import io.kairos.ui.server.security.{AuthInfo, SecurityFacade}
 
+import scala.concurrent.duration._
+
 /**
  * Created by alonsodomin on 14/10/2015.
  */
@@ -55,6 +57,8 @@ trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
     }
 
   private[this] def addAuthCookies(auth: AuthInfo): Directive0 =
-    setCookie(HttpCookie(Auth.XSRFTokenCookie, auth.token, path = Some("/")))
+    setCookie(HttpCookie(
+      Auth.XSRFTokenCookie, auth.token, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
+    ))
 
 }
