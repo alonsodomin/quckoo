@@ -1,5 +1,6 @@
 package io.kairos.ui.client
 
+import io.kairos.ui.client.execution.ExecutionsPage
 import io.kairos.ui.client.layout.Navigation.NavigationItem
 import io.kairos.ui.client.layout.{Footer, Navigation}
 import io.kairos.ui.client.registry.RegistryPage
@@ -37,6 +38,7 @@ object SiteMap extends ClientAuth {
     (emptyRule
     | staticRoute("#home", Home) ~> render(HomePage())
     | staticRoute("#registry", Registry) ~> render(RegistryPage())
+    | staticRoute("#executions", Executions) ~> render(ExecutionsPage())
     ).addConditionIO(isAuthenticatedIO)(_ => Some(redirectToPage(Login)))
   }
 

@@ -1,6 +1,7 @@
 package io.kairos.ui.client.boot
 
 import io.kairos.ui.client.layout.Footer
+import io.kairos.ui.client.registry.RegistryPage
 import io.kairos.ui.client.security.LoginPage
 import io.kairos.ui.client.{HomePage, SiteMap}
 import org.scalajs.dom
@@ -17,7 +18,8 @@ object App extends {
     GlobalRegistry.register(
       Footer.Style,
       LoginPage.Style,
-      HomePage.Style
+      HomePage.Style,
+      RegistryPage.Style
     )
     GlobalRegistry.onRegistration(_.addToDocument)
   }

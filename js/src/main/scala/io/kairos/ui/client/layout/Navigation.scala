@@ -3,11 +3,13 @@ package io.kairos.ui.client.layout
 import io.kairos.ui.client.SiteMap
 import io.kairos.ui.client.core.ClientApi
 import io.kairos.ui.client.security.ClientAuth
+import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router2.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scalaz.effect.IO
 
 /**
  * Created by alonsodomin on 16/10/2015.
@@ -22,22 +24,27 @@ object Navigation extends ClientAuth {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def navigationItemClicked(item: NavigationItem) = {
-      $.modState(_.copy(current = item))
-      $.props.routerCtl.set(item.page).unsafePerformIO()
-    }
+    def navigationItemClickedEH(item: NavigationItem): ReactEvent => IO[Unit] =
+      e => preventDefaultIO(e) >> stopPropagationIO(e) >> IO {
+        $.modState(_.copy(current = item))
+      } >> $.props.routerCtl.set(item.page)
 
     def renderNavItem(item: NavigationItem) = {
       <.li(^.classSet("active" -> ($.get().current == item)),
-        <.a(^.href := "#", ^.onClick --> navigationItemClicked(item), item.name)
+        <.a(^.href := $.props.routerCtl.urlFor(item.page).value,
+          ^.onClick ~~> navigationItemClickedEH(item), item.name)
       )
     }
 
-    def onLogoutClicked(event: ReactEventI) = {
-      event.preventDefault()
-      ClientApi.logout() onSuccess { case _ =>
-        $.props.routerCtl.refresh.unsafePerformIO()
+
+    def onLogoutClicked: ReactEvent => IO[Unit] = {
+      def logoutAndRefresh: IO[Unit] = IO {
+        ClientApi.logout() map { case _ =>
+          $.props.routerCtl.refresh
+        } onSuccess { case io => io.unsafePerformIO() }
       }
+
+      e => preventDefaultIO(e) >> logoutAndRefresh
     }
 
   }
@@ -49,8 +56,8 @@ object Navigation extends ClientAuth {
       <.nav(^.`class` := "navbar navbar-default navbar-fixed-top",
         <.div(^.`class` := "container-fluid",
           <.div(^.`class` := "navbar-header",
-            <.a(^.`class` := "navbar-brand", ^.href := "#",
-              ^.onClick --> b.navigationItemClicked(p.initial),
+            <.a(^.`class` := "navbar-brand", ^.href := p.routerCtl.urlFor(Home).value,
+              ^.onClick ~~> b.navigationItemClickedEH(p.initial),
               <.i(^.`class` := "fa fa-home"),
               <.span("Kairos Console")
             )
@@ -61,7 +68,7 @@ object Navigation extends ClientAuth {
                 p.menu.map(item => b.renderNavItem(item))
               ),
               <.ul(^.`class` := "nav navbar-nav navbar-right",
-                <.li(<.a(^.href := "#", ^.onClick ==> b.onLogoutClicked, "Logout"))
+                <.li(<.a(^.href := "#", ^.onClick ~~> b.onLogoutClicked, "Logout"))
               )
             )
           } else EmptyTag
