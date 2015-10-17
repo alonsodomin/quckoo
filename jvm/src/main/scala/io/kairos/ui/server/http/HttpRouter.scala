@@ -16,6 +16,10 @@ trait HttpRouter extends UpickleSupport with AuthDirectives {
 
   import StatusCodes._
 
+  val jobs: Seq[JobSpecDetails] = {
+    for (i <- 1 to 25) yield JobSpecDetails(i.toString, s"jobName_$i")
+  }
+
   private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     path("login") {
       post { authenticateRequest }
@@ -29,6 +33,12 @@ trait HttpRouter extends UpickleSupport with AuthDirectives {
       } ~ path("cluster") {
         get {
           complete(ClusterDetails())
+        }
+      } ~ pathPrefix("registry") {
+        path("jobs") {
+          get {
+            complete(jobs)
+          }
         }
       }
     }

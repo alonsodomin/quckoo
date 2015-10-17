@@ -1,7 +1,7 @@
 package io.kairos.ui.client.security
 
 import io.kairos.ui.auth.Auth
-import io.kairos.ui.client.RootScope
+import io.kairos.ui.client.core.RootScope
 
 import scalaz.effect.IO
 

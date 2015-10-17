@@ -1,9 +1,8 @@
-package io.kairos.ui.client.pages
+package io.kairos.ui.client.security
 
-import io.kairos.ui.client.ClientApi
 import io.kairos.ui.client.SiteMap.{ConsolePage, Home, Login}
+import io.kairos.ui.client.core.ClientApi
 import io.kairos.ui.client.layout.{Notification, NotificationDisplay}
-import io.kairos.ui.client.security.LoginForm
 import japgolly.scalajs.react.extra.router2.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB}

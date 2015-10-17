@@ -1,7 +1,8 @@
 package io.kairos.ui.client.layout
 
+import io.kairos.ui.client.SiteMap
+import io.kairos.ui.client.core.ClientApi
 import io.kairos.ui.client.security.ClientAuth
-import io.kairos.ui.client.{ClientApi, SiteMap}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router2.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._

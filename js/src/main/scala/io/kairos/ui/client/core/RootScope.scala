@@ -1,4 +1,4 @@
-package io.kairos.ui.client
+package io.kairos.ui.client.core
 
 import org.scalajs.dom
 

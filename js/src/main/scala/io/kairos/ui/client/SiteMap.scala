@@ -2,8 +2,8 @@ package io.kairos.ui.client
 
 import io.kairos.ui.client.layout.Navigation.NavigationItem
 import io.kairos.ui.client.layout.{Footer, Navigation}
-import io.kairos.ui.client.pages.{HomePage, LoginPage}
-import io.kairos.ui.client.security.ClientAuth
+import io.kairos.ui.client.registry.RegistryPage
+import io.kairos.ui.client.security.{ClientAuth, LoginPage}
 import japgolly.scalajs.react.extra.router2._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -36,6 +36,7 @@ object SiteMap extends ClientAuth {
 
     (emptyRule
     | staticRoute("#home", Home) ~> render(HomePage())
+    | staticRoute("#registry", Registry) ~> render(RegistryPage())
     ).addConditionIO(isAuthenticatedIO)(_ => Some(redirectToPage(Login)))
   }
 

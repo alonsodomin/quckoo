@@ -1,7 +1,8 @@
-package io.kairos.ui.client
+package io.kairos.ui.client.boot
 
 import io.kairos.ui.client.layout.Footer
-import io.kairos.ui.client.pages.{HomePage, LoginPage}
+import io.kairos.ui.client.security.LoginPage
+import io.kairos.ui.client.{HomePage, SiteMap}
 import org.scalajs.dom
 
 import scala.scalajs.js.annotation.JSExport
