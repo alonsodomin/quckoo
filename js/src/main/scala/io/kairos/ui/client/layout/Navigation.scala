@@ -23,6 +23,7 @@ object Navigation extends ClientAuth {
   case class State(current: NavigationItem)
 
   class Backend($: BackendScope[Props, State]) {
+    import scalaz.syntax.bind.ToBindOps
 
     def navigationItemClickedEH(item: NavigationItem): ReactEvent => IO[Unit] =
       e => preventDefaultIO(e) >> stopPropagationIO(e) >> IO {
@@ -35,7 +36,6 @@ object Navigation extends ClientAuth {
           ^.onClick ~~> navigationItemClickedEH(item), item.name)
       )
     }
-
 
     def onLogoutClicked: ReactEvent => IO[Unit] = {
       def logoutAndRefresh: IO[Unit] = IO {

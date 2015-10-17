@@ -30,6 +30,14 @@ object LoginPage {
       marginLeft(-150 px),
       marginTop(-180 px)
     )
+
+    object loginPanel {
+      val container = style(addClassNames("panel", "panel-default"))
+      val header = style(addClassName("panel-heading"))
+      val body = style(addClassName("panel-body"))
+    }
+
+    initInnerObjects(loginPanel.container, loginPanel.header, loginPanel.body)
   }
 
   case class NotificationHolder(notifications: Seq[Notification] = Seq())
@@ -61,13 +69,11 @@ object LoginPage {
     initialState(NotificationHolder()).
     backend(new LoginBackend(_)).
     render((props, s, b) => {
-      <.div(
+      <.div(Style.formPlacement,
         NotificationDisplay(s.notifications),
-        <.div(Style.formPlacement,
-          <.div(^.`class` := "panel panel-default",
-            <.div(^.`class` := "panel-heading", "Sign in into Kairos Console"),
-            <.div(^.`class` := "panel-body", LoginForm(b.loginHandler))
-          )
+        <.div(Style.loginPanel.container,
+          <.div(Style.loginPanel.header, "Sign in into Kairos Console"),
+          <.div(Style.loginPanel.body, LoginForm(b.loginHandler))
         )
       )
     }

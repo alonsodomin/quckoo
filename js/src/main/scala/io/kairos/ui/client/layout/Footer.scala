@@ -15,6 +15,7 @@ object Footer {
     import dsl._
 
     val content = style(
+      addClassName("footer"),
       position.absolute,
       left(0 px),
       bottom(0 px),

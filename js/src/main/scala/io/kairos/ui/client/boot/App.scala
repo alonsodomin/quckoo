@@ -1,6 +1,6 @@
 package io.kairos.ui.client.boot
 
-import io.kairos.ui.client.layout.Footer
+import io.kairos.ui.client.layout._
 import io.kairos.ui.client.registry.RegistryPage
 import io.kairos.ui.client.security.LoginPage
 import io.kairos.ui.client.{HomePage, SiteMap}
@@ -14,7 +14,7 @@ import scalacss.mutable.GlobalRegistry
 @JSExport
 object App extends {
 
-  def styles() = {
+  def inlineStyles() = {
     GlobalRegistry.register(
       Footer.Style,
       LoginPage.Style,
@@ -26,7 +26,8 @@ object App extends {
 
   @JSExport
   def main(container: dom.html.Div): Unit = {
-    styles()
+    dom.document.head.appendChild(GlobalStyle.contents)
+    inlineStyles()
     SiteMap.router().render(container)
   }
 
