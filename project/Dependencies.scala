@@ -24,7 +24,7 @@ object Dependencies {
 
     "com.github.scopt"    %% "scopt" % "3.3.0",
 
-    "com.github.krasserm" %% "akka-persistence-cassandra" % "0.4-SNAPSHOT",
+    "com.github.krasserm" %% "akka-persistence-cassandra" % "0.4",
     "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.1.3" % Test  withSources() withJavadoc(),
 
     "commons-io"    % "commons-io" % "2.4" % "test"

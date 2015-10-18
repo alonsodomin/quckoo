@@ -17,9 +17,7 @@ scalacOptions in ThisBuild ++= Seq(
 resolvers in ThisBuild ++= Seq(
   Opts.resolver.mavenLocalFile,
   "hseeberger at bintray" at "http://dl.bintray.com/hseeberger/maven",
-  "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/",
-  "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven",
-  "OJO Snapshots" at "https://oss.jfrog.org/oss-snapshot-local"
+  "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
 )
 
 coverageHighlighting in ThisBuild := true
@@ -120,12 +118,17 @@ lazy val console = (crossProject in file("console")).
       "biz.enef" %%% "slogging" % "0.3",
       "com.github.japgolly.scalajs-react" %%% "core" % scalaJSReactVersion,
       "com.github.japgolly.scalajs-react" %%% "extra" % scalaJSReactVersion,
+      "com.github.japgolly.scalajs-react" %%% "test" % scalaJSReactVersion % "test",
       "com.github.japgolly.scalacss" %%% "core" % scalaCssVersion,
       "com.github.japgolly.scalacss" %%% "ext-react" % scalaCssVersion
     )},
   jsDependencies ++= Seq(
-    "org.webjars" % "react" % "0.12.2" / "react-with-addons.js" commonJSName "React"
-  )
+    "org.webjars" % "react" % "0.12.2" / "react-with-addons.js" commonJSName "React",
+    "org.webjars" % "react" % "0.12.2" % "test" / "react-with-addons.js" commonJSName "React"
+  ),
+  requiresDOM := true,
+  scalaJSStage in Test := FastOptStage,
+  jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
 ).jvmSettings(
   libraryDependencies ++= {
     val akkaVersion = "2.4.0"
