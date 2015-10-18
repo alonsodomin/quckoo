@@ -15,20 +15,14 @@ object Footer {
     import dsl._
 
     val content = style(
-      addClassName("footer"),
-      position.absolute,
-      left(0 px),
-      bottom(0 px),
-      height(70 px),
-      width(100 %%),
-      textAlign.center
+      //addClassNames("navbar navbar-default navbar-fixed-bottom")
+      addClassName("footer")
     )
 
   }
 
   private[this] val component = ReactComponentB.static("Footer",
     <.footer(Style.content,
-      <.div(^.borderBottom := "1px solid grey", ^.padding := "0px"),
       <.p(^.paddingTop := "5px", "Built using scalajs/scalajs-react/scalacss")
     )
   ).buildU

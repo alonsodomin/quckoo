@@ -17,20 +17,20 @@ package object layout {
 
     private[this] val footerHeight = height(100 px)
 
-    ".view-port" - (
-      minHeight(100 %%),
-      marginBottom(100 px),
-
-      &.after - (
-        content := "",
-        display.block,
-        footerHeight
-      )
+    "html" - (
+      position.relative,
+      minHeight(100 %%)
     )
 
+    "body" - marginBottom(60 px)
+
     ".footer" - (
-      backgroundColor.white,
-      footerHeight
+      position.absolute,
+      bottom(0 px),
+      left(0 px),
+      width(100 %%),
+      height(60 px),
+      backgroundColor(Color("#f8f8f8"))
     )
 
     val contents: HTMLStyleElement = render(cssStyleElementRenderer, env)

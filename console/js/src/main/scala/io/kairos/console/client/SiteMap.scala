@@ -62,9 +62,7 @@ object SiteMap extends ClientAuth {
   def layout(ctrl: RouterCtl[ConsolePage], res: Resolution[ConsolePage]) =
     <.div(
       Navigation(mainMenu.head, mainMenu, ctrl),
-      <.div(^.`class` := "view-port",
-        res.render()
-      ),
+      res.render(),
       Footer()
     )
 
