@@ -10,11 +10,13 @@ scalacOptions in ThisBuild ++= Seq(
   "-language:postfixOps",
   "-feature",
   "-unchecked",
-  "-deprecation"
+  "-deprecation",
+  "-Ywarn-dead-code"
 )
 
 resolvers in ThisBuild ++= Seq(
   Opts.resolver.mavenLocalFile,
+  "hseeberger at bintray" at "http://dl.bintray.com/hseeberger/maven",
   "Akka Snapshot Repository" at "http://repo.akka.io/snapshots/",
   "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven",
   "OJO Snapshots" at "https://oss.jfrog.org/oss-snapshot-local"
@@ -23,7 +25,7 @@ resolvers in ThisBuild ++= Seq(
 coverageHighlighting in ThisBuild := true
 
 lazy val kairos = (project in file(".")).aggregate(
-  common, network, resolver, client, cluster, scheduler, examples, worker
+  common, network, resolver, client, cluster, scheduler, consoleRoot, examples, worker
 )
 
 lazy val examples = (project in file("examples")).aggregate(
@@ -97,6 +99,57 @@ lazy val worker = (project in file("worker")).
   dependsOn(network).
   dependsOn(resolver).
   dependsOn(cluster)
+
+lazy val consoleRoot = (project in file("console")).
+  aggregate(consoleJS, consoleJVM)
+
+lazy val console = (crossProject in file("console")).
+  settings(
+  name := "kairos-ui",
+  libraryDependencies ++= Seq(
+    "com.lihaoyi" %%% "scalatags" % "0.4.6",
+    "com.lihaoyi" %%% "upickle" % "0.3.6",
+    "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+  )
+).jsSettings(
+  libraryDependencies ++= {
+    val scalaJSReactVersion = "0.9.2"
+    val scalaCssVersion = "0.3.0"
+
+    Seq(
+      "biz.enef" %%% "slogging" % "0.3",
+      "com.github.japgolly.scalajs-react" %%% "core" % scalaJSReactVersion,
+      "com.github.japgolly.scalajs-react" %%% "extra" % scalaJSReactVersion,
+      "com.github.japgolly.scalacss" %%% "core" % scalaCssVersion,
+      "com.github.japgolly.scalacss" %%% "ext-react" % scalaCssVersion
+    )},
+  jsDependencies ++= Seq(
+    "org.webjars" % "react" % "0.12.2" / "react-with-addons.js" commonJSName "React"
+  )
+).jvmSettings(
+  libraryDependencies ++= {
+    val akkaVersion = "2.4.0"
+    val akkaHttpVersion = "1.0"
+
+    Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
+      "com.typesafe.akka" %% "akka-http-core-experimental" % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-http-experimental" % akkaHttpVersion,
+      "de.heikoseeberger" %% "akka-http-upickle" % "1.1.0",
+      "com.typesafe.slick" %% "slick" % "3.1.0",
+      "org.scalaz" %% "scalaz-core" % "7.1.4"
+    )}
+)
+
+lazy val consoleJS = console.js
+lazy val consoleJVM = console.jvm.settings(
+  (resources in Compile) ++= Seq(
+    (fastOptJS in (consoleJS, Compile)).value.data,
+    file((fastOptJS in (consoleJS, Compile)).value.data.getAbsolutePath + ".map"),
+    (packageJSDependencies in (consoleJS, Compile)).value
+  )
+).settings(Revolver.settings: _*)
 
 lazy val exampleJobs = Project("example-jobs", file("examples/jobs")).
   settings(Commons.settings: _*).
