@@ -149,7 +149,8 @@ lazy val consoleJVM = console.jvm.settings(
     file((fastOptJS in (consoleJS, Compile)).value.data.getAbsolutePath + ".map"),
     (packageJSDependencies in (consoleJS, Compile)).value
   )
-).settings(Revolver.settings: _*)
+).settings(Revolver.settings: _*).
+  dependsOn(scheduler)
 
 lazy val exampleJobs = Project("example-jobs", file("examples/jobs")).
   settings(Commons.settings: _*).
