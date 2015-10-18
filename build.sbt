@@ -101,9 +101,8 @@ lazy val worker = (project in file("worker")).
 lazy val consoleRoot = (project in file("console")).
   aggregate(consoleJS, consoleJVM)
 
-lazy val console = (crossProject in file("console")).
-  settings(
-  name := "kairos-ui",
+lazy val console = (crossProject in file("console")).settings(
+  name := "console",
   libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "scalatags" % "0.4.6",
     "com.lihaoyi" %%% "upickle" % "0.3.6",

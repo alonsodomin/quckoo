@@ -6,13 +6,14 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import io.kairos.console.server.Server
+import org.slf4s.Logging
 
 import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 11/10/2015.
  */
-object ServerBootstrap extends App {
+object ServerBootstrap extends App with Logging {
   implicit val system = ActorSystem("KairosBackend")
   sys.addShutdownHook { system.terminate() }
 
@@ -24,10 +25,10 @@ object ServerBootstrap extends App {
   import system.dispatcher
 
   Http().bindAndHandle(server.router, "0.0.0.0", 8080) map {
-    case sb: ServerBinding => println(s"HTTP server started!")
+    case sb: ServerBinding => log.info(s"HTTP server started!")
   } recover {
     case ex: Throwable =>
-      println("Error starting HTTP server: " + ex.getMessage)
+      log.error("Error starting HTTP server." + ex)
       system.terminate()
   }
 

@@ -7,12 +7,12 @@ import scalatags.Text.all._
  */
 object ClientBootstrap {
 
-  val boot = "io.kairos.ui.client.boot.App().main(document.getElementById('contents'))"
+  val boot = "io.kairos.console.client.boot.App().main(document.getElementById('contents'))"
 
   val skeleton = html(
     head(
-      script(src := "/kairos-ui-jsdeps.js"),
-      script(src := "/kairos-ui-fastopt.js"),
+      script(src := "/console-jsdeps.js"),
+      script(src := "/console-fastopt.js"),
       link(
         rel := "stylesheet",
         href := "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
