@@ -1,61 +1,81 @@
 package io.kairos.registry
 
+import akka.actor.{Props, ActorRef}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
+import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.{ImplicitSender, TestProbe}
-import io.kairos.id.ModuleId
+import io.kairos.JobSpec
+import io.kairos.cluster.ForwadingReceptionist
+import io.kairos.id.{JobId, ModuleId}
 import io.kairos.multijvm.MultiNodeClusterSpec
+import io.kairos.protocol.RegistryProtocol.{JobAccepted, RegisterJob}
+import io.kairos.protocol.ResolutionFailed
+import io.kairos.resolver.{Resolver, JobPackage}
+import io.kairos.resolver.Resolver.Validate
 
 /**
  * Created by domingueza on 28/08/15.
  */
 object RegistryNodesConfig extends MultiNodeConfig {
-  val registry1 = role("registry1")
-  val registry2 = role("registry2")
+  val registry = role("registry")
+  val proxy = role("proxy")
 
   commonConfig(MultiNodeClusterSpec.clusterConfig)
 }
 
 class RegistryMultiNodeSpecMultiJvmNode1 extends RegistryMultiNode
-class RegistryMultiNodeSpecMultiJvmNode2 extends RegistryMultiNode
+class RegistryMultiNodeSpecMultiJvmProxy extends RegistryMultiNode
 
 object RegistryMultiNode {
-  val TestModuleId = ModuleId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
+
+  final val TestModuleId = ModuleId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
+  final val TestJobSpec = JobSpec("Examples", moduleId = TestModuleId, jobClass = "io.kairos.examples.paramteters.PowerOfNJob")
+  final val TestJobPackage = JobPackage(TestModuleId, Seq())
+
 }
 
 abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with ImplicitSender with MultiNodeClusterSpec {
 
+  import RegistryMultiNode._
   import RegistryNodesConfig._
 
   "A Registry cluster" should {
-    val resolverProbe = TestProbe()
 
-    "distribute jobs across shards" in {
-      awaitClusterUp(registry1, registry2)
+    "distribute jobs specs across shards" in {
+      awaitClusterUp(registry, proxy)
 
-      runOn(registry1) {
-        ClusterSharding(system).start(
+      Persistence(system)
+
+      runOn(proxy) {
+        enterBarrier("shard-ready")
+
+        val registryRef = system.actorSelection(node(registry) / "user" / "registry")
+        registryRef ! RegisterJob(TestJobSpec)
+
+        enterBarrier("registering-job")
+
+        expectMsgType[JobAccepted].job should be(TestJobSpec)
+      }
+
+      runOn(registry) {
+        val resolverProbe = TestProbe()
+        val ref = ClusterSharding(system).start(
           typeName        = Registry.shardName,
           entityProps     = Registry.props(resolverProbe.ref),
           settings        = ClusterShardingSettings(system),
           extractEntityId = Registry.idExtractor,
           extractShardId  = Registry.shardResolver
         )
-        enterBarrier("shard-started")
+        system.actorOf(Props(classOf[ForwadingReceptionist], ref), "registry")
+        enterBarrier("shard-ready")
+
+        enterBarrier("registering-job")
+        resolverProbe.expectMsgType[Validate].moduleId should be(TestModuleId)
+        resolverProbe.reply(TestJobPackage)
       }
 
-      runOn(registry2) {
-        ClusterSharding(system).start(
-          typeName        = Registry.shardName,
-          entityProps     = Registry.props(resolverProbe.ref),
-          settings        = ClusterShardingSettings(system),
-          extractEntityId = Registry.idExtractor,
-          extractShardId  = Registry.shardResolver
-        )
-        enterBarrier("shard-started")
-      }
-
-
+      enterBarrier("finished")
     }
   }
 

@@ -17,42 +17,7 @@ import scala.language.implicitConversions
  */
 object MultiNodeClusterSpec {
 
-  def clusterConfig: Config = ConfigFactory.parseString("""
-    akka.actor.provider = akka.cluster.ClusterActorRefProvider
-    akka.cluster {
-      seed-nodes                          = []
-      jmx.enabled                         = off
-      gossip-interval                     = 200 ms
-      leader-actions-interval             = 200 ms
-      unreachable-nodes-reaper-interval   = 500 ms
-      periodic-tasks-initial-delay        = 300 ms
-      publish-stats-interval              = 0 s # always, when it happens
-      failure-detector.heartbeat-interval = 500 ms
-    }
-    akka.loglevel = INFO
-    akka.log-dead-letters = off
-    akka.log-dead-letters-during-shutdown = off
-    akka.remote.log-remote-lifecycle-events = off
-    akka.remote.netty.tcp.port = 0
-    akka.remote.netty.tcp.bind-port = 0
-    akka.loggers = ["akka.testkit.TestEventListener"]
-    akka.test {
-      single-expect-default = 5 s
-    }
-    persistence {
-      journal.plugin = "inmemory-journal"
-      snapshot-store.plugin = "inmemory-snapshot-store"
-    }
-    kairos {
-      ivy {
-        cacheDir = "target/ivy-cache"
-        workDir = "target/ivy"
-      }
-      task-queue {
-        max-work-timeout = 10m
-      }
-    }
-    """)
+  def clusterConfig: Config = ConfigFactory.load()
 
 }
 

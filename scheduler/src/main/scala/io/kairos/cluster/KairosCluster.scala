@@ -75,7 +75,6 @@ class KairosCluster(settings: KairosClusterSettings)(implicit clock: Clock) exte
       sender() ! clusterStatus
 
     case MemberUp(member) =>
-
       healthyMembers += member
       sendStatusToClients()
 
