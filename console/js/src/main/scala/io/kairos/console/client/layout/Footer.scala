@@ -15,7 +15,6 @@ object Footer {
     import dsl._
 
     val content = style(
-      //addClassNames("navbar navbar-default navbar-fixed-bottom")
       addClassName("footer")
     )
 
