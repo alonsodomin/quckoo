@@ -1,26 +1,22 @@
-
-organization in ThisBuild := "io.kairos"
-
-version in ThisBuild := Commons.kairosVersion
-
-scalaVersion in ThisBuild := "2.11.7"
-
-scalacOptions in ThisBuild ++= Seq(
-  "-Xexperimental",
-  "-language:postfixOps",
-  "-feature",
-  "-unchecked",
-  "-deprecation",
-  "-Ywarn-dead-code"
+val commonSettings = Seq(
+  organization := "io.kairos",
+  version := "0.1.0-SNAPSHOT",
+  scalaVersion := "2.11.7",
+  scalacOptions ++= Seq(
+    "-Xexperimental",
+    "-language:postfixOps",
+    "-feature",
+    "-unchecked",
+    "-deprecation",
+    "-Ywarn-dead-code"
+  ),
+  resolvers ++= Seq(
+    Opts.resolver.mavenLocalFile,
+    "hseeberger at bintray" at "http://dl.bintray.com/hseeberger/maven",
+    "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
+  ),
+  coverageHighlighting := true
 )
-
-resolvers in ThisBuild ++= Seq(
-  Opts.resolver.mavenLocalFile,
-  "hseeberger at bintray" at "http://dl.bintray.com/hseeberger/maven",
-  "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
-)
-
-coverageHighlighting in ThisBuild := true
 
 lazy val kairos = (project in file(".")).aggregate(
   common, network, resolver, client, cluster, scheduler, consoleRoot, examples, worker
@@ -31,77 +27,73 @@ lazy val examples = (project in file("examples")).aggregate(
 )
 
 lazy val common = (project in file("common")).
-  settings(Commons.settings: _*).
+  settings(commonSettings: _*).
   settings(
-    libraryDependencies ++= Dependencies.commonLibs
+    libraryDependencies ++= Dependencies.module.common
   )
 
 lazy val network = (project in file("network")).
-  settings(Commons.settings: _*).
+  settings(commonSettings: _*).
   settings(
-    libraryDependencies ++= Dependencies.networkLibs
+    libraryDependencies ++= Dependencies.module.network
   ).
   dependsOn(common)
 
 lazy val resolver = (project in file("resolver")).
-  settings(Commons.settings: _*).
+  settings(commonSettings: _*).
   settings(
-    libraryDependencies ++= Dependencies.resolverLibs
+    libraryDependencies ++= Dependencies.module.resolver
   ).
-  dependsOn(common).
   dependsOn(network)
 
 lazy val client = (project in file("client")).
-  settings(Commons.settings: _*).
+  settings(commonSettings: _*).
   settings(
-    libraryDependencies ++= Dependencies.clientLibs
+    libraryDependencies ++= Dependencies.module.client
   ).
-  dependsOn(common).
   dependsOn(network)
 
 lazy val cluster = (project in file("cluster")).
-  settings(Commons.settings: _*).
+  settings(commonSettings: _*).
   settings(
-    libraryDependencies ++= Dependencies.clusterLibs
+    libraryDependencies ++= Dependencies.module.client
   ).
-  dependsOn(common).
   dependsOn(network)
 
 lazy val scheduler = MultiNode(project in file("scheduler")).
-  settings(Commons.settings: _*).
+  settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(
-    libraryDependencies ++= Dependencies.schedulerLibs,
+    libraryDependencies ++= Dependencies.module.serverJvm,
     parallelExecution in Test := false
   ).
   enablePlugins(JavaServerAppPackaging).
   settings(Packaging.universalServerSettings: _*).
   enablePlugins(DockerPlugin).
   settings(Packaging.schedulerDockerSettings: _*).
-  dependsOn(common).
-  dependsOn(network).
   dependsOn(resolver).
   dependsOn(cluster)
 
 lazy val worker = (project in file("worker")).
-  settings(Commons.settings: _*).
+  settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(
-    libraryDependencies ++= Dependencies.workerLibs
+    libraryDependencies ++= Dependencies.module.worker
   ).
   enablePlugins(JavaServerAppPackaging).
-  settings(Packaging.universalServerSettings: _*).
   enablePlugins(DockerPlugin).
+  settings(Packaging.universalServerSettings: _*).
   settings(Packaging.workerDockerSettings: _*).
-  dependsOn(common).
-  dependsOn(network).
   dependsOn(resolver).
   dependsOn(cluster)
+
+
 
 lazy val consoleRoot = (project in file("console")).
   aggregate(consoleJS, consoleJVM)
 
-lazy val console = (crossProject in file("console")).settings(
+lazy val console = (crossProject in file("console")).
+  settings(commonSettings: _*).settings(
   name := "console",
   libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "scalatags" % "0.4.6",
@@ -155,17 +147,17 @@ lazy val consoleJVM = console.jvm.settings(
   dependsOn(scheduler)
 
 lazy val exampleJobs = Project("example-jobs", file("examples/jobs")).
-  settings(Commons.settings: _*).
+  settings(commonSettings: _*).
   settings(
-    libraryDependencies ++= Dependencies.exampleJobsLibs
+    libraryDependencies ++= Dependencies.module.exampleJobs
   ).
   dependsOn(common)
 
 lazy val exampleProducers = Project("example-producers", file("examples/producers")).
-  settings(Commons.settings: _*).
+  settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(
-    libraryDependencies ++= Dependencies.exampleProducersLibs
+    libraryDependencies ++= Dependencies.module.exampleProducers
   ).
   enablePlugins(JavaAppPackaging).
   settings(Packaging.universalSettings: _*).
