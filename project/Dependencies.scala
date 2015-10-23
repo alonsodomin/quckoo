@@ -38,6 +38,8 @@ object Dependencies {
 
   object libs {
 
+    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.5"
+
     object Akka {
       val actor        = "com.typesafe.akka" %% "akka-actor"             % version.akka
       val clusterTools = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka
@@ -89,7 +91,7 @@ object Dependencies {
   object module {
     import libs._
 
-    val common   = logging ++ testing
+    val common   = logging ++ testing ++ Seq(scalaXml)
     val network  = logging ++ testing ++ akka
     val client   = logging ++ testing ++ akka
     val cluster  = logging ++ testing ++ akka
