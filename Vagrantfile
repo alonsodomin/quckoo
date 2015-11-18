@@ -24,7 +24,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
 
   config.vm.define "support" do |support|
-    support.vm.network "private_network", ip: "192.168.33.25"
+    support.vm.hostname = "kairos-support"
+    support.vm.network "private_network", ip: "192.168.50.25"
 
     # Setting up docker provisioner in a separate line to allow for the proxy configuration
     support.vm.provision :docker, version: "latest"
@@ -33,9 +34,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
   end
 
-  config.vm.define "mesos" do |mesos|
-    mesos.vm.network "private_network", ip: "192.168.33.26"
-    mesos.vm.provision :shell, path: "vagrant/provision_mesos.sh"
+  config.vm.define "app" do |app|
+    app.vm.hostname = "kairos-app"
+    app.vm.network "private_network", ip: "192.168.50.26"
+
+    app.vm.synced_folder File.expand_path("~/.ivy2"), "/home/vagrant/.ivy2"
+
+    app.vm.provision :shell, path: "vagrant/provision_app.sh"
+    app.vm.provision :docker, version: "latest"
+
+    app.vm.provision :shell, path: "vagrant/build_app.sh", privileged: false
   end
 
 end
