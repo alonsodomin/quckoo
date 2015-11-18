@@ -49,6 +49,7 @@ object Dependencies {
 
       object persistence {
         val core      = "com.typesafe.akka"   %% "akka-persistence"           % version.akka
+        val query     = "com.typesafe.akka"   %% "akka-persistence-query-experimental" % version.akka
         val cassandra = "com.github.krasserm" %% "akka-persistence-cassandra" % "0.4"
         val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"  % "1.1.3"
       }
@@ -102,6 +103,7 @@ object Dependencies {
     val serverJvm = logging ++ testing ++ akka ++ Seq(
       Akka.persistence.core,
       Akka.persistence.cassandra,
+      Akka.persistence.query,
       Akka.persistence.memory % Test,
       Akka.sharding, Akka.http, Akka.httpUpickle,
       scopt, scalaz
