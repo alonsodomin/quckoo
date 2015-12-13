@@ -17,18 +17,18 @@ import io.kairos.scheduler.{Scheduler, TaskQueue}
 /**
  * Created by domingueza on 24/08/15.
  */
-object KairosCluster {
+object KairosClusterSupervisor {
 
   def props(settings: KairosClusterSettings)(implicit clock: Clock) =
-    Props(classOf[KairosCluster], settings, clock)
+    Props(classOf[KairosClusterSupervisor], settings, clock)
 
   case object Shutdown
 
 }
 
-class KairosCluster(settings: KairosClusterSettings)(implicit clock: Clock) extends Actor with ActorLogging {
+class KairosClusterSupervisor(settings: KairosClusterSettings)(implicit clock: Clock) extends Actor with ActorLogging {
 
-  import KairosCluster._
+  import KairosClusterSupervisor._
 
   ClusterClientReceptionist(context.system).registerService(self)
 

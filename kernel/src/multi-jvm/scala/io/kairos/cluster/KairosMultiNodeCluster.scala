@@ -44,7 +44,7 @@ abstract class KairosMultiNodeCluster extends MultiNodeSpec(KairosNodesConfig) w
       awaitClusterUp(registry, scheduler)
 
       runOn(registry) {
-        system.actorOf(KairosCluster.props(settings), "chronos")
+        system.actorOf(KairosClusterSupervisor.props(settings), "chronos")
         enterBarrier("deployed")
 
         val schedulerGuardian = system.actorSelection(node(scheduler) / "user" / "chronos")
@@ -56,7 +56,7 @@ abstract class KairosMultiNodeCluster extends MultiNodeSpec(KairosNodesConfig) w
       }
 
       runOn(scheduler) {
-        system.actorOf(KairosCluster.props(settings), "chronos")
+        system.actorOf(KairosClusterSupervisor.props(settings), "chronos")
         enterBarrier("deployed")
 
         val registryGuardian = system.actorSelection(node(registry) / "user" / "chronos")

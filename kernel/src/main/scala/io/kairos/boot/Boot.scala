@@ -3,9 +3,14 @@ package io.kairos.boot
 import java.time.Clock
 
 import akka.actor._
+import akka.stream.ActorMaterializer
+import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
 import io.kairos.cluster.{KairosCluster, KairosClusterSettings}
 import scopt.OptionParser
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 /**
  * Created by domingueza on 09/07/15.
@@ -37,12 +42,21 @@ object Boot extends App {
   }
 
   def start(config: Config): Unit = {
-    val system = ActorSystem("KairosClusterSystem", config)
+    implicit val system = ActorSystem("KairosClusterSystem", config)
+    sys.addShutdownHook { system.terminate() }
+
+    implicit val materializer = ActorMaterializer()
     implicit val clock = Clock.systemUTC()
 
     val settings = KairosClusterSettings(system)
-    val kairosProps  = KairosCluster.props(settings)
-    system.actorOf(kairosProps, "kairos")
+    val cluster = new KairosCluster(settings)
+
+    implicit val timeout = Timeout(5 seconds)
+    cluster.start recover {
+      case ex: Exception =>
+        ex.printStackTrace()
+        system.terminate()
+    }
   }
 
   parser.parse(args, Options()).foreach { opts =>

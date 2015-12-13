@@ -1,4 +1,7 @@
-val commonSettings = Seq(
+import sbt._
+import Keys._
+
+lazy val commonSettings = Seq(
   organization := "io.kairos",
   version := "0.1.0-SNAPSHOT",
   scalaVersion := "2.11.7",
@@ -14,12 +17,19 @@ val commonSettings = Seq(
     Opts.resolver.mavenLocalFile,
     "hseeberger at bintray" at "http://dl.bintray.com/hseeberger/maven",
     "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
-  ),
+  )
+)
+
+lazy val commonJsSettins = Seq(
+  scalaJSStage in Global := FastOptStage
+)
+
+lazy val scoverageSettings = Seq(
   coverageHighlighting := true
 )
 
 lazy val kairos = (project in file(".")).aggregate(
-  common, network, resolver, client, cluster, scheduler, consoleRoot, examples, worker
+  common, network, resolver, client, cluster, kernel, consoleRoot, examples, worker
 )
 
 lazy val examples = (project in file("examples")).aggregate(
@@ -60,7 +70,7 @@ lazy val cluster = (project in file("cluster")).
   ).
   dependsOn(network)
 
-lazy val scheduler = MultiNode(project in file("scheduler")).
+lazy val kernel = MultiNode(project in file("kernel")).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(
@@ -72,7 +82,8 @@ lazy val scheduler = MultiNode(project in file("scheduler")).
   enablePlugins(DockerPlugin).
   settings(Packaging.schedulerDockerSettings: _*).
   dependsOn(resolver).
-  dependsOn(cluster)
+  dependsOn(cluster).
+  dependsOn(consoleJVM)
 
 lazy val worker = (project in file("worker")).
   settings(commonSettings: _*).
@@ -86,8 +97,6 @@ lazy val worker = (project in file("worker")).
   settings(Packaging.workerDockerSettings: _*).
   dependsOn(resolver).
   dependsOn(cluster)
-
-
 
 lazy val consoleRoot = (project in file("console")).
   aggregate(consoleJS, consoleJVM)
@@ -143,8 +152,7 @@ lazy val consoleJVM = console.jvm.settings(
     file((fastOptJS in (consoleJS, Compile)).value.data.getAbsolutePath + ".map"),
     (packageJSDependencies in (consoleJS, Compile)).value
   )
-).settings(Revolver.settings: _*).
-  dependsOn(scheduler)
+)
 
 lazy val exampleJobs = Project("example-jobs", file("examples/jobs")).
   settings(commonSettings: _*).
