@@ -1,12 +1,23 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+if !Vagrant.has_plugin?("vagrant-env")
+  puts "ERROR: Missing plugin 'vagrant-env'"
+  puts "Please run: vagrant plugin install vagrant-env"
+  exit(1)
+end
+
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.env.enable
   config.vm.box = "phusion/ubuntu-14.04-amd64"
-  config.vm.hostname = "kairos-vagrant"
+
+  if Vagrant.has_plugin?("vagrant-hostmanager")
+    config.hostmanager.enabled = true
+    config.hostmanager.manage_host = true
+    config.hostmanager.ignore_private_ip = false
+  end
 
   if Vagrant.has_plugin?("vagrant-proxyconf")
     config.proxy.http     = ENV['HTTP_PROXY']
@@ -30,7 +41,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # Setting up docker provisioner in a separate line to allow for the proxy configuration
     support.vm.provision :docker, version: "latest"
     support.vm.provision :docker do |d|
-      d.run "cassandra", args: "-p 7000:7000 -p 9042:9042 -p 9160:9160"
+      d.run "cassandra", args: "-p 7000:7000 -p 9042:9042 -p 9160:9160 -v /var/lib/cassandra:/var/lib/cassandra"
     end
   end
 
