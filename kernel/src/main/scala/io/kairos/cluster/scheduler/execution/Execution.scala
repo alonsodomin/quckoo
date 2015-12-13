@@ -1,4 +1,4 @@
-package io.kairos.scheduler.execution
+package io.kairos.cluster.scheduler.execution
 
 import io.kairos.cluster._
 import io.kairos.id.PlanId

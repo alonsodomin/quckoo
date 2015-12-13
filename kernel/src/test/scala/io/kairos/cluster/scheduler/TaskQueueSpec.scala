@@ -1,4 +1,4 @@
-package io.kairos.scheduler
+package io.kairos.cluster.scheduler
 
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -7,7 +7,7 @@ import akka.testkit._
 import io.kairos.cluster.protocol.WorkerProtocol._
 import io.kairos.cluster.{Task, TaskFailureCause}
 import io.kairos.id.ModuleId
-import io.kairos.scheduler.execution.ExecutionFSM
+import io.kairos.cluster.scheduler.execution.ExecutionFSM
 import io.kairos.test.TestActorSystem
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}

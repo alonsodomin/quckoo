@@ -1,4 +1,4 @@
-package io.kairos.registry
+package io.kairos.cluster.registry
 
 import akka.cluster.Cluster
 import akka.persistence.PersistentView

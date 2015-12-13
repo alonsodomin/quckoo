@@ -7,6 +7,7 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.pattern._
 import akka.util.Timeout
+import io.kairos.cluster.core.{KairosClusterSupervisor, UserAuthenticator}
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.console.server.security.AuthInfo

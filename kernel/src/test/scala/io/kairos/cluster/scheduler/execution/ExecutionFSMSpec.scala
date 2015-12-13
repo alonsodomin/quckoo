@@ -1,12 +1,12 @@
-package io.kairos.scheduler.execution
+package io.kairos.cluster.scheduler.execution
 
 import java.util.UUID
 
 import akka.testkit._
 import io.kairos.cluster.Task
 import io.kairos.id.ModuleId
-import io.kairos.scheduler.TaskQueue
-import io.kairos.scheduler.TaskQueue.EnqueueAck
+import io.kairos.cluster.scheduler.TaskQueue
+import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
 import io.kairos.test.{ImplicitClock, TestActorSystem}
 import org.scalatest.{BeforeAndAfterAll, Ignore, Matchers, WordSpecLike}
 

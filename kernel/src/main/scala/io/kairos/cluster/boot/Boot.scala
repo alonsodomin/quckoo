@@ -1,4 +1,4 @@
-package io.kairos.boot
+package io.kairos.cluster.boot
 
 import java.time.Clock
 

@@ -1,4 +1,4 @@
-package io.kairos.registry
+package io.kairos.cluster.registry
 
 import akka.actor.{Props, ActorRef}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
@@ -6,7 +6,7 @@ import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.{ImplicitSender, TestProbe}
 import io.kairos.JobSpec
-import io.kairos.cluster.ForwadingReceptionist
+import io.kairos.cluster.core.ForwadingReceptionist
 import io.kairos.id.{JobId, ModuleId}
 import io.kairos.multijvm.MultiNodeClusterSpec
 import io.kairos.protocol.RegistryProtocol.{JobAccepted, RegisterJob}

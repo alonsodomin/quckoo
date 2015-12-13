@@ -1,4 +1,4 @@
-package io.kairos.scheduler.execution
+package io.kairos.cluster.scheduler.execution
 
 import java.time.{Clock, Duration => JDuration, ZonedDateTime}
 import java.util.UUID

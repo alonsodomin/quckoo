@@ -1,4 +1,4 @@
-package io.kairos.scheduler
+package io.kairos.cluster.scheduler
 
 import java.time.Clock
 import java.util.UUID
@@ -10,7 +10,7 @@ import io.kairos.cluster._
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
-import io.kairos.scheduler.execution.{ExecutionFSM, ExecutionPlan}
+import io.kairos.cluster.scheduler.execution.{ExecutionFSM, ExecutionPlan}
 
 /**
  * Created by aalonsodominguez on 16/08/15.

@@ -1,11 +1,11 @@
-package io.kairos.scheduler
+package io.kairos.cluster.scheduler
 
 import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.cluster.{Task, WorkerId}
 import io.kairos.id.TaskId
-import io.kairos.scheduler.execution.ExecutionFSM
+import io.kairos.cluster.scheduler.execution.ExecutionFSM
 
 import scala.collection.immutable.Queue
 import scala.concurrent.duration._

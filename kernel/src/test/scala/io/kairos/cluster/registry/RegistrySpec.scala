@@ -1,4 +1,4 @@
-package io.kairos.registry
+package io.kairos.cluster.registry
 
 import java.net.URL
 

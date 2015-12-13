@@ -3,6 +3,7 @@ package io.kairos.cluster
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
+import io.kairos.cluster.core.KairosClusterSupervisor
 import io.kairos.id.ModuleId
 import io.kairos.multijvm.MultiNodeClusterSpec
 import io.kairos.protocol.{Connect, Connected}

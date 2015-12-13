@@ -1,4 +1,4 @@
-package io.kairos.cluster
+package io.kairos.cluster.core
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.cluster.client.ClusterClientReceptionist
@@ -6,7 +6,7 @@ import akka.cluster.client.ClusterClientReceptionist
 /**
  * Created by aalonsodominguez on 24/08/15.
  */
-class ForwadingReceptionist(actorRef: ActorRef) extends Actor with ActorLogging {
+private[core] class ForwadingReceptionist(actorRef: ActorRef) extends Actor with ActorLogging {
 
   ClusterClientReceptionist(context.system).registerService(self)
 

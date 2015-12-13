@@ -1,4 +1,4 @@
-package io.kairos.scheduler.execution
+package io.kairos.cluster.scheduler.execution
 
 import java.time.Clock
 import java.util.UUID
@@ -8,8 +8,8 @@ import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.Normal
 import io.kairos.cluster.Task
 import io.kairos.id.PlanId
-import io.kairos.scheduler.TaskQueue.EnqueueAck
-import io.kairos.scheduler._
+import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
+import io.kairos.cluster.scheduler._
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag

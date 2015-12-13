@@ -1,4 +1,4 @@
-package io.kairos.cluster
+package io.kairos.cluster.core
 
 import java.time.Clock
 
@@ -9,10 +9,11 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.{Cluster, Member}
 import io.kairos.cluster.protocol.WorkerProtocol
+import io.kairos.cluster.registry.Registry
+import io.kairos.cluster.scheduler.{Scheduler, TaskQueue}
+import io.kairos.cluster.KairosClusterSettings
 import io.kairos.protocol._
-import io.kairos.registry.Registry
 import io.kairos.resolver.{IvyResolve, Resolver}
-import io.kairos.scheduler.{Scheduler, TaskQueue}
 
 /**
  * Created by domingueza on 24/08/15.

@@ -1,4 +1,4 @@
-package io.kairos.registry
+package io.kairos.cluster.registry
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster

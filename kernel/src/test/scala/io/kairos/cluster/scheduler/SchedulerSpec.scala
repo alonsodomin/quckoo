@@ -1,4 +1,4 @@
-package io.kairos.scheduler
+package io.kairos.cluster.scheduler
 
 import akka.testkit._
 import io.kairos.JobSpec

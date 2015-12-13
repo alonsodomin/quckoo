@@ -1,6 +1,4 @@
-package io.kairos
-
-import io.kairos.cluster.TaskFailureCause
+package io.kairos.cluster
 
 /**
  * Created by aalonsodominguez on 17/08/15.
