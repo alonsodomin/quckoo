@@ -15,6 +15,7 @@ lazy val commonSettings = Seq(
   ),
   resolvers ++= Seq(
     Opts.resolver.mavenLocalFile,
+    "krasserm at bintray" at "http://dl.bintray.com/krasserm/maven",
     "hseeberger at bintray" at "http://dl.bintray.com/hseeberger/maven",
     "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
   )
