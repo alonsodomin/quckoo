@@ -6,7 +6,7 @@ import akka.cluster.client.ClusterClientReceptionist
 /**
  * Created by aalonsodominguez on 24/08/15.
  */
-private[core] class ForwadingReceptionist(actorRef: ActorRef) extends Actor with ActorLogging {
+private[cluster] class ForwadingReceptionist(actorRef: ActorRef) extends Actor with ActorLogging {
 
   ClusterClientReceptionist(context.system).registerService(self)
 
