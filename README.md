@@ -15,6 +15,16 @@ implementation owes a lot to the previous post).
 
  * [Wiki](https://github.com/alonsodomin/kairos/wiki/Introduction)
 
+## Building
+
+To build the project input following commands in a terminal:
+
+```
+git clone https://github.com/alonsodomin/kairos
+cd kairos
+./activator package
+```
+
 ## Contributing
 
 Kairos is still right now in _experimental_ phase, current codebase will be evolving until it reaches the level of
