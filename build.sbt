@@ -84,7 +84,7 @@ lazy val kernel = MultiNode(Project("cluster-kernel", file("cluster/kernel"))).
   enablePlugins(JavaServerAppPackaging).
   settings(Packaging.universalServerSettings: _*).
   enablePlugins(DockerPlugin).
-  settings(Packaging.schedulerDockerSettings: _*).
+  settings(Packaging.kernelDockerSettings: _*).
   dependsOn(clusterShared).
   dependsOn(consoleJVM)
 

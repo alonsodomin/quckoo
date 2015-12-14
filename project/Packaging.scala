@@ -1,4 +1,3 @@
-import com.typesafe.sbt.SbtNativePackager.Docker
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging.autoImport._
 import com.typesafe.sbt.packager.docker.Cmd
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport._
@@ -23,12 +22,13 @@ object Packaging {
 
   lazy val dockerSettings = Seq(
     dockerRepository := Some("kairos"),
+    dockerUpdateLatest := true,
     dockerExposedVolumes := Seq("/opt/kairos/conf"),
     defaultLinuxInstallLocation in Docker := linuxHomeLocation,
     dockerCommands += Cmd("ENV", "KAIROS_HOME", linuxHomeLocation)
   )
 
-  lazy val schedulerDockerSettings = dockerSettings ++ Seq(
+  lazy val kernelDockerSettings = dockerSettings ++ Seq(
     dockerExposedPorts := Seq(2551, 8095)
   )
 
