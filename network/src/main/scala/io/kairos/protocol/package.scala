@@ -15,8 +15,6 @@ package object protocol {
 
   case object UnableToConnect extends ClientEvent
 
-  case object GetClusterStatus
-
   case class ResolutionFailed(unresolvedDependencies: Seq[String])
 
   type JobRejectedCause = Either[ResolutionFailed, Throwable]

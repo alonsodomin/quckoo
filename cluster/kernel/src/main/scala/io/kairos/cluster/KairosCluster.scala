@@ -4,17 +4,15 @@ import java.time.Clock
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.persistence.cassandra.journal.CassandraJournal
-import akka.persistence.query.PersistenceQuery
-import akka.stream.ActorMaterializer
 import akka.pattern._
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import io.kairos.cluster.core.{KairosClusterSupervisor, UserAuthenticator}
-import io.kairos.console.protocol.{ClusterDetails, JobSpecDetails}
+import io.kairos.cluster.protocol.GetClusterStatus
+import io.kairos.console.protocol.ClusterDetails
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.console.server.security.AuthInfo
-import io.kairos.protocol.{ClusterStatus, GetClusterStatus}
 import org.slf4s.Logging
 
 import scala.concurrent.Future
@@ -49,8 +47,8 @@ class KairosCluster(settings: KairosClusterSettings)(implicit system: ActorSyste
   def clusterDetails: Future[ClusterDetails] = {
     import system.dispatcher
     implicit val timeout = Timeout(5 seconds)
-    (clusterSupervisor ? GetClusterStatus).mapTo[ClusterStatus] map { status =>
-      ClusterDetails(status.healthyMembers.size, 0)
+    (clusterSupervisor ? GetClusterStatus).mapTo[KairosStatus] map { status =>
+      ClusterDetails(status.members.size, 0)
     }
   }
 

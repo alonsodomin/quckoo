@@ -61,10 +61,6 @@ class KairosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts:
       context.system.eventStream.publish(msg)
       context.become(standby)
 
-    case msg @ GetClusterStatus =>
-      val handler = context.actorOf(Props(classOf[RequestHandler], sender()))
-      clusterClient.tell(Send(KairosPath, msg, localAffinity = true), handler)
-
     case cmd: RegistryCommand =>
       val handler = context.actorOf(Props(classOf[RequestHandler], sender()))
       clusterClient.tell(Send(RegistryPath, cmd, localAffinity = true), handler)
@@ -73,8 +69,6 @@ class KairosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts:
       val handler = context.actorOf(Props(classOf[RequestHandler], sender()))
       clusterClient.tell(Send(SchedulerPath, cmd, localAffinity = true), handler)
 
-    case status: ClusterStatus =>
-      context.system.eventStream.publish(status)
   }
 
 }

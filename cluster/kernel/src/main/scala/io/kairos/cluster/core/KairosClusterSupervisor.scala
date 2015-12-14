@@ -3,15 +3,16 @@ package io.kairos.cluster.core
 import java.time.Clock
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
-import akka.cluster.{Cluster, Member}
-import io.kairos.cluster.protocol.WorkerProtocol
+import io.kairos.cluster.protocol.WorkerProtocol.{WorkerJoined, WorkerRemoved}
+import io.kairos.cluster.protocol._
 import io.kairos.cluster.registry.Registry
 import io.kairos.cluster.scheduler.{Scheduler, TaskQueue}
-import io.kairos.cluster.KairosClusterSettings
+import io.kairos.cluster.{KairosClusterSettings, KairosStatus}
 import io.kairos.protocol._
 import io.kairos.resolver.{IvyResolve, Resolver}
 
@@ -43,8 +44,7 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)(implicit clock: C
   private val scheduler = context.watch(context.actorOf(Scheduler.props(registry, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
 
   private var clients = Set.empty[ActorRef]
-  private var healthyMembers = Set.empty[Member]
-  private var unreachableMembers = Set.empty[Member]
+  private var kairosStatus = KairosStatus()
 
   override def preStart(): Unit = {
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[ReachabilityEvent])
@@ -55,11 +55,6 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)(implicit clock: C
     cluster.unsubscribe(self)
     mediator ! DistributedPubSubMediator.Unsubscribe(WorkerProtocol.WorkerTopic, self)
   }
-
-  def clusterStatus: ClusterStatus = ClusterStatus(
-    healthyMembers.map(_.uniqueAddress),
-    unreachableMembers.map(_.uniqueAddress)
-  )
 
   def receive: Receive = {
     case Connect =>
@@ -73,25 +68,16 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)(implicit clock: C
       sender() ! Disconnected
 
     case GetClusterStatus =>
-      sender() ! clusterStatus
+      sender() ! kairosStatus
 
-    case MemberUp(member) =>
-      healthyMembers += member
-      sendStatusToClients()
+    case evt: MemberEvent =>
+      kairosStatus = kairosStatus.update(evt)
 
-    case MemberExited(member) =>
-      healthyMembers -= member
-      sendStatusToClients()
+    case WorkerJoined(_) =>
+      kairosStatus = kairosStatus.copy(workers = kairosStatus.workers + 1)
 
-    case UnreachableMember(member) =>
-      healthyMembers -= member
-      unreachableMembers += member
-      sendStatusToClients()
-
-    case ReachableMember(member) =>
-      unreachableMembers -= member
-      healthyMembers += member
-      sendStatusToClients()
+    case WorkerRemoved(_) =>
+      kairosStatus = kairosStatus.copy(workers = kairosStatus.workers - 1)
 
     case Shutdown =>
       // Perform graceful shutdown of the cluster
@@ -114,11 +100,6 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)(implicit clock: C
       extractEntityId = Registry.idExtractor,
       extractShardId  = Registry.shardResolver
     )
-  }
-
-  private def sendStatusToClients(): Unit = {
-    val status = clusterStatus
-    clients.foreach { _ ! status }
   }
 
 }
