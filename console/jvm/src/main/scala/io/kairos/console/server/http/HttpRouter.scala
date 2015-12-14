@@ -16,7 +16,7 @@ trait HttpRouter extends UpickleSupport with AuthDirectives {
 
   import StatusCodes._
 
-  val jobs: Seq[JobSpecDetails] = {
+  private[this] val jobs: Seq[JobSpecDetails] = {
     for (i <- 1 to 25) yield JobSpecDetails(i.toString, s"jobName_$i")
   }
 
@@ -30,9 +30,9 @@ trait HttpRouter extends UpickleSupport with AuthDirectives {
             complete(OK)
           }
         }
-      } ~ path("cluster") {
+      } ~ path("cluster" / "info") {
         get {
-          complete(ClusterDetails())
+          complete(clusterDetails)
         }
       } ~ pathPrefix("registry") {
         path("jobs") {

@@ -23,7 +23,7 @@ object HomePage {
   }
 
   private[this] val component = ReactComponentB.static("HomePage",
-    <.div(Style.content, "Kairos UI - Home")
+    <.div(Style.content, "Kairos UI - Home", ClusterView())
   ).buildU
 
   def apply() = component()

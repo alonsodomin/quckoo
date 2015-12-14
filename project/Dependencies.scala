@@ -50,8 +50,8 @@ object Dependencies {
       object persistence {
         val core      = "com.typesafe.akka"   %% "akka-persistence"           % version.akka
         val query     = "com.typesafe.akka"   %% "akka-persistence-query-experimental" % version.akka
-        val cassandra = "com.github.krasserm" %% "akka-persistence-cassandra" % "0.6"
-        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"  % "1.1.3"
+        val cassandra = "com.github.krasserm" %% "akka-persistence-cassandra" % "0.4"
+        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"  % "1.1.5"
       }
 
       val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka

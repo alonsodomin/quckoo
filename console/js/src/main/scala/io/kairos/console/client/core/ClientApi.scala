@@ -1,7 +1,7 @@
 package io.kairos.console.client.core
 
 import io.kairos.console.client.security.ClientAuth
-import io.kairos.console.protocol.{JobSpecDetails, LoginRequest}
+import io.kairos.console.protocol.{ClusterDetails, JobSpecDetails, LoginRequest}
 import io.kairos.console.{Api, RegistryApi}
 import org.scalajs.dom.ext.Ajax
 
@@ -15,6 +15,8 @@ object ClientApi extends Api with RegistryApi with ClientAuth {
   private[this] val BaseURI = "/api"
   private[this] val LoginURI = BaseURI + "/login"
   private[this] val LogoutURI = BaseURI + "/logout"
+
+  private[this] val ClusterDetailsURI = BaseURI + "/cluster/info"
 
   private[this] val RegistryBaseURI = BaseURI + "/registry"
   private[this] val JobsURI = RegistryBaseURI + "/jobs"
@@ -30,6 +32,14 @@ object ClientApi extends Api with RegistryApi with ClientAuth {
 
   override def logout()(implicit ec: ExecutionContext): Future[Unit] = {
     Ajax.post(LogoutURI, headers = authHeaders) map { xhr => () }
+  }
+
+  override def clusterDetails(implicit ex: ExecutionContext): Future[ClusterDetails] = {
+    import upickle.default._
+
+    Ajax.get(ClusterDetailsURI, headers = authHeaders) map { xhr =>
+      read[ClusterDetails](xhr.responseText)
+    }
   }
 
   override def getJobs()(implicit ec: ExecutionContext): Future[Seq[JobSpecDetails]] = {

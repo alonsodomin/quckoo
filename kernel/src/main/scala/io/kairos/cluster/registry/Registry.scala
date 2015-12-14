@@ -81,10 +81,7 @@ class Registry(resolver: ActorRef) extends PersistentActor with ActorLogging {
 
   private var store = RegistryStore.empty
 
-  override val persistenceId: String = Cluster(context.system).selfRoles.find(_.startsWith("backend-")) match {
-    case Some(role) => role + "-registry"
-    case None       => "registry"
-  }
+  override val persistenceId: String = "registry"
 
   override def postStop(): Unit = snapshotTask.cancel()
 
