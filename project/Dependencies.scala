@@ -95,8 +95,7 @@ object Dependencies {
     val common   = logging ++ testing ++ Seq(scalaXml)
     val network  = logging ++ testing ++ akka
     val client   = logging ++ testing ++ akka
-    val cluster  = logging ++ testing ++ akka
-    val resolver = logging ++ testing ++ akka ++ Seq(
+    val cluster  = logging ++ testing ++ akka ++ Seq(
       "org.apache.ivy" % "ivy" % "2.4.0"
     )
 

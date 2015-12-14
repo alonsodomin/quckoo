@@ -30,8 +30,10 @@ lazy val scoverageSettings = Seq(
 )
 
 lazy val kairos = (project in file(".")).aggregate(
-  common, network, resolver, client, cluster, kernel, consoleRoot, examples, worker
+  common, network, client, cluster, kernel, consoleRoot, examples, worker
 )
+
+lazy val cluster = (project in file("cluster")).aggregate(clusterShared, kernel, worker)
 
 lazy val examples = (project in file("examples")).aggregate(
   exampleJobs, exampleProducers
@@ -50,13 +52,6 @@ lazy val network = (project in file("network")).
   ).
   dependsOn(common)
 
-lazy val resolver = (project in file("resolver")).
-  settings(commonSettings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.module.resolver
-  ).
-  dependsOn(network)
-
 lazy val client = (project in file("client")).
   settings(commonSettings: _*).
   settings(
@@ -64,14 +59,14 @@ lazy val client = (project in file("client")).
   ).
   dependsOn(network)
 
-lazy val cluster = (project in file("cluster")).
+lazy val clusterShared = Project("cluster-shared", file("cluster/shared")).
   settings(commonSettings: _*).
   settings(
-    libraryDependencies ++= Dependencies.module.client
+    libraryDependencies ++= Dependencies.module.cluster
   ).
   dependsOn(network)
 
-lazy val kernel = MultiNode(project in file("kernel")).
+lazy val kernel = MultiNode(Project("cluster-kernel", file("cluster/kernel"))).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(
@@ -82,11 +77,10 @@ lazy val kernel = MultiNode(project in file("kernel")).
   settings(Packaging.universalServerSettings: _*).
   enablePlugins(DockerPlugin).
   settings(Packaging.schedulerDockerSettings: _*).
-  dependsOn(resolver).
-  dependsOn(cluster).
+  dependsOn(clusterShared).
   dependsOn(consoleJVM)
 
-lazy val worker = (project in file("worker")).
+lazy val worker = Project("cluster-worker", file("cluster/worker")).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(
@@ -96,8 +90,7 @@ lazy val worker = (project in file("worker")).
   enablePlugins(DockerPlugin).
   settings(Packaging.universalServerSettings: _*).
   settings(Packaging.workerDockerSettings: _*).
-  dependsOn(resolver).
-  dependsOn(cluster)
+  dependsOn(clusterShared)
 
 lazy val consoleRoot = (project in file("console")).
   aggregate(consoleJS, consoleJVM)
