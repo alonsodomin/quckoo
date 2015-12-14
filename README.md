@@ -35,6 +35,10 @@ Docker containers. To start this environment issue following command in a termin
 vagrant up
 ```
 
+Once it has finished loading, you should be able to access the Kairos UI in following URL:
+
+http://192.168.50.25:8095
+
 ## Contributing
 
 Kairos is still right now in _experimental_ phase, current codebase will be evolving until it reaches the level of
