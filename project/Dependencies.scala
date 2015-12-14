@@ -99,7 +99,7 @@ object Dependencies {
       "org.apache.ivy" % "ivy" % "2.4.0"
     )
 
-    val serverJvm = logging ++ testing ++ akka ++ Seq(
+    val kernel = logging ++ testing ++ akka ++ Seq(
       Akka.persistence.core,
       Akka.persistence.cassandra,
       Akka.persistence.query,

@@ -40,11 +40,12 @@ lazy val kairos = (project in file(".")).aggregate(
 )
 
 lazy val cluster = (project in file("cluster")).
-  aggregate(clusterShared, kernel, worker)
+  aggregate(clusterShared, kernel, worker).
+  settings(noPublishSettings)
 
-lazy val examples = (project in file("examples")).aggregate(
-  exampleJobs, exampleProducers
-)
+lazy val examples = (project in file("examples")).
+  aggregate(exampleJobs, exampleProducers).
+  settings(noPublishSettings)
 
 lazy val common = (project in file("common")).
   settings(commonSettings: _*).
@@ -77,7 +78,7 @@ lazy val kernel = MultiNode(Project("cluster-kernel", file("cluster/kernel"))).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(
-    libraryDependencies ++= Dependencies.module.serverJvm,
+    libraryDependencies ++= Dependencies.module.kernel,
     parallelExecution in Test := false
   ).
   enablePlugins(JavaServerAppPackaging).
@@ -100,7 +101,8 @@ lazy val worker = Project("cluster-worker", file("cluster/worker")).
   dependsOn(clusterShared)
 
 lazy val consoleRoot = (project in file("console")).
-  aggregate(consoleJS, consoleJVM)
+  aggregate(consoleJS, consoleJVM).
+  settings(noPublishSettings)
 
 lazy val console = (crossProject in file("console")).
   settings(commonSettings: _*).settings(
