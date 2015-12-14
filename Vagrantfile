@@ -46,7 +46,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision :docker, version: "latest"
 
   config.vm.provision :shell, path: "boot/provision.sh"
-  config.vm.provision :shell, path: "boot/build.sh", privileged: false
+  config.vm.provision :shell, inline: "/vagrant/boot/build.sh", privileged: false
 
   config.vm.provision :docker do |d|
     d.run "cassandra",
