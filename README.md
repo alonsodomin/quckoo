@@ -27,8 +27,8 @@ cd kairos
 
 ### Bootstrapping DEV environment
 
-The repository ships a `Vagrantfile` in its root folder for ease the setup of a DEV environment. This Vagrant configuration
-will create a virtual machine in the host computer and deploy into the required components of the architecture as
+The repository ships with a `Vagrantfile` in its root folder for ease the setup of a DEV environment. This Vagrant configuration
+will create a virtual machine in the host computer and deploy into it the required components of the architecture as
 Docker containers. To start this environment issue following command in a terminal window from inside your working copy:
 
 ```
