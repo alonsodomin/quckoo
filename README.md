@@ -25,6 +25,16 @@ cd kairos
 ./activator package
 ```
 
+### Bootstrapping DEV environment
+
+The repository ships a `Vagrantfile` in its root folder for ease the setup of a DEV environment. This Vagrant configuration
+will create a virtual machine in the host computer and deploy into the required components of the architecture as
+Docker containers. To start this environment issue following command in a terminal window from inside your working copy:
+
+```
+vagrant up
+```
+
 ## Contributing
 
 Kairos is still right now in _experimental_ phase, current codebase will be evolving until it reaches the level of
