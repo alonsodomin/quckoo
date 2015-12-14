@@ -21,6 +21,12 @@ lazy val commonSettings = Seq(
   )
 )
 
+lazy val noPublishSettings = Seq(
+  publish := (),
+  publishLocal := (),
+  publishArtifact := false
+)
+
 lazy val commonJsSettins = Seq(
   scalaJSStage in Global := FastOptStage
 )
@@ -33,7 +39,8 @@ lazy val kairos = (project in file(".")).aggregate(
   common, network, client, cluster, kernel, consoleRoot, examples, worker
 )
 
-lazy val cluster = (project in file("cluster")).aggregate(clusterShared, kernel, worker)
+lazy val cluster = (project in file("cluster")).Add
+  aggregate(clusterShared, kernel, worker)
 
 lazy val examples = (project in file("examples")).aggregate(
   exampleJobs, exampleProducers
