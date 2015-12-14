@@ -55,7 +55,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     d.run "kernel",
       image: "kairos/cluster-kernel:0.1.0-SNAPSHOT",
-      args: "--link cassandra:cassandra -p 8095:8095"
+      args: "--link cassandra:cassandra -p 8095:8095 -p 2551:2551",
+      cmd: "-b 192.168.50.25:2551"
+
+    d.run "worker1",
+      image: "kairos/cluster-worker:0.1.0-SNAPSHOT",
+      args: "-p 5001:5001",
+      cmd: "--master 192.168.50.25:2551 -b 192.168.50.25:5001"
   end
 
 end
