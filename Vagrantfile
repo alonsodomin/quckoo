@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 def require_plugin(plugin_name)
-  if !Vagrant.has_plugin?(plugin_name)
+  unless Vagrant.has_plugin?(plugin_name)
     puts "ERROR: Missing plugin '#{plugin_name}'"
     puts "Please run: vagrant plugin install #{plugin_name}"
     exit(1)
@@ -50,7 +50,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provision :docker do |d|
     d.run "cassandra",
-      image: "cassandra:3.0",
+      image: "cassandra:2.2",
       args: "-p 7000:7000 -p 9042:9042 -p 9160:9160 -v /var/lib/cassandra:/var/lib/cassandra"
 
     d.run "kernel",
