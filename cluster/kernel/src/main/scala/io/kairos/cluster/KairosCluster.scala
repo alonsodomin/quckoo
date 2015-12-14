@@ -6,8 +6,10 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.pattern._
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Source
 import akka.util.Timeout
-import io.kairos.cluster.core.{KairosClusterSupervisor, UserAuthenticator}
+import de.heikoseeberger.akkasse.ServerSentEvent
+import io.kairos.cluster.core.{KairosClusterEvent, KairosEventEmitter, KairosClusterSupervisor, UserAuthenticator}
 import io.kairos.cluster.protocol.GetClusterStatus
 import io.kairos.console.protocol.ClusterDetails
 import io.kairos.console.server.ServerFacade
@@ -43,6 +45,12 @@ class KairosCluster(settings: KairosClusterSettings)(implicit system: ActorSyste
     Http().bindAndHandle(router, settings.httpInterface, settings.httpPort).
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
   }
+
+  def events = Source.actorPublisher[KairosClusterEvent](KairosEventEmitter.props).
+    map(evt => {
+      import upickle.default._
+      ServerSentEvent(write[KairosClusterEvent](evt))
+    })
 
   def clusterDetails: Future[ClusterDetails] = {
     import system.dispatcher

@@ -1,6 +1,6 @@
 package io.kairos.console.client
 
-import io.kairos.console.client.core.ClientApi
+import io.kairos.console.client.core.{ClusterEventListener, ClusterEvent, ClientApi}
 import io.kairos.console.protocol.ClusterDetails
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -24,9 +24,18 @@ object ClusterView {
 
   case class State(clusterDetails: ClusterDetails = ClusterDetails(0, 0))
 
+  class Backend($: BackendScope[Unit, State]) {
+    ClusterEventListener.onMessage(onEvent)
+
+    def onEvent(clusterEvent: ClusterEvent): Unit = {
+      println("Received event: " + clusterEvent)
+    }
+
+  }
+
   private[this] val component = ReactComponentB[Unit]("ClusterView").
     initialState(State()).
-    noBackend.
+    backend(new Backend(_)).
     render((_, s, _) =>
       <.div(Style.container,
         <.div(Style.row,

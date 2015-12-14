@@ -15,9 +15,9 @@ lazy val commonSettings = Seq(
   ),
   resolvers ++= Seq(
     Opts.resolver.mavenLocalFile,
-    "krasserm at bintray" at "http://dl.bintray.com/krasserm/maven",
-    "hseeberger at bintray" at "http://dl.bintray.com/hseeberger/maven",
-    "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
+    Resolver.bintrayRepo("krasserm", "maven"),
+    Resolver.bintrayRepo("hseeberger", "maven"),
+    Resolver.bintrayRepo("dnvriend", "maven")
   )
 )
 
@@ -134,18 +134,10 @@ lazy val console = (crossProject in file("console")).
   jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
 ).jvmSettings(
   libraryDependencies ++= {
-    val akkaVersion = "2.4.0"
-    val akkaHttpVersion = "1.0"
+    import Dependencies.libs._
 
-    Seq(
-      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-      "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-      "com.typesafe.akka" %% "akka-http-core-experimental" % akkaHttpVersion,
-      "com.typesafe.akka" %% "akka-http-experimental" % akkaHttpVersion,
-      "de.heikoseeberger" %% "akka-http-upickle" % "1.1.0",
-      "com.typesafe.slick" %% "slick" % "3.1.0",
-      "org.scalaz" %% "scalaz-core" % "7.1.4"
-    )}
+    Seq(Akka.http, Akka.httpUpickle, Akka.sse)
+  }
 )
 
 lazy val consoleJS = console.js

@@ -19,8 +19,8 @@ object Dependencies {
     // Akka ----------
 
     val akka = "2.4.1"
-    val akkaHttp = "1.0"
-    val akkaStreaming = "1.0"
+    val akkaHttp = "2.0-M2"
+    val akkaStreaming = "2.0-M2"
 
     // ScalaJS -------
 
@@ -45,7 +45,8 @@ object Dependencies {
       val clusterTools = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka
       val sharding     = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
       val http         = "com.typesafe.akka" %% "akka-http-experimental" % version.akkaHttp
-      val httpUpickle  = "de.heikoseeberger" %% "akka-http-upickle"      % "1.1.0"
+      val httpUpickle  = "de.heikoseeberger" %% "akka-http-upickle"      % "1.3.0"
+      val sse          = "de.heikoseeberger" %% "akka-sse"               % "1.3.0"
 
       object persistence {
         val core      = "com.typesafe.akka"   %% "akka-persistence"           % version.akka
@@ -104,7 +105,7 @@ object Dependencies {
       Akka.persistence.cassandra,
       Akka.persistence.query,
       Akka.persistence.memory % Test,
-      Akka.sharding, Akka.http, Akka.httpUpickle,
+      Akka.sharding, Akka.http, Akka.httpUpickle, Akka.sse,
       scopt, scalaz
     )
 

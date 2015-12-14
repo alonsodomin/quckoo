@@ -7,11 +7,12 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
+import de.heikoseeberger.akkasse.EventStreamMarshalling
 import io.kairos.console.protocol._
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.boot.ClientBootstrap
 
-trait HttpRouter extends UpickleSupport with AuthDirectives {
+trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMarshalling {
   this: ServerFacade =>
 
   import StatusCodes._
@@ -30,9 +31,16 @@ trait HttpRouter extends UpickleSupport with AuthDirectives {
             complete(OK)
           }
         }
-      } ~ path("cluster" / "info") {
-        get {
-          complete(clusterDetails)
+      } ~ pathPrefix("cluster") {
+        path("events") {
+          get {
+            import system.dispatcher
+            complete(events)
+          }
+        } ~ path("info") {
+          get {
+            complete(clusterDetails)
+          }
         }
       } ~ pathPrefix("registry") {
         path("jobs") {
@@ -43,14 +51,13 @@ trait HttpRouter extends UpickleSupport with AuthDirectives {
       }
     }
 
-  private[this] def staticResources: Route =
-    get {
-      pathSingleSlash {
-        complete {
-          HttpEntity(MediaTypes.`text/html`, ClientBootstrap.skeleton.render)
-        }
-      } ~ getFromResourceDirectory("")
-    }
+  private[this] def staticResources: Route = get {
+    pathSingleSlash {
+      complete {
+        HttpEntity(MediaTypes.`text/html`, ClientBootstrap.skeleton.render)
+      }
+    } ~ getFromResourceDirectory("")
+  }
 
   private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {
     case exception =>
