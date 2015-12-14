@@ -54,9 +54,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       args: "-p 7000:7000 -p 9042:9042 -p 9160:9160 -v /var/lib/cassandra:/var/lib/cassandra"
 
     d.run "kernel",
-      image: "kairos/kernel:0.1.0-SNAPSHOT",
-      args: "-p 8095:8095",
-      cmd: "--cs 192.168.50.25:9042"
+      image: "kairos/cluster-kernel:0.1.0-SNAPSHOT",
+      args: "--link cassandra:cassandra -p 8095:8095"
   end
 
 end
