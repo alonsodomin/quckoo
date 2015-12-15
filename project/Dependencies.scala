@@ -24,10 +24,10 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact = "0.9.2"
-    val scalaCss = "0.3.0"
+    val scalaJsReact = "0.10.2"
+    val scalaCss = "0.3.1"
 
-    val reactJs = "0.12.2"
+    val reactJs = "0.14.3"
 
     // Other utils ---
 

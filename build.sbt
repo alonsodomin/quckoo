@@ -115,21 +115,24 @@ lazy val console = (crossProject in file("console")).
   )
 ).jsSettings(
   libraryDependencies ++= {
-    val scalaJSReactVersion = "0.9.2"
-    val scalaCssVersion = "0.3.0"
+    import Dependencies.version._
 
     Seq(
       "biz.enef" %%% "slogging" % "0.3",
-      "com.github.japgolly.scalajs-react" %%% "core" % scalaJSReactVersion,
-      "com.github.japgolly.scalajs-react" %%% "extra" % scalaJSReactVersion,
-      "com.github.japgolly.scalajs-react" %%% "test" % scalaJSReactVersion % "test",
-      "com.github.japgolly.scalacss" %%% "core" % scalaCssVersion,
-      "com.github.japgolly.scalacss" %%% "ext-react" % scalaCssVersion
+      "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "test" % scalaJsReact % "test",
+      "com.github.japgolly.scalacss" %%% "core" % scalaCss,
+      "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss
     )},
-  jsDependencies ++= Seq(
-    "org.webjars" % "react" % "0.12.2" / "react-with-addons.js" commonJSName "React",
-    "org.webjars" % "react" % "0.12.2" % "test" / "react-with-addons.js" commonJSName "React"
-  ),
+  jsDependencies ++= {
+    import Dependencies.version._
+
+    Seq(
+      "org.webjars.bower" % "react" % reactJs / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
+      "org.webjars.bower" % "react" % reactJs / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM",
+      "org.webjars.bower" % "react" % reactJs % "test" / "react-with-addons.js" commonJSName "React"
+  )},
   requiresDOM := true,
   scalaJSStage in Test := FastOptStage,
   jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
