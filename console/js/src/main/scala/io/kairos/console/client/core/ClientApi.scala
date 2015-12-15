@@ -1,7 +1,8 @@
 package io.kairos.console.client.core
 
 import io.kairos.console.client.security.ClientAuth
-import io.kairos.console.protocol.{ClusterDetails, JobSpecDetails, LoginRequest}
+import io.kairos.console.info.ClusterInfo
+import io.kairos.console.protocol.{JobSpecDetails, LoginRequest}
 import io.kairos.console.{Api, RegistryApi}
 import org.scalajs.dom.ext.Ajax
 
@@ -34,11 +35,11 @@ object ClientApi extends Api with RegistryApi with ClientAuth {
     Ajax.post(LogoutURI, headers = authHeaders) map { xhr => () }
   }
 
-  override def clusterDetails(implicit ex: ExecutionContext): Future[ClusterDetails] = {
+  override def clusterDetails(implicit ex: ExecutionContext): Future[ClusterInfo] = {
     import upickle.default._
 
     Ajax.get(ClusterDetailsURI, headers = authHeaders) map { xhr =>
-      read[ClusterDetails](xhr.responseText)
+      read[ClusterInfo](xhr.responseText)
     }
   }
 

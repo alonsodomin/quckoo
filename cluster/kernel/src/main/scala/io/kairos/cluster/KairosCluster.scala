@@ -11,7 +11,7 @@ import akka.util.Timeout
 import de.heikoseeberger.akkasse.ServerSentEvent
 import io.kairos.cluster.core.{KairosClusterEvent, KairosEventEmitter, KairosClusterSupervisor, UserAuthenticator}
 import io.kairos.cluster.protocol.GetClusterStatus
-import io.kairos.console.protocol.ClusterDetails
+import io.kairos.console.info.{NodeInfo, ClusterInfo}
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.console.server.security.AuthInfo
@@ -52,11 +52,12 @@ class KairosCluster(settings: KairosClusterSettings)(implicit system: ActorSyste
       ServerSentEvent(write[KairosClusterEvent](evt))
     })
 
-  def clusterDetails: Future[ClusterDetails] = {
+  def clusterDetails: Future[ClusterInfo] = {
     import system.dispatcher
     implicit val timeout = Timeout(5 seconds)
     (clusterSupervisor ? GetClusterStatus).mapTo[KairosStatus] map { status =>
-      ClusterDetails(status.members.size, 0)
+      val nodeInfo = NodeInfo(status.members.size)
+      ClusterInfo(nodeInfo, 0)
     }
   }
 

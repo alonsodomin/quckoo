@@ -1,6 +1,6 @@
 package io.kairos.console
 
-import io.kairos.console.protocol.ClusterDetails
+import io.kairos.console.info.ClusterInfo
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -13,6 +13,6 @@ trait Api {
 
   def logout()(implicit ec: ExecutionContext): Future[Unit]
 
-  def clusterDetails(implicit ec: ExecutionContext): Future[ClusterDetails]
+  def clusterDetails(implicit ec: ExecutionContext): Future[ClusterInfo]
 
 }

@@ -14,16 +14,21 @@ object HomePage {
   object Style extends StyleSheet.Inline {
     import dsl._
 
-    val content = style(
-      textAlign.center,
-      fontSize(30 px),
-      minHeight(450 px),
-      paddingTop(40 px)
+    val content = style(addClassName("container-fluid"))
+
+    val leftPanel = style(
+      addClassNames("col-md-4"),
+      height(100 %%)
     )
   }
 
   private[this] val component = ReactComponentB.static("HomePage",
-    <.div(Style.content, "Kairos UI - Home", ClusterView())
+    <.div(^.`class` := "container-fluid",
+      <.div(^.`class` := "row-fluid",
+        <.div(Style.leftPanel, ClusterView()),
+        <.div(^.`class` := "container-fluid", "Here goes the contents")
+      )
+    )
   ).buildU
 
   def apply() = component()

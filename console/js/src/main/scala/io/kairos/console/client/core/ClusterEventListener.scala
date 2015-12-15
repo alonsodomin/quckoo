@@ -8,7 +8,7 @@ import org.scalajs.dom.raw.MessageEvent
   */
 object ClusterEventListener {
 
-  val EventURI = "/cluster/events"
+  val EventURI = "cluster/events"
 
   private[this] lazy val source = new dom.EventSource(EventURI)
 

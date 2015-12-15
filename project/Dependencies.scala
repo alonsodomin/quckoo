@@ -41,12 +41,13 @@ object Dependencies {
     val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.5"
 
     object Akka {
-      val actor        = "com.typesafe.akka" %% "akka-actor"             % version.akka
-      val clusterTools = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka
-      val sharding     = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
-      val http         = "com.typesafe.akka" %% "akka-http-experimental" % version.akkaHttp
-      val httpUpickle  = "de.heikoseeberger" %% "akka-http-upickle"      % "1.3.0"
-      val sse          = "de.heikoseeberger" %% "akka-sse"               % "1.3.0"
+      val actor          = "com.typesafe.akka" %% "akka-actor"             % version.akka
+      val clusterTools   = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka
+      val clusterMetrics = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka
+      val sharding       = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
+      val http           = "com.typesafe.akka" %% "akka-http-experimental" % version.akkaHttp
+      val httpUpickle    = "de.heikoseeberger" %% "akka-http-upickle"      % "1.3.0"
+      val sse            = "de.heikoseeberger" %% "akka-sse"               % "1.3.0"
 
       object persistence {
         val core      = "com.typesafe.akka"   %% "akka-persistence"           % version.akka
@@ -58,7 +59,7 @@ object Dependencies {
       val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka
       val testKit          = "com.typesafe.akka" %% "akka-testkit"            % version.akka % Test
     }
-    val akka = Seq(Akka.actor, Akka.clusterTools, Akka.testKit)
+    val akka = Seq(Akka.actor, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit)
 
     object Log4j {
       val api       = "org.apache.logging.log4j"  % "log4j-api"        % version.log4j

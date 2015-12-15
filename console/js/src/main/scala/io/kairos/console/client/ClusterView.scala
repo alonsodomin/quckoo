@@ -1,7 +1,7 @@
 package io.kairos.console.client
 
 import io.kairos.console.client.core.{ClusterEventListener, ClusterEvent, ClientApi}
-import io.kairos.console.protocol.ClusterDetails
+import io.kairos.console.info.ClusterInfo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -17,12 +17,19 @@ object ClusterView {
   object Style extends StyleSheet.Inline {
     import dsl._
 
-    val container = style(addClassNames("container-fluid"))
-    val row = style(addClassName("row"))
-    val cell = style(addClassName("col-md-6"))
+    val container = style(addClassName("well"))
+
+    object section {
+      val title = style(
+        fontSize(16 px),
+        fontWeight.bold
+      )
+    }
+
+    initInnerObjects(section.title)
   }
 
-  case class State(clusterDetails: ClusterDetails = ClusterDetails(0, 0))
+  case class State(info: ClusterInfo = ClusterInfo())
 
   class Backend($: BackendScope[Unit, State]) {
     ClusterEventListener.onMessage(onEvent)
@@ -38,18 +45,36 @@ object ClusterView {
     backend(new Backend(_)).
     render((_, s, _) =>
       <.div(Style.container,
-        <.div(Style.row,
-          <.div(Style.cell, "Nodes"),
-          <.div(Style.cell, "Workers")
+        <.section(
+          <.div(Style.section.title,
+            "Nodes"
+          ),
+          <.table(
+            <.tr(
+              <.td("Active"),
+              <.td(s.info.nodeInfo.active)
+            ),
+            <.tr(
+              <.td("Inactive"),
+              <.td(s.info.nodeInfo.inactive)
+            )
+          )
         ),
-        <.div(Style.row,
-          <.div(Style.cell, s.clusterDetails.nodeCount),
-          <.div(Style.cell, s.clusterDetails.workerCount)
+        <.section(
+          <.div(Style.section.title,
+            "Workers"
+          ),
+          <.table(
+            <.tr(
+              <.td("Active"),
+              <.td(s.info.workers)
+            )
+          )
         )
       )
     ).componentDidMount($ => {
       ClientApi.clusterDetails map { details =>
-        $.modState(_.copy(clusterDetails = details))
+        $.modState(_.copy(info = details))
       }
     }).buildU
 
