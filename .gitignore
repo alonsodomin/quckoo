@@ -85,3 +85,7 @@ build
 ###################
 .history
 !activator-launch-*.jar
+
+# Kamon native libraries            #
+#####################################
+native/
