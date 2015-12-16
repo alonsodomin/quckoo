@@ -15,9 +15,10 @@ scala:
    - 2.11.7
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test && sbt coverageAggregate
-after_success:
-  - sbt coveralls
+  #- sbt ++$TRAVIS_SCALA_VERSION clean coverage test && sbt coverageAggregate
+  - sbt ++$TRAVIS_SCALA_VERSION clean test
+#after_success:
+#  - sbt coveralls
 
 branches:
  only:
