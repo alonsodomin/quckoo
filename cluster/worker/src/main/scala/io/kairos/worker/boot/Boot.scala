@@ -34,7 +34,7 @@ object Boot extends App {
   }
 
   def start(config: Config): Unit = {
-    val system = ActorSystem("ChronosWorkerSystem", config)
+    val system = ActorSystem("KairosWorkerSystem", config)
     val initialContacts = immutableSeq(config.getStringList(Options.KairosContactPoints)).map {
       case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
     }.toSet
