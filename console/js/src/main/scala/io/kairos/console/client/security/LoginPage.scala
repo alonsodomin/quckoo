@@ -44,7 +44,7 @@ object LoginPage {
   class LoginBackend($: BackendScope[RouterCtl[ConsolePage], NotificationHolder]) {
     import LoginForm.LoginInfo
 
-    def loginHandler(loginInfo: LoginInfo): Unit = {
+    def loginHandler(loginInfo: LoginInfo): Callback = {
 
       def authFailedNotification(notifs: Seq[Notification]): Seq[Notification] =
         notifs :+ Notification(Notification.Level.Error, "Username or password incorrect")
@@ -57,7 +57,7 @@ object LoginPage {
             flatMap(_ => $.props.flatMap(_.set(Login)))
         }
 
-      performLogin() onSuccess { case cb => cb.runNow() }
+      Callback.future(performLogin())
     }
 
     def render(holder: NotificationHolder) =

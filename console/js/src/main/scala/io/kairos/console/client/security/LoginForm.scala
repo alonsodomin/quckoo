@@ -10,18 +10,18 @@ object LoginForm {
   
   case class LoginInfo(username: String, password: String)
 
-  type LoginHandler = LoginInfo => Unit
+  type LoginHandler = LoginInfo => Callback
 
   class LoginBackend($: BackendScope[LoginHandler, LoginInfo]) {
 
-    def updateUsername(event: ReactEventI) =
+    def updateUsername(event: ReactEventI): Callback =
       $.modState(_.copy(username = event.target.value))
 
-    def updatePassword(event: ReactEventI) =
+    def updatePassword(event: ReactEventI): Callback =
       $.modState(_.copy(password = event.target.value))
 
-    def handleSubmit(event: ReactEventI) =
-      event.preventDefaultCB >> $.state.flatMap(loginInfo => $.props.map(handler => handler(loginInfo)))
+    def handleSubmit(event: ReactEventI): Callback =
+      event.preventDefaultCB >> $.state.flatMap(loginInfo => $.props.flatMap(handler => handler(loginInfo)))
 
     def render(info: LoginInfo) =
       <.form(^.onSubmit ==> handleSubmit,
