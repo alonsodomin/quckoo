@@ -36,7 +36,7 @@ object Navigation extends ClientAuth {
 
     def onLogoutClicked(e: ReactEventI): Callback = {
       def logoutAndRefresh: Callback = Callback.future(
-        ClientApi.logout() map { _ => $.props.map(_.routerCtl.refresh) } recover {
+        ClientApi.logout() map { _ => $.props.flatMap(_.routerCtl.refresh) } recover {
           case error: Throwable => Callback.alert(error.getMessage)
         }
       )
