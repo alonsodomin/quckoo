@@ -14,7 +14,7 @@ object JobSpecList {
   private[this] val component = ReactComponentB[Props]("JobSpecList").
     stateless.
     noBackend.
-    render((p, _, _) =>
+    render_P(p =>
       <.table(^.`class` := "table table-striped",
         <.thead(
           <.tr(<.th("Id"), <.th("Name"))

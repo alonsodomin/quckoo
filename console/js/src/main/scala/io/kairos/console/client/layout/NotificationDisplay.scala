@@ -27,7 +27,7 @@ object NotificationDisplay {
   private[this] val component = ReactComponentB[Seq[Notification]]("GlobalMessages").
     stateless.
     noBackend.
-    render((msgs, _, _) =>
+    render_P(msgs =>
       <.div(msgs.map { msg =>
         <.p(^.`class` := bgClassForLevel(msg.level), ^.padding := 5.px,
           <.i(^.`class` := s"fa ${iconClassForLevel(msg.level)}"),

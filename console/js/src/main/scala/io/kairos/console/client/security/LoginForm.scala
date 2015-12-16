@@ -14,36 +14,27 @@ object LoginForm {
 
   class LoginBackend($: BackendScope[LoginHandler, LoginInfo]) {
 
-    def updateUsername(event: ReactEventI) = {
+    def updateUsername(event: ReactEventI) =
       $.modState(_.copy(username = event.target.value))
-    }
 
-    def updatePassword(event: ReactEventI) = {
+    def updatePassword(event: ReactEventI) =
       $.modState(_.copy(password = event.target.value))
-    }
 
-    def handleSubmit(event: ReactEventI) = {
-      event.preventDefault()
-      $.props($.get())
-    }
+    def handleSubmit(event: ReactEventI) =
+      event.preventDefaultCB >> $.state.flatMap(loginInfo => $.props.map(handler => handler(loginInfo)))
 
-  }
-
-  private[this] val component = ReactComponentB[LoginHandler]("LoginForm").
-    initialState(LoginInfo("", "")).
-    backend(new LoginBackend(_)).
-    render((_, info, b) =>
-      <.form(^.onSubmit ==> b.handleSubmit,
+    def render(info: LoginInfo) =
+      <.form(^.onSubmit ==> handleSubmit,
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "username", "Username"),
           <.input(^.id := "username", ^.`class` := "form-control", ^.placeholder := "Username",
-            ^.required := true, ^.onChange ==> b.updateUsername, ^.value := info.username
+            ^.required := true, ^.onChange ==> updateUsername, ^.value := info.username
           )
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "password", "Password"),
           <.input(^.id := "password", ^.`type` := "password", ^.`class` := "form-control", ^.placeholder := "Password",
-            ^.required := true, ^.onChange ==> b.updatePassword, ^.value := info.password
+            ^.required := true, ^.onChange ==> updatePassword, ^.value := info.password
           )
         ),
         <.div(^.`class` := "checkbox",
@@ -53,7 +44,12 @@ object LoginForm {
         ),
         <.button(^.`class` := "btn btn-default", "Sign in")
       )
-    ).build
+  }
+
+  private[this] val component = ReactComponentB[LoginHandler]("LoginForm").
+    initialState(LoginInfo("", "")).
+    renderBackend[LoginBackend].
+    build
 
   def apply(loginHandler: LoginHandler) = component(loginHandler)
 

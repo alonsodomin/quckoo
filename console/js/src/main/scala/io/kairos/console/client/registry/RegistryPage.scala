@@ -24,13 +24,13 @@ object RegistryPage {
   private[this] val component = ReactComponentB[Unit]("RegistryPage").
     initialState(State()).
     noBackend.
-    render((_, s, _) => {
+    render_S(s => {
       <.div(Style.content,
         <.h2("Registry"),
         JobSpecList(s.specs)
       )
     }).
-    componentDidMount($ => {
+    componentDidMount($ => Callback {
       ClientApi.getJobs() onSuccess { case jobDetails: Seq[JobSpecDetails] =>
         $.modState(_.copy(specs = jobDetails))
       }

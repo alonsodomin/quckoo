@@ -5,7 +5,7 @@ import io.kairos.console.client.layout.Navigation.NavigationItem
 import io.kairos.console.client.layout.{Footer, Navigation}
 import io.kairos.console.client.registry.RegistryPage
 import io.kairos.console.client.security.{ClientAuth, LoginPage}
-import japgolly.scalajs.react.extra.router2._
+import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 /**
@@ -39,7 +39,7 @@ object SiteMap extends ClientAuth {
     | staticRoute("#home", Home) ~> render(HomePage())
     | staticRoute("#registry", Registry) ~> render(RegistryPage())
     | staticRoute("#executions", Executions) ~> render(ExecutionsPage())
-    ).addConditionIO(isAuthenticatedIO)(_ => Some(redirectToPage(Login)))
+    ).addCondition(isAuthenticatedC)(_ => Some(redirectToPage(Login)))
   }
 
   private[this] val config = RouterConfigDsl[ConsolePage].buildConfig { dsl =>

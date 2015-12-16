@@ -5,7 +5,7 @@ import io.kairos.console.info.ClusterInfo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
@@ -38,12 +38,7 @@ object ClusterView {
       println("Received event: " + clusterEvent)
     }
 
-  }
-
-  private[this] val component = ReactComponentB[Unit]("ClusterView").
-    initialState(State()).
-    backend(new Backend(_)).
-    render((_, s, _) =>
+    def render(state: State) =
       <.div(Style.container,
         <.section(
           <.div(Style.section.title,
@@ -52,11 +47,11 @@ object ClusterView {
           <.table(
             <.tr(
               <.td("Active"),
-              <.td(s.info.nodeInfo.active)
+              <.td(state.info.nodeInfo.active)
             ),
             <.tr(
               <.td("Inactive"),
-              <.td(s.info.nodeInfo.inactive)
+              <.td(state.info.nodeInfo.inactive)
             )
           )
         ),
@@ -67,12 +62,18 @@ object ClusterView {
           <.table(
             <.tr(
               <.td("Active"),
-              <.td(s.info.workers)
+              <.td(state.info.workers)
             )
           )
         )
       )
-    ).componentDidMount($ => {
+
+  }
+
+  private[this] val component = ReactComponentB[Unit]("ClusterView").
+    initialState(State()).
+    renderBackend[Backend].
+    componentDidMount($ => Callback {
       ClientApi.clusterDetails map { details =>
         $.modState(_.copy(info = details))
       }

@@ -3,15 +3,14 @@ package io.kairos.console.client.security
 import io.kairos.console.client.SiteMap.{ConsolePage, Home, Login}
 import io.kairos.console.client.core.ClientApi
 import io.kairos.console.client.layout.{Notification, NotificationDisplay}
-import japgolly.scalajs.react.extra.router2.RouterCtl
+import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import scalaz.effect.IO
 
 /**
  * Created by alonsodomin on 13/10/2015.
@@ -46,38 +45,35 @@ object LoginPage {
     import LoginForm.LoginInfo
 
     def loginHandler(loginInfo: LoginInfo): Unit = {
-      val router = $.props
 
       def authFailedNotification(notifs: Seq[Notification]): Seq[Notification] =
         notifs :+ Notification(Notification.Level.Error, "Username or password incorrect")
 
-      def performLogin(): Future[IO[Unit]] =
+      def performLogin(): Future[Callback] =
         ClientApi.login(loginInfo.username, loginInfo.password).map { _ =>
-          router.set(Home)
+          $.props.flatMap(_.set(Home))
         } recover { case _ =>
-          router.set(Login).map { _ =>
-            $.modState(s => s.copy(notifications = authFailedNotification(s.notifications)))
-          }
+          $.modState(holder => holder.copy(notifications = authFailedNotification(holder.notifications))).
+            flatMap(_ => $.props.flatMap(_.set(Login)))
         }
 
-      performLogin() onSuccess { case io => io.unsafePerformIO() }
+      performLogin() onSuccess { case cb => cb.runNow() }
     }
 
+    def render(holder: NotificationHolder) =
+      <.div(Style.formPlacement,
+        NotificationDisplay(holder.notifications),
+        <.div(Style.loginPanel.container,
+          <.div(Style.loginPanel.header, "Sign in into Kairos Console"),
+          <.div(Style.loginPanel.body, LoginForm(loginHandler))
+        )
+      )
   }
 
   private[this] val component = ReactComponentB[RouterCtl[ConsolePage]]("LoginPage").
     initialState(NotificationHolder()).
-    backend(new LoginBackend(_)).
-    render((props, s, b) => {
-      <.div(Style.formPlacement,
-        NotificationDisplay(s.notifications),
-        <.div(Style.loginPanel.container,
-          <.div(Style.loginPanel.header, "Sign in into Kairos Console"),
-          <.div(Style.loginPanel.body, LoginForm(b.loginHandler))
-        )
-      )
-    }
-  ).build
+    renderBackend[LoginBackend].
+    build
 
   def apply(router: RouterCtl[ConsolePage]) = component(router)
 

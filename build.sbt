@@ -121,6 +121,7 @@ lazy val console = (crossProject in file("console")).
       "biz.enef" %%% "slogging" % "0.3",
       "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "test" % scalaJsReact % "test",
       "com.github.japgolly.scalacss" %%% "core" % scalaCss,
       "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss
