@@ -135,6 +135,7 @@ lazy val console = (crossProject in file("console")).
       "org.webjars.bower" % "react" % reactJs % "test" / "react-with-addons.js" commonJSName "React"
   )},
   requiresDOM := true,
+  coverageEnabled := false,
   scalaJSStage in Test := FastOptStage,
   jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
 ).jvmSettings(
