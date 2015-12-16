@@ -27,19 +27,20 @@ object LoginForm {
       <.form(^.onSubmit ==> handleSubmit,
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "username", "Username"),
-          <.input(^.id := "username", ^.`class` := "form-control", ^.placeholder := "Username",
+          <.input.text(^.id := "username", ^.`class` := "form-control", ^.placeholder := "Username",
             ^.required := true, ^.onChange ==> updateUsername, ^.value := info.username
           )
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "password", "Password"),
-          <.input(^.id := "password", ^.`type` := "password", ^.`class` := "form-control", ^.placeholder := "Password",
+          <.input.password(^.id := "password", ^.`class` := "form-control", ^.placeholder := "Password",
             ^.required := true, ^.onChange ==> updatePassword, ^.value := info.password
           )
         ),
         <.div(^.`class` := "checkbox",
           <.label(^.`for` := "rememberMe",
-            <.input(^.id := "rememberMe", ^.`type` := "checkbox", "Remember me")
+            <.input.checkbox(^.id := "rememberMe"),
+            "Remember me"
           )
         ),
         <.button(^.`class` := "btn btn-default", "Sign in")

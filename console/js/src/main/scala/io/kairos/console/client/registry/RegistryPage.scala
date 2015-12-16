@@ -30,8 +30,8 @@ object RegistryPage {
         JobSpecList(s.specs)
       )
     }).
-    componentDidMount($ => Callback {
-      ClientApi.getJobs() onSuccess { case jobDetails: Seq[JobSpecDetails] =>
+    componentDidMount($ => Callback.future {
+      ClientApi.getJobs() map { case jobDetails: Seq[JobSpecDetails] =>
         $.modState(_.copy(specs = jobDetails))
       }
     }).buildU

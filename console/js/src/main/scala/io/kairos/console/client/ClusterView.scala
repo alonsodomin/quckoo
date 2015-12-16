@@ -45,13 +45,15 @@ object ClusterView {
             "Nodes"
           ),
           <.table(
-            <.tr(
-              <.td("Active"),
-              <.td(state.info.nodeInfo.active)
-            ),
-            <.tr(
-              <.td("Inactive"),
-              <.td(state.info.nodeInfo.inactive)
+            <.tbody(
+              <.tr(
+                <.td("Active"),
+                <.td(state.info.nodeInfo.active)
+              ),
+              <.tr(
+                <.td("Inactive"),
+                <.td(state.info.nodeInfo.inactive)
+              )
             )
           )
         ),
@@ -60,9 +62,11 @@ object ClusterView {
             "Workers"
           ),
           <.table(
-            <.tr(
-              <.td("Active"),
-              <.td(state.info.workers)
+            <.tbody(
+              <.tr(
+                <.td("Active"),
+                <.td(state.info.workers)
+              )
             )
           )
         )
