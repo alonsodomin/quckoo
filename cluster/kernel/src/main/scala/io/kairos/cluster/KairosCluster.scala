@@ -5,16 +5,21 @@ import java.time.Clock
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.pattern._
+import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
+import akka.persistence.query.PersistenceQuery
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import de.heikoseeberger.akkasse.ServerSentEvent
+import io.kairos.JobSpec
 import io.kairos.cluster.core.{KairosClusterEvent, KairosEventEmitter, KairosClusterSupervisor, UserAuthenticator}
 import io.kairos.cluster.protocol.GetClusterStatus
 import io.kairos.console.info.{NodeInfo, ClusterInfo}
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.console.server.security.AuthInfo
+import io.kairos.id.JobId
+import io.kairos.protocol.RegistryProtocol.{JobDisabled, JobAccepted}
 import org.slf4s.Logging
 
 import scala.concurrent.Future
@@ -44,6 +49,24 @@ class KairosCluster(settings: KairosClusterSettings)(implicit system: ActorSyste
 
     Http().bindAndHandle(router, settings.httpInterface, settings.httpPort).
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
+  }
+
+  def registeredJobs: Future[Map[JobId, JobSpec]] = {
+    val readJournal = PersistenceQuery(system).readJournalFor[CassandraReadJournal](
+      "akka.persistence.query.cassandra-query-journal"
+    )
+
+    readJournal.currentEventsByPersistenceId("registry", 0, System.currentTimeMillis()).
+      runFold(Map.empty[JobId, JobSpec]) {
+        case (map, envelope) =>
+          envelope.event match {
+            case JobAccepted(jobId, jobSpec) =>
+              map + (jobId -> jobSpec)
+            case JobDisabled(jobId) if map.contains(jobId) =>
+              map - jobId
+            case _ => map
+          }
+      }
   }
 
   def events = Source.actorPublisher[KairosClusterEvent](KairosEventEmitter.props).

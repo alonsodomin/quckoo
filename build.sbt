@@ -7,11 +7,13 @@ lazy val commonSettings = Seq(
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   scalaVersion := "2.11.7",
   scalacOptions ++= Seq(
+    "-encoding", "UTF-8",
     "-Xexperimental",
     "-language:postfixOps",
     "-feature",
     "-unchecked",
     "-deprecation",
+    "-Xlint",
     "-Ywarn-dead-code"
   ),
   resolvers ++= Seq(

@@ -10,7 +10,7 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import io.kairos.cluster.protocol.WorkerProtocol.{WorkerJoined, WorkerRemoved}
 import io.kairos.cluster.protocol._
-import io.kairos.cluster.registry.Registry
+import io.kairos.cluster.registry.{RegistryView, Registry}
 import io.kairos.cluster.scheduler.{Scheduler, TaskQueue}
 import io.kairos.cluster.{KairosClusterSettings, KairosStatus}
 import io.kairos.protocol._
@@ -37,11 +37,13 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)(implicit clock: C
   private val cluster = Cluster(context.system)
   private val mediator = DistributedPubSub(context.system).mediator
 
-  private val resolver = context.watch(context.actorOf(Resolver.props(new IvyResolve(settings.ivyConfiguration)), "resolver"))
+  private val resolver = context.watch(context.actorOf(
+    Resolver.props(new IvyResolve(settings.ivyConfiguration)), "resolver"))
   private val registry = startRegistry
-  context.actorOf(Props(classOf[ForwadingReceptionist], registry), "registry")
+  context.actorOf(Props(classOf[RegistryReceptionist], registry), "registry")
 
-  private val scheduler = context.watch(context.actorOf(Scheduler.props(registry, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
+  private val scheduler = context.watch(context.actorOf(
+    Scheduler.props(registry, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
 
   private var clients = Set.empty[ActorRef]
   private var kairosStatus = KairosStatus()
