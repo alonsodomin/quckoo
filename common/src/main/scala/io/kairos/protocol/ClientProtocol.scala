@@ -1,11 +1,17 @@
 package io.kairos.protocol
 
-trait ClientEvent
+object ClientProtocol {
 
-case object Connect
-case object Connected extends ClientEvent
+  sealed trait ClientEvent
 
-case object Disconnect
-case object Disconnected extends ClientEvent
+  case object Connect
 
-case object UnableToConnect extends ClientEvent
+  case object Connected extends ClientEvent
+
+  case object Disconnect
+
+  case object Disconnected extends ClientEvent
+
+  case object UnableToConnect extends ClientEvent
+
+}

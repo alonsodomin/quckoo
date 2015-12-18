@@ -25,6 +25,7 @@ class KairosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts:
   extends Actor with ActorLogging {
 
   import KairosClient._
+  import ClientProtocol._
   import RegistryProtocol._
   import SchedulerProtocol._
 

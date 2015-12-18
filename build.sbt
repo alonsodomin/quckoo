@@ -55,8 +55,13 @@ lazy val common = crossProject.crossType(CrossType.Pure).in(file("common")).
     name := "common"
   ).
   settings(commonSettings: _*).
+  settings(
+    libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+  ).
   jvmSettings(
-    libraryDependencies ++= Dependencies.module.common
+    libraryDependencies ++= Seq(
+      Dependencies.libs.scalaTest
+    )
   )
 
 lazy val commonJS = common.js

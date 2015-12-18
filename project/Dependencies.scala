@@ -95,7 +95,7 @@ object Dependencies {
   object module {
     import libs._
 
-    val common   = logging ++ testing ++ Seq(scalaXml)
+    val common   = testing ++ Seq(scalaXml)
     val network  = logging ++ testing ++ akka
     val client   = logging ++ testing ++ akka
     val cluster  = logging ++ testing ++ akka ++ Seq(

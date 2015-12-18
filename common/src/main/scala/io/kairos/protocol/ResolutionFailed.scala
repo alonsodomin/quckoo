@@ -5,4 +5,8 @@ package io.kairos.protocol
   */
 object ResolutionFailed {
 
+  type JobRejectedCause = Either[ResolutionFailed, Throwable]
+
 }
+
+case class ResolutionFailed(unresolvedDependencies: Seq[String])

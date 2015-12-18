@@ -7,6 +7,7 @@ import io.kairos.id._
  * Created by aalonsodominguez on 21/08/15.
  */
 object RegistryProtocol {
+  import ResolutionFailed._
 
   sealed trait RegistryCommand
   sealed trait RegistryEvent
