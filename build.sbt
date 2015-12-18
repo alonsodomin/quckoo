@@ -31,51 +31,56 @@ lazy val noPublishSettings = Seq(
 )
 
 lazy val commonJsSettins = Seq(
-  scalaJSStage in Global := FastOptStage
+  scalaJSStage in Test := FastOptStage
 )
 
 lazy val scoverageSettings = Seq(
   coverageHighlighting := true
 )
 
-lazy val kairos = (project in file(".")).aggregate(
-  common, network, client, cluster, kernel, consoleRoot, examples, worker
-)
+lazy val kairos = (project in file(".")).
+  settings(moduleName := "root").
+  settings(noPublishSettings).
+  aggregate(commonRoot, client, cluster, consoleRoot, examples, worker)
 
-lazy val cluster = (project in file("cluster")).
-  aggregate(clusterShared, kernel, worker).
-  settings(noPublishSettings)
+// Common ==================================================
 
-lazy val examples = (project in file("examples")).
-  aggregate(exampleJobs, exampleProducers).
-  settings(noPublishSettings)
+lazy val commonRoot = (project in file("common")).
+  settings(moduleName := "common").
+  settings(noPublishSettings).
+  aggregate(commonJS, commonJVM)
 
-lazy val common = (project in file("common")).
-  settings(commonSettings: _*).
+lazy val common = crossProject.crossType(CrossType.Pure).in(file("common")).
   settings(
+    name := "common"
+  ).
+  settings(commonSettings: _*).
+  jvmSettings(
     libraryDependencies ++= Dependencies.module.common
   )
 
-lazy val network = (project in file("network")).
-  settings(commonSettings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.module.network
-  ).
-  dependsOn(common)
+lazy val commonJS = common.js
+lazy val commonJVM = common.jvm
 
 lazy val client = (project in file("client")).
   settings(commonSettings: _*).
   settings(
     libraryDependencies ++= Dependencies.module.client
   ).
-  dependsOn(network)
+  dependsOn(commonJVM)
+
+// Cluster ==================================================
+
+lazy val cluster = (project in file("cluster")).
+  aggregate(clusterShared, kernel, worker).
+  settings(noPublishSettings)
 
 lazy val clusterShared = Project("cluster-shared", file("cluster/shared")).
   settings(commonSettings: _*).
   settings(
     libraryDependencies ++= Dependencies.module.cluster
   ).
-  dependsOn(network)
+  dependsOn(commonJVM)
 
 lazy val kernel = MultiNode(Project("cluster-kernel", file("cluster/kernel"))).
   settings(commonSettings: _*).
@@ -103,50 +108,57 @@ lazy val worker = Project("cluster-worker", file("cluster/worker")).
   settings(Packaging.workerDockerSettings: _*).
   dependsOn(clusterShared)
 
+// Console ==================================================
+
 lazy val consoleRoot = (project in file("console")).
-  aggregate(consoleJS, consoleJVM).
-  settings(noPublishSettings)
+  settings(moduleName := "console").
+  settings(noPublishSettings).
+  aggregate(consoleJS, consoleJVM)
 
 lazy val console = (crossProject in file("console")).
-  settings(commonSettings: _*).settings(
-  name := "console",
-  libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "scalatags" % "0.4.6",
-    "com.lihaoyi" %%% "upickle" % "0.3.6",
-    "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
-  )
-).jsSettings(
-  libraryDependencies ++= {
-    import Dependencies.version._
+  settings(commonSettings: _*).
+  settings(
+    name := "console",
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "scalatags" % "0.4.6",
+      "com.lihaoyi" %%% "upickle" % "0.3.6",
+      "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+    )
+  ).
+  jsSettings(
+    libraryDependencies ++= {
+      import Dependencies.version._
 
-    Seq(
-      "biz.enef" %%% "slogging" % "0.3",
-      "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "test" % scalaJsReact % "test",
-      "com.github.japgolly.scalacss" %%% "core" % scalaCss,
-      "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss
+      Seq(
+        "biz.enef" %%% "slogging" % "0.3",
+        "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
+        "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
+        "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % scalaJsReact,
+        "com.github.japgolly.scalajs-react" %%% "test" % scalaJsReact % "test",
+        "com.github.japgolly.scalacss" %%% "core" % scalaCss,
+        "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss
+      )},
+    jsDependencies ++= {
+      import Dependencies.version._
+
+      Seq(
+        "org.webjars.bower" % "react" % reactJs / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
+        "org.webjars.bower" % "react" % reactJs / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM",
+        "org.webjars.bower" % "react" % reactJs % "test" / "react-with-addons.js" commonJSName "React"
     )},
-  jsDependencies ++= {
-    import Dependencies.version._
+    requiresDOM := true,
+    coverageEnabled := false,
+    scalaJSStage in Test := FastOptStage,
+    jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
+  )
+  .jvmSettings(
+    libraryDependencies ++= {
+      import Dependencies.libs._
 
-    Seq(
-      "org.webjars.bower" % "react" % reactJs / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
-      "org.webjars.bower" % "react" % reactJs / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM",
-      "org.webjars.bower" % "react" % reactJs % "test" / "react-with-addons.js" commonJSName "React"
-  )},
-  requiresDOM := true,
-  coverageEnabled := false,
-  scalaJSStage in Test := FastOptStage,
-  jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
-).jvmSettings(
-  libraryDependencies ++= {
-    import Dependencies.libs._
-
-    Seq(Akka.http, Akka.httpUpickle, Akka.sse)
-  }
-)
+      Seq(Akka.http, Akka.httpUpickle, Akka.sse)
+    }
+  ).
+  dependsOn(common)
 
 lazy val consoleJS = console.js
 lazy val consoleJVM = console.jvm.settings(
@@ -157,12 +169,18 @@ lazy val consoleJVM = console.jvm.settings(
   )
 )
 
+// Examples ==================================================
+
+lazy val examples = (project in file("examples")).
+  aggregate(exampleJobs, exampleProducers).
+  settings(noPublishSettings)
+
 lazy val exampleJobs = Project("example-jobs", file("examples/jobs")).
   settings(commonSettings: _*).
   settings(
     libraryDependencies ++= Dependencies.module.exampleJobs
   ).
-  dependsOn(common)
+  dependsOn(commonJVM)
 
 lazy val exampleProducers = Project("example-producers", file("examples/producers")).
   settings(commonSettings: _*).
@@ -174,6 +192,6 @@ lazy val exampleProducers = Project("example-producers", file("examples/producer
   settings(Packaging.universalSettings: _*).
   enablePlugins(DockerPlugin).
   settings(Packaging.dockerSettings: _*).
-  dependsOn(common).
+  dependsOn(commonJVM).
   dependsOn(exampleJobs).
   dependsOn(client)
