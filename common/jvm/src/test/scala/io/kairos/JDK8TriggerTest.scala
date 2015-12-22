@@ -1,27 +1,28 @@
 package io.kairos
 
-import java.time.{Clock, Instant, ZoneId, ZonedDateTime}
+import java.time.{Instant, ZoneId}
 
-import org.scalatest.{Inside, Matchers, WordSpec}
+import io.kairos.time.JDK8TimeSource
+import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.duration._
 
 /**
- * Created by domingueza on 04/08/15.
- */
-object TriggerTest {
+  * Created by alonsodomin on 22/12/2015.
+  */
+object JDK8TriggerTest {
 
   val FixedInstant = Instant.ofEpochMilli(82939839020L)
   val FixedZoneId  = ZoneId.systemDefault()
 
 }
 
-class TriggerTest extends WordSpec with Matchers with Inside {
+class JDK8TriggerTest extends WordSpec with Matchers {
 
   import Trigger._
-  import TriggerTest._
+  import JDK8TriggerTest._
 
-  implicit val clock = Clock.fixed(FixedInstant, FixedZoneId)
+  implicit val timeSource = JDK8TimeSource.fixed(FixedInstant, FixedZoneId)
 
   "An Immediate trigger" should {
     val trigger = Immediate
@@ -31,15 +32,15 @@ class TriggerTest extends WordSpec with Matchers with Inside {
     }
 
     "return now as execution time when has not been executed before" in {
-      val refTime = ScheduledTime(ZonedDateTime.now(clock))
+      val refTime = ScheduledTime(timeSource.currentDateTime)
 
       val returnedTime = trigger.nextExecutionTime(refTime)
 
-      returnedTime should be (Some(ZonedDateTime.now(clock)))
+      returnedTime should be (Some(timeSource.currentDateTime))
     }
 
     "return none as execution time if it has already been executed" in {
-      val refTime = LastExecutionTime(ZonedDateTime.now(clock))
+      val refTime = LastExecutionTime(timeSource.currentDateTime)
 
       val returnedTime = trigger.nextExecutionTime(refTime)
 
@@ -49,7 +50,7 @@ class TriggerTest extends WordSpec with Matchers with Inside {
   }
 
   "An After trigger" should {
-    val delay = 10.seconds
+    val delay = 10 seconds
     val trigger = After(delay)
 
     "never be recurring" in {
@@ -57,8 +58,8 @@ class TriggerTest extends WordSpec with Matchers with Inside {
     }
 
     "return a time with expected delay when has not been executed before" in {
-      val expectedTime = ZonedDateTime.now(clock).plusNanos(delay.toNanos)
-      val refTime      = ScheduledTime(ZonedDateTime.now(clock))
+      val expectedTime = timeSource.currentDateTime.plusMillis(delay.toMillis)
+      val refTime      = ScheduledTime(timeSource.currentDateTime)
 
       val returnedTime = trigger.nextExecutionTime(refTime)
 
@@ -66,7 +67,7 @@ class TriggerTest extends WordSpec with Matchers with Inside {
     }
 
     "return none as execution time if it has already been executed" in {
-      val refTime = LastExecutionTime(ZonedDateTime.now(clock))
+      val refTime = LastExecutionTime(timeSource.currentDateTime)
 
       val returnedTime = trigger.nextExecutionTime(refTime)
 
@@ -75,7 +76,7 @@ class TriggerTest extends WordSpec with Matchers with Inside {
   }
 
   "An At trigger" should {
-    val givenTime = ZonedDateTime.now(clock).plusHours(3)
+    val givenTime = timeSource.currentDateTime.plusHours(3)
     val trigger   = At(givenTime)
 
     "never be recurring" in {
@@ -83,7 +84,7 @@ class TriggerTest extends WordSpec with Matchers with Inside {
     }
 
     "return the given time when has not been executed before" in {
-      val refTime = ZonedDateTime.now(clock)
+      val refTime = timeSource.currentDateTime
 
       val returnedTime = trigger.nextExecutionTime(ScheduledTime(refTime))
 
@@ -91,7 +92,7 @@ class TriggerTest extends WordSpec with Matchers with Inside {
     }
 
     "return none when it has been already executed" in {
-      val refTime = ZonedDateTime.now(clock)
+      val refTime = timeSource.currentDateTime
 
       val returnedTime = trigger.nextExecutionTime(LastExecutionTime(refTime))
 
@@ -100,8 +101,8 @@ class TriggerTest extends WordSpec with Matchers with Inside {
   }
 
   "An Every trigger" should {
-    val frequency = 10.seconds
-    val delay     = 5.seconds
+    val frequency = 10 seconds
+    val delay     = 5 seconds
     val trigger   = Every(frequency, Some(delay))
 
     "always be recurring" in {
@@ -109,8 +110,8 @@ class TriggerTest extends WordSpec with Matchers with Inside {
     }
 
     "return a time with expected delay when has not been executed before" in {
-      val expectedTime = ZonedDateTime.now(clock).plusNanos(delay.toNanos)
-      val refTime      = ScheduledTime(ZonedDateTime.now(clock))
+      val expectedTime = timeSource.currentDateTime.plusMillis(delay.toMillis)
+      val refTime      = ScheduledTime(timeSource.currentDateTime)
 
       val returnedTime = trigger.nextExecutionTime(refTime)
 
@@ -118,8 +119,8 @@ class TriggerTest extends WordSpec with Matchers with Inside {
     }
 
     "return a time with frequency delay when it has already been executed before" in {
-      val expectedTime = ZonedDateTime.now(clock).plusNanos(frequency.toNanos)
-      val refTime      = LastExecutionTime(ZonedDateTime.now(clock))
+      val expectedTime = timeSource.currentDateTime.plusMillis(frequency.toMillis)
+      val refTime      = LastExecutionTime(timeSource.currentDateTime)
 
       val returnedTime = trigger.nextExecutionTime(refTime)
 

@@ -50,18 +50,16 @@ lazy val commonRoot = (project in file("common")).
   settings(noPublishSettings).
   aggregate(commonJS, commonJVM)
 
-lazy val common = crossProject.crossType(CrossType.Pure).in(file("common")).
+lazy val common = (crossProject in file("common")).
   settings(
     name := "common"
   ).
   settings(commonSettings: _*).
   settings(
-    libraryDependencies += "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+    libraryDependencies += "org.scalatest" %%% "scalatest" % Dependencies.version.scalaTest % Test
   ).
-  jvmSettings(
-    libraryDependencies ++= Seq(
-      Dependencies.libs.scalaTest
-    )
+  jsSettings(
+    libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % "0.1.4"
   )
 
 lazy val commonJS = common.js
