@@ -77,7 +77,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
-      executionProbe.expectMsg(ExecutionFSM.WakeUp)
+      executionProbe.expectMsg[ExecutionFSM.Command](ExecutionFSM.WakeUp)
     }
 
     "re-schedule the execution once it finishes" in {
@@ -95,7 +95,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
-      executionProbe.expectMsg(ExecutionFSM.WakeUp)
+      executionProbe.expectMsg[ExecutionFSM.Command](ExecutionFSM.WakeUp)
     }
 
     "stop the execution plan if trigger returns None" in {
@@ -137,7 +137,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
-      executionProbe.expectMsg(ExecutionFSM.WakeUp)
+      executionProbe.expectMsg[ExecutionFSM.Command](ExecutionFSM.WakeUp)
     }
 
     "terminate once the execution finishes" in {
@@ -174,7 +174,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
-      executionProbe.expectMsg(ExecutionFSM.WakeUp)
+      executionProbe.expectMsg[ExecutionFSM.Command](ExecutionFSM.WakeUp)
     }
 
     "not re-schedule the execution after the job is disabled" in {
