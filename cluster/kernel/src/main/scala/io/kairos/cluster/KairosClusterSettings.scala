@@ -1,5 +1,7 @@
 package io.kairos.cluster
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import io.kairos.resolver.IvyConfiguration
 
@@ -14,7 +16,7 @@ object KairosClusterSettings {
     val config = system.settings.config.getConfig("kairos")
     KairosClusterSettings(
       IvyConfiguration(config),
-      config.getDuration("task-queue.max-work-timeout").toMillis millis,
+      config.getDuration("task-queue.max-work-timeout", TimeUnit.MILLISECONDS) millis,
       config.getString("http.bind-interface"),
       config.getInt("http.bind-port")
     )

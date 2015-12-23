@@ -1,7 +1,6 @@
 package io.kairos.console.server
 
 import io.kairos.JobSpec
-import io.kairos.console.protocol.JobSpecDetails
 import io.kairos.id.JobId
 
 import scala.concurrent.Future

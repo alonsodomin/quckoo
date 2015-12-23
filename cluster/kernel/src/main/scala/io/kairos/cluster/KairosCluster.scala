@@ -3,21 +3,18 @@ package io.kairos.cluster
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.pattern._
-import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
-import akka.persistence.query.PersistenceQuery
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import de.heikoseeberger.akkasse.ServerSentEvent
 import io.kairos.JobSpec
-import io.kairos.cluster.core.{KairosClusterEvent, KairosEventEmitter, KairosClusterSupervisor, UserAuthenticator}
+import io.kairos.cluster.core._
 import io.kairos.cluster.protocol.GetClusterStatus
-import io.kairos.console.info.{NodeInfo, ClusterInfo}
+import io.kairos.console.info.{ClusterInfo, NodeInfo}
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.console.server.security.AuthInfo
 import io.kairos.id.JobId
-import io.kairos.protocol.RegistryProtocol.{JobDisabled, JobAccepted}
 import io.kairos.time.TimeSource
 import org.slf4s.Logging
 
@@ -44,6 +41,8 @@ class KairosCluster(settings: KairosClusterSettings)
 
   val userAuth = system.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
+  val journal = KairosJournal(system)
+
   def start(implicit timeout: Timeout): Future[Unit] = {
     import system.dispatcher
 
@@ -51,23 +50,8 @@ class KairosCluster(settings: KairosClusterSettings)
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
   }
 
-  def registeredJobs: Future[Map[JobId, JobSpec]] = {
-    val readJournal = PersistenceQuery(system).readJournalFor[CassandraReadJournal](
-      "akka.persistence.query.cassandra-query-journal"
-    )
-
-    readJournal.currentEventsByPersistenceId("registry", 0, System.currentTimeMillis()).
-      runFold(Map.empty[JobId, JobSpec]) {
-        case (map, envelope) =>
-          envelope.event match {
-            case JobAccepted(jobId, jobSpec) =>
-              map + (jobId -> jobSpec)
-            case JobDisabled(jobId) if map.contains(jobId) =>
-              map - jobId
-            case _ => map
-          }
-      }
-  }
+  def registeredJobs: Future[Map[JobId, JobSpec]] =
+    journal.registeredJobs
 
   def events = Source.actorPublisher[KairosClusterEvent](KairosEventEmitter.props).
     map(evt => {

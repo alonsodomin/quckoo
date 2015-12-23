@@ -4,10 +4,11 @@ import akka.actor._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
-import io.kairos.time.JDK8TimeSource
 import io.kairos.cluster.{KairosCluster, KairosClusterSettings}
+import io.kairos.time.JDK8TimeSource
 import scopt.OptionParser
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
@@ -42,7 +43,7 @@ object Boot extends App {
 
   def start(config: Config): Unit = {
     implicit val system = ActorSystem("KairosClusterSystem", config)
-    sys.addShutdownHook { system.shutdown() }
+    sys.addShutdownHook { system.terminate() }
 
     implicit val materializer = ActorMaterializer()
 
@@ -51,11 +52,13 @@ object Boot extends App {
     val cluster = new KairosCluster(settings)
 
     implicit val timeout = Timeout(5 seconds)
-    cluster.start recover {
+    val startUp = cluster.start recover {
       case ex: Exception =>
         ex.printStackTrace()
-        system.shutdown()
+        system.terminate()
     }
+
+    Await.ready(startUp, 10 seconds)
   }
 
   parser.parse(args, Options()).foreach { opts =>
