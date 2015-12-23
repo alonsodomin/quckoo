@@ -44,22 +44,22 @@ class KairosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts:
   }
 
   private def connecting: Receive = {
-    case msg @ Connected =>
-      context.system.eventStream.publish(msg)
+    case Connected =>
+      context.system.eventStream.publish(Connected)
       context.become(connected)
 
-    case msg @ UnableToConnect =>
-      context.system.eventStream.publish(msg)
+    case UnableToConnect =>
+      context.system.eventStream.publish(UnableToConnect)
       context.unbecome()
   }
 
   private def connected: Receive = {
-    case msg @ Disconnect =>
-      clusterClient ! Send(KairosPath, msg, localAffinity = true)
+    case Disconnect =>
+      clusterClient ! Send(KairosPath, Disconnect, localAffinity = true)
 
-    case msg @ Disconnected =>
+    case Disconnected =>
       log.info("Disconnected from Kaitos cluster.")
-      context.system.eventStream.publish(msg)
+      context.system.eventStream.publish(Disconnected)
       context.become(standby)
 
     case cmd: RegistryCommand =>
@@ -76,6 +76,8 @@ class KairosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts:
 
 private class ConnectHandler(clusterClient: ActorRef, requestor: ActorRef, timeout: FiniteDuration, maxConnectionAttempts: Int)
   extends Actor with ActorLogging {
+
+  import ClientProtocol._
   import KairosClient._
 
   private var connectionAttempts = 0
@@ -92,9 +94,9 @@ private class ConnectHandler(clusterClient: ActorRef, requestor: ActorRef, timeo
         context.stop(self)
       }
 
-    case msg @ Connected =>
+    case Connected =>
       log.info("Connected to Kairos cluster at: {}", sender().path.address)
-      context.parent.tell(msg, requestor)
+      context.parent.tell(Connected, requestor)
       context.stop(self)
   }
 

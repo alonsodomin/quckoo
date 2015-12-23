@@ -6,7 +6,7 @@ import akka.japi.Util._
 import com.typesafe.config.{Config, ConfigFactory}
 import io.kairos.client.KairosClient
 import io.kairos.examples.parameters.PowerOfNActor
-import io.kairos.protocol.Connect
+import io.kairos.protocol.ClientProtocol
 import scopt.OptionParser
 
 /**
@@ -34,7 +34,7 @@ object ExamplesMain extends App {
 
     val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
     val kairosClient = system.actorOf(KairosClient.props(clientSettings), "kairosClient")
-    kairosClient ! Connect
+    kairosClient ! ClientProtocol.Connect
 
     system.actorOf(Props(classOf[PowerOfNActor], kairosClient), "powerOfN")
   }
