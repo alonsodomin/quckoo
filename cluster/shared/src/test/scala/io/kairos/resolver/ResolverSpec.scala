@@ -31,7 +31,8 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with ImplicitSen
 
     moduleResolver ! Validate(TestModuleId)
 
-    expectMsg(jobPackage)
+    val returnedPackage = expectMsgType[JobPackage]
+    returnedPackage should be(jobPackage)
   }
 
   it should "return resolution failed error if the package is not valid" in {
@@ -41,7 +42,8 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with ImplicitSen
 
     moduleResolver ! Validate(TestModuleId)
 
-    expectMsg(expectedResolutionFailed)
+    val returnedError = expectMsgType[ResolutionFailed]
+    returnedError should be(expectedResolutionFailed)
   }
 
   it should "return an error message if an exception happens when validating" in {
@@ -61,7 +63,8 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with ImplicitSen
 
     moduleResolver ! Resolve(TestModuleId)
 
-    expectMsg(jobPackage)
+    val returnedPackage = expectMsgType[JobPackage]
+    returnedPackage should be(jobPackage)
   }
 
   it should "return resolution failed error if it can't resolve dependencies" in {
@@ -71,7 +74,8 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with ImplicitSen
 
     moduleResolver ! Resolve(TestModuleId)
 
-    expectMsg(expectedResolutionFailed)
+    val returnedError = expectMsgType[ResolutionFailed]
+    returnedError should be(expectedResolutionFailed)
   }
 
   it should "return an error message if an exception happens" in {
