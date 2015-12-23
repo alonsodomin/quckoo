@@ -1,13 +1,14 @@
 package io.kairos.cluster
 
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
+import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
 import io.kairos.cluster.core.KairosClusterSupervisor
 import io.kairos.id.ModuleId
 import io.kairos.multijvm.MultiNodeClusterSpec
-import io.kairos.protocol.{Connect, Connected}
-import io.kairos.test.ImplicitClock
+import io.kairos.protocol.ClientProtocol
+import io.kairos.test.ImplicitTimeSource
 
 /**
  * Created by domingueza on 26/08/15.
@@ -34,9 +35,12 @@ object KairosMultiNodeCluster {
 }
 
 abstract class KairosMultiNodeCluster extends MultiNodeSpec(KairosNodesConfig) with ImplicitSender
-  with MultiNodeClusterSpec with ImplicitClock {
+  with MultiNodeClusterSpec with ImplicitTimeSource {
 
   import KairosNodesConfig._
+  import ClientProtocol._
+
+  implicit val materializer = ActorMaterializer()
 
   "A Chronos cluster" must {
     val settings = KairosClusterSettings(system)

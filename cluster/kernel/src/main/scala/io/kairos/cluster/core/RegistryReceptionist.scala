@@ -5,6 +5,7 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.pattern._
 import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.persistence.query.PersistenceQuery
+import akka.stream.ActorMaterializer
 import io.kairos.JobSpec
 import io.kairos.cluster.registry.RegistryView
 import io.kairos.id.JobId
@@ -13,7 +14,15 @@ import io.kairos.protocol.RegistryProtocol.{JobDisabled, JobRejected, JobAccepte
 /**
  * Created by aalonsodominguez on 24/08/15.
  */
-private[cluster] class RegistryReceptionist(registryShardingRef: ActorRef) extends Actor with ActorLogging {
+private[cluster] object RegistryReceptionist {
+
+  def props(registryShardingRef: ActorRef)(implicit materializer: ActorMaterializer) =
+    Props(classOf[RegistryReceptionist], registryShardingRef, materializer)
+
+}
+
+private[cluster] class RegistryReceptionist(registryShardingRef: ActorRef)(implicit materializer: ActorMaterializer)
+  extends Actor with ActorLogging {
 
   ClusterClientReceptionist(context.system).registerService(self)
 

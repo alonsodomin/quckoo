@@ -6,6 +6,7 @@ import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
+import akka.stream.ActorMaterializer
 import io.kairos.cluster.protocol.WorkerProtocol.{WorkerJoined, WorkerRemoved}
 import io.kairos.cluster.protocol._
 import io.kairos.cluster.registry.Registry
@@ -20,14 +21,15 @@ import io.kairos.time.TimeSource
  */
 object KairosClusterSupervisor {
 
-  def props(settings: KairosClusterSettings)(implicit timeSource: TimeSource) =
-    Props(classOf[KairosClusterSupervisor], settings, timeSource)
+  def props(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer, timeSource: TimeSource) =
+    Props(classOf[KairosClusterSupervisor], settings, materializer, timeSource)
 
   case object Shutdown
 
 }
 
-class KairosClusterSupervisor(settings: KairosClusterSettings)(implicit timeSource: TimeSource) extends Actor with ActorLogging {
+class KairosClusterSupervisor(settings: KairosClusterSettings)
+                             (implicit materializer: ActorMaterializer, timeSource: TimeSource) extends Actor with ActorLogging {
 
   import ClientProtocol._
   import KairosClusterSupervisor._
@@ -40,7 +42,7 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)(implicit timeSour
   private val resolver = context.watch(context.actorOf(
     Resolver.props(new IvyResolve(settings.ivyConfiguration)), "resolver"))
   private val registry = startRegistry
-  context.actorOf(Props(classOf[RegistryReceptionist], registry), "registry")
+  context.actorOf(RegistryReceptionist.props(registry), "registry")
 
   private val scheduler = context.watch(context.actorOf(
     Scheduler.props(registry, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))

@@ -4,6 +4,7 @@ import akka.actor.{Props, ActorRef}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
+import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestProbe}
 import io.kairos.JobSpec
 import io.kairos.cluster.core.RegistryReceptionist
@@ -40,6 +41,8 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with
   import RegistryMultiNode._
   import RegistryNodesConfig._
 
+  implicit val materializer = ActorMaterializer()
+
   "A Registry cluster" should {
 
     "distribute jobs specs across shards" in {
@@ -67,7 +70,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with
           extractEntityId = Registry.idExtractor,
           extractShardId  = Registry.shardResolver
         )
-        system.actorOf(Props(classOf[RegistryReceptionist], ref), "registry")
+        system.actorOf(RegistryReceptionist.props(ref), "registry")
         enterBarrier("shard-ready")
 
         enterBarrier("registering-job")

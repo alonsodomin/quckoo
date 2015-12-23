@@ -40,6 +40,8 @@ object Dependencies {
 
     val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.5"
 
+    val ivy = "org.apache.ivy" % "ivy" % "2.4.0"
+
     object Akka {
       val actor          = "com.typesafe.akka" %% "akka-actor"             % version.akka
       val clusterTools   = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka
@@ -99,7 +101,7 @@ object Dependencies {
     val network  = logging ++ testing ++ akka
     val client   = logging ++ testing ++ akka
     val cluster  = logging ++ testing ++ akka ++ Seq(
-      "org.apache.ivy" % "ivy" % "2.4.0"
+      ivy, scalaXml
     )
 
     val kernel = logging ++ testing ++ akka ++ Seq(

@@ -7,7 +7,7 @@ import io.kairos.cluster.Task
 import io.kairos.id.ModuleId
 import io.kairos.cluster.scheduler.TaskQueue
 import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
-import io.kairos.test.{ImplicitClock, TestActorSystem}
+import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
 import org.scalatest.{BeforeAndAfterAll, Ignore, Matchers, WordSpecLike}
 
 import scala.concurrent.duration._
@@ -24,7 +24,7 @@ object ExecutionFSMSpec {
 
 @Ignore
 class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with ImplicitSender with DefaultTimeout
-  with WordSpecLike with BeforeAndAfterAll with Matchers with ImplicitClock {
+  with WordSpecLike with BeforeAndAfterAll with Matchers with ImplicitTimeSource {
 
   import Execution._
   import ExecutionFSM._

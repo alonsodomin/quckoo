@@ -31,7 +31,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
   import Resolver._
 
   val eventListener = TestProbe()
-  var testJobId: JobId = _
+  var testJobId : Option[JobId] = None
 
   before {
     system.eventStream.subscribe(eventListener.ref, classOf[RegistryEvent])
@@ -81,38 +81,46 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
 
       val registryResponse = expectMsgType[JobAccepted]
       registryResponse.job should be (TestJobSpec)
-      testJobId = registryResponse.jobId
+      testJobId = Some(registryResponse.jobId)
     }
 
     "return the registered job spec when asked for it" in {
-      registry ! GetJob(testJobId)
+      testJobId.foreach { id =>
+        registry ! GetJob(id)
 
-      expectMsg(TestJobSpec)
+        expectMsg(TestJobSpec)
+      }
     }
 
     "return a collection of all the registered jobs when asked for it" in {
       registry ! GetJobs
 
-      expectMsg(Seq(TestJobSpec))
+      val returnedSeq = expectMsgType[Seq[JobSpec]]
+      returnedSeq should contain (TestJobSpec)
     }
 
     "disable a job that has been previously registered and populate the event to the event stream" in {
-      registry ! DisableJob(testJobId)
+      testJobId.foreach { id =>
+        registry ! DisableJob(id)
 
-      expectMsgType[JobDisabled].jobId should be (testJobId)
-      eventListener.expectMsgType[JobDisabled].jobId should be (testJobId)
+        expectMsgType[JobDisabled].jobId should be (id)
+        eventListener.expectMsgType[JobDisabled].jobId should be (id)
+      }
     }
 
     "return a job not enabled message when asked for a job after disabling it" in {
-      registry ! GetJob(testJobId)
+      testJobId.foreach { id =>
+        registry ! GetJob(id)
 
-      expectMsgType[JobNotEnabled].jobId should be (testJobId)
+        expectMsgType[JobNotEnabled].jobId should be (id)
+      }
     }
 
     "return an empty collection when there are not enabled jobs" in {
       registry ! GetJobs
 
-      expectMsg(Seq.empty[JobSpec])
+      val returnedSeq = expectMsgType[Seq[JobSpec]]
+      returnedSeq should be (empty)
     }
   }
 

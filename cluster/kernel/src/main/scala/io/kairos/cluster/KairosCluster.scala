@@ -1,7 +1,5 @@
 package io.kairos.cluster
 
-import java.time.Clock
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.pattern._

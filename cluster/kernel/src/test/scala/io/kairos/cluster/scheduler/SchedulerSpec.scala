@@ -5,7 +5,7 @@ import io.kairos.JobSpec
 import io.kairos.id.{JobId, ModuleId}
 import io.kairos.protocol.RegistryProtocol.JobNotEnabled
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
-import io.kairos.test.{ImplicitClock, TestActorSystem}
+import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
@@ -19,7 +19,7 @@ object SchedulerSpec {
 
 }
 
-class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender with ImplicitClock
+class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender with ImplicitTimeSource
   with WordSpecLike with BeforeAndAfterAll with Matchers {
 
   import SchedulerProtocol._

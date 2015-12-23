@@ -1,13 +1,13 @@
 package io.kairos.cluster.scheduler.execution
 
-import java.time.{Clock, ZonedDateTime}
 import java.util.UUID
 
 import akka.actor._
 import akka.testkit._
 import io.kairos.id.{JobId, ModuleId}
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
-import io.kairos.test.ImplicitClock
+import io.kairos.test.ImplicitTimeSource
+import io.kairos.time.TimeSource
 import io.kairos.{JobSpec, Trigger}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
@@ -25,7 +25,7 @@ object ExecutionPlanSpec {
 
 }
 
-class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with ImplicitSender with ImplicitClock
+class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with ImplicitSender with ImplicitTimeSource
   with WordSpecLike with BeforeAndAfterAll with Matchers with Inside with MockFactory {
 
   import ExecutionPlanSpec._
@@ -64,11 +64,11 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     watch(executionPlan)
 
     "create an execution from a job specification" in {
-      val expectedScheduleTime = ZonedDateTime.now(clock)
+      val expectedScheduleTime = currentDateTime
       val expectedExecutionTime = expectedScheduleTime
 
-      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).
-        expects(ScheduledTime(expectedScheduleTime), clock).
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: TimeSource)).
+        expects(ScheduledTime(expectedScheduleTime), timeSource).
         returning(Some(expectedExecutionTime))
 
       executionPlan ! (TestJobId -> TestJobSpec)
@@ -81,12 +81,12 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     }
 
     "re-schedule the execution once it finishes" in {
-      val expectedLastExecutionTime = ZonedDateTime.now(clock)
+      val expectedLastExecutionTime = currentDateTime
       val expectedExecutionTime = expectedLastExecutionTime
 
       (triggerMock.isRecurring _).expects().returning(true)
-      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).
-        expects(LastExecutionTime(expectedLastExecutionTime), clock).
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: TimeSource)).
+        expects(LastExecutionTime(expectedLastExecutionTime), timeSource).
         returning(Some(expectedExecutionTime))
 
       executionProbe.send(executionPlan, ExecutionFSM.Result(Execution.Success("bar")))
@@ -99,11 +99,11 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     }
 
     "stop the execution plan if trigger returns None" in {
-      val expectedLastExecutionTime = ZonedDateTime.now(clock)
+      val expectedLastExecutionTime = currentDateTime
 
       (triggerMock.isRecurring _).expects().returning(true)
-      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).
-        expects(LastExecutionTime(expectedLastExecutionTime), clock).
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: TimeSource)).
+        expects(LastExecutionTime(expectedLastExecutionTime), timeSource).
         returning(None)
 
       executionProbe.send(executionPlan, ExecutionFSM.Result(Execution.Success("bar")))
@@ -124,11 +124,11 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     watch(executionPlan)
 
     "create an execution from a job specification" in {
-      val expectedScheduleTime = ZonedDateTime.now(clock)
+      val expectedScheduleTime = currentDateTime
       val expectedExecutionTime = expectedScheduleTime
 
-      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).
-        expects(ScheduledTime(expectedScheduleTime), clock).
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: TimeSource)).
+        expects(ScheduledTime(expectedScheduleTime), timeSource).
         returning(Some(expectedExecutionTime))
 
       executionPlan ! (TestJobId -> TestJobSpec)
@@ -161,11 +161,11 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     watch(executionPlan)
 
     "create an execution from a job specification" in {
-      val expectedScheduleTime = ZonedDateTime.now(clock)
+      val expectedScheduleTime = currentDateTime
       val expectedExecutionTime = expectedScheduleTime
 
-      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: Clock)).
-        expects(ScheduledTime(expectedScheduleTime), clock).
+      (triggerMock.nextExecutionTime(_: ReferenceTime)(_: TimeSource)).
+        expects(ScheduledTime(expectedScheduleTime), timeSource).
         returning(Some(expectedExecutionTime))
 
       executionPlan ! (TestJobId -> TestJobSpec)
