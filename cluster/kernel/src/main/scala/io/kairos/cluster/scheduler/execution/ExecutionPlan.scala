@@ -8,6 +8,7 @@ import io.kairos.Trigger._
 import io.kairos.cluster.TaskFailureCause
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
+import io.kairos.time.{TimeSource, DateTime}
 import io.kairos.{JobSpec, Trigger}
 
 import scala.concurrent.duration._
@@ -17,20 +18,20 @@ import scala.concurrent.duration._
  */
 object ExecutionPlan {
 
-  def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionFSMProps)(implicit clock: Clock) =
-    Props(classOf[ExecutionPlan], planId, trigger, executionProps, clock)
+  def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionFSMProps)(implicit timeSource: TimeSource) =
+    Props(classOf[ExecutionPlan], planId, trigger, executionProps, timeSource)
 
 }
 
-class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: ExecutionFSMProps)(implicit clock: Clock)
+class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: ExecutionFSMProps)(implicit timeSource: TimeSource)
   extends Actor with ActorLogging {
 
   import RegistryProtocol._
   import SchedulerProtocol._
 
   private var triggerTask: Option[Cancellable] = None
-  private val scheduledTime = ZonedDateTime.now(clock)
-  private var lastExecutionTime: Option[ZonedDateTime] = None
+  private val scheduledTime = timeSource.currentDateTime
+  private var lastExecutionTime: Option[DateTime] = None
 
   private var originalRequestor: Option[ActorRef] = None
 
@@ -76,7 +77,7 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
         }
       } else shutdown
 
-      lastExecutionTime = Some(ZonedDateTime.now(clock))
+      lastExecutionTime = Some(timeSource.currentDateTime)
       context.become(nextStage)
   }
 
@@ -104,18 +105,18 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
   }
 
   private def schedule(jobId: JobId, jobSpec: JobSpec): Receive = {
-    def nextExecutionTime: Option[ZonedDateTime] = trigger.nextExecutionTime(lastExecutionTime match {
+    def nextExecutionTime: Option[DateTime] = trigger.nextExecutionTime(lastExecutionTime match {
       case Some(time) => LastExecutionTime(time)
       case None       => ScheduledTime(scheduledTime)
     })
 
     def triggerDelay: Option[FiniteDuration] = {
-      val now = ZonedDateTime.now(clock)
+      val now = timeSource.currentDateTime
       nextExecutionTime match {
         case Some(time) if time.isBefore(now) || time.isEqual(now) =>
           Some(0 millis)
         case Some(time) =>
-          val delay = JDuration.between(now, time)
+          val delay = now.diff(time)
           Some(delay.toMillis millis)
         case None => None
       }

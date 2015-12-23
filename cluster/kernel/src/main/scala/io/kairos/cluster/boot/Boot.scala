@@ -1,11 +1,10 @@
 package io.kairos.cluster.boot
 
-import java.time.Clock
-
 import akka.actor._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
+import io.kairos.time.JDK8TimeSource.Implicits.system
 import io.kairos.cluster.{KairosCluster, KairosClusterSettings}
 import scopt.OptionParser
 
@@ -43,10 +42,9 @@ object Boot extends App {
 
   def start(config: Config): Unit = {
     implicit val system = ActorSystem("KairosClusterSystem", config)
-    sys.addShutdownHook { system.terminate() }
+    sys.addShutdownHook { system.shutdown() }
 
     implicit val materializer = ActorMaterializer()
-    implicit val clock = Clock.systemUTC()
 
     val settings = KairosClusterSettings(system)
     val cluster = new KairosCluster(settings)
@@ -55,7 +53,7 @@ object Boot extends App {
     cluster.start recover {
       case ex: Exception =>
         ex.printStackTrace()
-        system.terminate()
+        system.shutdown()
     }
   }
 

@@ -1,7 +1,5 @@
 package io.kairos.cluster.core
 
-import java.time.Clock
-
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
@@ -10,26 +8,28 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import io.kairos.cluster.protocol.WorkerProtocol.{WorkerJoined, WorkerRemoved}
 import io.kairos.cluster.protocol._
-import io.kairos.cluster.registry.{RegistryView, Registry}
+import io.kairos.cluster.registry.Registry
 import io.kairos.cluster.scheduler.{Scheduler, TaskQueue}
 import io.kairos.cluster.{KairosClusterSettings, KairosStatus}
 import io.kairos.protocol._
 import io.kairos.resolver.{IvyResolve, Resolver}
+import io.kairos.time.TimeSource
 
 /**
  * Created by domingueza on 24/08/15.
  */
 object KairosClusterSupervisor {
 
-  def props(settings: KairosClusterSettings)(implicit clock: Clock) =
-    Props(classOf[KairosClusterSupervisor], settings, clock)
+  def props(settings: KairosClusterSettings)(implicit timeSource: TimeSource) =
+    Props(classOf[KairosClusterSupervisor], settings, timeSource)
 
   case object Shutdown
 
 }
 
-class KairosClusterSupervisor(settings: KairosClusterSettings)(implicit clock: Clock) extends Actor with ActorLogging {
+class KairosClusterSupervisor(settings: KairosClusterSettings)(implicit timeSource: TimeSource) extends Actor with ActorLogging {
 
+  import ClientProtocol._
   import KairosClusterSupervisor._
 
   ClusterClientReceptionist(context.system).registerService(self)

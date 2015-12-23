@@ -1,6 +1,5 @@
 package io.kairos.cluster.scheduler
 
-import java.time.Clock
 import java.util.UUID
 
 import akka.actor._
@@ -8,21 +7,22 @@ import akka.cluster.client.ClusterClientReceptionist
 import io.kairos.JobSpec
 import io.kairos.cluster._
 import io.kairos.cluster.protocol.WorkerProtocol
+import io.kairos.cluster.scheduler.execution.{ExecutionFSM, ExecutionPlan}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
-import io.kairos.cluster.scheduler.execution.{ExecutionFSM, ExecutionPlan}
+import io.kairos.time.TimeSource
 
 /**
  * Created by aalonsodominguez on 16/08/15.
  */
 object Scheduler {
 
-  def props(registry: ActorRef, queueProps: Props)(implicit clock: Clock) =
-    Props(classOf[Scheduler], registry, queueProps, clock)
+  def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource) =
+    Props(classOf[Scheduler], registry, queueProps, timeSource)
 
 }
 
-class Scheduler(registry: ActorRef, queueProps: Props)(implicit clock: Clock)
+class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource)
   extends Actor with ActorLogging {
 
   import RegistryProtocol._
@@ -31,7 +31,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit clock: Clock)
 
   ClusterClientReceptionist(context.system).registerService(self)
 
-  private val taskQueue = context.actorOf(queueProps, "taskQueue")
+  private[this] val taskQueue = context.actorOf(queueProps, "taskQueue")
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>
@@ -49,7 +49,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit clock: Clock)
       taskQueue.tell(msg, sender())
   }
 
-  private def handlerProps(jobId: JobId, requestor: ActorRef)(executionPlan: () => ActorRef): Props =
+  private[this] def handlerProps(jobId: JobId, requestor: ActorRef)(executionPlan: () => ActorRef): Props =
     Props(classOf[ScheduleHandler], jobId, requestor, executionPlan)
 
 }

@@ -1,6 +1,6 @@
 package io.kairos.time
 
-import java.time.{ZoneId, Instant, ZonedDateTime, Clock}
+import java.time.{ZoneId, Instant, ZonedDateTime, Clock, Duration => JDuration}
 
 /**
   * Created by alonsodomin on 22/12/2015.
@@ -14,7 +14,7 @@ object JDK8TimeSource {
 
   object Implicits {
 
-    implicit val system = JDK8TimeSource.system
+    implicit val system: TimeSource = JDK8TimeSource.system
 
   }
 

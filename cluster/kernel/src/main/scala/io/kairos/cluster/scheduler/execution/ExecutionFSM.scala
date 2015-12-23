@@ -1,15 +1,14 @@
 package io.kairos.cluster.scheduler.execution
 
-import java.time.Clock
 import java.util.UUID
 
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.Normal
 import io.kairos.cluster.Task
-import io.kairos.id.PlanId
 import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
 import io.kairos.cluster.scheduler._
+import io.kairos.id.PlanId
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -56,14 +55,14 @@ object ExecutionFSM {
 
   def props(planId: PlanId, task: Task, taskQueue: ActorRef,
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
-            executionTimeout: Option[FiniteDuration] = None)(implicit clock: Clock) =
-    Props(classOf[ExecutionFSM], planId, task, taskQueue, enqueueTimeout, executionTimeout, clock)
+            executionTimeout: Option[FiniteDuration] = None) =
+    Props(classOf[ExecutionFSM], planId, task, taskQueue, enqueueTimeout, executionTimeout)
 
 }
 
 class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
                    enqueueTimeout: FiniteDuration,
-                   executionTimeout: Option[FiniteDuration])(implicit clock: Clock)
+                   executionTimeout: Option[FiniteDuration])
   extends PersistentFSM[ExecutionFSM.Phase, Execution, ExecutionFSM.DomainEvent] with ActorLogging {
 
   import Execution._

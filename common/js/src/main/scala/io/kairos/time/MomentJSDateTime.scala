@@ -1,11 +1,16 @@
 package io.kairos.time
 
-import org.widok.moment.{Units, Date}
+import org.widok.moment.{Moment, Units, Date}
 
 /**
   * Created by alonsodomin on 22/12/2015.
   */
 class MomentJSDateTime private[time] (private val date: Date) extends DateTime {
+
+  def diff(that: DateTime): Duration = {
+    val millis = that.toEpochMillis - this.toEpochMillis
+    new MomentJSDuration(Moment.duration(millis.toInt))
+  }
 
   def plusMillis(millis: Long): DateTime =
     new MomentJSDateTime(date.add(millis.toInt))
@@ -19,5 +24,8 @@ class MomentJSDateTime private[time] (private val date: Date) extends DateTime {
   }
 
   override def hashCode(): Int = date.hashCode()
+
+  def toEpochMillis: Long =
+    date.milliseconds()
 
 }

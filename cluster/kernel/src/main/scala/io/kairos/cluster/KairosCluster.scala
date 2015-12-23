@@ -20,6 +20,7 @@ import io.kairos.console.server.http.HttpRouter
 import io.kairos.console.server.security.AuthInfo
 import io.kairos.id.JobId
 import io.kairos.protocol.RegistryProtocol.{JobDisabled, JobAccepted}
+import io.kairos.time.TimeSource
 import org.slf4s.Logging
 
 import scala.concurrent.Future
@@ -34,7 +35,8 @@ object KairosCluster {
 
 }
 
-class KairosCluster(settings: KairosClusterSettings)(implicit system: ActorSystem, materializer: ActorMaterializer, clock: Clock)
+class KairosCluster(settings: KairosClusterSettings)
+                   (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
   extends HttpRouter with ServerFacade with Logging {
 
   import KairosCluster._

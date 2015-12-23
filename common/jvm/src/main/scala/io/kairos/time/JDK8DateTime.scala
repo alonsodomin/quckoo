@@ -1,12 +1,15 @@
 package io.kairos.time
 
-import java.time.ZonedDateTime
+import java.time.{ZonedDateTime, Duration => JDuration}
 import java.time.temporal.ChronoUnit
 
 /**
   * Created by alonsodomin on 22/12/2015.
   */
-class JDK8DateTime private[time] (private val zonedDateTime: ZonedDateTime) extends DateTime {
+class JDK8DateTime private[time] (private[JDK8DateTime] val zonedDateTime: ZonedDateTime) extends DateTime {
+
+  def diff(that: DateTime): Duration =
+    new JDK8Duration(JDuration.ofMillis(that.toEpochMillis - this.toEpochMillis))
 
   def plusMillis(millis: Long): DateTime =
     new JDK8DateTime(zonedDateTime.plus(millis, ChronoUnit.MILLIS))
@@ -20,5 +23,8 @@ class JDK8DateTime private[time] (private val zonedDateTime: ZonedDateTime) exte
   }
 
   override def hashCode(): Int = zonedDateTime.hashCode()
+
+  def toEpochMillis: Long =
+    zonedDateTime.toInstant.toEpochMilli
 
 }
