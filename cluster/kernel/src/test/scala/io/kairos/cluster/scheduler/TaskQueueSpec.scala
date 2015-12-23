@@ -66,8 +66,10 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
     "dispatch task to worker on successful request and notify execution" in {
       taskQueue.tell(RequestTask(workerId), workerProbe.ref)
 
-      workerProbe.expectMsg(task)
-      executionProbe.expectMsg(ExecutionFSM.Start)
+      val returnedTask = workerProbe.expectMsgType[Task]
+      returnedTask should be(task)
+
+      executionProbe.expectMsg[ExecutionFSM.Command](ExecutionFSM.Start)
     }
 
     "ignore a task request from a busy worker" in {
@@ -139,10 +141,10 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
 
       taskQueue.tell(RequestTask(timingOutWorkerId), timingOutWorker.ref)
       timingOutWorker.expectMsg(task)
-      timingOutExec.expectMsg(ExecutionFSM.Start)
+      timingOutExec.expectMsg[ExecutionFSM.Command](ExecutionFSM.Start)
 
       taskQueue.tell(TimeOut(task.id), timingOutExec.ref)
-      timingOutExec.expectMsg(ExecutionFSM.TimeOut)
+      timingOutExec.expectMsg[ExecutionFSM.Command](ExecutionFSM.TimeOut)
     }
 
   }
@@ -169,7 +171,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
 
       val waitForTimeout = Future { blocking { TimeUnit.MILLISECONDS.sleep(100) } }
       whenReady(waitForTimeout) { _ =>
-        timingOutExec.expectMsg(ExecutionFSM.TimeOut)
+        timingOutExec.expectMsg[ExecutionFSM.Command](ExecutionFSM.TimeOut)
       }
     }
   }
