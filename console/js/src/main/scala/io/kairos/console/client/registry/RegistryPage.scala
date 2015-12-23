@@ -1,11 +1,12 @@
 package io.kairos.console.client.registry
 
+import io.kairos.JobSpec
 import io.kairos.console.client.core.ClientApi
-import io.kairos.console.protocol.JobSpecDetails
+import io.kairos.id.JobId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
@@ -19,7 +20,7 @@ object RegistryPage {
     val content = style()
   }
 
-  case class State(specs: Seq[JobSpecDetails] = Seq())
+  case class State(specs: Map[JobId, JobSpec] = Map.empty)
 
   private[this] val component = ReactComponentB[Unit]("RegistryPage").
     initialState(State()).
@@ -31,8 +32,8 @@ object RegistryPage {
       )
     }).
     componentDidMount($ => Callback.future {
-      ClientApi.getJobs() map { case jobDetails: Seq[JobSpecDetails] =>
-        $.modState(_.copy(specs = jobDetails))
+      ClientApi.getJobs() map { case specMap: Map[JobId, JobSpec] =>
+        $.modState(_.copy(specs = specMap))
       }
     }).buildU
 

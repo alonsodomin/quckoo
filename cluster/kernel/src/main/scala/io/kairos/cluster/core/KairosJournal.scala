@@ -21,7 +21,7 @@ trait KairosJournal {
 
 object KairosJournal {
 
-  final val CassandraReadJournalId = "akka.persistence.query.cassandra-query-journal"
+  final val CassandraReadJournalId = "cassandra-query-journal"
 
   def apply(system: ActorSystem): KairosJournal = new KairosJournal {
     val readJournal = PersistenceQuery(system).readJournalFor[CassandraReadJournal](CassandraReadJournalId)

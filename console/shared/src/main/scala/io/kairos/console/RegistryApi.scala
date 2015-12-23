@@ -1,6 +1,7 @@
 package io.kairos.console
 
-import io.kairos.console.protocol.JobSpecDetails
+import io.kairos.JobSpec
+import io.kairos.id.JobId
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -9,6 +10,6 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait RegistryApi {
 
-  def getJobs()(implicit ec: ExecutionContext): Future[Seq[JobSpecDetails]]
+  def getJobs()(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]]
 
 }

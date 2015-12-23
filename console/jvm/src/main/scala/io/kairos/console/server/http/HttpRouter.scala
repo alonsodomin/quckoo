@@ -8,7 +8,6 @@ import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, Val
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
-import io.kairos.console.protocol._
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.boot.ClientBootstrap
 
@@ -16,10 +15,6 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
   this: ServerFacade =>
 
   import StatusCodes._
-
-  private[this] val jobs: Seq[JobSpecDetails] = {
-    for (i <- 1 to 25) yield JobSpecDetails(i.toString, s"jobName_$i")
-  }
 
   private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     path("login") {
@@ -45,7 +40,7 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
       } ~ pathPrefix("registry") {
         path("jobs") {
           get {
-            complete(jobs)
+            complete(registeredJobs)
           }
         }
       }
@@ -70,7 +65,7 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
   private[this] def rejectionHandler(log: LoggingAdapter) = RejectionHandler.newBuilder().
     handle { case ValidationRejection(msg, cause) =>
         log.error(s"$msg - reason: $cause")
-        complete(Unauthorized, msg)
+        complete(HttpResponse(Unauthorized, entity = msg))
     } result()
 
   def router(implicit system: ActorSystem, materializer: ActorMaterializer): Route =

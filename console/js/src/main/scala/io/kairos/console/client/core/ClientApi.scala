@@ -1,9 +1,11 @@
 package io.kairos.console.client.core
 
+import io.kairos.JobSpec
 import io.kairos.console.client.security.ClientAuth
 import io.kairos.console.info.ClusterInfo
-import io.kairos.console.protocol.{JobSpecDetails, LoginRequest}
+import io.kairos.console.protocol.LoginRequest
 import io.kairos.console.{Api, RegistryApi}
+import io.kairos.id.JobId
 import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,11 +45,11 @@ object ClientApi extends Api with RegistryApi with ClientAuth {
     }
   }
 
-  override def getJobs()(implicit ec: ExecutionContext): Future[Seq[JobSpecDetails]] = {
+  override def getJobs()(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
     import upickle.default._
 
     Ajax.get(JobsURI, headers = authHeaders).map { xhr =>
-      read[Seq[JobSpecDetails]](xhr.responseText)
+      read[Map[JobId, JobSpec]](xhr.responseText)
     }
   }
 

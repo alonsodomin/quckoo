@@ -1,6 +1,7 @@
 package io.kairos.console.client.registry
 
-import io.kairos.console.protocol.JobSpecDetails
+import io.kairos.JobSpec
+import io.kairos.id.JobId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -9,7 +10,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
  */
 object JobSpecList {
 
-  case class Props(specs: Seq[JobSpecDetails])
+  case class Props(specs: Map[JobId, JobSpec])
 
   private[this] val component = ReactComponentB[Props]("JobSpecList").
     stateless.
@@ -20,15 +21,16 @@ object JobSpecList {
           <.tr(<.th("Id"), <.th("Name"))
         ),
         <.tbody(
-          p.specs.map(spec => {
+          p.specs.map { case (jobId, spec) =>
             <.tr(
-              <.td(spec.id), <.td(spec.name)
+              //<.td(jobId),
+              <.td(spec.displayName)
             )
-          })
+          }
         )
       )
     ).build
 
-  def apply(specs: Seq[JobSpecDetails]) = component(Props(specs))
+  def apply(specs: Map[JobId, JobSpec]) = component(Props(specs))
 
 }
