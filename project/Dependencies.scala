@@ -1,5 +1,4 @@
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import sbt.Keys._
 import sbt._
 
 object Dependencies {
@@ -32,6 +31,7 @@ object Dependencies {
     // Other utils ---
 
     val scopt = "3.3.0"
+    val monocle = "1.1.1"
   }
 
   // Common library definitions

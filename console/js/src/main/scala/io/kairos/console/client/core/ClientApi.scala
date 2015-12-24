@@ -48,6 +48,8 @@ object ClientApi extends Api with RegistryApi with ClientAuth {
   override def getJobs()(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
     import upickle.default._
 
+    println("Fetching registered jobs from the backend...")
+
     Ajax.get(JobsURI, headers = authHeaders).map { xhr =>
       read[Map[JobId, JobSpec]](xhr.responseText)
     }

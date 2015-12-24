@@ -28,6 +28,7 @@ object RegistryPage {
     render_S(s => {
       <.div(Style.content,
         <.h2("Registry"),
+        JobForm(),
         JobSpecList(s.specs)
       )
     }).

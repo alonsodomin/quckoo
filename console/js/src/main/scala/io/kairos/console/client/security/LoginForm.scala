@@ -24,7 +24,7 @@ object LoginForm {
       event.preventDefaultCB >> $.state.flatMap(loginInfo => $.props.flatMap(handler => handler(loginInfo)))
 
     def render(info: LoginInfo) =
-      <.form(^.onSubmit ==> handleSubmit,
+      <.form(^.name := "loginForm", ^.onSubmit ==> handleSubmit,
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "username", "Username"),
           <.input.text(^.id := "username", ^.`class` := "form-control", ^.placeholder := "Username",

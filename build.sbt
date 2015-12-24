@@ -1,5 +1,5 @@
+import sbt.Keys._
 import sbt._
-import Keys._
 
 lazy val commonSettings = Seq(
   organization := "io.kairos",
@@ -56,7 +56,8 @@ lazy val common = (crossProject in file("common")).
   ).
   settings(commonSettings: _*).
   settings(
-    libraryDependencies += "org.scalatest" %%% "scalatest" % Dependencies.version.scalaTest % Test
+    libraryDependencies += "org.scalatest" %%% "scalatest" % Dependencies.version.scalaTest % Test,
+    addCompilerPlugin(compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full))
   ).
   jsSettings(
     libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % "0.1.4"
@@ -137,10 +138,14 @@ lazy val console = (crossProject in file("console")).
         "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % scalaJsReact,
+        "com.github.japgolly.scalajs-react" %%% "ext-monocle" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "test" % scalaJsReact % "test",
         "com.github.japgolly.scalacss" %%% "core" % scalaCss,
-        "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss
-      )},
+        "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss,
+
+        "com.github.japgolly.fork.monocle" %%% "monocle-macro" % monocle
+      )
+    },
     jsDependencies ++= {
       import Dependencies.version._
 
@@ -148,7 +153,8 @@ lazy val console = (crossProject in file("console")).
         "org.webjars.bower" % "react" % reactJs / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
         "org.webjars.bower" % "react" % reactJs / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM",
         "org.webjars.bower" % "react" % reactJs % "test" / "react-with-addons.js" commonJSName "React"
-    )},
+      )
+    },
     requiresDOM := true,
     coverageEnabled := false,
     scalaJSStage in Test := FastOptStage,

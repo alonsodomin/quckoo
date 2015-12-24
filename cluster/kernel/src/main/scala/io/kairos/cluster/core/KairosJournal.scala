@@ -7,6 +7,7 @@ import akka.stream.ActorMaterializer
 import io.kairos.JobSpec
 import io.kairos.id.JobId
 import io.kairos.protocol.RegistryProtocol.{JobAccepted, JobDisabled}
+import org.slf4s.Logging
 
 import scala.concurrent.Future
 
@@ -23,10 +24,11 @@ object KairosJournal {
 
   final val CassandraReadJournalId = "cassandra-query-journal"
 
-  def apply(system: ActorSystem): KairosJournal = new KairosJournal {
+  def apply(system: ActorSystem): KairosJournal = new KairosJournal with Logging {
     val readJournal = PersistenceQuery(system).readJournalFor[CassandraReadJournal](CassandraReadJournalId)
 
     def registeredJobs(implicit materializer: ActorMaterializer): Future[Map[JobId, JobSpec]] = {
+      log.info("Querying jobs from the journal...")
       readJournal.currentEventsByPersistenceId("registry", 0, System.currentTimeMillis()).
         runFold(Map.empty[JobId, JobSpec]) {
           case (map, envelope) =>
