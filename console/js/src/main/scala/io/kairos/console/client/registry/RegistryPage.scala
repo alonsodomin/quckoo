@@ -29,6 +29,7 @@ object RegistryPage {
   class RegistryBackend($: BackendScope[Unit, State]) {
 
     def handleJobSubmit(jobSpec: JobSpec): Callback = {
+      import Notification.Implicits._
 
       def jobRejectedMsg(state: State, cause: ResolutionFailed): State = {
         def resolutionFailed: Notification =
@@ -41,7 +42,7 @@ object RegistryPage {
         state.copy(notifications = state.notifications :+ Notification.error(t))
 
       def successMsg(state: State, jobId: JobId): State =
-        state.copy(notifications = state.notifications :+ Notification.info("Job registered: " + jobId))
+        state.copy(notifications = state.notifications :+ Notification.success("Job registered: " + jobId))
 
       def performSubmit(): Future[Callback] = {
         ClientApi.registerJob(jobSpec).map {

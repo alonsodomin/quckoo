@@ -45,15 +45,16 @@ object LoginPage {
     import LoginForm.LoginInfo
 
     def loginHandler(loginInfo: LoginInfo): Callback = {
+      import Notification.Implicits._
 
-      def authFailedNotification(notifs: Seq[Notification]): Seq[Notification] =
-        notifs :+ Notification(Notification.Level.Error, "Username or password incorrect")
+      def authFailedNotification(holder: NotificationHolder): NotificationHolder =
+        holder.copy(notifications = holder.notifications :+ Notification.error("Username or password incorrect"))
 
       def performLogin(): Future[Callback] =
         ClientApi.login(loginInfo.username, loginInfo.password).map { _ =>
           $.props.flatMap(_.set(Home))
         } recover { case _ =>
-          $.modState(holder => holder.copy(notifications = authFailedNotification(holder.notifications))).
+          $.modState(holder => authFailedNotification(holder)).
             flatMap(_ => $.props.flatMap(_.set(Login)))
         }
 

@@ -29,9 +29,9 @@ object NotificationDisplay {
     noBackend.
     render_P(msgs =>
       <.div(msgs.map { msg =>
-        <.p(^.`class` := bgClassForLevel(msg.level), ^.padding := 5.px,
+        <.div(^.`class` := bgClassForLevel(msg.level), ^.padding := 5.px,
           <.i(^.`class` := s"fa ${iconClassForLevel(msg.level)}"),
-          <.span(msg.content)
+          msg.content.runNow()
         )
       })
     ).build
