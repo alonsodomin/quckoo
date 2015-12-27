@@ -6,6 +6,7 @@ import io.kairos.console.info.ClusterInfo
 import io.kairos.console.protocol.LoginRequest
 import io.kairos.console.{Api, RegistryApi}
 import io.kairos.id.JobId
+import io.kairos.protocol.ResolutionFailed
 import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -42,6 +43,14 @@ object ClientApi extends Api with RegistryApi with ClientAuth {
 
     Ajax.get(ClusterDetailsURI, headers = authHeaders) map { xhr =>
       read[ClusterInfo](xhr.responseText)
+    }
+  }
+
+  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Either[ResolutionFailed, JobId]] = {
+    import upickle.default._
+
+    Ajax.post(JobsURI, write(jobSpec), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
+      read[Either[ResolutionFailed, JobId]](xhr.responseText)
     }
   }
 

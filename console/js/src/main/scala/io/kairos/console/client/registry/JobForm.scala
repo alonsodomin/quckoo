@@ -1,5 +1,6 @@
 package io.kairos.console.client.registry
 
+import io.kairos.JobSpec
 import io.kairos.id.ModuleId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.ExternalVar
@@ -9,6 +10,8 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   * Created by alonsodomin on 23/12/2015.
   */
 object JobForm {
+
+  type RegisterHandler = JobSpec => Callback
 
   case class JobDetails(name: String = "", description: String = "",
                         moduleId: ModuleId = ModuleId("", "", ""),
@@ -49,7 +52,7 @@ object JobForm {
 
   }
 
-  class JobFormBackend($: BackendScope[Unit, JobDetails]) {
+  class JobFormBackend($: BackendScope[RegisterHandler, JobDetails]) {
 
     def updateName(event: ReactEventI): Callback =
       $.modState(_.copy(name = event.target.value))
@@ -60,7 +63,11 @@ object JobForm {
     def updateClassName(event: ReactEventI): Callback =
       $.modState(_.copy(jobClass = event.target.value))
 
-    def submitJob(event: ReactEventI): Callback = Callback.empty
+    def submitJob(event: ReactEventI): Callback = {
+      preventDefault(event) >>
+        $.state.map(details => JobSpec(details.name, details.description, details.moduleId, details.jobClass)).
+          flatMap(spec => $.props.flatMap(handler => handler(spec)))
+    }
 
     def render(details: JobDetails) = {
       <.form(^.name := "jobDetails", ^.onSubmit ==> submitJob,
@@ -90,11 +97,11 @@ object JobForm {
 
   }
 
-  private[this] val component = ReactComponentB[Unit]("JobForm").
+  private[this] val component = ReactComponentB[RegisterHandler]("JobForm").
     initialState(JobDetails()).
     renderBackend[JobFormBackend].
-    buildU
+    build
 
-  def apply() = component()
+  def apply(handler: RegisterHandler) = component(handler)
 
 }

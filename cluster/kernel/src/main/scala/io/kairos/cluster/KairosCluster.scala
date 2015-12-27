@@ -15,6 +15,7 @@ import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.console.server.security.AuthInfo
 import io.kairos.id.JobId
+import io.kairos.protocol.ResolutionFailed
 import io.kairos.time.TimeSource
 import org.slf4s.Logging
 
@@ -36,8 +37,10 @@ class KairosCluster(settings: KairosClusterSettings)
 
   import KairosCluster._
   import UserAuthenticator._
+  import io.kairos.protocol.RegistryProtocol._
 
   val clusterSupervisor = system.actorOf(KairosClusterSupervisor.props(settings), "kairosSupervisor")
+  val registry = system.actorSelection(clusterSupervisor.path / "registry")
 
   val userAuth = system.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
@@ -48,6 +51,19 @@ class KairosCluster(settings: KairosClusterSettings)
 
     Http().bindAndHandle(router, settings.httpInterface, settings.httpPort).
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
+  }
+
+  def registerJob(jobSpec: JobSpec): Future[Either[ResolutionFailed, JobId]] = {
+    import system.dispatcher
+
+    implicit val timeout = Timeout(10 seconds)
+    (registry ? RegisterJob(jobSpec)) flatMap {
+      case JobAccepted(jobId, _) => Future.successful(Right(jobId))
+      case JobRejected(_, cause) => cause match {
+        case Left(resolutionFailed) => Future.successful(Left(resolutionFailed))
+        case Right(throwable)       => Future.failed(throwable)
+      }
+    }
   }
 
   def registeredJobs: Future[Map[JobId, JobSpec]] =

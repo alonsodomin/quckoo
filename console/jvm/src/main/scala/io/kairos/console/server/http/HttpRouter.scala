@@ -8,6 +8,7 @@ import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, Val
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
+import io.kairos.JobSpec
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.boot.ClientBootstrap
 
@@ -41,6 +42,10 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
         path("jobs") {
           get {
             complete(registeredJobs)
+          } ~ post {
+            entity(as[JobSpec]) { jobSpec =>
+              complete(registerJob(jobSpec))
+            }
           }
         }
       }

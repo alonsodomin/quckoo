@@ -56,8 +56,7 @@ lazy val common = (crossProject in file("common")).
   ).
   settings(commonSettings: _*).
   settings(
-    libraryDependencies += "org.scalatest" %%% "scalatest" % Dependencies.version.scalaTest % Test,
-    addCompilerPlugin(compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full))
+    libraryDependencies += "org.scalatest" %%% "scalatest" % Dependencies.version.scalaTest % Test
   ).
   jsSettings(
     libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % "0.1.4"
