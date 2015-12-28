@@ -2,19 +2,19 @@ package io.kairos.console.client.layout
 
 import io.kairos.console.client.layout.Notification.Level.Level
 import japgolly.scalajs.react
-import japgolly.scalajs.react.CallbackTo
+import japgolly.scalajs.react.{Callback, CallbackTo}
 
 /**
  * Created by alonsodomin on 15/10/2015.
  */
 object Notification {
 
-  type Content = CallbackTo[react.ReactElement]
-
   object Level extends Enumeration {
     type Level = Value
     val Error, Warning, Info, Success = Value
   }
+
+  type Content = CallbackTo[react.ReactElement]
 
   object Implicits {
     import react.vdom.prefix_<^
@@ -26,8 +26,15 @@ object Notification {
       <.span(content)
     }
 
-    implicit def throwableElement(throwable: Throwable): Content =
-      stringElement(throwable.getMessage)
+    implicit def throwableElement(throwable: Throwable): Content = {
+      def logException(): Callback = {
+        val stackTrace = throwable.getStackTrace.map(_.toString).mkString("\n")
+        val msg = s"${throwable.getClass.getName}: ${throwable.getMessage}\n$stackTrace"
+        Callback.log(msg)
+      }
+
+      logException() >> stringElement(s"${throwable.getClass.getName}: ${throwable.getMessage}")
+    }
 
   }
 

@@ -13,6 +13,6 @@ trait RegistryApi {
 
   def registerJob(jobSpec: JobSpec)(implicit ex: ExecutionContext): Future[Either[ResolutionFailed, JobId]]
 
-  def getJobs()(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]]
+  def enabledJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]]
 
 }

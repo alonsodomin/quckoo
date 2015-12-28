@@ -1,7 +1,6 @@
 package io.kairos.cluster.registry
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.cluster.Cluster
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, SnapshotOffer}
 import io.kairos.JobSpec
@@ -111,7 +110,7 @@ class Registry(resolver: ActorRef) extends PersistentActor with ActorLogging {
       log.error(
         "Couldn't resolve the job module. jobModuleId={}, unresolved={}",
         jobSpec.moduleId,
-        failed.unresolvedDependencies.mkString(",")
+        failed.unresolved.mkString(",")
       )
       sender() ! JobRejected(jobSpec.moduleId, Left(failed))
 

@@ -7,7 +7,7 @@ import io.kairos.console.protocol.LoginRequest
 import io.kairos.console.{Api, RegistryApi}
 import io.kairos.id.JobId
 import io.kairos.protocol.ResolutionFailed
-import org.scalajs.dom.ext.Ajax
+import org.scalajs.dom
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -15,6 +15,8 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created by alonsodomin on 13/10/2015.
  */
 object ClientApi extends Api with RegistryApi with ClientAuth {
+  import dom.console
+  import dom.ext.Ajax
 
   private[this] val BaseURI = "/api"
   private[this] val LoginURI = BaseURI + "/login"
@@ -50,11 +52,12 @@ object ClientApi extends Api with RegistryApi with ClientAuth {
     import upickle.default._
 
     Ajax.post(JobsURI, write(jobSpec), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
+      console.log(xhr.responseText)
       read[Either[ResolutionFailed, JobId]](xhr.responseText)
     }
   }
 
-  override def getJobs()(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
+  override def enabledJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
     import upickle.default._
 
     println("Fetching registered jobs from the backend...")

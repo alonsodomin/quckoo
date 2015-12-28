@@ -32,8 +32,12 @@ object RegistryPage {
       import Notification.Implicits._
 
       def jobRejectedMsg(state: State, cause: ResolutionFailed): State = {
-        def resolutionFailed: Notification =
-          Notification.error("Resolution failed: " + cause.unresolvedDependencies.mkString(","))
+        def resolutionFailed: Notification = Notification.error(CallbackTo {
+          <.div(
+            <.p("Dependency resolution failed. Unresolved dependencies: "),
+            <.ul(cause.unresolved.map { <.li(_) })
+          )
+        })
 
         state.copy(notifications = state.notifications :+ resolutionFailed)
       }
@@ -72,7 +76,7 @@ object RegistryPage {
     initialState(State()).
     renderBackend[RegistryBackend].
     componentDidMount($ => Callback.future {
-      ClientApi.getJobs() map { case specMap: Map[JobId, JobSpec] =>
+      ClientApi.enabledJobs map { specMap =>
         $.modState(_.copy(specs = specMap))
       }
     }).buildU

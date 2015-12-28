@@ -57,7 +57,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
     case JobRejected(_, cause) =>
       cause match {
         case Left(resolutionFailed) =>
-          log.error("Resolution of job spec failed. unresolvedDependencies={}", resolutionFailed.unresolvedDependencies.mkString(", "))
+          log.error("Resolution of job spec failed. unresolvedDependencies={}", resolutionFailed.unresolved.mkString(", "))
 
         case Right(thrown) =>
           log.error("Registration of job spec failed due to an exception. Retrying...")

@@ -9,4 +9,4 @@ object ResolutionFailed {
 
 }
 
-case class ResolutionFailed(unresolvedDependencies: Seq[String])
+case class ResolutionFailed(unresolved: Seq[String])
