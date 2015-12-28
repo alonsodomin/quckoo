@@ -11,16 +11,16 @@ object NotificationDisplay {
   import Level.Level
 
   private[this] def bgClassForLevel(level: Level): String = level match {
-    case Level.Error => "bg-danger"
+    case Level.Error   => "bg-danger"
     case Level.Warning => "bg-warning"
-    case Level.Info => "bg-info"
+    case Level.Info    => "bg-info"
     case Level.Success => "bg-success"
   }
 
   private[this] def iconClassForLevel(level: Level): String = level match {
-    case Level.Error => "fa-exclamation-circle"
+    case Level.Error   => "fa-exclamation-circle"
     case Level.Warning => "fa-exclamation-triangle"
-    case Level.Info => "fa-question"
+    case Level.Info    => "fa-question"
     case Level.Success => "fa-check"
   }
 

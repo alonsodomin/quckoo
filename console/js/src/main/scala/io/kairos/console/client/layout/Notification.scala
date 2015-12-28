@@ -2,7 +2,7 @@ package io.kairos.console.client.layout
 
 import io.kairos.console.client.layout.Notification.Level.Level
 import japgolly.scalajs.react
-import japgolly.scalajs.react.{Callback, CallbackTo}
+import japgolly.scalajs.react.{Callback, CallbackTo, ReactElement}
 
 /**
  * Created by alonsodomin on 15/10/2015.
@@ -14,7 +14,7 @@ object Notification {
     val Error, Warning, Info, Success = Value
   }
 
-  type Content = CallbackTo[react.ReactElement]
+  type Content = CallbackTo[ReactElement]
 
   object Implicits {
     import react.vdom.prefix_<^
@@ -38,14 +38,26 @@ object Notification {
 
   }
 
+  def error(content: => ReactElement): Notification =
+    Notification(Level.Error, CallbackTo(content))
+
   def error(content: Content): Notification =
     Notification(Level.Error, content)
+
+  def warn(content: => ReactElement): Notification =
+    Notification(Level.Warning, CallbackTo(content))
 
   def warn(content: Content): Notification =
     Notification(Level.Warning, content)
 
+  def info(content: => ReactElement): Notification =
+    Notification(Level.Info, CallbackTo(content))
+
   def info(content: Content): Notification =
     Notification(Level.Info, content)
+
+  def success(content: => ReactElement): Notification =
+    Notification(Level.Success, CallbackTo(content))
 
   def success(content: Content): Notification =
     Notification(Level.Success, content)

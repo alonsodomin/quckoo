@@ -32,7 +32,7 @@ object RegistryPage {
       import Notification.Implicits._
 
       def jobRejectedMsg(state: State, cause: ResolutionFailed): State = {
-        def resolutionFailed: Notification = Notification.error(CallbackTo {
+        def resolutionFailed: Notification = Notification.error {
           <.div(
             <.p("Dependency resolution failed. Unresolved dependencies: "),
             cause match {
@@ -41,7 +41,7 @@ object RegistryPage {
               case _ => EmptyTag
             }
           )
-        })
+        }
 
         state.copy(notifications = state.notifications :+ resolutionFailed)
       }
