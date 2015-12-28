@@ -4,8 +4,8 @@ import java.net.URL
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
-import io.kairos.id.ModuleId
-import io.kairos.protocol.ResolutionFailed
+import io.kairos.id.ArtifactId
+import io.kairos.protocol.{ResolutionFailed, UnresolvedDependencies}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
@@ -17,30 +17,30 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with ImplicitSen
 
   import Resolver._
 
-  final val TestModuleId = ModuleId("com.example", "foo", "latest")
-  val mockResolve = mockFunction[ModuleId, Boolean, Either[ResolutionFailed, JobPackage]]
+  final val TestArtifactId = ArtifactId("com.example", "foo", "latest")
+  val mockResolve = mockFunction[ArtifactId, Boolean, Either[ResolutionFailed, Artifact]]
   val moduleResolver = TestActorRef(Resolver.props(mockResolve))
 
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
-  "A resolver" should "return the job package when it's valid" in {
-    val jobPackage = JobPackage(TestModuleId, Seq(new URL("http://www.google.com")))
+  "A resolver" should "return the artifact when it's valid" in {
+    val jobPackage = Artifact(TestArtifactId, Seq(new URL("http://www.google.com")))
 
-    mockResolve expects (TestModuleId, false) returning Right(jobPackage)
+    mockResolve expects (TestArtifactId, false) returning Right(jobPackage)
 
-    moduleResolver ! Validate(TestModuleId)
+    moduleResolver ! Validate(TestArtifactId)
 
-    val returnedPackage = expectMsgType[JobPackage]
+    val returnedPackage = expectMsgType[Artifact]
     returnedPackage should be(jobPackage)
   }
 
-  it should "return resolution failed error if the package is not valid" in {
-    val expectedResolutionFailed = ResolutionFailed(Seq("com.foo.bar"))
+  it should "return resolution failed error if the artifactId is not valid" in {
+    val expectedResolutionFailed = UnresolvedDependencies(Seq("com.foo.bar"))
 
-    mockResolve expects (TestModuleId, false) returning Left(expectedResolutionFailed)
+    mockResolve expects (TestArtifactId, false) returning Left(expectedResolutionFailed)
 
-    moduleResolver ! Validate(TestModuleId)
+    moduleResolver ! Validate(TestArtifactId)
 
     val returnedError = expectMsgType[ResolutionFailed]
     returnedError should be(expectedResolutionFailed)
@@ -49,30 +49,30 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with ImplicitSen
   it should "return an error message if an exception happens when validating" in {
     val expectedException = new RuntimeException("TEST EXCEPTION")
 
-    mockResolve expects (TestModuleId, false) throwing expectedException
+    mockResolve expects (TestArtifactId, false) throwing expectedException
 
-    moduleResolver ! Validate(TestModuleId)
+    moduleResolver ! Validate(TestArtifactId)
 
     expectMsgType[ErrorResolvingModule].cause should be (expectedException)
   }
 
-  it should "return the job package on successful resolution of dependencies" in {
-    val jobPackage = JobPackage(TestModuleId, Seq(new URL("http://www.google.com")))
+  it should "return the artifact on successful acquiring of dependencies" in {
+    val jobPackage = Artifact(TestArtifactId, Seq(new URL("http://www.google.com")))
 
-    mockResolve expects (TestModuleId, true) returning Right(jobPackage)
+    mockResolve expects (TestArtifactId, true) returning Right(jobPackage)
 
-    moduleResolver ! Resolve(TestModuleId)
+    moduleResolver ! Acquire(TestArtifactId)
 
-    val returnedPackage = expectMsgType[JobPackage]
+    val returnedPackage = expectMsgType[Artifact]
     returnedPackage should be(jobPackage)
   }
 
   it should "return resolution failed error if it can't resolve dependencies" in {
-    val expectedResolutionFailed = ResolutionFailed(Seq("com.foo.bar"))
+    val expectedResolutionFailed = UnresolvedDependencies(Seq("com.foo.bar"))
 
-    mockResolve expects (TestModuleId, true) returning Left(expectedResolutionFailed)
+    mockResolve expects (TestArtifactId, true) returning Left(expectedResolutionFailed)
 
-    moduleResolver ! Resolve(TestModuleId)
+    moduleResolver ! Acquire(TestArtifactId)
 
     val returnedError = expectMsgType[ResolutionFailed]
     returnedError should be(expectedResolutionFailed)
@@ -81,9 +81,9 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with ImplicitSen
   it should "return an error message if an exception happens" in {
     val expectedException = new RuntimeException("TEST EXCEPTION")
 
-    mockResolve expects (TestModuleId, true) throwing expectedException
+    mockResolve expects (TestArtifactId, true) throwing expectedException
 
-    moduleResolver ! Resolve(TestModuleId)
+    moduleResolver ! Acquire(TestArtifactId)
 
     expectMsgType[ErrorResolvingModule].cause should be (expectedException)
   }

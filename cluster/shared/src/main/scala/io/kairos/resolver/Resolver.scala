@@ -1,7 +1,7 @@
 package io.kairos.resolver
 
 import akka.actor.{Actor, ActorLogging, Props}
-import io.kairos.id.ModuleId
+import io.kairos.id.ArtifactId
 import io.kairos.protocol.ResolutionFailed
 
 import scala.concurrent._
@@ -12,11 +12,11 @@ import scala.util.{Failure, Success}
  */
 object Resolver {
 
-  def props(resolve: io.kairos.resolver.Resolve) = Props(classOf[Resolver], resolve)
+  def props(resolve: Resolve) = Props(classOf[Resolver], resolve)
 
-  case class Validate(moduleId: ModuleId)
-  case class Resolve(moduleId: ModuleId)
-  case class ErrorResolvingModule(moduleId: ModuleId, cause: Throwable)
+  case class Validate(moduleId: ArtifactId)
+  case class Acquire(moduleId: ArtifactId)
+  case class ErrorResolvingModule(moduleId: ArtifactId, cause: Throwable)
 
 }
 
@@ -36,7 +36,7 @@ class Resolver(resolve: Resolve) extends Actor with ActorLogging {
           origSender ! ErrorResolvingModule(moduleId, error)
       }
 
-    case Resolve(moduleId) =>
+    case Acquire(moduleId) =>
       val origSender = sender()
       doResolve(moduleId, download = true) onComplete {
         case Success(result) =>
@@ -47,7 +47,7 @@ class Resolver(resolve: Resolve) extends Actor with ActorLogging {
       }
   }
 
-  private def doResolve(moduleId: ModuleId, download: Boolean): Future[Either[ResolutionFailed, JobPackage]] = Future {
+  private def doResolve(moduleId: ArtifactId, download: Boolean): Future[Either[ResolutionFailed, Artifact]] = Future {
     resolve(moduleId, download)
   }
   

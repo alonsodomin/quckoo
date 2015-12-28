@@ -4,9 +4,9 @@ import java.util.UUID
 
 import akka.testkit._
 import io.kairos.cluster.Task
-import io.kairos.id.ModuleId
 import io.kairos.cluster.scheduler.TaskQueue
 import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
+import io.kairos.id.ArtifactId
 import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
 import org.scalatest.{BeforeAndAfterAll, Ignore, Matchers, WordSpecLike}
 
@@ -17,7 +17,7 @@ import scala.concurrent.duration._
  */
 object ExecutionFSMSpec {
 
-  val TestModuleId = ModuleId("com.example", "example", "test")
+  val TestArtifactId = ArtifactId("com.example", "example", "test")
   val TestJobClass = "com.example.Job"
 
 }
@@ -31,7 +31,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
   import ExecutionFSMSpec._
 
   val planId = UUID.randomUUID()
-  val task = Task(id = UUID.randomUUID(), moduleId = TestModuleId, jobClass = TestJobClass)
+  val task = Task(id = UUID.randomUUID(), artifactId = TestArtifactId, jobClass = TestJobClass)
 
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)

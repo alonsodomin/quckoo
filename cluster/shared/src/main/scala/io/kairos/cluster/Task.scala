@@ -7,6 +7,6 @@ import io.kairos.id._
  */
 
 case class Task(id: TaskId,
-                moduleId: ModuleId,
+                artifactId: ArtifactId,
                 params: Map[String, AnyVal] = Map.empty,
                 jobClass: String)

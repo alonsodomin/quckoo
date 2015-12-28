@@ -8,7 +8,6 @@ import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
 import io.kairos.cluster.Task
 import io.kairos.cluster.protocol.WorkerProtocol
-import io.kairos.id.ModuleId
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
@@ -23,7 +22,7 @@ import scala.concurrent.duration._
 object WorkerSpec {
 
   val TestJobClass = "com.example.FooClass"
-  val TestModuleId = ModuleId("com.example", "foo", "latest")
+  val TestModuleId = ArtifactId("com.example", "foo", "latest")
 
 }
 

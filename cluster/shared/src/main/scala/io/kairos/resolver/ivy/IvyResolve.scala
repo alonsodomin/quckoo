@@ -3,11 +3,11 @@ package io.kairos.resolver.ivy
 import java.net.URL
 
 import akka.actor.ActorSystem
-import io.kairos.id.ModuleId
+import io.kairos.id.ArtifactId
 import io.kairos.protocol._
 import io.kairos.resolver._
 import org.apache.ivy.Ivy
-import org.apache.ivy.core.module.descriptor._
+import org.apache.ivy.core.module.descriptor.{Configuration, DefaultDependencyDescriptor, DefaultModuleDescriptor, ModuleDescriptor}
 import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
 import org.apache.ivy.core.report.ArtifactDownloadReport
 import org.apache.ivy.core.resolve.ResolveOptions
@@ -32,10 +32,10 @@ class IvyResolve(config: IvyConfiguration) extends Resolve {
 
   private lazy val ivy = Ivy.newInstance(config)
 
-  def apply(jobModuleId: ModuleId, download: Boolean): Either[ResolutionFailed, JobPackage] = {
+  def apply(artifactId: ArtifactId, download: Boolean): Either[ResolutionFailed, Artifact] = {
     def newCallerInstance(confs: Array[String]): ModuleDescriptor = {
       val moduleRevisionId: IvyModuleId = IvyModuleId.newInstance(
-        jobModuleId.group, jobModuleId.artifact, jobModuleId.version
+        artifactId.group, artifactId.artifact, artifactId.version
       )
 
       val descriptor = new DefaultModuleDescriptor(IvyModuleId.newInstance(
@@ -67,7 +67,7 @@ class IvyResolve(config: IvyConfiguration) extends Resolve {
     if (resolveReport.hasError) {
       Left(UnresolvedDependencies(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
     } else {
-      Right(JobPackage(jobModuleId, artifactLocations(resolveReport.getAllArtifactsReports)))
+      Right(Artifact(artifactId, artifactLocations(resolveReport.getAllArtifactsReports)))
     }
   }
 

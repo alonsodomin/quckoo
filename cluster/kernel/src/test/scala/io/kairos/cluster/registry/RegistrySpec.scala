@@ -4,9 +4,9 @@ import java.net.URL
 
 import akka.testkit._
 import io.kairos.JobSpec
-import io.kairos.id.{JobId, ModuleId}
-import io.kairos.protocol.{RegistryProtocol, ResolutionFailed}
-import io.kairos.resolver.{JobPackage, Resolver}
+import io.kairos.id.{ArtifactId, JobId}
+import io.kairos.protocol.{RegistryProtocol, UnresolvedDependencies}
+import io.kairos.resolver.{Artifact, Resolver}
 import io.kairos.test.TestActorSystem
 import org.scalatest._
 
@@ -15,11 +15,11 @@ import org.scalatest._
  */
 object RegistrySpec {
 
-  final val TestModuleId = ModuleId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec("foo", "foo desc", TestModuleId, "com.example.Job")
+  final val TestArtifactId = ArtifactId("com.example", "bar", "test")
+  final val TestJobSpec = JobSpec("foo", "foo desc", TestArtifactId, "com.example.Job")
 
   final val CommonsLoggingURL = new URL("http://repo1.maven.org/maven2/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar")
-  final val TestJobPackage = JobPackage(TestModuleId, Seq(CommonsLoggingURL))
+  final val TestArtifact = Artifact(TestArtifactId, Seq(CommonsLoggingURL))
 
 }
 
@@ -49,12 +49,12 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     val registry = TestActorRef(Registry.props(resolverProbe.ref))
 
     "reject a job if it fails to resolve its dependencies" in {
-      val expectedResolutionFailed = ResolutionFailed(Seq("com.foo.bar"))
+      val expectedResolutionFailed = UnresolvedDependencies(Seq("com.foo.bar"))
 
       registry ! RegisterJob(TestJobSpec)
 
       val resolveMsg = resolverProbe.expectMsgType[Validate]
-      resolveMsg.moduleId should be (TestModuleId)
+      resolveMsg.moduleId should be (TestArtifactId)
 
       resolverProbe.reply(expectedResolutionFailed)
 
@@ -62,7 +62,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     }
 
     "notify that a specific job is not enabled when attempting to disabling it" in {
-      val otherModuleId = ModuleId("com.example", "foo", "latest")
+      val otherModuleId = ArtifactId("com.example", "foo", "latest")
       val otherJobSpec = JobSpec("foo", "foo desc", otherModuleId, "com.example.Job")
 
       val nonExistentJobId = JobId(otherJobSpec)
@@ -75,9 +75,9 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
       registry ! RegisterJob(TestJobSpec)
 
       val resolveMsg = resolverProbe.expectMsgType[Validate]
-      resolveMsg.moduleId should be (TestModuleId)
+      resolveMsg.moduleId should be (TestArtifactId)
 
-      resolverProbe.reply(TestJobPackage)
+      resolverProbe.reply(TestArtifact)
 
       val registryResponse = expectMsgType[JobAccepted]
       registryResponse.job should be (TestJobSpec)

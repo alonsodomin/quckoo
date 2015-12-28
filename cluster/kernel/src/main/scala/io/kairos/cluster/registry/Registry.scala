@@ -7,7 +7,7 @@ import io.kairos.JobSpec
 import io.kairos.id._
 import io.kairos.protocol._
 import io.kairos.resolver.Resolver.ErrorResolvingModule
-import io.kairos.resolver.{JobPackage, Resolver}
+import io.kairos.resolver.{Artifact, Resolver}
 
 import scala.concurrent.duration._
 
@@ -95,10 +95,10 @@ class Registry(resolver: ActorRef) extends PersistentActor with ActorLogging {
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
       val handler = context.actorOf(Props(classOf[ResolutionHandler], jobSpec, self, sender()))
-      resolver.tell(Validate(jobSpec.moduleId), handler)
+      resolver.tell(Validate(jobSpec.artifactId), handler)
 
-    case (jobSpec: JobSpec, _: JobPackage) =>
-      log.debug("Job module has been successfully resolved. jobModuleId={}", jobSpec.moduleId)
+    case (jobSpec: JobSpec, _: Artifact) =>
+      log.debug("Job module has been successfully resolved. artifactId={}", jobSpec.artifactId)
       val jobId = JobId(jobSpec)
       persist(JobAccepted(jobId, jobSpec)) { event =>
         log.info("Job spec has been registered. jobId={}, name={}", jobId, jobSpec.displayName)
@@ -108,11 +108,11 @@ class Registry(resolver: ActorRef) extends PersistentActor with ActorLogging {
 
     case (jobSpec: JobSpec, failed: ResolutionFailed) =>
       log.error(
-        "Couldn't resolve the job module. jobModuleId={}, description={}",
-        jobSpec.moduleId,
+        "Couldn't resolve the job module. artifactId={}, description={}",
+        jobSpec.artifactId,
         failed.description
       )
-      sender() ! JobRejected(jobSpec.moduleId, Left(failed))
+      sender() ! JobRejected(jobSpec.artifactId, Left(failed))
 
     case DisableJob(jobId) =>
       if (!store.isEnabled(jobId)) {
@@ -144,7 +144,7 @@ class Registry(resolver: ActorRef) extends PersistentActor with ActorLogging {
 private class ResolutionHandler(jobSpec: JobSpec, registry: ActorRef, requestor: ActorRef) extends Actor {
 
   def receive: Receive = {
-    case pkg: JobPackage =>
+    case pkg: Artifact =>
       reply(jobSpec -> pkg)
 
     case failed: ResolutionFailed =>

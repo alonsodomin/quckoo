@@ -1,6 +1,6 @@
 package io.kairos
 
-import io.kairos.id.ModuleId
+import io.kairos.id.ArtifactId
 import io.kairos.protocol.ResolutionFailed
 
 import scala.language.implicitConversions
@@ -10,6 +10,6 @@ import scala.language.implicitConversions
  */
 package object resolver {
 
-  type Resolve = (ModuleId, Boolean) => Either[ResolutionFailed, JobPackage]
+  type Resolve = (ArtifactId, Boolean) => Either[ResolutionFailed, Artifact]
 
 }

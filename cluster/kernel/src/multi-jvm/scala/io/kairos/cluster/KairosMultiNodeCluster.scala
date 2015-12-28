@@ -5,7 +5,7 @@ import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
 import io.kairos.cluster.core.KairosClusterSupervisor
-import io.kairos.id.ModuleId
+import io.kairos.id.ArtifactId
 import io.kairos.multijvm.MultiNodeClusterSpec
 import io.kairos.protocol.ClientProtocol
 import io.kairos.test.ImplicitTimeSource
@@ -30,15 +30,15 @@ class KairosMultiNodeClusterSpecMultiJvmNode2 extends KairosMultiNodeCluster
 
 object KairosMultiNodeCluster {
 
-  val TestModuleId = ModuleId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
+  val TestArtifactId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
 
 }
 
 abstract class KairosMultiNodeCluster extends MultiNodeSpec(KairosNodesConfig) with ImplicitSender
   with MultiNodeClusterSpec with ImplicitTimeSource {
 
-  import KairosNodesConfig._
   import ClientProtocol._
+  import KairosNodesConfig._
 
   implicit val materializer = ActorMaterializer()
 

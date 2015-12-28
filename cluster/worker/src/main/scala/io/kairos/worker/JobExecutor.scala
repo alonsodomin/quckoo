@@ -3,7 +3,7 @@ package io.kairos.worker
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.kairos.cluster.{Task, TaskFailureCause}
 import io.kairos.protocol.ResolutionFailed
-import io.kairos.resolver.{JobPackage, Resolver}
+import io.kairos.resolver.{Artifact, Resolver}
 import io.kairos.worker.JobExecutor.{Completed, Failed}
 
 import scala.util.{Failure, Success, Try}
@@ -29,7 +29,7 @@ class JobExecutor(resolver: ActorRef) extends Actor with ActorLogging {
   def receive = {
     case Execute(task) =>
       val runner = context.actorOf(Props(classOf[JobRunner], task, context.parent))
-      resolver.tell(Resolve(task.moduleId), runner)
+      resolver.tell(Acquire(task.artifactId), runner)
   }
 
 }
@@ -38,7 +38,7 @@ private class JobRunner(task: Task, worker: ActorRef) extends Actor with ActorLo
   import Resolver._
   
   def receive: Receive = {
-    case pkg: JobPackage =>
+    case pkg: Artifact =>
       log.info("Executing task. taskId={}", task.id)
       pkg.newJob(task.jobClass, task.params) flatMap { job => Try(job.call()) } match {
         case Success(result) =>

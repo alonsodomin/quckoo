@@ -6,9 +6,8 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.testkit._
 import io.kairos.cluster.Task
-import io.kairos.id.{ModuleId, TaskId}
-import io.kairos.protocol._
-import io.kairos.resolver.{JobPackage, Resolver}
+import io.kairos.id.TaskId
+import io.kairos.resolver.Resolver
 import org.scalatest._
 
 import scala.concurrent.duration._
@@ -19,7 +18,7 @@ import scala.concurrent.duration._
 object JobExecutorSpec {
   val TestExecutionId: TaskId = UUID.randomUUID()
   val TestJobClass = "com.example.FooClass"
-  val TestModuleId = ModuleId("io.kairos", "test", "latest")
+  val TestModuleId = ArtifactId("io.kairos", "test", "latest")
 }
 
 class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatSpecLike with Matchers
@@ -36,13 +35,13 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
   }
 
   "A job executor actor" must "fail an execution if the dependency resolution fails" in {
-    val task = Task(TestExecutionId, moduleId = TestModuleId, jobClass = TestJobClass)
+    val task = Task(TestExecutionId, artifactId = TestModuleId, jobClass = TestJobClass)
     val expectedResolutionFailed = ResolutionFailed(Seq("com.bar.foo"))
     val expectedResolverResponse = Left(expectedResolutionFailed)
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    resolverProbe.expectMsg(Resolve(TestModuleId))
+    resolverProbe.expectMsg(Acquire(TestModuleId))
 
     within(2 seconds) {
       resolverProbe.reply(expectedResolutionFailed)
@@ -57,11 +56,11 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
     val task = Task(TestExecutionId, TestModuleId, params, TestJobClass)
 
     val expectedException = new ClassNotFoundException(TestJobClass)
-    val failingPackage = JobPackage(TestModuleId, Seq(new URL("http://www.example.com")))
+    val failingPackage = Artifact(TestModuleId, Seq(new URL("http://www.example.com")))
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    resolverProbe.expectMsg(Resolve(TestModuleId))
+    resolverProbe.expectMsg(Acquire(TestModuleId))
 
     resolverProbe.reply(failingPackage)
 

@@ -3,13 +3,13 @@ package io.kairos.id
 /**
  * Created by aalonsodominguez on 15/07/15.
  */
-object ModuleId {
+object ArtifactId {
   val GroupSeparator : Char = ':'
   val VersionSeparator : Char = '#'
 }
 
-case class ModuleId(group: String, artifact: String, version: String) {
-  import ModuleId._
+case class ArtifactId(group: String, artifact: String, version: String) {
+  import ArtifactId._
 
   override def toString: String = s"$group$GroupSeparator$artifact$VersionSeparator$version"
 

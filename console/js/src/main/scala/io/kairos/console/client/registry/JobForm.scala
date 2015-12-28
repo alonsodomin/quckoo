@@ -1,7 +1,7 @@
 package io.kairos.console.client.registry
 
 import io.kairos.JobSpec
-import io.kairos.id.ModuleId
+import io.kairos.id.ArtifactId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -14,12 +14,12 @@ object JobForm {
   type RegisterHandler = JobSpec => Callback
 
   case class JobDetails(name: String = "", description: String = "",
-                        moduleId: ModuleId = ModuleId("", "", ""),
+                        artifactId: ArtifactId = ArtifactId("", "", ""),
                         jobClass: String = "")
 
-  object ModuleField {
+  object ArtifactField {
 
-    private[this] val component = ReactComponentB[(String, String, ExternalVar[String])]("Module Field").
+    private[this] val component = ReactComponentB[(String, String, ExternalVar[String])]("Artifact Field").
       render_P { case (id, placeholder, field) =>
         val updateField = (event: ReactEventI) => field.set(event.target.value)
         <.input.text(^.id := id,
@@ -34,21 +34,21 @@ object JobForm {
 
   }
 
-  object ModuleDetails {
+  object ArtifactDetails {
 
-    private[this] val component = ReactComponentB[ModuleId]("Module Details").
+    private[this] val component = ReactComponentB[ArtifactId]("Artifact Details").
       render_P { p =>
         val group = ExternalVar(p.group)(g => Callback { p.copy(group = g) })
         val artifact = ExternalVar(p.artifact)(a => Callback { p.copy(artifact = a) })
         val version = ExternalVar(p.version)(v => Callback { p.copy(version = v) })
         <.div(
-          ModuleField("group", "Group ID", group),
-          ModuleField("artifact", "Artifact ID", artifact),
-          ModuleField("version", "Version", version)
+          ArtifactField("group", "Group ID", group),
+          ArtifactField("artifact", "Artifact ID", artifact),
+          ArtifactField("version", "Version", version)
         )
       } build
 
-    def apply(moduleId: ModuleId) = component(moduleId)
+    def apply(moduleId: ArtifactId) = component(moduleId)
 
   }
 
@@ -65,7 +65,7 @@ object JobForm {
 
     def submitJob(event: ReactEventI): Callback = {
       preventDefault(event) >>
-        $.state.map(details => JobSpec(details.name, details.description, details.moduleId, details.jobClass)).
+        $.state.map(details => JobSpec(details.name, details.description, details.artifactId, details.jobClass)).
           flatMap(spec => $.props.flatMap(handler => handler(spec)))
     }
 
@@ -82,8 +82,8 @@ object JobForm {
             ^.required := false, ^.onChange ==> updateDescription, ^.value := details.description)
         ),
         <.div(^.`class` := "form-group",
-          <.label("Module ID"),
-          ModuleDetails(details.moduleId)
+          <.label("Artifact ID"),
+          ArtifactDetails(details.artifactId)
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "jobClass", "Job Class"),

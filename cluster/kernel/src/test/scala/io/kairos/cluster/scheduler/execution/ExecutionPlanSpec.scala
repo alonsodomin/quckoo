@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor._
 import akka.testkit._
-import io.kairos.id.{JobId, ModuleId}
+import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.test.ImplicitTimeSource
 import io.kairos.time.TimeSource
@@ -19,8 +19,8 @@ import scala.concurrent.duration._
  */
 object ExecutionPlanSpec {
 
-  final val TestModuleId = ModuleId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec("foo", "foo desc", TestModuleId, "com.example.Job")
+  final val TestArtifactId = ArtifactId("com.example", "bar", "test")
+  final val TestJobSpec = JobSpec("foo", "foo desc", TestArtifactId, "com.example.Job")
   final val TestJobId = JobId(TestJobSpec)
 
 }

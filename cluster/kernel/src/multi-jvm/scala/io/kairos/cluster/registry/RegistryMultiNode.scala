@@ -1,6 +1,5 @@
 package io.kairos.cluster.registry
 
-import akka.actor.{Props, ActorRef}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
@@ -8,11 +7,8 @@ import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestProbe}
 import io.kairos.JobSpec
 import io.kairos.cluster.core.RegistryReceptionist
-import io.kairos.id.{JobId, ModuleId}
 import io.kairos.multijvm.MultiNodeClusterSpec
 import io.kairos.protocol.RegistryProtocol.{JobAccepted, RegisterJob}
-import io.kairos.protocol.ResolutionFailed
-import io.kairos.resolver.{Resolver, JobPackage}
 import io.kairos.resolver.Resolver.Validate
 
 /**
@@ -30,9 +26,9 @@ class RegistryMultiNodeSpecMultiJvmProxy extends RegistryMultiNode
 
 object RegistryMultiNode {
 
-  final val TestModuleId = ModuleId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
-  final val TestJobSpec = JobSpec("Examples", moduleId = TestModuleId, jobClass = "io.kairos.examples.paramteters.PowerOfNJob")
-  final val TestJobPackage = JobPackage(TestModuleId, Seq())
+  final val TestModuleId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
+  final val TestJobSpec = JobSpec("Examples", artifactId = TestModuleId, jobClass = "io.kairos.examples.paramteters.PowerOfNJob")
+  final val TestJobPackage = Artifact(TestModuleId, Seq())
 
 }
 

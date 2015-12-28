@@ -36,7 +36,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
   override def receive: Receive = {
     case cmd: ScheduleJob =>
       def executionPlanProps(planId: PlanId): Props = ExecutionPlan.props(planId, cmd.trigger) { (taskId, jobSpec) =>
-        val task = Task(taskId, jobSpec.moduleId, cmd.params, jobSpec.jobClass)
+        val task = Task(taskId, jobSpec.artifactId, cmd.params, jobSpec.jobClass)
         ExecutionFSM.props(planId, task, taskQueue, executionTimeout = cmd.timeout)
       }
       val handler = context.actorOf(handlerProps(cmd.jobId, sender()) { () =>

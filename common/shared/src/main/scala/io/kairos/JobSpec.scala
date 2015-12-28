@@ -7,5 +7,5 @@ import io.kairos.id._
  */
 case class JobSpec(displayName: String,
                    description: String = "",
-                   moduleId: ModuleId,
+                   artifactId: ArtifactId,
                    jobClass: String)

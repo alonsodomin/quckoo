@@ -2,7 +2,7 @@ package io.kairos.resolver
 
 import java.net.URL
 
-import io.kairos.id.ModuleId
+import io.kairos.id.ArtifactId
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
@@ -12,9 +12,9 @@ import scala.util.Success
 /**
  * Created by aalonsodominguez on 26/07/15.
  */
-class JobPackageTest extends FlatSpec with Matchers with MockFactory with Inside {
+class ArtifactTest extends FlatSpec with Matchers with MockFactory with Inside {
 
-  class StubPackageClassLoader(urls: Array[URL]) extends PackageClassLoader(Array.empty) {
+  class StubArtifactClassLoader(urls: Array[URL]) extends ArtifactClassLoader(Array.empty) {
     private val classMap = mutable.Map.empty[String, Class[_]]
 
     def this() = this(Array.empty)
@@ -29,28 +29,28 @@ class JobPackageTest extends FlatSpec with Matchers with MockFactory with Inside
 
   }
 
-  private val TestModuleId = ModuleId("io.kairos.test", "package-test", "SNAPSHOT")
+  private val TestArtifactId = ArtifactId("io.kairos.test", "package-test", "SNAPSHOT")
 
   "A JobModulePackage" should "return the URLs of its classpath from the class loader" in {
     val expectedUrls = Array(new URL("http://www.example.com"))
 
-    val stubClassLoader = new StubPackageClassLoader(expectedUrls)
-    val jobModulePackage = new JobPackage(TestModuleId, stubClassLoader)
+    val stubClassLoader = new StubArtifactClassLoader(expectedUrls)
+    val artifact = new Artifact(TestArtifactId, stubClassLoader)
 
-    val returnedUrls = jobModulePackage.classpath
+    val returnedUrls = artifact.classpath
 
     returnedUrls should be (expectedUrls)
   }
 
   it should "load a job class from the class loader" in {
-    val stubClassLoader   = new StubPackageClassLoader
+    val stubClassLoader   = new StubArtifactClassLoader
     val expectedClass     = classOf[DummyJavaJob]
     val expectedClassName = expectedClass.getName
     stubClassLoader.addClass(expectedClassName, expectedClass)
 
-    val jobModulePackage = new JobPackage(TestModuleId, stubClassLoader)
+    val artifact = new Artifact(TestArtifactId, stubClassLoader)
 
-    val returnedClass = jobModulePackage.jobClass(expectedClassName)
+    val returnedClass = artifact.jobClass(expectedClassName)
 
     inside (returnedClass) {
       case Success(clazz) => clazz should be (expectedClass)
@@ -58,7 +58,7 @@ class JobPackageTest extends FlatSpec with Matchers with MockFactory with Inside
   }
 
   it should "inject parameters into the job instance" in {
-    val stubClassLoader   = new StubPackageClassLoader
+    val stubClassLoader   = new StubArtifactClassLoader
     val expectedClass     = classOf[DummyJavaJob]
     val expectedClassName = expectedClass.getName
     stubClassLoader.addClass(expectedClassName, expectedClass)
@@ -67,9 +67,9 @@ class JobPackageTest extends FlatSpec with Matchers with MockFactory with Inside
     val expectedJobInstance = new DummyJavaJob
     expectedJobInstance.value = parameterValue
 
-    val jobModulePackage = new JobPackage(TestModuleId, stubClassLoader)
+    val artifact = new Artifact(TestArtifactId, stubClassLoader)
 
-    val returnedInstance = jobModulePackage.newJob(expectedClassName, Map("value" -> parameterValue))
+    val returnedInstance = artifact.newJob(expectedClassName, Map("value" -> parameterValue))
 
     inside (returnedInstance) {
       case Success(instance) => instance.asInstanceOf[DummyJavaJob].value should be (parameterValue)
