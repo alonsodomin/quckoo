@@ -7,13 +7,13 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.stream.ActorMaterializer
-import io.kairos.cluster.protocol.WorkerProtocol.{WorkerJoined, WorkerRemoved}
 import io.kairos.cluster.protocol._
 import io.kairos.cluster.registry.Registry
 import io.kairos.cluster.scheduler.{Scheduler, TaskQueue}
 import io.kairos.cluster.{KairosClusterSettings, KairosStatus}
 import io.kairos.protocol._
-import io.kairos.resolver.{IvyResolve, Resolver}
+import io.kairos.resolver.Resolver
+import io.kairos.resolver.ivy.IvyResolve
 import io.kairos.time.TimeSource
 
 /**
@@ -33,6 +33,7 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)
 
   import ClientProtocol._
   import KairosClusterSupervisor._
+  import WorkerProtocol.{WorkerJoined, WorkerRemoved}
 
   ClusterClientReceptionist(context.system).registerService(self)
 

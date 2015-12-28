@@ -12,7 +12,7 @@ import scala.util.{Failure, Success}
  */
 object Resolver {
 
-  def props(resolve: ResolveFun) = Props(classOf[Resolver], resolve)
+  def props(resolve: io.kairos.resolver.Resolve) = Props(classOf[Resolver], resolve)
 
   case class Validate(moduleId: ModuleId)
   case class Resolve(moduleId: ModuleId)
@@ -20,7 +20,7 @@ object Resolver {
 
 }
 
-class Resolver(resolve: ResolveFun) extends Actor with ActorLogging {
+class Resolver(resolve: Resolve) extends Actor with ActorLogging {
 
   import Resolver._
   import context.dispatcher

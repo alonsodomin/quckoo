@@ -3,7 +3,7 @@ package io.kairos.worker
 import akka.actor.{ActorSystem, AddressFromURIString, Props, RootActorPath}
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import akka.japi.Util._
-import io.kairos.resolver.IvyConfiguration
+import io.kairos.resolver.ivy.IvyConfiguration
 
 import scala.concurrent.duration._
 

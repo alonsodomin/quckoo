@@ -1,10 +1,11 @@
-package io.kairos.resolver
+package io.kairos.resolver.ivy
 
 import java.net.URL
 
 import akka.actor.ActorSystem
 import io.kairos.id.ModuleId
 import io.kairos.protocol._
+import io.kairos.resolver._
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor._
 import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
@@ -23,7 +24,7 @@ object IvyResolve {
 
 }
 
-class IvyResolve(config: IvyConfiguration) extends ResolveFun {
+class IvyResolve(config: IvyConfiguration) extends Resolve {
 
   private val DefaultConfName = "default"
   private val CompileConfName = "compile"

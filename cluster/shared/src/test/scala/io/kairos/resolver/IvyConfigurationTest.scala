@@ -3,6 +3,7 @@ package io.kairos.resolver
 import java.nio.file.Paths
 
 import com.typesafe.config.ConfigFactory
+import io.kairos.resolver.ivy.IvyConfiguration
 import org.scalatest.{FlatSpec, Matchers}
 
 /**

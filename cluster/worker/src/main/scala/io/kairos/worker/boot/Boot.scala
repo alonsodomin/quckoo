@@ -4,7 +4,8 @@ import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import akka.japi.Util._
 import com.typesafe.config.{Config, ConfigFactory}
-import io.kairos.resolver.{IvyConfiguration, IvyResolve, Resolver}
+import io.kairos.resolver._
+import io.kairos.resolver.ivy.{IvyConfiguration, IvyResolve}
 import io.kairos.worker.{JobExecutor, Worker}
 import scopt.OptionParser
 

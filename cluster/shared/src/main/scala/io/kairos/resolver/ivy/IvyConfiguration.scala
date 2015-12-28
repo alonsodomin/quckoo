@@ -1,10 +1,11 @@
-package io.kairos.resolver
+package io.kairos.resolver.ivy
 
 import java.io.File
 import java.net.URL
 import java.nio.file.Paths
 
 import com.typesafe.config.Config
+import io.kairos.resolver.{MavenRepository, Repository}
 
 import scala.collection.JavaConversions._
 

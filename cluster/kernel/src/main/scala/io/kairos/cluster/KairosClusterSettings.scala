@@ -3,7 +3,7 @@ package io.kairos.cluster
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
-import io.kairos.resolver.IvyConfiguration
+import io.kairos.resolver.ivy.IvyConfiguration
 
 import scala.concurrent.duration._
 
