@@ -4,7 +4,7 @@ import io.kairos.JobSpec
 import io.kairos.console.client.core.ClientApi
 import io.kairos.console.client.layout.{Notification, NotificationDisplay}
 import io.kairos.id.JobId
-import io.kairos.protocol.ResolutionFailed
+import io.kairos.protocol.{ResolutionFailed, UnresolvedDependencies}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -35,7 +35,11 @@ object RegistryPage {
         def resolutionFailed: Notification = Notification.error(CallbackTo {
           <.div(
             <.p("Dependency resolution failed. Unresolved dependencies: "),
-            <.ul(cause.unresolved.map { <.li(_) })
+            cause match {
+              case UnresolvedDependencies(unresolved) =>
+                <.ul(unresolved.map { <.li(_) })
+              case _ => EmptyTag
+            }
           )
         })
 

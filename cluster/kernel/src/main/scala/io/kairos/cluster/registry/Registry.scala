@@ -108,9 +108,9 @@ class Registry(resolver: ActorRef) extends PersistentActor with ActorLogging {
 
     case (jobSpec: JobSpec, failed: ResolutionFailed) =>
       log.error(
-        "Couldn't resolve the job module. jobModuleId={}, unresolved={}",
+        "Couldn't resolve the job module. jobModuleId={}, description={}",
         jobSpec.moduleId,
-        failed.unresolved.mkString(",")
+        failed.description
       )
       sender() ! JobRejected(jobSpec.moduleId, Left(failed))
 

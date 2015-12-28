@@ -64,7 +64,7 @@ class IvyResolve(config: IvyConfiguration) extends ResolveFun {
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
     if (resolveReport.hasError) {
-      Left(ResolutionFailed(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
+      Left(UnresolvedDependencies(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)))
     } else {
       Right(JobPackage(jobModuleId, artifactLocations(resolveReport.getAllArtifactsReports)))
     }
