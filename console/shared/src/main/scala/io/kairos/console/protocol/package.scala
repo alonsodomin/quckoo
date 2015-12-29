@@ -1,7 +1,7 @@
 package io.kairos.console
 
 import io.kairos.id.JobId
-import io.kairos.protocol.Error
+import io.kairos.protocol.ErrorResponse
 
 import scalaz.ValidationNel
 
@@ -10,6 +10,6 @@ import scalaz.ValidationNel
   */
 package object protocol {
 
-  type RegisterJobResponse = ValidationNel[Error, JobId]
+  type RegisterJobResponse = ValidationNel[ErrorResponse, JobId]
 
 }

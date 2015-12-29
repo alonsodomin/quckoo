@@ -1,8 +1,8 @@
 package io.kairos.console.client.layout
 
 import io.kairos.console.client.layout.Notification.Level.Level
-import japgolly.scalajs.react
-import japgolly.scalajs.react.{Callback, CallbackTo, ReactElement}
+import japgolly.scalajs.react.{CallbackTo, vdom}
+import japgolly.scalajs.react.vdom.TagMod
 
 /**
  * Created by alonsodomin on 15/10/2015.
@@ -14,53 +14,40 @@ object Notification {
     val Error, Warning, Info, Success = Value
   }
 
-  type Content = CallbackTo[ReactElement]
-
-  object Implicits {
-    import react.vdom.prefix_<^
-
+  type Content = CallbackTo[TagMod]
+  sealed trait ContentMagnet {
+    def apply(): Content
+  }
+  object ContentMagnet {
     import scala.language.implicitConversions
 
-    implicit def stringElement(content: String): Content = CallbackTo {
-      import prefix_<^._
+    implicit def fromVDom(elem: => TagMod): ContentMagnet = () => CallbackTo(elem)
+
+    implicit def fromContent(content: Content): ContentMagnet = () => content
+
+    implicit def fromString(content: String): ContentMagnet = () => CallbackTo {
+      import vdom.prefix_<^._
       <.span(content)
     }
 
-    implicit def throwableElement(throwable: Throwable): Content = {
-      def logException(): Callback = {
-        val stackTrace = throwable.getStackTrace.map(_.toString).mkString("\n")
-        val msg = s"${throwable.getClass.getName}: ${throwable.getMessage}\n$stackTrace"
-        Callback.log(msg)
-      }
-
-      logException() >> stringElement(s"${throwable.getClass.getName}: ${throwable.getMessage}")
-    }
-
+    implicit def fromThrowable(throwable: Throwable): ContentMagnet =
+      fromString(s"${throwable.getClass.getName}: ${throwable.getMessage}")
   }
 
-  def error(content: => ReactElement): Notification =
-    Notification(Level.Error, CallbackTo(content))
+  def apply(level: Level, contentMagnet: ContentMagnet): Notification =
+    Notification(level, contentMagnet())
 
-  def error(content: Content): Notification =
-    Notification(Level.Error, content)
+  def error(magnet: ContentMagnet): Notification =
+    apply(Level.Error, magnet)
 
-  def warn(content: => ReactElement): Notification =
-    Notification(Level.Warning, CallbackTo(content))
+  def warn(magnet: ContentMagnet): Notification =
+    apply(Level.Warning, magnet)
 
-  def warn(content: Content): Notification =
-    Notification(Level.Warning, content)
+  def info(magnet: ContentMagnet): Notification =
+    apply(Level.Info, magnet)
 
-  def info(content: => ReactElement): Notification =
-    Notification(Level.Info, CallbackTo(content))
-
-  def info(content: Content): Notification =
-    Notification(Level.Info, content)
-
-  def success(content: => ReactElement): Notification =
-    Notification(Level.Success, CallbackTo(content))
-
-  def success(content: Content): Notification =
-    Notification(Level.Success, content)
+  def success(magnet: ContentMagnet): Notification =
+    apply(Level.Success, magnet)
 
 }
 

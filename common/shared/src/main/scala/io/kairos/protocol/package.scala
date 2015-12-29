@@ -7,6 +7,6 @@ import scalaz.NonEmptyList
   */
 package object protocol {
 
-  type JobRejectedCause = NonEmptyList[Error]
+  type JobRejectedCause = NonEmptyList[ErrorResponse]
 
 }

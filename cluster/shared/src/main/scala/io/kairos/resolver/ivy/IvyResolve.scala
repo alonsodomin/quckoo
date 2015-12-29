@@ -54,14 +54,14 @@ class IvyResolve(config: IvyConfiguration) extends Resolve {
       descriptor
     }
 
-    def unresolvedDependencies(report: ResolveReport): ValidationNel[Error, ResolveReport] = {
+    def unresolvedDependencies(report: ResolveReport): ValidationNel[ErrorResponse, ResolveReport] = {
       report.getUnresolvedDependencies.map(_.getId).map { moduleId =>
         val unresolvedId = ArtifactId(moduleId.getOrganisation, moduleId.getName, moduleId.getRevision)
         UnresolvedDependency(unresolvedId).failureNel[ResolveReport]
       }.reduce(_ |@| _ { _ => report })
     }
 
-    def downloadFailed(report: ResolveReport): ValidationNel[Error, ResolveReport] = {
+    def downloadFailed(report: ResolveReport): ValidationNel[ErrorResponse, ResolveReport] = {
       report.getArtifactsReports(DownloadStatus.FAILED, true).map { artifactReport =>
         DownloadFailed(artifactReport.getName).failureNel[ResolveReport]
       }.reduce(_ |@| _ { _ => report })

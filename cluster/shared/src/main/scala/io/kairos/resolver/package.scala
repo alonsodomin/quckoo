@@ -1,7 +1,7 @@
 package io.kairos
 
 import io.kairos.id.ArtifactId
-import io.kairos.protocol.Error
+import io.kairos.protocol.ErrorResponse
 
 import scala.language.implicitConversions
 import scalaz.ValidationNel
@@ -11,7 +11,7 @@ import scalaz.ValidationNel
  */
 package object resolver {
 
-  type ResolutionResult = ValidationNel[Error, Artifact]
+  type ResolutionResult = ValidationNel[ErrorResponse, Artifact]
   type Resolve = (ArtifactId, Boolean) => ResolutionResult
 
 }

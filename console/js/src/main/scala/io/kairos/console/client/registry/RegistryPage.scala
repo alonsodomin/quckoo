@@ -4,7 +4,7 @@ import io.kairos.JobSpec
 import io.kairos.console.client.core.ClientApi
 import io.kairos.console.client.layout.{Notification, NotificationDisplay}
 import io.kairos.id.JobId
-import io.kairos.protocol.{ResolutionFailed, UnresolvedDependencies}
+import io.kairos.protocol._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -29,16 +29,15 @@ object RegistryPage {
   class RegistryBackend($: BackendScope[Unit, State]) {
 
     def handleJobSubmit(jobSpec: JobSpec): Callback = {
-      import Notification.Implicits._
 
-      def jobRejectedMsg(state: State, cause: ResolutionFailed): State = {
-        def resolutionFailed: Notification = Notification.error {
+      def jobRejectedMsg(state: State, cause: JobRejectedCause): State = {
+        def resolutionFailed = Notification.error {
           <.div(
-            <.p("Dependency resolution failed. Unresolved dependencies: "),
-            cause match {
-              case UnresolvedDependencies(unresolved) =>
-                <.ul(unresolved.map { <.li(_) })
-              case _ => EmptyTag
+            <.p("Dependency resolution failed:"),
+            cause.map {
+              case UnresolvedDependency(artifactId) =>
+                <.li(s"Unresolved dependency: $artifactId")
+              case error: ErrorResponse => <.li(error.toString)
             }
           )
         }
@@ -53,9 +52,10 @@ object RegistryPage {
         state.copy(notifications = state.notifications :+ Notification.success("Job registered: " + jobId))
 
       def performSubmit(): Future[Callback] = {
+        import scalaz._
         ClientApi.registerJob(jobSpec).map {
-          case Left(cause) => $.modState(s => jobRejectedMsg(s, cause))
-          case Right(jobId) => $.modState { s =>
+          case Failure(cause) => $.modState(s => jobRejectedMsg(s, cause))
+          case Success(jobId) => $.modState { s =>
             successMsg(s, jobId).copy(specs = s.specs + (jobId -> jobSpec))
           }
         } recover {

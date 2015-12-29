@@ -2,7 +2,7 @@ package io.kairos.worker
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import io.kairos.cluster.Task
-import io.kairos.protocol.{Error, ExceptionThrown}
+import io.kairos.protocol.{ErrorResponse, ExceptionThrown}
 import io.kairos.resolver.{Artifact, ResolutionResult, Resolver}
 import io.kairos.worker.JobExecutor.{Completed, Failed}
 
@@ -17,7 +17,7 @@ object JobExecutor {
 
   case class Execute(task: Task)
 
-  case class Failed(errors: NonEmptyList[Error])
+  case class Failed(errors: NonEmptyList[ErrorResponse])
   case class Completed(result: Any)
 
   def props(resolver: ActorRef): Props =
@@ -42,7 +42,7 @@ private class JobRunner(task: Task, worker: ActorRef) extends Actor with ActorLo
     case result: ResolutionResult =>
       import scala.util.{Failure, Success}
       reply(result.map(runJob).flatMap {
-        case Success(r)     => r.successNel[Error]
+        case Success(r)     => r.successNel[ErrorResponse]
         case Failure(cause) => ExceptionThrown(cause).failureNel[Any]
       })
   }
@@ -50,7 +50,7 @@ private class JobRunner(task: Task, worker: ActorRef) extends Actor with ActorLo
   private[this] def runJob(artifact: Artifact): Try[Any] =
     artifact.newJob(task.jobClass, task.params) flatMap { job => Try(job.call()) }
 
-  private[this] def reply(msg: ValidationNel[Error, Any]): Unit = {
+  private[this] def reply(msg: ValidationNel[ErrorResponse, Any]): Unit = {
     val response = msg match {
       case Success(value)  => Completed(value)
       case Failure(errors) => Failed(errors)
