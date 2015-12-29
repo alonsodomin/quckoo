@@ -1,8 +1,8 @@
 package io.kairos.console
 
 import io.kairos.JobSpec
+import io.kairos.console.protocol.RegisterJobResponse
 import io.kairos.id.JobId
-import io.kairos.protocol.ResolutionFailed
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -11,7 +11,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait RegistryApi {
 
-  def registerJob(jobSpec: JobSpec)(implicit ex: ExecutionContext): Future[Either[ResolutionFailed, JobId]]
+  def registerJob(jobSpec: JobSpec)(implicit ex: ExecutionContext): Future[RegisterJobResponse]
 
   def enabledJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]]
 

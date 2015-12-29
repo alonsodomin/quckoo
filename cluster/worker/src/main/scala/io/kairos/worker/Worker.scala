@@ -8,8 +8,10 @@ import akka.cluster.client.ClusterClient.SendToAll
 import io.kairos.cluster.Task
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.id.TaskId
+import io.kairos.protocol.ExceptionThrown
 
 import scala.concurrent.duration._
+import scalaz.NonEmptyList
 
 /**
  * Created by aalonsodominguez on 05/07/15.
@@ -106,7 +108,7 @@ class Worker(clusterClient: ActorRef,
     case _: DeathPactException => Stop
     case cause: Exception =>
       currentTaskId.foreach {
-        taskId => sendToQueue(TaskFailed(workerId, taskId, Right(cause)))
+        taskId => sendToQueue(TaskFailed(workerId, taskId, NonEmptyList(ExceptionThrown(cause))))
       }
       context.become(idle)
       Restart

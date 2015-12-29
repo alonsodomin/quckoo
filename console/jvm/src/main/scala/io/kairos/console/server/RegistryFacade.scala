@@ -1,8 +1,8 @@
 package io.kairos.console.server
 
 import io.kairos.JobSpec
+import io.kairos.console.protocol.RegisterJobResponse
 import io.kairos.id.JobId
-import io.kairos.protocol.ResolutionFailed
 
 import scala.concurrent.Future
 
@@ -11,7 +11,7 @@ import scala.concurrent.Future
   */
 trait RegistryFacade {
 
-  def registerJob(jobSpec: JobSpec): Future[Either[ResolutionFailed, JobId]]
+  def registerJob(jobSpec: JobSpec): Future[RegisterJobResponse]
 
   def registeredJobs: Future[Map[JobId, JobSpec]]
 

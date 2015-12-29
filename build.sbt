@@ -59,7 +59,16 @@ lazy val common = (crossProject in file("common")).
     libraryDependencies += "org.scalatest" %%% "scalatest" % Dependencies.version.scalaTest % Test
   ).
   jsSettings(
-    libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % "0.1.4"
+    libraryDependencies ++= {
+      import Dependencies.version._
+
+      Seq(
+        "io.github.widok" %%% "scala-js-momentjs" % "0.1.4",
+        "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % scalaz
+      )
+    }
+  ).jvmSettings(
+    libraryDependencies += Dependencies.libs.scalaz
   )
 
 lazy val commonJS = common.js

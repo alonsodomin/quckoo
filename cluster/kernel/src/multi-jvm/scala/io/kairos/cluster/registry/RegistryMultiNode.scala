@@ -70,7 +70,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with
         enterBarrier("shard-ready")
 
         enterBarrier("registering-job")
-        resolverProbe.expectMsgType[Validate].moduleId should be(TestModuleId)
+        resolverProbe.expectMsgType[Validate].artifactId should be(TestModuleId)
         resolverProbe.reply(TestJobPackage)
       }
 

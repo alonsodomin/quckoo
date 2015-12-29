@@ -1,11 +1,12 @@
 package io.kairos.resolver
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.pattern._
 import io.kairos.id.ArtifactId
-import io.kairos.protocol.ResolutionFailed
+import io.kairos.protocol.ExceptionThrown
 
 import scala.concurrent._
-import scala.util.{Failure, Success}
+import scalaz.Scalaz._
 
 /**
  * Created by aalonsodominguez on 22/08/15.
@@ -14,41 +15,28 @@ object Resolver {
 
   def props(resolve: Resolve) = Props(classOf[Resolver], resolve)
 
-  case class Validate(moduleId: ArtifactId)
-  case class Acquire(moduleId: ArtifactId)
-  case class ErrorResolvingModule(moduleId: ArtifactId, cause: Throwable)
+  case class Validate(artifactId: ArtifactId)
+  case class Acquire(artifactId: ArtifactId)
 
 }
 
 class Resolver(resolve: Resolve) extends Actor with ActorLogging {
 
   import Resolver._
-  import context.dispatcher
 
   def receive: Receive = {
-    case Validate(moduleId) =>
-      val origSender = sender()
-      doResolve(moduleId, download = false) onComplete {
-        case Success(result) =>
-          origSender ! result.fold(identity, identity)
+    case Validate(artifactId) =>
+      resolution(artifactId, download = false, sender())
 
-        case Failure(error) =>
-          origSender ! ErrorResolvingModule(moduleId, error)
-      }
-
-    case Acquire(moduleId) =>
-      val origSender = sender()
-      doResolve(moduleId, download = true) onComplete {
-        case Success(result) =>
-          origSender ! result.fold(identity, identity)
-
-        case Failure(error) =>
-          origSender ! ErrorResolvingModule(moduleId, error)
-      }
+    case Acquire(artifactId) =>
+      resolution(artifactId, download = true, sender())
   }
 
-  private def doResolve(moduleId: ArtifactId, download: Boolean): Future[Either[ResolutionFailed, Artifact]] = Future {
-    resolve(moduleId, download)
+  private[this] def resolution(artifactId: ArtifactId, download: Boolean, requestor: ActorRef): Unit = {
+    import context.dispatcher
+    Future { resolve(artifactId, download) } recover {
+      case t: Throwable => ExceptionThrown(t).failureNel[Artifact]
+    } pipeTo requestor
   }
-  
+
 }

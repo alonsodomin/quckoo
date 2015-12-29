@@ -32,6 +32,7 @@ object Dependencies {
 
     val scopt = "3.3.0"
     val monocle = "1.1.1"
+    val scalaz = "7.1.3"
   }
 
   // Common library definitions
@@ -79,7 +80,7 @@ object Dependencies {
 
     val testing = Seq(scalaTest, scalaMock).map(_ % Test)
 
-    val scalaz = "org.scalaz" %% "scalaz-core" % "7.1.4"
+    val scalaz = "org.scalaz" %% "scalaz-core" % version.scalaz
 
     object ScalaJsReact {
       val core  = Def.setting { "com.github.japgolly.scalajs-react" %%% "core"  % version.scalaJsReact }
@@ -101,7 +102,7 @@ object Dependencies {
     val network  = logging ++ testing ++ akka
     val client   = logging ++ testing ++ akka
     val cluster  = logging ++ testing ++ akka ++ Seq(
-      ivy, scalaXml
+      ivy, scalaXml, scalaz
     )
 
     val kernel = logging ++ testing ++ akka ++ Seq(

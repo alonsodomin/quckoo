@@ -1,12 +1,14 @@
 package io.kairos.worker
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import io.kairos.cluster.{Task, TaskFailureCause}
-import io.kairos.protocol.ResolutionFailed
-import io.kairos.resolver.{Artifact, Resolver}
+import io.kairos.cluster.Task
+import io.kairos.protocol.{Error, ExceptionThrown}
+import io.kairos.resolver.{Artifact, ResolutionResult, Resolver}
 import io.kairos.worker.JobExecutor.{Completed, Failed}
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
+import scalaz.Scalaz._
+import scalaz.{ValidationNel, _}
 
 /**
  * Created by aalonsodominguez on 05/07/15.
@@ -15,7 +17,7 @@ object JobExecutor {
 
   case class Execute(task: Task)
 
-  case class Failed(reason: TaskFailureCause)
+  case class Failed(errors: NonEmptyList[Error])
   case class Completed(result: Any)
 
   def props(resolver: ActorRef): Props =
@@ -35,27 +37,26 @@ class JobExecutor(resolver: ActorRef) extends Actor with ActorLogging {
 }
 
 private class JobRunner(task: Task, worker: ActorRef) extends Actor with ActorLogging {
-  import Resolver._
   
   def receive: Receive = {
-    case pkg: Artifact =>
-      log.info("Executing task. taskId={}", task.id)
-      pkg.newJob(task.jobClass, task.params) flatMap { job => Try(job.call()) } match {
-        case Success(result) =>
-          reply(Completed(result)) 
-        case Failure(cause) =>
-          reply(Failed(Right(cause))) 
-      }
-
-    case failed: ResolutionFailed =>
-      reply(Failed(Left(failed))) 
-
-    case error: ErrorResolvingModule =>
-      reply(Failed(Right(error.cause))) 
+    case result: ResolutionResult =>
+      import scala.util.{Failure, Success}
+      reply(result.map(runJob).flatMap {
+        case Success(r)     => r.successNel[Error]
+        case Failure(cause) => ExceptionThrown(cause).failureNel[Any]
+      })
   }
-  
-  private def reply(msg: Any): Unit = {
-    worker ! msg
+
+  private[this] def runJob(artifact: Artifact): Try[Any] =
+    artifact.newJob(task.jobClass, task.params) flatMap { job => Try(job.call()) }
+
+  private[this] def reply(msg: ValidationNel[Error, Any]): Unit = {
+    val response = msg match {
+      case Success(value)  => Completed(value)
+      case Failure(errors) => Failed(errors)
+    }
+
+    worker ! response
     context.stop(self)
   }
   

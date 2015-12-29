@@ -2,7 +2,7 @@ package io.kairos.examples.parameters
 
 import akka.actor._
 import io.kairos._
-import io.kairos.id.JobId
+import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 
 import scala.concurrent.duration._
@@ -55,9 +55,10 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
       context.become(produce)
 
     case JobRejected(_, cause) =>
+      cause.toZipper
       cause match {
         case Left(resolutionFailed) =>
-          log.error("Resolution of job spec failed. unresolvedDependencies={}", resolutionFailed.unresolved.mkString(", "))
+          log.error("Resolution of job spec failed. unresolvedDependencies={}", resolutionFailed.toString)
 
         case Right(thrown) =>
           log.error("Registration of job spec failed due to an exception. Retrying...")

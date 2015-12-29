@@ -6,10 +6,10 @@ import akka.persistence.{PersistentActor, SnapshotOffer}
 import io.kairos.JobSpec
 import io.kairos.id._
 import io.kairos.protocol._
-import io.kairos.resolver.Resolver.ErrorResolvingModule
-import io.kairos.resolver.{Artifact, Resolver}
+import io.kairos.resolver.{ResolutionResult, Resolver}
 
 import scala.concurrent.duration._
+import scalaz._
 
 /**
  * Created by aalonsodominguez on 10/08/15.
@@ -17,8 +17,10 @@ import scala.concurrent.duration._
 object Registry {
   import RegistryProtocol._
 
-  def props(resolver: ActorRef): Props =
-    Props(classOf[Registry], resolver)
+  val DefaultSnapshotFrequency = 15 minutes
+
+  def props(resolver: ActorRef, snapshotFrequency: FiniteDuration = DefaultSnapshotFrequency): Props =
+    Props(classOf[Registry], resolver, snapshotFrequency)
 
   val shardName      = "Registry"
   val numberOfShards = 100
@@ -71,12 +73,12 @@ object Registry {
 
 }
 
-class Registry(resolver: ActorRef) extends PersistentActor with ActorLogging {
+class Registry(resolver: ActorRef, snapshotFrequency: FiniteDuration) extends PersistentActor with ActorLogging {
   import Registry._
   import RegistryProtocol._
   import Resolver._
   import context.dispatcher
-  private val snapshotTask = context.system.scheduler.schedule(15 minutes, 15 minutes, self, Snap)
+  private val snapshotTask = context.system.scheduler.schedule(snapshotFrequency, snapshotFrequency, self, Snap)
 
   private var store = RegistryStore.empty
 
@@ -97,22 +99,21 @@ class Registry(resolver: ActorRef) extends PersistentActor with ActorLogging {
       val handler = context.actorOf(Props(classOf[ResolutionHandler], jobSpec, self, sender()))
       resolver.tell(Validate(jobSpec.artifactId), handler)
 
-    case (jobSpec: JobSpec, _: Artifact) =>
-      log.debug("Job module has been successfully resolved. artifactId={}", jobSpec.artifactId)
-      val jobId = JobId(jobSpec)
-      persist(JobAccepted(jobId, jobSpec)) { event =>
-        log.info("Job spec has been registered. jobId={}, name={}", jobId, jobSpec.displayName)
+    case (jobSpec: JobSpec, resolution: ResolutionResult) =>
+      val result = resolution match {
+        case Success(_) =>
+          log.debug("Job artifact has been successfully resolved. artifactId={}", jobSpec.artifactId)
+          val jobId = JobId(jobSpec)
+          JobAccepted(jobId, jobSpec)
+
+        case Failure(errors) =>
+          log.error("Couldn't validate the job artifact id. " + errors)
+          JobRejected(jobSpec.artifactId, errors)
+      }
+      persist(result) { event =>
         store = store.updated(event)
         sender() ! event
       }
-
-    case (jobSpec: JobSpec, failed: ResolutionFailed) =>
-      log.error(
-        "Couldn't resolve the job module. artifactId={}, description={}",
-        jobSpec.artifactId,
-        failed.description
-      )
-      sender() ! JobRejected(jobSpec.artifactId, Left(failed))
 
     case DisableJob(jobId) =>
       if (!store.isEnabled(jobId)) {
@@ -144,19 +145,9 @@ class Registry(resolver: ActorRef) extends PersistentActor with ActorLogging {
 private class ResolutionHandler(jobSpec: JobSpec, registry: ActorRef, requestor: ActorRef) extends Actor {
 
   def receive: Receive = {
-    case pkg: Artifact =>
-      reply(jobSpec -> pkg)
-
-    case failed: ResolutionFailed =>
-      reply(jobSpec -> failed)
-
-    case error: ErrorResolvingModule =>
-      reply(error)
-  }
-
-  private def reply(msg: Any): Unit = {
-    registry.tell(msg, requestor)
-    context.stop(self)
+    case result: ResolutionResult =>
+      registry.tell(jobSpec -> result, requestor)
+      context.stop(self)
   }
 
 }
