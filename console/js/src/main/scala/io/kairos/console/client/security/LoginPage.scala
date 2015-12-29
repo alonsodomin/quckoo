@@ -45,7 +45,6 @@ object LoginPage {
     import LoginForm.LoginInfo
 
     def loginHandler(loginInfo: LoginInfo): Callback = {
-      import Notification.Implicits._
 
       def authFailedNotification(holder: NotificationHolder): NotificationHolder =
         holder.copy(notifications = holder.notifications :+ Notification.error("Username or password incorrect"))

@@ -31,7 +31,7 @@ object NotificationDisplay {
       <.div(msgs.map { msg =>
         <.div(^.`class` := bgClassForLevel(msg.level), ^.padding := 5.px,
           <.i(^.`class` := s"fa ${iconClassForLevel(msg.level)}"),
-          msg.content.runNow()
+          msg.renderer.runNow()
         )
       })
     ).build
