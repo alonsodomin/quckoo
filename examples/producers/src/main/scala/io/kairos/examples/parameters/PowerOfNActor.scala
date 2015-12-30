@@ -55,15 +55,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
       context.become(produce)
 
     case JobRejected(_, cause) =>
-      cause.toZipper
-      cause match {
-        case Left(resolutionFailed) =>
-          log.error("Resolution of job spec failed. unresolvedDependencies={}", resolutionFailed.toString)
-
-        case Right(thrown) =>
-          log.error("Registration of job spec failed due to an exception. Retrying...")
-          scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
-      }
+      log.error("Resolution of job spec failed. cause={}", cause.list.mkString(","))
       context.setReceiveTimeout(Duration.Undefined)
 
     case ReceiveTimeout =>

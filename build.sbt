@@ -56,7 +56,10 @@ lazy val common = (crossProject in file("common")).
   ).
   settings(commonSettings: _*).
   settings(
-    libraryDependencies += "org.scalatest" %%% "scalatest" % Dependencies.version.scalaTest % Test
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "upickle" % "0.3.6",
+      "org.scalatest" %%% "scalatest" % Dependencies.version.scalaTest % Test
+    )
   ).
   jsSettings(
     libraryDependencies ++= {

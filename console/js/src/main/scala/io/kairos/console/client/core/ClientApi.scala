@@ -6,6 +6,7 @@ import io.kairos.console.info.ClusterInfo
 import io.kairos.console.protocol.{LoginRequest, RegisterJobResponse}
 import io.kairos.console.{Api, RegistryApi}
 import io.kairos.id.JobId
+import io.kairos.serialization._
 import org.scalajs.dom
 
 import scala.concurrent.{ExecutionContext, Future}

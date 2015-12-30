@@ -58,13 +58,13 @@ class IvyResolve(config: IvyConfiguration) extends Resolve {
       report.getUnresolvedDependencies.map(_.getId).map { moduleId =>
         val unresolvedId = ArtifactId(moduleId.getOrganisation, moduleId.getName, moduleId.getRevision)
         UnresolvedDependency(unresolvedId).failureNel[ResolveReport]
-      }.reduce(_ |@| _ { _ => report })
+      }.foldLeft(report.successNel[ErrorResponse])((a, b) => (a |@| b) { case (_, r) => r })
     }
 
     def downloadFailed(report: ResolveReport): ValidationNel[ErrorResponse, ResolveReport] = {
       report.getArtifactsReports(DownloadStatus.FAILED, true).map { artifactReport =>
         DownloadFailed(artifactReport.getName).failureNel[ResolveReport]
-      }.reduce(_ |@| _ { _ => report })
+      }.foldLeft(report.successNel[ErrorResponse])((a, b) => (a |@| b) { case (_, r) => r })
     }
 
     def artifactLocations(artifactReports: Seq[ArtifactDownloadReport]): Seq[URL] = {

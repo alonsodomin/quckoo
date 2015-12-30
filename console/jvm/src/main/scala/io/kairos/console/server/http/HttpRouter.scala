@@ -11,6 +11,7 @@ import de.heikoseeberger.akkasse.EventStreamMarshalling
 import io.kairos.JobSpec
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.boot.ClientBootstrap
+import io.kairos.serialization._
 
 trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMarshalling {
   this: ServerFacade =>

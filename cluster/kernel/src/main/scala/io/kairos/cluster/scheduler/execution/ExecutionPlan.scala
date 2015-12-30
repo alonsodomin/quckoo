@@ -1,14 +1,14 @@
 package io.kairos.cluster.scheduler.execution
 
-import java.time.{Clock, Duration => JDuration, ZonedDateTime}
+import java.time.{Duration => JDuration}
 import java.util.UUID
 
 import akka.actor._
 import io.kairos.Trigger._
 import io.kairos.cluster.TaskFailureCause
 import io.kairos.id._
-import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
-import io.kairos.time.{TimeSource, DateTime}
+import io.kairos.protocol.{ExceptionThrown, RegistryProtocol, SchedulerProtocol}
+import io.kairos.time.{DateTime, TimeSource}
 import io.kairos.{JobSpec, Trigger}
 
 import scala.concurrent.duration._
@@ -81,15 +81,8 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
       context.become(nextStage)
   }
 
-  private def shouldRetry(cause: TaskFailureCause): Boolean = cause match {
-    case Left(resolutionFailed) =>
-      log.error("Worker node could not resolve dependencies for the execution. jobId={}, unresolvedDependencies={}")
-      true
-
-    case Right(exception) =>
-      log.error(exception, "Execution threw exception on worker. planId={}", planId)
-      false
-  }
+  private def shouldRetry(cause: TaskFailureCause): Boolean =
+    !cause.list.exists(_.isInstanceOf[ExceptionThrown])
 
   private def shutdown: Receive = {
     if (triggerTask.isDefined) {
