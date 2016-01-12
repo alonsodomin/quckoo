@@ -8,6 +8,7 @@ import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
 import io.kairos.cluster.Task
 import io.kairos.cluster.protocol.WorkerProtocol
+import io.kairos.id.ArtifactId
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}

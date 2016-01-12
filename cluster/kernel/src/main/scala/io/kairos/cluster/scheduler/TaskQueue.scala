@@ -3,9 +3,9 @@ package io.kairos.cluster.scheduler
 import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import io.kairos.cluster.protocol.WorkerProtocol
+import io.kairos.cluster.scheduler.execution.ExecutionFSM
 import io.kairos.cluster.{Task, WorkerId}
 import io.kairos.id.TaskId
-import io.kairos.cluster.scheduler.execution.ExecutionFSM
 
 import scala.collection.immutable.Queue
 import scala.concurrent.duration._
@@ -118,7 +118,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
     case Enqueue(task) =>
       // Enqueue messages will always come from inside the cluster so accept them all
-      pendingTasks = pendingTasks.enqueue(task, sender())
+      pendingTasks = pendingTasks.enqueue((task, sender()))
       sender ! EnqueueAck(task.id)
       notifyWorkers()
 

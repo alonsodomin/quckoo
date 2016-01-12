@@ -6,11 +6,13 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.testkit._
 import io.kairos.cluster.Task
-import io.kairos.id.TaskId
-import io.kairos.resolver.Resolver
+import io.kairos.id.{ArtifactId, TaskId}
+import io.kairos.protocol.{ExceptionThrown, UnresolvedDependency}
+import io.kairos.resolver.{Artifact, Resolver}
 import org.scalatest._
 
 import scala.concurrent.duration._
+import scalaz._
 
 /**
  * Created by aalonsodominguez on 04/08/15.
@@ -27,6 +29,8 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
   import JobExecutorSpec._
   import Resolver._
 
+  import Scalaz._
+
   val resolverProbe = TestProbe()
   val jobExecutor = TestActorRef(JobExecutor.props(resolverProbe.ref), self)
 
@@ -36,17 +40,16 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
   "A job executor actor" must "fail an execution if the dependency resolution fails" in {
     val task = Task(TestExecutionId, artifactId = TestModuleId, jobClass = TestJobClass)
-    val expectedResolutionFailed = ResolutionFailed(Seq("com.bar.foo"))
-    val expectedResolverResponse = Left(expectedResolutionFailed)
+    val expectedResolutionFailed = UnresolvedDependency(TestModuleId)
 
     jobExecutor ! JobExecutor.Execute(task)
 
     resolverProbe.expectMsg(Acquire(TestModuleId))
 
     within(2 seconds) {
-      resolverProbe.reply(expectedResolutionFailed)
+      resolverProbe.reply(expectedResolutionFailed.failureNel[Artifact])
       awaitAssert {
-        expectMsg(JobExecutor.Failed(expectedResolverResponse))
+        expectMsg(JobExecutor.Failed(NonEmptyList(expectedResolutionFailed)))
       }
     }
   }
@@ -61,16 +64,9 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
     jobExecutor ! JobExecutor.Execute(task)
 
     resolverProbe.expectMsg(Acquire(TestModuleId))
-
     resolverProbe.reply(failingPackage)
 
-    expectMsgType[JobExecutor.Failed].reason match {
-      case Right(x) =>
-        x.getClass should be (expectedException.getClass)
-        x.getMessage should be (expectedException.getMessage)
-      case _ =>
-        fail("Expected a ClassNotFoundException as the cause of the failure.")
-    }
+    expectMsgType[JobExecutor.Failed].errors should be(ExceptionThrown(expectedException))
   }
 
 }
