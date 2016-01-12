@@ -48,7 +48,8 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
 
     val task = Task(UUID.randomUUID(), TestArtifactId, Map.empty, TestJobClass)
 
-    val worker = TestActorRef(Worker.props(clusterClientProbe.ref, executorProps, 1 day, 1 second))
+    val ackTimeout = 1 second
+    val worker = TestActorRef(Worker.props(clusterClientProbe.ref, executorProps, 1 day, ackTimeout))
 
     "auto-register itself with the task queue" in {
       val registration = clusterClientProbe.expectMsgType[SendToAll]
@@ -90,7 +91,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
     "resend task done notification if queue doesn't reply whiting the ack timeout" in {
       val taskId = task.id
 
-      val waitingForTimeout = Future { blocking { TimeUnit.SECONDS.sleep(1) } }
+      val waitingForTimeout = Future { blocking { TimeUnit.SECONDS.sleep(ackTimeout.toSeconds) } }
       whenReady(waitingForTimeout, Timeout(Span(1, Seconds))) { _ =>
         val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
         queueMsg.path should be (SchedulerPath)
@@ -104,7 +105,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
 
       worker ! TaskDoneAck(anotherTaskId)
 
-      val waitingForTimeout = Future { blocking { TimeUnit.SECONDS.sleep(1) } }
+      val waitingForTimeout = Future { blocking { TimeUnit.SECONDS.sleep(ackTimeout.toSeconds) } }
       whenReady(waitingForTimeout, Timeout(Span(1, Seconds))) { _ =>
         val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
         queueMsg.path should be (SchedulerPath)

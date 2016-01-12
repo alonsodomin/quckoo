@@ -12,7 +12,7 @@ object Dependencies {
 
     // Testing --------
 
-    val scalaTest = "3.0.0-M10"
+    val scalaTest = "3.0.0-M15"
     val scalaMock = "3.2.2"
 
     // Akka ----------

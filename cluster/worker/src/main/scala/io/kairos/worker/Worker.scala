@@ -97,6 +97,7 @@ class Worker(clusterClient: ActorRef,
     case ReceiveTimeout =>
       log.warning("Didn't receive any ack from task queue in the last {}, retrying", queueAckTimeout)
       sendToQueue(TaskDone(workerId, taskId, result))
+      context.setReceiveTimeout(queueAckTimeout)
   }
 
   private def sendToQueue(msg: Any): Unit = {
