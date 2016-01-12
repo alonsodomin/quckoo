@@ -7,9 +7,14 @@ import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestProbe}
 import io.kairos.JobSpec
 import io.kairos.cluster.core.RegistryReceptionist
+import io.kairos.id.ArtifactId
 import io.kairos.multijvm.MultiNodeClusterSpec
+import io.kairos.protocol.ErrorResponse
 import io.kairos.protocol.RegistryProtocol.{JobAccepted, RegisterJob}
+import io.kairos.resolver.Artifact
 import io.kairos.resolver.Resolver.Validate
+
+import scalaz._
 
 /**
  * Created by domingueza on 28/08/15.
@@ -26,9 +31,9 @@ class RegistryMultiNodeSpecMultiJvmProxy extends RegistryMultiNode
 
 object RegistryMultiNode {
 
-  final val TestModuleId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
-  final val TestJobSpec = JobSpec("Examples", artifactId = TestModuleId, jobClass = "io.kairos.examples.paramteters.PowerOfNJob")
-  final val TestJobPackage = Artifact(TestModuleId, Seq())
+  final val TestArtifactId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
+  final val TestJobSpec = JobSpec("Examples", artifactId = TestArtifactId, jobClass = "io.kairos.examples.paramteters.PowerOfNJob")
+  final val TestArtifact = Artifact(TestArtifactId, Seq())
 
 }
 
@@ -36,6 +41,8 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with
 
   import RegistryMultiNode._
   import RegistryNodesConfig._
+
+  import Scalaz._
 
   implicit val materializer = ActorMaterializer()
 
@@ -70,8 +77,8 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with
         enterBarrier("shard-ready")
 
         enterBarrier("registering-job")
-        resolverProbe.expectMsgType[Validate].artifactId should be(TestModuleId)
-        resolverProbe.reply(TestJobPackage)
+        resolverProbe.expectMsgType[Validate].artifactId should be(TestArtifactId)
+        resolverProbe.reply(TestArtifact.successNel[ErrorResponse])
       }
 
       enterBarrier("finished")

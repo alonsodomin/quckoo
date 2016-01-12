@@ -2,7 +2,7 @@ package io.kairos.cluster.scheduler
 
 import akka.testkit._
 import io.kairos.JobSpec
-import io.kairos.id.JobId
+import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.RegistryProtocol.JobNotEnabled
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
@@ -13,8 +13,8 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
  */
 object SchedulerSpec {
 
-  final val TestModuleId = ArtifactId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec("foo", "foo desc", TestModuleId, "com.example.Job")
+  final val TestArtifactId = ArtifactId("com.example", "bar", "test")
+  final val TestJobSpec = JobSpec("foo", "foo desc", TestArtifactId, "com.example.Job")
   final val TestJobId = JobId(TestJobSpec)
 
 }

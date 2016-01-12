@@ -5,10 +5,12 @@ import java.net.URL
 import akka.testkit._
 import io.kairos.JobSpec
 import io.kairos.id.{ArtifactId, JobId}
-import io.kairos.protocol.RegistryProtocol
+import io.kairos.protocol.{ErrorResponse, RegistryProtocol, UnresolvedDependency}
 import io.kairos.resolver.{Artifact, Resolver}
 import io.kairos.test.TestActorSystem
 import org.scalatest._
+
+import scalaz._
 
 /**
  * Created by domingueza on 21/08/15.
@@ -30,6 +32,8 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
   import RegistrySpec._
   import Resolver._
 
+  import Scalaz._
+
   val eventListener = TestProbe()
   var testJobId : Option[JobId] = None
 
@@ -49,16 +53,16 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     val registry = TestActorRef(Registry.props(resolverProbe.ref))
 
     "reject a job if it fails to resolve its dependencies" in {
-      val expectedResolutionFailed = UnresolvedDependencies(Seq("com.foo.bar"))
+      val expectedResolutionFailed = UnresolvedDependency(TestArtifactId)
 
       registry ! RegisterJob(TestJobSpec)
 
       val resolveMsg = resolverProbe.expectMsgType[Validate]
       resolveMsg.artifactId should be (TestArtifactId)
 
-      resolverProbe.reply(expectedResolutionFailed)
+      resolverProbe.reply(expectedResolutionFailed.failureNel[Artifact])
 
-      expectMsgType[JobRejected].cause should be (Left(expectedResolutionFailed))
+      expectMsgType[JobRejected].cause should be (NonEmptyList(expectedResolutionFailed))
     }
 
     "notify that a specific job is not enabled when attempting to disabling it" in {
@@ -77,7 +81,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
       val resolveMsg = resolverProbe.expectMsgType[Validate]
       resolveMsg.artifactId should be (TestArtifactId)
 
-      resolverProbe.reply(TestArtifact)
+      resolverProbe.reply(TestArtifact.successNel[ErrorResponse])
 
       val registryResponse = expectMsgType[JobAccepted]
       registryResponse.job should be (TestJobSpec)

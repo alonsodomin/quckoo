@@ -8,12 +8,14 @@ import io.kairos.cluster.protocol.WorkerProtocol._
 import io.kairos.cluster.scheduler.execution.ExecutionFSM
 import io.kairos.cluster.{Task, TaskFailureCause}
 import io.kairos.id.ArtifactId
+import io.kairos.protocol.ExceptionThrown
 import io.kairos.test.TestActorSystem
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent._
 import scala.concurrent.duration._
+import scalaz.NonEmptyList
 
 /**
  * Created by aalonsodominguez on 18/08/15.
@@ -119,7 +121,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
       failingWorker.expectMsg(task)
       failingExec.expectMsg(ExecutionFSM.Start)
 
-      val cause: TaskFailureCause = Right(new Exception("TEST EXCEPTION"))
+      val cause: TaskFailureCause = NonEmptyList(ExceptionThrown(new Exception("TEST EXCEPTION")))
       taskQueue.tell(TaskFailed(failingWorkerId, task.id, cause), failingWorker.ref)
 
       failingExec.expectMsgType[ExecutionFSM.Finish].result should be(Left(cause))

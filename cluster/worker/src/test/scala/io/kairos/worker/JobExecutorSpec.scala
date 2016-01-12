@@ -18,9 +18,11 @@ import scalaz._
  * Created by aalonsodominguez on 04/08/15.
  */
 object JobExecutorSpec {
-  val TestExecutionId: TaskId = UUID.randomUUID()
-  val TestJobClass = "com.example.FooClass"
-  val TestModuleId = ArtifactId("io.kairos", "test", "latest")
+
+  final val TestExecutionId: TaskId = UUID.randomUUID()
+  final val TestJobClass = "com.example.FooClass"
+  final val TestArtifactId = ArtifactId("io.kairos", "test", "latest")
+
 }
 
 class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatSpecLike with Matchers
@@ -39,12 +41,12 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
   }
 
   "A job executor actor" must "fail an execution if the dependency resolution fails" in {
-    val task = Task(TestExecutionId, artifactId = TestModuleId, jobClass = TestJobClass)
-    val expectedResolutionFailed = UnresolvedDependency(TestModuleId)
+    val task = Task(TestExecutionId, artifactId = TestArtifactId, jobClass = TestJobClass)
+    val expectedResolutionFailed = UnresolvedDependency(TestArtifactId)
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    resolverProbe.expectMsg(Acquire(TestModuleId))
+    resolverProbe.expectMsg(Acquire(TestArtifactId))
 
     within(2 seconds) {
       resolverProbe.reply(expectedResolutionFailed.failureNel[Artifact])
@@ -56,14 +58,14 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
   it must "fail if instantiation of the job failed" in {
     val params = Map("a" -> 7)
-    val task = Task(TestExecutionId, TestModuleId, params, TestJobClass)
+    val task = Task(TestExecutionId, TestArtifactId, params, TestJobClass)
 
     val expectedException = new ClassNotFoundException(TestJobClass)
-    val failingPackage = Artifact(TestModuleId, Seq(new URL("http://www.example.com")))
+    val failingPackage = Artifact(TestArtifactId, Seq(new URL("http://www.example.com")))
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    resolverProbe.expectMsg(Acquire(TestModuleId))
+    resolverProbe.expectMsg(Acquire(TestArtifactId))
     resolverProbe.reply(failingPackage)
 
     expectMsgType[JobExecutor.Failed].errors should be(ExceptionThrown(expectedException))

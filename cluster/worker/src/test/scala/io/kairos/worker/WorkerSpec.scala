@@ -9,6 +9,7 @@ import akka.testkit._
 import io.kairos.cluster.Task
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.id.ArtifactId
+import io.kairos.protocol.ExceptionThrown
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
@@ -16,14 +17,15 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent._
 import scala.concurrent.duration._
+import scalaz.NonEmptyList
 
 /**
  * Created by domingueza on 21/08/15.
  */
 object WorkerSpec {
 
-  val TestJobClass = "com.example.FooClass"
-  val TestModuleId = ArtifactId("com.example", "foo", "latest")
+  final val TestJobClass = "com.example.FooClass"
+  final val TestArtifactId = ArtifactId("com.example", "foo", "latest")
 
 }
 
@@ -44,7 +46,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
     val executorProbe = TestProbe()
     val executorProps = TestActors.forwardActorProps(executorProbe.ref)
 
-    val task = Task(UUID.randomUUID(), TestModuleId, Map.empty, TestJobClass)
+    val task = Task(UUID.randomUUID(), TestArtifactId, Map.empty, TestJobClass)
 
     val worker = TestActorRef(Worker.props(clusterClientProbe.ref, executorProps, 1 day, 1 second))
 
@@ -69,7 +71,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
     }
 
     "not overwhelm the executor with more tasks if we are busy" in {
-      val anotherTask = Task(UUID.randomUUID(), TestModuleId, Map.empty, TestJobClass)
+      val anotherTask = Task(UUID.randomUUID(), TestArtifactId, Map.empty, TestJobClass)
       worker ! anotherTask
 
       executorProbe.expectNoMsg(500 millis)
@@ -130,11 +132,12 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       val taskId = task.id
       val cause = new Exception("TEST EXCEPTION")
 
-      executorProbe.send(worker, JobExecutor.Failed(Right(cause)))
+      val expectedError = ExceptionThrown(cause)
+      executorProbe.send(worker, JobExecutor.Failed(NonEmptyList(expectedError)))
 
       val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
       queueMsg.path should be (SchedulerPath)
-      queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, Right(`cause`)) => }
+      queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, NonEmptyList(`expectedError`)) => }
     }
 
     "send one more task to the executor" in {
