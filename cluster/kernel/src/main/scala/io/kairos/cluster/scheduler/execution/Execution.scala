@@ -1,5 +1,6 @@
 package io.kairos.cluster.scheduler.execution
 
+import io.kairos.Faults
 import io.kairos.cluster._
 import io.kairos.id.PlanId
 
@@ -13,7 +14,7 @@ object Execution {
   sealed trait Outcome
   case object NotRunYet extends Outcome
   case class Success(result: Any) extends Outcome
-  case class Failure(cause: TaskFailureCause) extends Outcome
+  case class Failure(cause: Faults) extends Outcome
   case class Interrupted(reason: String) extends Outcome
   case class NeverRun(reason: String) extends Outcome
   case object NeverEnding extends Outcome

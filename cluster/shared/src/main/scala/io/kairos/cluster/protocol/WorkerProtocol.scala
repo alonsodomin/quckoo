@@ -1,5 +1,6 @@
 package io.kairos.cluster.protocol
 
+import io.kairos.Faults
 import io.kairos.cluster._
 import io.kairos.id.TaskId
 
@@ -12,7 +13,7 @@ object WorkerProtocol {
   case class RegisterWorker(workerId: WorkerId) extends WorkerMessage
   case class RequestTask(workerId: WorkerId) extends WorkerMessage
   case class TaskDone(workerId: WorkerId, taskId: TaskId, result: Any) extends WorkerMessage
-  case class TaskFailed(workerId: WorkerId, taskId: TaskId, cause: TaskFailureCause) extends WorkerMessage
+  case class TaskFailed(workerId: WorkerId, taskId: TaskId, cause: Faults) extends WorkerMessage
 
   // Messages to workers
   case object TaskReady

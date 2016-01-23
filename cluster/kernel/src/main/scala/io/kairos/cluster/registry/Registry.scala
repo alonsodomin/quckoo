@@ -1,13 +1,13 @@
 package io.kairos.cluster.registry
 
-import akka.actor.{ActorLogging, ActorRef, Props}
+import akka.actor.{ActorLogging, Props}
 import akka.cluster.sharding.ShardRegion
 import akka.pattern._
 import akka.persistence.{PersistentActor, SnapshotOffer}
-import io.kairos.JobSpec
 import io.kairos.id._
 import io.kairos.protocol._
 import io.kairos.resolver.Resolve
+import io.kairos.{ExceptionThrown, JobSpec}
 
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
@@ -21,8 +21,8 @@ object Registry {
 
   val DefaultSnapshotFrequency = 15 minutes
 
-  def props(resolver: ActorRef, snapshotFrequency: FiniteDuration = DefaultSnapshotFrequency): Props =
-    Props(classOf[Registry], resolver, snapshotFrequency)
+  def props(resolve: Resolve, snapshotFrequency: FiniteDuration = DefaultSnapshotFrequency): Props =
+    Props(classOf[Registry], resolve, snapshotFrequency)
 
   val shardName      = "Registry"
   val numberOfShards = 100

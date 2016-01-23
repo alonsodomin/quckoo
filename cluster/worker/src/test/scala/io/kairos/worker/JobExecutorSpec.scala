@@ -7,8 +7,8 @@ import akka.actor.ActorSystem
 import akka.testkit._
 import io.kairos.cluster.Task
 import io.kairos.id.{ArtifactId, TaskId}
-import io.kairos.protocol.{ExceptionThrown, Fault, UnresolvedDependency}
-import io.kairos.resolver.{Artifact, Resolver}
+import io.kairos.resolver.Artifact
+import io.kairos.{ExceptionThrown, Fault, UnresolvedDependency}
 import org.scalatest._
 
 import scala.concurrent.duration._
@@ -29,7 +29,6 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
   with BeforeAndAfterAll with ImplicitSender with DefaultTimeout {
 
   import JobExecutorSpec._
-  import Resolver._
 
   import Scalaz._
 

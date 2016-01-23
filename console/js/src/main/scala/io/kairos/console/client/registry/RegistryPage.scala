@@ -1,10 +1,9 @@
 package io.kairos.console.client.registry
 
-import io.kairos.JobSpec
+import io.kairos._
 import io.kairos.console.client.core.ClientApi
 import io.kairos.console.client.layout.{Notification, NotificationDisplay}
 import io.kairos.id.JobId
-import io.kairos.protocol._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -30,7 +29,7 @@ object RegistryPage {
 
     def handleJobSubmit(jobSpec: JobSpec): Callback = {
 
-      def jobRejectedMsg(state: State, cause: JobRejectedCause): State = {
+      def jobRejectedMsg(state: State, cause: Faults): State = {
         def resolutionFailed = Notification.error {
           <.div(
             <.p("Dependency resolution failed:"),

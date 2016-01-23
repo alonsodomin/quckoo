@@ -1,9 +1,9 @@
 package io.kairos.worker
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern._
+import io.kairos._
 import io.kairos.cluster.Task
-import io.kairos.protocol._
 import io.kairos.resolver.{Artifact, Resolve}
 
 import scala.util.Try
@@ -17,11 +17,11 @@ object JobExecutor {
 
   case class Execute(task: Task)
 
-  case class Failed(errors: NonEmptyList[Fault])
+  case class Failed(errors: Faults)
   case class Completed(result: Any)
 
-  def props(resolver: ActorRef): Props =
-    Props(classOf[JobExecutor], resolver)
+  def props(resolve: Resolve): Props =
+    Props(classOf[JobExecutor], resolve)
 }
 
 class JobExecutor(resolve: Resolve) extends Actor with ActorLogging {

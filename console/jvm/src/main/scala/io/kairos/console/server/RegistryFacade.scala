@@ -1,8 +1,7 @@
 package io.kairos.console.server
 
-import io.kairos.JobSpec
-import io.kairos.console.protocol.RegisterJobResponse
 import io.kairos.id.JobId
+import io.kairos.{JobSpec, Validated}
 
 import scala.concurrent.Future
 
@@ -11,7 +10,7 @@ import scala.concurrent.Future
   */
 trait RegistryFacade {
 
-  def registerJob(jobSpec: JobSpec): Future[RegisterJobResponse]
+  def registerJob(jobSpec: JobSpec): Future[Validated[JobId]]
 
   def registeredJobs: Future[Map[JobId, JobSpec]]
 

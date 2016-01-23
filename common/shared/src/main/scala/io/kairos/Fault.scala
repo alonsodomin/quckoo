@@ -1,4 +1,4 @@
-package io.kairos.protocol
+package io.kairos
 
 import io.kairos.id.ArtifactId
 

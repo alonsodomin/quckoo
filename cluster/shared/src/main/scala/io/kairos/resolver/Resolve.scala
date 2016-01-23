@@ -1,7 +1,7 @@
 package io.kairos.resolver
 
+import io.kairos._
 import io.kairos.id.ArtifactId
-import io.kairos.protocol._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -10,8 +10,6 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait Resolve {
 
-  def apply(artifactId: ArtifactId, download: Boolean)(implicit ec: ExecutionContext): Future[ResolutionResult]
-
-  def res(artifactId: ArtifactId, download: Boolean)(implicit ec: ExecutionContext): Future[Response[Artifact]]
+  def apply(artifactId: ArtifactId, download: Boolean)(implicit ec: ExecutionContext): Future[Validated[Artifact]]
 
 }

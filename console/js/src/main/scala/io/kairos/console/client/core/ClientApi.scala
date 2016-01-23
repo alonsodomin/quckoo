@@ -1,12 +1,12 @@
 package io.kairos.console.client.core
 
-import io.kairos.JobSpec
 import io.kairos.console.client.security.ClientAuth
 import io.kairos.console.info.ClusterInfo
-import io.kairos.console.protocol.{LoginRequest, RegisterJobResponse}
+import io.kairos.console.protocol.LoginRequest
 import io.kairos.console.{Api, RegistryApi}
 import io.kairos.id.JobId
 import io.kairos.serialization._
+import io.kairos.{JobSpec, Validated}
 import org.scalajs.dom
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -48,12 +48,12 @@ object ClientApi extends Api with RegistryApi with ClientAuth {
     }
   }
 
-  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[RegisterJobResponse] = {
+  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]] = {
     import upickle.default._
 
     Ajax.post(JobsURI, write(jobSpec), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
       console.log(xhr.responseText)
-      read[RegisterJobResponse](xhr.responseText)
+      read[Validated[JobId]](xhr.responseText)
     }
   }
 

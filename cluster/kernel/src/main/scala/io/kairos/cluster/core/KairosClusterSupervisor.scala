@@ -12,7 +12,6 @@ import io.kairos.cluster.registry.Registry
 import io.kairos.cluster.scheduler.{Scheduler, TaskQueue}
 import io.kairos.cluster.{KairosClusterSettings, KairosStatus}
 import io.kairos.protocol._
-import io.kairos.resolver.Resolver
 import io.kairos.resolver.ivy.IvyResolve
 import io.kairos.time.TimeSource
 
@@ -40,8 +39,7 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)
   private val cluster = Cluster(context.system)
   private val mediator = DistributedPubSub(context.system).mediator
 
-  private val resolver = context.watch(context.actorOf(
-    Resolver.props(new IvyResolve(settings.ivyConfiguration)), "resolver"))
+
   private val registry = startRegistry
   context.actorOf(RegistryReceptionist.props(registry), "registry")
 
@@ -92,7 +90,7 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)
     log.info("Starting registry shards...")
     ClusterSharding(context.system).start(
       typeName        = Registry.shardName,
-      entityProps     = Registry.props(resolver),
+      entityProps     = Registry.props(new IvyResolve(settings.ivyConfiguration)),
       settings        = ClusterShardingSettings(context.system).withRole("registry"),
       extractEntityId = Registry.idExtractor,
       extractShardId  = Registry.shardResolver

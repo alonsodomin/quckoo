@@ -3,13 +3,15 @@ package io.kairos.cluster.registry
 import java.net.URL
 
 import akka.testkit._
-import io.kairos.JobSpec
+import io.kairos._
 import io.kairos.id.{ArtifactId, JobId}
-import io.kairos.protocol.{Fault, RegistryProtocol, UnresolvedDependency}
-import io.kairos.resolver.{Artifact, Resolver}
+import io.kairos.protocol.RegistryProtocol
+import io.kairos.resolver.{Artifact, Resolve}
 import io.kairos.test.TestActorSystem
+import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
+import scala.concurrent.{ExecutionContext, Future}
 import scalaz._
 
 /**
@@ -26,16 +28,17 @@ object RegistrySpec {
 }
 
 class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with ImplicitSender
-  with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
+  with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers with MockFactory {
 
   import RegistryProtocol._
   import RegistrySpec._
-  import Resolver._
 
   import Scalaz._
 
   val eventListener = TestProbe()
   var testJobId : Option[JobId] = None
+
+  val mockResolve = mock[Resolve]
 
   before {
     system.eventStream.subscribe(eventListener.ref, classOf[RegistryEvent])
@@ -49,20 +52,32 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     TestKit.shutdownActorSystem(system)
 
   "A job registry" should {
-    val resolverProbe = TestProbe()
-    val registry = TestActorRef(Registry.props(resolverProbe.ref))
+    val registry = TestActorRef(Registry.props(mockResolve))
 
     "reject a job if it fails to resolve its dependencies" in {
-      val expectedResolutionFailed = UnresolvedDependency(TestArtifactId)
+      val unresolvedDependency = UnresolvedDependency(TestArtifactId)
+
+      (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
+        expects(TestArtifactId, false, *).
+        returning(Future.successful(unresolvedDependency.failureNel[Artifact]))
 
       registry ! RegisterJob(TestJobSpec)
 
-      val resolveMsg = resolverProbe.expectMsgType[Validate]
-      resolveMsg.artifactId should be (TestArtifactId)
+      expectMsgType[JobRejected].cause should be (NonEmptyList(unresolvedDependency))
+      eventListener.expectMsgType[JobRejected].cause should be (NonEmptyList(unresolvedDependency))
+    }
 
-      resolverProbe.reply(expectedResolutionFailed.failureNel[Artifact])
+    "reject a job if its resolution throws an unexpected exception" in {
+      val expectedException = new Exception("TEST EXCEPTION")
 
-      expectMsgType[JobRejected].cause should be (NonEmptyList(expectedResolutionFailed))
+      (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
+        expects(TestArtifactId, false, *).
+        returning(Future.failed[Validated[Artifact]](expectedException))
+
+      registry ! RegisterJob(TestJobSpec)
+
+      expectMsgType[JobRejected].cause should be (NonEmptyList(ExceptionThrown(expectedException)))
+      eventListener.expectMsgType[JobRejected].cause should be (NonEmptyList(ExceptionThrown(expectedException)))
     }
 
     "notify that a specific job is not enabled when attempting to disabling it" in {
@@ -76,12 +91,11 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     }
 
     "return job accepted if resolution of dependencies succeeds" in {
+      (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
+        expects(TestArtifactId, false, *).
+        returning(Future.successful(TestArtifact.successNel[Fault]))
+
       registry ! RegisterJob(TestJobSpec)
-
-      val resolveMsg = resolverProbe.expectMsgType[Validate]
-      resolveMsg.artifactId should be (TestArtifactId)
-
-      resolverProbe.reply(TestArtifact.successNel[Fault])
 
       val registryResponse = expectMsgType[JobAccepted]
       registryResponse.job should be (TestJobSpec)

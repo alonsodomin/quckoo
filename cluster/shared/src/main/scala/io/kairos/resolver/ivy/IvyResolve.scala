@@ -3,8 +3,8 @@ package io.kairos.resolver.ivy
 import java.net.URL
 
 import akka.actor.ActorSystem
+import io.kairos._
 import io.kairos.id.ArtifactId
-import io.kairos.protocol._
 import io.kairos.resolver._
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor.{Configuration, DefaultDependencyDescriptor, DefaultModuleDescriptor, ModuleDescriptor}
@@ -14,7 +14,6 @@ import org.apache.ivy.core.resolve.ResolveOptions
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalaz.Scalaz._
-import scalaz._
 
 /**
  * Created by aalonsodominguez on 17/07/15.
@@ -40,16 +39,17 @@ class IvyResolve(config: IvyConfiguration) extends Resolve {
 
   private lazy val ivy = Ivy.newInstance(config)
 
-  def apply(artifactId: ArtifactId, download: Boolean)(implicit ec: ExecutionContext): Future[ResolutionResult] = Future {
+  def apply(artifactId: ArtifactId, download: Boolean)
+           (implicit ec: ExecutionContext): Future[Validated[Artifact]] = Future {
 
-    def unresolvedDependencies(report: ResolveReport): ValidationNel[Fault, ResolveReport] = {
+    def unresolvedDependencies(report: ResolveReport): Validated[ResolveReport] = {
       report.getUnresolvedDependencies.map(_.getId).map { moduleId =>
         val unresolvedId = ArtifactId(moduleId.getOrganisation, moduleId.getName, moduleId.getRevision)
         UnresolvedDependency(unresolvedId).failureNel[ResolveReport]
       }.foldLeft(report.successNel[Fault])((a, b) => (a |@| b) { case (_, r) => r })
     }
 
-    def downloadFailed(report: ResolveReport): ValidationNel[Fault, ResolveReport] = {
+    def downloadFailed(report: ResolveReport): Validated[ResolveReport] = {
       report.getArtifactsReports(DownloadStatus.FAILED, true).map { artifactReport =>
         DownloadFailed(artifactReport.getName).failureNel[ResolveReport]
       }.foldLeft(report.successNel[Fault])((a, b) => (a |@| b) { case (_, r) => r })

@@ -7,17 +7,15 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import de.heikoseeberger.akkasse.ServerSentEvent
-import io.kairos.JobSpec
 import io.kairos.cluster.core._
 import io.kairos.cluster.protocol.GetClusterStatus
 import io.kairos.console.info.{ClusterInfo, NodeInfo}
-import io.kairos.console.protocol.RegisterJobResponse
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.console.server.security.AuthInfo
 import io.kairos.id.JobId
-import io.kairos.protocol.Fault
 import io.kairos.time.TimeSource
+import io.kairos.{Fault, JobSpec, Validated}
 import org.slf4s.Logging
 
 import scala.concurrent.Future
@@ -54,7 +52,7 @@ class KairosCluster(settings: KairosClusterSettings)
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
   }
 
-  def registerJob(jobSpec: JobSpec): Future[RegisterJobResponse] = {
+  def registerJob(jobSpec: JobSpec): Future[Validated[JobId]] = {
     import system.dispatcher
 
     import scalaz._

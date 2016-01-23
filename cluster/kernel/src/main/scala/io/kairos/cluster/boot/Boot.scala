@@ -8,9 +8,9 @@ import io.kairos.cluster.{KairosCluster, KairosClusterSettings}
 import io.kairos.time.JDK8TimeSource
 import scopt.OptionParser
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 /**
  * Created by domingueza on 09/07/15.
@@ -52,7 +52,7 @@ object Boot extends App {
     val cluster = new KairosCluster(settings)
 
     implicit val timeout = Timeout(5 seconds)
-    val startUp = cluster.start recover {
+    val startUp: Future[Unit] = cluster.start recover {
       case ex: Exception =>
         ex.printStackTrace()
         system.terminate()

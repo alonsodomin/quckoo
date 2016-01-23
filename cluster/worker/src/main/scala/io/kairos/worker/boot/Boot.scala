@@ -4,7 +4,6 @@ import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import akka.japi.Util._
 import com.typesafe.config.{Config, ConfigFactory}
-import io.kairos.resolver._
 import io.kairos.resolver.ivy.{IvyConfiguration, IvyResolve}
 import io.kairos.worker.{JobExecutor, Worker}
 import scopt.OptionParser
@@ -45,9 +44,7 @@ object Boot extends App {
 
     val ivyConfig  = IvyConfiguration(config.getConfig("kairos"))
     val ivyResolve = new IvyResolve(ivyConfig)
-    val resolver   = system.actorOf(Resolver.props(ivyResolve), "resolver")
-
-    val jobExecutorProps = JobExecutor.props(resolver)
+    val jobExecutorProps = JobExecutor.props(ivyResolve)
     system.actorOf(Worker.props(clusterClient, jobExecutorProps), "worker")
   }
 

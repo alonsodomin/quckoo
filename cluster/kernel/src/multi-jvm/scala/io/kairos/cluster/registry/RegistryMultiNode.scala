@@ -4,16 +4,16 @@ import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
-import akka.testkit.{ImplicitSender, TestProbe}
-import io.kairos.JobSpec
+import akka.testkit.ImplicitSender
 import io.kairos.cluster.core.RegistryReceptionist
 import io.kairos.id.ArtifactId
 import io.kairos.multijvm.MultiNodeClusterSpec
-import io.kairos.protocol.Fault
 import io.kairos.protocol.RegistryProtocol.{JobAccepted, RegisterJob}
-import io.kairos.resolver.Artifact
-import io.kairos.resolver.Resolver.Validate
+import io.kairos.resolver.{Artifact, Resolve}
+import io.kairos.{Fault, JobSpec}
+import org.scalamock.scalatest.MockFactory
 
+import scala.concurrent.{ExecutionContext, Future}
 import scalaz._
 
 /**
@@ -37,7 +37,8 @@ object RegistryMultiNode {
 
 }
 
-abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with ImplicitSender with MultiNodeClusterSpec {
+abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
+    with ImplicitSender with MultiNodeClusterSpec with MockFactory {
 
   import RegistryMultiNode._
   import RegistryNodesConfig._
@@ -45,6 +46,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with
   import Scalaz._
 
   implicit val materializer = ActorMaterializer()
+  val mockResolve = mock[Resolve]
 
   "A Registry cluster" should {
 
@@ -65,10 +67,13 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with
       }
 
       runOn(registry) {
-        val resolverProbe = TestProbe()
+        (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
+          expects(TestArtifactId, false, *).
+          returning(Future.successful(TestArtifact.successNel[Fault]))
+
         val ref = ClusterSharding(system).start(
           typeName        = Registry.shardName,
-          entityProps     = Registry.props(resolverProbe.ref),
+          entityProps     = Registry.props(mockResolve),
           settings        = ClusterShardingSettings(system),
           extractEntityId = Registry.idExtractor,
           extractShardId  = Registry.shardResolver
@@ -77,8 +82,6 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with
         enterBarrier("shard-ready")
 
         enterBarrier("registering-job")
-        resolverProbe.expectMsgType[Validate].artifactId should be(TestArtifactId)
-        resolverProbe.reply(TestArtifact.successNel[Fault])
       }
 
       enterBarrier("finished")
