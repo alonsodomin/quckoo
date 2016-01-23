@@ -2,7 +2,7 @@ package io.kairos
 
 import java.util.UUID
 
-import io.kairos.protocol.ErrorResponse
+import io.kairos.protocol.Fault
 
 import scalaz.NonEmptyList
 
@@ -12,6 +12,6 @@ import scalaz.NonEmptyList
 package object cluster {
 
   type WorkerId = UUID
-  type TaskFailureCause = NonEmptyList[ErrorResponse]
+  type TaskFailureCause = NonEmptyList[Fault]
 
 }

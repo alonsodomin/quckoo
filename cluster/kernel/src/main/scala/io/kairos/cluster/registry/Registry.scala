@@ -1,14 +1,16 @@
 package io.kairos.cluster.registry
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.cluster.sharding.ShardRegion
+import akka.pattern._
 import akka.persistence.{PersistentActor, SnapshotOffer}
 import io.kairos.JobSpec
 import io.kairos.id._
 import io.kairos.protocol._
-import io.kairos.resolver.{ResolutionResult, Resolver}
+import io.kairos.resolver.Resolve
 
 import scala.concurrent.duration._
+import scala.util.control.NonFatal
 import scalaz._
 
 /**
@@ -61,7 +63,8 @@ object Registry {
 
       case JobDisabled(jobId) =>
         val job = enabledJobs(jobId)
-        copy(enabledJobs = enabledJobs - jobId, disabledJobs = disabledJobs + (jobId -> job))
+        copy(enabledJobs = enabledJobs - jobId,
+            disabledJobs = disabledJobs + (jobId -> job))
 
       // Any event other than the previous ones have no impact in the state
       case _ => this
@@ -73,12 +76,14 @@ object Registry {
 
 }
 
-class Registry(resolver: ActorRef, snapshotFrequency: FiniteDuration) extends PersistentActor with ActorLogging {
+class Registry(resolve: Resolve, snapshotFrequency: FiniteDuration)
+    extends PersistentActor with ActorLogging {
+
   import Registry._
   import RegistryProtocol._
-  import Resolver._
   import context.dispatcher
-  private val snapshotTask = context.system.scheduler.schedule(snapshotFrequency, snapshotFrequency, self, Snap)
+  private val snapshotTask = context.system.scheduler.schedule(
+      snapshotFrequency, snapshotFrequency, self, Snap)
 
   private var store = RegistryStore.empty
 
@@ -90,30 +95,36 @@ class Registry(resolver: ActorRef, snapshotFrequency: FiniteDuration) extends Pe
     case event: RegistryEvent =>
       store = store.updated(event)
       log.info("Replayed registry event. event={}", event)
+
     case SnapshotOffer(_, snapshot: RegistryStore) =>
       store = snapshot
   }
 
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
-      val handler = context.actorOf(Props(classOf[ResolutionHandler], jobSpec, self, sender()))
-      resolver.tell(Validate(jobSpec.artifactId), handler)
+      resolve(jobSpec.artifactId, download = false) map {
 
-    case (jobSpec: JobSpec, resolution: ResolutionResult) =>
-      val result = resolution match {
         case Success(_) =>
-          log.debug("Job artifact has been successfully resolved. artifactId={}", jobSpec.artifactId)
+          log.debug("Job artifact has been successfully resolved. artifactId={}",
+              jobSpec.artifactId)
           val jobId = JobId(jobSpec)
           JobAccepted(jobId, jobSpec)
 
         case Failure(errors) =>
           log.error("Couldn't validate the job artifact id. " + errors)
           JobRejected(jobSpec.artifactId, errors)
-      }
-      persist(result) { event =>
-        store = store.updated(event)
-        sender() ! event
-      }
+
+      } recover {
+        case NonFatal(ex) =>
+          JobRejected(jobSpec.artifactId, NonEmptyList(ExceptionThrown(ex)))
+
+      } map { response =>
+        persist(response) { event =>
+          store = store.updated(event)
+          context.system.eventStream.publish(event)
+        }
+        response
+      } pipeTo sender()
 
     case DisableJob(jobId) =>
       if (!store.isEnabled(jobId)) {
@@ -138,16 +149,6 @@ class Registry(resolver: ActorRef, snapshotFrequency: FiniteDuration) extends Pe
 
     case Snap =>
       saveSnapshot(store)
-  }
-
-}
-
-private class ResolutionHandler(jobSpec: JobSpec, registry: ActorRef, requestor: ActorRef) extends Actor {
-
-  def receive: Receive = {
-    case result: ResolutionResult =>
-      registry.tell(jobSpec -> result, requestor)
-      context.stop(self)
   }
 
 }

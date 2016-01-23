@@ -7,7 +7,7 @@ import akka.actor.ActorSystem
 import akka.testkit._
 import io.kairos.cluster.Task
 import io.kairos.id.{ArtifactId, TaskId}
-import io.kairos.protocol.{ErrorResponse, ExceptionThrown, UnresolvedDependency}
+import io.kairos.protocol.{ExceptionThrown, Fault, UnresolvedDependency}
 import io.kairos.resolver.{Artifact, Resolver}
 import org.scalatest._
 
@@ -66,7 +66,7 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
     jobExecutor ! JobExecutor.Execute(task)
 
     resolverProbe.expectMsg(Acquire(TestArtifactId))
-    resolverProbe.reply(failingPackage.successNel[ErrorResponse])
+    resolverProbe.reply(failingPackage.successNel[Fault])
 
     expectMsgType[JobExecutor.Failed].errors should be(NonEmptyList(ExceptionThrown(expectedException)))
   }

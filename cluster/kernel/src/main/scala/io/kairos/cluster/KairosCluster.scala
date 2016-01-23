@@ -16,7 +16,7 @@ import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.console.server.security.AuthInfo
 import io.kairos.id.JobId
-import io.kairos.protocol.ErrorResponse
+import io.kairos.protocol.Fault
 import io.kairos.time.TimeSource
 import org.slf4s.Logging
 
@@ -62,7 +62,7 @@ class KairosCluster(settings: KairosClusterSettings)
 
     implicit val timeout = Timeout(10 seconds)
     (registry ? RegisterJob(jobSpec)) map {
-      case JobAccepted(jobId, _) => jobId.successNel[ErrorResponse]
+      case JobAccepted(jobId, _) => jobId.successNel[Fault]
       case JobRejected(_, cause) => cause.failure[JobId]
     }
   }

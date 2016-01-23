@@ -1,14 +1,14 @@
 package io.kairos.worker
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.pattern._
 import io.kairos.cluster.Task
-import io.kairos.protocol.{ErrorResponse, ExceptionThrown}
-import io.kairos.resolver.{Artifact, ResolutionResult, Resolver}
-import io.kairos.worker.JobExecutor.{Completed, Failed}
+import io.kairos.protocol._
+import io.kairos.resolver.{Artifact, Resolve}
 
 import scala.util.Try
-import scalaz.Scalaz._
-import scalaz.{ValidationNel, _}
+import scala.util.control.NonFatal
+import scalaz._
 
 /**
  * Created by aalonsodominguez on 05/07/15.
@@ -17,47 +17,41 @@ object JobExecutor {
 
   case class Execute(task: Task)
 
-  case class Failed(errors: NonEmptyList[ErrorResponse])
+  case class Failed(errors: NonEmptyList[Fault])
   case class Completed(result: Any)
 
   def props(resolver: ActorRef): Props =
     Props(classOf[JobExecutor], resolver)
 }
 
-class JobExecutor(resolver: ActorRef) extends Actor with ActorLogging {
+class JobExecutor(resolve: Resolve) extends Actor with ActorLogging {
   import JobExecutor._
-  import Resolver._
+
+  import Scalaz._
 
   def receive = {
     case Execute(task) =>
-      val runner = context.actorOf(Props(classOf[JobRunner], task, context.parent))
-      resolver.tell(Acquire(task.artifactId), runner)
+      import context.dispatcher
+
+      resolve(task.artifactId, download = true) recover {
+        case NonFatal(ex) => ExceptionThrown(ex).failureNel[Artifact]
+      } map {
+        _.disjunctioned {
+          import scala.util.{Failure, Success}
+
+          _.flatMap(artifact => runTaskFrom(artifact, task) match {
+            case Success(result) => \/-(result)
+            case Failure(cause)  => -\/(NonEmptyList(ExceptionThrown(cause)))
+          })
+        }
+      } map {
+        case Success(value)  => Completed(value)
+        case Failure(errors) => Failed(errors)
+      } pipeTo sender()
   }
 
-}
-
-private class JobRunner(task: Task, worker: ActorRef) extends Actor with ActorLogging {
-  
-  def receive: Receive = {
-    case result: ResolutionResult =>
-      import scala.util.{Failure, Success}
-      reply(result.map(runJob).flatMap {
-        case Success(r)     => r.successNel[ErrorResponse]
-        case Failure(cause) => ExceptionThrown(cause).failureNel[Any]
-      })
-  }
-
-  private[this] def runJob(artifact: Artifact): Try[Any] =
+  private[this] def runTaskFrom(artifact: Artifact, task: Task): Try[Any] =
     artifact.newJob(task.jobClass, task.params) flatMap { job => Try(job.call()) }
 
-  private[this] def reply(msg: ValidationNel[ErrorResponse, Any]): Unit = {
-    val response = msg match {
-      case Success(value)  => Completed(value)
-      case Failure(errors) => Failed(errors)
-    }
-
-    worker ! response
-    context.stop(self)
-  }
-  
 }
+

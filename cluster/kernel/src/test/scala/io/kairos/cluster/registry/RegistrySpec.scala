@@ -5,7 +5,7 @@ import java.net.URL
 import akka.testkit._
 import io.kairos.JobSpec
 import io.kairos.id.{ArtifactId, JobId}
-import io.kairos.protocol.{ErrorResponse, RegistryProtocol, UnresolvedDependency}
+import io.kairos.protocol.{Fault, RegistryProtocol, UnresolvedDependency}
 import io.kairos.resolver.{Artifact, Resolver}
 import io.kairos.test.TestActorSystem
 import org.scalatest._
@@ -81,7 +81,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
       val resolveMsg = resolverProbe.expectMsgType[Validate]
       resolveMsg.artifactId should be (TestArtifactId)
 
-      resolverProbe.reply(TestArtifact.successNel[ErrorResponse])
+      resolverProbe.reply(TestArtifact.successNel[Fault])
 
       val registryResponse = expectMsgType[JobAccepted]
       registryResponse.job should be (TestJobSpec)

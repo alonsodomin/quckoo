@@ -37,7 +37,7 @@ object RegistryPage {
             cause.list.map {
               case UnresolvedDependency(artifactId) =>
                 <.li(s"Unresolved dependency: $artifactId")
-              case error: ErrorResponse => <.li(error.toString())
+              case error: Fault => <.li(error.toString())
             }
           )
         }

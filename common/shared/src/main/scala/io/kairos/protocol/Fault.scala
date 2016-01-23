@@ -5,23 +5,22 @@ import io.kairos.id.ArtifactId
 /**
   * Created by alonsodomin on 28/12/2015.
   */
-sealed trait ErrorResponse extends Serializable
+sealed trait Fault extends Serializable
 
 // == Generic errors ================
 
-case class ExceptionThrown(className: String, message: String) extends ErrorResponse {
+case class ExceptionThrown(className: String, message: String) extends Fault {
 
   override def toString: String = s"$className: $message"
 
 }
-
 object ExceptionThrown {
   def apply(t: Throwable): ExceptionThrown = ExceptionThrown(t.getClass.getName, t.getMessage)
 }
 
 // == Artifact resolution errors ============
 
-sealed trait ResolutionFailed extends ErrorResponse
+sealed trait ResolutionFailed extends Fault
 
 case class UnresolvedDependency(artifactId: ArtifactId) extends ResolutionFailed {
   override def toString = artifactId.toString

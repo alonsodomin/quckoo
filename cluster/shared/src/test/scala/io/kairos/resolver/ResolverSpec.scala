@@ -5,7 +5,7 @@ import java.net.URL
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import io.kairos.id.ArtifactId
-import io.kairos.protocol.{ErrorResponse, ExceptionThrown, UnresolvedDependency}
+import io.kairos.protocol.{ExceptionThrown, Fault, UnresolvedDependency}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
@@ -32,12 +32,12 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with ImplicitSen
   "A resolver" should "return the artifact when it's valid" in {
     val jobPackage = Artifact(TestArtifactId, Seq(new URL("http://www.google.com")))
 
-    mockResolve expects (TestArtifactId, false) returning jobPackage.successNel[ErrorResponse]
+    mockResolve expects (TestArtifactId, false) returning jobPackage.successNel[Fault]
 
     moduleResolver ! Validate(TestArtifactId)
 
     val response = expectMsgType[ResolutionResult]
-    response should be(jobPackage.successNel[ErrorResponse])
+    response should be(jobPackage.successNel[Fault])
   }
 
   it should "return resolution failed error if the artifactId is not valid" in {
@@ -65,12 +65,12 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with ImplicitSen
   it should "return the artifact on successful acquiring of dependencies" in {
     val jobPackage = Artifact(TestArtifactId, Seq(new URL("http://www.google.com")))
 
-    mockResolve expects (TestArtifactId, true) returning jobPackage.successNel[ErrorResponse]
+    mockResolve expects (TestArtifactId, true) returning jobPackage.successNel[Fault]
 
     moduleResolver ! Acquire(TestArtifactId)
 
     val response = expectMsgType[ResolutionResult]
-    response should be(jobPackage.successNel[ErrorResponse])
+    response should be(jobPackage.successNel[Fault])
   }
 
   it should "return resolution failed error if it can't resolve dependencies" in {

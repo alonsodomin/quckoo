@@ -9,7 +9,7 @@ import io.kairos.JobSpec
 import io.kairos.cluster.core.RegistryReceptionist
 import io.kairos.id.ArtifactId
 import io.kairos.multijvm.MultiNodeClusterSpec
-import io.kairos.protocol.ErrorResponse
+import io.kairos.protocol.Fault
 import io.kairos.protocol.RegistryProtocol.{JobAccepted, RegisterJob}
 import io.kairos.resolver.Artifact
 import io.kairos.resolver.Resolver.Validate
@@ -78,7 +78,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig) with
 
         enterBarrier("registering-job")
         resolverProbe.expectMsgType[Validate].artifactId should be(TestArtifactId)
-        resolverProbe.reply(TestArtifact.successNel[ErrorResponse])
+        resolverProbe.reply(TestArtifact.successNel[Fault])
       }
 
       enterBarrier("finished")
