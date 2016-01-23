@@ -100,6 +100,8 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
       val registryResponse = expectMsgType[JobAccepted]
       registryResponse.job should be (TestJobSpec)
       testJobId = Some(registryResponse.jobId)
+
+      eventListener.expectMsgType[JobAccepted].job should be (TestJobSpec)
     }
 
     "return the registered job spec when asked for it" in {
