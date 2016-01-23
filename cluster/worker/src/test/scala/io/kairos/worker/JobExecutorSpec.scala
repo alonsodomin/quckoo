@@ -7,11 +7,12 @@ import akka.actor.ActorSystem
 import akka.testkit._
 import io.kairos.cluster.Task
 import io.kairos.id.{ArtifactId, TaskId}
-import io.kairos.resolver.Artifact
+import io.kairos.resolver.{Artifact, Resolve}
 import io.kairos.{ExceptionThrown, Fault, UnresolvedDependency}
+import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
-import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 import scalaz._
 
 /**
@@ -26,14 +27,14 @@ object JobExecutorSpec {
 }
 
 class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatSpecLike with Matchers
-  with BeforeAndAfterAll with ImplicitSender with DefaultTimeout {
+  with BeforeAndAfterAll with ImplicitSender with DefaultTimeout with MockFactory {
 
   import JobExecutorSpec._
 
   import Scalaz._
 
-  val resolverProbe = TestProbe()
-  val jobExecutor = TestActorRef(JobExecutor.props(resolverProbe.ref), self)
+  val mockResolve = mock[Resolve]
+  val jobExecutor = TestActorRef(JobExecutor.props(mockResolve), self)
 
   override protected def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
@@ -41,18 +42,15 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
   "A job executor actor" must "fail an execution if the dependency resolution fails" in {
     val task = Task(TestExecutionId, artifactId = TestArtifactId, jobClass = TestJobClass)
-    val expectedResolutionFailed = UnresolvedDependency(TestArtifactId)
+    val unresolvedDependency = UnresolvedDependency(TestArtifactId)
+
+    (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
+      expects(TestArtifactId, true, *).
+      returning(Future.successful(unresolvedDependency.failureNel[Artifact]))
 
     jobExecutor ! JobExecutor.Execute(task)
 
-    resolverProbe.expectMsg(Acquire(TestArtifactId))
-
-    within(2 seconds) {
-      resolverProbe.reply(expectedResolutionFailed.failureNel[Artifact])
-      awaitAssert {
-        expectMsg(JobExecutor.Failed(NonEmptyList(expectedResolutionFailed)))
-      }
-    }
+    expectMsg(JobExecutor.Failed(NonEmptyList(unresolvedDependency)))
   }
 
   it must "fail if instantiation of the job failed" in {
@@ -62,10 +60,11 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
     val expectedException = new ClassNotFoundException(TestJobClass)
     val failingPackage = Artifact(TestArtifactId, Seq(new URL("http://www.example.com")))
 
-    jobExecutor ! JobExecutor.Execute(task)
+    (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
+      expects(TestArtifactId, true, *).
+      returning(Future.successful(failingPackage.successNel[Fault]))
 
-    resolverProbe.expectMsg(Acquire(TestArtifactId))
-    resolverProbe.reply(failingPackage.successNel[Fault])
+    jobExecutor ! JobExecutor.Execute(task)
 
     expectMsgType[JobExecutor.Failed].errors should be(NonEmptyList(ExceptionThrown(expectedException)))
   }
