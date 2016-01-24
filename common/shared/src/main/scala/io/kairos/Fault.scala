@@ -35,3 +35,4 @@ case class DownloadFailed(artifactName: String) extends ResolutionFailed
 sealed trait ValidationFault extends Fault
 
 case class NotNull(msg: String) extends ValidationFault
+case class Required(msg: String) extends ValidationFault

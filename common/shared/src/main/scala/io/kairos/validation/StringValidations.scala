@@ -1,6 +1,6 @@
 package io.kairos.validation
 
-import io.kairos.{NotNull, Validated, ValidationFault}
+import io.kairos.{Required, Validated, ValidationFault}
 
 import scalaz._
 
@@ -11,7 +11,7 @@ trait StringValidations {
   import Scalaz._
 
   def notNullOrEmpty(str: String)(msg: => String): Validated[String] = {
-    if (str == null || str.isEmpty) NotNull(msg).failureNel[String]
+    if (str == null || str.isEmpty) Required(msg).failureNel[String]
     else str.successNel[ValidationFault]
   }
 

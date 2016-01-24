@@ -22,13 +22,20 @@ object JobSpec {
     def validDisplayName: Validated[String] =
       notNullOrEmpty(displayName)("displayName")
 
-    def validArtifactId: Validated[ArtifactId] =
-      ArtifactId.validate(artifactId)
+    def validDescription: Validated[String] =
+      notNull(description)("description")
+
+    def validArtifactId: Validated[ArtifactId] = {
+      import Validation.FlatMap._
+      notNull(artifactId)("artifactId").flatMap(_ => ArtifactId.validate(artifactId))
+    }
 
     def validJobClass: Validated[String] =
       notNullOrEmpty(jobClass)("jobClass")
 
-    (validDisplayName |@| validArtifactId |@| validJobClass) { (dn, a, jc) => JobSpec(dn, description, a, jc) }
+    (validDisplayName |@| validDescription |@| validArtifactId |@| validJobClass) {
+      (dn, desc, a, jc) => JobSpec(dn, desc, a, jc)
+    }
   }
 
 }
