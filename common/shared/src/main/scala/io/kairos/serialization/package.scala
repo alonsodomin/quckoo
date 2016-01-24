@@ -12,7 +12,7 @@ package object serialization {
   import scala.language.implicitConversions
 
   implicit def nonEmptyListW[T: Writer]: Writer[NonEmptyList[T]] = Writer[NonEmptyList[T]] {
-    x => Js.Arr(x.list.map(writeJs(_)).toArray: _*)
+    x => Js.Arr(x.list.toList.map(writeJs(_)).toArray: _*)
   }
 
   implicit def nonEmptyListR[T: Reader]: Reader[NonEmptyList[T]] = Reader[NonEmptyList[T]]( {

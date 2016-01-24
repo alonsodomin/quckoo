@@ -10,6 +10,7 @@ lazy val commonSettings = Seq(
     "-encoding", "UTF-8",
     "-Xexperimental",
     "-language:postfixOps",
+    "-language:higherKinds",
     "-feature",
     "-unchecked",
     "-deprecation",
@@ -56,6 +57,7 @@ lazy val common = (crossProject in file("common")).
     name := "common"
   ).
   settings(commonSettings: _*).
+  settings(addCompilerPlugin(Dependencies.compiler.macroParadise)).
   settings(
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "0.3.6",
@@ -68,11 +70,17 @@ lazy val common = (crossProject in file("common")).
 
       Seq(
         "io.github.widok" %%% "scala-js-momentjs" % "0.1.4",
-        "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % scalaz
+        "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % scalaz,
+        "com.github.japgolly.fork.monocle" %%% "monocle-core" % monocle,
+        "com.github.japgolly.fork.monocle" %%% "monocle-macro" % monocle
       )
     }
   ).jvmSettings(
-    libraryDependencies += Dependencies.libs.scalaz
+    libraryDependencies ++= {
+      import Dependencies.libs._
+
+      Seq(scalaz, Monocle.core, Monocle.`macro`)
+    }
   )
 
 lazy val commonJS = common.js
@@ -132,6 +140,7 @@ lazy val consoleRoot = (project in file("console")).
 
 lazy val console = (crossProject in file("console")).
   settings(commonSettings: _*).
+  settings(addCompilerPlugin(Dependencies.compiler.macroParadise)).
   settings(
     name := "console",
     libraryDependencies ++= Seq(
@@ -148,7 +157,7 @@ lazy val console = (crossProject in file("console")).
         "biz.enef" %%% "slogging" % "0.3",
         "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
-        "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % scalaJsReact,
+        "com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "ext-monocle" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "test" % scalaJsReact % "test",
         "com.github.japgolly.scalacss" %%% "core" % scalaCss,

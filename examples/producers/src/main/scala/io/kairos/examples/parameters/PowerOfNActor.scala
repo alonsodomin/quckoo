@@ -55,7 +55,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
       context.become(produce)
 
     case JobRejected(_, cause) =>
-      log.error("Resolution of job spec failed. cause={}", cause.list.mkString(","))
+      log.error("Resolution of job spec failed. cause={}", cause.list.toList.mkString(","))
       context.setReceiveTimeout(Duration.Undefined)
 
     case ReceiveTimeout =>

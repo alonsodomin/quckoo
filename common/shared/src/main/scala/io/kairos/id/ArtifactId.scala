@@ -1,5 +1,7 @@
 package io.kairos.id
 
+import monocle.macros.Lenses
+
 /**
  * Created by aalonsodominguez on 15/07/15.
  */
@@ -8,7 +10,7 @@ object ArtifactId {
   val VersionSeparator : Char = '#'
 }
 
-case class ArtifactId(group: String, artifact: String, version: String) {
+@Lenses case class ArtifactId(group: String, artifact: String, version: String) {
   import ArtifactId._
 
   override def toString: String = s"$group$GroupSeparator$artifact$VersionSeparator$version"

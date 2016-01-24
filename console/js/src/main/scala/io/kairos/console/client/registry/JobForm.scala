@@ -5,6 +5,7 @@ import io.kairos.id.ArtifactId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._
+import monocle.macros.Lenses
 
 /**
   * Created by alonsodomin on 23/12/2015.
@@ -13,6 +14,7 @@ object JobForm {
 
   type RegisterHandler = JobSpec => Callback
 
+  @Lenses
   case class JobDetails(name: String = "", description: String = "",
                         artifactId: ArtifactId = ArtifactId("", "", ""),
                         jobClass: String = "")
@@ -30,25 +32,28 @@ object JobForm {
           ^.onChange ==> updateField)
       } build
 
-    def apply(fieldId: String, placeholder: String, fieldVar: ExternalVar[String]) = component((fieldId, placeholder, fieldVar))
+    def apply(fieldId: String, placeholder: String, fieldVar: ExternalVar[String]) =
+      component((fieldId, placeholder, fieldVar))
 
   }
 
   object ArtifactDetails {
+    import MonocleReact._
 
-    private[this] val component = ReactComponentB[ArtifactId]("Artifact Details").
-      render_P { p =>
-        val group = ExternalVar(p.group)(g => Callback { p.copy(group = g) })
-        val artifact = ExternalVar(p.artifact)(a => Callback { p.copy(artifact = a) })
-        val version = ExternalVar(p.version)(v => Callback { p.copy(version = v) })
+    private[this] val component = ReactComponentB[JobDetails]("Artifact Details").
+      initialState_P(_.artifactId).
+      render { $ =>
+        val group = ExternalVar.state($.zoomL(ArtifactId.group))
+        val artifactName = ExternalVar.state($.zoomL(ArtifactId.artifact))
+        val version = ExternalVar.state($.zoomL(ArtifactId.version))
         <.div(
-          ArtifactField("group", "Group ID", group),
-          ArtifactField("artifact", "Artifact ID", artifact),
+          ArtifactField("group", "GroupId", group),
+          ArtifactField("name", "ArtifactId", artifactName),
           ArtifactField("version", "Version", version)
         )
       } build
 
-    def apply(moduleId: ArtifactId) = component(moduleId)
+    def apply(jobDetails: JobDetails) = component(jobDetails)
 
   }
 
@@ -64,7 +69,7 @@ object JobForm {
       $.modState(_.copy(jobClass = event.target.value))
 
     def submitJob(event: ReactEventI): Callback = {
-      preventDefault(event) >>
+      event.preventDefaultCB >>
         $.state.map(details => JobSpec(details.name, details.description, details.artifactId, details.jobClass)).
           flatMap(spec => $.props.flatMap(handler => handler(spec)))
     }
@@ -83,7 +88,7 @@ object JobForm {
         ),
         <.div(^.`class` := "form-group",
           <.label("Artifact ID"),
-          ArtifactDetails(details.artifactId)
+          ArtifactDetails(details)
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "jobClass", "Job Class"),

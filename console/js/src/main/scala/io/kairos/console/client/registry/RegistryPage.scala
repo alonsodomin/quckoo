@@ -33,7 +33,7 @@ object RegistryPage {
         def resolutionFailed = Notification.error {
           <.div(
             <.p("Dependency resolution failed:"),
-            cause.list.map {
+            cause.list.toList.map {
               case UnresolvedDependency(artifactId) =>
                 <.li(s"Unresolved dependency: $artifactId")
               case error: Fault => <.li(error.toString())

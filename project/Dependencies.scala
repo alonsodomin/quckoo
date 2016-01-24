@@ -24,7 +24,7 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact = "0.10.2"
+    val scalaJsReact = "0.10.4"
     val scalaCss = "0.3.1"
 
     val reactJs = "0.14.3"
@@ -80,6 +80,15 @@ object Dependencies {
 
     val scalaz = "org.scalaz" %% "scalaz-core" % version.scalaz
 
+    object Monocle {
+      val core    = "com.github.julien-truffaut"  %%  "monocle-core"    % version.monocle
+      val `macro` = "com.github.julien-truffaut"  %%  "monocle-macro"   % version.monocle
+    }
+    object MonocleSJS {
+      val core    = Def.setting { "com.github.japgolly.fork.monocle" %%% "monocle-core" % version.monocle }
+      val `macro` = Def.setting { "com.github.japgolly.fork.monocle" %%% "monocle-macro" % version.monocle }
+    }
+
     object ScalaJsReact {
       val core  = Def.setting { "com.github.japgolly.scalajs-react" %%% "core"  % version.scalaJsReact }
       val extra = Def.setting { "com.github.japgolly.scalajs-react" %%% "extra" % version.scalaJsReact }
@@ -91,6 +100,10 @@ object Dependencies {
       val react = Def.setting { "com.github.japgolly.scalacss" %%% "ext-react" % version.scalaCss }
     }
 
+  }
+
+  object compiler {
+    val macroParadise = "org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full
   }
 
   object module {
