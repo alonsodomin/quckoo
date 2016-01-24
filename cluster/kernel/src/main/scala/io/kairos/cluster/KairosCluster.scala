@@ -53,15 +53,22 @@ class KairosCluster(settings: KairosClusterSettings)
   }
 
   def registerJob(jobSpec: JobSpec): Future[Validated[JobId]] = {
-    import system.dispatcher
-
     import scalaz._
     import Scalaz._
 
-    implicit val timeout = Timeout(10 seconds)
-    (registry ? RegisterJob(jobSpec)) map {
-      case JobAccepted(jobId, _) => jobId.successNel[Fault]
-      case JobRejected(_, cause) => cause.failure[JobId]
+    val valid = JobSpec.validate(jobSpec)
+    if (valid.isFailure) {
+      //Future.successful(valid.rightAs[JobId](JobId("invalid")))
+      Future.successful(valid.asInstanceOf[Validated[JobId]])
+    } else {
+      import system.dispatcher
+      log.info(s"Registering job spec: $jobSpec")
+
+      implicit val timeout = Timeout(30 seconds)
+      (registry ? RegisterJob(jobSpec)) map {
+        case JobAccepted(jobId, _) => jobId.successNel[Fault]
+        case JobRejected(_, cause) => cause.failure[JobId]
+      }
     }
   }
 

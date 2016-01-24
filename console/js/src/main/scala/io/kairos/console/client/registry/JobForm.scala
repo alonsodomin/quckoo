@@ -5,7 +5,6 @@ import io.kairos.id.ArtifactId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._
-import monocle.macros.Lenses
 
 /**
   * Created by alonsodomin on 23/12/2015.
@@ -13,11 +12,6 @@ import monocle.macros.Lenses
 object JobForm {
 
   type RegisterHandler = JobSpec => Callback
-
-  @Lenses
-  case class JobDetails(name: String = "", description: String = "",
-                        artifactId: ArtifactId = ArtifactId("", "", ""),
-                        jobClass: String = "")
 
   object ArtifactField {
 
@@ -40,7 +34,7 @@ object JobForm {
   object ArtifactDetails {
     import MonocleReact._
 
-    private[this] val component = ReactComponentB[JobDetails]("Artifact Details").
+    private[this] val component = ReactComponentB[JobSpec]("Artifact Details").
       initialState_P(_.artifactId).
       render { $ =>
         val group = ExternalVar.state($.zoomL(ArtifactId.group))
@@ -53,47 +47,46 @@ object JobForm {
         )
       } build
 
-    def apply(jobDetails: JobDetails) = component(jobDetails)
+    def apply(spec: JobSpec) = component(spec)
 
   }
 
-  class JobFormBackend($: BackendScope[RegisterHandler, JobDetails]) {
+  class JobFormBackend($: BackendScope[RegisterHandler, JobSpec]) {
 
     def updateName(event: ReactEventI): Callback =
-      $.modState(_.copy(name = event.target.value))
+      $.modState(_.copy(displayName = event.target.value))
 
     def updateDescription(event: ReactEventI): Callback =
-      $.modState(_.copy(name = event.target.value))
+      $.modState(_.copy(description = event.target.value))
 
     def updateClassName(event: ReactEventI): Callback =
       $.modState(_.copy(jobClass = event.target.value))
 
     def submitJob(event: ReactEventI): Callback = {
       event.preventDefaultCB >>
-        $.state.map(details => JobSpec(details.name, details.description, details.artifactId, details.jobClass)).
-          flatMap(spec => $.props.flatMap(handler => handler(spec)))
+        $.state.flatMap(spec => $.props.flatMap(handler => handler(spec)))
     }
 
-    def render(details: JobDetails) = {
+    def render(spec: JobSpec) = {
       <.form(^.name := "jobDetails", ^.onSubmit ==> submitJob,
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "name", "Name"),
           <.input.text(^.id := "name", ^.`class` := "form-control", ^.placeholder := "Job Name",
-            ^.required := true, ^.onChange ==> updateName, ^.value := details.name)
+            ^.required := true, ^.onChange ==> updateName, ^.value := spec.displayName)
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "description", "Description"),
           <.input.text(^.id := "description", ^.`class` := "form-control", ^.placeholder := "Job Description",
-            ^.required := false, ^.onChange ==> updateDescription, ^.value := details.description)
+            ^.required := false, ^.onChange ==> updateDescription, ^.value := spec.description)
         ),
         <.div(^.`class` := "form-group",
           <.label("Artifact ID"),
-          ArtifactDetails(details)
+          ArtifactDetails(spec)
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "jobClass", "Job Class"),
           <.input.text(^.id := "jobClass", ^.`class` := "form-control", ^.placeholder := "Job class name",
-            ^.required := true, ^.onChange ==> updateClassName, ^.value := details.jobClass
+            ^.required := true, ^.onChange ==> updateClassName, ^.value := spec.jobClass
           )
         ),
         <.button(^.`class` := "btn btn-default", "Submit")
@@ -103,7 +96,7 @@ object JobForm {
   }
 
   private[this] val component = ReactComponentB[RegisterHandler]("JobForm").
-    initialState(JobDetails()).
+    initialState(JobSpec(displayName = "", artifactId = ArtifactId("", "", ""), jobClass = "")).
     renderBackend[JobFormBackend].
     build
 

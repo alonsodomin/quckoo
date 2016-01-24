@@ -57,7 +57,8 @@ object LoginPage {
             flatMap(_ => $.props.flatMap(_.set(Login)))
         }
 
-      Callback.future(performLogin())
+      $.modState(holder => holder.copy(notifications = Seq())) >>
+        Callback.future(performLogin())
     }
 
     def render(holder: NotificationHolder) =

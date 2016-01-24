@@ -62,7 +62,8 @@ object RegistryPage {
         }
       }
 
-      Callback.future(performSubmit())
+      println(s"Submitting jobspec: $jobSpec")
+      $.modState(st => st.copy(notifications = Seq())) >> Callback.future(performSubmit())
     }
 
     def render(state: State) =
