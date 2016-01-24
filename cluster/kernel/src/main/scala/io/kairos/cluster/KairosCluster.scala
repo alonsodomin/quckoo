@@ -58,7 +58,6 @@ class KairosCluster(settings: KairosClusterSettings)
 
     val valid = JobSpec.validate(jobSpec)
     if (valid.isFailure) {
-      //Future.successful(valid.rightAs[JobId](JobId("invalid")))
       Future.successful(valid.asInstanceOf[Validated[JobId]])
     } else {
       import system.dispatcher
