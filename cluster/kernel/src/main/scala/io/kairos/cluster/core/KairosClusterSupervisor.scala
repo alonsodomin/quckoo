@@ -90,7 +90,7 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)
     log.info("Starting registry shards...")
     ClusterSharding(context.system).start(
       typeName        = Registry.shardName,
-      entityProps     = Registry.props(new IvyResolve(settings.ivyConfiguration)),
+      entityProps     = Registry.props(IvyResolve(settings.ivyConfiguration)),
       settings        = ClusterShardingSettings(context.system).withRole("registry"),
       extractEntityId = Registry.idExtractor,
       extractShardId  = Registry.shardResolver

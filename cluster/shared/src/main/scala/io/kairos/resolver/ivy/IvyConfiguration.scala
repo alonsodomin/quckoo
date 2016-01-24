@@ -20,10 +20,10 @@ class IvyConfiguration private (val baseDir: File,
 }
 
 object IvyConfiguration {
-  val BaseDir = "resolver.workDir"
-  val HomeDir = "resolver.home"
-  val CacheDir = "resolver.cacheDir"
-  val Repositories = "resolver.repositories"
+  final val BaseDir = "resolver.workDir"
+  final val HomeDir = "resolver.home"
+  final val CacheDir = "resolver.cacheDir"
+  final val Repositories = "resolver.repositories"
 
   val DefaultRepositories = Seq(
     Repository.mavenCentral,

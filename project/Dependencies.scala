@@ -14,6 +14,7 @@ object Dependencies {
 
     val scalaTest = "3.0.0-M15"
     val scalaMock = "3.2.2"
+    val mockito   = "1.10.19"
 
     // Akka ----------
 
@@ -57,13 +58,12 @@ object Dependencies {
         val query     = "com.typesafe.akka"   %% "akka-persistence-query-experimental" % version.akka
         val jdbc      = "com.github.dnvriend" %% "akka-persistence-jdbc"         % "1.2.2"
         val cassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6"
-        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % "1.1.5"
+        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % "1.1.5" % Test
       }
 
       val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka
       val testKit          = "com.typesafe.akka" %% "akka-testkit"            % version.akka % Test
     }
-    val akka = Seq(Akka.actor, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit)
 
     object Log4j {
       val api       = "org.apache.logging.log4j"  % "log4j-api"        % version.log4j
@@ -71,14 +71,12 @@ object Dependencies {
       val slf4jImpl = "org.apache.logging.log4j"  % "log4j-slf4j-impl" % version.log4j % Runtime
     }
     val slf4s = "org.slf4s" %% "slf4s-api" % version.slf4s
-    val logging = Seq(slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl)
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
 
-    val scalaTest = "org.scalatest" %% "scalatest"                   % version.scalaTest
-    val scalaMock = "org.scalamock" %% "scalamock-scalatest-support" % version.scalaMock
-
-    val testing = Seq(scalaTest, scalaMock).map(_ % Test)
+    val scalaTest = "org.scalatest" %% "scalatest"                   % version.scalaTest % Test
+    val scalaMock = "org.scalamock" %% "scalamock-scalatest-support" % version.scalaMock % Test
+    val mockito   = "org.mockito"    % "mockito-core"                % version.mockito   % Test
 
     val scalaz = "org.scalaz" %% "scalaz-core" % version.scalaz
 
@@ -98,18 +96,22 @@ object Dependencies {
   object module {
     import libs._
 
+    private[this] val akka = Seq(Akka.actor, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit)
+    private[this] val logging = Seq(slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl)
+    private[this] val testing = Seq(scalaTest, scalaMock)
+
     val common   = testing ++ Seq(scalaXml)
     val network  = logging ++ testing ++ akka
     val client   = logging ++ testing ++ akka
     val cluster  = logging ++ testing ++ akka ++ Seq(
-      ivy, scalaXml, scalaz
+      ivy, scalaXml, scalaz, mockito
     )
 
     val kernel = logging ++ testing ++ akka ++ Seq(
       Akka.persistence.core,
       Akka.persistence.cassandra,
       Akka.persistence.query,
-      Akka.persistence.memory % Test,
+      Akka.persistence.memory,
       Akka.sharding, Akka.http, Akka.httpUpickle, Akka.sse,
       scopt, scalaz
     )

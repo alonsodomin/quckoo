@@ -2,18 +2,18 @@ package io.kairos.resolver.ivy
 
 import java.net.URL
 
-import akka.actor.ActorSystem
 import io.kairos._
 import io.kairos.id.ArtifactId
 import io.kairos.resolver._
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor.{Configuration, DefaultDependencyDescriptor, DefaultModuleDescriptor, ModuleDescriptor}
 import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
-import org.apache.ivy.core.report.{ArtifactDownloadReport, DownloadStatus, ResolveReport}
+import org.apache.ivy.core.report.{ArtifactDownloadReport, ResolveReport}
 import org.apache.ivy.core.resolve.ResolveOptions
+import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
-import scalaz.Scalaz._
+import scalaz._
 
 /**
  * Created by aalonsodominguez on 17/07/15.
@@ -24,20 +24,21 @@ object IvyResolve {
   private final val CompileConfName = "compile"
   private final val RuntimeConfName = "runtime"
 
-  private final val Configurations = Array(DefaultConfName, CompileConfName, RuntimeConfName)
+  private final val Configurations =
+    Array(DefaultConfName, CompileConfName, RuntimeConfName)
 
-  def apply(system: ActorSystem): IvyResolve = {
-    val settings = IvyConfiguration(system.settings.config)
-    new IvyResolve(settings)
+  def apply(config: IvyConfiguration): IvyResolve = {
+    val ivy = Ivy.newInstance(config)
+    new IvyResolve(ivy)
   }
 
 }
 
-class IvyResolve(config: IvyConfiguration) extends Resolve {
+class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
 
   import IvyResolve._
 
-  private lazy val ivy = Ivy.newInstance(config)
+  import Scalaz._
 
   def apply(artifactId: ArtifactId, download: Boolean)
            (implicit ec: ExecutionContext): Future[Validated[Artifact]] = Future {
@@ -50,7 +51,7 @@ class IvyResolve(config: IvyConfiguration) extends Resolve {
     }
 
     def downloadFailed(report: ResolveReport): Validated[ResolveReport] = {
-      report.getArtifactsReports(DownloadStatus.FAILED, true).map { artifactReport =>
+      report.getFailedArtifactsReports.map { artifactReport =>
         DownloadFailed(artifactReport.getName).failureNel[ResolveReport]
       }.foldLeft(report.successNel[Fault])((a, b) => (a |@| b) { case (_, r) => r })
     }
@@ -73,6 +74,7 @@ class IvyResolve(config: IvyConfiguration) extends Resolve {
       setOutputReport(false).
       setConfs(Array(RuntimeConfName))
 
+    log.debug(s"Resolving $moduleDescriptor")
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
     (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)) { (_, r) =>
@@ -86,7 +88,7 @@ class IvyResolve(config: IvyConfiguration) extends Resolve {
     }*/
   }
 
-  private def newCallerInstance(artifactId: ArtifactId): ModuleDescriptor = {
+  private[this] def newCallerInstance(artifactId: ArtifactId): ModuleDescriptor = {
     val moduleRevisionId: IvyModuleId = IvyModuleId.newInstance(
       artifactId.group, artifactId.artifact, artifactId.version
     )

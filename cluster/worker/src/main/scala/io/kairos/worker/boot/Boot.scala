@@ -13,6 +13,8 @@ import scopt.OptionParser
  */
 object Boot extends App {
 
+  final val SystemName = "KairosWorkerSystem"
+
   val parser = new OptionParser[Options]("worker") {
     head("worker", "0.1.0")
     opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
@@ -34,7 +36,9 @@ object Boot extends App {
   }
 
   def start(config: Config): Unit = {
-    val system = ActorSystem("KairosWorkerSystem", config)
+    val system = ActorSystem(SystemName, config)
+    sys.addShutdownHook { system.terminate() }
+
     val initialContacts = immutableSeq(config.getStringList(Options.KairosContactPoints)).map {
       case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
     }.toSet
@@ -43,7 +47,7 @@ object Boot extends App {
     val clusterClient  = system.actorOf(ClusterClient.props(clientSettings), "client")
 
     val ivyConfig  = IvyConfiguration(config.getConfig("kairos"))
-    val ivyResolve = new IvyResolve(ivyConfig)
+    val ivyResolve = IvyResolve(ivyConfig)
     val jobExecutorProps = JobExecutor.props(ivyResolve)
     system.actorOf(Worker.props(clusterClient, jobExecutorProps), "worker")
   }

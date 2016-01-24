@@ -1,9 +1,8 @@
-package io.kairos.resolver
+package io.kairos.resolver.ivy
 
 import java.nio.file.Paths
 
 import com.typesafe.config.ConfigFactory
-import io.kairos.resolver.ivy.IvyConfiguration
 import org.scalatest.{FlatSpec, Matchers}
 
 /**

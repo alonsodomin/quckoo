@@ -7,6 +7,8 @@ import java.util.UUID
  */
 package object cluster {
 
+  final val BaseConfigNamespace = "kairos"
+
   type WorkerId = UUID
 
 }

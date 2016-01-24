@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 object KairosClusterSettings {
 
   def apply(system: ActorSystem): KairosClusterSettings = {
-    val config = system.settings.config.getConfig("kairos")
+    val config = system.settings.config.getConfig(BaseConfigNamespace)
     KairosClusterSettings(
       IvyConfiguration(config),
       config.getDuration("task-queue.max-work-timeout", TimeUnit.MILLISECONDS) millis,
@@ -24,7 +24,9 @@ object KairosClusterSettings {
 
 }
 
-case class KairosClusterSettings private(ivyConfiguration: IvyConfiguration,
-                                         queueMaxWorkTimeout: FiniteDuration,
-                                         httpInterface: String = "0.0.0.0",
-                                         httpPort: Int = 8080)
+case class KairosClusterSettings private (
+    ivyConfiguration: IvyConfiguration,
+    queueMaxWorkTimeout: FiniteDuration,
+    httpInterface: String = "0.0.0.0",
+    httpPort: Int = 8080
+)
