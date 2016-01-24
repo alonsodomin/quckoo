@@ -21,7 +21,8 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("krasserm", "maven"),
     Resolver.bintrayRepo("hseeberger", "maven"),
     Resolver.bintrayRepo("dnvriend", "maven")
-  )
+  ),
+  parallelExecution in Test := false
 )
 
 lazy val noPublishSettings = Seq(
@@ -101,8 +102,7 @@ lazy val kernel = MultiNode(Project("cluster-kernel", file("cluster/kernel"))).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(
-    libraryDependencies ++= Dependencies.module.kernel,
-    parallelExecution in Test := false
+    libraryDependencies ++= Dependencies.module.kernel
   ).
   enablePlugins(JavaServerAppPackaging).
   settings(Packaging.universalServerSettings: _*).

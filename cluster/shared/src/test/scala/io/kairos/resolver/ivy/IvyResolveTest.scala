@@ -2,6 +2,7 @@ package io.kairos.resolver.ivy
 
 import java.io.File
 import java.net.URL
+import java.util.concurrent.ForkJoinPool
 
 import io.kairos.id.ArtifactId
 import io.kairos.resolver.Artifact
@@ -12,8 +13,10 @@ import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.apache.ivy.core.report.{ArtifactDownloadReport, ResolveReport}
 import org.apache.ivy.core.resolve.{IvyNode, ResolveOptions}
 import org.mockito.{Matchers => Match, Mockito}
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
+import org.scalatest.time.SpanSugar
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 
 import scala.concurrent.ExecutionContext
@@ -31,12 +34,12 @@ object IvyResolveTest {
 
 }
 
-class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with ScalaFutures with MockitoSugar {
+class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with ScalaFutures with MockitoSugar with SpanSugar {
   import IvyResolveTest._
   import Match._
   import Mockito._
 
-  import ExecutionContext.Implicits.global
+  implicit val executionContext = ExecutionContext.fromExecutorService(ForkJoinPool.commonPool())
 
   "IvyResolve" should "accumulate all the errors of the resolve operation" in {
     Given("An Ivy resolver")
@@ -72,7 +75,7 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
     val expectedResult = (validatedDep |@| validatedDown) { case (_, a) => a }
 
     When("Attempting to resolve the artifact")
-    whenReady(ivyResolve(TestArtifactId, download = false)) { result =>
+    whenReady(ivyResolve(TestArtifactId, download = false), Timeout(2 seconds)) { result =>
       Then("Result should be the expected errors")
       result should be (expectedResult)
 
@@ -129,7 +132,7 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
     ))
 
     When("attempting to download the artifacts")
-    whenReady(ivyResolve(TestArtifactId, download = true)) { result =>
+    whenReady(ivyResolve(TestArtifactId, download = true), Timeout(2 seconds)) { result =>
       import Scalaz._
 
       Then("the returned validation should contain the expected artifact")
