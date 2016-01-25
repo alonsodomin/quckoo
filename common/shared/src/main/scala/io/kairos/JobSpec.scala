@@ -1,7 +1,7 @@
 package io.kairos
 
 import io.kairos.id._
-import io.kairos.validation.Validations
+import io.kairos.validation._
 import monocle.macros.Lenses
 
 import scalaz._
@@ -10,14 +10,13 @@ import scalaz._
  * Created by aalonsodominguez on 10/07/15.
  */
 object JobSpec {
+  import Scalaz._
 
   def validate(jobSpec: JobSpec): Validated[JobSpec] =
     validate(jobSpec.displayName, jobSpec.description, jobSpec.artifactId, jobSpec.jobClass)
 
   def validate(displayName: String, description: String, artifactId: ArtifactId, jobClass: String): Validated[JobSpec] = {
     import Validations._
-
-    import Scalaz._
 
     def validDisplayName: Validated[String] =
       notNullOrEmpty(displayName)("displayName")
@@ -33,9 +32,7 @@ object JobSpec {
     def validJobClass: Validated[String] =
       notNullOrEmpty(jobClass)("jobClass")
 
-    (validDisplayName |@| validDescription |@| validArtifactId |@| validJobClass) {
-      (dn, desc, a, jc) => JobSpec(dn, desc, a, jc)
-    }
+    (validDisplayName |@| validDescription |@| validArtifactId |@| validJobClass)(JobSpec.apply)
   }
 
 }

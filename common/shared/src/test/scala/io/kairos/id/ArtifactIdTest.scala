@@ -37,6 +37,11 @@ class ArtifactIdTest extends FlatSpec with Matchers {
     ArtifactId.validate(null, "foo", "") should be (expectedErrors)
   }
 
+  it should "do something" in {
+    val artifact = ArtifactId("", "", "")
+    println(ArtifactId.validation(artifact))
+  }
+
   it should "accept any other values" in {
     val expectedArtifactId = ArtifactId("foo", "bar", "baz")
     ArtifactId.validate(expectedArtifactId) should be (expectedArtifactId.successNel[Fault])
