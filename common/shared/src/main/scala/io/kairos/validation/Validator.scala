@@ -22,16 +22,6 @@ object Validator {
 
   implicit def coyoneda[A](validator: Validator[A]): Coyoneda[Validator, A] = Coyoneda.lift(validator)
 
-  implicit val instance = new Applicative[Validator] {
-    def point[A](a: => A): Validator[A] = Validator { _ => a.successNel[ValidationFault] }
-
-    def map2[A, B, C](fa: Validator[A], fb: Validator[B])(f: (A, B) => C): Validator[C] =
-      ap(map(fa)(f.curried))(fb)
-
-    def ap[A, B](fa: => Validator[A])(f: => Validator[A => B]): Validator[B] =
-      map2(fa, f)((a, f) => f(a))
-  }
-
   sealed trait Rule[A]
   type Rules[A] = FreeAp[Rule, A]
 
