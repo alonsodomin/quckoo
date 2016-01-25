@@ -22,6 +22,11 @@ object Validator {
 
   implicit def coyoneda[A](validator: Validator[A]): Coyoneda[Validator, A] = Coyoneda.lift(validator)
 
+  implicit val instance = new InvariantFunctor[Validator] {
+    def xmap[A, B](va: Validator[A], f: A => B, g: B => A): Validator[B] =
+      Validator { b => va.eval(g(b)).map(f) }
+  }
+
   sealed trait Rule[A]
   type Rules[A] = FreeAp[Rule, A]
 
@@ -73,6 +78,17 @@ object Validator {
     def valid[A](name: String, ruleSet: Rules[A]): Rules[A] = valid[A, A](name, ruleSet)(identity)
     def valid[S, A](name: String, lens: monocle.Lens[S, A], ruleSet: Rules[A]): Rules[A] = valid[S, A](name, ruleSet)(getterToFun(lens))
     def valid[S, A](name: String, ruleSet: Rules[A])(g: S => A): Rules[A] = lift[A](ValidRule(name, g, ruleSet))
+  }
+
+  def build[A](ruleSet: Rules[A]): Validator[A] = {
+    import rules._
+
+    ruleSet.foldMap(new (Rule ~> Validator) {
+      def apply[A](rule: Rule[A]): Validator[A] = rule match {
+        case NotNullRule(name, g) => Validator { a => anyRefs.notNull(name, a)(g) }
+        case NotEmptyRule(name, g, v) => Validator { a => strings.notEmpty(name, a)(g).map(v) }
+      }
+    })
   }
 
   def validate[T](a: T, ruleSet: Rules[T]): Validated[T] =
