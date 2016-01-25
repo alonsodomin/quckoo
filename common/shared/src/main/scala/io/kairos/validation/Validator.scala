@@ -7,15 +7,20 @@ import scalaz._
 /**
   * Created by alonsodomin on 24/01/2016.
   */
-trait Validator[A] {
+trait Validator[A] { self =>
   def eval(item: A): Validated[A]
+
+
 }
 object Validator {
   import Scalaz._
+  import scala.language.implicitConversions
 
   def apply[A](f: A => Validated[A]): Validator[A] = new Validator[A] {
     def eval(item: A): Validated[A] = f(item)
   }
+
+  implicit def coyoneda[A](validator: Validator[A]): Coyoneda[Validator, A] = Coyoneda.lift(validator)
 
   implicit val instance = new Applicative[Validator] {
     def point[A](a: => A): Validator[A] = Validator { _ => a.successNel[ValidationFault] }
