@@ -19,14 +19,14 @@ object ArtifactId {
     import Validator._
 
 
-    val rules: Rules[ArtifactId] = {
+    /*val rules: Rules[ArtifactId] = {
       import dsl._
 
       (notEmpty("groupId", ArtifactId.group) |@|
         notEmpty("artifactId", ArtifactId.artifact) |@|
         notEmpty("version", ArtifactId.version))(ArtifactId.apply _)
     }
-    def apply(artifactId: ArtifactId) = Validator.validate(artifactId, rules)
+    def apply(artifactId: ArtifactId) = Validator.validate(artifactId, rules)*/
   }
 
   /*object validation {

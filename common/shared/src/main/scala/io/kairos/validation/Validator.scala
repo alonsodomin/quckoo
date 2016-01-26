@@ -7,11 +7,10 @@ import scalaz._
 /**
   * Created by alonsodomin on 24/01/2016.
   */
-trait Validator[A] { self =>
+trait Validator[A] {
   def eval(item: A): Validated[A]
-
-
 }
+
 object Validator {
   import Scalaz._
   import scala.language.implicitConversions
@@ -20,40 +19,36 @@ object Validator {
     def eval(item: A): Validated[A] = f(item)
   }
 
-  implicit def coyoneda[A](validator: Validator[A]): Coyoneda[Validator, A] = Coyoneda.lift(validator)
+  type ValidatorCo[A] = Coyoneda[Validator, A]
+  def liftC[A](validator: Validator[A]): ValidatorCo[A] = Coyoneda.lift(validator)
 
-  implicit val instance = new InvariantFunctor[Validator] {
-    def xmap[A, B](va: Validator[A], f: A => B, g: B => A): Validator[B] =
-      Validator { b => va.eval(g(b)).map(f) }
-  }
+  type ValidatorMonad[A] = Free[ValidatorCo, A]
+  def liftM[A](validator: Validator[A]): ValidatorMonad[A] = Free.liftFC(validator)
 
   sealed trait Rule[A]
   type Rules[A] = FreeAp[Rule, A]
 
   trait AnyRefRules {
-    case class NotNullRule[S, A](name: String, g: S => A) extends Rule[A]
-    case class ValidRule[S, A](name: String, g: S => A, value: Rules[A]) extends Rule[A]
+    case class NotNullRule[A](name: String) extends Rule[A]
+    case class ValidRule[A](name: String, value: Rules[A]) extends Rule[A]
   }
   trait StringRules {
-    case class NotEmptyRule[S, A](name: String, g: S => String, value: String => A) extends Rule[A]
+    case class NotEmptyRule[S, A](name: String, value: String => A) extends Rule[A]
   }
 
   object rules extends AnyRefRules with StringRules
 
   object anyRefs {
-    def notNull[S, A](name: String, item: S)(g: S => A): Validated[A] = {
-      val value = g(item)
+    def notNull[A](name: String): Validator[A] = Validator { value =>
       if (value == null) NotNull(name).failureNel[A]
       else value.successNel[ValidationFault]
     }
 
-    def valid[S, A](name: String, item: S, ruleSet: Rules[A])(g: S => A): Validated[A] = {
-      validate(g(item), name + ".", ruleSet)
-    }
+    def valid[A](name: String, ruleSet: Rules[A]): Validator[A] =
+      build[A](name + ".", ruleSet)
   }
   object strings {
-    def notEmpty[S](name: String, item: S)(g: S => String): Validated[String] = {
-      val value = g(item)
+    def notEmpty(name: String): Validator[String] = Validator { value =>
       if (value.isEmpty) Required(name).failureNel[String]
       else value.successNel[ValidationFault]
     }
@@ -67,52 +62,47 @@ object Validator {
 
     private[this] def lift[A](value: Rule[A]): Rules[A] = FreeAp.lift[Rule, A](value)
 
-    def notNull[A](name: String): Rules[A] = notNull[A, A](name)(identity)
-    def notNull[S, A](name: String, lens: monocle.Lens[S, A]): Rules[A] = notNull[S, A](name)(s => lens.get(s))
-    def notNull[S, A](name: String)(g: S => A): Rules[A] = lift[A](NotNullRule(name, g))
+    def notNull[A](name: String): Rules[A] = lift[A](NotNullRule(name))
 
-    def notEmpty(name: String): Rules[String] = notEmpty[String](name)(identity)
-    def notEmpty[S](name: String, lens: monocle.Lens[S, String]): Rules[String] = notEmpty[S](name)(getterToFun(lens))
-    def notEmpty[S](name: String)(g: S => String): Rules[String] = lift[String](NotEmptyRule(name, g, identity))
+    def notEmpty(name: String): Rules[String] = lift[String](NotEmptyRule(name, identity))
 
-    def valid[A](name: String, ruleSet: Rules[A]): Rules[A] = valid[A, A](name, ruleSet)(identity)
-    def valid[S, A](name: String, lens: monocle.Lens[S, A], ruleSet: Rules[A]): Rules[A] = valid[S, A](name, ruleSet)(getterToFun(lens))
-    def valid[S, A](name: String, ruleSet: Rules[A])(g: S => A): Rules[A] = lift[A](ValidRule(name, g, ruleSet))
+    def valid[A](name: String, ruleSet: Rules[A]): Rules[A] = lift[A](ValidRule(name, ruleSet))
   }
 
-  def build[A](ruleSet: Rules[A]): Validator[A] = {
+  def ruleCompiler(prefix: String) = new (Rule ~> ValidatorMonad) {
     import rules._
 
-    ruleSet.foldMap(new (Rule ~> Validator) {
-      def apply[A](rule: Rule[A]): Validator[A] = rule match {
-        case NotNullRule(name, g) => Validator { a => anyRefs.notNull(name, a)(g) }
-        case NotEmptyRule(name, g, v) => Validator { a => strings.notEmpty(name, a)(g).map(v) }
-      }
-    })
+    def apply[A](rule: Rule[A]): ValidatorMonad[A] = liftM[A](Validator { value => rule match {
+      case NotNullRule(name) =>
+        if (value == null) NotNull(name).failureNel[A]
+        else value.successNel[ValidationFault]
+      case NotEmptyRule(name, v) =>
+        if (value.asInstanceOf[String].isEmpty) Required(name).failureNel[A]
+        else value.successNel[ValidationFault]
+      case ValidRule(name, rs) =>
+        build[A](name, rs).eval(value)
+    }})
   }
 
-  def validate[T](a: T, ruleSet: Rules[T]): Validated[T] =
-    validate(a, "", ruleSet)
+  def validatorCompiler = new (ValidatorCo ~> Validated) {
+    def apply[A](fa: ValidatorCo[A]): Validated[A] = ???
+  }
 
-  private def validate[S](item: S, prefix: String, ruleSet: Rules[S]): Validated[S] = {
-    ruleSet.foldMap(new (Rule ~> Validated) {
-      import rules._
+  def build[A](ruleSet: Rules[A]): Validator[A] =
+    build("", ruleSet)
 
-      def apply[A](rule: Rule[A]): Validated[A] = rule match {
-        case NotNullRule(name, g) => anyRefs.notNull(prefix + name, item)(g)
-        case NotEmptyRule(name, g, v) => strings.notEmpty[S](prefix + name, item)(g).map(v)
-        case ValidRule(name, g, rs) => anyRefs.valid[S, A](prefix + name, item, rs)(g)
-      }
-    })
+  private def build[A](prefix: String, ruleSet: Rules[A]): Validator[A] = Validator { value =>
+    ruleSet.foldMap(ruleCompiler(prefix)).foldMap(validatorCompiler)
   }
 
   object example {
     import dsl._
+    import syntax.applicative._
 
     case class Example(a: String, b: String)
-    val r: Rules[Example] = (notEmpty[Example]("a")(_.a) |@| notEmpty[Example]("b")(_.b))(Example)
+    val r: Rules[Example] = (notEmpty("a") |@| notEmpty("b"))(Example)
 
-    val valid = validate(Example("", ""), r)
+    val validator = build(r)
   }
 
   /*def validate[A](a: A, ruleSet: Rules[A]): Validated[A] = {

@@ -39,7 +39,7 @@ class ArtifactIdTest extends FlatSpec with Matchers {
 
   it should "do something" in {
     val artifact = ArtifactId("", "", "")
-    println(ArtifactId.validation(artifact))
+    //println(ArtifactId.validation(artifact))
   }
 
   it should "accept any other values" in {
