@@ -15,32 +15,6 @@ object ArtifactId {
   val GroupSeparator : Char = ':'
   val VersionSeparator : Char = '#'
 
-  object validation {
-    import Validator._
-
-
-    /*val rules: Rules[ArtifactId] = {
-      import dsl._
-
-      (notEmpty("groupId", ArtifactId.group) |@|
-        notEmpty("artifactId", ArtifactId.artifact) |@|
-        notEmpty("version", ArtifactId.version))(ArtifactId.apply _)
-    }
-    def apply(artifactId: ArtifactId) = Validator.validate(artifactId, rules)*/
-  }
-
-  /*object validation {
-    import Validator._
-
-    val rules: Rules[ArtifactId] = {
-      import dsl._
-
-      (notEmpty("groupId") |@| notEmpty("artifactId") |@| notEmpty("version"))(ArtifactId)
-    }
-
-    def apply(artifactId: ArtifactId) = build(rules).eval(artifactId)
-  }*/
-
   def validate(artifactId: ArtifactId): Validated[ArtifactId] =
     validate(artifactId.group, artifactId.artifact, artifactId.version)
 
