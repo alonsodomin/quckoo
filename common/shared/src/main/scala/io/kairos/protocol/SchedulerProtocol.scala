@@ -20,6 +20,7 @@ object SchedulerProtocol {
   case class JobScheduled(jobId: JobId, planId: PlanId)
   case class JobFailedToSchedule(jobId: JobId, cause: Throwable)
 
-  case class CancelPlan(planId: PlanId)
+  case object GetExecutionPlans extends SchedulerCommand
+  case class CancelPlan(planId: PlanId) extends SchedulerCommand
 
 }

@@ -18,13 +18,20 @@ object JobSpecList {
     render_P(p =>
       <.table(^.`class` := "table table-striped",
         <.thead(
-          <.tr(<.th("Id"), <.th("Name"))
+          <.tr(
+            <.th("Name"),
+            <.th("Description"),
+            <.th("ArtifactId"),
+            <.th("Job Class")
+          )
         ),
         <.tbody(
           p.specs.map { case (jobId, spec) =>
             <.tr(
-              //<.td(jobId),
-              <.td(spec.displayName)
+              <.td(spec.displayName),
+              <.td(spec.description),
+              <.td(spec.artifactId.toString()),
+              <.td(spec.jobClass)
             )
           }
         )
