@@ -2,7 +2,7 @@ package io.kairos.console.client.registry
 
 import io.kairos._
 import io.kairos.console.client.core.ClientApi
-import io.kairos.console.client.layout.{Notification, NotificationDisplay}
+import io.kairos.console.client.layout.{Notification, NotificationDisplay, Panel}
 import io.kairos.id.JobId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -68,12 +68,9 @@ object RegistryPage {
     def render(state: State) =
       <.div(Style.content,
         <.h2("Registry"),
-        <.div(^.`class` := "panel panel-default",
-          <.div(^.`class` := "panel-heading", "Register new job"),
-          <.div(^.`class` := "panel-body",
-            NotificationDisplay(state.notifications),
-            JobForm(handleJobSubmit)
-          )
+        Panel("Register new Job",
+          NotificationDisplay(state.notifications),
+          JobForm(handleJobSubmit)
         ),
         JobSpecList(state.specs)
       )

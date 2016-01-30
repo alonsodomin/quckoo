@@ -2,7 +2,7 @@ package io.kairos.console.client.security
 
 import io.kairos.console.client.SiteMap.{ConsolePage, Home, Login}
 import io.kairos.console.client.core.ClientApi
-import io.kairos.console.client.layout.{Notification, NotificationDisplay}
+import io.kairos.console.client.layout.{Notification, NotificationDisplay, Panel}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
@@ -29,14 +29,6 @@ object LoginPage {
       marginLeft(-150 px),
       marginTop(-180 px)
     )
-
-    object loginPanel {
-      val container = style(addClassNames("panel", "panel-default"))
-      val header = style(addClassName("panel-heading"))
-      val body = style(addClassName("panel-body"))
-    }
-
-    initInnerObjects(loginPanel.container, loginPanel.header, loginPanel.body)
   }
 
   case class NotificationHolder(notifications: Seq[Notification] = Seq())
@@ -64,10 +56,7 @@ object LoginPage {
     def render(holder: NotificationHolder) =
       <.div(Style.formPlacement,
         NotificationDisplay(holder.notifications),
-        <.div(Style.loginPanel.container,
-          <.div(Style.loginPanel.header, "Sign in into Kairos Console"),
-          <.div(Style.loginPanel.body, LoginForm(loginHandler))
-        )
+        Panel("Sign in into Kairos Console", LoginForm(loginHandler))
       )
   }
 
