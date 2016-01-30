@@ -32,7 +32,7 @@ object RegistryPage {
       def jobRejectedMsg(state: State, cause: Faults): State = {
         def resolutionFailed = Notification.error {
           <.div(
-            <.p("Dependency resolution failed:"),
+            <.p("Could not register the job due to following errors:"),
             cause.list.toList.map {
               case UnresolvedDependency(artifactId) =>
                 <.li(s"Unresolved dependency: $artifactId")
@@ -69,8 +69,13 @@ object RegistryPage {
     def render(state: State) =
       <.div(Style.content,
         <.h2("Registry"),
-        NotificationDisplay(state.notifications),
-        JobForm(handleJobSubmit),
+        <.div(^.`class` := "panel panel-default",
+          <.div(^.`class` := "panel-heading", "Register new job"),
+          <.div(^.`class` := "panel-body",
+            NotificationDisplay(state.notifications),
+            JobForm(handleJobSubmit)
+          )
+        ),
         JobSpecList(state.specs)
       )
 

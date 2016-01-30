@@ -46,10 +46,12 @@ object JobForm {
         ),
         <.div(^.`class` := "form-group",
           <.label("Artifact ID"),
-          <.div(
-            InputField.text("group", "GroupId", required = true, groupId),
-            InputField.text("name", "ArtifactId", required = true, artifactId),
-            InputField.text("version", "Version", required = true, version)
+          <.div(^.`class` := "container-fluid",
+            <.div(^.`class` := "row",
+              <.div(^.`class` := "col-md-4", InputField.text("group", "GroupId", required = true, groupId)),
+              <.div(^.`class` := "col-md-4", InputField.text("name", "ArtifactId", required = true, artifactId)),
+              <.div(^.`class` := "col-md-4", InputField.text("version", "Version", required = true, version))
+            )
           )
         ),
         <.div(^.`class` := "form-group",
