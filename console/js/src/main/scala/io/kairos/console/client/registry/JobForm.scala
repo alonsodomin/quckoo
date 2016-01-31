@@ -42,30 +42,40 @@ object JobForm {
       val version     = ExternalVar.state($.zoomL(JobSpec.artifactId ^|-> ArtifactId.version))
       val jobClass    = ExternalVar.state($.zoomL(JobSpec.jobClass))
 
-      <.form(^.name := "jobDetails", ^.onSubmit ==> $.backend.submitJob,
+      <.form(^.name := "jobDetails", ^.`class` := "form-horizontal", ^.onSubmit ==> $.backend.submitJob,
         <.div(^.`class` := "form-group",
-          <.label(^.`for` := "displayName", "Name"),
-          InputField.text("displayName", "Job Name", required = true, displayName)
+          <.label(^.`for` := "displayName", ^.`class` := "col-sm-2 control-label", "Name"),
+          <.div(^.`class` := "col-sm-10",
+            InputField.text("displayName", "Job Name", required = true, displayName)
+          )
         ),
         <.div(^.`class` := "form-group",
-          <.label(^.`for` := "description", "Description"),
-          InputField.text("description", "Description", required = false, description)
+          <.label(^.`for` := "description", ^.`class` := "col-sm-2 control-label", "Description"),
+          <.div(^.`class` := "col-sm-10",
+            InputField.text("description", "Description", required = false, description)
+          )
         ),
         <.div(^.`class` := "form-group",
-          <.label("Artifact ID"),
-          <.div(^.`class` := "container-fluid",
-            <.div(^.`class` := "row",
-              <.div(^.`class` := "col-md-4", InputField.text("group", "GroupId", required = true, groupId)),
-              <.div(^.`class` := "col-md-4", InputField.text("name", "ArtifactId", required = true, artifactId)),
-              <.div(^.`class` := "col-md-4", InputField.text("version", "Version", required = true, version))
+          <.label(^.`class` := "col-sm-2 control-label", "Artifact ID"),
+          <.div(^.`class` := "col-sm-10",
+            <.div(^.`class` := "container-fluid",
+              <.div(^.`class` := "row",
+                <.div(^.`class` := "col-sm-4", InputField.text("group", "GroupId", required = true, groupId)),
+                <.div(^.`class` := "col-sm-4", InputField.text("name", "ArtifactId", required = true, artifactId)),
+                <.div(^.`class` := "col-sm-4", InputField.text("version", "Version", required = true, version))
+              )
             )
           )
         ),
         <.div(^.`class` := "form-group",
-          <.label(^.`for` := "jobClass", "Job Class"),
-          InputField.text("jobClass", "Job class name", required = true, jobClass)
+          <.label(^.`for` := "jobClass", ^.`class` := "col-sm-2 control-label", "Job Class"),
+          <.div(^.`class` := "col-sm-10",
+            InputField.text("jobClass", "Job class name", required = true, jobClass)
+          )
         ),
-        <.button(^.`class` := "btn btn-default", "Submit")
+        <.div(^.`class` := "col-sm-offset-2",
+          <.button(^.`class` := "btn btn-default", "Submit")
+        )
       )
     }.
     build
