@@ -11,10 +11,10 @@ object NotificationDisplay {
   import Level.Level
 
   private[this] def bgClassForLevel(level: Level): String = level match {
-    case Level.Error   => "bg-danger"
-    case Level.Warning => "bg-warning"
-    case Level.Info    => "bg-info"
-    case Level.Success => "bg-success"
+    case Level.Error   => "alert-danger"
+    case Level.Warning => "alert-warning"
+    case Level.Info    => "alert-info"
+    case Level.Success => "alert-success"
   }
 
   private[this] def iconClassForLevel(level: Level): String = level match {
@@ -29,8 +29,8 @@ object NotificationDisplay {
     noBackend.
     render_P(msgs =>
       <.div(msgs.map { msg =>
-        <.div(^.`class` := bgClassForLevel(msg.level), ^.padding := 5.px,
-          <.i(^.`class` := s"fa ${iconClassForLevel(msg.level)}"),
+        <.div(^.`class` := s"alert ${bgClassForLevel(msg.level)}", ^.padding := 5.px,
+          <.i(^.`class` := s"fa ${iconClassForLevel(msg.level)}", ^.paddingRight := 5.px),
           msg.renderer.runNow()
         )
       })

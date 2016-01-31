@@ -1,7 +1,7 @@
 package io.kairos.console.client.registry
 
 import io.kairos.JobSpec
-import io.kairos.console.client.layout.FormField
+import io.kairos.console.client.layout.{Button, FormField}
 import io.kairos.id.ArtifactId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.ExternalVar
@@ -43,24 +43,16 @@ object JobForm {
       val jobClass    = ExternalVar.state($.zoomL(JobSpec.jobClass))
 
       <.form(^.name := "jobDetails", ^.`class` := "form-horizontal", ^.onSubmit ==> $.backend.submitJob,
-        <.div(^.`class` := "form-group",
-          <.label(^.`for` := "displayName", ^.`class` := "col-sm-2 control-label", "Name"),
-          <.div(^.`class` := "col-sm-10",
-            FormField.text("displayName",
-              placeholder = Some("Job name"),
-              validator = FormField.notEmptyStr("displayName"),
-              accessor = displayName
-            )
-          )
+        FormField.text("displayName",
+          label = Some("Name"),
+          placeholder = Some("Job name"),
+          validator = FormField.notEmptyStr("displayName"),
+          accessor = displayName
         ),
-        <.div(^.`class` := "form-group",
-          <.label(^.`for` := "description", ^.`class` := "col-sm-2 control-label", "Description"),
-          <.div(^.`class` := "col-sm-10",
-            FormField.text("description",
-              placeholder = Some("Description"),
-              accessor = description
-            )
-          )
+        FormField.text("description",
+          label = Some("Description"),
+          placeholder = Some("Long description for the job"),
+          accessor = description
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Artifact ID"),
@@ -89,19 +81,13 @@ object JobForm {
             )
           )
         ),
-        <.div(^.`class` := "form-group",
-          <.label(^.`for` := "jobClass", ^.`class` := "col-sm-2 control-label", "Job Class"),
-          <.div(^.`class` := "col-sm-10",
-            FormField.text("jobClass",
-              placeholder = Some("Job class name"),
-              validator = FormField.notEmptyStr("jobClass"),
-              accessor = jobClass
-            )
-          )
+        FormField.text("jobClass",
+          label = Some("Job Class"),
+          placeholder = Some("Fully qualified job class name"),
+          validator = FormField.notEmptyStr("jobClass"),
+          accessor = jobClass
         ),
-        <.div(^.`class` := "col-sm-offset-2",
-          <.button(^.`class` := "btn btn-default", "Submit")
-        )
+        Button.submit()
       )
     }.
     build

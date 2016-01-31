@@ -23,9 +23,9 @@ object FormField {
     _.successNel[Fault]
   }
 
-  def notEmptyStr(fieldId: String): Validator[String] = { str =>
+  def notEmptyStr(fieldId: String)(str: String): Validated[String] = {
     import Scalaz._
-    if (str.isEmpty) Required(fieldId).failureNel[String]
+    if (str.isEmpty) Required(fieldId).asInstanceOf[Fault].failureNel[String]
     else str.successNel[Fault]
   }
 
@@ -60,7 +60,8 @@ object FormField {
   case class Props[T](
     inputType: String,
     id: String,
-    placeholder: Option[String] = None,
+    label: Option[String],
+    placeholder: Option[String],
     converter: Converter[T],
     validator: Validator[T],
     accessor: Accessor[T]
@@ -78,10 +79,9 @@ object FormField {
         $.modState(_.copy(value = value), $.state.flatMap(s => validate(s.value)).flatMap {
           case Failure(errors) =>
             $.modState(_.copy(notification = Some(Notification.error(errors.head)), valid = false))
-          case Success(v) =>
-            $.modState(_.copy(notification = None, valid = true)) >>
-              $.props.flatMap(p => p.accessor.setter(v))
-        })
+          case Success(_) =>
+            $.modState(_.copy(notification = None, valid = true))
+        }) >> $.props.flatMap(p => p.accessor.setter(value))
       }
     }
 
@@ -91,27 +91,37 @@ object FormField {
     initialState_P(props => State(value = props.accessor.getter.runNow())).
     backend(new FieldBackend[T](_)).
     renderPS(($, props, state) => {
-      <.div(^.`class` := "container-fluid",
-        <.div(^.`class` := "row",
+      <.div(^.classSet1("form-group", "has-error" -> !state.valid),
+        props.label.map { text =>
+          <.label(^.`for` := props.id, ^.`class` := "col-sm-2 control-label", text)
+        }.getOrElse(EmptyTag),
+        <.div(^.classSet("col-sm-10" -> props.label.isDefined),
           <.input(^.id := props.id,
             ^.`type` := props.inputType,
-            ^.`class` := "form-control col-sm-8",
+            ^.classSet1("form-control", "has-error" -> !state.valid),
             ^.placeholder := props.placeholder.getOrElse(""),
             ^.value := props.converter.to(state.value),
             ^.onChange ==> $.backend.updateField
           ),
-          <.div(^.`class` := "col-sm-2",
+          if (!state.valid)
             NotificationDisplay(state.notification.toList)
-          )
+          else EmptyTag
         )
       )
     })
 
   private[this] val componentS = componentB[String].build
 
-  def text(id: String, placeholder: Option[String] = None,
-           validator: Validator[String] = noOpValidator[String],
-           accessor: Accessor[String]) =
-    componentS(Props("text", id, placeholder, StringConverter, validator, accessor))
+  def text(id: String, label: Option[String] = None,
+      placeholder: Option[String] = None,
+      validator: Validator[String] = noOpValidator[String],
+      accessor: Accessor[String]) =
+    componentS(Props("text", id, label, placeholder, StringConverter, validator, accessor))
+
+  def password(id: String, label: Option[String] = None,
+      placeholder: Option[String] = None,
+      validator: Validator[String] = noOpValidator[String],
+      accessor: Accessor[String]) =
+    componentS(Props("password", id, label, placeholder, StringConverter, validator, accessor))
 
 }
