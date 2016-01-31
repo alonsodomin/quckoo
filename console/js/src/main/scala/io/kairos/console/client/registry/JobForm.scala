@@ -1,7 +1,7 @@
 package io.kairos.console.client.registry
 
 import io.kairos.JobSpec
-import io.kairos.console.client.layout.InputField
+import io.kairos.console.client.layout.FormField
 import io.kairos.id.ArtifactId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.ExternalVar
@@ -46,13 +46,20 @@ object JobForm {
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "displayName", ^.`class` := "col-sm-2 control-label", "Name"),
           <.div(^.`class` := "col-sm-10",
-            InputField.text("displayName", "Job Name", required = true, displayName)
+            FormField.text("displayName",
+              placeholder = Some("Job name"),
+              validator = FormField.notEmptyStr("displayName"),
+              accessor = displayName
+            )
           )
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "description", ^.`class` := "col-sm-2 control-label", "Description"),
           <.div(^.`class` := "col-sm-10",
-            InputField.text("description", "Description", required = false, description)
+            FormField.text("description",
+              placeholder = Some("Description"),
+              accessor = description
+            )
           )
         ),
         <.div(^.`class` := "form-group",
@@ -60,9 +67,24 @@ object JobForm {
           <.div(^.`class` := "col-sm-10",
             <.div(^.`class` := "container-fluid",
               <.div(^.`class` := "row",
-                <.div(^.`class` := "col-sm-4", InputField.text("group", "GroupId", required = true, groupId)),
-                <.div(^.`class` := "col-sm-4", InputField.text("name", "ArtifactId", required = true, artifactId)),
-                <.div(^.`class` := "col-sm-4", InputField.text("version", "Version", required = true, version))
+                <.div(^.`class` := "col-sm-4",
+                  FormField.text("group",
+                    placeholder = Some("Group Id"),
+                    validator = FormField.notEmptyStr("groupId"),
+                    accessor = groupId
+                  )),
+                <.div(^.`class` := "col-sm-4",
+                  FormField.text("name",
+                    placeholder = Some("Artifact Id"),
+                    validator = FormField.notEmptyStr("artifactId"),
+                    accessor = artifactId
+                  )),
+                <.div(^.`class` := "col-sm-4",
+                  FormField.text("version",
+                    placeholder = Some("Version"),
+                    validator = FormField.notEmptyStr("version"),
+                    accessor = version
+                  ))
               )
             )
           )
@@ -70,7 +92,11 @@ object JobForm {
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "jobClass", ^.`class` := "col-sm-2 control-label", "Job Class"),
           <.div(^.`class` := "col-sm-10",
-            InputField.text("jobClass", "Job class name", required = true, jobClass)
+            FormField.text("jobClass",
+              placeholder = Some("Job class name"),
+              validator = FormField.notEmptyStr("jobClass"),
+              accessor = jobClass
+            )
           )
         ),
         <.div(^.`class` := "col-sm-offset-2",

@@ -1,5 +1,6 @@
 package io.kairos.console.client.layout
 
+import io.kairos.Fault
 import io.kairos.console.client.layout.Notification.Level.Level
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.{CallbackTo, vdom}
@@ -29,6 +30,9 @@ object Notification {
       import vdom.prefix_<^._
       <.span(content)
     }
+
+    implicit def fromFault(fault: Fault): ToContentRenderer =
+      fromString(fault.toString)
 
     implicit def fromThrowable(throwable: Throwable): ToContentRenderer =
       fromString(s"${throwable.getClass.getName}: ${throwable.getMessage}")
