@@ -3,6 +3,7 @@ package io.kairos.protocol
 import io.kairos.Trigger
 import io.kairos.Trigger.Immediate
 import io.kairos.id._
+import monocle.macros.Lenses
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -12,6 +13,8 @@ import scala.concurrent.duration.FiniteDuration
 object SchedulerProtocol {
 
   sealed trait SchedulerCommand
+
+  @Lenses
   case class ScheduleJob(jobId: JobId,
                          params: Map[String, AnyVal] = Map.empty,
                          trigger: Trigger = Immediate,

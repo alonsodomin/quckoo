@@ -15,13 +15,13 @@ object JobSpec {
   def validate(jobSpec: JobSpec): Validated[JobSpec] =
     validate(jobSpec.displayName, jobSpec.description, jobSpec.artifactId, jobSpec.jobClass)
 
-  def validate(displayName: String, description: String, artifactId: ArtifactId, jobClass: String): Validated[JobSpec] = {
+  def validate(displayName: String, description: Option[String], artifactId: ArtifactId, jobClass: String): Validated[JobSpec] = {
     import Validations._
 
     def validDisplayName: Validated[String] =
       notNullOrEmpty(displayName)("displayName")
 
-    def validDescription: Validated[String] =
+    def validDescription: Validated[Option[String]] =
       notNull(description)("description")
 
     def validArtifactId: Validated[ArtifactId] = {
@@ -39,7 +39,7 @@ object JobSpec {
 
 @Lenses case class JobSpec(
     displayName: String,
-    description: String = "",
+    description: Option[String] = None,
     artifactId: ArtifactId,
     jobClass: String
 )

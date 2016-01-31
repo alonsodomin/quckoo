@@ -1,8 +1,9 @@
 package io.kairos.console.client.execution
 
-import io.kairos.console.client.layout.Notification
+import io.kairos.console.client.layout._
+import io.kairos.protocol.SchedulerProtocol.ScheduleJob
 import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
@@ -21,9 +22,17 @@ object ExecutionsPage {
 
   class ExecutionsBackend($: BackendScope[Unit, State]) {
 
+    def handleSchedule(scheduleJob: ScheduleJob): Callback = {
+      $.modState(st => st.copy(notifications = Seq()))
+    }
+
     def render(state: State) = {
       <.div(Style.content,
         <.h2("Executions"),
+        Panel("Schedule a job",
+          NotificationDisplay(state.notifications),
+          ExecutionPlanForm(handleSchedule)
+        ),
         ExecutionPlanList(state.plans)
       )
     }

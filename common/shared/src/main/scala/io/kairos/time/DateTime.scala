@@ -3,7 +3,7 @@ package io.kairos.time
 /**
   * Created by alonsodomin on 22/12/2015.
   */
-abstract class DateTime extends Ordered[DateTime] {
+abstract class DateTime extends Ordered[DateTime] with Serializable {
 
   def diff(that: DateTime): Duration
 

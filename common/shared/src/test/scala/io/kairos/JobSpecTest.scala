@@ -27,7 +27,7 @@ class JobSpecTest extends FlatSpec with Matchers {
       NotNull("artifactId"),
       Required("jobClass")
     ).failure[JobSpec]
-    JobSpec.validate("", "", null, "") should be (expectedErrors)
+    JobSpec.validate("", None, null, "") should be (expectedErrors)
   }
 
   it should "not accept an invalid artifactId" in {
@@ -36,7 +36,7 @@ class JobSpecTest extends FlatSpec with Matchers {
       Required("artifactId"),
       Required("version")
     ).failure[JobSpec]
-    JobSpec.validate("foo", "", ArtifactId(null, null, null), "bar") should be (expectedErrors)
+    JobSpec.validate("foo", None, ArtifactId(null, null, null), "bar") should be (expectedErrors)
   }
 
 }
