@@ -29,6 +29,7 @@ object AmountOfTimeField {
       //val updateAmount = (event: ReactEventI) => freq.mod(_.copy(amount = event.target.value.toInt))
       val amount = ExternalVar(freq.value.amount)(f => freq.setL(AmountOfTime.amount)(f))
 
+
       <.div(
         InputField.int(s"${id}_amount", "0", required, amount),
         <.select(^.id := s"{id}_unit", ^.`class` := "form-control", ^.required := required,

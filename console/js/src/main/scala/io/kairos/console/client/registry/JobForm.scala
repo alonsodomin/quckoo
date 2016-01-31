@@ -6,7 +6,6 @@ import io.kairos.id.ArtifactId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._
-import monocle.std.option.some
 
 /**
   * Created by alonsodomin on 23/12/2015.
@@ -30,9 +29,13 @@ object JobForm {
     backend(new JobFormBackend(_)).
     render { $ =>
       val displayName = ExternalVar.state($.zoomL(JobSpec.displayName))
-      val description = {
-        val prism = JobSpec.description ^<-? some
-        ExternalVar.state($.zoom(prism.getOption(_).getOrElse(""))((s, t) => prism.set(t)(s)))
+      lazy val description = {
+        val readValue = (spec: JobSpec) =>
+          JobSpec.description.get(spec).getOrElse("")
+        val writeValue = (spec: JobSpec, value: String) =>
+          JobSpec.description.set(Some(value))(spec)
+
+        ExternalVar.state($.zoom(readValue)(writeValue))
       }
       val groupId     = ExternalVar.state($.zoomL(JobSpec.artifactId ^|-> ArtifactId.group))
       val artifactId  = ExternalVar.state($.zoomL(JobSpec.artifactId ^|-> ArtifactId.artifact))

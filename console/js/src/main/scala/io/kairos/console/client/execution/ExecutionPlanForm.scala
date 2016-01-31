@@ -27,6 +27,7 @@ object ExecutionPlanForm {
 
   @Lenses
   case class ScheduleDetails(jobId: JobId = null,
+                             trigger: TriggerOption.TriggerOption = TriggerOption.Immediate,
                              timeout: AmountOfTime = AmountOfTime()) {
     def toScheduleJob: ScheduleJob = ???
   }
@@ -49,9 +50,11 @@ object ExecutionPlanForm {
     backend(new ExecutionPlanFormBackend(_)).
     render { $ =>
       val jobId   = ExternalVar.state($.zoomL(FormState.details ^|-> ScheduleDetails.jobId))
+      val trigger = ExternalVar.state($.zoomL(FormState.details ^|-> ScheduleDetails.trigger))
       val timeout = ExternalVar.state($.zoomL(FormState.details ^|-> ScheduleDetails.timeout))
 
       val updateJobId = (event: ReactEventI) => jobId.set($.state.availableJobIds(event.target.value.toInt)._1)
+      val updateTrigger = (event: ReactEventI) => trigger.set(TriggerOption(event.target.value.toInt))
 
       <.form(^.name := "scheduleDetails", ^.onSubmit ==> $.backend.submitSchedule,
         <.div(^.`class` := "form-group",
@@ -67,6 +70,7 @@ object ExecutionPlanForm {
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "trigger", "Trigger"),
           <.select(^.id := "trigger", ^.`class` := "form-control", ^.required := true,
+            ^.value := trigger.value.id, ^.onChange ==> updateTrigger,
             TriggerOption.values.map { triggerOp =>
               <.option(^.value := triggerOp.id, triggerOp.toString())
             }
