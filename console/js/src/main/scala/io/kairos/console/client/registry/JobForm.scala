@@ -64,19 +64,22 @@ object JobForm {
                     placeholder = Some("Group Id"),
                     validator = FormField.notEmptyStr("groupId"),
                     accessor = groupId
-                  )),
+                  )
+                ),
                 <.div(^.`class` := "col-sm-4",
                   FormField.text("name",
                     placeholder = Some("Artifact Id"),
                     validator = FormField.notEmptyStr("artifactId"),
                     accessor = artifactId
-                  )),
+                  )
+                ),
                 <.div(^.`class` := "col-sm-4",
                   FormField.text("version",
                     placeholder = Some("Version"),
                     validator = FormField.notEmptyStr("version"),
                     accessor = version
-                  ))
+                  )
+                )
               )
             )
           )

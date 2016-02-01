@@ -27,7 +27,7 @@ object JobSpecList {
         ),
         <.tbody(
           p.specs.map { case (jobId, spec) =>
-            <.tr(
+            <.tr(^.key := jobId.toString(),
               <.td(spec.displayName),
               <.td(spec.description),
               <.td(spec.artifactId.toString()),
