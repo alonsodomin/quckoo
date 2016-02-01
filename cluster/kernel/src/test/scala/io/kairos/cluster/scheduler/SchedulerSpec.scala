@@ -14,7 +14,7 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 object SchedulerSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec("foo", "foo desc", TestArtifactId, "com.example.Job")
+  final val TestJobSpec = JobSpec("foo", Some("foo desc"), TestArtifactId, "com.example.Job")
   final val TestJobId = JobId(TestJobSpec)
 
 }

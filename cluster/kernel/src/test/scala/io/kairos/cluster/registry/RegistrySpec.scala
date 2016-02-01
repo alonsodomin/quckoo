@@ -82,7 +82,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
 
     "notify that a specific job is not enabled when attempting to disabling it" in {
       val otherModuleId = ArtifactId("com.example", "foo", "latest")
-      val otherJobSpec = JobSpec("foo", "foo desc", otherModuleId, "com.example.Job")
+      val otherJobSpec = JobSpec("foo", Some("foo desc"), otherModuleId, "com.example.Job")
 
       val nonExistentJobId = JobId(otherJobSpec)
       registry ! DisableJob(nonExistentJobId)
