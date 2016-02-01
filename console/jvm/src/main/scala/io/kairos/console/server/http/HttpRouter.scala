@@ -55,7 +55,7 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
   private[this] def staticResources: Route = get {
     pathSingleSlash {
       complete {
-        HttpEntity(MediaTypes.`text/html`, ClientBootstrap.skeleton.render)
+        HttpEntity(ContentTypes.`text/html(UTF-8)`, ClientBootstrap.skeleton.render)
       }
     } ~ getFromResourceDirectory("")
   }
