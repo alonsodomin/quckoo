@@ -20,7 +20,7 @@ import scalaz._
 object RegistrySpec {
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec("foo", "foo desc", TestArtifactId, "com.example.Job")
+  final val TestJobSpec = JobSpec("foo", Some("foo desc"), TestArtifactId, "com.example.Job")
 
   final val CommonsLoggingURL = new URL("http://repo1.maven.org/maven2/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar")
   final val TestArtifact = Artifact(TestArtifactId, Seq(CommonsLoggingURL))
