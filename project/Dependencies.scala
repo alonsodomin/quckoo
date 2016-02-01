@@ -18,9 +18,7 @@ object Dependencies {
 
     // Akka ----------
 
-    val akka = "2.4.1"
-    val akkaHttp = "2.0-M2"
-    val akkaStreaming = "2.0-M2"
+    val akka = "2.4.2-RC1"
 
     // ScalaJS -------
 
@@ -49,16 +47,16 @@ object Dependencies {
       val clusterTools   = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka
       val clusterMetrics = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka
       val sharding       = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
-      val http           = "com.typesafe.akka" %% "akka-http-experimental" % version.akkaHttp
-      val httpUpickle    = "de.heikoseeberger" %% "akka-http-upickle"      % "1.3.0"
-      val sse            = "de.heikoseeberger" %% "akka-sse"               % "1.3.0"
+      val http           = "com.typesafe.akka" %% "akka-http-experimental" % version.akka
+      val httpUpickle    = "de.heikoseeberger" %% "akka-http-upickle"      % "1.5.0"
+      val sse            = "de.heikoseeberger" %% "akka-sse"               % "1.6.1"
 
       object persistence {
         val core      = "com.typesafe.akka"   %% "akka-persistence"              % version.akka
         val query     = "com.typesafe.akka"   %% "akka-persistence-query-experimental" % version.akka
+        val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra"    % "0.8"
         val jdbc      = "com.github.dnvriend" %% "akka-persistence-jdbc"         % "1.2.2"
-        val cassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6"
-        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % "1.1.5" % Test
+        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % "1.2.2" % Test
       }
 
       val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka
