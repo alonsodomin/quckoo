@@ -14,10 +14,13 @@ jdk:
 scala:
    - 2.11.7
 
+before_install:
+  - pip install codecov
 script:
   #- sbt ++$TRAVIS_SCALA_VERSION clean coverage test && sbt coverageAggregate
   - sbt ++$TRAVIS_SCALA_VERSION clean test
-#after_success:
+after_success:
+  - codecov
 #  - sbt coveralls
 
 branches:
