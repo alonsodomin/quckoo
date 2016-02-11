@@ -31,6 +31,6 @@ object Form {
     }).build
 
   def apply[T](id: String, value: T, children: ReactElement*)(handler: FormHandler[T]) =
-    component(Props[T](id, value, handler))
+    component.withProps(Props[T](id, value, handler)).apply(children)
 
 }

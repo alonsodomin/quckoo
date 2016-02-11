@@ -155,7 +155,6 @@ lazy val console = (crossProject in file("console")).
 
       Seq(
         "biz.enef" %%% "slogging" % "0.3",
-        "com.thoughtworks.binding" %%% "dom" % "1.1.1",
         "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % scalaJsReact,
@@ -163,6 +162,7 @@ lazy val console = (crossProject in file("console")).
         "com.github.japgolly.scalajs-react" %%% "test" % scalaJsReact % "test",
         "com.github.japgolly.scalacss" %%% "core" % scalaCss,
         "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss,
+        "com.github.chandu0101.scalajs-react-components" %%% "core" % "0.3.0",
 
         "com.github.japgolly.fork.monocle" %%% "monocle-macro" % monocle
       )

@@ -7,6 +7,6 @@ import org.widok.moment.{Duration => MDuration}
   */
 class MomentJSDuration(d: MDuration) extends Duration {
 
-  def toMillis: Long = d.milliseconds()
+  def toMillis: Long = d.milliseconds().toLong
 
 }
