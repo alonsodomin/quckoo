@@ -15,7 +15,7 @@ scala:
    - 2.11.7
 
 before_install:
-  - pip install codecov
+  - pip install --user codecov
 script:
   #- sbt ++$TRAVIS_SCALA_VERSION clean coverage test && sbt coverageAggregate
   - sbt ++$TRAVIS_SCALA_VERSION clean test
