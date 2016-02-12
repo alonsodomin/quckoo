@@ -46,8 +46,8 @@ object Registry {
   }
 
   private case class RegistryStore private (
-    private val enabledJobs: Map[JobId, JobSpec],
-    private val disabledJobs: Map[JobId, JobSpec]) {
+      private val enabledJobs: Map[JobId, JobSpec],
+      private val disabledJobs: Map[JobId, JobSpec]) {
 
     def get(id: JobId): Option[JobSpec] =
       enabledJobs.get(id)

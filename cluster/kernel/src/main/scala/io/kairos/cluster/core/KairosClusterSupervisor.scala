@@ -39,8 +39,9 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)
   private val cluster = Cluster(context.system)
   private val mediator = DistributedPubSub(context.system).mediator
 
+  private val settingsRepo = context.actorOf(SettingsRepository.props, "settingsRepository")
 
-  private val registry = startRegistry
+  private val registry = startRegistry(settingsRepo)
   context.actorOf(RegistryReceptionist.props(registry), "registry")
 
   private val scheduler = context.watch(context.actorOf(
@@ -86,7 +87,7 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)
       // Perform graceful shutdown of the cluster
   }
 
-  private def startRegistry: ActorRef = if (cluster.selfRoles.contains("registry")) {
+  private def startRegistry(settingsRepo: ActorRef): ActorRef = if (cluster.selfRoles.contains("registry")) {
     log.info("Starting registry shards...")
     ClusterSharding(context.system).start(
       typeName        = Registry.shardName,

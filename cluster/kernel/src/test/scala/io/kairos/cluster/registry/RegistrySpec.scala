@@ -28,7 +28,8 @@ object RegistrySpec {
 }
 
 class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with ImplicitSender
-  with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers with MockFactory {
+    with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll
+    with Matchers with MockFactory {
 
   import RegistryProtocol._
   import RegistrySpec._
