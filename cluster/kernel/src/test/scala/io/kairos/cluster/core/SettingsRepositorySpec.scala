@@ -3,6 +3,7 @@ package io.kairos.cluster.core
 import java.net.URL
 
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
+import io.kairos.cluster.KairosClusterSettings
 import io.kairos.test.TestActorSystem
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
@@ -25,8 +26,10 @@ class SettingsRepositorySpec extends TestKit(TestActorSystem("SettingsRepository
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
+  val defaultSettings = KairosClusterSettings(system)
+
   "A settings repository" should {
-    val settingsRepository = TestActorRef(SettingsRepository.props)
+    val settingsRepository = TestActorRef(SettingsRepository.props(defaultSettings))
 
     "return an empty artifact repositories when it's actually empty" in {
       settingsRepository ! GetArtifactRepositories

@@ -28,7 +28,8 @@ object KairosClusterSupervisor {
 }
 
 class KairosClusterSupervisor(settings: KairosClusterSettings)
-                             (implicit materializer: ActorMaterializer, timeSource: TimeSource) extends Actor with ActorLogging {
+                             (implicit materializer: ActorMaterializer, timeSource: TimeSource)
+    extends Actor with ActorLogging {
 
   import ClientProtocol._
   import KairosClusterSupervisor._
@@ -39,7 +40,7 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)
   private val cluster = Cluster(context.system)
   private val mediator = DistributedPubSub(context.system).mediator
 
-  private val settingsRepo = context.actorOf(SettingsRepository.props, "settingsRepository")
+  private val settingsRepo = context.actorOf(SettingsRepository.props(settings), "settingsRepository")
 
   private val registry = startRegistry(settingsRepo)
   context.actorOf(RegistryReceptionist.props(registry), "registry")

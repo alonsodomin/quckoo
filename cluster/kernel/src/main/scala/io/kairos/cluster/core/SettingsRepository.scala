@@ -4,6 +4,7 @@ import java.net.URL
 
 import akka.actor.{ActorLogging, Props}
 import akka.persistence.PersistentActor
+import io.kairos.cluster.KairosClusterSettings
 
 /**
   * Created by alonsodomin on 12/02/2016.
@@ -48,11 +49,13 @@ object SettingsRepository {
 
   }
 
-  def props: Props = Props(classOf[SettingsRepository])
+  def props(clusterSettings: KairosClusterSettings): Props =
+    Props(classOf[SettingsRepository], clusterSettings)
 
 }
 
-class SettingsRepository extends PersistentActor with ActorLogging {
+class SettingsRepository(clusterSettings: KairosClusterSettings)
+    extends PersistentActor with ActorLogging {
   import SettingsRepository._
 
   private[this] var store = SettingsStore.empty

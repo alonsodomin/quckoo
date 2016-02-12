@@ -21,7 +21,8 @@ object Registry {
 
   val DefaultSnapshotFrequency = 15 minutes
 
-  def props(resolve: Resolve, snapshotFrequency: FiniteDuration = DefaultSnapshotFrequency): Props =
+  def props(resolve: Resolve,
+      snapshotFrequency: FiniteDuration = DefaultSnapshotFrequency): Props =
     Props(classOf[Registry], resolve, snapshotFrequency)
 
   val shardName      = "Registry"
