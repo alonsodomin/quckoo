@@ -122,7 +122,7 @@ object Dependencies {
       ivy, scalaXml, scalaz, mockito
     )
 
-    val kernel = logging ++ testing ++ akka ++ Seq(
+    val master = logging ++ testing ++ akka ++ Seq(
       Akka.persistence.core,
       Akka.persistence.cassandra,
       Akka.persistence.query,

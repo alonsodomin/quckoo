@@ -28,7 +28,7 @@ object Packaging {
     dockerCommands += Cmd("ENV", "KAIROS_HOME", linuxHomeLocation)
   )
 
-  lazy val kernelDockerSettings = dockerSettings ++ Seq(
+  lazy val masterDockerSettings = dockerSettings ++ Seq(
     dockerExposedPorts := Seq(2551, 8095)
   )
 

@@ -96,7 +96,7 @@ lazy val client = (project in file("client")).
 // Cluster ==================================================
 
 lazy val cluster = (project in file("cluster")).
-  aggregate(clusterShared, kernel, worker).
+  aggregate(clusterShared, master, worker).
   settings(noPublishSettings)
 
 lazy val clusterShared = Project("cluster-shared", file("cluster/shared")).
@@ -106,16 +106,16 @@ lazy val clusterShared = Project("cluster-shared", file("cluster/shared")).
   ).
   dependsOn(commonJVM)
 
-lazy val kernel = MultiNode(Project("cluster-kernel", file("cluster/kernel"))).
+lazy val master = MultiNode(Project("cluster-master", file("cluster/master"))).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(
-    libraryDependencies ++= Dependencies.module.kernel
+    libraryDependencies ++= Dependencies.module.master
   ).
   enablePlugins(JavaServerAppPackaging).
   settings(Packaging.universalServerSettings: _*).
   enablePlugins(DockerPlugin).
-  settings(Packaging.kernelDockerSettings: _*).
+  settings(Packaging.masterDockerSettings: _*).
   dependsOn(clusterShared).
   dependsOn(consoleJVM)
 
