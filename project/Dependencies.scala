@@ -19,6 +19,7 @@ object Dependencies {
     // Akka ----------
 
     val akka = "2.4.2-RC1"
+    val kryo = "0.4.0"
 
     // ScalaJS -------
 
@@ -61,6 +62,8 @@ object Dependencies {
 
       val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka
       val testKit          = "com.typesafe.akka" %% "akka-testkit"            % version.akka % Test
+
+      val kryoSerialization = "com.github.romix.akka" %% "akka-kryo-serialization" % version.kryo
     }
 
     object Log4j {
@@ -111,7 +114,7 @@ object Dependencies {
     private[this] val logging = Seq(slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl)
     private[this] val testing = Seq(scalaTest, scalaMock)
 
-    val common   = testing ++ Seq(scalaXml)
+    val common   = testing :+ scalaXml
     val network  = logging ++ testing ++ akka
     val client   = logging ++ testing ++ akka
     val cluster  = logging ++ testing ++ akka ++ Seq(
@@ -124,13 +127,18 @@ object Dependencies {
       Akka.persistence.query,
       Akka.persistence.memory,
       Akka.sharding, Akka.http, Akka.httpUpickle, Akka.sse,
+      Akka.kryoSerialization,
       scopt, scalaz
     )
 
-    val worker = logging ++ testing ++ akka :+ scopt
+    val worker = logging ++ testing ++ akka ++ Seq(
+      scopt, Akka.kryoSerialization
+    )
 
     val exampleJobs = logging
-    val exampleProducers = logging ++ testing ++ akka :+ scopt
+    val exampleProducers = logging ++ testing ++ akka ++ Seq(
+      scopt, Akka.kryoSerialization
+    )
 
   }
 

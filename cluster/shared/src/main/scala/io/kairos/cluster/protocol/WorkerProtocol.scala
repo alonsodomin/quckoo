@@ -16,8 +16,9 @@ object WorkerProtocol {
   case class TaskFailed(workerId: WorkerId, taskId: TaskId, cause: Faults) extends WorkerMessage
 
   // Messages to workers
-  case object TaskReady
-  case class TaskDoneAck(taskId: TaskId)
+  sealed trait MasterMessage
+  case object TaskReady extends MasterMessage
+  case class TaskDoneAck(taskId: TaskId) extends MasterMessage
 
   // Worker related events
   final val WorkerTopic = "Workers"

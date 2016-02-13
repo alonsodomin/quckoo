@@ -13,6 +13,7 @@ import scala.concurrent.duration.FiniteDuration
 object SchedulerProtocol {
 
   sealed trait SchedulerCommand
+  sealed trait SchedulerEvent
 
   @Lenses
   case class ScheduleJob(jobId: JobId,
@@ -20,8 +21,8 @@ object SchedulerProtocol {
                          trigger: Trigger = Immediate,
                          timeout: Option[FiniteDuration] = None) extends SchedulerCommand
 
-  case class JobScheduled(jobId: JobId, planId: PlanId)
-  case class JobFailedToSchedule(jobId: JobId, cause: Throwable)
+  case class JobScheduled(jobId: JobId, planId: PlanId) extends SchedulerEvent
+  case class JobFailedToSchedule(jobId: JobId, cause: Throwable) extends SchedulerEvent
 
   case object GetExecutionPlans extends SchedulerCommand
   case class CancelPlan(planId: PlanId) extends SchedulerCommand
