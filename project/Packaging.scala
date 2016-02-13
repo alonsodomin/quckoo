@@ -5,7 +5,7 @@ import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
 
 object Packaging {
 
-  private val linuxHomeLocation = "/opt/kairos"
+  private[this] val linuxHomeLocation = "/opt/kairos"
 
   lazy val universalSettings = Seq(
     bashScriptExtraDefines ++= Seq(
@@ -23,7 +23,10 @@ object Packaging {
   lazy val dockerSettings = Seq(
     dockerRepository := Some("kairos"),
     dockerUpdateLatest := true,
-    dockerExposedVolumes := Seq("/opt/kairos/conf"),
+    dockerExposedVolumes := Seq(
+      s"$linuxHomeLocation/conf",
+      s"$linuxHomeLocation/cache"
+    ),
     defaultLinuxInstallLocation in Docker := linuxHomeLocation,
     dockerCommands += Cmd("ENV", "KAIROS_HOME", linuxHomeLocation)
   )

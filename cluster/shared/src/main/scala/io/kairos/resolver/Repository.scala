@@ -89,15 +89,18 @@ object Repository {
         if (!file.exists) None
         else (XML.loadFile(file) \ "localRepository").text match {
           case "" => None
-          case e @ _ => Some(new File(e))
+          case e : String => Some(new File(e))
         }
       } catch {
         // Occurs inside File constructor when property or environment variable does not exist
         case _: NullPointerException => None
         // Occurs when File does not exist
         case _: IOException          => None
-        case e: SAXParseException    => System.err.println(s"WARNING: Problem parsing ${f().getAbsolutePath}, ${e.getMessage}"); None
+        case e: SAXParseException    =>
+          System.err.println(s"WARNING: Problem parsing ${f().getAbsolutePath}, ${e.getMessage}");
+          None
       }
+
     loadHomeFromSettings(() => new File(System.getProperty("user.home"), ".m2/settings.xml")) orElse
       loadHomeFromSettings(() => new File(new File(System.getenv("M2_HOME")), "conf/settings.xml")) getOrElse
       new File(System.getProperty("user.home"), ".m2/repository")

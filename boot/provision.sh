@@ -14,7 +14,7 @@ function install_devtools() {
 
     echo "Installing SBT..."
     wget -nv https://dl.bintray.com/sbt/debian/sbt-0.13.9.deb -O ~/sbt-0.13.9.deb
-    sudo dpkg -i ~/sbt-0.13.9.deb
+    sudo dpkg -i ~/sbt-0.13.9.deb &> /dev/null
     rm ~/sbt-0.13.9.deb
 }
 
@@ -23,6 +23,10 @@ function install_devtools() {
 function main() {
     install_devtools
     touch ~/.devtools_provisioned
+
+    # Forcing a re-start of the docker daemon
+    sudo service docker restart
 }
 
+# Only run main function on first build
 test -f ~/.devtools_provisioned || main
