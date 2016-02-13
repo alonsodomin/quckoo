@@ -44,13 +44,14 @@ object Dependencies {
     val ivy = "org.apache.ivy" % "ivy" % "2.4.0"
 
     object Akka {
-      val actor          = "com.typesafe.akka" %% "akka-actor"             % version.akka
-      val clusterTools   = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka
-      val clusterMetrics = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka
-      val sharding       = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
-      val http           = "com.typesafe.akka" %% "akka-http-experimental" % version.akka
-      val httpUpickle    = "de.heikoseeberger" %% "akka-http-upickle"      % "1.5.0"
-      val sse            = "de.heikoseeberger" %% "akka-sse"               % "1.6.1"
+      val actor           = "com.typesafe.akka" %% "akka-actor"             % version.akka
+      val clusterTools    = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka
+      val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka
+      val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
+      val http            = "com.typesafe.akka" %% "akka-http-experimental" % version.akka
+      val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % "1.5.0"
+      val sse             = "de.heikoseeberger" %% "akka-sse"               % "1.6.1"
+      val distributedData = "com.typesafe.akka" %% "akka-distributed-data-experimental" % version.akka
 
       object persistence {
         val core      = "com.typesafe.akka"   %% "akka-persistence"              % version.akka
@@ -127,7 +128,7 @@ object Dependencies {
       Akka.persistence.query,
       Akka.persistence.memory,
       Akka.sharding, Akka.http, Akka.httpUpickle, Akka.sse,
-      Akka.kryoSerialization,
+      Akka.distributedData, Akka.kryoSerialization,
       scopt, scalaz
     )
 

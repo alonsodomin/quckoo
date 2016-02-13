@@ -39,6 +39,16 @@ Once it has finished loading, you should be able to access the Kairos UI in foll
 
 http://192.168.50.25:8095
 
+#### Build error when building the vagrant box
+
+When trying to bootstrap the self-contained VM with Vagrant, SBT will be invoked from the inside the VM to publish
+the Docker images in the host's local registry. When this is done the first time SBT may fail to communicate with
+the local Docker daemon and you will see a build error. If this happens just re-provision the VM and it should work.
+
+```
+vagrant provision
+```
+
 ## Contributing
 
 Kairos is still right now in _experimental_ phase, current codebase will be evolving until it reaches the level of
