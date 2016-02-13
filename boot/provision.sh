@@ -24,6 +24,11 @@ function main() {
     install_devtools
     touch ~/.devtools_provisioned
 
+    # Prepare the local SBT repository folder
+    mkdir -p /home/vagrant/.ivy2/local
+    chown -R vagrant:vagrant /home/vagrant/.ivy2/local
+    chmod -R 777 /home/vagrant/.ivy2/local
+
     # Forcing a re-start of the docker daemon
     sudo service docker restart
 }

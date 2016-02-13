@@ -12,6 +12,8 @@ end
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  require_plugin("vagrant-docker-compose")
+
   config.vm.box = "alonsodomin/ubuntu-trusty64-java8"
 
   if Vagrant.has_plugin?("vagrant-hostmanager")
@@ -40,45 +42,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.hostname = "kairos-vagrant"
   config.vm.network "private_network", ip: "192.168.50.25"
-  config.vm.synced_folder File.expand_path("~/.ivy2"), "/home/vagrant/.ivy2"
+  config.vm.synced_folder File.expand_path("~/.ivy2"), "/home/vagrant/.ivy2",
+    id: "ivy-cache",
+    mount_options: ["dmode=777,fmode=777"]
 
   # Setting up docker provisioner in a separate line to allow for the proxy configuration
   config.vm.provision :docker, version: "latest"
 
   config.vm.provision :shell, path: "boot/provision.sh"
 
-  #config.vm.provision :docker do |d|
-  #  d.run "artifactory",
-  #    image: "mattgruter/artifactory",
-  #    args: "-p 8180:8080"
-  #end
-
   config.vm.provision :shell, inline: "/vagrant/boot/build.sh", privileged: false
-
-  config.vm.provision :docker do |d|
-    d.run "cassandra",
-      image: "cassandra:3.2",
-      args: "-p 7000:7000 -p 9042:9042 -p 9160:9160 -v /var/lib/cassandra:/var/lib/cassandra"
-
-    d.run "master1",
-      image: "kairos/cluster-master:0.1.0-SNAPSHOT",
-      args: "-p 8095:8095 -p 2551:2551 -v /opt/kairos/conf:/vagrant/boot/etc/kairos -v /opt/kairos/cache:/home/vagrant/.ivy/local",
-      cmd: "-b 192.168.50.25:2551 --cs 192.168.50.25:9042"
-
-    d.run "master2",
-      image: "kairos/cluster-master:0.1.0-SNAPSHOT",
-      args: "-p 8096:8095 -p 2552:2551 -v /opt/kairos/conf:/vagrant/boot/etc/kairos -v /opt/kairos/cache:/home/vagrant/.ivy/local",
-      cmd: "-b 192.168.50.25:2552 --nodes 192.168.50.25:2551 --cs 192.168.50.25:9042"
-
-    d.run "worker1",
-      image: "kairos/cluster-worker:0.1.0-SNAPSHOT",
-      args: "-p 5001:5001",
-      cmd: "--master 192.168.50.25:2551,192.168.50.25:2552 -b 192.168.50.25:5001"
-
-    d.run "worker2",
-      image: "kairos/cluster-worker:0.1.0-SNAPSHOT",
-      args: "-p 5002:5001",
-      cmd: "--master 192.168.50.25:2551,192.168.50.25:2552 -b 192.168.50.25:5002"
-  end
+  config.vm.provision :docker_compose, yml: "/vagrant/boot/docker-compose.yml"
 
 end

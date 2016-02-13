@@ -1,0 +1,33 @@
+cassandra:
+  image: cassandra:3.1
+  container_name: cassandra
+  ports:
+    - 9042:9042
+    - 7000:7000
+    - 9160:9160
+  volumes:
+    - /var/lib/cassandra:/var/lib/cassandra
+
+master:
+  image: kairos/cluster-master
+  container_name: master
+  links:
+    - cassandra:cassandra
+  ports:
+    - 8095:8095
+    - 2551:2551
+  volumes:
+    - /vagrant/boot/etc/kairos:/opt/kairos/conf
+    - /home/vagrant/.ivy2/local:/opt/kairos/cache:rw
+  command: -b 192.168.50.25:2551 --cs 192.168.50.25:9042
+
+worker:
+  image: kairos/cluster-worker
+  container_name: worker
+  links:
+    - master:master
+  ports:
+    - 5001:5001
+  volumes:
+    - /home/vagrant/.ivy2/local:/opt/kairos/cache:rw
+  command: --master 192.168.50.25:2551 -b 192.168.50.25:5001
