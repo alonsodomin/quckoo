@@ -8,6 +8,9 @@ import io.kairos.resolver.ivy.IvyConfiguration
   */
 object KairosWorkerSettings {
 
+  final val DefaultTcpInterface = "127.0.0.1"
+  final val DefaultTcpPort = 5001
+
   final val KairosContactPoints = "contact-points"
 
   def apply(system: ActorSystem): KairosWorkerSettings = {

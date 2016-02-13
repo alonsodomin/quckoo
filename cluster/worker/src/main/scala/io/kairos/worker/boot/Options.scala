@@ -3,6 +3,9 @@ package io.kairos.worker.boot
 import java.net.InetAddress
 import java.util.{HashMap => JHashMap, Map => JMap}
 
+import com.typesafe.config.{Config, ConfigFactory}
+import io.kairos.worker.KairosWorkerSettings
+
 import scala.collection.JavaConversions._
 
 /**
@@ -23,28 +26,34 @@ object Options {
 
 }
 
-case class Options(bindAddress: String = s"localhost:${Options.DefaultPort}",
-                   port: Int = Options.DefaultPort,
+case class Options(bindAddress: Option[String] = None,
+                   port: Int = KairosWorkerSettings.DefaultTcpPort,
                    masterNodes: Seq[String] = Seq()) {
   import Options._
 
-  def asJavaMap: JMap[String, Object] = {
-    val map = new JHashMap[String, Object]()
+  def toConfig: Config = {
+    val valueMap = new JHashMap[String, Object]()
 
-    val HostAndPort(externalHost, externalPort) = bindAddress
-    map.put(AkkaRemoteNettyHost, externalHost)
-    map.put(AkkaRemoteNettyPort, externalPort)
+    val (bindHost, bindPort) = bindAddress.map { addr =>
+      val HostAndPort(h, p) = addr
+      (h, p.toInt)
+    } getOrElse((KairosWorkerSettings.DefaultTcpInterface, port))
 
-    val localAddress = InetAddress.getLocalHost.getHostAddress
-    map.put(AkkaRemoteNettyBindHost, localAddress)
-    map.put(AkkaRemoteNettyBindPort, Int.box(port))
+    valueMap.put(AkkaRemoteNettyHost, bindHost)
+    valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))
+
+    if (bindAddress.isDefined) {
+      val localAddress = InetAddress.getLocalHost.getHostAddress
+      valueMap.put(AkkaRemoteNettyBindHost, localAddress)
+      valueMap.put(AkkaRemoteNettyBindPort, Int.box(port))
+    }
 
     if (masterNodes.nonEmpty) {
-      map.put(KairosContactPoints, seqAsJavaList(masterNodes.map { node =>
+      valueMap.put(KairosContactPoints, seqAsJavaList(masterNodes.map { node =>
         s"akka.tcp://KairosClusterSystem@$node"
       }))
     }
-    map
+    ConfigFactory.parseMap(valueMap)
   }
 
 }

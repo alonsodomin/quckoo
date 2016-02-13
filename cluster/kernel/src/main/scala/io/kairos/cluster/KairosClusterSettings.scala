@@ -12,6 +12,12 @@ import scala.concurrent.duration._
  */
 object KairosClusterSettings {
 
+  final val DefaultHttpInterface = "0.0.0.0"
+  final val DefaultHttpPort = 8095
+
+  final val DefaultTcpInterface = "127.0.0.1"
+  final val DefaultTcpPort = 2551
+
   def apply(system: ActorSystem): KairosClusterSettings = {
     val config = system.settings.config.getConfig(BaseConfigNamespace)
     KairosClusterSettings(
@@ -27,6 +33,6 @@ object KairosClusterSettings {
 case class KairosClusterSettings private (
     ivyConfiguration: IvyConfiguration,
     queueMaxWorkTimeout: FiniteDuration,
-    httpInterface: String = "0.0.0.0",
-    httpPort: Int = 8080
+    httpInterface: String = KairosClusterSettings.DefaultHttpInterface,
+    httpPort: Int = KairosClusterSettings.DefaultHttpPort
 )

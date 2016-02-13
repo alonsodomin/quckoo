@@ -15,24 +15,28 @@ import io.kairos.protocol._
 import io.kairos.resolver.ivy.IvyResolve
 import io.kairos.time.TimeSource
 
+import scala.concurrent.duration._
+
 /**
  * Created by domingueza on 24/08/15.
  */
-object KairosClusterSupervisor {
+object KairosCluster {
+
+  final val DefaultSessionTimeout: FiniteDuration = 30 minutes
 
   def props(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer, timeSource: TimeSource) =
-    Props(classOf[KairosClusterSupervisor], settings, materializer, timeSource)
+    Props(classOf[KairosCluster], settings, materializer, timeSource)
 
   case object Shutdown
 
 }
 
-class KairosClusterSupervisor(settings: KairosClusterSettings)
-                             (implicit materializer: ActorMaterializer, timeSource: TimeSource)
+class KairosCluster(settings: KairosClusterSettings)
+                   (implicit materializer: ActorMaterializer, timeSource: TimeSource)
     extends Actor with ActorLogging {
 
   import ClientProtocol._
-  import KairosClusterSupervisor._
+  import KairosCluster._
   import WorkerProtocol.{WorkerJoined, WorkerRemoved}
 
   ClusterClientReceptionist(context.system).registerService(self)
@@ -41,6 +45,8 @@ class KairosClusterSupervisor(settings: KairosClusterSettings)
   private val mediator = DistributedPubSub(context.system).mediator
 
   private val settingsRepo = context.actorOf(SettingsRepository.props(settings), "settingsRepository")
+
+  val userAuth = context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
   private val registry = startRegistry(settingsRepo)
   context.actorOf(RegistryReceptionist.props(registry), "registry")

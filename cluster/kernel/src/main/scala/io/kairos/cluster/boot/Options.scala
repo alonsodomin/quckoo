@@ -1,7 +1,10 @@
 package io.kairos.cluster.boot
 
 import java.net.InetAddress
-import java.util.{HashMap => JHashMap, Map => JMap}
+import java.util.{HashMap => JHashMap}
+
+import com.typesafe.config.{Config, ConfigFactory}
+import io.kairos.cluster.KairosClusterSettings
 
 import scala.collection.JavaConversions._
 
@@ -9,8 +12,6 @@ import scala.collection.JavaConversions._
  * Created by aalonsodominguez on 03/10/2015.
  */
 object Options {
-
-  final val DefaultPort = 2551
 
   final val AkkaRemoteNettyHost = "akka.remote.netty.tcp.hostname"
   final val AkkaRemoteNettyPort = "akka.remote.netty.tcp.port"
@@ -22,44 +23,56 @@ object Options {
   final val CassandraJournalContactPoints = "cassandra-journal.contact-points"
   final val CassandraSnapshotContactPoints = "cassandra-snapshot-store.contact-points"
 
+  final val KairosHttpBindPort = "kairos.http.bind-port"
+
   private final val HostAndPort = """(.+?):(\d+)""".r
 
 }
 
-case class Options(bindAddress: String = s"localhost:${Options.DefaultPort}",
-                   port: Int = Options.DefaultPort,
-                   seed: Boolean = false,
-                   seedNodes: Seq[String] = Seq(),
-                   cassandraSeedNodes: Seq[String] = Seq()) {
+case class Options(bindAddress: Option[String] = None,
+    port: Int = KairosClusterSettings.DefaultTcpPort,
+    httpPort: Option[Int] = None,
+    seed: Boolean = false,
+    seedNodes: Seq[String] = Seq(),
+    cassandraSeedNodes: Seq[String] = Seq()) {
   import Options._
 
-  def asJavaMap: JMap[String, Object] = {
-    val map = new JHashMap[String, Object]()
+  def toConfig: Config = {
+    val valueMap = new JHashMap[String, Object]()
 
-    val HostAndPort(externalHost, externalPort) = bindAddress
-    map.put(AkkaRemoteNettyHost, externalHost)
-    map.put(AkkaRemoteNettyPort, externalPort)
+    val (bindHost, bindPort) = bindAddress.map { addr =>
+      val HostAndPort(h, p) = addr
+      (h, p.toInt)
+    } getOrElse((KairosClusterSettings.DefaultTcpInterface, port))
 
-    val localAddress = InetAddress.getLocalHost.getHostAddress
-    map.put(AkkaRemoteNettyBindHost, localAddress)
-    map.put(AkkaRemoteNettyBindPort, Int.box(port))
+    valueMap.put(AkkaRemoteNettyHost, bindHost)
+    valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))
+
+    if (bindAddress.isDefined) {
+      val localAddress = InetAddress.getLocalHost.getHostAddress
+      valueMap.put(AkkaRemoteNettyBindHost, localAddress)
+      valueMap.put(AkkaRemoteNettyBindPort, Int.box(port))
+    }
+
+    httpPort.foreach(p => valueMap.put(KairosHttpBindPort, Int.box(p)))
 
     val clusterSeedNodes: Seq[String] = {
       if (seed || seedNodes.isEmpty)
-        List(s"akka.tcp://KairosClusterSystem@$externalHost:$externalPort")
+        List(s"akka.tcp://KairosClusterSystem@$bindHost:$bindPort")
       else
         List.empty[String]
     } ::: seedNodes.map({ node =>
       s"akka.tcp://KairosClusterSystem@$node"
     }).toList
 
-    map.put(AkkaClusterSeedNodes, seqAsJavaList(clusterSeedNodes))
+    valueMap.put(AkkaClusterSeedNodes, seqAsJavaList(clusterSeedNodes))
 
     if (cassandraSeedNodes.nonEmpty) {
-      map.put(CassandraJournalContactPoints, seqAsJavaList(cassandraSeedNodes))
-      map.put(CassandraSnapshotContactPoints, seqAsJavaList(cassandraSeedNodes))
+      valueMap.put(CassandraJournalContactPoints, seqAsJavaList(cassandraSeedNodes))
+      valueMap.put(CassandraSnapshotContactPoints, seqAsJavaList(cassandraSeedNodes))
     }
-    map
+
+    ConfigFactory.parseMap(valueMap)
   }
 
 }

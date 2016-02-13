@@ -4,7 +4,7 @@ import akka.actor._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
-import io.kairos.cluster.{KairosCluster, KairosClusterSettings}
+import io.kairos.cluster.{Kairos, KairosClusterSettings}
 import io.kairos.time.JDK8TimeSource
 import scopt.OptionParser
 
@@ -20,8 +20,14 @@ object Boot extends App {
   val parser = new OptionParser[Options]("scheduler") {
     head("scheduler", "0.1.0")
     opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
-      options.copy(bindAddress = b)
+      options.copy(bindAddress = Some(b))
     } text "Bind to this external host and port. Useful when using inside Docker containers"
+    opt[Int]('p', "port") valueName "port" action { (p, options) =>
+      options.copy(port = p)
+    } text "Port to use to listen to connections"
+    opt[Int]("httpPort") valueName "port" action { (p, options) =>
+      options.copy(httpPort = Some(p))
+    } text "HTTP port to use to serve the web UI"
     opt[Unit]("seed") action { (_, options) =>
       options.copy(seed = true)
     } text "Flag that indicates that this node will be a seed node. Defaults to true if the list of seed nodes is empty."
@@ -34,12 +40,8 @@ object Boot extends App {
     help("help") text "prints this usage text"
   }
 
-  def loadConfig(opts: Options): Config = {
-    val defaultConf = ConfigFactory.load("reference.conf")
-    ConfigFactory.parseMap(opts.asJavaMap).
-      withFallback(ConfigFactory.load()).
-      withFallback(defaultConf)
-  }
+  def loadConfig(opts: Options): Config =
+    opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
     implicit val system = ActorSystem("KairosClusterSystem", config)
@@ -49,10 +51,10 @@ object Boot extends App {
 
     implicit val timeSource = JDK8TimeSource.default
     val settings = KairosClusterSettings(system)
-    val cluster = new KairosCluster(settings)
+    val kairos = new Kairos(settings)
 
     implicit val timeout = Timeout(5 seconds)
-    val startUp: Future[Unit] = cluster.start recover {
+    val startUp: Future[Unit] = kairos.start recover {
       case ex: Exception =>
         ex.printStackTrace()
         system.terminate()

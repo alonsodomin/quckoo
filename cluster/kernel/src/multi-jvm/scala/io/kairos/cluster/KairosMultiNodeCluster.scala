@@ -4,7 +4,7 @@ import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
-import io.kairos.cluster.core.KairosClusterSupervisor
+import io.kairos.cluster.core.KairosCluster
 import io.kairos.id.ArtifactId
 import io.kairos.multijvm.MultiNodeClusterSpec
 import io.kairos.protocol.ClientProtocol
@@ -49,7 +49,7 @@ abstract class KairosMultiNodeCluster extends MultiNodeSpec(KairosNodesConfig) w
       awaitClusterUp(registry, scheduler)
 
       runOn(registry) {
-        system.actorOf(KairosClusterSupervisor.props(settings), "chronos")
+        system.actorOf(KairosCluster.props(settings), "chronos")
         enterBarrier("deployed")
 
         val schedulerGuardian = system.actorSelection(node(scheduler) / "user" / "chronos")
@@ -61,7 +61,7 @@ abstract class KairosMultiNodeCluster extends MultiNodeSpec(KairosNodesConfig) w
       }
 
       runOn(scheduler) {
-        system.actorOf(KairosClusterSupervisor.props(settings), "chronos")
+        system.actorOf(KairosCluster.props(settings), "chronos")
         enterBarrier("deployed")
 
         val registryGuardian = system.actorSelection(node(registry) / "user" / "chronos")

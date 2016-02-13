@@ -14,6 +14,7 @@ import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.console.server.security.AuthInfo
 import io.kairos.id.JobId
+import io.kairos.protocol.RegistryProtocol
 import io.kairos.time.TimeSource
 import io.kairos.{Fault, JobSpec, Validated}
 import org.slf4s.Logging
@@ -24,24 +25,17 @@ import scala.concurrent.duration._
 /**
   * Created by alonsodomin on 13/12/2015.
   */
-object KairosCluster {
-
-  final val DefaultSessionTimeout: FiniteDuration = 30 minutes
-
-}
-
-class KairosCluster(settings: KairosClusterSettings)
-                   (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
+class Kairos(settings: KairosClusterSettings)
+            (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
   extends HttpRouter with ServerFacade with Logging {
 
-  import KairosCluster._
+  import RegistryProtocol._
   import UserAuthenticator._
-  import io.kairos.protocol.RegistryProtocol._
 
-  val clusterSupervisor = system.actorOf(KairosClusterSupervisor.props(settings), "kairosSupervisor")
+  val clusterSupervisor = system.actorOf(KairosCluster.props(settings), "kairos")
+
   val registry = system.actorSelection(clusterSupervisor.path / "registry")
-
-  val userAuth = system.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
+  val userAuth = system.actorSelection(clusterSupervisor.path / "authenticator")
 
   val journal = KairosJournal(system)
 

@@ -18,7 +18,7 @@ object Boot extends App {
   val parser = new OptionParser[Options]("worker") {
     head("worker", "0.1.0")
     opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
-      options.copy(bindAddress = b)
+      options.copy(bindAddress = Some(b))
     } text "Bind to this external host and port. Useful when using inside Docker containers"
     opt[Int]('p', "port") valueName "<port>" action { (p, options) =>
       options.copy(port = p)
@@ -28,12 +28,8 @@ object Boot extends App {
     } text "Comma separated list of Kairos cluster master nodes"
   }
 
-  def loadConfig(opts: Options): Config = {
-    val defaultConf = ConfigFactory.load("reference.conf")
-    ConfigFactory.parseMap(opts.asJavaMap).
-      withFallback(ConfigFactory.load()).
-      withFallback(defaultConf)
-  }
+  def loadConfig(opts: Options): Config =
+    opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
     val system = ActorSystem(SystemName, config)
