@@ -25,7 +25,8 @@ object Packaging {
     dockerUpdateLatest := true,
     dockerExposedVolumes := Seq(
       s"$linuxHomeLocation/conf",
-      s"$linuxHomeLocation/cache"
+      s"$linuxHomeLocation/resolver/cache",
+      s"$linuxHomeLocation/resolver/repository"
     ),
     defaultLinuxInstallLocation in Docker := linuxHomeLocation,
     dockerCommands += Cmd("ENV", "KAIROS_HOME", linuxHomeLocation)

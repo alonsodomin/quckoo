@@ -12,17 +12,18 @@ import scala.collection.JavaConversions._
 /**
  * Created by aalonsodominguez on 19/07/2015.
  */
-class IvyConfiguration private (val baseDir: File,
-                                val cacheDir: File,
-                                val ivyHome: Option[File],
-                                val repositories: Seq[Repository] = Nil) {
-
-}
+class IvyConfiguration private (
+   val baseDir: File,
+   val resolutionDir: File,
+   val repositoryDir: File,
+   val ivyHome: Option[File],
+   val repositories: Seq[Repository] = Seq.empty)
 
 object IvyConfiguration {
-  final val BaseDir = "resolver.workDir"
+  final val BaseDir = "resolver.work-dir"
   final val HomeDir = "resolver.home"
-  final val CacheDir = "resolver.cacheDir"
+  final val ResolutionDir = "resolver.resolution-cache-dir"
+  final val RepositoryDir = "resolver.repository-cache-dir"
   final val Repositories = "resolver.repositories"
 
   val DefaultRepositories = Seq(
@@ -33,17 +34,20 @@ object IvyConfiguration {
 
   def apply(config: Config): IvyConfiguration = {
     val baseDir = createPathIfNotExists(config.getString(BaseDir))
-    val cacheDir = createPathIfNotExists(config.getString(CacheDir))
+    val resolutionDir = createPathIfNotExists(config.getString(ResolutionDir))
+    val repositoryDir = createPathIfNotExists(config.getString(RepositoryDir))
+
     val repositories = config.getConfigList(Repositories).map { repoConf =>
       MavenRepository(repoConf.getString("name"), new URL(repoConf.getString("url")))
     }
+
     if (config.hasPath(HomeDir)) {
-      new IvyConfiguration(baseDir, cacheDir,
+      new IvyConfiguration(baseDir, resolutionDir, repositoryDir,
         Some(createPathIfNotExists(config.getString(HomeDir))),
         repositories
       )
     } else {
-      new IvyConfiguration(baseDir, cacheDir, None, repositories)
+      new IvyConfiguration(baseDir, resolutionDir, repositoryDir, None, repositories)
     }
   }
 

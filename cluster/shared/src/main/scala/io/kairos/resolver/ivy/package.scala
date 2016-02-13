@@ -12,7 +12,9 @@ package object ivy {
   private[ivy] implicit def convertConfig2Settings(config: IvyConfiguration): IvySettings = {
     implicit val ivySettings = new IvySettings()
     ivySettings.setBaseDir(config.baseDir)
-    ivySettings.setDefaultCache(config.cacheDir)
+    ivySettings.setDefaultResolutionCacheBasedir(config.resolutionDir.getAbsolutePath)
+    ivySettings.setDefaultRepositoryCacheBasedir(config.repositoryDir.getAbsolutePath)
+
     config.ivyHome match {
       case Some(home) => ivySettings.setDefaultIvyUserDir(home)
       case None       =>

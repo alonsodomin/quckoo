@@ -41,7 +41,7 @@ class IvyConfigurationTest extends FlatSpec with Matchers {
     val configuration = IvyConfiguration(ConfigWithoutHome)
 
     configuration.baseDir should be (ExpectedWorkDir)
-    configuration.cacheDir should be (ExpectedCacheDir)
+    configuration.resolutionDir should be (ExpectedCacheDir)
     configuration.ivyHome should be (None)
     assert(configuration.repositories.isEmpty)
   }
@@ -50,7 +50,7 @@ class IvyConfigurationTest extends FlatSpec with Matchers {
     val configuration = IvyConfiguration(ConfigWithHome)
 
     configuration.baseDir should be (ExpectedWorkDir)
-    configuration.cacheDir should be (ExpectedCacheDir)
+    configuration.resolutionDir should be (ExpectedCacheDir)
     configuration.ivyHome should be (Some(ExpectedHomeDir))
     assert(configuration.repositories.isEmpty)
   }
