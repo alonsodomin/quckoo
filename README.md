@@ -22,7 +22,7 @@ To build the project input following commands in a terminal:
 ```
 git clone https://github.com/alonsodomin/kairos
 cd kairos
-./activator package
+sbt package
 ```
 
 ### Bootstrapping DEV environment
