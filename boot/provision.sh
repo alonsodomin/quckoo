@@ -11,6 +11,11 @@ function install_devtools() {
 
     echo "Installing PhantomJS..."
     sudo npm install -g phantomjs &> /dev/null
+
+    echo "Installing SBT..."
+    wget -nv https://dl.bintray.com/sbt/debian/sbt-0.13.9.deb -O ~/sbt-0.13.9.deb
+    sudo dpkg -i ~/sbt-0.13.9.deb
+    rm ~/sbt-0.13.9.deb
 }
 
 ########## PROGRAM STARTS HERE ##############

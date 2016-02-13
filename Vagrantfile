@@ -31,7 +31,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provider "virtualbox" do |vb|
     # Customize the amount of memory on the VM:
-    vb.memory = "2048"
+    vb.memory = "4096"
     vb.cpus = 2
   end
 
@@ -53,15 +53,25 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       image: "cassandra:2.2",
       args: "-p 7000:7000 -p 9042:9042 -p 9160:9160 -v /var/lib/cassandra:/var/lib/cassandra"
 
-    d.run "kernel",
+    d.run "master1",
       image: "kairos/cluster-kernel:0.1.0-SNAPSHOT",
       args: "--link cassandra:cassandra -p 8095:8095 -p 2551:2551",
-      cmd: "-b 192.168.50.25:2551"
+      cmd: "-b 192.168.50.25:2551 --cs 192.168.50.25:9042"
+
+    d.run "master2",
+      image: "kairos/cluster-kernel:0.1.0-SNAPSHOT",
+      args: "--link cassandra:cassandra -p 8096:8095 -p 2552:2551",
+      cmd: "-b 192.168.50.25:2552 --nodes 192.168.50.25:2551 --cs 192.168.50.25:9042"
 
     d.run "worker1",
       image: "kairos/cluster-worker:0.1.0-SNAPSHOT",
       args: "-p 5001:5001",
-      cmd: "--master 192.168.50.25:2551 -b 192.168.50.25:5001"
+      cmd: "--master 192.168.50.25:2551,192.168.50.25:2552 -b 192.168.50.25:5001"
+
+    d.run "worker2",
+      image: "kairos/cluster-worker:0.1.0-SNAPSHOT",
+      args: "-p 5002:5001",
+      cmd: "--master 192.168.50.25:2551,192.168.50.25:2552 -b 192.168.50.25:5002"
   end
 
 end
