@@ -60,7 +60,7 @@ lazy val common = (crossProject in file("common")).
   settings(addCompilerPlugin(Dependencies.compiler.macroParadise)).
   settings(
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % "0.3.6",
+      "com.lihaoyi"   %%% "upickle" % "0.3.6",
       "org.scalatest" %%% "scalatest" % Dependencies.version.scalaTest % Test
     )
   ).
@@ -112,12 +112,10 @@ lazy val master = MultiNode(Project("cluster-master", file("cluster/master"))).
   settings(
     libraryDependencies ++= Dependencies.module.master
   ).
-  enablePlugins(JavaServerAppPackaging).
+  enablePlugins(JavaServerAppPackaging, DockerPlugin).
   settings(Packaging.universalServerSettings: _*).
-  enablePlugins(DockerPlugin).
   settings(Packaging.masterDockerSettings: _*).
-  dependsOn(clusterShared).
-  dependsOn(consoleJVM)
+  dependsOn(clusterShared, consoleJVM, consoleResources)
 
 lazy val worker = Project("cluster-worker", file("cluster/worker")).
   settings(commonSettings: _*).
@@ -125,8 +123,7 @@ lazy val worker = Project("cluster-worker", file("cluster/worker")).
   settings(
     libraryDependencies ++= Dependencies.module.worker
   ).
-  enablePlugins(JavaServerAppPackaging).
-  enablePlugins(DockerPlugin).
+  enablePlugins(JavaServerAppPackaging, DockerPlugin).
   settings(Packaging.universalServerSettings: _*).
   settings(Packaging.workerDockerSettings: _*).
   dependsOn(clusterShared)
@@ -136,7 +133,7 @@ lazy val worker = Project("cluster-worker", file("cluster/worker")).
 lazy val consoleRoot = (project in file("console")).
   settings(moduleName := "console").
   settings(noPublishSettings).
-  aggregate(consoleJS, consoleJVM)
+  aggregate(consoleJS, consoleJVM, consoleResources)
 
 lazy val console = (crossProject in file("console")).
   settings(commonSettings: _*).
@@ -144,9 +141,10 @@ lazy val console = (crossProject in file("console")).
   settings(
     name := "console",
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "scalatags" % "0.4.6",
-      "com.lihaoyi" %%% "upickle" % "0.3.6",
-      "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+      "com.lihaoyi"     %%% "scalatags" % "0.4.6",
+      "com.lihaoyi"     %%% "upickle" % "0.3.6",
+      "com.lihaoyi"     %%% "utest" % "0.3.0" % "test",
+      "io.github.widok" %%% "widok" % "0.2.4"
     )
   ).
   jsSettings(
@@ -162,7 +160,6 @@ lazy val console = (crossProject in file("console")).
         "com.github.japgolly.scalajs-react" %%% "test" % scalaJsReact % "test",
         "com.github.japgolly.scalacss" %%% "core" % scalaCss,
         "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss,
-        "com.github.chandu0101.scalajs-react-components" %%% "core" % "0.3.0",
 
         "com.github.japgolly.fork.monocle" %%% "monocle-macro" % monocle
       )
@@ -178,6 +175,8 @@ lazy val console = (crossProject in file("console")).
     },
     requiresDOM := true,
     coverageEnabled := false,
+    persistLauncher in Compile := true,
+    persistLauncher in Test := false,
     scalaJSStage in Test := FastOptStage,
     jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
   )
@@ -194,10 +193,30 @@ lazy val consoleJS = console.js
 lazy val consoleJVM = console.jvm.settings(
   (resources in Compile) ++= Seq(
     (fastOptJS in (consoleJS, Compile)).value.data,
+    (packageScalaJSLauncher in (consoleJS, Compile)).value.data,
     file((fastOptJS in (consoleJS, Compile)).value.data.getAbsolutePath + ".map"),
     (packageJSDependencies in (consoleJS, Compile)).value
   )
 )
+
+lazy val consoleResources = (project in file("console/resources")).
+  aggregate(consoleJS).
+  settings(commonSettings: _*).
+  settings(
+    name := "console-resources",
+    unmanagedResourceDirectories in Compile += (crossTarget in consoleJS).value,
+    includeFilter in (Compile, unmanagedResources) := ("*.js" || "*.css"),
+    mappings in (Compile, packageBin) ~= { (ms: Seq[(File, String)]) =>
+      ms.map { case (file, path) =>
+        val extIdx = file.getName.indexOf(".")
+        val folder = {
+          if (extIdx >= 0) file.getName.substring(extIdx + 1)
+          else "lib"
+        }
+        (file, s"kairos/$folder/${file.getName}")
+      }
+    }
+  )
 
 // Examples ==================================================
 
@@ -218,10 +237,7 @@ lazy val exampleProducers = Project("example-producers", file("examples/producer
   settings(
     libraryDependencies ++= Dependencies.module.exampleProducers
   ).
-  enablePlugins(JavaAppPackaging).
+  enablePlugins(JavaAppPackaging, DockerPlugin).
   settings(Packaging.universalSettings: _*).
-  enablePlugins(DockerPlugin).
   settings(Packaging.dockerSettings: _*).
-  dependsOn(commonJVM).
-  dependsOn(exampleJobs).
-  dependsOn(client)
+  dependsOn(commonJVM, exampleJobs, client)
