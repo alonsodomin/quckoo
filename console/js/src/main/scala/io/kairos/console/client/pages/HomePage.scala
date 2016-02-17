@@ -8,7 +8,7 @@ import pl.metastack.metarx.Var
 /**
   * Created by alonsodomin on 15/02/2016.
   */
-case class HomePage() extends KairosPage with DefaultHeader {
+case class HomePage() extends KairosPage with NavigationHeader with SecurePage {
   val activeNodes = Var(0)
   val inactiveNodes = Var(0)
   val activeWorkers = Var(0)

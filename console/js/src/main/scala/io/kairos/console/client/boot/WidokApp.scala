@@ -8,12 +8,13 @@ import org.widok.{Route, RoutingApplication}
   */
 object Routees {
   val home       = Route("/", HomePage)
+  val login      = Route("/login", LoginPage)
   val registry   = Route("/registry", RegistryPage)
   val executions = Route("/executions", ExecutionsPage)
   val test       = Route("/test/:param", TestPage)
   val notFound   = Route("/404", NotFound)
 
-  val all = Set(home, registry, executions, test, notFound)
+  val all = Set(home, login, registry, executions, test, notFound)
 }
 
 object WidokApp extends RoutingApplication(Routees.all, Routees.notFound)

@@ -1,3 +1,17 @@
 @import "imports.scss";
 @import "globals.scss";
 @import "header.scss";
+
+.center-container {
+  position: relative;
+}
+
+#loginPanel {
+  width: 350px;
+  height: 300px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: -150px;
+  margin-top: 40px;
+}

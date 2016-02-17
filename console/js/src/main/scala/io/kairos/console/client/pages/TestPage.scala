@@ -6,7 +6,7 @@ import pl.metastack.metarx.Channel
 /**
   * Created by alonsodomin on 17/02/2016.
   */
-case class TestPage() extends KairosPage with DefaultHeader {
+case class TestPage() extends KairosPage with NavigationHeader {
   val query = Channel[String]()
 
   override def body(route: InstantiatedRoute): View = {

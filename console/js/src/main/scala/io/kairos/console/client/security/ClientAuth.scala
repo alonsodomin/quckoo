@@ -9,13 +9,13 @@ import japgolly.scalajs.react.CallbackTo
  */
 trait ClientAuth {
 
-  def isAuthenticated: Boolean =
+  final def isAuthenticated: Boolean =
     RootScope.cookie(Auth.XSRFTokenCookie).isDefined
 
-  def isAuthenticatedC: CallbackTo[Boolean] =
+  final def isAuthenticatedC: CallbackTo[Boolean] =
     CallbackTo { isAuthenticated }
 
-  def authHeaders: Map[String, String] =
+  final def authHeaders: Map[String, String] =
     RootScope.cookie(Auth.XSRFTokenCookie).
       map(token => Map(Auth.XSRFTokenHeader -> token)).
       getOrElse(Map())

@@ -169,7 +169,7 @@ lazy val consoleResources = (project in file("console/resources")).
     ),
     exportJars := true,
     unmanagedResourceDirectories in Compile += (crossTarget in consoleJS).value,
-    includeFilter in (Compile, unmanagedResources) := ("*.js" || "*.css"),
+    includeFilter in (Compile, unmanagedResources) := ("*.js" || "*.css" || "*.js.map"),
     mappings in (Compile, packageBin) ~= { (ms: Seq[(File, String)]) =>
       ms.filter(!_._1.getName.endsWith("scss")).map { case (file, path) =>
         val prefix = {
