@@ -18,7 +18,7 @@ object Dependencies {
 
     // Akka ----------
 
-    val akka = "2.4.2-RC1"
+    val akka = "2.4.2"
     val kryo = "0.4.0"
 
     // ScalaJS -------
@@ -56,7 +56,7 @@ object Dependencies {
       object persistence {
         val core      = "com.typesafe.akka"   %% "akka-persistence"              % version.akka
         val query     = "com.typesafe.akka"   %% "akka-persistence-query-experimental" % version.akka
-        val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra"    % "0.8"
+        val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra"    % "0.9"
         val jdbc      = "com.github.dnvriend" %% "akka-persistence-jdbc"         % "1.2.2"
         val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % "1.2.2" % Test
       }

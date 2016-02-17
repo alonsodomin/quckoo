@@ -1,0 +1,6 @@
+@import "globals.scss";
+
+/* The fixed navbar requires changing the padding */
+body {
+  padding-top: $bodyOffset;
+}

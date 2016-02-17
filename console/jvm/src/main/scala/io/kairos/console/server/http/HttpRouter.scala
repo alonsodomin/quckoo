@@ -10,7 +10,6 @@ import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
 import io.kairos.JobSpec
 import io.kairos.console.server.ServerFacade
-import io.kairos.console.server.boot.ClientBootstrap
 import io.kairos.serialization._
 
 trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMarshalling {
@@ -54,10 +53,8 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
 
   private[this] def staticResources: Route = get {
     pathSingleSlash {
-      complete {
-        HttpEntity(ContentTypes.`text/html(UTF-8)`, ClientBootstrap.skeleton.render)
-      }
-    } ~ getFromResourceDirectory("")
+      getFromResource("kairos/index.html")
+    } ~ getFromResourceDirectory("kairos")
   }
 
   private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {
@@ -79,9 +76,9 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
       logResult("HTTPResponse") {
         handleExceptions(exceptionHandler(system.log)) {
           handleRejections(rejectionHandler(system.log)) {
-            staticResources ~ pathPrefix("api") {
+            pathPrefix("api") {
               defineApi
-            }
+            } ~ staticResources
           }
         }
       }

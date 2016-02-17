@@ -93,41 +93,6 @@ lazy val client = (project in file("client")).
   ).
   dependsOn(commonJVM)
 
-// Cluster ==================================================
-
-lazy val cluster = (project in file("cluster")).
-  aggregate(clusterShared, master, worker).
-  settings(noPublishSettings)
-
-lazy val clusterShared = Project("cluster-shared", file("cluster/shared")).
-  settings(commonSettings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.module.cluster
-  ).
-  dependsOn(commonJVM)
-
-lazy val master = MultiNode(Project("cluster-master", file("cluster/master"))).
-  settings(commonSettings: _*).
-  settings(Revolver.settings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.module.master
-  ).
-  enablePlugins(JavaServerAppPackaging, DockerPlugin).
-  settings(Packaging.universalServerSettings: _*).
-  settings(Packaging.masterDockerSettings: _*).
-  dependsOn(clusterShared, consoleJVM, consoleResources)
-
-lazy val worker = Project("cluster-worker", file("cluster/worker")).
-  settings(commonSettings: _*).
-  settings(Revolver.settings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.module.worker
-  ).
-  enablePlugins(JavaServerAppPackaging, DockerPlugin).
-  settings(Packaging.universalServerSettings: _*).
-  settings(Packaging.workerDockerSettings: _*).
-  dependsOn(clusterShared)
-
 // Console ==================================================
 
 lazy val consoleRoot = (project in file("console")).
@@ -190,33 +155,69 @@ lazy val console = (crossProject in file("console")).
   dependsOn(common)
 
 lazy val consoleJS = console.js
-lazy val consoleJVM = console.jvm.settings(
-  (resources in Compile) ++= Seq(
-    (fastOptJS in (consoleJS, Compile)).value.data,
-    (packageScalaJSLauncher in (consoleJS, Compile)).value.data,
-    file((fastOptJS in (consoleJS, Compile)).value.data.getAbsolutePath + ".map"),
-    (packageJSDependencies in (consoleJS, Compile)).value
-  )
-)
+lazy val consoleJVM = console.jvm
 
 lazy val consoleResources = (project in file("console/resources")).
   aggregate(consoleJS).
+  enablePlugins(SbtSass).
   settings(commonSettings: _*).
   settings(
     name := "console-resources",
+    libraryDependencies ++= Seq(
+      "org.webjars" % "bootstrap-sass" % "3.3.1",
+      "org.webjars" % "font-awesome"   % "4.3.0-1"
+    ),
+    exportJars := true,
     unmanagedResourceDirectories in Compile += (crossTarget in consoleJS).value,
     includeFilter in (Compile, unmanagedResources) := ("*.js" || "*.css"),
     mappings in (Compile, packageBin) ~= { (ms: Seq[(File, String)]) =>
-      ms.map { case (file, path) =>
-        val extIdx = file.getName.indexOf(".")
-        val folder = {
-          if (extIdx >= 0) file.getName.substring(extIdx + 1)
-          else "lib"
+      ms.filter(!_._1.getName.endsWith("scss")).map { case (file, path) =>
+        val prefix = {
+          if (file.getName.indexOf(".css") >= 0) "css/"
+          else if (file.getName.indexOf(".js") >= 0) "js/"
+          else ""
         }
-        (file, s"kairos/$folder/${file.getName}")
+        (file, s"kairos/$prefix${file.getName}")
       }
-    }
+    },
+    packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleJS)
   )
+
+// Cluster ==================================================
+
+lazy val cluster = (project in file("cluster")).
+  aggregate(clusterShared, master, worker).
+  settings(noPublishSettings)
+
+lazy val clusterShared = Project("cluster-shared", file("cluster/shared")).
+  settings(commonSettings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.module.cluster
+  ).
+  dependsOn(commonJVM)
+
+lazy val master = MultiNode(Project("cluster-master", file("cluster/master"))).
+  settings(commonSettings: _*).
+  settings(Revolver.settings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.module.master,
+    reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
+  ).
+  enablePlugins(JavaServerAppPackaging, DockerPlugin).
+  settings(Packaging.universalServerSettings: _*).
+  settings(Packaging.masterDockerSettings: _*).
+  dependsOn(clusterShared, consoleResources, consoleJVM)
+
+lazy val worker = Project("cluster-worker", file("cluster/worker")).
+  settings(commonSettings: _*).
+  settings(Revolver.settings: _*).
+  settings(
+    libraryDependencies ++= Dependencies.module.worker
+  ).
+  enablePlugins(JavaServerAppPackaging, DockerPlugin).
+  settings(Packaging.universalServerSettings: _*).
+  settings(Packaging.workerDockerSettings: _*).
+  dependsOn(clusterShared)
 
 // Examples ==================================================
 
