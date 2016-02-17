@@ -1,33 +1,19 @@
 package io.kairos.console.client.boot
 
-import io.kairos.console.client.pages.HomePage
-import org.widok.html._
-import org.widok.{PageApplication, Route, View}
-import pl.metastack.metarx.Var
+import io.kairos.console.client.pages._
+import org.widok.{Route, RoutingApplication}
 
 /**
   * Created by alonsodomin on 14/02/2016.
   */
-object WidokApp extends PageApplication {
+object Routees {
+  val home       = Route("/", HomePage)
+  val registry   = Route("/registry", RegistryPage)
+  val executions = Route("/executions", ExecutionsPage)
+  val test       = Route("/test/:param", TestPage)
+  val notFound   = Route("/404", NotFound)
 
-  object Routees {
-    val home = Route("/", HomePage)
-
-    val all = Seq(home)
-  }
-
-  val name = Var("")
-  val hasName = name.map(_.nonEmpty)
-
-  override def view(): View = div(
-    h1("Welcome!"),
-    p("Please, enter your name:"),
-    text().bind(name),
-    p("Hello, ", name).show(hasName),
-    button("Change my name").onClick(_ => name := "tux").show(name !=== "tux"),
-    button("Log out").onClick(_ => name := "").show(hasName)
-  )
-
-  override def ready(): Unit = ()
-
+  val all = Set(home, registry, executions, test, notFound)
 }
+
+object WidokApp extends RoutingApplication(Routees.all, Routees.notFound)

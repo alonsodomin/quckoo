@@ -108,8 +108,7 @@ lazy val console = (crossProject in file("console")).
     libraryDependencies ++= Seq(
       "com.lihaoyi"     %%% "scalatags" % "0.4.6",
       "com.lihaoyi"     %%% "upickle" % "0.3.6",
-      "com.lihaoyi"     %%% "utest" % "0.3.0" % "test",
-      "io.github.widok" %%% "widok" % "0.2.4"
+      "com.lihaoyi"     %%% "utest" % "0.3.0" % "test"
     )
   ).
   jsSettings(
@@ -118,6 +117,7 @@ lazy val console = (crossProject in file("console")).
 
       Seq(
         "biz.enef" %%% "slogging" % "0.3",
+        "io.github.widok" %%% "widok" % "0.2.4",
         "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % scalaJsReact,
@@ -178,6 +178,16 @@ lazy val consoleResources = (project in file("console/resources")).
           else ""
         }
         (file, s"kairos/$prefix${file.getName}")
+      }
+    },
+    mappings in (Compile, packageBin) <++= (WebKeys.webJarsDirectory in Assets).map { path =>
+      val fontPaths = Seq(
+        path / "lib" / "font-awesome" / "fonts",
+        path / "lib" / "bootstrap-sass" / "fonts" / "bootstrap"
+      )
+
+      fontPaths.flatMap { p =>
+        p.listFiles().map { src => (src, "kairos/fonts/" + src.getName) }
       }
     },
     packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleJS)
