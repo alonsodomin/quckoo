@@ -15,13 +15,13 @@ trait KairosPage extends Page {
 
   private[this] val readyCallbacks = ListBuffer.empty[Node => ReadyResult]
 
-  def header: Widget[_]
+  def header(route: InstantiatedRoute): Widget[_]
 
   def body(route: InstantiatedRoute): View
 
   def render(route: InstantiatedRoute): Future[View] = Future {
     Inline(
-      header,
+      header(route),
       Container(body(route))
     )
   }
@@ -49,3 +49,5 @@ object KairosPage {
   }
 
 }
+
+abstract class PrivatePage extends KairosPage with NavigationHeader with SecurePage
