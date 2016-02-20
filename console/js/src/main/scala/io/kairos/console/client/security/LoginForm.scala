@@ -1,6 +1,5 @@
 package io.kairos.console.client.security
 
-import io.kairos.console.client.components.BootstrapSupport._
 import io.kairos.console.client.components._
 import io.kairos.console.client.layout.InputField
 import japgolly.scalajs.react.extra.ExternalVar

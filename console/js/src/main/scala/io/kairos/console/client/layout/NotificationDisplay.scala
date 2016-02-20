@@ -1,6 +1,6 @@
 package io.kairos.console.client.layout
 
-import io.kairos.console.client.components.BootstrapSupport._
+import io.kairos.console.client.components._
 import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.vdom.prefix_<^._
 

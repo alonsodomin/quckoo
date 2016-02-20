@@ -1,6 +1,6 @@
 package io.kairos.console.client.layout
 
-import io.kairos.console.client.components.BootstrapSupport
+import io.kairos.console.client.components._
 
 import scalacss.Defaults._
 
@@ -9,6 +9,6 @@ import scalacss.Defaults._
   */
 object GlobalStyles extends StyleSheet.Inline {
 
-  val bootstrap = new BootstrapSupport.LookAndFeel
+  val bootstrap = lookAndFeel
 
 }

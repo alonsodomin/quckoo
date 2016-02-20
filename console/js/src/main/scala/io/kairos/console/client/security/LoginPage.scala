@@ -1,7 +1,6 @@
 package io.kairos.console.client.security
 
 import io.kairos.console.client.SiteMap.{ConsolePage, Home, Login}
-import io.kairos.console.client.components.BootstrapSupport._
 import io.kairos.console.client.core.ClientApi
 import io.kairos.console.client.layout.{Notification, NotificationDisplay}
 import japgolly.scalajs.react.extra.router.RouterCtl

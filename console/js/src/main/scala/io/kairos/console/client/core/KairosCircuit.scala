@@ -1,7 +1,8 @@
-package io.kairos.console.client.model
+package io.kairos.console.client.core
 
 import diode.Circuit
 import diode.react.ReactConnector
+import io.kairos.console.client.model.KairosModel
 
 /**
   * Created by alonsodomin on 20/02/2016.
