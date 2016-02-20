@@ -1,9 +1,9 @@
 package io.kairos.console.client.layout
 
 import io.kairos.Fault
+import io.kairos.console.client.components._
 import io.kairos.console.client.layout.Notification.Level.Level
-import japgolly.scalajs.react.vdom.TagMod
-import japgolly.scalajs.react.{CallbackTo, vdom}
+import japgolly.scalajs.react._
 
 /**
  * Created by alonsodomin on 15/10/2015.
@@ -15,20 +15,28 @@ object Notification {
     val Danger, Warning, Info, Success = Value
   }
 
-  type ContentRenderer = CallbackTo[TagMod]
+  private def level2Icon(level: Level.Level): Icon = level match {
+    case Level.Danger  => Icons.exclamationCircle
+    case Level.Warning => Icons.exclamationTriangle
+    case Level.Info    => Icons.questionCircle
+    case Level.Success => Icons.checkCircle
+  }
+
+  type ContentRenderer = Level.Level => CallbackTo[ReactNode]
   sealed trait ToContentRenderer {
     def apply(): ContentRenderer
   }
   object ToContentRenderer {
+    import vdom.prefix_<^._
+
     import scala.language.implicitConversions
 
-    implicit def fromVDom(elem: => TagMod): ToContentRenderer = () => CallbackTo(elem)
+    implicit def fromVDom(elem: => ReactTagOf[_]): ToContentRenderer = () => level => CallbackTo(elem.render)
 
     implicit def fromRenderer(renderer: ContentRenderer): ToContentRenderer = () => renderer
 
-    implicit def fromString(content: String): ToContentRenderer = () => CallbackTo {
-      import vdom.prefix_<^._
-      <.span(content)
+    implicit def fromString(content: String): ToContentRenderer = () => level => CallbackTo {
+      <.span(level2Icon(level), content)
     }
 
     implicit def fromFault(fault: Fault): ToContentRenderer =

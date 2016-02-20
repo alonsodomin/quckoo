@@ -1,8 +1,9 @@
 package io.kairos.console.client.security
 
 import io.kairos.console.client.SiteMap.{ConsolePage, Home, Login}
+import io.kairos.console.client.components.BootstrapSupport._
 import io.kairos.console.client.core.ClientApi
-import io.kairos.console.client.layout.{Notification, NotificationDisplay, Panel}
+import io.kairos.console.client.layout.{Notification, NotificationDisplay}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
@@ -56,7 +57,7 @@ object LoginPage {
     def render(holder: NotificationHolder) =
       <.div(Style.formPlacement,
         NotificationDisplay(holder.notifications),
-        Panel("Sign in into Kairos Console", LoginForm(loginHandler))
+        Panel(Panel.Props("Sign in into Kairos Console", ContextStyle.primary), LoginForm(loginHandler))
       )
   }
 

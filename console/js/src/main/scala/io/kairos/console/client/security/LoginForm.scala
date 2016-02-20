@@ -47,7 +47,7 @@ object LoginForm {
             "Remember me"
           )
         ),
-        Button(Button.Props(style = Style.primary), Icons.signIn, "Sign in")
+        Button(Button.Props(style = ContextStyle.primary), Icons.signIn, "Sign in")
       )
     } build
 

@@ -1,6 +1,6 @@
 package io.kairos.console.client.layout
 
-import io.kairos.console.client.components._
+import io.kairos.console.client.components.BootstrapSupport._
 import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -10,11 +10,11 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object NotificationDisplay {
   import Notification._
 
-  private[this] val alertClasses: Map[Level.Level, (String, String)] = Map(
-    Level.Danger  -> ("alert-danger", "exclamation-circle"),
-    Level.Warning -> ("alert-warning", "exclamation-triangle"),
-    Level.Info    -> ("alert-info", "question"),
-    Level.Success -> ("alert-success", "check")
+  private[this] final val AlertClasses = Map(
+    Level.Danger  -> ContextStyle.danger,
+    Level.Warning -> ContextStyle.warning,
+    Level.Info    -> ContextStyle.info,
+    Level.Success -> ContextStyle.success
   )
 
   private[this] val component = ReactComponentB[Seq[Notification]]("AlertDisplay").
@@ -22,11 +22,8 @@ object NotificationDisplay {
     noBackend.
     render_P(msgs =>
       <.div(msgs.map { msg =>
-        val (alertClass, iconClass) = alertClasses(msg.level)
-        <.div(^.`class` := s"alert $alertClass", ^.role := "alert", ^.padding := 5.px,
-          Icons.icon(iconClass),
-          msg.renderer.runNow()
-        )
+        val alertClass = AlertClasses(msg.level)
+        Alert(alertClass, msg.renderer(msg.level).runNow())
       })
     ).build
   

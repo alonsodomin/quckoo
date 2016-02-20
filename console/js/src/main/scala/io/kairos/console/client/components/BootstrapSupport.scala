@@ -22,35 +22,35 @@ object BootstrapSupport {
   }
   implicit def jq2bootstrap(jq: JQuery): BootstrapJQuery = jq.asInstanceOf[BootstrapJQuery]
 
-  object Style extends Enumeration {
+  object ContextStyle extends Enumeration {
     val default, primary, success, info, warning, danger = Value
   }
 
   class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
-    import Style._
+    import ContextStyle._
     import dsl._
 
     val global = Domain.ofValues(default, primary, success, info, warning, danger)
     val context = Domain.ofValues(success, info, warning, danger)
 
-    def common[A](domain: Domain[A], base: String) = styleF(domain) { opt =>
+    def from[A](domain: Domain[A], base: String) = styleF(domain) { opt =>
       styleS(addClassNames(base, s"$base-$opt"))
     }
 
     def wrap(classNames: String*) = style(addClassNames(classNames: _*))
 
-    val buttonOpt = common(global, "btn")
+    val buttonOpt = from(global, "btn")
     val button    = buttonOpt(default)
 
-    val panelOpt     = common(global, "panel")
+    val panelOpt     = from(global, "panel")
     val panel        = panelOpt(default)
     val panelHeading = wrap("panel-heading")
     val panelBody    = wrap("panel-body")
 
-    val labelOpt = common(global, "label")
+    val labelOpt = from(global, "label")
     val label    = labelOpt(default)
 
-    val alert    = common(global, "alert")
+    val alert    = from(context, "alert")
 
     object modal {
       val modal   = wrap("modal")
@@ -66,18 +66,31 @@ object BootstrapSupport {
 
   val lookAndFeel = new LookAndFeel
 
+  object Alert {
+    case class Props(style: ContextStyle.Value)
+
+    val component = ReactComponentB[Props]("Alert").
+      renderPC { (_, p, c) =>
+        <.div(lookAndFeel.alert(p.style), ^.role := "alert", ^.padding := 5.px, c)
+      } build
+
+    def apply() = component
+    def apply(style: ContextStyle.Value, children: ReactNode*) = component(Props(style), children)
+  }
+
   object Button {
     case class Props(
-        onClick: Option[Callback] = None,
-        style: Style.Value = Style.default,
-        addStyles: Seq[StyleA] = Seq()
+       onClick: Option[Callback] = None,
+       style: ContextStyle.Value = ContextStyle.default,
+       addStyles: Seq[StyleA] = Seq()
     )
 
     val component = ReactComponentB[Props]("Button").
       renderPC { (_, p, c) =>
-        val mods = p.onClick.map(callback => ^.onClick --> callback)
         val buttonType = if (p.onClick.isEmpty) "submit" else "button"
-        <.button(lookAndFeel.buttonOpt(p.style), p.addStyles, ^.tpe := buttonType, mods.toList, c)
+        <.button(lookAndFeel.buttonOpt(p.style), p.addStyles, ^.tpe := buttonType,
+          p.onClick.isDefined ?= (^.onClick --> p.onClick.get), c
+        )
       } build
 
     def apply() = component
@@ -85,7 +98,7 @@ object BootstrapSupport {
   }
 
   object Panel {
-    case class Props(heading: String, style: Style.Value = Style.default)
+    case class Props(heading: String, style: ContextStyle.Value = ContextStyle.default)
 
     val component = ReactComponentB[Props]("Panel").
       renderPC { (_, p, c) =>
