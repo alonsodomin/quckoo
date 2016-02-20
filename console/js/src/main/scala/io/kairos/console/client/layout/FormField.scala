@@ -78,7 +78,7 @@ object FormField {
       $.props.map(_.converter.from(event.target.value)).flatMap { value =>
         $.modState(_.copy(value = value), $.state.flatMap(s => validate(s.value)).flatMap {
           case Failure(errors) =>
-            $.modState(_.copy(notification = Some(Notification.error(errors.head)), valid = false))
+            $.modState(_.copy(notification = Some(Notification.danger(errors.head)), valid = false))
           case Success(_) =>
             $.modState(_.copy(notification = None, valid = true))
         }) >> $.props.flatMap(p => p.accessor.setter(value))

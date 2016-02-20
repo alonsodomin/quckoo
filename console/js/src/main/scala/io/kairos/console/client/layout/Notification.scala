@@ -12,7 +12,7 @@ object Notification {
 
   object Level extends Enumeration {
     type Level = Value
-    val Error, Warning, Info, Success = Value
+    val Danger, Warning, Info, Success = Value
   }
 
   type ContentRenderer = CallbackTo[TagMod]
@@ -41,8 +41,8 @@ object Notification {
   def apply(level: Level, contentMagnet: ToContentRenderer): Notification =
     Notification(level, contentMagnet())
 
-  def error(magnet: ToContentRenderer): Notification =
-    apply(Level.Error, magnet)
+  def danger(magnet: ToContentRenderer): Notification =
+    apply(Level.Danger, magnet)
 
   def warn(magnet: ToContentRenderer): Notification =
     apply(Level.Warning, magnet)

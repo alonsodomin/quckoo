@@ -1,6 +1,7 @@
 package io.kairos.console.client.layout
 
 import io.kairos.console.client.SiteMap
+import io.kairos.console.client.components._
 import io.kairos.console.client.core.ClientApi
 import io.kairos.console.client.security.ClientAuth
 import japgolly.scalajs.react._
@@ -15,7 +16,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 object Navigation extends ClientAuth {
   import SiteMap._
 
-  case class NavigationItem(name: String, page: ConsolePage)
+  case class NavigationItem(name: String, page: ConsolePage, icon: Icon)
 
   case class Props(initial: NavigationItem, menu: Seq[NavigationItem], routerCtl: RouterCtl[ConsolePage])
   case class State(current: NavigationItem)
@@ -30,7 +31,9 @@ object Navigation extends ClientAuth {
     def renderNavItem(item: NavigationItem, props: Props, state: State) = {
       <.li(^.classSet("active" -> (state.current == item)),
         <.a(^.href := props.routerCtl.urlFor(item.page).value,
-          ^.onClick ==> navigationItemClicked(item), item.name)
+          ^.onClick ==> navigationItemClicked(item),
+          item.icon, item.name
+        )
       )
     }
 
@@ -60,7 +63,7 @@ object Navigation extends ClientAuth {
                 props.menu.map(item => renderNavItem(item, props, state))
               ),
               <.ul(^.`class` := "nav navbar-nav navbar-right",
-                <.li(<.a(^.href := "#", ^.onClick ==> onLogoutClicked, "Logout"))
+                <.li(<.a(^.href := "#", ^.onClick ==> onLogoutClicked, Icons.signOut, "Logout"))
               )
             )
           } else EmptyTag

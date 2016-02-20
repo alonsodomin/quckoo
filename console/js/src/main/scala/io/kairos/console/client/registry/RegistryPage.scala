@@ -30,7 +30,7 @@ object RegistryPage {
     def handleJobSubmit(jobSpec: JobSpec): Callback = {
 
       def jobRejectedMsg(state: State, cause: Faults): State = {
-        def resolutionFailed = Notification.error {
+        def resolutionFailed = Notification.danger {
           <.div(
             <.p("Could not register the job due to following errors:"),
             cause.list.toList.map {
@@ -45,7 +45,7 @@ object RegistryPage {
       }
 
       def errorMsg(state: State, t: Throwable): State =
-        state.copy(notifications = state.notifications :+ Notification.error(t))
+        state.copy(notifications = state.notifications :+ Notification.danger(t))
 
       def successMsg(state: State, jobId: JobId): State =
         state.copy(notifications = state.notifications :+ Notification.success("Job registered: " + jobId))

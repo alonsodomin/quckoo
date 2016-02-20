@@ -118,6 +118,9 @@ lazy val console = (crossProject in file("console")).
       Seq(
         "biz.enef" %%% "slogging" % "0.3",
         "io.github.widok" %%% "widok" % "0.2.4",
+        "me.chrons" %%% "diode" % "0.5.0",
+        "me.chrons" %%% "diode-react" % "0.5.0",
+        "be.doeraene" %%% "scalajs-jquery" % "0.9.0",
         "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % scalaJsReact,
@@ -135,7 +138,8 @@ lazy val console = (crossProject in file("console")).
       Seq(
         "org.webjars.bower" % "react" % reactJs / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
         "org.webjars.bower" % "react" % reactJs / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM",
-        "org.webjars.bower" % "react" % reactJs % "test" / "react-with-addons.js" commonJSName "React"
+        "org.webjars.bower" % "react" % reactJs % "test" / "react-with-addons.js" commonJSName "React",
+        "org.webjars" % "jquery" % "1.11.1" / "jquery.js" minified "jquery.min.js"
       )
     },
     requiresDOM := true,

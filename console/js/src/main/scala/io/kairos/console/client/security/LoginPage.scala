@@ -39,7 +39,7 @@ object LoginPage {
     def loginHandler(loginInfo: LoginInfo): Callback = {
 
       def authFailedNotification(holder: NotificationHolder): NotificationHolder =
-        holder.copy(notifications = holder.notifications :+ Notification.error("Username or password incorrect"))
+        holder.copy(notifications = holder.notifications :+ Notification.danger("Username or password incorrect"))
 
       def performLogin(): Future[Callback] =
         ClientApi.login(loginInfo.username, loginInfo.password).map { _ =>

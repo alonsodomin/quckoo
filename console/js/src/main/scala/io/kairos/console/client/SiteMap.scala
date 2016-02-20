@@ -1,8 +1,9 @@
 package io.kairos.console.client
 
+import io.kairos.console.client.components.Icons
 import io.kairos.console.client.execution.ExecutionsPage
+import io.kairos.console.client.layout.Navigation
 import io.kairos.console.client.layout.Navigation.NavigationItem
-import io.kairos.console.client.layout.{Footer, Navigation}
 import io.kairos.console.client.registry.RegistryPage
 import io.kairos.console.client.security.{ClientAuth, LoginPage}
 import japgolly.scalajs.react.extra.router._
@@ -54,16 +55,15 @@ object SiteMap extends ClientAuth {
   }
 
   val mainMenu = Seq(
-    NavigationItem("Home", Home),
-    NavigationItem("Registry", Registry),
-    NavigationItem("Executions", Executions)
+    NavigationItem("Home", Home, Icons.dashboard),
+    NavigationItem("Registry", Registry, Icons.book),
+    NavigationItem("Executions", Executions, Icons.bolt)
   )
 
   def layout(ctrl: RouterCtl[ConsolePage], res: Resolution[ConsolePage]) =
     <.div(
       Navigation(mainMenu.head, mainMenu, ctrl),
-      res.render(),
-      Footer()
+      res.render()
     )
 
   val baseUrl = BaseUrl.fromWindowOrigin_/
