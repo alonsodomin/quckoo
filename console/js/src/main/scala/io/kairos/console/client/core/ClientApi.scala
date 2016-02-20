@@ -3,7 +3,7 @@ package io.kairos.console.client.core
 import io.kairos.console.client.security.ClientAuth
 import io.kairos.console.info.ClusterInfo
 import io.kairos.console.protocol.LoginRequest
-import io.kairos.console.{Api, RegistryApi}
+import io.kairos.console.{KairosApi, RegistryApi}
 import io.kairos.id.JobId
 import io.kairos.serialization._
 import io.kairos.{JobSpec, Validated}
@@ -14,7 +14,7 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
  * Created by alonsodomin on 13/10/2015.
  */
-object ClientApi extends Api with RegistryApi with ClientAuth {
+object ClientApi extends KairosApi with RegistryApi with ClientAuth {
   import dom.console
   import dom.ext.Ajax
 

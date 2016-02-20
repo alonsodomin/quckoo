@@ -2,8 +2,8 @@ package io.kairos.console.client.layout
 
 import io.kairos.console.client.SiteMap
 import io.kairos.console.client.components._
-import io.kairos.console.client.core.ClientApi
-import io.kairos.console.client.security.ClientAuth
+import io.kairos.console.client.core.{KairosCircuit, ClientApi}
+import io.kairos.console.client.security.{UserMenu, ClientAuth}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -53,20 +53,18 @@ object Navigation extends ClientAuth {
           <.div(^.`class` := "navbar-header",
             <.a(^.`class` := "navbar-brand", ^.href := props.routerCtl.urlFor(Home).value,
               ^.onClick ==> navigationItemClicked(props.initial),
-              <.i(^.`class` := "fa fa-home"),
-              <.span("Kairos Console")
+              Icons.home, <.span("Kairos Console")
             )
           ),
-          if (isAuthenticated) {
-            <.div(^.`class` := "collapse navbar-collapse",
-              <.ul(^.`class` := "nav navbar-nav",
-                props.menu.map(item => renderNavItem(item, props, state))
-              ),
-              <.ul(^.`class` := "nav navbar-nav navbar-right",
-                <.li(<.a(^.href := "#", ^.onClick ==> onLogoutClicked, Icons.signOut, "Logout"))
-              )
+          <.div(^.`class` := "collapse navbar-collapse",
+            <.ul(^.`class` := "nav navbar-nav",
+              props.menu.map(item => renderNavItem(item, props, state))
+            ),
+            <.ul(^.`class` := "nav navbar-nav navbar-right",
+              <.li(^.`class` := "navbar-text", KairosCircuit.wrap(_.currentUser)(UserMenu.apply)),
+              <.li(<.a(^.href := "#", ^.onClick ==> onLogoutClicked, Icons.signOut, "Logout"))
             )
-          } else EmptyTag
+          )
         )
       )
 

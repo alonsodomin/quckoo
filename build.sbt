@@ -106,6 +106,7 @@ lazy val console = (crossProject in file("console")).
   settings(
     name := "console",
     libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "autowire" % "0.2.5",
       "com.lihaoyi"     %%% "scalatags" % "0.4.6",
       "com.lihaoyi"     %%% "upickle" % "0.3.6",
       "com.lihaoyi"     %%% "utest" % "0.3.0" % "test"

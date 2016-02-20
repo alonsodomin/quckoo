@@ -2,7 +2,9 @@ package io.kairos.console.client.security
 
 import io.kairos.console.client.SiteMap.{ConsolePage, Home, Login}
 import io.kairos.console.client.core.ClientApi
+import io.kairos.console.client.components._
 import io.kairos.console.client.layout.{Notification, NotificationDisplay}
+import io.kairos.console.protocol.LoginRequest
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
@@ -34,15 +36,14 @@ object LoginPage {
   case class NotificationHolder(notifications: Seq[Notification] = Seq())
 
   class LoginBackend($: BackendScope[RouterCtl[ConsolePage], NotificationHolder]) {
-    import LoginForm.LoginInfo
 
-    def loginHandler(loginInfo: LoginInfo): Callback = {
+    def loginHandler(loginReq: LoginRequest): Callback = {
 
       def authFailedNotification(holder: NotificationHolder): NotificationHolder =
         holder.copy(notifications = holder.notifications :+ Notification.danger("Username or password incorrect"))
 
       def performLogin(): Future[Callback] =
-        ClientApi.login(loginInfo.username, loginInfo.password).map { _ =>
+        ClientApi.login(loginReq.username, loginReq.password).map { _ =>
           $.props.flatMap(_.set(Home))
         } recover { case _ =>
           $.modState(holder => authFailedNotification(holder)).

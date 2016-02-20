@@ -55,14 +55,16 @@ object SiteMap extends ClientAuth {
   }
 
   val mainMenu = Seq(
-    NavigationItem("Home", Home, Icons.dashboard),
+    NavigationItem("Dashboard", Home, Icons.dashboard),
     NavigationItem("Registry", Registry, Icons.book),
     NavigationItem("Executions", Executions, Icons.bolt)
   )
 
   def layout(ctrl: RouterCtl[ConsolePage], res: Resolution[ConsolePage]) =
     <.div(
-      Navigation(mainMenu.head, mainMenu, ctrl),
+      if (isAuthenticated) {
+        Navigation(mainMenu.head, mainMenu, ctrl)
+      } else EmptyTag,
       res.render()
     )
 

@@ -2,6 +2,7 @@ package io.kairos.console.client.security
 
 import io.kairos.console.client.components._
 import io.kairos.console.client.layout.InputField
+import io.kairos.console.protocol.LoginRequest
 import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, _}
@@ -13,12 +14,9 @@ import monocle.macros.Lenses
 object LoginForm {
   import MonocleReact._
 
-  @Lenses
-  case class LoginInfo(username: String, password: String)
+  type LoginHandler = LoginRequest => Callback
 
-  type LoginHandler = LoginInfo => Callback
-
-  class LoginBackend($: BackendScope[LoginHandler, LoginInfo]) {
+  class LoginBackend($: BackendScope[LoginHandler, LoginRequest]) {
 
     def handleSubmit(event: ReactEventI): Callback =
       event.preventDefaultCB >> $.state.flatMap(loginInfo => $.props.flatMap(handler => handler(loginInfo)))
@@ -26,11 +24,11 @@ object LoginForm {
   }
 
   private[this] val component = ReactComponentB[LoginHandler]("LoginForm").
-    initialState(LoginInfo("", "")).
+    initialState(LoginRequest("", "")).
     backend(new LoginBackend(_)).
     render { $ =>
-      val username = ExternalVar.state($.zoomL(LoginInfo.username))
-      val password = ExternalVar.state($.zoomL(LoginInfo.password))
+      val username = ExternalVar.state($.zoomL(LoginRequest.username))
+      val password = ExternalVar.state($.zoomL(LoginRequest.password))
       <.form(^.name := "loginForm", ^.onSubmit ==> $.backend.handleSubmit,
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "username", "Username"),
