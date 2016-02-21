@@ -9,10 +9,10 @@ import akka.util.Timeout
 import de.heikoseeberger.akkasse.ServerSentEvent
 import io.kairos.cluster.core._
 import io.kairos.cluster.protocol.GetClusterStatus
+import io.kairos.console.auth.AuthInfo
 import io.kairos.console.info.{ClusterInfo, NodeInfo}
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
-import io.kairos.console.server.security.AuthInfo
 import io.kairos.id.JobId
 import io.kairos.protocol.RegistryProtocol
 import io.kairos.time.TimeSource

@@ -1,5 +1,7 @@
 package io.kairos.console.server.security
 
+import io.kairos.console.auth.AuthInfo
+
 import scala.concurrent.Future
 
 /**

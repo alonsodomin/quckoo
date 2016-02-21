@@ -5,10 +5,7 @@ package io.kairos.console.auth
  */
 object Auth {
 
-  val UsernameCookie = "Principal"
-
   val XSRFTokenCookie = "XSRF_TOKEN"
-
   val XSRFTokenHeader = "X-" + XSRFTokenCookie
 
 }

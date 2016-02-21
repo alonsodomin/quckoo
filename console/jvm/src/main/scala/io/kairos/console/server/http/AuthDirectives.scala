@@ -7,9 +7,9 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-import io.kairos.console.auth.Auth
+import io.kairos.console.auth.{AuthInfo, Auth}
 import io.kairos.console.protocol.LoginRequest
-import io.kairos.console.server.security.{AuthInfo, SecurityFacade}
+import io.kairos.console.server.security._
 
 import scala.concurrent.duration._
 
@@ -60,7 +60,7 @@ trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
 
   def refreshAuthInfo: Directive0 =
     extractAuthInfo.flatMap { authInfo =>
-      addAuthCookies(authInfo.refresh())
+      addAuthCookies(authInfo.copy(token = generateAuthToken))
     }
 
   private[this] def addAuthCookies(auth: AuthInfo): Directive0 =

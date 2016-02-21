@@ -1,10 +1,8 @@
 package io.kairos.cluster.core
 
-import java.util.UUID
-
 import akka.actor.{Actor, Props}
-import io.kairos.console.auth.UserId
-import io.kairos.console.server.security.AuthInfo
+import io.kairos.console.auth.{AuthInfo, UserId}
+import io.kairos.console.server.security._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -27,13 +25,11 @@ class UserAuthenticator(sessionTimeout: FiniteDuration) extends Actor {
   def receive = {
     case Authenticate(userId, password) =>
       if (userId == "admin" && password.mkString == "password") {
-        val authInfo = new AuthInfo(userId)
+        val authInfo = new AuthInfo(userId, generateAuthToken)
         sender() ! AuthenticationSuccess(authInfo)
       } else {
         sender() ! AuthenticationFailed
       }
   }
-
-  def generateToken: () => String = { UUID.randomUUID().toString }
   
 }
