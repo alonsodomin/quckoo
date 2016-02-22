@@ -24,6 +24,9 @@ object LoginForm {
 
   class LoginBackend($: BackendScope[LoginHandler, LoginRequest]) {
 
+    val subject = PublishSubject[String]()
+    val valid = PublishSubject[Boolean]()
+
     def handleSubmit(event: ReactEventI): Callback =
       event.preventDefaultCB >> $.state.flatMap(loginInfo => $.props.flatMap(handler => handler(loginInfo)))
 
@@ -37,17 +40,14 @@ object LoginForm {
       val username = ExternalVar.state($.zoomL(LoginRequest.username))
       val password = ExternalVar.state($.zoomL(LoginRequest.password))
 
-      val subject = PublishSubject[String]()
-      val valid = PublishSubject[Boolean]()
-
-      val usernameField = Input.text(username, subject,
+      val usernameField = Input.text(username, $.backend.subject,
         ^.id := "username", ^.placeholder := "Username")
 
       <.form(^.name := "loginForm", ^.onSubmit ==> $.backend.handleSubmit,
-        FormGroup(valid,
+        FormGroup($.backend.valid,
           <.label(^.`for` := "username", "Username"),
           usernameField,
-          ValidationHelp(subject, notEmptyStr("username"), valid)
+          ValidationHelp($.backend.subject, notEmptyStr("username"), $.backend.valid)
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "password", "Password"),
@@ -61,7 +61,11 @@ object LoginForm {
         ),
         Button(Button.Props(style = ContextStyle.primary), Icons.signIn, "Sign in")
       )
-    } build
+    }.componentWillUnmount($ => Callback {
+      $.backend.subject.onComplete()
+      $.backend.valid.onComplete()
+    }).
+    build
 
   def apply(loginHandler: LoginHandler) = component(loginHandler)
 

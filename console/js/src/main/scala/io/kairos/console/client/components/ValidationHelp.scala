@@ -22,8 +22,6 @@ object ValidationHelp {
 
   class ValidationBackend[T]($: BackendScope[Props[T], State[T]])  {
 
-    val subject = PublishSubject[Boolean]()
-
     def validate(t: T): Callback = {
       def invokeValidator: CallbackTo[Validated[T]] =
         $.props.map(_.validator(t))
@@ -49,10 +47,8 @@ object ValidationHelp {
       }.getOrElse[ReactTagOf[Span]](<.span(EmptyTag))
     }).
     componentDidMount($ => Callback {
-      $.backend.subject.subscribe($.props.observer)
       $.props.observable.foreach(value => $.backend.validate(value).runNow())
     }).
-    componentWillUnmount($ => Callback { $.backend.subject.onComplete() }).
     build
 
   def apply[T](observable: Observable[T], validator: Validator[T], observer: Observer[Boolean]) =
