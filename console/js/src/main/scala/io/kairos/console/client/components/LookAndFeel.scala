@@ -31,6 +31,7 @@ class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
   val label    = labelOpt(default)
 
   val alert    = from(context, "alert")
+  val close    = wrap("close")
 
   object modal {
     val modal   = wrap("modal")

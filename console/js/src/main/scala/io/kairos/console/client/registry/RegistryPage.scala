@@ -68,10 +68,8 @@ object RegistryPage {
     def render(state: State) =
       <.div(Style.content,
         <.h2("Registry"),
-        Panel("Register new Job",
-          NotificationDisplay(state.notifications),
-          JobForm(handleJobSubmit)
-        ),
+        NotificationDisplay(state.notifications),
+        JobForm(handleJobSubmit),
         JobSpecList(state.specs)
       )
 

@@ -10,6 +10,7 @@ import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
 import io.kairos.JobSpec
 import io.kairos.console.server.ServerFacade
+import io.kairos.id.JobId
 import io.kairos.serialization._
 
 trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMarshalling {
@@ -39,12 +40,18 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
           }
         }
       } ~ pathPrefix("registry") {
-        path("jobs") {
-          get {
-            complete(registeredJobs)
-          } ~ post {
-            entity(as[JobSpec]) { jobSpec =>
-              complete(registerJob(jobSpec))
+        pathPrefix("jobs") {
+          pathEnd {
+            get {
+              complete(registeredJobs)
+            } ~ post {
+              entity(as[JobSpec]) { jobSpec =>
+                complete(registerJob(jobSpec))
+              }
+            }
+          } ~ path(JavaUUID) { jobId =>
+            get {
+              complete(fetchJob(JobId(jobId)))
             }
           }
         }

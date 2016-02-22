@@ -10,7 +10,9 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait RegistryApi {
 
-  def registerJob(jobSpec: JobSpec)(implicit ex: ExecutionContext): Future[Validated[JobId]]
+  def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]]
+
+  def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]]
 
   def enabledJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]]
 

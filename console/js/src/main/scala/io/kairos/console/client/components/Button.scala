@@ -11,10 +11,10 @@ import scalacss.ScalaCssReact._
   */
 object Button {
   case class Props(
-                    onClick: Option[Callback] = None,
-                    style: ContextStyle.Value = ContextStyle.default,
-                    addStyles: Seq[StyleA] = Seq()
-                  )
+      onClick: Option[Callback] = None,
+      style: ContextStyle.Value = ContextStyle.default,
+      addStyles: Seq[StyleA] = Seq()
+  )
 
   val component = ReactComponentB[Props]("Button").
     renderPC { (_, p, c) =>

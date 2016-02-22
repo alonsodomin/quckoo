@@ -121,6 +121,7 @@ lazy val console = (crossProject in file("console")).
         "io.github.widok" %%% "widok" % "0.2.4",
         "me.chrons" %%% "diode" % "0.5.0",
         "me.chrons" %%% "diode-react" % "0.5.0",
+        "org.monifu" %%% "monifu" % "1.0",
         "be.doeraene" %%% "scalajs-jquery" % "0.9.0",
         "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,

@@ -46,6 +46,16 @@ class Kairos(settings: KairosClusterSettings)
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
   }
 
+  override def fetchJob(jobId: JobId): Future[Option[JobSpec]] = {
+    import system.dispatcher
+
+    implicit val timeout = Timeout(5 seconds)
+    (registry ? GetJob(jobId)) map {
+      case JobNotEnabled(_)         => None
+      case jobSpec: Option[JobSpec] => jobSpec
+    }
+  }
+
   def registerJob(jobSpec: JobSpec): Future[Validated[JobId]] = {
     import scalaz._
     import Scalaz._

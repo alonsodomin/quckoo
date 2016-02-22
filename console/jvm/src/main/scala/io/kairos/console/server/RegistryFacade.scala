@@ -10,6 +10,8 @@ import scala.concurrent.Future
   */
 trait RegistryFacade {
 
+  def fetchJob(jobId: JobId): Future[Option[JobSpec]]
+
   def registerJob(jobSpec: JobSpec): Future[Validated[JobId]]
 
   def registeredJobs: Future[Map[JobId, JobSpec]]
