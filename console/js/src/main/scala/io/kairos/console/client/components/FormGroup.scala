@@ -2,10 +2,10 @@ package io.kairos.console.client.components
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import monifu.concurrent.Cancelable
 import monifu.concurrent.Implicits.globalScheduler
+import monifu.reactive.Ack.Continue
 import monifu.reactive.Observable
-
-import org.scalajs.dom
 
 /**
   * Created by alonsodomin on 21/02/2016.
@@ -16,11 +16,20 @@ object FormGroup {
   case class State(valid: Boolean = true)
 
   class Backend($: BackendScope[Props, State]) {
+    private var subscription: Cancelable = _
 
     def updateValid(v: Boolean) = {
-      dom.console.log("Status is valid = " + v)
       $.modState(_.copy(valid = v))
     }
+
+    def subscribe = $.props.map(p => {
+      subscription = p.observable.subscribe(v => {
+        this.updateValid(v).runNow()
+        Continue
+      })
+    })
+
+    def cancel = subscription.cancel()
 
   }
 
@@ -32,9 +41,8 @@ object FormGroup {
         children
       )
     }).
-    componentDidMount($ => Callback {
-      $.props.observable.foreach(valid => $.backend.updateValid(valid).runNow())
-    }).
+    componentDidMount(_.backend.subscribe).
+    componentWillUnmount($ => CallbackTo.pure($.backend.cancel)).
     build
 
   def apply(observable: Observable[Boolean], children: ReactNode*) =

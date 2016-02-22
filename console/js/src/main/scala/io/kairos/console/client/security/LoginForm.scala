@@ -36,28 +36,19 @@ object LoginForm {
     initialState(LoginRequest("", "")).
     backend(new LoginBackend(_)).
     render { $ =>
-      val user1 = $.zoomL(LoginRequest.username)
       val username = ExternalVar.state($.zoomL(LoginRequest.username))
       val password = ExternalVar.state($.zoomL(LoginRequest.password))
-
-      val usernameField = Input.text(username, $.backend.subject,
-        ^.id := "username", ^.placeholder := "Username")
 
       <.form(^.name := "loginForm", ^.onSubmit ==> $.backend.handleSubmit,
         FormGroup($.backend.valid,
           <.label(^.`for` := "username", "Username"),
-          usernameField,
+          Input.text(username, $.backend.subject,
+            ^.id := "username", ^.placeholder := "Username"),
           ValidationHelp($.backend.subject, notEmptyStr("username"), $.backend.valid)
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "password", "Password"),
           InputField.password("password", "Password", required = true, password)
-        ),
-        <.div(^.`class` := "checkbox",
-          <.label(^.`for` := "rememberMe",
-            <.input.checkbox(^.id := "rememberMe"),
-            "Remember me"
-          )
         ),
         Button(Button.Props(style = ContextStyle.primary), Icons.signIn, "Sign in")
       )
