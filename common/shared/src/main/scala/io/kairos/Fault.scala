@@ -9,8 +9,6 @@ sealed trait Fault extends Serializable
 
 // == Generic errors ================
 
-case class MissingRequiredAttribute(attr: String) extends Fault
-
 case class ExceptionThrown(className: String, message: String) extends Fault {
 
   override def toString: String = s"$className: $message"

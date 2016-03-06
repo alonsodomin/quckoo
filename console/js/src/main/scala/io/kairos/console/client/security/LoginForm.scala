@@ -1,18 +1,11 @@
 package io.kairos.console.client.security
 
-import io.kairos.{Fault, Required}
 import io.kairos.console.client.components._
-import io.kairos.console.client.layout.InputField
-import io.kairos.console.client.validation._
 import io.kairos.console.protocol.LoginRequest
 import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, _}
-import monifu.reactive.OverflowStrategy.DropOld
-import monifu.reactive.channels.PublishChannel
-import monifu.reactive.subjects.PublishSubject
 import monocle.macros.Lenses
-import monifu.concurrent.Implicits.globalScheduler
 
 /**
  * Created by aalonsodominguez on 12/10/2015.
@@ -22,40 +15,48 @@ object LoginForm {
 
   type LoginHandler = LoginRequest => Callback
 
-  class LoginBackend($: BackendScope[LoginHandler, LoginRequest]) {
+  @Lenses
+  case class State(request: LoginRequest)
 
-    val subject = PublishSubject[String]()
-    val valid = PublishSubject[Boolean]()
+  class LoginBackend($: BackendScope[LoginHandler, State]) {
 
-    def handleSubmit(event: ReactEventI): Callback =
-      event.preventDefaultCB >> $.state.flatMap(loginInfo => $.props.flatMap(handler => handler(loginInfo)))
+    def handleSubmit(event: ReactEventI): Callback = {
+      def invokeHandler(loginReq: LoginRequest): Callback =
+        $.props.flatMap(handler => handler(loginReq))
+
+      event.preventDefaultCB >> $.state.map(_.request) >>= invokeHandler
+    }
 
   }
 
   private[this] val component = ReactComponentB[LoginHandler]("LoginForm").
-    initialState(LoginRequest("", "")).
+    initialState(State(LoginRequest("", ""))).
     backend(new LoginBackend(_)).
     render { $ =>
-      val username = ExternalVar.state($.zoomL(LoginRequest.username))
-      val password = ExternalVar.state($.zoomL(LoginRequest.password))
+      val username = ExternalVar.state($.zoomL(State.request ^|-> LoginRequest.username))
+      val password = ExternalVar.state($.zoomL(State.request ^|-> LoginRequest.password))
+
+      def usernameChange(evt: ReactEventI): Callback =
+        username.set(evt.target.value)
+      def passwordChange(evt: ReactEventI): Callback =
+        password.set(evt.target.value)
 
       <.form(^.name := "loginForm", ^.onSubmit ==> $.backend.handleSubmit,
-        FormGroup($.backend.valid,
-          <.label(^.`for` := "username", "Username"),
-          Input.text(username, $.backend.subject,
-            ^.id := "username", ^.placeholder := "Username"),
-          ValidationHelp($.backend.subject, notEmptyStr("username"), $.backend.valid)
+        <.div(^.`class` := "form-group",
+          <.label(^.`for` := "username", ^.`class` := "control-label", "Username"),
+          <.input.text(^.id := "username", ^.`class` := "form-control", ^.required := true,
+            ^.value := username.value, ^.onChange ==> usernameChange
+          )
         ),
         <.div(^.`class` := "form-group",
-          <.label(^.`for` := "password", "Password"),
-          InputField.password("password", "Password", required = true, password)
+          <.label(^.`for` := "password", ^.`class` := "control-label", "Password"),
+          <.input.password(^.id := "password", ^.`class` := "form-control",
+            ^.value := password.value, ^.onChange ==> passwordChange
+          )
         ),
         Button(Button.Props(style = ContextStyle.primary), Icons.signIn, "Sign in")
       )
-    }.componentWillUnmount($ => Callback {
-      $.backend.subject.onComplete()
-      $.backend.valid.onComplete()
-    }).
+    }.
     build
 
   def apply(loginHandler: LoginHandler) = component(loginHandler)

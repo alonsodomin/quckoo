@@ -3,12 +3,15 @@ package io.kairos.console.client.components
 import io.kairos.Validated
 import io.kairos.console.client.validation._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra.OnUnmount
 import japgolly.scalajs.react.vdom.prefix_<^._
 import monifu.concurrent.Cancelable
 import monifu.concurrent.Implicits.globalScheduler
 import monifu.reactive.Ack.Continue
 import monifu.reactive.{Observable, Observer}
+import org.reactivestreams.Subscription
 import org.scalajs.dom.html.Span
+import scala.concurrent.duration._
 
 /**
   * Created by alonsodomin on 21/02/2016.
@@ -18,8 +21,21 @@ object ValidationHelp {
   case class Props[T](observable: Observable[T], validator: Validator[T], observer: Observer[Boolean])
   case class State[T](valid: Option[Validated[T]])
 
-  class ValidationBackend[T]($: BackendScope[Props[T], State[T]])  {
-    private var subscription: Cancelable = _
+  class ValidationBackend[T]($: BackendScope[Props[T], State[T]]) extends OnUnmount { self =>
+
+    def init: Callback = {
+      def subscribe: CallbackTo[Cancelable] = $.props.map(p => {
+        p.observable.debounce(750 millis).subscribe(v => {
+          self.validate(v).runNow()
+          Continue
+        })
+      })
+
+      def dispose(subscription: Cancelable): Callback =
+        onUnmount(Callback { subscription.cancel() })
+
+      subscribe >>= dispose
+    }
 
     def validate(t: T): Callback = {
       def invokeValidator: CallbackTo[Validated[T]] =
@@ -34,15 +50,6 @@ object ValidationHelp {
       invokeValidator >>= updateState >>= propagateValid
     }
 
-    def subscribe = $.props.map(p => {
-      subscription = p.observable.subscribe(v => {
-        this.validate(v).runNow()
-        Continue
-      })
-    })
-
-    def cancel = subscription.cancel()
-
   }
 
   def component[T] = ReactComponentB[Props[T]]("Validation").
@@ -53,8 +60,8 @@ object ValidationHelp {
         <.span(^.`class` := "help-block with-errors", errors.map(_.toString()))
       }.getOrElse[ReactTagOf[Span]](<.span(EmptyTag))
     }).
-    componentDidMount(_.backend.subscribe).
-    componentWillUnmount($ => CallbackTo.pure($.backend.cancel)).
+    componentDidMount(_.backend.init).
+    configure(OnUnmount.install).
     build
 
   def apply[T](observable: Observable[T], validator: Validator[T], observer: Observer[Boolean]) =

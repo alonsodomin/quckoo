@@ -1,6 +1,7 @@
 package io.kairos.console.client
 
 import io.kairos.console.client.components.Icons
+import io.kairos.console.client.core.KairosCircuit
 import io.kairos.console.client.execution.ExecutionsPage
 import io.kairos.console.client.layout.Navigation
 import io.kairos.console.client.layout.Navigation.NavigationItem
@@ -36,9 +37,12 @@ object SiteMap extends ClientAuth {
 
     implicit val redirectMethod = Redirect.Push
 
+    def registryPage =
+      KairosCircuit.connect(_.jobSpecs)(proxy => RegistryPage(proxy))
+
     (emptyRule
     | staticRoute("#home", Home) ~> render(HomePage())
-    | staticRoute("#registry", Registry) ~> render(RegistryPage())
+    | staticRoute("#registry", Registry) ~> render(registryPage)
     | staticRoute("#executions", Executions) ~> render(ExecutionsPage())
     ).addCondition(isAuthenticatedC)(_ => Some(redirectToPage(Login)))
   }

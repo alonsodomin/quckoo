@@ -44,8 +44,8 @@ object JobForm {
       val version     = ExternalVar.state($.zoomL(JobSpec.artifactId ^|-> ArtifactId.version))
       val jobClass    = ExternalVar.state($.zoomL(JobSpec.jobClass))
 
-      <.form(^.name := "jobDetails", ^.`class` := "form-horizontal", ^.onSubmit ==> $.backend.submitJob,
-        Modal(Modal.Props(
+      <.form(^.name := "jobDetails", ^.`class` := "form-horizontal", ^.onSubmit ==> $.backend.submitJob
+        /*Modal(Modal.Props(
           header = hide => <.span(<.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close), <.h4("Register Job")),
           footer = hide => <.span(Button(Button.Props(style = ContextStyle.primary), "Ok")),
           closed = Callback.empty),
@@ -96,7 +96,7 @@ object JobForm {
             validator = FormField.notEmptyStr("jobClass"),
             accessor = jobClass
           )
-        )
+        )*/
       )
     }.
     build

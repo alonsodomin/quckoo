@@ -1,6 +1,11 @@
 package io.kairos.console.client.registry
 
+import diode.data.PotMap
+import diode.react.ModelProxy
+import diode.react.ReactPot._
 import io.kairos.JobSpec
+import io.kairos.console.client.core.LoadJobSpecs
+import io.kairos.console.client.layout.{Notification, NotificationDisplay}
 import io.kairos.id.JobId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -10,12 +15,19 @@ import japgolly.scalajs.react.vdom.prefix_<^._
  */
 object JobSpecList {
 
-  case class Props(specs: Map[JobId, JobSpec])
+  case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
 
-  private[this] val component = ReactComponentB[Props]("JobSpecList").
-    stateless.
-    noBackend.
-    render_P(p =>
+  class Backend($: BackendScope[Props, Unit]) {
+
+    def mounted(props: Props) = {
+      def dispatchJobLoading: Callback =
+        Callback.log("Loading job specs...") >> props.proxy.dispatch(LoadJobSpecs)
+
+      Callback.ifTrue(props.proxy().size == 0, dispatchJobLoading)
+    }
+
+    def render(p: Props) = {
+      val model = p.proxy()
       <.table(^.`class` := "table table-striped",
         <.thead(
           <.tr(
@@ -26,18 +38,32 @@ object JobSpecList {
           )
         ),
         <.tbody(
-          p.specs.map { case (jobId, spec) =>
+          model.seq.map { case (jobId, spec) =>
             <.tr(^.key := jobId.toString(),
-              <.td(spec.displayName),
-              <.td(spec.description),
-              <.td(spec.artifactId.toString()),
-              <.td(spec.jobClass)
+              spec.renderFailed { ex =>
+                <.td(^.colSpan := 4, NotificationDisplay(List(Notification.danger(ex))))
+              },
+              spec.renderPending(_ > 500, _ => "Loading ..."),
+              spec.render { item => List(
+                <.td(item.displayName),
+                <.td(item.description),
+                <.td(item.artifactId.toString()),
+                <.td(item.jobClass)
+              )}
             )
           }
         )
       )
-    ).build
+    }
 
-  def apply(specs: Map[JobId, JobSpec]) = component(Props(specs))
+  }
+
+  private[this] val component = ReactComponentB[Props]("JobSpecList").
+    stateless.
+    renderBackend[Backend].
+    componentDidMount($ => $.backend.mounted($.props)).
+    build
+
+  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]]) = component(Props(proxy))
 
 }

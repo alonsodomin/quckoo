@@ -16,8 +16,6 @@ trait ClientAuth {
   final def authInfo: Option[AuthInfo] =
     RootScope.cookie(Auth.XSRFTokenCookie).map(AuthInfo(_))
 
-  //KairosCircuit.zoom(_.currentUser).value != Empty
-
   final def isAuthenticatedC: CallbackTo[Boolean] =
     CallbackTo { isAuthenticated }
 

@@ -1,6 +1,6 @@
 package io.kairos.console.client.layout
 
-import io.kairos.{Fault, Required, Validated}
+import io.kairos.{ValidationFault, Fault, Required, Validated}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._

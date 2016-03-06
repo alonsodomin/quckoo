@@ -1,5 +1,7 @@
 package io.kairos.console.client.registry
 
+import diode.data.PotMap
+import diode.react.ModelProxy
 import io.kairos._
 import io.kairos.console.client.core.ClientApi
 import io.kairos.console.client.layout.{Notification, NotificationDisplay, Panel}
@@ -11,6 +13,7 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
+import scalaz.NonEmptyList
 
 /**
  * Created by alonsodomin on 17/10/2015.
@@ -22,10 +25,11 @@ object RegistryPage {
     val content = style()
   }
 
+  case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
   case class State(notifications: Seq[Notification] = Seq(),
                    specs: Map[JobId, JobSpec] = Map.empty)
 
-  class RegistryBackend($: BackendScope[Unit, State]) {
+  class RegistryBackend($: BackendScope[Props, State]) {
 
     def handleJobSubmit(jobSpec: JobSpec): Callback = {
 
@@ -65,25 +69,21 @@ object RegistryPage {
       $.modState(st => st.copy(notifications = Seq())) >> Callback.future(performSubmit())
     }
 
-    def render(state: State) =
+    def render(props: Props, state: State) =
       <.div(Style.content,
         <.h2("Registry"),
         NotificationDisplay(state.notifications),
         JobForm(handleJobSubmit),
-        JobSpecList(state.specs)
+        JobSpecList(props.proxy)
       )
 
   }
 
-  private[this] val component = ReactComponentB[Unit]("RegistryPage").
+  private[this] val component = ReactComponentB[Props]("RegistryPage").
     initialState(State()).
     renderBackend[RegistryBackend].
-    componentDidMount($ => Callback.future {
-      ClientApi.enabledJobs map { specMap =>
-        $.modState(_.copy(specs = specMap))
-      }
-    }).buildU
+    build
 
-  def apply() = component()
+  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]]) = component(Props(proxy))
 
 }

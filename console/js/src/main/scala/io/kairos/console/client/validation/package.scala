@@ -10,7 +10,7 @@ import scalaz._
 package object validation {
   import Scalaz._
 
-  type Validator[T] = T => Validated[T]
+  type Validator[A] = A => Validated[A]
 
   def notEmptyStr(fieldId: String)(str: String): Validated[String] = {
     if (str.isEmpty) Required(fieldId).asInstanceOf[Fault].failureNel[String]

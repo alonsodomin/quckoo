@@ -118,7 +118,6 @@ lazy val console = (crossProject in file("console")).
 
       Seq(
         "biz.enef" %%% "slogging" % "0.3",
-        "io.github.widok" %%% "widok" % "0.2.4",
         "me.chrons" %%% "diode" % "0.5.0",
         "me.chrons" %%% "diode-react" % "0.5.0",
         "org.monifu" %%% "monifu" % "1.0",

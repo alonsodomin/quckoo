@@ -53,4 +53,7 @@ object Input {
   def text(evar: ExternalVar[String], observer: Observer[String], mods: TagMod*) =
     component[String](Props(evar, StringConverter, observer, (^.tpe := "text") :: mods.toList))
 
+  def password(evar: ExternalVar[String], observer: Observer[String], mods: TagMod*) =
+    component[String](Props(evar, StringConverter, observer, (^.tpe := "password") :: mods.toList))
+
 }
