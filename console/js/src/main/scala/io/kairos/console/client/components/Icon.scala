@@ -15,7 +15,8 @@ final case class IconState(
     inverse: Boolean = false,
     pulse: Boolean = false,
     flipHorizontal: Boolean = false,
-    flipVertical: Boolean = false)
+    flipVertical: Boolean = false
+)
 
 final case class Icon private[components](name: String, state: IconState = IconState()) {
 

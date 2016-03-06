@@ -40,7 +40,7 @@ object ClientApi extends KairosApi with RegistryApi with ClientAuth {
     Ajax.post(LogoutURI, headers = authHeaders) map { xhr => () }
   }
 
-  override def clusterDetails(implicit ex: ExecutionContext): Future[ClusterInfo] = {
+  override def clusterDetails(implicit ec: ExecutionContext): Future[ClusterInfo] = {
     import upickle.default._
 
     Ajax.get(ClusterDetailsURI, headers = authHeaders) map { xhr =>
@@ -67,8 +67,6 @@ object ClientApi extends KairosApi with RegistryApi with ClientAuth {
 
   override def enabledJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
     import upickle.default._
-
-    println("Fetching registered jobs from the backend...")
 
     Ajax.get(JobsURI, headers = authHeaders).map { xhr =>
       read[Map[JobId, JobSpec]](xhr.responseText)

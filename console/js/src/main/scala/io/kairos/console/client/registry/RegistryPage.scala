@@ -3,8 +3,9 @@ package io.kairos.console.client.registry
 import diode.data.PotMap
 import diode.react.ModelProxy
 import io.kairos._
+import io.kairos.console.client.components.{Button, Icons}
 import io.kairos.console.client.core.ClientApi
-import io.kairos.console.client.layout.{Notification, NotificationDisplay, Panel}
+import io.kairos.console.client.layout.{Notification, NotificationDisplay}
 import io.kairos.id.JobId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -13,7 +14,6 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import scalaz.NonEmptyList
 
 /**
  * Created by alonsodomin on 17/10/2015.
@@ -26,8 +26,12 @@ object RegistryPage {
   }
 
   case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
-  case class State(notifications: Seq[Notification] = Seq(),
-                   specs: Map[JobId, JobSpec] = Map.empty)
+  case class State(
+      notifications: Seq[Notification] = Seq(),
+      specs: Map[JobId, JobSpec] = Map.empty,
+      selectedJob: Option[JobSpec] = None,
+      showForm: Boolean = false
+  )
 
   class RegistryBackend($: BackendScope[Props, State]) {
 
@@ -69,11 +73,16 @@ object RegistryPage {
       $.modState(st => st.copy(notifications = Seq())) >> Callback.future(performSubmit())
     }
 
+    def editJob(spec: Option[JobSpec]) =
+      $.modState(_.copy(selectedJob = spec, showForm = true))
+
     def render(props: Props, state: State) =
       <.div(Style.content,
         <.h2("Registry"),
         NotificationDisplay(state.notifications),
-        JobForm(handleJobSubmit),
+        Button(Button.Props(Some(editJob(None))), Icons.plusSquare, "Register"),
+        if (state.showForm) JobForm(state.selectedJob, handleJobSubmit)
+        else EmptyTag,
         JobSpecList(props.proxy)
       )
 

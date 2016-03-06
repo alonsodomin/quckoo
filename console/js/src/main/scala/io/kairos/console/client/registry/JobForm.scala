@@ -7,6 +7,7 @@ import io.kairos.id.ArtifactId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._
+import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 
 /**
@@ -17,34 +18,40 @@ object JobForm {
 
   type RegisterHandler = JobSpec => Callback
 
-  class JobFormBackend($: BackendScope[RegisterHandler, JobSpec]) {
+  case class Props(spec: Option[JobSpec], handler: RegisterHandler)
+
+  @Lenses
+  case class State(spec: JobSpec, cancelled: Boolean = true)
+
+  class JobFormBackend($: BackendScope[Props, State]) {
 
     def submitJob(event: ReactEventI): Callback = {
       event.preventDefaultCB >>
-        $.state.flatMap(spec => $.props.flatMap(handler => handler(spec)))
+        $.state.map(_.spec).flatMap(spec => $.props.map(_.handler).flatMap(handler => handler(spec)))
     }
 
-  }
-
-  private[this] val component = ReactComponentB[RegisterHandler]("JobForm").
-    initialState(JobSpec(displayName = "", artifactId = ArtifactId("", "", ""), jobClass = "")).
-    backend(new JobFormBackend(_)).
-    render { $ =>
-      val displayName = ExternalVar.state($.zoomL(JobSpec.displayName))
-      lazy val description = {
+    def render(props: Props, state: State) = {
+      //val displayName = ExternalVar.state($.accessCB.zoomL(State.spec ^|-> JobSpec.displayName))
+      /*lazy val description = {
         val readValue = (spec: JobSpec) =>
           JobSpec.description.get(spec).getOrElse("")
         val writeValue = (spec: JobSpec, value: String) =>
           JobSpec.description.set(Some(value))(spec)
 
         ExternalVar.state($.zoom(readValue)(writeValue))
-      }
-      val groupId     = ExternalVar.state($.zoomL(JobSpec.artifactId ^|-> ArtifactId.group))
-      val artifactId  = ExternalVar.state($.zoomL(JobSpec.artifactId ^|-> ArtifactId.artifact))
-      val version     = ExternalVar.state($.zoomL(JobSpec.artifactId ^|-> ArtifactId.version))
-      val jobClass    = ExternalVar.state($.zoomL(JobSpec.jobClass))
+      }*/
+      /*val groupId     = ExternalVar.state($.zoomL(State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.group))
+      val artifactId  = ExternalVar.state($.zoomL(State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.artifact))
+      val version     = ExternalVar.state($.zoomL(State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.version))
+      val jobClass    = ExternalVar.state($.zoomL(State.spec ^|-> JobSpec.jobClass))*/
 
-      <.form(^.name := "jobDetails", ^.`class` := "form-horizontal", ^.onSubmit ==> $.backend.submitJob
+      <.form(^.name := "jobDetails", ^.`class` := "form-horizontal", ^.onSubmit ==> submitJob,
+        Modal(Modal.Props(
+          header = hide => <.span(<.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close), <.h4("Register Job")),
+          footer = hide => <.span(Button(Button.Props(style = ContextStyle.primary), "Ok")),
+          closed = Callback.empty),
+          <.span("Hello!")
+        )
         /*Modal(Modal.Props(
           header = hide => <.span(<.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close), <.h4("Register Job")),
           footer = hide => <.span(Button(Button.Props(style = ContextStyle.primary), "Ok")),
@@ -98,9 +105,17 @@ object JobForm {
           )
         )*/
       )
-    }.
+    }
+
+  }
+
+  private[this] def emptyJobSpec = JobSpec(displayName = "", artifactId = ArtifactId("", "", ""), jobClass = "")
+
+  private[this] val component = ReactComponentB[Props]("JobForm").
+    initialState_P(p => State(p.spec.getOrElse(emptyJobSpec))).
+    renderBackend[JobFormBackend].
     build
 
-  def apply(handler: RegisterHandler) = component(handler)
+  def apply(spec: Option[JobSpec], handler: RegisterHandler) = component(Props(spec, handler))
 
 }

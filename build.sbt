@@ -140,7 +140,8 @@ lazy val console = (crossProject in file("console")).
         "org.webjars.bower" % "react" % reactJs / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
         "org.webjars.bower" % "react" % reactJs / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM",
         "org.webjars.bower" % "react" % reactJs % "test" / "react-with-addons.js" commonJSName "React",
-        "org.webjars" % "jquery" % "1.11.1" / "jquery.js" minified "jquery.min.js"
+        "org.webjars" % "jquery" % "1.11.1" / "jquery.js" minified "jquery.min.js",
+        "org.webjars" % "bootstrap" % "3.3.2" / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js"
       )
     },
     requiresDOM := true,

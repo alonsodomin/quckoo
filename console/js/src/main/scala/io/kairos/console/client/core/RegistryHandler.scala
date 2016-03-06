@@ -14,7 +14,7 @@ import scala.util.{Failure, Try}
   */
 
 case object LoadJobSpecs
-case class JobSpecsLoaded(value: Map[JobId, JobSpec])
+case class JobSpecsLoaded(value: Map[JobId, Pot[JobSpec]])
 
 case class UpdateJobSpecs(
     keys: Set[JobId],
@@ -27,15 +27,15 @@ case class UpdateJobSpecs(
 
 }
 
-class JobSpecFetch(dispatch: Dispatcher) extends Fetch[JobId] {
+class JobSpecFetch extends Fetch[JobId] {
   override def fetch(key: JobId): Unit =
-    dispatch(UpdateJobSpecs(keys = Set(key)))
+    KairosCircuit.dispatch(UpdateJobSpecs(keys = Set(key)))
 
   override def fetch(keys: Traversable[JobId]): Unit =
-    dispatch(UpdateJobSpecs(keys.toSet))
+    KairosCircuit.dispatch(UpdateJobSpecs(keys.toSet))
 }
 
-class RegistryHandler(circuit: Circuit[KairosModel], model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) extends ActionHandler(model) {
+class RegistryHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) extends ActionHandler(model) {
 
   def loadJobSpec(jobId: JobId): Future[(JobId, Pot[JobSpec])] =
     ClientApi.fetchJob(jobId).map {
@@ -43,10 +43,7 @@ class RegistryHandler(circuit: Circuit[KairosModel], model: ModelRW[KairosModel,
       case None       => (jobId, Unavailable)
     }
 
-  def loadJobSpecs: Future[Map[JobId, JobSpec]] =
-    ClientApi.enabledJobs
-
-  def updateJobSpecs(keys: Set[JobId]): Future[Map[JobId, Pot[JobSpec]]] = {
+  def loadJobSpecs(keys: Set[JobId] = Set.empty): Future[Map[JobId, Pot[JobSpec]]] = {
     if (keys.isEmpty) {
       ClientApi.enabledJobs.map(_.map { case (k, v) => (k, Ready(v)) })
     } else {
@@ -57,14 +54,13 @@ class RegistryHandler(circuit: Circuit[KairosModel], model: ModelRW[KairosModel,
   override def handle = {
 
     case LoadJobSpecs =>
-      effectOnly(Effect(updateJobSpecs(Set.empty)))
+      effectOnly(Effect(loadJobSpecs().map(JobSpecsLoaded)))
 
     case JobSpecsLoaded(specs) if specs.nonEmpty =>
-      val asPotMap = specs.map { case (k, v) => (k, Ready(v)) }
-      updated(PotMap(new JobSpecFetch(circuit), asPotMap))
+      updated(PotMap(new JobSpecFetch, specs))
 
     case action: UpdateJobSpecs =>
-      val updateEffect = action.effect(updateJobSpecs(action.keys))(identity)
+      val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
       action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
 
   }

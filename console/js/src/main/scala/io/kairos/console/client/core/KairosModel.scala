@@ -1,14 +1,10 @@
 package io.kairos.console.client.core
 
-import diode.{Circuit, Dispatcher}
-import diode.data.AsyncAction.PendingException
 import diode.data._
 import io.kairos.JobSpec
 import io.kairos.console.auth.User
 import io.kairos.console.client.security.ClientAuth
 import io.kairos.id.JobId
-
-import scala.util.{Failure, Try}
 
 /**
   * Created by alonsodomin on 20/02/2016.
@@ -20,10 +16,10 @@ case object LoggedOut
 
 object KairosModel extends ClientAuth {
 
-  def initial(circuit: Circuit[KairosModel]) =
+  def initial =
     KairosModel(
       currentUser = authInfo.map(auth => User(auth.userId)),
-      jobSpecs = PotMap(new JobSpecFetch(circuit))
+      jobSpecs = PotMap(new JobSpecFetch)
     )
 
 }
