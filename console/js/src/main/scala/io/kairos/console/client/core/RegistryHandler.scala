@@ -1,7 +1,7 @@
 package io.kairos.console.client.core
 
-import diode.data._
 import diode._
+import diode.data._
 import io.kairos.{Validated, JobSpec}
 import io.kairos.id.JobId
 
@@ -66,8 +66,8 @@ class RegistryHandler(model: ModelRW[KairosModel, RegistryModel]) extends Action
     case RegisterJobResult(validated) =>
       validated.disjunction match {
         case \/-(id) =>
-          KairosCircuit.dispatch(UpdateJobSpecs(Set(id)))
-          noChange
+          effectOnly(Effect.action(UpdateJobSpecs(Set(id))))
+
         case -\/(errors) =>
           updated(value.copy(lastErrors = Some(errors)))
       }
