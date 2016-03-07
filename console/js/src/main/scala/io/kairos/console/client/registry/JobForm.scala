@@ -2,19 +2,21 @@ package io.kairos.console.client.registry
 
 import io.kairos.JobSpec
 import io.kairos.console.client.components._
-import io.kairos.console.client.layout.FormField
 import io.kairos.id.ArtifactId
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._
 import monocle.macros.Lenses
+import monocle.std.option._
+
 import scalacss.ScalaCssReact._
 
 /**
   * Created by alonsodomin on 23/12/2015.
   */
 object JobForm {
-  import MonocleReact._
+
+  @inline
+  private def lnf = lookAndFeel
 
   type RegisterHandler = JobSpec => Callback
 
@@ -25,85 +27,89 @@ object JobForm {
 
   class JobFormBackend($: BackendScope[Props, State]) {
 
-    def submitJob(event: ReactEventI): Callback = {
-      event.preventDefaultCB >>
-        $.state.map(_.spec).flatMap(spec => $.props.map(_.handler).flatMap(handler => handler(spec)))
-    }
+    val displayName     = State.spec ^|-> JobSpec.displayName
+    val description     = State.spec ^|-> JobSpec.description ^<-? some
+    val artifactGroup   = State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.group
+    val artifactName    = State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.artifact
+    val artifactVersion = State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.version
+    val jobClass        = State.spec ^|-> JobSpec.jobClass
+
+    def updateDisplayName(evt: ReactEventI) =
+      $.modState(state => displayName.set(evt.target.value)(state))
+
+    def updateDescription(evt: ReactEventI) =
+      $.modState(state => description.set(evt.target.value)(state))
+
+    def updateArtifactName(evt: ReactEventI) =
+      $.modState(state => artifactName.set(evt.target.value)(state))
+
+    def updateArtifactGroup(evt: ReactEventI) =
+      $.modState(state => artifactGroup.set(evt.target.value)(state))
+
+    def updateArtifactVersion(evt: ReactEventI) =
+      $.modState(state => artifactVersion.set(evt.target.value)(state))
+
+    def updateJobClass(evt: ReactEventI) =
+      $.modState(state => jobClass.set(evt.target.value)(state))
+
+    def submitForm(): Callback =
+      $.modState(_.copy(cancelled = false))
+
+    def formClosed(props: Props, state: State) =
+      if (state.cancelled) Callback.empty
+      else props.handler(state.spec)
 
     def render(props: Props, state: State) = {
-      //val displayName = ExternalVar.state($.accessCB.zoomL(State.spec ^|-> JobSpec.displayName))
-      /*lazy val description = {
-        val readValue = (spec: JobSpec) =>
-          JobSpec.description.get(spec).getOrElse("")
-        val writeValue = (spec: JobSpec, value: String) =>
-          JobSpec.description.set(Some(value))(spec)
-
-        ExternalVar.state($.zoom(readValue)(writeValue))
-      }*/
-      /*val groupId     = ExternalVar.state($.zoomL(State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.group))
-      val artifactId  = ExternalVar.state($.zoomL(State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.artifact))
-      val version     = ExternalVar.state($.zoomL(State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.version))
-      val jobClass    = ExternalVar.state($.zoomL(State.spec ^|-> JobSpec.jobClass))*/
-
-      <.form(^.name := "jobDetails", ^.`class` := "form-horizontal", ^.onSubmit ==> submitJob,
+      <.form(^.name := "jobDetails",
         Modal(Modal.Props(
           header = hide => <.span(<.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close), <.h4("Register Job")),
-          footer = hide => <.span(Button(Button.Props(style = ContextStyle.primary), "Ok")),
-          closed = Callback.empty),
-          <.span("Hello!")
-        )
-        /*Modal(Modal.Props(
-          header = hide => <.span(<.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close), <.h4("Register Job")),
-          footer = hide => <.span(Button(Button.Props(style = ContextStyle.primary), "Ok")),
-          closed = Callback.empty),
-          FormField.text("displayName",
-            label = Some("Name"),
-            placeholder = Some("Job name"),
-            validator = FormField.notEmptyStr("displayName"),
-            accessor = displayName
+          footer = hide => <.span(Button(Button.Props(Some(submitForm() >> hide), style = ContextStyle.primary), "Ok")),
+          closed = formClosed(props, state)),
+          <.div(lnf.formGroup,
+            <.label(^.`for` := "displayName", "Display Name"),
+            <.input.text(lnf.formControl, ^.id := "displayName",
+              ^.placeholder := "Job's name",
+              ^.onChange ==> updateDisplayName
+            )
           ),
-          FormField.text("description",
-            label = Some("Description"),
-            placeholder = Some("Long description for the job"),
-            accessor = description
+          <.div(lnf.formGroup,
+            <.label(^.`for` := "description", "Description"),
+            <.input.text(lnf.formControl, ^.id := "description",
+              ^.placeholder := "Job's description",
+              ^.onChange ==> updateDescription
+            )
           ),
-          <.div(^.`class` := "form-group",
-            <.label(^.`class` := "col-sm-2 control-label", "Artifact ID"),
-            <.div(^.`class` := "col-sm-10",
-              <.div(^.`class` := "container-fluid",
-                <.div(^.`class` := "row",
-                  <.div(^.`class` := "col-sm-4",
-                    FormField.text("group",
-                      placeholder = Some("Group Id"),
-                      validator = FormField.notEmptyStr("groupId"),
-                      accessor = groupId
-                    )
-                  ),
-                  <.div(^.`class` := "col-sm-4",
-                    FormField.text("name",
-                      placeholder = Some("Artifact Id"),
-                      validator = FormField.notEmptyStr("artifactId"),
-                      accessor = artifactId
-                    )
-                  ),
-                  <.div(^.`class` := "col-sm-4",
-                    FormField.text("version",
-                      placeholder = Some("Version"),
-                      validator = FormField.notEmptyStr("version"),
-                      accessor = version
-                    )
-                  )
+          <.div(lnf.formGroup,
+            <.label("Artifact"),
+            <.div(^.`class` := "row",
+              <.div(^.`class` := "col-sm-4",
+                <.input.text(lnf.formControl, ^.id := "artifactGroup",
+                  ^.placeholder := "Group",
+                  ^.onChange ==> updateArtifactGroup
+                )
+              ),
+              <.div(^.`class` := "col-sm-4",
+                <.input.text(lnf.formControl, ^.id := "artifactName",
+                  ^.placeholder := "Name",
+                  ^.onChange ==> updateArtifactName
+                )
+              ),
+              <.div(^.`class` := "col-sm-4",
+                <.input.text(lnf.formControl, ^.id := "artifactVersion",
+                  ^.placeholder := "Version",
+                  ^.onChange ==> updateArtifactVersion
                 )
               )
             )
           ),
-          FormField.text("jobClass",
-            label = Some("Job Class"),
-            placeholder = Some("Fully qualified job class name"),
-            validator = FormField.notEmptyStr("jobClass"),
-            accessor = jobClass
+          <.div(lnf.formGroup,
+            <.label(^.`for` := "jobClass", "Job Class"),
+            <.input.text(lnf.formControl, ^.id := "jobClass",
+              ^.placeholder := "Fully classified job class name",
+              ^.onChange ==> updateJobClass
+            )
           )
-        )*/
+        )
       )
     }
 

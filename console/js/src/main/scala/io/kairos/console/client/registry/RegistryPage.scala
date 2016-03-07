@@ -4,7 +4,7 @@ import diode.data.PotMap
 import diode.react.ModelProxy
 import io.kairos._
 import io.kairos.console.client.components.{Button, Icons}
-import io.kairos.console.client.core.ClientApi
+import io.kairos.console.client.core.{RegisterJob, KairosCircuit, RegistryModel, ClientApi}
 import io.kairos.console.client.layout.{Notification, NotificationDisplay}
 import io.kairos.id.JobId
 import japgolly.scalajs.react._
@@ -25,7 +25,7 @@ object RegistryPage {
     val content = style()
   }
 
-  case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
+  case class Props(proxy: ModelProxy[RegistryModel])
   case class State(
       notifications: Seq[Notification] = Seq(),
       specs: Map[JobId, JobSpec] = Map.empty,
@@ -35,7 +35,7 @@ object RegistryPage {
 
   class RegistryBackend($: BackendScope[Props, State]) {
 
-    def handleJobSubmit(jobSpec: JobSpec): Callback = {
+    /*def handleJobSubmit(jobSpec: JobSpec): Callback = {
 
       def jobRejectedMsg(state: State, cause: Faults): State = {
         def resolutionFailed = Notification.danger {
@@ -71,19 +71,38 @@ object RegistryPage {
       }
 
       $.modState(st => st.copy(notifications = Seq())) >> Callback.future(performSubmit())
-    }
+    }*/
 
     def editJob(spec: Option[JobSpec]) =
       $.modState(_.copy(selectedJob = spec, showForm = true))
 
+    def jobEdited(spec: JobSpec): Callback = {
+      Callback.log("Registering job...") >>
+        $.props.map(_.proxy.dispatch(RegisterJob(spec))) >> $.modState(_.copy(showForm = false))
+    }
+
     def render(props: Props, state: State) =
       <.div(Style.content,
         <.h2("Registry"),
+        props.proxy().lastErrors.map { errors =>
+          NotificationDisplay(Seq(
+            Notification.danger {
+              <.div(
+                <.p("Could not register the job due to following errors:"),
+                errors.list.toList.map {
+                  case UnresolvedDependency(artifactId) =>
+                    <.li(s"Unresolved dependency: $artifactId")
+                  case error: Fault => <.li(error.toString())
+                }
+              )
+            }
+          ))
+        },
         NotificationDisplay(state.notifications),
         Button(Button.Props(Some(editJob(None))), Icons.plusSquare, "Register"),
-        if (state.showForm) JobForm(state.selectedJob, handleJobSubmit)
+        if (state.showForm) JobForm(state.selectedJob, jobEdited)
         else EmptyTag,
-        JobSpecList(props.proxy)
+        props.proxy.wrap(_.jobSpecs)(JobSpecList(_))
       )
 
   }
@@ -93,6 +112,6 @@ object RegistryPage {
     renderBackend[RegistryBackend].
     build
 
-  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]]) = component(Props(proxy))
+  def apply(proxy: ModelProxy[RegistryModel]) = component(Props(proxy))
 
 }

@@ -43,4 +43,7 @@ class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
     val footer  = wrap("modal-footer")
   }
 
+  val formGroup   = wrap("form-group")
+  val formControl = wrap("form-control")
+
 }

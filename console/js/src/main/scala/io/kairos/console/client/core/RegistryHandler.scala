@@ -2,12 +2,13 @@ package io.kairos.console.client.core
 
 import diode.data._
 import diode._
-import io.kairos.JobSpec
+import io.kairos.{Validated, JobSpec}
 import io.kairos.id.JobId
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Try}
+import scalaz._
 
 /**
   * Created by alonsodomin on 06/03/2016.
@@ -27,15 +28,16 @@ case class UpdateJobSpecs(
 
 }
 
-class JobSpecFetch extends Fetch[JobId] {
-  override def fetch(key: JobId): Unit =
-    KairosCircuit.dispatch(UpdateJobSpecs(keys = Set(key)))
+class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) extends ActionHandler(model) {
 
-  override def fetch(keys: Traversable[JobId]): Unit =
-    KairosCircuit.dispatch(UpdateJobSpecs(keys.toSet))
+  override def handle: PartialFunction[AnyRef, ActionResult[KairosModel]] = ???
+
 }
 
-class RegistryHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) extends ActionHandler(model) {
+case class RegisterJob(spec: JobSpec)
+case class RegisterJobResult(jobId: Validated[JobId])
+
+class RegistryHandler(model: ModelRW[KairosModel, RegistryModel]) extends ActionHandler(model) {
 
   def loadJobSpec(jobId: JobId): Future[(JobId, Pot[JobSpec])] =
     ClientApi.fetchJob(jobId).map {
@@ -52,16 +54,28 @@ class RegistryHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) exten
   }
 
   override def handle = {
-
     case LoadJobSpecs =>
       effectOnly(Effect(loadJobSpecs().map(JobSpecsLoaded)))
 
     case JobSpecsLoaded(specs) if specs.nonEmpty =>
-      updated(PotMap(new JobSpecFetch, specs))
+      updated(value.copy(jobSpecs = PotMap(JobSpecFetch, specs)))
+
+    case RegisterJob(spec) =>
+      updated(value.copy(lastErrors = None), Effect(ClientApi.registerJob(spec).map(RegisterJobResult)))
+
+    case RegisterJobResult(validated) =>
+      validated.disjunction match {
+        case \/-(id) =>
+          KairosCircuit.dispatch(UpdateJobSpecs(Set(id)))
+          noChange
+        case -\/(errors) =>
+          updated(value.copy(lastErrors = Some(errors)))
+      }
 
     case action: UpdateJobSpecs =>
       val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
-      action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
+      val mapModel = model.zoomRW(_.jobSpecs)((model, map) => model.copy(jobSpecs = map))
+      action.handleWith(new JobSpecsHandler(mapModel), updateEffect)(AsyncAction.mapHandler(action.keys))
 
   }
 
