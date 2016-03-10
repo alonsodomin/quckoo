@@ -114,11 +114,11 @@ class Registry(resolve: Resolve, snapshotFrequency: FiniteDuration)
 
         case Failure(errors) =>
           log.error("Couldn't validate the job artifact id. " + errors)
-          JobRejected(jobSpec.artifactId, errors)
+          JobRejected(jobSpec.artifactId, errors.list)
 
       } recover {
         case NonFatal(ex) =>
-          JobRejected(jobSpec.artifactId, NonEmptyList(ExceptionThrown(ex)))
+          JobRejected(jobSpec.artifactId, List(ExceptionThrown(ex)))
 
       } map { response =>
         persist(response) { event =>
@@ -140,11 +140,7 @@ class Registry(resolve: Resolve, snapshotFrequency: FiniteDuration)
       }
 
     case GetJob(jobId) =>
-      if (store.isEnabled(jobId)) {
-        sender() ! store.get(jobId).get
-      } else {
-        sender() ! JobNotEnabled(jobId)
-      }
+      sender() ! store.get(jobId)
 
     case GetJobs =>
       sender() ! store.listEnabled

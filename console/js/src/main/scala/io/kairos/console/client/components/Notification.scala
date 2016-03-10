@@ -40,16 +40,20 @@ object Notification {
 
     implicit def fromVDom(elem: => ReactTagOf[_]): ToRenderer = () => CallbackTo(elem.render)
 
-    implicit def fromRenderer(renderer: Renderer): ToRenderer = () => renderer
+    implicit def fromRenderer(renderer: => Renderer): ToRenderer = () => renderer
 
     implicit def fromString(content: String): ToRenderer = () => CallbackTo {
       <.span(content)
     }
 
     implicit def fromFaults(faults: Faults): ToRenderer =
-      fromVDom(<.ul(
-        faults.list.toList.map(_.toString).map(desc => <.li(desc))
-      ))
+      if (faults.size == 1) {
+        fromFault(faults.head)
+      } else {
+        fromVDom(<.ul(
+          faults.list.toList.map(_.toString).map(desc => <.li(desc))
+        ))
+      }
 
     implicit def fromFault(fault: Fault): ToRenderer =
       fromString(fault.toString)

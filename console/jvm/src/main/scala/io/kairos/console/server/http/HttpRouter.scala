@@ -18,6 +18,23 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
 
   import StatusCodes._
 
+  private[this] def registryApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+    pathPrefix("jobs") {
+      pathEnd {
+        get {
+          complete(registeredJobs)
+        } ~ post {
+          entity(as[JobSpec]) { jobSpec =>
+            complete(registerJob(jobSpec))
+          }
+        }
+      } ~ path(JavaUUID) { jobId =>
+        get {
+          complete(fetchJob(JobId(jobId)))
+        }
+      }
+    }
+
   private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     path("login") {
       post { authenticateRequest }
@@ -40,21 +57,7 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
           }
         }
       } ~ pathPrefix("registry") {
-        pathPrefix("jobs") {
-          pathEnd {
-            get {
-              complete(registeredJobs)
-            } ~ post {
-              entity(as[JobSpec]) { jobSpec =>
-                complete(registerJob(jobSpec))
-              }
-            }
-          } ~ path(JavaUUID) { jobId =>
-            get {
-              complete(fetchJob(JobId(jobId)))
-            }
-          }
-        }
+        registryApi
       }
     }
 

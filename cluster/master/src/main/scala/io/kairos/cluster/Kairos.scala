@@ -48,13 +48,8 @@ class Kairos(settings: KairosClusterSettings)
   }
 
   override def fetchJob(jobId: JobId): Future[Option[JobSpec]] = {
-    import system.dispatcher
-
     implicit val timeout = Timeout(5 seconds)
-    (registry ? GetJob(jobId)) map {
-      case JobNotEnabled(_)         => None
-      case jobSpec: Option[JobSpec] => jobSpec
-    }
+    (registry ? GetJob(jobId)).mapTo[Option[JobSpec]]
   }
 
   def registerJob(jobSpec: JobSpec): Future[Validated[JobId]] = {
@@ -71,7 +66,8 @@ class Kairos(settings: KairosClusterSettings)
       implicit val timeout = Timeout(30 seconds)
       (registry ? RegisterJob(jobSpec)) map {
         case JobAccepted(jobId, _) => jobId.successNel[Fault]
-        case JobRejected(_, cause) => cause.failure[JobId]
+        case JobRejected(_, headError :: tailErrors) =>
+          NonEmptyList(headError, tailErrors: _*).failure[JobId]
       }
     }
   }

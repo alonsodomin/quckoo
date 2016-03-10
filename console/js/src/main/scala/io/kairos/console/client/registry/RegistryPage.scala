@@ -17,8 +17,10 @@ import scalacss.ScalaCssReact._
 object RegistryPage {
 
   object Style extends StyleSheet.Inline {
+    import dsl._
 
-    val content = style()
+    val content = style(addClassName("container"))
+
   }
 
   case class Props(proxy: ModelProxy[KairosModel])

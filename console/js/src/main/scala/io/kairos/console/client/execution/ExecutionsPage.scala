@@ -15,7 +15,9 @@ import scalacss.ScalaCssReact._
 object ExecutionsPage {
 
   object Style extends StyleSheet.Inline {
-    val content = style()
+    import dsl._
+
+    val content = style(addClassName("container"))
   }
 
   case class State(notifications: Seq[Notification] = Seq(),

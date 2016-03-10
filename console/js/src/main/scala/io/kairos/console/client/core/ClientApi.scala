@@ -51,7 +51,7 @@ object ClientApi extends KairosApi with RegistryApi with ClientAuth {
   override def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] = {
     import upickle.default._
 
-    Ajax.get(JobsURI + "/" + jobId, headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
+    Ajax.get(JobsURI + "/" + jobId, headers = authHeaders).map { xhr =>
       read[Option[JobSpec]](xhr.responseText)
     }
   }
