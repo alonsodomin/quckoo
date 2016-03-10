@@ -1,7 +1,8 @@
 package io.kairos.console.client.execution
 
+import io.kairos.console.client.components.AmountOfTimeInput
 import io.kairos.console.client.core.ClientApi
-import io.kairos.console.client.time.{AmountOfTime, AmountOfTimeField}
+import io.kairos.console.client.time.AmountOfTime
 import io.kairos.id.JobId
 import io.kairos.protocol._
 import japgolly.scalajs.react._
@@ -24,13 +25,12 @@ object ExecutionPlanForm {
   type ScheduleHandler = ScheduleJob => Callback
 
   object TriggerOption extends Enumeration {
-    type TriggerOption = Value
     val Immediate, After, Every, At = Value
   }
 
   @Lenses
   case class ScheduleDetails(jobId: Option[JobId] = None,
-                             trigger: TriggerOption.TriggerOption = TriggerOption.Immediate,
+                             trigger: TriggerOption.Value = TriggerOption.Immediate,
                              timeout: AmountOfTime = AmountOfTime())
 
   @Lenses
@@ -43,6 +43,10 @@ object ExecutionPlanForm {
   }
 
   class ExecutionPlanFormBackend($: BackendScope[ScheduleHandler, FormState]) {
+
+    val jobId   = FormState.details ^|-> ScheduleDetails.jobId ^<-? some
+    val trigger = FormState.details ^|-> ScheduleDetails.trigger
+    val timeout = FormState.details ^|-> ScheduleDetails.timeout
 
     def submitSchedule(event: ReactEventI): Callback = {
       event.preventDefaultCB >>
@@ -58,7 +62,7 @@ object ExecutionPlanForm {
       val jobIdPrism : Optional[FormState, JobId] = FormState.details ^|-> ScheduleDetails.jobId ^<-? some
       val jobIdSetter = $.setStateL(jobIdPrism) _
 
-      val trigger : ExternalVar[TriggerOption.TriggerOption] =
+      val trigger : ExternalVar[TriggerOption.Value] =
         ExternalVar.state($.zoomL(FormState.details ^|-> ScheduleDetails.trigger))
       val timeout : ExternalVar[AmountOfTime] =
         ExternalVar.state($.zoomL(FormState.details ^|-> ScheduleDetails.timeout))
@@ -106,7 +110,7 @@ object ExecutionPlanForm {
           ),
           <.div(^.`class` := "col-sm-offset-2",
             if ($.state.enableTimeout)
-              AmountOfTimeField("timeout", required = false, timeout)
+              AmountOfTimeInput("timeout", timeout)
             else EmptyTag
           )
         ),

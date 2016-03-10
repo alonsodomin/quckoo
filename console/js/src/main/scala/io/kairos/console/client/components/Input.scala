@@ -1,59 +1,111 @@
 package io.kairos.console.client.components
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.ExternalVar
+import japgolly.scalajs.react.extra.OnUnmount
+import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.prefix_<^._
-import monifu.reactive.Observer
+import monifu.concurrent.Implicits.globalScheduler
+import monifu.concurrent.cancelables.BooleanCancelable
+import monifu.reactive.subjects.PublishSubject
 
-import scalaz.Isomorphism._
+import scala.concurrent.duration._
+import scalaz._
 
 /**
-  * Created by alonsodomin on 21/02/2016.
+  * Created by alonsodomin on 28/02/2016.
   */
 object Input {
-  type Converter[T] = T <=> String
+  import Isomorphism._
 
-  abstract class BaseConverter[T] extends Converter[T] {
-    override def to: (T) => String = _.toString
+  type Converter[A] = A <=> String
+
+  abstract class BaseConverter[A] extends Converter[A] {
+    override def to: A => String = _.toString
   }
 
   private[this] val StringConverter: Converter[String] = new Converter[String] {
-    def to: (String) => String = identity
-    def from: (String) => String = identity
+    def to: String => String = identity
+    def from: String => String = identity
   }
 
-  case class Props[T](evar: ExternalVar[T], converter: Converter[T], observer: Observer[T], mods: List[TagMod])
-  case class State[T](value: T)
+  private[this] val IntConverter: Converter[Int] = new BaseConverter[Int] {
+    override def from: String => Int = _.toInt
+  }
 
-  class InputBackend[T]($: BackendScope[Props[T], State[T]]) {
+  case class Props[A](
+      initial: A,
+      converter: Converter[A],
+      onChange: A => Callback,
+      tagMods: Seq[TagMod]
+  )
+  case class State[A](currentValue: A)
+
+  class Backend[A]($: BackendScope[Props[A], State[A]]) extends OnUnmount {
+    private[this] val subject = PublishSubject[A]()
+    private[this] lazy val stream = subject.debounce(250 millis).publish
+
+    def init(p: Props[A]): Callback = {
+      def subscribeHandlers: Callback = Callback {
+        stream.map(p.onChange).foreach(_.runNow())
+      }
+
+      def connect: CallbackTo[BooleanCancelable] =
+        CallbackTo { stream.connect() }
+
+      def registerDispose(cancellable: BooleanCancelable): Callback = {
+        def cancelConnection: CallbackTo[Boolean] =
+          CallbackTo { cancellable.cancel() }
+
+        def completeStream(cancelled: Boolean): Callback = Callback {
+          if (cancelled) subject.onComplete()
+          else subject.onError(new Exception("Could not cancel event stream"))
+        }
+
+        onUnmount(cancelConnection >>= completeStream)
+      }
+
+      subscribeHandlers >> connect >>= registerDispose
+    }
 
     def onChange(event: ReactEventI): Callback = {
-      def propagateValue(v: T): Callback = $.props.flatMap(p => Callback { p.observer.onNext(v) })
+      def convertValue: CallbackTo[A] =
+        $.props.map(_.converter.from(event.target.value))
 
-      $.props.map(_.converter.from(event.target.value)).flatMap { value =>
-        $.modState(_.copy(value)).flatMap(_ => propagateValue(value))
-      }
+      def updateState(value: A): CallbackTo[A] =
+        $.modState(_.copy(currentValue = value)).ret(value)
+
+      def propagateValue(value: A): Callback =
+        Callback { subject.onNext(value) }
+
+      event.preventDefaultCB >> convertValue >>= updateState >>= propagateValue
+    }
+
+    def render(p: Props[A], s: State[A]) = {
+      val tagMods = Seq(
+        ^.value := p.converter.to(s.currentValue),
+        ^.`class` := "form-control",
+        ^.onChange ==> onChange
+      ) ++ p.tagMods
+
+      <.input(tagMods: _*)
     }
 
   }
 
-  def component[T] = ReactComponentB[Props[T]]("Input").
-    initialState_P(p => State(p.evar.value)).
-    backend(new InputBackend[T](_)).
-    renderPS(($, p, s) => {
-      val tagMods = Seq(
-        ^.value := p.converter.to(s.value),
-        ^.`class` := "form-control",
-        ^.onChange ==> $.backend.onChange
-      ) ++ p.mods
-      <.input(tagMods: _*)
-    }).
+  def component[A] = ReactComponentB[Props[A]]("Input").
+    initialState_P(p => State(p.initial)).
+    renderBackend[Backend[A]].
+    componentDidMount($ => $.backend.init($.props)).
+    configure(OnUnmount.install).
     build
 
-  def text(evar: ExternalVar[String], observer: Observer[String], mods: TagMod*) =
-    component[String](Props(evar, StringConverter, observer, (^.tpe := "text") :: mods.toList))
+  def text(initial: String, onChange: String => Callback, tagMods: TagMod*) =
+    component[String](Props(initial, StringConverter, onChange, (^.tpe := "text") :: tagMods.toList))
 
-  def password(evar: ExternalVar[String], observer: Observer[String], mods: TagMod*) =
-    component[String](Props(evar, StringConverter, observer, (^.tpe := "password") :: mods.toList))
+  def password(initial: String, onChange: String => Callback, tagMods: TagMod*) =
+    component[String](Props(initial, StringConverter, onChange, (^.tpe := "password") :: tagMods.toList))
+
+  def int(initial: Int, onChange: Int => Callback, tagMods: TagMod*) =
+    component[Int](Props(initial, IntConverter, onChange, (^.tpe := "number") :: tagMods.toList))
 
 }
