@@ -1,6 +1,6 @@
 package io.kairos.console.client.components
 
-import io.kairos.{Faults, ValidationFault}
+import io.kairos.fault.Faults
 import io.kairos.console.client.validation.Validator
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.OnUnmount

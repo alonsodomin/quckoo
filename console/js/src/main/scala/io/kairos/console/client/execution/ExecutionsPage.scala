@@ -1,5 +1,6 @@
 package io.kairos.console.client.execution
 
+import io.kairos.console.client.components.Notification
 import io.kairos.console.client.layout._
 import io.kairos.protocol.SchedulerProtocol.ScheduleJob
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -30,7 +31,7 @@ object ExecutionsPage {
       <.div(Style.content,
         <.h2("Executions"),
         Panel("Schedule a job",
-          NotificationDisplay(state.notifications),
+          //NotificationDisplay(state.notifications),
           ExecutionPlanForm(handleSchedule)
         ),
         ExecutionPlanList(state.plans)

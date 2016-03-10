@@ -4,6 +4,7 @@ import java.net.URL
 
 import akka.testkit._
 import io.kairos._
+import io.kairos.fault.{UnresolvedDependency, ExceptionThrown, Fault}
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.RegistryProtocol
 import io.kairos.resolver.{Artifact, Resolve}

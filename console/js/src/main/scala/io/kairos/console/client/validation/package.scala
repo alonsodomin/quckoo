@@ -1,6 +1,7 @@
 package io.kairos.console.client
 
 import io.kairos._
+import io.kairos.fault.{Required, Fault}
 
 import scalaz._
 

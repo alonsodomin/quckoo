@@ -1,7 +1,7 @@
 package io.kairos.cluster.protocol
 
-import io.kairos.Faults
 import io.kairos.cluster._
+import io.kairos.fault.Faults
 import io.kairos.id.TaskId
 
 /**

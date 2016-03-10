@@ -1,6 +1,7 @@
 package io.kairos.validation
 
-import io.kairos.{Required, Validated, ValidationFault}
+import io.kairos.fault.{Required, ValidationFault}
+import io.kairos.Validated
 
 import scalaz._
 

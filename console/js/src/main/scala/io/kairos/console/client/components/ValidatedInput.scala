@@ -1,7 +1,8 @@
 package io.kairos.console.client.components
 
-import io.kairos.{Faults, Fault, ValidationFault, Validated}
+import io.kairos.Validated
 import io.kairos.console.client.validation._
+import io.kairos.fault.Faults
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.OnUnmount
 import japgolly.scalajs.react.vdom.TagMod

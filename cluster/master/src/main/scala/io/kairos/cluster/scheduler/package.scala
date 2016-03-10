@@ -1,6 +1,6 @@
 package io.kairos.cluster
 
-import io.kairos.Faults
+import io.kairos.fault.Faults
 
 /**
  * Created by aalonsodominguez on 17/08/15.

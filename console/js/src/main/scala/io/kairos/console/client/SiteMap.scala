@@ -38,7 +38,7 @@ object SiteMap extends ClientAuth {
     implicit val redirectMethod = Redirect.Push
 
     def registryPage =
-      KairosCircuit.connect(_.registry)(proxy => RegistryPage(proxy))
+      KairosCircuit.connect(identity(_))(proxy => RegistryPage(proxy))
 
     (emptyRule
     | staticRoute("#home", Home) ~> render(HomePage())

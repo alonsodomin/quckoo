@@ -5,7 +5,7 @@ import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.kairos.JobSpec
 import io.kairos.console.client.core.LoadJobSpecs
-import io.kairos.console.client.layout.{Notification, NotificationDisplay}
+import io.kairos.fault._
 import io.kairos.id.JobId
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -41,7 +41,7 @@ object JobSpecList {
           model.seq.map { case (jobId, spec) =>
             <.tr(^.key := jobId.toString(),
               spec.renderFailed { ex =>
-                <.td(^.colSpan := 4, NotificationDisplay(List(Notification.danger(ex))))
+                <.td(^.colSpan := 4, ExceptionThrown(ex).toString())
               },
               spec.renderPending(_ > 500, _ => "Loading ..."),
               spec.render { item => List(

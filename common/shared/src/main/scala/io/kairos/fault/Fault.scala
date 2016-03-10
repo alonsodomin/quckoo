@@ -1,4 +1,4 @@
-package io.kairos
+package io.kairos.fault
 
 import io.kairos.id.ArtifactId
 
@@ -22,10 +22,7 @@ object ExceptionThrown {
 
 sealed trait ResolutionFailed extends Fault
 
-case class UnresolvedDependency(artifactId: ArtifactId) extends ResolutionFailed {
-  override def toString = artifactId.toString
-}
-
+case class UnresolvedDependency(artifactId: ArtifactId) extends ResolutionFailed
 case class DownloadFailed(artifactName: String) extends ResolutionFailed
 
 // == Validation errors ====================

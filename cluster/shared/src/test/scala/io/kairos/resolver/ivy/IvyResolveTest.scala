@@ -4,9 +4,10 @@ import java.io.File
 import java.net.URL
 import java.util.concurrent.ForkJoinPool
 
+import io.kairos.fault.{DownloadFailed, UnresolvedDependency, Fault}
 import io.kairos.id.ArtifactId
 import io.kairos.resolver.Artifact
-import io.kairos.{DownloadFailed, Fault, UnresolvedDependency, Validated}
+import io.kairos.Validated
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor.{Artifact => IvyArtifact, ModuleDescriptor}
 import org.apache.ivy.core.module.id.ModuleRevisionId

@@ -3,6 +3,7 @@ package io.kairos.resolver.ivy
 import java.net.URL
 
 import io.kairos._
+import io.kairos.fault.{DownloadFailed, UnresolvedDependency, Fault}
 import io.kairos.id.ArtifactId
 import io.kairos.resolver._
 import org.apache.ivy.Ivy

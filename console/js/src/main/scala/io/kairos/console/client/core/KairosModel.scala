@@ -1,8 +1,9 @@
 package io.kairos.console.client.core
 
 import diode.data._
-import io.kairos.{Faults, JobSpec}
+import io.kairos.JobSpec
 import io.kairos.console.auth.User
+import io.kairos.console.client.components.Notification
 import io.kairos.console.client.security.ClientAuth
 import io.kairos.id.JobId
 
@@ -20,20 +21,11 @@ object JobSpecFetch extends Fetch[JobId] {
 
 }
 
-case class RegistryModel private (
-    jobSpecs: PotMap[JobId, JobSpec],
-    lastErrors: Option[Faults]
+case class KairosModel private (
+    currentUser: Option[User],
+    notification: Option[Notification],
+    jobSpecs: PotMap[JobId, JobSpec]
 )
-object RegistryModel {
-
-  def initial: RegistryModel = RegistryModel(
-    jobSpecs = PotMap(JobSpecFetch),
-    lastErrors = None
-  )
-
-}
-
-case class KairosModel private (currentUser: Option[User], registry: RegistryModel)
 
 case class LoggedIn(username: String)
 case object LoggedOut
@@ -43,7 +35,8 @@ object KairosModel extends ClientAuth {
   def initial =
     KairosModel(
       currentUser = authInfo.map(auth => User(auth.userId)),
-      registry = RegistryModel.initial
+      notification = None,
+      jobSpecs = PotMap(JobSpecFetch)
     )
 
 }

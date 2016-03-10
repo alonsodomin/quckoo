@@ -2,8 +2,9 @@ package io.kairos.console.client.core
 
 import diode._
 import diode.data._
-import io.kairos.{Validated, JobSpec}
+import io.kairos.console.client.components.Notification
 import io.kairos.id.JobId
+import io.kairos.{JobSpec, Validated}
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -30,15 +31,6 @@ case class UpdateJobSpecs(
 
 class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) extends ActionHandler(model) {
 
-  override def handle: PartialFunction[AnyRef, ActionResult[KairosModel]] = ???
-
-}
-
-case class RegisterJob(spec: JobSpec)
-case class RegisterJobResult(jobId: Validated[JobId])
-
-class RegistryHandler(model: ModelRW[KairosModel, RegistryModel]) extends ActionHandler(model) {
-
   def loadJobSpec(jobId: JobId): Future[(JobId, Pot[JobSpec])] =
     ClientApi.fetchJob(jobId).map {
       case Some(spec) => (jobId, Ready(spec))
@@ -58,10 +50,24 @@ class RegistryHandler(model: ModelRW[KairosModel, RegistryModel]) extends Action
       effectOnly(Effect(loadJobSpecs().map(JobSpecsLoaded)))
 
     case JobSpecsLoaded(specs) if specs.nonEmpty =>
-      updated(value.copy(jobSpecs = PotMap(JobSpecFetch, specs)))
+      updated(PotMap(JobSpecFetch, specs))
+
+    case action: UpdateJobSpecs =>
+      val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
+      action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
+  }
+
+}
+
+case class RegisterJob(spec: JobSpec)
+case class RegisterJobResult(jobId: Validated[JobId])
+
+class RegistryHandler(model: ModelRW[KairosModel, KairosModel]) extends ActionHandler(model) {
+
+  override def handle = {
 
     case RegisterJob(spec) =>
-      updated(value.copy(lastErrors = None), Effect(ClientApi.registerJob(spec).map(RegisterJobResult)))
+      updated(value.copy(notification = None), Effect(ClientApi.registerJob(spec).map(RegisterJobResult)))
 
     case RegisterJobResult(validated) =>
       validated.disjunction match {
@@ -69,13 +75,8 @@ class RegistryHandler(model: ModelRW[KairosModel, RegistryModel]) extends Action
           effectOnly(Effect.action(UpdateJobSpecs(Set(id))))
 
         case -\/(errors) =>
-          updated(value.copy(lastErrors = Some(errors)))
+          updated(value.copy(notification = Some(Notification.danger(errors))))
       }
-
-    case action: UpdateJobSpecs =>
-      val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
-      val mapModel = model.zoomRW(_.jobSpecs)((model, map) => model.copy(jobSpecs = map))
-      action.handleWith(new JobSpecsHandler(mapModel), updateEffect)(AsyncAction.mapHandler(action.keys))
 
   }
 

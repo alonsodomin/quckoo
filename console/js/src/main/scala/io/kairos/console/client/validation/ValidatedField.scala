@@ -1,6 +1,6 @@
 package io.kairos.console.client.validation
 
-import io.kairos.Fault
+import io.kairos.fault.Fault
 
 /**
   * Created by alonsodomin on 01/03/2016.

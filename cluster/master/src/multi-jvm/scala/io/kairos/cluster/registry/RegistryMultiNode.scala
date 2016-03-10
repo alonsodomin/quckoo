@@ -6,11 +6,12 @@ import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
 import io.kairos.cluster.core.RegistryReceptionist
+import io.kairos.fault.Fault
 import io.kairos.id.ArtifactId
 import io.kairos.multijvm.MultiNodeClusterSpec
 import io.kairos.protocol.RegistryProtocol.{JobAccepted, RegisterJob}
 import io.kairos.resolver.{Artifact, Resolve}
-import io.kairos.{Fault, JobSpec}
+import io.kairos.JobSpec
 import org.scalamock.scalatest.MockFactory
 
 import scala.concurrent.{ExecutionContext, Future}

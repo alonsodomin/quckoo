@@ -4,10 +4,11 @@ import java.util.UUID
 
 import akka.actor._
 import io.kairos.Trigger._
+import io.kairos.fault.{Faults, ExceptionThrown}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.{DateTime, TimeSource}
-import io.kairos.{ExceptionThrown, Faults, JobSpec, Trigger}
+import io.kairos.{JobSpec, Trigger}
 
 import scala.concurrent.duration._
 

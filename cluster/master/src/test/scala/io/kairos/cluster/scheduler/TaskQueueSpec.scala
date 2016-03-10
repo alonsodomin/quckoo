@@ -7,9 +7,10 @@ import akka.testkit._
 import io.kairos.cluster.Task
 import io.kairos.cluster.protocol.WorkerProtocol._
 import io.kairos.cluster.scheduler.execution.ExecutionFSM
+import io.kairos.fault.ExceptionThrown
 import io.kairos.id.ArtifactId
 import io.kairos.test.TestActorSystem
-import io.kairos.{ExceptionThrown, Faults}
+import io.kairos.Faults
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 

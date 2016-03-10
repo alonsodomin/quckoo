@@ -2,6 +2,8 @@ package io
 
 import java.util.concurrent.Callable
 
+import io.kairos.fault.Fault
+
 import scalaz._
 
 /**
@@ -11,8 +13,6 @@ package object kairos {
 
   type JobClass = Class[_ <: Callable[_]]
 
-  type Faulty[+A] = Fault \/ A
-  type Faults = NonEmptyList[Fault]
   type Validated[+A] = ValidationNel[Fault, A]
 
 }

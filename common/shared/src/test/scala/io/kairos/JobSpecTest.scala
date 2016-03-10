@@ -1,8 +1,10 @@
 package io.kairos
 
+import io.kairos.fault.{Required, NotNull}
 import io.kairos.id.ArtifactId
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.NotNull
 import scalaz._
 
 /**

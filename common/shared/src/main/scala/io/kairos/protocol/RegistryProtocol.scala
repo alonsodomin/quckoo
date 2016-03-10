@@ -1,7 +1,8 @@
 package io.kairos.protocol
 
+import io.kairos.fault.Faults
 import io.kairos.id._
-import io.kairos.{Faults, JobSpec}
+import io.kairos.JobSpec
 
 /**
  * Created by aalonsodominguez on 21/08/15.

@@ -60,8 +60,8 @@ lazy val common = (crossProject in file("common")).
   settings(addCompilerPlugin(Dependencies.compiler.macroParadise)).
   settings(
     libraryDependencies ++= Seq(
-      "com.lihaoyi"   %%% "upickle" % "0.3.6",
-      "org.scalatest" %%% "scalatest" % Dependencies.version.scalaTest % Test
+      "com.lihaoyi"    %%% "upickle" % "0.3.6",
+      "org.scalatest"  %%% "scalatest" % Dependencies.version.scalaTest % Test
     )
   ).
   jsSettings(

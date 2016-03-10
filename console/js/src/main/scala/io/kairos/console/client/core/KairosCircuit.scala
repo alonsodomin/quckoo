@@ -11,7 +11,8 @@ object KairosCircuit extends Circuit[KairosModel] with ReactConnector[KairosMode
 
   override protected def actionHandler = combineHandlers(
     new LoginHandler(zoomRW(_.currentUser) { (model, value) => model.copy(currentUser = value) }),
-    new RegistryHandler(zoomRW(_.registry) { (model, value) => model.copy(registry = value) } )
+    new RegistryHandler(zoomRW(identity)((_, m) => m)),
+    new JobSpecsHandler(zoomRW(_.jobSpecs) { (model, specs) => model.copy(jobSpecs = specs) } )
   )
 
 }

@@ -4,10 +4,11 @@ import akka.actor.{ActorLogging, Props}
 import akka.cluster.sharding.ShardRegion
 import akka.pattern._
 import akka.persistence.{PersistentActor, SnapshotOffer}
+import io.kairos.fault.ExceptionThrown
 import io.kairos.id._
 import io.kairos.protocol._
 import io.kairos.resolver.Resolve
-import io.kairos.{ExceptionThrown, JobSpec}
+import io.kairos.JobSpec
 
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
