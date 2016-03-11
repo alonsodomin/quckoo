@@ -74,7 +74,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
           returning(Future.successful(TestArtifact.successNel[Fault]))
 
         val ref = ClusterSharding(system).start(
-          typeName        = RegistryShard.shardName,
+          typeName        = RegistryShard.ShardName,
           entityProps     = RegistryShard.props(mockResolve),
           settings        = ClusterShardingSettings(system),
           extractEntityId = RegistryShard.idExtractor,
