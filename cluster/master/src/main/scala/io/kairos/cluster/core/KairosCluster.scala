@@ -8,7 +8,7 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.stream.ActorMaterializer
 import io.kairos.cluster.protocol._
-import io.kairos.cluster.registry.Registry
+import io.kairos.cluster.registry.{Registry, RegistryShard}
 import io.kairos.cluster.scheduler.{Scheduler, TaskQueue}
 import io.kairos.cluster.{KairosClusterSettings, KairosStatus}
 import io.kairos.protocol._
@@ -48,7 +48,7 @@ class KairosCluster(settings: KairosClusterSettings)
 
   val userAuth = context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
-  private val registry = context.actorOf(RegistryReceptionist.props(settings), "registry")
+  private val registry = context.actorOf(Registry.props(settings), "registry")
 
   private val scheduler = context.watch(context.actorOf(
     Scheduler.props(registry, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))

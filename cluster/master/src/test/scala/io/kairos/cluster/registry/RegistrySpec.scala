@@ -54,7 +54,7 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
     TestKit.shutdownActorSystem(system)
 
   "A job registry" should {
-    val registry = TestActorRef(Registry.props(mockResolve))
+    val registry = TestActorRef(RegistryShard.props(mockResolve))
 
     "reject a job if it fails to resolve its dependencies" in {
       val unresolvedDependency = UnresolvedDependency(TestArtifactId)

@@ -1,151 +1,79 @@
 package io.kairos.cluster.registry
 
-import akka.actor.{ActorLogging, Props}
-import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
-import akka.cluster.sharding.ShardRegion
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.cluster.Cluster
+import akka.cluster.client.ClusterClientReceptionist
+import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.persistence.{PersistentActor, SnapshotOffer}
-import io.kairos.fault.ExceptionThrown
-import io.kairos.id._
-import io.kairos.protocol._
-import io.kairos.resolver.Resolve
+import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
+import akka.persistence.query.PersistenceQuery
+import akka.stream.ActorMaterializer
 import io.kairos.JobSpec
-
-import scala.concurrent.duration._
-import scala.util.control.NonFatal
-import scalaz._
+import io.kairos.cluster.KairosClusterSettings
+import io.kairos.id.JobId
+import io.kairos.protocol.RegistryProtocol.{GetJobs, JobAccepted, JobDisabled}
+import io.kairos.resolver.ivy.IvyResolve
 
 /**
- * Created by aalonsodominguez on 10/08/15.
+ * Created by aalonsodominguez on 24/08/15.
  */
 object Registry {
-  import RegistryProtocol._
 
-  val DefaultSnapshotFrequency = 15 minutes
-
-  def props(resolve: Resolve,
-      snapshotFrequency: FiniteDuration = DefaultSnapshotFrequency): Props =
-    Props(classOf[Registry], resolve, snapshotFrequency)
-
-  val shardName      = "Registry"
-  val numberOfShards = 100
-
-  val idExtractor: ShardRegion.ExtractEntityId = {
-    case r: RegisterJob => (JobId(r.job).toString, r)
-    case g: GetJob      => (g.jobId.toString, g)
-    case d: DisableJob  => (d.jobId.toString, d)
-  }
-
-  val shardResolver: ShardRegion.ExtractShardId = {
-    case RegisterJob(jobSpec) => (JobId(jobSpec).hashCode % numberOfShards).toString
-    case GetJob(jobId)        => (jobId.hashCode % numberOfShards).toString
-    case DisableJob(jobId)    => (jobId.hashCode % numberOfShards).toString
-  }
-
-  private object RegistryStore {
-
-    def empty: RegistryStore = new RegistryStore(Map.empty, Map.empty)
-
-  }
-
-  private case class RegistryStore private (
-      private val enabledJobs: Map[JobId, JobSpec],
-      private val disabledJobs: Map[JobId, JobSpec]) {
-
-    def get(id: JobId): Option[JobSpec] =
-      enabledJobs.get(id)
-
-    def isEnabled(jobId: JobId): Boolean =
-      enabledJobs.contains(jobId)
-
-    def listEnabled: Seq[JobSpec] = enabledJobs.values.toSeq
-
-    def updated(event: RegistryEvent): RegistryStore = event match {
-      case JobAccepted(jobId, jobSpec) =>
-        copy(enabledJobs = enabledJobs + (jobId -> jobSpec))
-
-      case JobDisabled(jobId) =>
-        val job = enabledJobs(jobId)
-        copy(enabledJobs = enabledJobs - jobId,
-            disabledJobs = disabledJobs + (jobId -> job))
-
-      // Any event other than the previous ones have no impact in the state
-      case _ => this
-    }
-
-  }
-
-  private case object Snap
+  def props(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer) =
+    Props(classOf[Registry], settings, materializer)
 
 }
 
-class Registry(resolve: Resolve, snapshotFrequency: FiniteDuration)
-    extends PersistentActor with ActorLogging {
+class Registry(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer)
+  extends Actor with ActorLogging {
 
-  import Registry._
-  import RegistryProtocol._
-  import context.dispatcher
-  private val snapshotTask = context.system.scheduler.schedule(
-      snapshotFrequency, snapshotFrequency, self, Snap)
+  ClusterClientReceptionist(context.system).registerService(self)
 
-  private val mediator = DistributedPubSub(context.system).mediator
-  private var store = RegistryStore.empty
+  private val cluster = Cluster(context.system)
+  private val shardRegion = startShardRegion
 
-  override val persistenceId: String = "registry"
+  val registryView = context.actorOf(Props[RegistryView], "view")
 
-  override def postStop(): Unit = snapshotTask.cancel()
+  def receive: Receive = {
+    case GetJobs =>
+      val readJournal = PersistenceQuery(context.system).readJournalFor[CassandraReadJournal](
+        "akka.persistence.query.cassandra-query-journal"
+      )
 
-  override def receiveRecover: Receive = {
-    case event: RegistryEvent =>
-      store = store.updated(event)
-      log.info("Replayed registry event. event={}", event)
+      import context.dispatcher
+      readJournal.currentEventsByPersistenceId("registry", 0, System.currentTimeMillis()).
+        runFold(Map.empty[JobId, JobSpec]) {
+          case (map, envelope) =>
+            envelope.event match {
+              case JobAccepted(jobId, jobSpec) =>
+                map + (jobId -> jobSpec)
+              case JobDisabled(jobId) if map.contains(jobId) =>
+                map - jobId
+              case _ => map
+            }
+        } pipeTo sender()
 
-    case SnapshotOffer(_, snapshot: RegistryStore) =>
-      store = snapshot
+    case msg: Any =>
+      shardRegion.tell(msg, sender())
   }
 
-  override def receiveCommand: Receive = {
-    case RegisterJob(jobSpec) =>
-      resolve(jobSpec.artifactId, download = false) map {
-
-        case Success(_) =>
-          log.debug("Job artifact has been successfully resolved. artifactId={}",
-              jobSpec.artifactId)
-          val jobId = JobId(jobSpec)
-          JobAccepted(jobId, jobSpec)
-
-        case Failure(errors) =>
-          log.error("Couldn't validate the job artifact id. " + errors)
-          JobRejected(jobSpec.artifactId, errors.list)
-
-      } recover {
-        case NonFatal(ex) =>
-          JobRejected(jobSpec.artifactId, List(ExceptionThrown(ex)))
-
-      } map { response =>
-        persist(response) { event =>
-          store = store.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
-        }
-        response
-      } pipeTo sender()
-
-    case DisableJob(jobId) =>
-      if (!store.isEnabled(jobId)) {
-        sender() ! JobNotEnabled(jobId)
-      } else {
-        persist(JobDisabled(jobId)) { event =>
-          store = store.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
-          sender() ! event
-        }
-      }
-
-    case GetJob(jobId) =>
-      sender() ! store.get(jobId)
-
-    case Snap =>
-      saveSnapshot(store)
+  private def startShardRegion: ActorRef = if (cluster.selfRoles.contains("registry")) {
+    log.info("Starting registry shards...")
+    ClusterSharding(context.system).start(
+      typeName        = RegistryShard.shardName,
+      entityProps     = RegistryShard.props(IvyResolve(settings.ivyConfiguration)),
+      settings        = ClusterShardingSettings(context.system).withRole("registry"),
+      extractEntityId = RegistryShard.idExtractor,
+      extractShardId  = RegistryShard.shardResolver
+    )
+  } else {
+    log.info("Starting registry proxy...")
+    ClusterSharding(context.system).startProxy(
+      typeName        = RegistryShard.shardName,
+      role            = None,
+      extractEntityId = RegistryShard.idExtractor,
+      extractShardId  = RegistryShard.shardResolver
+    )
   }
 
 }

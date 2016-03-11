@@ -5,7 +5,6 @@ import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
-import io.kairos.cluster.core.RegistryReceptionist
 import io.kairos.fault.Fault
 import io.kairos.id.ArtifactId
 import io.kairos.multijvm.MultiNodeClusterSpec
@@ -73,13 +72,13 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
           returning(Future.successful(TestArtifact.successNel[Fault]))
 
         val ref = ClusterSharding(system).start(
-          typeName        = Registry.shardName,
-          entityProps     = Registry.props(mockResolve),
+          typeName        = RegistryShard.shardName,
+          entityProps     = RegistryShard.props(mockResolve),
           settings        = ClusterShardingSettings(system),
-          extractEntityId = Registry.idExtractor,
-          extractShardId  = Registry.shardResolver
+          extractEntityId = RegistryShard.idExtractor,
+          extractShardId  = RegistryShard.shardResolver
         )
-        system.actorOf(RegistryReceptionist.props(ref), "registry")
+        system.actorOf(Registry.props(ref), "registry")
         enterBarrier("shard-ready")
 
         enterBarrier("registering-job")
