@@ -41,7 +41,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
       }
       val handler = context.actorOf(handlerProps(cmd.jobId, sender()) { () =>
         val planId = UUID.randomUUID()
-        context.actorOf(executionPlanProps(planId), "plan-" + planId)
+        context.actorOf(executionPlanProps(planId), s"plan-$planId")
       })
       registry.tell(GetJob(cmd.jobId), handler)
 
@@ -60,12 +60,12 @@ private class ScheduleHandler(jobId: JobId, requestor: ActorRef, executionPlan: 
   import RegistryProtocol._
 
   def receive: Receive = {
-    case spec: JobSpec => // create execution plan
+    case Some(spec @ JobSpec) => // create execution plan
       log.info("Scheduling job {}.", jobId)
       executionPlan().tell(jobId -> spec, requestor)
       context.stop(self)
 
-    case jne: JobNotEnabled =>
+    case jne: JobNotEnabled | None =>
       requestor ! jne
       context.stop(self)
   }

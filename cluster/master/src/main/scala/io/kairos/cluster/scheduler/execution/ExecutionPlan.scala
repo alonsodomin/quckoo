@@ -3,8 +3,9 @@ package io.kairos.cluster.scheduler.execution
 import java.util.UUID
 
 import akka.actor._
+import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
 import io.kairos.Trigger._
-import io.kairos.fault.{Faults, ExceptionThrown}
+import io.kairos.fault.{ExceptionThrown, Faults}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.{DateTime, TimeSource}
@@ -28,21 +29,19 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
   import RegistryProtocol._
   import SchedulerProtocol._
 
+  private val mediator = DistributedPubSub(context.system).mediator
+
   private var triggerTask: Option[Cancellable] = None
   private val scheduledTime = timeSource.currentDateTime
   private var lastExecutionTime: Option[DateTime] = None
 
   private var originalRequestor: Option[ActorRef] = None
 
-  @throws[Exception](classOf[Exception])
-  override def preStart(): Unit = {
-    context.system.eventStream.subscribe(self, classOf[JobDisabled])
-  }
+  override def preStart(): Unit =
+    mediator ! DistributedPubSubMediator.Subscribe(RegistryTopic, self)
 
-  @throws[Exception](classOf[Exception])
-  override def postStop(): Unit = {
-    context.system.eventStream.unsubscribe(self)
-  }
+  override def postStop(): Unit =
+    mediator ! DistributedPubSubMediator.Unsubscribe(RegistryTopic, self)
 
   override def receive: Receive = {
     case (jobId: JobId, jobSpec: JobSpec) =>
@@ -85,7 +84,7 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
 
   private def shutdown: Receive = {
     if (triggerTask.isDefined) {
-      log.info("Stopping trigger for current execution plan. planId={}", planId)
+      log.debug("Cancelling trigger for execution plan. planId={}", planId)
       triggerTask.foreach( _.cancel() )
       triggerTask = None
     }

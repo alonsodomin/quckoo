@@ -1,6 +1,7 @@
 package io.kairos.cluster.registry
 
 import akka.actor.{ActorLogging, Props}
+import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
 import akka.cluster.sharding.ShardRegion
 import akka.pattern._
 import akka.persistence.{PersistentActor, SnapshotOffer}
@@ -87,6 +88,7 @@ class Registry(resolve: Resolve, snapshotFrequency: FiniteDuration)
   private val snapshotTask = context.system.scheduler.schedule(
       snapshotFrequency, snapshotFrequency, self, Snap)
 
+  private val mediator = DistributedPubSub(context.system).mediator
   private var store = RegistryStore.empty
 
   override val persistenceId: String = "registry"
@@ -123,7 +125,7 @@ class Registry(resolve: Resolve, snapshotFrequency: FiniteDuration)
       } map { response =>
         persist(response) { event =>
           store = store.updated(event)
-          context.system.eventStream.publish(event)
+          mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
         }
         response
       } pipeTo sender()
@@ -134,16 +136,13 @@ class Registry(resolve: Resolve, snapshotFrequency: FiniteDuration)
       } else {
         persist(JobDisabled(jobId)) { event =>
           store = store.updated(event)
-          context.system.eventStream.publish(event)
+          mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
           sender() ! event
         }
       }
 
     case GetJob(jobId) =>
       sender() ! store.get(jobId)
-
-    case GetJobs =>
-      sender() ! store.listEnabled
 
     case Snap =>
       saveSnapshot(store)

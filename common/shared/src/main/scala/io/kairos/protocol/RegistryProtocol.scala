@@ -9,6 +9,8 @@ import io.kairos.id._
  */
 object RegistryProtocol {
 
+  final val RegistryTopic = "Registry"
+
   sealed trait RegistryCommand
   sealed trait RegistryEvent
 

@@ -1,30 +1,37 @@
 package io.kairos.cluster.core
 
 import akka.actor.{Props, Actor, ActorLogging, ActorRef}
+import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
+import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
 import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.persistence.query.PersistenceQuery
 import akka.stream.ActorMaterializer
 import io.kairos.JobSpec
-import io.kairos.cluster.registry.RegistryView
+import io.kairos.cluster.KairosClusterSettings
+import io.kairos.cluster.registry.{Registry, RegistryView}
 import io.kairos.id.JobId
 import io.kairos.protocol.RegistryProtocol.{JobDisabled, JobRejected, JobAccepted, GetJobs}
+import io.kairos.resolver.ivy.IvyResolve
 
 /**
  * Created by aalonsodominguez on 24/08/15.
  */
 private[cluster] object RegistryReceptionist {
 
-  def props(registryShardingRef: ActorRef)(implicit materializer: ActorMaterializer) =
-    Props(classOf[RegistryReceptionist], registryShardingRef, materializer)
+  def props(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer) =
+    Props(classOf[RegistryReceptionist], settings, materializer)
 
 }
 
-private[cluster] class RegistryReceptionist(registryShardingRef: ActorRef)(implicit materializer: ActorMaterializer)
+private[cluster] class RegistryReceptionist(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer)
   extends Actor with ActorLogging {
 
   ClusterClientReceptionist(context.system).registerService(self)
+
+  private val cluster = Cluster(context.system)
+  private val shardRegion = startShardRegion
 
   val registryView = context.actorOf(Props[RegistryView], "view")
 
@@ -48,7 +55,26 @@ private[cluster] class RegistryReceptionist(registryShardingRef: ActorRef)(impli
         } pipeTo sender()
 
     case msg: Any =>
-      registryShardingRef.tell(msg, sender())
+      shardRegion.tell(msg, sender())
+  }
+
+  private def startShardRegion: ActorRef = if (cluster.selfRoles.contains("registry")) {
+    log.info("Starting registry shards...")
+    ClusterSharding(context.system).start(
+      typeName        = Registry.shardName,
+      entityProps     = Registry.props(IvyResolve(settings.ivyConfiguration)),
+      settings        = ClusterShardingSettings(context.system).withRole("registry"),
+      extractEntityId = Registry.idExtractor,
+      extractShardId  = Registry.shardResolver
+    )
+  } else {
+    log.info("Starting registry proxy...")
+    ClusterSharding(context.system).startProxy(
+      typeName        = Registry.shardName,
+      role            = None,
+      extractEntityId = Registry.idExtractor,
+      extractShardId  = Registry.shardResolver
+    )
   }
 
 }

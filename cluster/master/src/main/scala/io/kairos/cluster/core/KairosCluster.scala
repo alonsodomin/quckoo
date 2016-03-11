@@ -48,8 +48,7 @@ class KairosCluster(settings: KairosClusterSettings)
 
   val userAuth = context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
-  private val registry = startRegistry(settingsRepo)
-  context.actorOf(RegistryReceptionist.props(registry), "registry")
+  private val registry = context.actorOf(RegistryReceptionist.props(settings), "registry")
 
   private val scheduler = context.watch(context.actorOf(
     Scheduler.props(registry, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
@@ -92,25 +91,6 @@ class KairosCluster(settings: KairosClusterSettings)
 
     case Shutdown =>
       // Perform graceful shutdown of the cluster
-  }
-
-  private def startRegistry(settingsRepo: ActorRef): ActorRef = if (cluster.selfRoles.contains("registry")) {
-    log.info("Starting registry shards...")
-    ClusterSharding(context.system).start(
-      typeName        = Registry.shardName,
-      entityProps     = Registry.props(IvyResolve(settings.ivyConfiguration)),
-      settings        = ClusterShardingSettings(context.system).withRole("registry"),
-      extractEntityId = Registry.idExtractor,
-      extractShardId  = Registry.shardResolver
-    )
-  } else {
-    log.info("Starting registry proxy...")
-    ClusterSharding(context.system).startProxy(
-      typeName        = Registry.shardName,
-      role            = None,
-      extractEntityId = Registry.idExtractor,
-      extractShardId  = Registry.shardResolver
-    )
   }
 
 }

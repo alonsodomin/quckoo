@@ -24,6 +24,8 @@ object ExecutionPlanForm {
 
   type ScheduleHandler = ScheduleJob => Callback
 
+  case class Props()
+
   object TriggerOption extends Enumeration {
     val Immediate, After, Every, At = Value
   }
