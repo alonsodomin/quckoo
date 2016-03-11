@@ -1,6 +1,5 @@
 package io.kairos.id
 
-import io.kairos.Required
 import io.kairos.fault.{Required, Fault}
 import org.scalatest.{FlatSpec, Matchers}
 
