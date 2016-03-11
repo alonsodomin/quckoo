@@ -3,6 +3,7 @@ package io.kairos.cluster.scheduler.execution
 import java.util.UUID
 
 import akka.actor._
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.testkit._
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
@@ -25,12 +26,16 @@ object ExecutionPlanSpec {
 
 }
 
-class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with ImplicitSender with ImplicitTimeSource
-  with WordSpecLike with BeforeAndAfterAll with Matchers with Inside with MockFactory {
+class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
+    with ImplicitSender with ImplicitTimeSource
+    with WordSpecLike with BeforeAndAfterAll with Matchers
+    with Inside with MockFactory {
 
   import ExecutionPlanSpec._
   import SchedulerProtocol._
   import Trigger._
+
+  val mediator = DistributedPubSub(system).mediator
 
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
@@ -178,12 +183,11 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec")) with I
     }
 
     "not re-schedule the execution after the job is disabled" in {
-      system.eventStream.publish(RegistryProtocol.JobDisabled(TestJobId))
+      import RegistryProtocol._
 
-      // This message will be sent to the deadletter actor.
-      executionProbe.send(executionPlan, ExecutionFSM.Result(Execution.Success("bar")))
+      mediator ! DistributedPubSubMediator.Publish(RegistryTopic, JobDisabled(TestJobId))
 
-      executionProbe.expectNoMsg(1 second)
+      executionProbe.expectNoMsg(2 seconds)
       expectTerminated(executionPlan)
     }
 
