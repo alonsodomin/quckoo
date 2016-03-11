@@ -57,7 +57,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
 private class ScheduleHandler(jobId: JobId, requestor: ActorRef, executionPlan: () => ActorRef)
   extends Actor with ActorLogging {
 
-  import RegistryProtocol._
+  import SchedulerProtocol._
 
   def receive: Receive = {
     case Some(spec: JobSpec) => // create execution plan
@@ -67,6 +67,7 @@ private class ScheduleHandler(jobId: JobId, requestor: ActorRef, executionPlan: 
 
     case None =>
       log.warning("No job with id {} could be retrieved.", jobId)
+      requestor ! JobNotFound(jobId)
       context.stop(self)
   }
 

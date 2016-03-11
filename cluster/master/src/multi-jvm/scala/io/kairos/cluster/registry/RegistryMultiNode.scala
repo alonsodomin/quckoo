@@ -5,6 +5,7 @@ import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
+import io.kairos.cluster.KairosClusterSettings
 import io.kairos.fault.Fault
 import io.kairos.id.ArtifactId
 import io.kairos.multijvm.MultiNodeClusterSpec
@@ -49,6 +50,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
   val mockResolve = mock[Resolve]
 
   "A Registry cluster" should {
+    val settings = KairosClusterSettings(system)
 
     "distribute jobs specs across shards" in {
       awaitClusterUp(registry, proxy)
@@ -78,7 +80,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
           extractEntityId = RegistryShard.idExtractor,
           extractShardId  = RegistryShard.shardResolver
         )
-        system.actorOf(Registry.props(ref), "registry")
+        system.actorOf(Registry.props(settings), "registry")
         enterBarrier("shard-ready")
 
         enterBarrier("registering-job")

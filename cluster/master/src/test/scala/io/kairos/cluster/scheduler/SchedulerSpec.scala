@@ -41,18 +41,18 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       scheduler ! ScheduleJob(TestJobId)
 
       registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
-      registryProbe.reply(TestJobSpec)
+      registryProbe.reply(Some(TestJobSpec))
 
       expectMsgType[JobScheduled].jobId should be (TestJobId)
     }
 
-    "should forward the registry response if the job is not enabled" in {
+    "should reply not found if the job is not present" in {
       scheduler ! ScheduleJob(TestJobId)
 
       registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
-      registryProbe.reply(JobNotEnabled(TestJobId))
+      registryProbe.reply(None)
 
-      expectMsgType[JobNotEnabled].jobId should be (TestJobId)
+      expectMsgType[JobNotFound].jobId should be (TestJobId)
     }
   }
 

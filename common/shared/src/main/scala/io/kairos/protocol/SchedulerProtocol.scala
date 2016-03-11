@@ -26,6 +26,7 @@ object SchedulerProtocol {
   ) extends SchedulerCommand
 
   case class JobScheduled(jobId: JobId, planId: PlanId) extends SchedulerEvent
+  case class JobNotFound(jobId: JobId) extends SchedulerEvent
   case class JobFailedToSchedule(jobId: JobId, cause: Throwable) extends SchedulerEvent
 
   case object GetExecutionPlans extends SchedulerCommand
