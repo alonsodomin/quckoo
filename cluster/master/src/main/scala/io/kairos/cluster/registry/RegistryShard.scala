@@ -27,8 +27,8 @@ object RegistryShard {
       snapshotFrequency: FiniteDuration = DefaultSnapshotFrequency): Props =
     Props(classOf[RegistryShard], resolve, snapshotFrequency)
 
-  val shardName      = "Registry"
-  val numberOfShards = 100
+  final val ShardName      = "Registry"
+  final val NumberOfShards = 100
 
   val idExtractor: ShardRegion.ExtractEntityId = {
     case r: RegisterJob => (JobId(r.job).toString, r)
@@ -37,9 +37,9 @@ object RegistryShard {
   }
 
   val shardResolver: ShardRegion.ExtractShardId = {
-    case RegisterJob(jobSpec) => (JobId(jobSpec).hashCode % numberOfShards).toString
-    case GetJob(jobId)        => (jobId.hashCode % numberOfShards).toString
-    case DisableJob(jobId)    => (jobId.hashCode % numberOfShards).toString
+    case RegisterJob(jobSpec) => (JobId(jobSpec).hashCode % NumberOfShards).toString
+    case GetJob(jobId)        => (jobId.hashCode % NumberOfShards).toString
+    case DisableJob(jobId)    => (jobId.hashCode % NumberOfShards).toString
   }
 
   private object RegistryStore {

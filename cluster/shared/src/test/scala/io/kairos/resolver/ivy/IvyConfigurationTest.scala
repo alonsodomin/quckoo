@@ -13,8 +13,9 @@ object IvyConfigurationTest {
   val ConfigWithoutHome = ConfigFactory.parseString(
     """
       |resolver {
-      | workDir = "target/work"
-      | cacheDir = "target/cache"
+      | work-dir = "target/work"
+      | resolution-cache-dir = "target/ivy/cache"
+      | repository-cache-dir = "target/ivy/local"
       |
       | repositories = []
       |}
@@ -27,9 +28,10 @@ object IvyConfigurationTest {
       |}
     """.stripMargin).withFallback(ConfigWithoutHome)
 
-  val ExpectedWorkDir  = Paths.get("target/work").toAbsolutePath.toFile
-  val ExpectedCacheDir = Paths.get("target/cache").toAbsolutePath.toFile
-  val ExpectedHomeDir  = Paths.get("target/home").toAbsolutePath.toFile
+  val ExpectedWorkDir            = Paths.get("target/work").toAbsolutePath.toFile
+  val ExpectedResolutionCacheDir = Paths.get("target/ivy/cache").toAbsolutePath.toFile
+  val ExpectedResolutionRepoDir  = Paths.get("target/ivy/local").toAbsolutePath.toFile
+  val ExpectedHomeDir            = Paths.get("target/home").toAbsolutePath.toFile
 
 }
 
@@ -37,11 +39,12 @@ class IvyConfigurationTest extends FlatSpec with Matchers {
 
   import IvyConfigurationTest._
 
-  "IvyConfiguration factory" should "give an instance without home folder if not specified" in {
+  "IvyConfiguration" should "give an instance without home folder if not specified" in {
     val configuration = IvyConfiguration(ConfigWithoutHome)
 
     configuration.baseDir should be (ExpectedWorkDir)
-    configuration.resolutionDir should be (ExpectedCacheDir)
+    configuration.resolutionDir should be (ExpectedResolutionCacheDir)
+    configuration.repositoryDir should be (ExpectedResolutionRepoDir)
     configuration.ivyHome should be (None)
     assert(configuration.repositories.isEmpty)
   }
@@ -50,7 +53,8 @@ class IvyConfigurationTest extends FlatSpec with Matchers {
     val configuration = IvyConfiguration(ConfigWithHome)
 
     configuration.baseDir should be (ExpectedWorkDir)
-    configuration.resolutionDir should be (ExpectedCacheDir)
+    configuration.resolutionDir should be (ExpectedResolutionCacheDir)
+    configuration.repositoryDir should be (ExpectedResolutionRepoDir)
     configuration.ivyHome should be (Some(ExpectedHomeDir))
     assert(configuration.repositories.isEmpty)
   }

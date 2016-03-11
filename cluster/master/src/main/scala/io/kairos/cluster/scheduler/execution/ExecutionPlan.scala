@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
+import akka.cluster.sharding.ShardRegion
 import io.kairos.Trigger._
 import io.kairos.fault.{ExceptionThrown, Faults}
 import io.kairos.id._
@@ -17,6 +18,9 @@ import scala.concurrent.duration._
  * Created by aalonsodominguez on 16/08/15.
  */
 object ExecutionPlan {
+
+  final val ShardName      = "ExecutionPlan"
+  final val NumberOfShards = 100
 
   def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionFSMProps)(implicit timeSource: TimeSource) =
     Props(classOf[ExecutionPlan], planId, trigger, executionProps, timeSource)
