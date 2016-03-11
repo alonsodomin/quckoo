@@ -60,13 +60,13 @@ private class ScheduleHandler(jobId: JobId, requestor: ActorRef, executionPlan: 
   import RegistryProtocol._
 
   def receive: Receive = {
-    case Some(spec @ JobSpec) => // create execution plan
+    case Some(spec: JobSpec) => // create execution plan
       log.info("Scheduling job {}.", jobId)
       executionPlan().tell(jobId -> spec, requestor)
       context.stop(self)
 
-    case jne: JobNotEnabled | None =>
-      requestor ! jne
+    case None =>
+      log.warning("No job with id {} could be retrieved.", jobId)
       context.stop(self)
   }
 

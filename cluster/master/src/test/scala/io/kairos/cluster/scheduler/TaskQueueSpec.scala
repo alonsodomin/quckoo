@@ -10,7 +10,7 @@ import io.kairos.cluster.scheduler.execution.ExecutionFSM
 import io.kairos.fault.ExceptionThrown
 import io.kairos.id.ArtifactId
 import io.kairos.test.TestActorSystem
-import io.kairos.Faults
+import io.kairos.fault.Faults
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
