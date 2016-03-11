@@ -116,11 +116,11 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
 
         case Failure(errors) =>
           log.error("Couldn't validate the job artifact id. " + errors)
-          JobRejected(jobSpec.artifactId, errors.list)
+          JobRejected(jobSpec.artifactId, errors)
 
       } recover {
         case NonFatal(ex) =>
-          JobRejected(jobSpec.artifactId, List(ExceptionThrown(ex)))
+          JobRejected(jobSpec.artifactId, NonEmptyList(ExceptionThrown(ex)))
 
       } map { response =>
         persist(response) { event =>

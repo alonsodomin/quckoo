@@ -65,9 +65,8 @@ class Kairos(settings: KairosClusterSettings)
 
       implicit val timeout = Timeout(30 seconds)
       (registry ? RegisterJob(jobSpec)) map {
-        case JobAccepted(jobId, _) => jobId.successNel[Fault]
-        case JobRejected(_, headError :: tailErrors) =>
-          NonEmptyList(headError, tailErrors: _*).failure[JobId]
+        case JobAccepted(jobId, _)  => jobId.successNel[Fault]
+        case JobRejected(_, errors) => errors.failure[JobId]
       }
     }
   }

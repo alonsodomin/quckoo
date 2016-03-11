@@ -2,6 +2,7 @@ package io.kairos.cluster.registry
 
 import java.net.URL
 
+import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
 import akka.testkit._
 import io.kairos._
 import io.kairos.fault.{UnresolvedDependency, ExceptionThrown, Fault}
@@ -18,7 +19,7 @@ import scalaz._
 /**
  * Created by domingueza on 21/08/15.
  */
-object RegistrySpec {
+object RegistryShardSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "test")
   final val TestJobSpec = JobSpec("foo", Some("foo desc"), TestArtifactId, "com.example.Job")
@@ -28,26 +29,33 @@ object RegistrySpec {
 
 }
 
-class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with ImplicitSender
+class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) with ImplicitSender
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll
     with Matchers with MockFactory {
 
   import RegistryProtocol._
-  import RegistrySpec._
+  import RegistryShardSpec._
 
   import Scalaz._
 
+  val mediator = DistributedPubSub(system).mediator
+  ignoreMsg {
+    case DistributedPubSubMediator.SubscribeAck(_) => true
+    case DistributedPubSubMediator.UnsubscribeAck(_) => true
+  }
+
   val eventListener = TestProbe()
+
   var testJobId : Option[JobId] = None
 
   val mockResolve = mock[Resolve]
 
   before {
-    system.eventStream.subscribe(eventListener.ref, classOf[RegistryEvent])
+    mediator ! DistributedPubSubMediator.Subscribe(RegistryTopic, eventListener.ref)
   }
 
   after {
-    system.eventStream.unsubscribe(eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(RegistryTopic, eventListener.ref)
   }
 
   override def afterAll(): Unit =
@@ -110,15 +118,8 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
       testJobId.foreach { id =>
         registry ! GetJob(id)
 
-        expectMsg(TestJobSpec)
+        expectMsg(Some(TestJobSpec))
       }
-    }
-
-    "return a collection of all the registered jobs when asked for it" in {
-      registry ! GetJobs
-
-      val returnedSeq = expectMsgType[Seq[JobSpec]]
-      returnedSeq should contain (TestJobSpec)
     }
 
     "disable a job that has been previously registered and populate the event to the event stream" in {
@@ -130,20 +131,14 @@ class RegistrySpec extends TestKit(TestActorSystem("RegistrySpec")) with Implici
       }
     }
 
-    "return a job not enabled message when asked for a job after disabling it" in {
+    "return None when asked for a job after disabling it" in {
       testJobId.foreach { id =>
         registry ! GetJob(id)
 
-        expectMsgType[JobNotEnabled].jobId should be (id)
+        expectMsg(None)
       }
     }
 
-    "return an empty collection when there are not enabled jobs" in {
-      registry ! GetJobs
-
-      val returnedSeq = expectMsgType[Seq[JobSpec]]
-      returnedSeq should be (empty)
-    }
   }
 
 }

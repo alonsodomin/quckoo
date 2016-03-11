@@ -1,7 +1,7 @@
 package io.kairos.protocol
 
 import io.kairos.JobSpec
-import io.kairos.fault.Fault
+import io.kairos.fault.Faults
 import io.kairos.id._
 
 /**
@@ -20,7 +20,7 @@ object RegistryProtocol {
 
   case class RegisterJob(job: JobSpec) extends RegistryCommand
   case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryEvent
-  case class JobRejected(artifactId: ArtifactId, cause: List[Fault]) extends RegistryEvent
+  case class JobRejected(artifactId: ArtifactId, cause: Faults) extends RegistryEvent
 
   case class DisableJob(jobId: JobId) extends RegistryCommand
   case class JobDisabled(jobId: JobId) extends RegistryEvent
