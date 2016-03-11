@@ -32,8 +32,6 @@ class Registry(settings: KairosClusterSettings)(implicit materializer: ActorMate
   private val cluster = Cluster(context.system)
   private val shardRegion = startShardRegion
 
-  val registryView = context.actorOf(Props[RegistryView], "view")
-
   def receive: Receive = {
     case GetJobs =>
       val readJournal = PersistenceQuery(context.system).readJournalFor[CassandraReadJournal](
