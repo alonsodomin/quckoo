@@ -8,7 +8,7 @@ import akka.persistence.fsm.PersistentFSM.Normal
 import io.kairos.cluster.Task
 import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
 import io.kairos.cluster.scheduler._
-import io.kairos.id.PlanId
+import io.kairos.id.{TaskId, PlanId}
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -44,12 +44,15 @@ object ExecutionFSM {
     override def identifier = "Done"
   }
 
-  sealed trait DomainEvent
-  case class Cancelled(reason: String) extends DomainEvent
-  case object Triggered extends DomainEvent
-  case object Started extends DomainEvent
-  case class Completed(result: TaskResult) extends DomainEvent
-  case object TimedOut extends DomainEvent
+  sealed trait ExecutionEvent {
+    val planId: PlanId
+    val taskId: TaskId
+  }
+  case class Cancelled(planId: PlanId, taskId: TaskId, reason: String) extends ExecutionEvent
+  case class Triggered(planId: PlanId, taskId: TaskId) extends ExecutionEvent
+  case class Started(planId: PlanId, taskId: TaskId) extends ExecutionEvent
+  case class Completed(planId: PlanId, taskId: TaskId, result: TaskResult) extends ExecutionEvent
+  case class TimedOut(planId: PlanId, taskId: TaskId) extends ExecutionEvent
 
   case class Result(outcome: Outcome)
 
@@ -63,7 +66,7 @@ object ExecutionFSM {
 class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
                    enqueueTimeout: FiniteDuration,
                    executionTimeout: Option[FiniteDuration])
-  extends PersistentFSM[ExecutionFSM.Phase, Execution, ExecutionFSM.DomainEvent] with ActorLogging {
+  extends PersistentFSM[ExecutionFSM.Phase, Execution, ExecutionFSM.ExecutionEvent] with ActorLogging {
 
   import Execution._
   import ExecutionFSM._
@@ -78,15 +81,15 @@ class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
       log.debug("Execution waking up. taskId={}", task.id)
       sendToQueue()
     case Event(Cancel(reason), _) =>
-      goto(Done) applying Cancelled(reason)
+      goto(Done) applying Cancelled(planId, task.id, reason)
     case Event(GetExecution, data) =>
       stay replying data
     case Event(EnqueueAck(taskId), _) if taskId == task.id =>
-      goto(Waiting) applying Triggered
+      goto(Waiting) applying Triggered(planId, task.id)
     case Event(StateTimeout, _) =>
       enqueueAttempts += 1
       if (enqueueAttempts < 2) sendToQueue()
-      else goto(Done) applying Cancelled(s"Could not enqueue task! taskId=${task.id}")
+      else goto(Done) applying Cancelled(planId, task.id, s"Could not enqueue task! taskId=${task.id}")
   }
 
   when(Waiting) {
@@ -94,7 +97,7 @@ class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
       log.debug("Execution starting. taskId={}", task.id)
       startExecution()
     case Event(Cancel(reason), _) =>
-      goto(Done) applying Cancelled(reason)
+      goto(Done) applying Cancelled(planId, task.id, reason)
     case Event(GetExecution, data) =>
       stay replying data
   }
@@ -103,12 +106,12 @@ class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
     case Event(GetExecution, data) =>
       stay replying data
     case Event(Cancel(reason), _) =>
-      goto(Done) applying Cancelled(reason)
+      goto(Done) applying Cancelled(planId, task.id, reason)
     case Event(Finish(result), _) =>
       log.debug("Execution finishing. taskId={}", task.id)
-      goto(Done) applying Completed(result)
+      goto(Done) applying Completed(planId, task.id, result)
     case Event(TimeOut, _) =>
-      goto(Done) applying TimedOut
+      goto(Done) applying TimedOut(planId, task.id)
     case Event(StateTimeout, _) =>
       log.debug("Execution has timed out, notifying queue. taskId={}", task.id)
       taskQueue ! TaskQueue.TimeOut(task.id)
@@ -130,23 +133,23 @@ class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
 
   override val persistenceId: String = UUID.randomUUID().toString
 
-  override def domainEventClassTag: ClassTag[DomainEvent] = ClassTag(classOf[DomainEvent])
+  override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 
-  override def applyEvent(event: DomainEvent, previous: Execution): Execution = event match {
-    case Completed(report) => report match {
+  override def applyEvent(event: ExecutionEvent, previous: Execution): Execution = event match {
+    case Completed(_, _, report) => report match {
       case Left(cause)   => previous <<= Failure(cause)
       case Right(result) => previous <<= Success(result)
     }
-    case Cancelled(reason) => stateName match {
+    case Cancelled(_, _, reason) => stateName match {
       case InProgress => previous <<= Interrupted(reason)
       case _          => previous <<= NeverRun(reason)
     }
-    case TimedOut          => previous <<= NeverEnding
+    case TimedOut(_, _)    => previous <<= NeverEnding
     case _                 => previous
   }
 
   private def startExecution() = {
-    val st = goto(InProgress) applying Started
+    val st = goto(InProgress) applying Started(planId, task.id)
     executionTimeout.map( duration => st forMax duration ).getOrElse(st)
   }
 
