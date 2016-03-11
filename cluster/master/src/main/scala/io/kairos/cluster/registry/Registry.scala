@@ -58,7 +58,7 @@ class Registry(settings: KairosClusterSettings)(implicit materializer: ActorMate
   private def startShardRegion: ActorRef = if (cluster.selfRoles.contains("registry")) {
     log.info("Starting registry shards...")
     ClusterSharding(context.system).start(
-      typeName        = RegistryShard.shardName,
+      typeName        = RegistryShard.ShardName,
       entityProps     = RegistryShard.props(IvyResolve(settings.ivyConfiguration)),
       settings        = ClusterShardingSettings(context.system).withRole("registry"),
       extractEntityId = RegistryShard.idExtractor,
@@ -67,7 +67,7 @@ class Registry(settings: KairosClusterSettings)(implicit materializer: ActorMate
   } else {
     log.info("Starting registry proxy...")
     ClusterSharding(context.system).startProxy(
-      typeName        = RegistryShard.shardName,
+      typeName        = RegistryShard.ShardName,
       role            = None,
       extractEntityId = RegistryShard.idExtractor,
       extractShardId  = RegistryShard.shardResolver
