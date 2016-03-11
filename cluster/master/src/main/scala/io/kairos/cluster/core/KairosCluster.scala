@@ -44,8 +44,6 @@ class KairosCluster(settings: KairosClusterSettings)
   private val cluster = Cluster(context.system)
   private val mediator = DistributedPubSub(context.system).mediator
 
-  private val settingsRepo = context.actorOf(SettingsRepository.props(settings), "settingsRepository")
-
   val userAuth = context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
   private val registry = context.actorOf(Registry.props(settings), "registry")
