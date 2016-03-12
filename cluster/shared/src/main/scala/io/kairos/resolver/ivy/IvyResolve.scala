@@ -81,12 +81,6 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
     (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)) { (_, r) =>
       Artifact(artifactId, artifactLocations(r.getAllArtifactsReports))
     }
-
-    /*if (resolveReport.hasError) {
-      UnresolvedDependencies(resolveReport.getUnresolvedDependencies.map(_.getModuleId.toString)).failureNel[Artifact]
-    } else {
-      Artifact(artifactId, artifactLocations(resolveReport.getAllArtifactsReports)).successNel[BaseError]
-    }*/
   }
 
   private[this] def newCallerInstance(artifactId: ArtifactId): ModuleDescriptor = {

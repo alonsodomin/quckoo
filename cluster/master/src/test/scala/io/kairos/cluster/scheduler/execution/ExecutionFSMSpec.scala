@@ -26,8 +26,8 @@ object ExecutionFSMSpec {
 class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with ImplicitSender with DefaultTimeout
   with WordSpecLike with BeforeAndAfterAll with Matchers with ImplicitTimeSource {
 
+  import ExecutionState._
   import Execution._
-  import ExecutionFSM._
   import ExecutionFSMSpec._
 
   val planId = UUID.randomUUID()
@@ -39,7 +39,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
   "A full running execution" should {
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      ExecutionFSM.props(planId, task, taskQueue.ref),
+      Execution.props(planId, task, taskQueue.ref),
       self, "FullPathExecution"
     )
     watch(execution)
@@ -74,13 +74,13 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
   "An execution cancelled while sleeping" should {
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      ExecutionFSM.props(planId, task, taskQueue.ref),
+      Execution.props(planId, task, taskQueue.ref),
       self, "SleepingExecution"
     )
     watch(execution)
 
     "return a never run outcome with the cancellation reason" in {
-      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Scheduled)
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Scheduled)
 
       val reason = "bar"
       execution ! Cancel(reason)
@@ -93,7 +93,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
   "A waiting execution that is cancelled" should {
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      ExecutionFSM.props(planId, task, taskQueue.ref),
+      Execution.props(planId, task, taskQueue.ref),
       self, "WaitingExecution"
     )
     watch(execution)
@@ -117,7 +117,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
   "An in progress execution that gets cancelled" should {
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      ExecutionFSM.props(planId, task, taskQueue.ref),
+      Execution.props(planId, task, taskQueue.ref),
       self, "CancelledExecution"
     )
     watch(execution)
@@ -133,13 +133,13 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       }
 
-      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Scheduled)
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Scheduled)
 
       within(5 seconds) {
         taskQueue.reply(EnqueueAck(task.id))
 
         awaitAssert {
-          execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Waiting)
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
       }
 
@@ -154,7 +154,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
         execution ! Start
 
         awaitAssert {
-          execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (InProgress)
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
         }
       }
     }
@@ -171,7 +171,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
   "An in progress execution that times out by the queue" should {
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      ExecutionFSM.props(planId, task, taskQueue.ref),
+      Execution.props(planId, task, taskQueue.ref),
       self, "ExecutionTimedOutByQueue"
     )
     watch(execution)
@@ -187,13 +187,13 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       }
 
-      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Scheduled)
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Scheduled)
 
       within(5 seconds) {
         taskQueue.reply(EnqueueAck(task.id))
 
         awaitAssert {
-          execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Waiting)
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
       }
 
@@ -208,7 +208,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
         execution ! Start
 
         awaitAssert {
-          execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (InProgress)
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
         }
       }
     }
@@ -225,7 +225,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
     val expectedTimeout = 100 millis
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      ExecutionFSM.props(planId, task, taskQueue.ref, executionTimeout = Some(expectedTimeout)),
+      Execution.props(planId, task, taskQueue.ref, executionTimeout = Some(expectedTimeout)),
       self, "TimingOutExecution"
     )
     watch(execution)
@@ -241,13 +241,13 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       }
 
-      execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Scheduled)
+      execution.underlying.actor.asInstanceOf[Execution].stateName should be (Scheduled)
 
       within(5 seconds) {
         taskQueue.reply(EnqueueAck(task.id))
 
         awaitAssert {
-          execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (Waiting)
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (Waiting)
         }
       }
 
@@ -262,7 +262,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
         execution ! Start
 
         awaitAssert {
-          execution.underlying.actor.asInstanceOf[ExecutionFSM].stateName should be (InProgress)
+          execution.underlying.actor.asInstanceOf[Execution].stateName should be (InProgress)
         }
       }
 
@@ -280,7 +280,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
     val expectedTimeout = 100 millis
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      ExecutionFSM.props(planId, task, taskQueue.ref, expectedTimeout),
+      Execution.props(planId, task, taskQueue.ref, expectedTimeout),
       self, "NeverAckedExecution"
     )
     watch(execution)

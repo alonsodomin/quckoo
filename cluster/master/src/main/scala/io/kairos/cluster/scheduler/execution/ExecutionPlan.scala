@@ -23,8 +23,9 @@ object ExecutionPlan {
   final val NumberOfShards = 100
 
   case class PrepareJob(jobId: JobId, spec: JobSpec, requestor: ActorRef)
+  case object FinishPlan
 
-  case class TaskCreated(taskId: TaskId)
+  case class PlanFinished(jobId: JobId, planId: PlanId, taskId: TaskId)
 
   def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionFSMProps)(implicit timeSource: TimeSource) =
     Props(classOf[ExecutionPlan], planId, trigger, executionProps, timeSource)
@@ -38,13 +39,12 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
   import RegistryProtocol._
   import SchedulerProtocol._
 
-  private val mediator = DistributedPubSub(context.system).mediator
+  private[this] val mediator = DistributedPubSub(context.system).mediator
 
-  private var triggerTask: Option[Cancellable] = None
-  private val scheduledTime = timeSource.currentDateTime
-  private var lastExecutionTime: Option[DateTime] = None
-
-  private var originalRequestor: Option[ActorRef] = None
+  private[this] var triggerTask: Option[Cancellable] = None
+  private[this] val scheduledTime = timeSource.currentDateTime
+  private[this] var lastExecutionTime: Option[DateTime] = None
+  private[this] var originalRequestor: Option[ActorRef] = None
 
   override def persistenceId = planId.toString
 
@@ -67,13 +67,13 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
       log.info("Job has been disabled. jobId={}", id)
       context.become(shutdown)
 
-    case ExecutionFSM.Result(_, _, outcome) =>
+    case Execution.Result(_, taskId, outcome) =>
       def nextStage: Receive = if (trigger.isRecurring) {
         outcome match {
-          case _: Execution.Success =>
+          case _: ExecutionState.Success =>
             schedule(jobId, jobSpec)
 
-          case Execution.Failure(cause) =>
+          case ExecutionState.Failure(cause) =>
             if (shouldRetry(cause))
               schedule(jobId, jobSpec)
             else shutdown
@@ -115,10 +115,12 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
       nextExecutionTime match {
         case Some(time) if time.isBefore(now) || time.isEqual(now) =>
           Some(0 millis)
+
         case Some(time) =>
           val delay = now.diff(time)
           Some(delay.toMillis millis)
-        case None => None
+
+        case _ => None
       }
     }
 
@@ -130,8 +132,10 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
         val taskId = UUID.randomUUID()
         log.info("Scheduling a new execution. jobId={}, taskId={}", jobId, taskId)
         val execution = context.actorOf(executionProps(taskId, jobSpec), "exec-" + taskId)
-        triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, ExecutionFSM.WakeUp))
-        mediator ! DistributedPubSubMediator.Publish(SchedulerTopic, JobScheduled(jobId, planId))
+        triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
+        persist(JobScheduled(jobId, planId, taskId)) { event =>
+          mediator ! DistributedPubSubMediator.Publish(SchedulerTopic, event)
+        }
 
         active(jobId, jobSpec)
 

@@ -7,7 +7,7 @@ import akka.cluster.client.ClusterClientReceptionist
 import io.kairos.JobSpec
 import io.kairos.cluster._
 import io.kairos.cluster.protocol.WorkerProtocol
-import io.kairos.cluster.scheduler.execution.{ExecutionFSM, ExecutionPlan}
+import io.kairos.cluster.scheduler.execution.{Execution, ExecutionPlan}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.TimeSource
@@ -39,7 +39,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
     case cmd: ScheduleJob =>
       def executionPlanProps(planId: PlanId): Props = ExecutionPlan.props(planId, cmd.trigger) { (taskId, jobSpec) =>
         val task = Task(taskId, jobSpec.artifactId, cmd.params, jobSpec.jobClass)
-        ExecutionFSM.props(planId, task, taskQueue, executionTimeout = cmd.timeout)
+        Execution.props(planId, task, taskQueue, executionTimeout = cmd.timeout)
       }
       val handler = context.actorOf(handlerProps(cmd.jobId, sender()) { () =>
         val planId = UUID.randomUUID()
