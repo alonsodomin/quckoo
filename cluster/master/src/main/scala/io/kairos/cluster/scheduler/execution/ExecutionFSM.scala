@@ -1,7 +1,5 @@
 package io.kairos.cluster.scheduler.execution
 
-import java.util.UUID
-
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.Normal
@@ -54,7 +52,7 @@ object ExecutionFSM {
   case class Completed(planId: PlanId, taskId: TaskId, result: TaskResult) extends ExecutionEvent
   case class TimedOut(planId: PlanId, taskId: TaskId) extends ExecutionEvent
 
-  case class Result(outcome: Outcome)
+  case class Result(planId: PlanId, taskId: TaskId, outcome: Outcome)
 
   def props(planId: PlanId, task: Task, taskQueue: ActorRef,
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
@@ -126,12 +124,13 @@ class ExecutionFSM(planId: PlanId, task: Task, taskQueue: ActorRef,
   }
 
   onTermination {
-    case StopEvent(Normal, _, data) => context.parent ! Result(data.outcome)
+    case StopEvent(Normal, _, data) =>
+      context.parent ! Result(planId, task.id, data.outcome)
   }
 
   initialize()
 
-  override val persistenceId: String = UUID.randomUUID().toString
+  override val persistenceId: String = task.id.toString
 
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 

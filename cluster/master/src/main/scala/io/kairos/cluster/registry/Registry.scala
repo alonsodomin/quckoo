@@ -5,13 +5,12 @@ import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
-import akka.persistence.query.PersistenceQuery
 import akka.stream.ActorMaterializer
 import io.kairos.JobSpec
 import io.kairos.cluster.KairosClusterSettings
+import io.kairos.cluster.core.KairosJournal
 import io.kairos.id.JobId
-import io.kairos.protocol.RegistryProtocol.{GetJobs, JobAccepted, JobDisabled}
+import io.kairos.protocol.RegistryProtocol
 import io.kairos.resolver.ivy.IvyResolve
 
 /**
@@ -19,27 +18,30 @@ import io.kairos.resolver.ivy.IvyResolve
  */
 object Registry {
 
+  final val PersistenceId = "registry"
+
   def props(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer) =
     Props(classOf[Registry], settings, materializer)
 
 }
 
 class Registry(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer)
-  extends Actor with ActorLogging {
+    extends Actor with ActorLogging with KairosJournal {
+
+  import Registry._
+  import RegistryProtocol._
 
   ClusterClientReceptionist(context.system).registerService(self)
 
   private val cluster = Cluster(context.system)
   private val shardRegion = startShardRegion
 
+  def actorSystem = context.system
+
   def receive: Receive = {
     case GetJobs =>
-      val readJournal = PersistenceQuery(context.system).readJournalFor[CassandraReadJournal](
-        "akka.persistence.query.cassandra-query-journal"
-      )
-
       import context.dispatcher
-      readJournal.currentEventsByPersistenceId("registry", 0, System.currentTimeMillis()).
+      readJournal.currentEventsByPersistenceId(PersistenceId, 0, System.currentTimeMillis()).
         runFold(Map.empty[JobId, JobSpec]) {
           case (map, envelope) =>
             envelope.event match {

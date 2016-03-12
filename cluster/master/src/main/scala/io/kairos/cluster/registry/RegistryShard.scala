@@ -82,8 +82,10 @@ object RegistryShard {
 class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
     extends PersistentActor with ActorLogging {
 
+  import Registry._
   import RegistryShard._
   import RegistryProtocol._
+
   import context.dispatcher
   private val snapshotTask = context.system.scheduler.schedule(
       snapshotFrequency, snapshotFrequency, self, Snap)
@@ -91,7 +93,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
   private val mediator = DistributedPubSub(context.system).mediator
   private var store = RegistryStore.empty
 
-  override val persistenceId: String = "registry"
+  override val persistenceId: String = PersistenceId
 
   override def postStop(): Unit = snapshotTask.cancel()
 

@@ -17,6 +17,8 @@ import io.kairos.time.TimeSource
  */
 object Scheduler {
 
+  case class PlanReady(jobId: JobId, spec: JobSpec, executionPlan: ActorRef)
+
   def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource) =
     Props(classOf[Scheduler], registry, queueProps, timeSource)
 
@@ -57,12 +59,15 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
 private class ScheduleHandler(jobId: JobId, requestor: ActorRef, executionPlan: () => ActorRef)
   extends Actor with ActorLogging {
 
+  import Scheduler._
   import SchedulerProtocol._
 
   def receive: Receive = {
     case Some(spec: JobSpec) => // create execution plan
       log.info("Scheduling job {}.", jobId)
-      executionPlan().tell(jobId -> spec, requestor)
+      val plan = executionPlan()
+      plan ! ExecutionPlan.PrepareJob(jobId, spec, requestor)
+      context.parent ! PlanReady(jobId, spec, plan)
       context.stop(self)
 
     case None =>

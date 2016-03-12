@@ -3,8 +3,8 @@ package io.kairos.cluster.scheduler.execution
 import java.util.UUID
 
 import akka.actor._
-import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
-import akka.cluster.sharding.ShardRegion
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import akka.persistence.PersistentActor
 import io.kairos.Trigger._
 import io.kairos.fault.{ExceptionThrown, Faults}
 import io.kairos.id._
@@ -22,14 +22,19 @@ object ExecutionPlan {
   final val ShardName      = "ExecutionPlan"
   final val NumberOfShards = 100
 
+  case class PrepareJob(jobId: JobId, spec: JobSpec, requestor: ActorRef)
+
+  case class TaskCreated(taskId: TaskId)
+
   def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionFSMProps)(implicit timeSource: TimeSource) =
     Props(classOf[ExecutionPlan], planId, trigger, executionProps, timeSource)
 
 }
 
 class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: ExecutionFSMProps)(implicit timeSource: TimeSource)
-  extends Actor with ActorLogging {
+  extends PersistentActor with ActorLogging {
 
+  import ExecutionPlan._
   import RegistryProtocol._
   import SchedulerProtocol._
 
@@ -41,20 +46,20 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
 
   private var originalRequestor: Option[ActorRef] = None
 
+  override def persistenceId = planId.toString
+
   override def preStart(): Unit =
     mediator ! DistributedPubSubMediator.Subscribe(RegistryTopic, self)
 
   override def postStop(): Unit =
     mediator ! DistributedPubSubMediator.Unsubscribe(RegistryTopic, self)
 
-  override def receive: Receive = {
-    case (jobId: JobId, jobSpec: JobSpec) =>
-      originalRequestor = Some(sender())
-      context.become(schedule(jobId, jobSpec))
+  override def receiveRecover: Receive = ???
 
-    case JobNotEnabled(jobId) =>
-      log.info("Given job can't be scheduled as it is not enabled. jobId={}", jobId)
-      context.become(shutdown)
+  override def receiveCommand: Receive = {
+    case PrepareJob(jobId, jobSpec, requestor) =>
+      originalRequestor = Some(requestor)
+      context.become(schedule(jobId, jobSpec))
   }
 
   private def active(jobId: JobId, jobSpec: JobSpec): Receive = {
@@ -62,7 +67,7 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
       log.info("Job has been disabled. jobId={}", id)
       context.become(shutdown)
 
-    case ExecutionFSM.Result(outcome) =>
+    case ExecutionFSM.Result(_, _, outcome) =>
       def nextStage: Receive = if (trigger.isRecurring) {
         outcome match {
           case _: Execution.Success =>
@@ -126,7 +131,7 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
         log.info("Scheduling a new execution. jobId={}, taskId={}", jobId, taskId)
         val execution = context.actorOf(executionProps(taskId, jobSpec), "exec-" + taskId)
         triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, ExecutionFSM.WakeUp))
-        originalRequestor.foreach { _ ! JobScheduled(jobId, planId) }
+        mediator ! DistributedPubSubMediator.Publish(SchedulerTopic, JobScheduled(jobId, planId))
 
         active(jobId, jobSpec)
 

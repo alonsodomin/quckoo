@@ -1,7 +1,7 @@
 package io.kairos.protocol
 
 import io.kairos.Trigger
-import io.kairos.Trigger.{LastExecutionTime, Immediate}
+import io.kairos.Trigger.Immediate
 import io.kairos.id._
 import io.kairos.time.DateTime
 import monocle.macros.Lenses
