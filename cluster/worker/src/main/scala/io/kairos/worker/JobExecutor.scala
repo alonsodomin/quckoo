@@ -2,8 +2,8 @@ package io.kairos.worker
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern._
+import io.kairos.Task
 import io.kairos.fault.Faults
-import io.kairos.cluster.Task
 import io.kairos.fault.ExceptionThrown
 import io.kairos.resolver.{Artifact, Resolve}
 

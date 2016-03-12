@@ -5,12 +5,11 @@ import java.util.UUID
 import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.PersistentActor
-import io.kairos.Trigger._
 import io.kairos.fault.{ExceptionThrown, Faults}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.{DateTime, TimeSource}
-import io.kairos.{JobSpec, Trigger}
+import io.kairos.{Task, JobSpec, Trigger}
 
 import scala.concurrent.duration._
 
@@ -22,18 +21,69 @@ object ExecutionPlan {
   final val ShardName      = "ExecutionPlan"
   final val NumberOfShards = 100
 
-  case class PrepareJob(jobId: JobId, spec: JobSpec, requestor: ActorRef)
-  case object FinishPlan
+  case class StartPlan(jobId: JobId, spec: JobSpec)
+  private case class ScheduleTask(time: DateTime)
+  private case object FinishPlan
 
-  case class PlanFinished(jobId: JobId, planId: PlanId, taskId: TaskId)
+  private case class PlanState private (
+      planId: PlanId,
+      trigger: Trigger,
+      job: Option[(JobId, JobSpec)] = None,
+      startedTime: DateTime,
+      currentTaskId: Option[TaskId] = None,
+      lastOutcome: Option[Task.Outcome] = None,
+      lastScheduledTime: Option[DateTime] = None,
+      lastExecutionTime: Option[DateTime] = None,
+      finishedTime: Option[DateTime] = None
+  )(implicit timeSource: TimeSource) {
+    import SchedulerProtocol._
 
-  def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionFSMProps)(implicit timeSource: TimeSource) =
+    def ready: Boolean = job.isDefined && finishedTime.isEmpty
+
+    def finished: Boolean = finishedTime.isDefined
+
+    def nextExecutionTime: Option[DateTime] = {
+      import Trigger._
+
+      val referenceTime = lastExecutionTime match {
+        case Some(time) => LastExecutionTime(time)
+        case None       => ScheduledTime(lastScheduledTime.getOrElse(startedTime))
+      }
+      trigger.nextExecutionTime(referenceTime)
+    }
+
+    def scheduleOrFinish = nextExecutionTime.map(ScheduleTask).getOrElse(FinishPlan)
+
+    def updated(event: SchedulerEvent): PlanState = {
+      if (finished) this
+      else {
+        event match {
+          case ExecutionPlanStarted(jobId, `planId`, spec) =>
+            copy(job = Some(jobId -> spec))
+
+          case TaskScheduled(_, `planId`, taskId) if currentTaskId.isEmpty =>
+            copy(currentTaskId = Some(taskId), lastScheduledTime = Some(timeSource.currentDateTime))
+
+          case TaskCompleted(_, `planId`, taskId, outcome) =>
+            copy(currentTaskId = None, lastExecutionTime = Some(timeSource.currentDateTime), lastOutcome = Some(outcome))
+
+          case ExecutionPlanFinished(_, `planId`) =>
+            copy(currentTaskId = None, finishedTime = Some(timeSource.currentDateTime))
+
+          case _ => this
+        }
+      }
+    }
+
+  }
+
+  def props(planId: PlanId, trigger: Trigger)(executionProps: ExecutionProps)(implicit timeSource: TimeSource) =
     Props(classOf[ExecutionPlan], planId, trigger, executionProps, timeSource)
 
 }
 
-class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: ExecutionFSMProps)(implicit timeSource: TimeSource)
-  extends PersistentActor with ActorLogging {
+class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: ExecutionProps)(implicit timeSource: TimeSource)
+    extends PersistentActor with ActorLogging {
 
   import ExecutionPlan._
   import RegistryProtocol._
@@ -42,105 +92,112 @@ class ExecutionPlan(val planId: PlanId, trigger: Trigger, executionProps: Execut
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   private[this] var triggerTask: Option[Cancellable] = None
-  private[this] val scheduledTime = timeSource.currentDateTime
-  private[this] var lastExecutionTime: Option[DateTime] = None
-  private[this] var originalRequestor: Option[ActorRef] = None
+  private[this] var state = PlanState(
+    planId, trigger, startedTime = timeSource.currentDateTime
+  )
 
   override def persistenceId = planId.toString
 
-  override def preStart(): Unit =
+  override def preStart(): Unit = {
     mediator ! DistributedPubSubMediator.Subscribe(RegistryTopic, self)
+    context.setReceiveTimeout(5 seconds)
+  }
 
   override def postStop(): Unit =
     mediator ! DistributedPubSubMediator.Unsubscribe(RegistryTopic, self)
 
-  override def receiveRecover: Receive = ???
+  override def receiveRecover: Receive = {
+    case evt @ ExecutionPlanFinished(_, id) if state.planId == id =>
+      state = state.updated(evt)
+
+  }
 
   override def receiveCommand: Receive = {
-    case PrepareJob(jobId, jobSpec, requestor) =>
-      originalRequestor = Some(requestor)
-      context.become(schedule(jobId, jobSpec))
+    case StartPlan(jobId, jobSpec) =>
+      persist(ExecutionPlanStarted(jobId, planId, jobSpec)) { event =>
+        state = state.updated(event)
+        mediator ! DistributedPubSubMediator.Publish(SchedulerTopic, event)
+        self ! state.scheduleOrFinish
+        context.become(active(jobId, jobSpec))
+      }
+
+    case ReceiveTimeout =>
+      log.warning("")
   }
 
   private def active(jobId: JobId, jobSpec: JobSpec): Receive = {
     case JobDisabled(id) if id == jobId =>
       log.info("Job has been disabled. jobId={}", id)
-      context.become(shutdown)
+      self ! FinishPlan
 
-    case Execution.Result(_, taskId, outcome) =>
-      def nextStage: Receive = if (trigger.isRecurring) {
-        outcome match {
-          case _: ExecutionState.Success =>
-            schedule(jobId, jobSpec)
+    case Execution.Result(`planId`, taskId, outcome) =>
+      def nextCommand = {
+        if (trigger.isRecurring) {
+          outcome match {
+            case Task.Success(_) =>
+              state.scheduleOrFinish
 
-          case ExecutionState.Failure(cause) =>
-            if (shouldRetry(cause))
-              schedule(jobId, jobSpec)
-            else shutdown
+            case Task.Failure(cause) =>
+              if (shouldRetry(cause)) {
+                state.scheduleOrFinish
+              } else {
+                FinishPlan
+              }
 
-          case _ =>
-            // Plan is no longer needed
-            shutdown
+            case _ => FinishPlan
+          }
+        } else FinishPlan
+      }
+
+      persist(TaskCompleted(jobId, planId, taskId, outcome)) { event =>
+        state = state.updated(event)
+        self ! nextCommand
+      }
+
+    case ScheduleTask(time) =>
+      import context.dispatcher
+
+      val delay = {
+        val now = timeSource.currentDateTime
+        if (time.isBefore(now) || time.isEqual(now)) 0 millis
+        else {
+          val diff = now.diff(time)
+          diff.toMillis millis
         }
-      } else shutdown
+      }
 
-      lastExecutionTime = Some(timeSource.currentDateTime)
-      context.become(nextStage)
+      // Create a new execution
+      val taskId = UUID.randomUUID()
+      log.info("Scheduling a new execution. jobId={}, taskId={}", jobId, taskId)
+      val execution = context.actorOf(executionProps(taskId, jobSpec), "exec-" + taskId)
+      triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
+
+      persist(TaskScheduled(jobId, planId, taskId)) { event =>
+        mediator ! DistributedPubSubMediator.Publish(SchedulerTopic, event)
+      }
+
+    case FinishPlan =>
+      if (triggerTask.isDefined) {
+        log.debug("Cancelling trigger for execution plan. planId={}", planId)
+        triggerTask.foreach(_.cancel())
+        triggerTask = None
+      }
+
+      log.info("Stopping execution plan. planId={}", planId)
+      persist(ExecutionPlanFinished(jobId, planId)) { event =>
+        state = state.updated(event)
+        mediator ! DistributedPubSubMediator.Publish(SchedulerTopic, event)
+        self ! PoisonPill
+        context.become(shuttingDown)
+      }
+  }
+
+  private def shuttingDown: Receive = {
+    case _ =>
+      log.warning("Execution plan '{}' has finished, shutting down.", planId)
   }
 
   private def shouldRetry(cause: Faults): Boolean =
     !cause.list.exists(_.isInstanceOf[ExceptionThrown])
-
-  private def shutdown: Receive = {
-    if (triggerTask.isDefined) {
-      log.debug("Cancelling trigger for execution plan. planId={}", planId)
-      triggerTask.foreach( _.cancel() )
-      triggerTask = None
-    }
-
-    log.info("Stopping execution plan. planId={}", planId)
-    self ! PoisonPill
-
-    { case _ => log.error("Execution plan '{}' unavailable, shutting down.", planId) }
-  }
-
-  private def schedule(jobId: JobId, jobSpec: JobSpec): Receive = {
-    def nextExecutionTime: Option[DateTime] = trigger.nextExecutionTime(lastExecutionTime match {
-      case Some(time) => LastExecutionTime(time)
-      case None       => ScheduledTime(scheduledTime)
-    })
-
-    def triggerDelay: Option[FiniteDuration] = {
-      val now = timeSource.currentDateTime
-      nextExecutionTime match {
-        case Some(time) if time.isBefore(now) || time.isEqual(now) =>
-          Some(0 millis)
-
-        case Some(time) =>
-          val delay = now.diff(time)
-          Some(delay.toMillis millis)
-
-        case _ => None
-      }
-    }
-
-    triggerDelay match {
-      case Some(delay) =>
-        import context.dispatcher
-
-        // Create a new execution
-        val taskId = UUID.randomUUID()
-        log.info("Scheduling a new execution. jobId={}, taskId={}", jobId, taskId)
-        val execution = context.actorOf(executionProps(taskId, jobSpec), "exec-" + taskId)
-        triggerTask = Some(context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp))
-        persist(JobScheduled(jobId, planId, taskId)) { event =>
-          mediator ! DistributedPubSubMediator.Publish(SchedulerTopic, event)
-        }
-
-        active(jobId, jobSpec)
-
-      case _ => shutdown
-    }
-  }
 
 }

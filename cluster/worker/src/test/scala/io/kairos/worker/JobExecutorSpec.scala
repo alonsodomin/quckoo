@@ -5,7 +5,7 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import akka.testkit._
-import io.kairos.cluster.Task
+import io.kairos.Task
 import io.kairos.fault.{UnresolvedDependency, ExceptionThrown, Fault}
 import io.kairos.id.{ArtifactId, TaskId}
 import io.kairos.resolver.{Artifact, Resolve}

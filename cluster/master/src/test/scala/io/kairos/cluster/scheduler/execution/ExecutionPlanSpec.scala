@@ -7,13 +7,11 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.testkit._
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
-import io.kairos.test.ImplicitTimeSource
+import io.kairos.test.{TestActorSystem, ImplicitTimeSource}
 import io.kairos.time.TimeSource
-import io.kairos.{JobSpec, Trigger}
+import io.kairos.{Task, JobSpec, Trigger}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
-
-import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 20/08/15.
@@ -26,45 +24,43 @@ object ExecutionPlanSpec {
 
 }
 
-class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
+class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
     with ImplicitSender with ImplicitTimeSource
-    with WordSpecLike with BeforeAndAfterAll with Matchers
+    with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers
     with Inside with MockFactory {
 
+  import ExecutionPlan._
   import ExecutionPlanSpec._
   import SchedulerProtocol._
   import Trigger._
 
   val mediator = DistributedPubSub(system).mediator
+  ignoreMsg {
+    case DistributedPubSubMediator.SubscribeAck(_) => true
+    case DistributedPubSubMediator.UnsubscribeAck(_) => true
+  }
+
+  val eventListener = TestProbe()
+
+  before {
+    mediator ! DistributedPubSubMediator.Subscribe(SchedulerTopic, eventListener.ref)
+  }
+
+  after {
+    mediator ! DistributedPubSubMediator.Unsubscribe(SchedulerTopic, eventListener.ref)
+  }
 
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
-  "An execution plan for a disabled job" should {
-
-    "terminate itself immediately" in {
-      val trigger = mock[Trigger]
-      val executionProps: ExecutionFSMProps =
-        (taskId, jobSpec) => TestActors.echoActorProps
-
-      val planId = UUID.randomUUID()
-      val executionPlan = TestActorRef(ExecutionPlan.props(planId, trigger)(executionProps), "executionPlanForDisabledJob")
-      watch(executionPlan)
-
-      executionPlan ! RegistryProtocol.JobNotEnabled(TestJobId)
-
-      expectTerminated(executionPlan)
-    }
-
-  }
-
   "An execution plan with recurring trigger" should  {
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
-    val executionProps: ExecutionFSMProps =
+    val executionProps: ExecutionProps =
       (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
+    val taskId = UUID.randomUUID()
     val executionPlan = TestActorRef(ExecutionPlan.props(planId, triggerMock)(executionProps), "executionPlanWithRecurringTrigger")
     watch(executionPlan)
 
@@ -76,11 +72,16 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
         expects(ScheduledTime(expectedScheduleTime), timeSource).
         returning(Some(expectedExecutionTime))
 
-      executionPlan ! (TestJobId -> TestJobSpec)
+      executionPlan ! StartPlan(TestJobId, TestJobSpec)
 
-      val scheduledMsg = expectMsgType[JobScheduled]
+      val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
+      startedMsg.jobId should be (TestJobId)
+      startedMsg.planId should be (planId)
+      startedMsg.spec should be (TestJobSpec)
+
+      val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
       scheduledMsg.jobId should be (TestJobId)
-      scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
+      scheduledMsg.planId should be (planId)
 
       executionProbe.expectMsg[Execution.Command](Execution.WakeUp)
     }
@@ -94,11 +95,11 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
         expects(LastExecutionTime(expectedLastExecutionTime), timeSource).
         returning(Some(expectedExecutionTime))
 
-      executionProbe.send(executionPlan, Execution.Result(ExecutionState.Success("bar")))
+      executionProbe.send(executionPlan, Execution.Result(planId, taskId, Task.Success("bar")))
 
-      val scheduledMsg = expectMsgType[JobScheduled]
+      val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
       scheduledMsg.jobId should be (TestJobId)
-      scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
+      scheduledMsg.planId should be (planId)
 
       executionProbe.expectMsg[Execution.Command](Execution.WakeUp)
     }
@@ -111,9 +112,13 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
         expects(LastExecutionTime(expectedLastExecutionTime), timeSource).
         returning(None)
 
-      executionProbe.send(executionPlan, Execution.Result(ExecutionState.Success("bar")))
+      executionProbe.send(executionPlan, Execution.Result(planId, taskId, Task.Success("bar")))
 
-      executionProbe.expectNoMsg(1 second)
+      val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
+      finishedMsg.jobId should be (TestJobId)
+      finishedMsg.planId should be (planId)
+
+      executionProbe.expectNoMsg()
       expectTerminated(executionPlan)
     }
   }
@@ -121,10 +126,11 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
   "An execution plan with non recurring trigger" should {
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
-    val executionProps: ExecutionFSMProps =
+    val executionProps: ExecutionProps =
       (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
+    val taskId = UUID.randomUUID()
     val executionPlan = TestActorRef(ExecutionPlan.props(planId, triggerMock)(executionProps), "executionPlanWithOneShotTrigger")
     watch(executionPlan)
 
@@ -136,11 +142,16 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
         expects(ScheduledTime(expectedScheduleTime), timeSource).
         returning(Some(expectedExecutionTime))
 
-      executionPlan ! (TestJobId -> TestJobSpec)
+      executionPlan ! StartPlan(TestJobId, TestJobSpec)
 
-      val scheduledMsg = expectMsgType[JobScheduled]
+      val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
+      startedMsg.jobId should be (TestJobId)
+      startedMsg.planId should be (planId)
+      startedMsg.spec should be (TestJobSpec)
+
+      val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
       scheduledMsg.jobId should be (TestJobId)
-      scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
+      scheduledMsg.planId should be (planId)
 
       executionProbe.expectMsg[Execution.Command](Execution.WakeUp)
     }
@@ -148,9 +159,13 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
     "terminate once the execution finishes" in {
       (triggerMock.isRecurring _).expects().returning(false)
 
-      executionProbe.send(executionPlan, Execution.Result(ExecutionState.Success("bar")))
+      executionProbe.send(executionPlan, Execution.Result(planId, taskId, Task.Success("bar")))
 
-      executionProbe.expectNoMsg(1 second)
+      val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
+      finishedMsg.jobId should be (TestJobId)
+      finishedMsg.planId should be (planId)
+
+      executionProbe.expectNoMsg()
       expectTerminated(executionPlan)
     }
   }
@@ -158,7 +173,7 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
   "An execution plan that gets disabled" should {
     val triggerMock = mock[Trigger]
     val executionProbe = TestProbe()
-    val executionProps: ExecutionFSMProps =
+    val executionProps: ExecutionProps =
       (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
@@ -173,9 +188,14 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
         expects(ScheduledTime(expectedScheduleTime), timeSource).
         returning(Some(expectedExecutionTime))
 
-      executionPlan ! (TestJobId -> TestJobSpec)
+      executionPlan ! StartPlan(TestJobId, TestJobSpec)
 
-      val scheduledMsg = expectMsgType[JobScheduled]
+      val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
+      startedMsg.jobId should be (TestJobId)
+      startedMsg.planId should be (planId)
+      startedMsg.spec should be (TestJobSpec)
+
+      val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
 
@@ -187,7 +207,11 @@ class ExecutionPlanSpec extends TestKit(ActorSystem("ExecutionPlanSpec"))
 
       mediator ! DistributedPubSubMediator.Publish(RegistryTopic, JobDisabled(TestJobId))
 
-      executionProbe.expectNoMsg(2 seconds)
+      val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
+      finishedMsg.jobId should be (TestJobId)
+      finishedMsg.planId should be (planId)
+
+      executionProbe.expectNoMsg()
       expectTerminated(executionPlan)
     }
 

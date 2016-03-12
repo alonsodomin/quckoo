@@ -3,7 +3,7 @@ package io.kairos.cluster.scheduler.execution
 import java.util.UUID
 
 import akka.testkit._
-import io.kairos.cluster.Task
+import io.kairos.Task
 import io.kairos.cluster.scheduler.TaskQueue
 import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
 import io.kairos.id.ArtifactId
@@ -15,7 +15,7 @@ import scala.concurrent.duration._
 /**
  * Created by domingueza on 18/08/15.
  */
-object ExecutionFSMSpec {
+object ExecutionSpec {
 
   val TestArtifactId = ArtifactId("com.example", "example", "test")
   val TestJobClass = "com.example.Job"
@@ -23,12 +23,12 @@ object ExecutionFSMSpec {
 }
 
 @Ignore
-class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with ImplicitSender with DefaultTimeout
+class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with ImplicitSender with DefaultTimeout
   with WordSpecLike with BeforeAndAfterAll with Matchers with ImplicitTimeSource {
 
-  import ExecutionState._
+  import Task._
   import Execution._
-  import ExecutionFSMSpec._
+  import ExecutionSpec._
 
   val planId = UUID.randomUUID()
   val task = Task(id = UUID.randomUUID(), artifactId = TestArtifactId, jobClass = TestJobClass)
@@ -46,7 +46,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
-        execution ! GetExecution
+        execution ! Get
         expectMsg(NotRunYet)
       }
 
@@ -66,7 +66,8 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
       val result: Int = 8392
       execution ! Finish(Right(result))
 
-      expectMsg(Result(Success(result)))
+      val taskId = task.id
+      expectMsg(Result(`planId`, `taskId`, Success(result)))
       expectTerminated(execution)
     }
   }
@@ -85,7 +86,8 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
       val reason = "bar"
       execution ! Cancel(reason)
 
-      expectMsg(Result(NeverRun(reason)))
+      val taskId = task.id
+      expectMsg(Result(`planId`, `taskId`, NeverRun(reason)))
       expectTerminated(execution)
     }
   }
@@ -100,7 +102,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
 
     "return a never run outcome with the cancellation reason" in {
       within(1 second) {
-        execution ! GetExecution
+        execution ! Get
         expectMsg(NotRunYet)
       }
 
@@ -108,7 +110,8 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
         val reason = "bar1"
         execution ! Cancel(reason)
 
-        expectMsg(Result(NeverRun(reason)))
+        val taskId = task.id
+        expectMsg(Result(`planId`, `taskId`, NeverRun(reason)))
       }
       expectTerminated(execution)
     }
@@ -124,7 +127,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
-        execution ! GetExecution
+        execution ! Get
         expectMsg(NotRunYet)
       }
 
@@ -144,7 +147,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
       }
 
       within(1 second) {
-        execution ! GetExecution
+        execution ! Get
         expectMsg(NotRunYet)
       }
     }
@@ -163,7 +166,8 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
       val reason = "whatever"
       execution ! Cancel(reason)
 
-      expectMsg(Result(Interrupted(reason)))
+      val taskId = task.id
+      expectMsg(Result(`planId`, `taskId`, Interrupted(reason)))
       expectTerminated(execution)
     }
   }
@@ -178,7 +182,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
-        execution ! GetExecution
+        execution ! Get
         expectMsg(NotRunYet)
       }
 
@@ -198,7 +202,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
       }
 
       within(1 second) {
-        execution ! GetExecution
+        execution ! Get
         expectMsg(NotRunYet)
       }
     }
@@ -216,7 +220,8 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
     "return an never ending outcome when task queue notifies time out" in {
       execution.tell(TimeOut, taskQueue.ref)
 
-      expectMsg(Result(NeverEnding))
+      val taskId = task.id
+      expectMsg(Result(`planId`, `taskId`, NeverEnding))
       expectTerminated(execution)
     }
   }
@@ -232,7 +237,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
 
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
-        execution ! GetExecution
+        execution ! Get
         expectMsg(NotRunYet)
       }
 
@@ -252,7 +257,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
       }
 
       within(1 second) {
-        execution ! GetExecution
+        execution ! Get
         expectMsg(NotRunYet)
       }
     }
@@ -270,7 +275,8 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
         taskQueue.expectMsgType[TaskQueue.TimeOut].taskId should be (task.id)
         taskQueue.reply(TimeOut)
 
-        expectMsg(Result(NeverEnding))
+        val taskId = task.id
+        expectMsg(Result(`planId`, `taskId`, NeverEnding))
         expectTerminated(execution)
       }
     }
@@ -287,7 +293,7 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
 
     "become cancelled after the ack timeout" in {
       within(1 second) {
-        execution ! GetExecution
+        execution ! Get
         expectMsg(NotRunYet)
       }
 
@@ -300,7 +306,8 @@ class ExecutionFSMSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       }
 
-      expectMsg(Result(NeverRun(s"Could not enqueue task! taskId=${task.id}")))
+      val taskId = task.id
+      expectMsg(Result(`planId`, `taskId`, NeverRun(s"Could not enqueue task! taskId=${task.id}")))
     }
   }
 

@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.cluster.client.ClusterClient.SendToAll
-import io.kairos.cluster.Task
+import io.kairos.Task
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.fault.ExceptionThrown
 import io.kairos.id.TaskId

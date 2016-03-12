@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorSystem
 import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
-import io.kairos.cluster.Task
+import io.kairos.Task
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.fault.ExceptionThrown
 import io.kairos.id.ArtifactId

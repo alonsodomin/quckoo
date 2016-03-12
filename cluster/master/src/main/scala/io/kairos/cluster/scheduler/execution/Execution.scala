@@ -3,10 +3,10 @@ package io.kairos.cluster.scheduler.execution
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.Normal
-import io.kairos.cluster.Task
+import io.kairos.Task
 import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
 import io.kairos.cluster.scheduler._
-import io.kairos.id.{TaskId, PlanId}
+import io.kairos.id.{PlanId, TaskId}
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -15,8 +15,7 @@ import scala.reflect.ClassTag
  * Created by aalonsodominguez on 17/08/15.
  */
 object Execution {
-
-  import ExecutionState._
+  import Task._
 
   final val DefaultEnqueueTimeout = 10 seconds
 
@@ -26,7 +25,7 @@ object Execution {
   case class Finish(result: TaskResult) extends Command
   case class Cancel(reason: String) extends Command
   case object TimeOut extends Command
-  case object GetExecution extends Command
+  case object Get extends Command
 
   sealed trait Phase extends PersistentFSM.FSMState
   object Scheduled extends Phase {
@@ -54,6 +53,17 @@ object Execution {
 
   case class Result(planId: PlanId, taskId: TaskId, outcome: Outcome)
 
+  case class ExecutionState private (val planId: PlanId, val task: Task, val outcome: Outcome) {
+
+    private[execution] def <<= (out: Outcome): ExecutionState =
+      this.copy(outcome = out)
+
+  }
+  object ExecutionState {
+    def apply(planId: PlanId, task: Task): ExecutionState =
+      ExecutionState(planId, task, NotRunYet)
+  }
+
   def props(planId: PlanId, task: Task, taskQueue: ActorRef,
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
             executionTimeout: Option[FiniteDuration] = None) =
@@ -64,10 +74,10 @@ object Execution {
 class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
                 enqueueTimeout: FiniteDuration,
                 executionTimeout: Option[FiniteDuration])
-  extends PersistentFSM[Execution.Phase, ExecutionState, Execution.ExecutionEvent] with ActorLogging {
+  extends PersistentFSM[Execution.Phase, Execution.ExecutionState, Execution.ExecutionEvent] with ActorLogging {
 
-  import ExecutionState._
   import Execution._
+  import Task._
 
   private var enqueueAttempts = 0
   context.watch(taskQueue)
@@ -80,7 +90,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
       sendToQueue()
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(planId, task.id, reason)
-    case Event(GetExecution, data) =>
+    case Event(Get, data) =>
       stay replying data
     case Event(EnqueueAck(taskId), _) if taskId == task.id =>
       goto(Waiting) applying Triggered(planId, task.id)
@@ -96,12 +106,12 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
       startExecution()
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(planId, task.id, reason)
-    case Event(GetExecution, data) =>
+    case Event(Get, data) =>
       stay replying data
   }
 
   when(InProgress) {
-    case Event(GetExecution, data) =>
+    case Event(Get, data) =>
       stay replying data
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(planId, task.id, reason)
@@ -117,7 +127,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
   }
 
   when(Done, stateTimeout = 10 millis) {
-    case Event(GetExecution, data) =>
+    case Event(Get, data) =>
       stay replying data
     case Event(StateTimeout, _) => stop()
     case Event(_, _) => stay()
@@ -149,7 +159,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
 
   private def startExecution() = {
     val st = goto(InProgress) applying Started(planId, task.id)
-    executionTimeout.map( duration => st forMax duration ).getOrElse(st)
+    executionTimeout.map(duration => st forMax duration).getOrElse(st)
   }
 
   private def sendToQueue() = {

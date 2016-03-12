@@ -38,8 +38,6 @@ class Kairos(settings: KairosClusterSettings)
   val registry = system.actorSelection(clusterSupervisor.path / "registry")
   val userAuth = system.actorSelection(clusterSupervisor.path / "authenticator")
 
-  val journal = KairosJournal(system)
-
   def start(implicit timeout: Timeout): Future[Unit] = {
     import system.dispatcher
 
@@ -71,8 +69,10 @@ class Kairos(settings: KairosClusterSettings)
     }
   }
 
-  def registeredJobs: Future[Map[JobId, JobSpec]] =
-    journal.registeredJobs
+  def registeredJobs: Future[Map[JobId, JobSpec]] = {
+    implicit val timeout = Timeout(5 seconds)
+    (registry ? GetJobs).mapTo[Map[JobId, JobSpec]]
+  }
 
   def events = Source.actorPublisher[KairosClusterEvent](KairosEventEmitter.props).
     map(evt => {

@@ -1,6 +1,6 @@
 package io.kairos.protocol
 
-import io.kairos.Trigger
+import io.kairos.{Task, JobSpec, Trigger}
 import io.kairos.Trigger.Immediate
 import io.kairos.id._
 import io.kairos.time.DateTime
@@ -25,9 +25,13 @@ object SchedulerProtocol {
       timeout: Option[FiniteDuration] = None
   ) extends SchedulerCommand
 
-  case class JobScheduled(jobId: JobId, planId: PlanId, taskId: TaskId) extends SchedulerEvent
+  case class TaskScheduled(jobId: JobId, planId: PlanId, taskId: TaskId) extends SchedulerEvent
+  case class TaskCompleted(jobId: JobId, planId: PlanId, taskId: TaskId, outcome: Task.Outcome) extends SchedulerEvent
   case class JobNotFound(jobId: JobId) extends SchedulerEvent
   case class JobFailedToSchedule(jobId: JobId, cause: Throwable) extends SchedulerEvent
+
+  case class ExecutionPlanStarted(jobId: JobId, planId: PlanId, spec: JobSpec) extends SchedulerEvent
+  case class ExecutionPlanFinished(jobId: JobId, planId: PlanId) extends SchedulerEvent
 
   case object GetExecutionPlans extends SchedulerCommand
   case class CancelPlan(planId: PlanId) extends SchedulerCommand

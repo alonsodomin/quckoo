@@ -72,7 +72,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
   }
 
   def waitAccepted: Receive = {
-    case JobScheduled(id, planId) if jobId == id =>
+    case TaskScheduled(id, planId) if jobId == id =>
       log.info("Job schedule has been accepted by the cluster. executionPlanId={}", planId)
       if (n < 25) {
         scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)

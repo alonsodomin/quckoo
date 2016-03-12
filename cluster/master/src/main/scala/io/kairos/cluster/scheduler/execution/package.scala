@@ -9,6 +9,6 @@ import io.kairos.id._
  */
 package object execution {
 
-  type ExecutionFSMProps = (TaskId, JobSpec) => Props
+  type ExecutionProps = (TaskId, JobSpec) => Props
 
 }

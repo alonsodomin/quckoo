@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
-import io.kairos.JobSpec
+import io.kairos.{Task, JobSpec}
 import io.kairos.cluster._
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.cluster.scheduler.execution.{Execution, ExecutionPlan}
@@ -66,7 +66,7 @@ private class ScheduleHandler(jobId: JobId, requestor: ActorRef, executionPlan: 
     case Some(spec: JobSpec) => // create execution plan
       log.info("Scheduling job {}.", jobId)
       val plan = executionPlan()
-      plan ! ExecutionPlan.PrepareJob(jobId, spec, requestor)
+      plan ! ExecutionPlan.StartPlan(jobId, spec)
       context.parent ! PlanReady(jobId, spec, plan)
       context.stop(self)
 
