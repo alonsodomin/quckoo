@@ -4,14 +4,13 @@ import java.util.UUID
 
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
-import akka.cluster.sharding.ClusterSharding
-import io.kairos.{Task, JobSpec}
-import io.kairos.cluster._
+import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.cluster.scheduler.execution.{Execution, ExecutionPlan}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.TimeSource
+import io.kairos.{JobSpec, Task}
 
 /**
  * Created by aalonsodominguez on 16/08/15.
@@ -30,14 +29,20 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
   extends Actor with ActorLogging {
 
   import RegistryProtocol._
+  import Scheduler._
   import SchedulerProtocol._
   import WorkerProtocol._
-  import Scheduler._
 
   ClusterClientReceptionist(context.system).registerService(self)
 
   private[this] val taskQueue = context.actorOf(queueProps, "taskQueue")
-  //private[this] val shardRegion = ClusterSharding(context.system)
+  private[this] val shardRegion = ClusterSharding(context.system).start(
+    ExecutionPlan.ShardName,
+    entityProps     = ExecutionPlan.props,
+    settings        = ClusterShardingSettings(context.system),
+    extractEntityId = ExecutionPlan.idExtractor,
+    extractShardId  = ExecutionPlan.shardResolver
+  )
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>
@@ -50,11 +55,8 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
         val task = Task(taskId, jobSpec.artifactId, config.params, jobSpec.jobClass)
         Execution.props(planId, task, taskQueue, executionTimeout = config.timeout)
       }
-      val plan = context.watch(context.actorOf(
-        ExecutionPlan.props, s"plan-$planId"
-      ))
       log.info("Starting execution plan for job {}.", config.jobId)
-      plan ! ExecutionPlan.New(config.jobId, spec, planId, config.trigger, executionProps)
+      shardRegion ! ExecutionPlan.New(config.jobId, spec, planId, config.trigger, executionProps)
 
     case msg: WorkerMessage =>
       taskQueue.tell(msg, sender())

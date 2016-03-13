@@ -22,7 +22,18 @@ object ExecutionPlan {
   final val ShardName      = "ExecutionPlan"
   final val NumberOfShards = 100
 
-  case class New(jobId: JobId, spec: JobSpec, planId: PlanId, trigger: Trigger, executionProps: ExecutionProps)
+  val idExtractor: ShardRegion.ExtractEntityId = {
+    case n: New => (n.planId.toString, n)
+    case g: Get => (g.planId.toString, g)
+  }
+
+  val shardResolver: ShardRegion.ExtractShardId = {
+    case New(_, _, planId, _, _) => (planId.hashCode() % NumberOfShards).toString
+    case Get(planId)             => (planId.hashCode() % NumberOfShards).toString
+  }
+
+  final case class New(jobId: JobId, spec: JobSpec, planId: PlanId, trigger: Trigger, executionProps: ExecutionProps)
+  final case class Get(planId: PlanId)
 
   // Private messages, used for managing the internal lifecycle
   private[execution] case class Created(cmd: New, time: DateTime)
@@ -152,6 +163,9 @@ class ExecutionPlan(implicit timeSource: TimeSource)
     case JobDisabled(id) if id == state.jobId =>
       log.info("Job has been disabled, finishing execution plan. jobId={}, planId={}", id, state.planId)
       self ! FinishPlan
+
+    case Get(_) =>
+      sender() ! state
 
     case Execution.Result(outcome) =>
       state.currentTaskId.foreach { taskId =>
