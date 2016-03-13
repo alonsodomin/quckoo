@@ -19,6 +19,6 @@ trait KairosJournal {
 
 object KairosJournal {
 
-  final val CassandraReadJournalId = "akka.persistence.query.cassandra-query-journal"
+  final val CassandraReadJournalId = "cassandra-query-journal"
 
 }
