@@ -25,7 +25,7 @@ object ExecutionPlan {
   private case class ScheduleTask(time: DateTime)
   private case object FinishPlan
 
-  private case class PlanState private (
+  private case class PlanState(
       planId: PlanId,
       trigger: Trigger,
       job: Option[(JobId, JobSpec)] = None,
