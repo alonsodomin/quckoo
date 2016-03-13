@@ -1,12 +1,12 @@
 package io.kairos.cluster.scheduler
 
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.testkit._
 import io.kairos.JobSpec
 import io.kairos.id.{ArtifactId, JobId}
-import io.kairos.protocol.RegistryProtocol.JobNotEnabled
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
  * Created by aalonsodominguez on 18/08/15.
@@ -20,13 +20,28 @@ object SchedulerSpec {
 }
 
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender with ImplicitTimeSource
-  with WordSpecLike with BeforeAndAfterAll with Matchers {
+    with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 
   import SchedulerProtocol._
   import SchedulerSpec._
 
   val registryProbe = TestProbe("registry")
   val taskQueueProbe = TestProbe("taskQueue")
+
+  val eventListener = TestProbe()
+  val mediator = DistributedPubSub(system).mediator
+  ignoreMsg {
+    case DistributedPubSubMediator.SubscribeAck(_) => true
+    case DistributedPubSubMediator.UnsubscribeAck(_) => true
+  }
+
+  before {
+    mediator ! DistributedPubSubMediator.Subscribe(SchedulerTopic, eventListener.ref)
+  }
+
+  after {
+    mediator ! DistributedPubSubMediator.Unsubscribe(SchedulerTopic, eventListener.ref)
+  }
 
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
@@ -43,7 +58,8 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
       registryProbe.reply(Some(TestJobSpec))
 
-      expectMsgType[TaskScheduled].jobId should be (TestJobId)
+      eventListener.expectMsgType[ExecutionPlanStarted].jobId should be (TestJobId)
+      eventListener.expectMsgType[TaskScheduled].jobId should be (TestJobId)
     }
 
     "should reply not found if the job is not present" in {
