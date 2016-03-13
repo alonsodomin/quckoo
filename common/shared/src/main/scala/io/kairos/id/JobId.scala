@@ -16,9 +16,6 @@ object JobId {
     new JobId(id)
   }
 
-  @inline
-  def apply(id: UUID): JobId = new JobId(id)
-
   implicit def jobIdToString(jobId: JobId): String = jobId.toString
 
 }
