@@ -27,4 +27,6 @@ class JDK8DateTime private[time] (private[JDK8DateTime] val zonedDateTime: Zoned
   def toEpochMillis: Long =
     zonedDateTime.toInstant.toEpochMilli
 
+  override def toString = zonedDateTime.toString
+
 }

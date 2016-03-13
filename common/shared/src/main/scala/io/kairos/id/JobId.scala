@@ -11,7 +11,8 @@ object JobId {
   import scala.language.implicitConversions
 
   def apply(jobSpec: JobSpec): JobId = {
-    val id = UUID.nameUUIDFromBytes(jobSpec.artifactId.toString.getBytes("UTF-8"))
+    val plainId = s"${jobSpec.artifactId.toString}!${jobSpec.jobClass}"
+    val id = UUID.nameUUIDFromBytes(plainId.getBytes("UTF-8"))
     new JobId(id.toString)
   }
 

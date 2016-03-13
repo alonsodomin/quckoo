@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
+import akka.cluster.sharding.ClusterSharding
 import io.kairos.{Task, JobSpec}
 import io.kairos.cluster._
 import io.kairos.cluster.protocol.WorkerProtocol
@@ -16,8 +17,9 @@ import io.kairos.time.TimeSource
  * Created by aalonsodominguez on 16/08/15.
  */
 object Scheduler {
+  import SchedulerProtocol._
 
-  case class PlanReady(jobId: JobId, spec: JobSpec, executionPlan: ActorRef)
+  case class CreateExecutionPlan(spec: JobSpec, config: ScheduleJob)
 
   def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource) =
     Props(classOf[Scheduler], registry, queueProps, timeSource)
@@ -30,44 +32,48 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
   import RegistryProtocol._
   import SchedulerProtocol._
   import WorkerProtocol._
+  import Scheduler._
 
   ClusterClientReceptionist(context.system).registerService(self)
 
   private[this] val taskQueue = context.actorOf(queueProps, "taskQueue")
+  //private[this] val shardRegion = ClusterSharding(context.system)
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>
-      def executionPlanProps(planId: PlanId): Props = ExecutionPlan.props(planId, cmd.trigger) { (taskId, jobSpec) =>
-        val task = Task(taskId, jobSpec.artifactId, cmd.params, jobSpec.jobClass)
-        Execution.props(planId, task, taskQueue, executionTimeout = cmd.timeout)
-      }
-      val handler = context.actorOf(handlerProps(cmd.jobId, sender()) { () =>
-        val planId = UUID.randomUUID()
-        context.actorOf(executionPlanProps(planId), s"plan-$planId")
-      })
+      val handler = context.actorOf(handlerProps(cmd.jobId, sender(), cmd))
       registry.tell(GetJob(cmd.jobId), handler)
+
+    case CreateExecutionPlan(spec, config) =>
+      val planId = UUID.randomUUID()
+      def executionProps(taskId: TaskId, jobSpec: JobSpec): Props = {
+        val task = Task(taskId, jobSpec.artifactId, config.params, jobSpec.jobClass)
+        Execution.props(planId, task, taskQueue, executionTimeout = config.timeout)
+      }
+      val plan = context.watch(context.actorOf(
+        ExecutionPlan.props, s"plan-$planId"
+      ))
+      log.info("Starting execution plan for job {}.", config.jobId)
+      plan ! ExecutionPlan.New(config.jobId, spec, planId, config.trigger, executionProps)
 
     case msg: WorkerMessage =>
       taskQueue.tell(msg, sender())
   }
 
-  private[this] def handlerProps(jobId: JobId, requestor: ActorRef)(executionPlan: () => ActorRef): Props =
-    Props(classOf[ScheduleHandler], jobId, requestor, executionPlan)
+  private[this] def handlerProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
+    Props(classOf[ScheduleHandler], jobId, requestor, config)
 
 }
 
-private class ScheduleHandler(jobId: JobId, requestor: ActorRef, executionPlan: () => ActorRef)
-  extends Actor with ActorLogging {
+private class ScheduleHandler(jobId: JobId, requestor: ActorRef, config: SchedulerProtocol.ScheduleJob)
+    extends Actor with ActorLogging {
 
   import Scheduler._
   import SchedulerProtocol._
 
   def receive: Receive = {
     case Some(spec: JobSpec) => // create execution plan
-      log.info("Scheduling job {}.", jobId)
-      val plan = executionPlan()
-      plan ! ExecutionPlan.StartPlan(jobId, spec)
-      context.parent ! PlanReady(jobId, spec, plan)
+      context.parent ! CreateExecutionPlan(spec, config)
       context.stop(self)
 
     case None =>

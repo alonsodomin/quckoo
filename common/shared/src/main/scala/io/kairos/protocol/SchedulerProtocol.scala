@@ -15,8 +15,9 @@ object SchedulerProtocol {
 
   final val SchedulerTopic = "Scheduler"
 
-  sealed trait SchedulerCommand
-  sealed trait SchedulerEvent
+  sealed trait SchedulerMessage
+  sealed trait SchedulerCommand extends SchedulerMessage
+  sealed trait SchedulerEvent extends SchedulerMessage
 
   @Lenses
   case class ScheduleJob(jobId: JobId,
@@ -27,10 +28,11 @@ object SchedulerProtocol {
 
   case class TaskScheduled(jobId: JobId, planId: PlanId, taskId: TaskId) extends SchedulerEvent
   case class TaskCompleted(jobId: JobId, planId: PlanId, taskId: TaskId, outcome: Task.Outcome) extends SchedulerEvent
-  case class JobNotFound(jobId: JobId) extends SchedulerEvent
-  case class JobFailedToSchedule(jobId: JobId, cause: Throwable) extends SchedulerEvent
 
-  case class ExecutionPlanStarted(jobId: JobId, planId: PlanId, spec: JobSpec) extends SchedulerEvent
+  case class JobNotFound(jobId: JobId) extends SchedulerMessage
+  case class JobFailedToSchedule(jobId: JobId, cause: Throwable) extends SchedulerMessage
+
+  case class ExecutionPlanStarted(jobId: JobId, planId: PlanId) extends SchedulerEvent
   case class ExecutionPlanFinished(jobId: JobId, planId: PlanId) extends SchedulerEvent
 
   case object GetExecutionPlans extends SchedulerCommand

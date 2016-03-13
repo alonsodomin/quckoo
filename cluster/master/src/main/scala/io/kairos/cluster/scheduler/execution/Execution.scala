@@ -1,6 +1,6 @@
 package io.kairos.cluster.scheduler.execution
 
-import akka.actor.{ActorLogging, ActorRef, Props}
+import akka.actor.{RootActorPath, ActorLogging, ActorRef, Props}
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.Normal
 import io.kairos.Task
@@ -41,17 +41,14 @@ object Execution {
     override def identifier = "Done"
   }
 
-  sealed trait ExecutionEvent {
-    val planId: PlanId
-    val taskId: TaskId
-  }
-  case class Cancelled(planId: PlanId, taskId: TaskId, reason: String) extends ExecutionEvent
-  case class Triggered(planId: PlanId, taskId: TaskId) extends ExecutionEvent
-  case class Started(planId: PlanId, taskId: TaskId) extends ExecutionEvent
-  case class Completed(planId: PlanId, taskId: TaskId, result: TaskResult) extends ExecutionEvent
-  case class TimedOut(planId: PlanId, taskId: TaskId) extends ExecutionEvent
+  sealed trait ExecutionEvent
+  case class Cancelled(reason: String) extends ExecutionEvent
+  case object Triggered extends ExecutionEvent
+  case object Started extends ExecutionEvent
+  case class Completed(result: TaskResult) extends ExecutionEvent
+  case object TimedOut extends ExecutionEvent
 
-  case class Result(planId: PlanId, taskId: TaskId, outcome: Outcome)
+  case class Result(outcome: Outcome)
 
   case class ExecutionState private (val planId: PlanId, val task: Task, val outcome: Outcome) {
 
@@ -71,16 +68,19 @@ object Execution {
 
 }
 
-class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
-                enqueueTimeout: FiniteDuration,
-                executionTimeout: Option[FiniteDuration])
-  extends PersistentFSM[Execution.Phase, Execution.ExecutionState, Execution.ExecutionEvent] with ActorLogging {
+class Execution(
+    planId: PlanId,
+    task: Task,
+    taskQueue: ActorRef,
+    enqueueTimeout: FiniteDuration,
+    executionTimeout: Option[FiniteDuration]
+  ) extends PersistentFSM[Execution.Phase, Execution.ExecutionState, Execution.ExecutionEvent]
+    with ActorLogging {
 
   import Execution._
   import Task._
 
   private var enqueueAttempts = 0
-  context.watch(taskQueue)
 
   startWith(Scheduled, ExecutionState(planId, task))
 
@@ -89,15 +89,15 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
       log.debug("Execution waking up. taskId={}", task.id)
       sendToQueue()
     case Event(Cancel(reason), _) =>
-      goto(Done) applying Cancelled(planId, task.id, reason)
+      goto(Done) applying Cancelled(reason)
     case Event(Get, data) =>
       stay replying data
     case Event(EnqueueAck(taskId), _) if taskId == task.id =>
-      goto(Waiting) applying Triggered(planId, task.id)
+      goto(Waiting) applying Triggered
     case Event(StateTimeout, _) =>
       enqueueAttempts += 1
       if (enqueueAttempts < 2) sendToQueue()
-      else goto(Done) applying Cancelled(planId, task.id, s"Could not enqueue task! taskId=${task.id}")
+      else goto(Done) applying Cancelled(s"Could not enqueue task! taskId=${task.id}")
   }
 
   when(Waiting) {
@@ -105,7 +105,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
       log.debug("Execution starting. taskId={}", task.id)
       startExecution()
     case Event(Cancel(reason), _) =>
-      goto(Done) applying Cancelled(planId, task.id, reason)
+      goto(Done) applying Cancelled(reason)
     case Event(Get, data) =>
       stay replying data
   }
@@ -114,12 +114,12 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
     case Event(Get, data) =>
       stay replying data
     case Event(Cancel(reason), _) =>
-      goto(Done) applying Cancelled(planId, task.id, reason)
+      goto(Done) applying Cancelled(reason)
     case Event(Finish(result), _) =>
       log.debug("Execution finishing. taskId={}", task.id)
-      goto(Done) applying Completed(planId, task.id, result)
+      goto(Done) applying Completed(result)
     case Event(TimeOut, _) =>
-      goto(Done) applying TimedOut(planId, task.id)
+      goto(Done) applying TimedOut
     case Event(StateTimeout, _) =>
       log.debug("Execution has timed out, notifying queue. taskId={}", task.id)
       taskQueue ! TaskQueue.TimeOut(task.id)
@@ -135,7 +135,7 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
 
   onTermination {
     case StopEvent(Normal, _, data) =>
-      context.parent ! Result(planId, task.id, data.outcome)
+      context.parent ! Result(data.outcome)
   }
 
   initialize()
@@ -145,20 +145,20 @@ class Execution(planId: PlanId, task: Task, taskQueue: ActorRef,
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 
   override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState = event match {
-    case Completed(_, _, report) => report match {
-      case Left(cause)   => previous <<= Failure(cause)
-      case Right(result) => previous <<= Success(result)
+    case Completed(result) => result match {
+      case Left(cause)  => previous <<= Failure(cause)
+      case Right(value) => previous <<= Success(value)
     }
-    case Cancelled(_, _, reason) => stateName match {
+    case Cancelled(reason) => stateName match {
       case InProgress => previous <<= Interrupted(reason)
       case _          => previous <<= NeverRun(reason)
     }
-    case TimedOut(_, _)    => previous <<= NeverEnding
-    case _                 => previous
+    case TimedOut => previous <<= NeverEnding
+    case _        => previous
   }
 
   private def startExecution() = {
-    val st = goto(InProgress) applying Started(planId, task.id)
+    val st = goto(InProgress) applying Started
     executionTimeout.map(duration => st forMax duration).getOrElse(st)
   }
 

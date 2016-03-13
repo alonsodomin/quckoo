@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import akka.cluster.sharding.ShardRegion
 import akka.testkit._
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
@@ -60,8 +61,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
       (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val taskId = UUID.randomUUID()
-    val executionPlan = TestActorRef(ExecutionPlan.props(planId, triggerMock)(executionProps), "executionPlanWithRecurringTrigger")
+    val executionPlan = TestActorRef(ExecutionPlan.props, self, "executionPlanWithRecurringTrigger")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -72,12 +72,11 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
         expects(ScheduledTime(expectedScheduleTime), timeSource).
         returning(Some(expectedExecutionTime))
 
-      executionPlan ! StartPlan(TestJobId, TestJobSpec)
+      executionPlan ! New(TestJobId, TestJobSpec, planId, triggerMock, executionProps)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId should be (TestJobId)
       startedMsg.planId should be (planId)
-      startedMsg.spec should be (TestJobSpec)
 
       val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
       scheduledMsg.jobId should be (TestJobId)
@@ -95,7 +94,13 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
         expects(LastExecutionTime(expectedLastExecutionTime), timeSource).
         returning(Some(expectedExecutionTime))
 
-      executionProbe.send(executionPlan, Execution.Result(planId, taskId, Task.Success("bar")))
+      val successOutcome = Task.Success("foo")
+      executionProbe.send(executionPlan, Execution.Result(successOutcome))
+
+      val completedMsg = eventListener.expectMsgType[TaskCompleted]
+      completedMsg.jobId should be (TestJobId)
+      completedMsg.planId should be (planId)
+      completedMsg.outcome should be (successOutcome)
 
       val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
       scheduledMsg.jobId should be (TestJobId)
@@ -112,13 +117,22 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
         expects(LastExecutionTime(expectedLastExecutionTime), timeSource).
         returning(None)
 
-      executionProbe.send(executionPlan, Execution.Result(planId, taskId, Task.Success("bar")))
+      val successOutcome = Task.Success("bar")
+      executionProbe.send(executionPlan, Execution.Result(successOutcome))
+
+      val completedMsg = eventListener.expectMsgType[TaskCompleted]
+      completedMsg.jobId should be (TestJobId)
+      completedMsg.planId should be (planId)
+      completedMsg.outcome should be (successOutcome)
 
       val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
       finishedMsg.jobId should be (TestJobId)
       finishedMsg.planId should be (planId)
 
       executionProbe.expectNoMsg()
+      expectMsg(ShardRegion.Passivate(PoisonPill))
+
+      executionPlan ! PoisonPill
       expectTerminated(executionPlan)
     }
   }
@@ -130,8 +144,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
       (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val taskId = UUID.randomUUID()
-    val executionPlan = TestActorRef(ExecutionPlan.props(planId, triggerMock)(executionProps), "executionPlanWithOneShotTrigger")
+    val executionPlan = TestActorRef(ExecutionPlan.props, self, "executionPlanWithOneShotTrigger")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -142,12 +155,11 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
         expects(ScheduledTime(expectedScheduleTime), timeSource).
         returning(Some(expectedExecutionTime))
 
-      executionPlan ! StartPlan(TestJobId, TestJobSpec)
+      executionPlan ! New(TestJobId, TestJobSpec, planId, triggerMock, executionProps)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId should be (TestJobId)
       startedMsg.planId should be (planId)
-      startedMsg.spec should be (TestJobSpec)
 
       val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
       scheduledMsg.jobId should be (TestJobId)
@@ -159,13 +171,22 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
     "terminate once the execution finishes" in {
       (triggerMock.isRecurring _).expects().returning(false)
 
-      executionProbe.send(executionPlan, Execution.Result(planId, taskId, Task.Success("bar")))
+      val successOutcome = Task.Success("bar")
+      executionProbe.send(executionPlan, Execution.Result(successOutcome))
+
+      val completedMsg = eventListener.expectMsgType[TaskCompleted]
+      completedMsg.jobId should be (TestJobId)
+      completedMsg.planId should be (planId)
+      completedMsg.outcome should be (successOutcome)
 
       val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
       finishedMsg.jobId should be (TestJobId)
       finishedMsg.planId should be (planId)
 
       executionProbe.expectNoMsg()
+      expectMsg(ShardRegion.Passivate(PoisonPill))
+
+      executionPlan ! PoisonPill
       expectTerminated(executionPlan)
     }
   }
@@ -177,7 +198,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
       (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val executionPlan = TestActorRef(ExecutionPlan.props(planId, triggerMock)(executionProps), "executionPlanForJobThatGetsDisabled")
+    val executionPlan = TestActorRef(ExecutionPlan.props, self, "executionPlanForJobThatGetsDisabled")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -188,16 +209,15 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
         expects(ScheduledTime(expectedScheduleTime), timeSource).
         returning(Some(expectedExecutionTime))
 
-      executionPlan ! StartPlan(TestJobId, TestJobSpec)
+      executionPlan ! New(TestJobId, TestJobSpec, planId, triggerMock, executionProps)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId should be (TestJobId)
       startedMsg.planId should be (planId)
-      startedMsg.spec should be (TestJobSpec)
 
       val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
       scheduledMsg.jobId should be (TestJobId)
-      scheduledMsg.planId should be (executionPlan.underlying.actor.asInstanceOf[ExecutionPlan].planId)
+      scheduledMsg.planId should be (planId)
 
       executionProbe.expectMsg[Execution.Command](Execution.WakeUp)
     }
@@ -212,6 +232,9 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
       finishedMsg.planId should be (planId)
 
       executionProbe.expectNoMsg()
+      expectMsg(ShardRegion.Passivate(PoisonPill))
+
+      executionPlan ! PoisonPill
       expectTerminated(executionPlan)
     }
 

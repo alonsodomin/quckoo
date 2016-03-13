@@ -67,7 +67,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
       execution ! Finish(Right(result))
 
       val taskId = task.id
-      expectMsg(Result(`planId`, `taskId`, Success(result)))
+      expectMsg(Result(Success(result)))
       expectTerminated(execution)
     }
   }
@@ -86,8 +86,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
       val reason = "bar"
       execution ! Cancel(reason)
 
-      val taskId = task.id
-      expectMsg(Result(`planId`, `taskId`, NeverRun(reason)))
+      expectMsg(Result(NeverRun(reason)))
       expectTerminated(execution)
     }
   }
@@ -110,8 +109,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
         val reason = "bar1"
         execution ! Cancel(reason)
 
-        val taskId = task.id
-        expectMsg(Result(`planId`, `taskId`, NeverRun(reason)))
+        expectMsg(Result(NeverRun(reason)))
       }
       expectTerminated(execution)
     }
@@ -166,8 +164,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
       val reason = "whatever"
       execution ! Cancel(reason)
 
-      val taskId = task.id
-      expectMsg(Result(`planId`, `taskId`, Interrupted(reason)))
+      expectMsg(Result(Interrupted(reason)))
       expectTerminated(execution)
     }
   }
@@ -220,8 +217,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
     "return an never ending outcome when task queue notifies time out" in {
       execution.tell(TimeOut, taskQueue.ref)
 
-      val taskId = task.id
-      expectMsg(Result(`planId`, `taskId`, NeverEnding))
+      expectMsg(Result(NeverEnding))
       expectTerminated(execution)
     }
   }
@@ -275,8 +271,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
         taskQueue.expectMsgType[TaskQueue.TimeOut].taskId should be (task.id)
         taskQueue.reply(TimeOut)
 
-        val taskId = task.id
-        expectMsg(Result(`planId`, `taskId`, NeverEnding))
+        expectMsg(Result(NeverEnding))
         expectTerminated(execution)
       }
     }
@@ -306,8 +301,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
       }
 
-      val taskId = task.id
-      expectMsg(Result(`planId`, `taskId`, NeverRun(s"Could not enqueue task! taskId=${task.id}")))
+      expectMsg(Result(NeverRun(s"Could not enqueue task! taskId=${task.id}")))
     }
   }
 
