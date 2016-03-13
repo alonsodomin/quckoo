@@ -13,17 +13,17 @@ object JobId {
   def apply(jobSpec: JobSpec): JobId = {
     val plainId = s"${jobSpec.artifactId.toString}!${jobSpec.jobClass}"
     val id = UUID.nameUUIDFromBytes(plainId.getBytes("UTF-8"))
-    new JobId(id.toString)
+    new JobId(id)
   }
 
   @inline
-  def apply(id: UUID): JobId = new JobId(id.toString)
+  def apply(id: UUID): JobId = new JobId(id)
 
   implicit def jobIdToString(jobId: JobId): String = jobId.toString
 
 }
 
-final case class JobId(private val id: String) extends Serializable {
+final case class JobId(private val id: UUID) {
 
   override def equals(other: Any): Boolean = other match {
     case that: JobId => that.id equals this.id
@@ -32,6 +32,6 @@ final case class JobId(private val id: String) extends Serializable {
 
   override def hashCode = id.hashCode
 
-  override def toString = id
+  override def toString = id.toString
 
 }
