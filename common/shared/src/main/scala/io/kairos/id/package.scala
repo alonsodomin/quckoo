@@ -1,15 +1,14 @@
 package io.kairos
 
 import java.util.UUID
-
-import scala.language.implicitConversions
+import derive.key
 
 /**
- * Created by domingueza on 06/07/15.
- */
+  * Created by alonsodomin on 14/03/2016.
+  */
 package object id {
 
-  type PlanId = UUID
-  type TaskId = UUID
+  @key("PlanId") type PlanId = UUID
+  @key("TaskId") type TaskId = UUID
 
 }

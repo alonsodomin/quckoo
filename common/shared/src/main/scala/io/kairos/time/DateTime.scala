@@ -23,6 +23,8 @@ abstract class DateTime extends Ordered[DateTime] with Serializable {
   final def isEqual(dateTime: DateTime): Boolean =
     compareTo(dateTime) == 0
 
+  def toUTC: DateTime
+
   def toEpochMillis: Long
 
 }

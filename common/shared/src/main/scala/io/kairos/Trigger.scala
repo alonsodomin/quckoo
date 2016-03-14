@@ -7,7 +7,7 @@ import scala.concurrent.duration._
 /**
  * Created by aalonsodominguez on 08/07/15.
  */
-trait Trigger extends Serializable {
+sealed trait Trigger extends Serializable {
   import Trigger.ReferenceTime
 
   def nextExecutionTime(referenceTime: ReferenceTime)(implicit source: TimeSource): Option[DateTime]

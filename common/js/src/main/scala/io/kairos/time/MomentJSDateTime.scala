@@ -5,7 +5,7 @@ import org.widok.moment.{Moment, Units, Date}
 /**
   * Created by alonsodomin on 22/12/2015.
   */
-class MomentJSDateTime private[time] (private val date: Date) extends DateTime {
+class MomentJSDateTime(private val date: Date) extends DateTime {
 
   def diff(that: DateTime): Duration = {
     val millis = that.toEpochMillis - this.toEpochMillis
@@ -24,6 +24,8 @@ class MomentJSDateTime private[time] (private val date: Date) extends DateTime {
   }
 
   override def hashCode(): Int = date.hashCode()
+
+  def toUTC: DateTime = new MomentJSDateTime(date.utc())
 
   def toEpochMillis: Long =
     date.milliseconds()

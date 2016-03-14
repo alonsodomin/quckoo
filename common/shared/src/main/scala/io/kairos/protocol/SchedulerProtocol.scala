@@ -36,13 +36,7 @@ object SchedulerProtocol {
   case class ExecutionPlanFinished(jobId: JobId, planId: PlanId) extends SchedulerEvent
 
   case object GetExecutionPlans extends SchedulerCommand
+  case class GetExecutionPlan(planId: PlanId) extends SchedulerCommand
   case class CancelPlan(planId: PlanId) extends SchedulerCommand
-
-  case class ExecutionPlanDetails(
-      jobId: JobId,
-      params: Map[String, AnyVal],
-      trigger: Trigger,
-      lastExecution: DateTime
-  )
 
 }
