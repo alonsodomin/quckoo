@@ -1,4 +1,4 @@
-package io.kairos.cluster.scheduler.execution
+package io.kairos.cluster.scheduler
 
 import java.util.UUID
 
@@ -10,7 +10,7 @@ import io.kairos.fault.{ExceptionThrown, Faults}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.{DateTime, TimeSource}
-import io.kairos.{Task, JobSpec, Trigger}
+import io.kairos.{JobSpec, Task, Trigger}
 
 import scala.concurrent.duration._
 
@@ -18,30 +18,33 @@ import scala.concurrent.duration._
  * Created by aalonsodominguez on 16/08/15.
  */
 object ExecutionPlan {
+  import SchedulerProtocol._
 
   final val ShardName      = "ExecutionPlan"
   final val NumberOfShards = 100
 
   val idExtractor: ShardRegion.ExtractEntityId = {
-    case n: New => (n.planId.toString, n)
-    case g: Get => (g.planId.toString, g)
+    case n: New              => (n.planId.toString, n)
+    case g: GetExecutionPlan => (g.planId.toString, g)
   }
 
   val shardResolver: ShardRegion.ExtractShardId = {
-    case New(_, _, planId, _, _) => (planId.hashCode() % NumberOfShards).toString
-    case Get(planId)             => (planId.hashCode() % NumberOfShards).toString
+    case New(_, _, planId, _, _)  => (planId.hashCode() % NumberOfShards).toString
+    case GetExecutionPlan(planId) => (planId.hashCode() % NumberOfShards).toString
   }
 
-  final case class New(jobId: JobId, spec: JobSpec, planId: PlanId, trigger: Trigger, executionProps: ExecutionProps)
-  final case class Get(planId: PlanId)
+  // Only for internal usage from the Scheduler actor
+  private[scheduler] case class New(jobId: JobId, spec: JobSpec, planId: PlanId,
+                                    trigger: Trigger, executionProps: ExecutionProps)
 
   // Private messages, used for managing the internal lifecycle
-  private[execution] case class Created(cmd: New, time: DateTime)
+  private[scheduler] case class Created(cmd: New, time: DateTime)
   private case class ScheduleTask(time: DateTime)
   private case object FinishPlan
 
+  // Public execution plan state
   object PlanState {
-    private[execution] def apply(created: Created)(implicit timeSource: TimeSource): PlanState = PlanState(
+    private[scheduler] def apply(created: Created)(implicit timeSource: TimeSource): PlanState = PlanState(
       created.cmd.jobId,
       created.cmd.spec,
       created.cmd.planId,
@@ -164,7 +167,7 @@ class ExecutionPlan(implicit timeSource: TimeSource)
       log.info("Job has been disabled, finishing execution plan. jobId={}, planId={}", id, state.planId)
       self ! FinishPlan
 
-    case Get(_) =>
+    case GetExecutionPlan(_) =>
       sender() ! state
 
     case Execution.Result(outcome) =>

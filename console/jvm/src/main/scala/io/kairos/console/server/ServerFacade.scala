@@ -11,7 +11,7 @@ import scala.concurrent.Future
 /**
  * Created by alonsodomin on 14/10/2015.
  */
-trait ServerFacade extends SecurityFacade with RegistryFacade {
+trait ServerFacade extends SecurityFacade with RegistryFacade with SchedulerFacade {
 
   def events: Source[ServerSentEvent, ActorRef]
 

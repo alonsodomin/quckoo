@@ -11,29 +11,14 @@ import de.heikoseeberger.akkasse.EventStreamMarshalling
 import io.kairos.JobSpec
 import io.kairos.console.server.ServerFacade
 import io.kairos.id.JobId
-import io.kairos.serialization._
+import io.kairos.serialization
 
 trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMarshalling {
   this: ServerFacade =>
 
   import StatusCodes._
-
-  private[this] def registryApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
-    pathPrefix("jobs") {
-      pathEnd {
-        get {
-          complete(registeredJobs)
-        } ~ post {
-          entity(as[JobSpec]) { jobSpec =>
-            complete(registerJob(jobSpec))
-          }
-        }
-      } ~ path(JavaUUID) { jobId =>
-        get {
-          complete(fetchJob(JobId(jobId)))
-        }
-      }
-    }
+  import serialization.default._
+  import serialization.time._
 
   private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     path("login") {
@@ -58,6 +43,38 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
         }
       } ~ pathPrefix("registry") {
         registryApi
+      } ~ pathPrefix("scheduler") {
+        schedulerApi
+      }
+    }
+
+  private[this] def registryApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+    pathPrefix("jobs") {
+      pathEnd {
+        get {
+          complete(registeredJobs)
+        } ~ post {
+          entity(as[JobSpec]) { jobSpec =>
+            complete(registerJob(jobSpec))
+          }
+        }
+      } ~ path(JavaUUID) { jobId =>
+        get {
+          complete(fetchJob(JobId(jobId)))
+        }
+      }
+    }
+
+  private[this] def schedulerApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+    pathPrefix("executions") {
+      pathEnd {
+        get {
+          complete(allExecutionPlanIds)
+        }
+      } ~ path(JavaUUID) { planId =>
+        get {
+          complete(executionPlan(planId))
+        }
       }
     }
 

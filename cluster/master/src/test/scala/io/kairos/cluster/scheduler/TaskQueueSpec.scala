@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit
 import akka.testkit._
 import io.kairos.Task
 import io.kairos.cluster.protocol.WorkerProtocol._
-import io.kairos.cluster.scheduler.execution.Execution
 import io.kairos.fault.ExceptionThrown
 import io.kairos.id.ArtifactId
 import io.kairos.test.TestActorSystem

@@ -78,6 +78,12 @@ class KairosCluster(settings: KairosClusterSettings)
     case GetClusterStatus =>
       sender() ! kairosStatus
 
+    case cmd: RegistryProtocol.RegistryCommand =>
+      registry.tell(cmd, sender())
+
+    case cmd: SchedulerProtocol.SchedulerCommand =>
+      scheduler.tell(cmd, sender())
+
     case evt: MemberEvent =>
       kairosStatus = kairosStatus.update(evt)
 

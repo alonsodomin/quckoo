@@ -1,4 +1,4 @@
-package io.kairos.cluster.scheduler.execution
+package io.kairos.cluster.scheduler
 
 import java.util.UUID
 
@@ -8,9 +8,9 @@ import akka.cluster.sharding.ShardRegion
 import akka.testkit._
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
-import io.kairos.test.{TestActorSystem, ImplicitTimeSource}
+import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
 import io.kairos.time.TimeSource
-import io.kairos.{Task, JobSpec, Trigger}
+import io.kairos.{JobSpec, Task, Trigger}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 

@@ -5,8 +5,10 @@ import java.util.UUID
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
+import akka.pattern._
+import akka.stream.ActorMaterializer
+import io.kairos.cluster.core.KairosJournal
 import io.kairos.cluster.protocol.WorkerProtocol
-import io.kairos.cluster.scheduler.execution.{Execution, ExecutionPlan}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.TimeSource
@@ -18,15 +20,15 @@ import io.kairos.{JobSpec, Task}
 object Scheduler {
   import SchedulerProtocol._
 
-  case class CreateExecutionPlan(spec: JobSpec, config: ScheduleJob)
+  private[scheduler] case class CreateExecutionPlan(spec: JobSpec, config: ScheduleJob)
 
-  def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource) =
-    Props(classOf[Scheduler], registry, queueProps, timeSource)
+  def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource, materializer: ActorMaterializer) =
+    Props(classOf[Scheduler], registry, queueProps, timeSource, materializer)
 
 }
 
-class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource)
-  extends Actor with ActorLogging {
+class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource, materializer: ActorMaterializer)
+  extends Actor with ActorLogging with KairosJournal {
 
   import RegistryProtocol._
   import Scheduler._
@@ -44,9 +46,11 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
     extractShardId  = ExecutionPlan.shardResolver
   )
 
+  override implicit def actorSystem: ActorSystem = context.system
+
   override def receive: Receive = {
     case cmd: ScheduleJob =>
-      val handler = context.actorOf(handlerProps(cmd.jobId, sender(), cmd))
+      val handler = context.actorOf(handlerProps(cmd.jobId, sender(), cmd), "handler")
       registry.tell(GetJob(cmd.jobId), handler)
 
     case CreateExecutionPlan(spec, config) =>
@@ -57,6 +61,23 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
       }
       log.info("Starting execution plan for job {}.", config.jobId)
       shardRegion ! ExecutionPlan.New(config.jobId, spec, planId, config.trigger, executionProps)
+
+    case get: GetExecutionPlan =>
+      shardRegion.tell(get, sender())
+
+    case GetExecutionPlans =>
+      import context.dispatcher
+      readJournal.eventsByTag(SchedulerTagEventAdapter.tags.ExecutionPlan, 0).
+        filter(env =>
+          env.event match {
+            case evt: ExecutionPlan.Created => true
+            case _                          => false
+          }
+        ).map(env =>
+          env.event.asInstanceOf[ExecutionPlan.Created].cmd.planId
+        ).runFold(List.empty[PlanId]) {
+          case (list, planId) => planId :: list
+        } pipeTo sender()
 
     case msg: WorkerMessage =>
       taskQueue.tell(msg, sender())

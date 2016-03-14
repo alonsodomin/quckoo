@@ -4,7 +4,6 @@ import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import io.kairos.Task
 import io.kairos.cluster.protocol.WorkerProtocol
-import io.kairos.cluster.scheduler.execution.Execution
 import io.kairos.cluster.WorkerId
 import io.kairos.id.TaskId
 

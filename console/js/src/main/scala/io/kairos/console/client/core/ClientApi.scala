@@ -2,11 +2,13 @@ package io.kairos.console.client.core
 
 import io.kairos.console.client.security.ClientAuth
 import io.kairos.console.info.ClusterInfo
+import io.kairos.console.model.ExecutionPlanDetails
 import io.kairos.console.protocol.LoginRequest
-import io.kairos.console.{KairosApi, RegistryApi}
-import io.kairos.id.JobId
-import io.kairos.serialization._
+import io.kairos.console.{SchedulerApi, KairosApi, RegistryApi}
+import io.kairos.id.{PlanId, JobId}
+import io.kairos.serialization
 import io.kairos.{JobSpec, Validated}
+import io.kairos.time.MomentJSDateTime
 import org.scalajs.dom
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -14,9 +16,11 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
  * Created by alonsodomin on 13/10/2015.
  */
-object ClientApi extends KairosApi with RegistryApi with ClientAuth {
+object ClientApi extends KairosApi with RegistryApi with SchedulerApi with ClientAuth {
   import dom.console
   import dom.ext.Ajax
+  import serialization.default._
+  import serialization.time._
 
   private[this] val BaseURI = "/api"
   private[this] val LoginURI = BaseURI + "/login"
@@ -26,6 +30,9 @@ object ClientApi extends KairosApi with RegistryApi with ClientAuth {
 
   private[this] val RegistryBaseURI = BaseURI + "/registry"
   private[this] val JobsURI = RegistryBaseURI + "/jobs"
+
+  private[this] val SchedulerBaseURI = BaseURI + "/scheduler"
+  private[this] val ExecutionsURI = SchedulerBaseURI + "/executions"
 
   private[this] val JsonRequestHeaders = Map("Content-Type" -> "application/json")
 
@@ -73,4 +80,19 @@ object ClientApi extends KairosApi with RegistryApi with ClientAuth {
     }
   }
 
+  override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[ExecutionPlanDetails] = {
+    import upickle.default._
+
+    Ajax.get(ExecutionsURI + "/" + planId, headers = authHeaders).map { xhr =>
+      read[ExecutionPlanDetails](xhr.responseText)
+    }
+  }
+
+  override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]] = {
+    import upickle.default._
+
+    Ajax.get(ExecutionsURI, headers = authHeaders).map { xhr =>
+      read[List[PlanId]](xhr.responseText)
+    }
+  }
 }

@@ -43,14 +43,13 @@ class Registry(settings: KairosClusterSettings)(implicit materializer: ActorMate
       import context.dispatcher
       readJournal.currentEventsByPersistenceId(PersistenceId, 0, System.currentTimeMillis()).
         runFold(Map.empty[JobId, JobSpec]) {
-          case (map, envelope) =>
-            envelope.event match {
-              case JobAccepted(jobId, jobSpec) =>
-                map + (jobId -> jobSpec)
-              case JobDisabled(jobId) if map.contains(jobId) =>
-                map - jobId
-              case _ => map
-            }
+          case (map, envelope) => envelope.event match {
+            case JobAccepted(jobId, jobSpec) =>
+              map + (jobId -> jobSpec)
+            case JobDisabled(jobId) if map.contains(jobId) =>
+              map - jobId
+            case _ => map
+          }
         } pipeTo sender()
 
     case msg: Any =>

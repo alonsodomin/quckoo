@@ -1,12 +1,11 @@
-package io.kairos.cluster.scheduler.execution
+package io.kairos.cluster.scheduler
 
-import akka.actor.{RootActorPath, ActorLogging, ActorRef, Props}
+import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.Normal
 import io.kairos.Task
 import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
-import io.kairos.cluster.scheduler._
-import io.kairos.id.{PlanId, TaskId}
+import io.kairos.id.PlanId
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -52,7 +51,7 @@ object Execution {
 
   case class ExecutionState private (val planId: PlanId, val task: Task, val outcome: Outcome) {
 
-    private[execution] def <<= (out: Outcome): ExecutionState =
+    private[scheduler] def <<= (out: Outcome): ExecutionState =
       this.copy(outcome = out)
 
   }

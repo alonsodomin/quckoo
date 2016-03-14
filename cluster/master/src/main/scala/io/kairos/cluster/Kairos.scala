@@ -9,13 +9,16 @@ import akka.util.Timeout
 import de.heikoseeberger.akkasse.ServerSentEvent
 import io.kairos.cluster.core._
 import io.kairos.cluster.protocol.GetClusterStatus
+import io.kairos.cluster.scheduler.ExecutionPlan
 import io.kairos.console.auth.AuthInfo
 import io.kairos.console.info.{ClusterInfo, NodeInfo}
+import io.kairos.console.model.ExecutionPlanDetails
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.fault.Fault
-import io.kairos.id.JobId
+import io.kairos.id.{PlanId, JobId}
 import io.kairos.protocol.RegistryProtocol
+import io.kairos.protocol.SchedulerProtocol
 import io.kairos.time.TimeSource
 import io.kairos.{JobSpec, Validated}
 import org.slf4s.Logging
@@ -31,12 +34,12 @@ class Kairos(settings: KairosClusterSettings)
   extends HttpRouter with ServerFacade with Logging {
 
   import RegistryProtocol._
+  import SchedulerProtocol._
   import UserAuthenticator._
 
-  val clusterSupervisor = system.actorOf(KairosCluster.props(settings), "kairos")
+  val core = system.actorOf(KairosCluster.props(settings), "kairos")
 
-  val registry = system.actorSelection(clusterSupervisor.path / "registry")
-  val userAuth = system.actorSelection(clusterSupervisor.path / "authenticator")
+  val userAuth = system.actorSelection(core.path / "authenticator")
 
   def start(implicit timeout: Timeout): Future[Unit] = {
     import system.dispatcher
@@ -45,9 +48,26 @@ class Kairos(settings: KairosClusterSettings)
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
   }
 
-  override def fetchJob(jobId: JobId): Future[Option[JobSpec]] = {
+  def allExecutionPlanIds: Future[List[PlanId]] = {
     implicit val timeout = Timeout(5 seconds)
-    (registry ? GetJob(jobId)).mapTo[Option[JobSpec]]
+    (core ? GetExecutionPlans).mapTo[List[PlanId]]
+  }
+
+  def executionPlan(planId: PlanId): Future[ExecutionPlanDetails] = {
+    import system.dispatcher
+
+    implicit val timeout = Timeout(5 seconds)
+    (core ? GetExecutionPlan(planId)).map {
+      case state: ExecutionPlan.PlanState =>
+        ExecutionPlanDetails(
+          state.jobId, state.planId, state.trigger, state.lastExecutionTime
+        )
+    }
+  }
+
+  def fetchJob(jobId: JobId): Future[Option[JobSpec]] = {
+    implicit val timeout = Timeout(5 seconds)
+    (core ? GetJob(jobId)).mapTo[Option[JobSpec]]
   }
 
   def registerJob(jobSpec: JobSpec): Future[Validated[JobId]] = {
@@ -62,7 +82,7 @@ class Kairos(settings: KairosClusterSettings)
       log.info(s"Registering job spec: $jobSpec")
 
       implicit val timeout = Timeout(30 seconds)
-      (registry ? RegisterJob(jobSpec)) map {
+      (core ? RegisterJob(jobSpec)) map {
         case JobAccepted(jobId, _)  => jobId.successNel[Fault]
         case JobRejected(_, errors) => errors.failure[JobId]
       }
@@ -71,7 +91,7 @@ class Kairos(settings: KairosClusterSettings)
 
   def registeredJobs: Future[Map[JobId, JobSpec]] = {
     implicit val timeout = Timeout(5 seconds)
-    (registry ? GetJobs).mapTo[Map[JobId, JobSpec]]
+    (core ? GetJobs).mapTo[Map[JobId, JobSpec]]
   }
 
   def events = Source.actorPublisher[KairosClusterEvent](KairosEventEmitter.props).
@@ -83,7 +103,7 @@ class Kairos(settings: KairosClusterSettings)
   def clusterDetails: Future[ClusterInfo] = {
     import system.dispatcher
     implicit val timeout = Timeout(5 seconds)
-    (clusterSupervisor ? GetClusterStatus).mapTo[KairosStatus] map { status =>
+    (core ? GetClusterStatus).mapTo[KairosStatus] map { status =>
       val nodeInfo = NodeInfo(status.members.size)
       ClusterInfo(nodeInfo, 0)
     }

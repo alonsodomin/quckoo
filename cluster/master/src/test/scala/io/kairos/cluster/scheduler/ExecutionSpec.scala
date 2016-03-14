@@ -1,10 +1,9 @@
-package io.kairos.cluster.scheduler.execution
+package io.kairos.cluster.scheduler
 
 import java.util.UUID
 
 import akka.testkit._
 import io.kairos.Task
-import io.kairos.cluster.scheduler.TaskQueue
 import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
 import io.kairos.id.ArtifactId
 import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
@@ -26,9 +25,9 @@ object ExecutionSpec {
 class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with ImplicitSender with DefaultTimeout
   with WordSpecLike with BeforeAndAfterAll with Matchers with ImplicitTimeSource {
 
-  import Task._
   import Execution._
   import ExecutionSpec._
+  import Task._
 
   val planId = UUID.randomUUID()
   val task = Task(id = UUID.randomUUID(), artifactId = TestArtifactId, jobClass = TestJobClass)
