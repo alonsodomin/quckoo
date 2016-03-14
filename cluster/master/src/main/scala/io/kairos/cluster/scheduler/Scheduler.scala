@@ -6,7 +6,7 @@ import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializerSettings, ActorMaterializer}
 import io.kairos.cluster.core.KairosJournal
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.id._
@@ -22,12 +22,12 @@ object Scheduler {
 
   private[scheduler] case class CreateExecutionPlan(spec: JobSpec, config: ScheduleJob)
 
-  def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource, materializer: ActorMaterializer) =
-    Props(classOf[Scheduler], registry, queueProps, timeSource, materializer)
+  def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource) =
+    Props(classOf[Scheduler], registry, queueProps, timeSource)
 
 }
 
-class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource, materializer: ActorMaterializer)
+class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource)
   extends Actor with ActorLogging with KairosJournal {
 
   import RegistryProtocol._
@@ -36,6 +36,8 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
   import WorkerProtocol._
 
   ClusterClientReceptionist(context.system).registerService(self)
+
+  final implicit val materializer = ActorMaterializer(ActorMaterializerSettings(context.system))
 
   private[this] val taskQueue = context.actorOf(queueProps, "taskQueue")
   private[this] val shardRegion = ClusterSharding(context.system).start(

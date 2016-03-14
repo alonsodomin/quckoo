@@ -5,9 +5,27 @@ package io.kairos.time
   */
 abstract class DateTime extends Ordered[DateTime] with Serializable {
 
+  def - (that: DateTime): Duration = diff(that)
+
   def diff(that: DateTime): Duration
 
+  def minusMillis(millis: Long): DateTime =
+    plusMillis(-millis)
+
   def plusMillis(millis: Long): DateTime
+
+  def minusSeconds(seconds: Int): DateTime =
+    plusSeconds(-seconds)
+
+  def plusSeconds(seconds: Int): DateTime
+
+  def minusMinutes(minutes: Int): DateTime =
+    plusMinutes(-minutes)
+
+  def plusMinutes(minutes: Int): DateTime
+
+  def minusHours(hours: Int): DateTime =
+    plusHours(-hours)
 
   def plusHours(hours: Int): DateTime
 

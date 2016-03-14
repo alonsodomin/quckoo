@@ -8,12 +8,18 @@ import org.widok.moment.{Moment, Units, Date}
 class MomentJSDateTime(private val date: Date) extends DateTime {
 
   def diff(that: DateTime): Duration = {
-    val millis = that.toEpochMillis - this.toEpochMillis
+    val millis = this.toEpochMillis - that.toEpochMillis
     new MomentJSDuration(Moment.duration(millis.toInt))
   }
 
   def plusMillis(millis: Long): DateTime =
     new MomentJSDateTime(date.add(millis.toInt))
+
+  def plusSeconds(seconds: Int): DateTime =
+    new MomentJSDateTime(date.add(seconds, Units.Second))
+
+  def plusMinutes(minutes: Int): DateTime =
+    new MomentJSDateTime(date.add(minutes, Units.Minute))
 
   def plusHours(hours: Int): DateTime =
     new MomentJSDateTime(date.add(hours, Units.Hour))

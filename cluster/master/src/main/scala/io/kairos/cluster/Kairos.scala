@@ -31,7 +31,7 @@ import scala.concurrent.duration._
   */
 class Kairos(settings: KairosClusterSettings)
             (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
-  extends HttpRouter with ServerFacade with Logging {
+    extends HttpRouter with ServerFacade with Logging {
 
   import RegistryProtocol._
   import SchedulerProtocol._

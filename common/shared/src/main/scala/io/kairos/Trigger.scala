@@ -10,7 +10,8 @@ import scala.concurrent.duration._
 sealed trait Trigger extends Serializable {
   import Trigger.ReferenceTime
 
-  def nextExecutionTime(referenceTime: ReferenceTime)(implicit source: TimeSource): Option[DateTime]
+  def nextExecutionTime(referenceTime: ReferenceTime)
+                       (implicit timeSource: TimeSource): Option[DateTime]
 
   def isRecurring: Boolean = false
 
@@ -26,8 +27,9 @@ object Trigger {
 
   case object Immediate extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)(implicit source: TimeSource): Option[DateTime] = referenceTime match {
-      case ScheduledTime(_)     => Some(source.currentDateTime)
+    override def nextExecutionTime(referenceTime: ReferenceTime)
+                                  (implicit timeSource: TimeSource): Option[DateTime] = referenceTime match {
+      case ScheduledTime(_)     => Some(timeSource.currentDateTime)
       case LastExecutionTime(_) => None
     }
 
@@ -35,31 +37,48 @@ object Trigger {
 
   case class After(delay: FiniteDuration) extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)(implicit source: TimeSource): Option[DateTime] =
+    override def nextExecutionTime(referenceTime: ReferenceTime)
+                                  (implicit timeSource: TimeSource): Option[DateTime] =
       referenceTime match {
         case ScheduledTime(time) =>
           val millis = delay.toMillis
           Some(time.plusMillis(millis))
+
         case LastExecutionTime(_) => None
       }
 
   }
 
-  case class At(when: DateTime) extends Trigger {
-    override def nextExecutionTime(referenceTime: ReferenceTime)(implicit source: TimeSource): Option[DateTime] =
+  case class At(when: DateTime, graceTime: Option[FiniteDuration] = None) extends Trigger {
+
+    override def nextExecutionTime(referenceTime: ReferenceTime)
+                                  (implicit timeSource: TimeSource): Option[DateTime] =
       referenceTime match {
-        case ScheduledTime(_)     => Some(when)
+        case ScheduledTime(_) =>
+          if (graceTime.isDefined) {
+            graceTime.flatMap { margin =>
+              val now = timeSource.currentDateTime
+              val diff = Math.abs((now - when).toMillis)
+              if (diff <= margin.toMillis) Some(now)
+              else if (now < when) Some(when)
+              else None
+            }
+          } else Some(when)
+
         case LastExecutionTime(_) => None
       }
+
   }
 
   case class Every(frequency: FiniteDuration, startingIn: Option[FiniteDuration] = None) extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)(implicit source: TimeSource): Option[DateTime] =
+    override def nextExecutionTime(referenceTime: ReferenceTime)
+                                  (implicit timeSource: TimeSource): Option[DateTime] =
       referenceTime match {
         case ScheduledTime(time) =>
           val millisDelay = (startingIn getOrElse 0.seconds).toMillis
           Some(time.plusMillis(millisDelay))
+
         case LastExecutionTime(time) =>
           val millisDelay = frequency.toMillis
           Some(time.plusMillis(millisDelay))
