@@ -45,7 +45,7 @@ object SiteMap extends ClientAuth {
     | staticRoute("#home", Home) ~> render(HomePage())
     | staticRoute("#registry", Registry) ~> render(registryPage)
     | staticRoute("#scheduler", Scheduler) ~> render(schedulerPage)
-    ).addCondition(isAuthenticatedC)(_ => Some(redirectToPage(Login)))
+    ).addCondition(isAuthenticatedC)(referral => Some(renderR(router => LoginPage(router, Some(referral)))))
   }
 
   private[this] val config = RouterConfigDsl[ConsolePage].buildConfig { dsl =>

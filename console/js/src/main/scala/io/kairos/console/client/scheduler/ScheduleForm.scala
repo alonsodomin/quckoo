@@ -3,7 +3,7 @@ package io.kairos.console.client.scheduler
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.kairos.console.client.components._
-import io.kairos.console.client.core.KairosModel
+import io.kairos.console.client.core.{LoadJobSpecs, KairosModel}
 import io.kairos.console.client.time.AmountOfTime
 import io.kairos.console.model.Schedule
 import io.kairos.id.JobId
@@ -51,6 +51,9 @@ object ScheduleForm {
     val jobId   = State.schedule ^|-> ScheduleDetails.jobId ^<-? some
     val trigger = State.schedule ^|-> ScheduleDetails.trigger
     val timeout = State.schedule ^|-> ScheduleDetails.timeout
+
+    def mounted(props: Props) =
+      Callback.ifTrue(props.proxy().jobSpecs.size == 0, props.proxy.dispatch(LoadJobSpecs))
 
     def formClosed(props: Props, state: State) = {
       if (state.cancelled) Callback.empty
@@ -173,6 +176,7 @@ object ScheduleForm {
   private[this] val component = ReactComponentB[Props]("ScheduleForm").
     initialState(State()).
     renderBackend[Backend].
+    componentWillMount($ => $.backend.mounted($.props)).
     build
 
   def apply(proxy: ModelProxy[KairosModel], schedule: Option[Schedule], handler: ScheduleHandler) =

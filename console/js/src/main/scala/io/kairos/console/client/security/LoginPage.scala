@@ -32,41 +32,43 @@ object LoginPage {
     )
   }
 
+  case class Props(routerCtl: RouterCtl[ConsolePage], referral: Option[ConsolePage])
   case class NotificationHolder(notifications: Option[Notification] = None)
 
-  class LoginBackend($: BackendScope[RouterCtl[ConsolePage], NotificationHolder]) {
+  class LoginBackend($: BackendScope[Props, NotificationHolder]) {
 
-    def loginHandler(loginReq: LoginRequest): Callback = {
+    def loginHandler(props: Props)(loginReq: LoginRequest): Callback = {
 
       def authFailedNotification(holder: NotificationHolder): NotificationHolder =
         holder.copy(notifications = Some(Notification.danger("Username or password incorrect")))
 
       def performLogin(): Future[Callback] =
         ClientApi.login(loginReq.username, loginReq.password).map { _ =>
-          $.props.flatMap(_.set(Home))
+          props.routerCtl.set(props.referral.getOrElse(Home))
         } recover { case _ =>
           $.modState(holder => authFailedNotification(holder)).
-            flatMap(_ => $.props.flatMap(_.set(Login)))
+            flatMap(_ => props.routerCtl.set(Login))
         }
 
       $.modState(holder => holder.copy(notifications = None)) >>
         Callback.future(performLogin())
     }
 
-    def render(holder: NotificationHolder) =
+    def render(props: Props, holder: NotificationHolder) =
       <.div(Style.formPlacement,
         holder.notifications.map(_.render),
         Panel(Panel.Props("Sign in into Kairos Console", ContextStyle.primary),
-          LoginForm(loginHandler)
+          LoginForm(loginHandler(props))
         )
       )
   }
 
-  private[this] val component = ReactComponentB[RouterCtl[ConsolePage]]("LoginPage").
+  private[this] val component = ReactComponentB[Props]("LoginPage").
     initialState(NotificationHolder()).
     renderBackend[LoginBackend].
     build
 
-  def apply(router: RouterCtl[ConsolePage]) = component(router)
+  def apply(router: RouterCtl[ConsolePage], referral: Option[ConsolePage] = None) =
+    component(Props(router, referral))
 
 }
