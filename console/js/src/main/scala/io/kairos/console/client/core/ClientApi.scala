@@ -2,7 +2,7 @@ package io.kairos.console.client.core
 
 import io.kairos.console.client.security.ClientAuth
 import io.kairos.console.info.ClusterInfo
-import io.kairos.console.model.ExecutionPlanDetails
+import io.kairos.console.model.Schedule
 import io.kairos.console.protocol.LoginRequest
 import io.kairos.console.{SchedulerApi, KairosApi, RegistryApi}
 import io.kairos.id.{PlanId, JobId}
@@ -80,11 +80,11 @@ object ClientApi extends KairosApi with RegistryApi with SchedulerApi with Clien
     }
   }
 
-  override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[ExecutionPlanDetails] = {
+  override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Schedule] = {
     import upickle.default._
 
     Ajax.get(ExecutionsURI + "/" + planId, headers = authHeaders).map { xhr =>
-      read[ExecutionPlanDetails](xhr.responseText)
+      read[Schedule](xhr.responseText)
     }
   }
 

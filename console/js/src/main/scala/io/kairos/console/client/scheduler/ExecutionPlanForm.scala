@@ -1,4 +1,4 @@
-package io.kairos.console.client.execution
+package io.kairos.console.client.scheduler
 
 import io.kairos.console.client.components.AmountOfTimeInput
 import io.kairos.console.client.core.ClientApi

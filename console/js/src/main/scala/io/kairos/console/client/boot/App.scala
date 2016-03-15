@@ -1,6 +1,6 @@
 package io.kairos.console.client.boot
 
-import io.kairos.console.client.execution.ExecutionsPage
+import io.kairos.console.client.scheduler.SchedulerPage
 import io.kairos.console.client.layout._
 import io.kairos.console.client.registry.RegistryPage
 import io.kairos.console.client.security.LoginPage
@@ -21,7 +21,7 @@ object App extends JSApp {
       LoginPage.Style,
       HomePage.Style,
       RegistryPage.Style,
-      ExecutionsPage.Style
+      SchedulerPage.Style
     )
     GlobalRegistry.onRegistration(_.addToDocument)
   }

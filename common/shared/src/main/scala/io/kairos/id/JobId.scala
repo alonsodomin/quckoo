@@ -19,4 +19,8 @@ object JobId {
 
 }
 
-final case class JobId(id: String)
+final case class JobId(private val id: String) {
+
+  override def toString = id
+
+}

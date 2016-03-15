@@ -41,6 +41,7 @@ object JobSpecList {
           model.seq.map { case (jobId, spec) =>
             <.tr(^.key := jobId.toString(),
               spec.renderFailed { ex =>
+                ex.printStackTrace()
                 <.td(^.colSpan := 4, ExceptionThrown(ex).toString())
               },
               spec.renderPending(_ > 500, _ => "Loading ..."),

@@ -2,7 +2,7 @@ package io.kairos.console.client
 
 import io.kairos.console.client.components.Icons
 import io.kairos.console.client.core.KairosCircuit
-import io.kairos.console.client.execution.ExecutionsPage
+import io.kairos.console.client.scheduler.SchedulerPage
 import io.kairos.console.client.layout.Navigation
 import io.kairos.console.client.layout.Navigation.NavigationItem
 import io.kairos.console.client.registry.RegistryPage
@@ -16,12 +16,11 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object SiteMap extends ClientAuth {
 
   sealed trait ConsolePage
-
   case object Root extends ConsolePage
   case object Home extends ConsolePage
   case object Login extends ConsolePage
   case object Registry extends ConsolePage
-  case object Executions extends ConsolePage
+  case object Scheduler extends ConsolePage
 
   private[this] val publicPages = RouterConfigDsl[ConsolePage].buildRule { dsl =>
     import dsl._
@@ -38,12 +37,14 @@ object SiteMap extends ClientAuth {
     implicit val redirectMethod = Redirect.Push
 
     def registryPage =
-      KairosCircuit.connect(identity(_))(proxy => RegistryPage(proxy))
+      KairosCircuit.connect(identity(_))(RegistryPage(_))
+    def schedulerPage =
+      KairosCircuit.connect(identity(_))(SchedulerPage(_))
 
     (emptyRule
     | staticRoute("#home", Home) ~> render(HomePage())
     | staticRoute("#registry", Registry) ~> render(registryPage)
-    | staticRoute("#executions", Executions) ~> render(ExecutionsPage())
+    | staticRoute("#scheduler", Scheduler) ~> render(schedulerPage)
     ).addCondition(isAuthenticatedC)(_ => Some(redirectToPage(Login)))
   }
 
@@ -58,16 +59,16 @@ object SiteMap extends ClientAuth {
       logToConsole
   }
 
-  val mainMenu = Seq(
-    NavigationItem("Dashboard", Home, Icons.dashboard),
-    NavigationItem("Registry", Registry, Icons.book),
-    NavigationItem("Executions", Executions, Icons.bolt)
+  val mainMenu = List(
+    NavigationItem(Icons.dashboard, "Dashboard", Home),
+    NavigationItem(Icons.book, "Registry", Registry),
+    NavigationItem(Icons.clockO, "Scheduler", Scheduler)
   )
 
   def layout(ctrl: RouterCtl[ConsolePage], res: Resolution[ConsolePage]) =
     <.div(
       if (isAuthenticated) {
-        Navigation(mainMenu.head, mainMenu, ctrl)
+        Navigation(mainMenu.head, mainMenu, ctrl, res.page)
       } else EmptyTag,
       res.render()
     )

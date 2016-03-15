@@ -7,7 +7,7 @@ import io.kairos.time.DateTime
 /**
   * Created by alonsodomin on 14/03/2016.
   */
-final case class ExecutionPlanDetails(
+final case class Schedule(
     jobId: JobId,
     planId: PlanId,
     trigger: Trigger,

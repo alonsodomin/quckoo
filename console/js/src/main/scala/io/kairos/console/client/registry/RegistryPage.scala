@@ -25,7 +25,6 @@ object RegistryPage {
 
   case class Props(proxy: ModelProxy[KairosModel])
   case class State(
-      notifications: Seq[Notification] = Seq(),
       selectedJob: Option[JobSpec] = None,
       showForm: Boolean = false
   )

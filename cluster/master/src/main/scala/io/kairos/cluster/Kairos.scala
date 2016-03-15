@@ -12,7 +12,7 @@ import io.kairos.cluster.protocol.GetClusterStatus
 import io.kairos.cluster.scheduler.ExecutionPlan
 import io.kairos.console.auth.AuthInfo
 import io.kairos.console.info.{ClusterInfo, NodeInfo}
-import io.kairos.console.model.ExecutionPlanDetails
+import io.kairos.console.model.Schedule
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.fault.Fault
@@ -53,13 +53,13 @@ class Kairos(settings: KairosClusterSettings)
     (core ? GetExecutionPlans).mapTo[List[PlanId]]
   }
 
-  def executionPlan(planId: PlanId): Future[ExecutionPlanDetails] = {
+  def executionPlan(planId: PlanId): Future[Schedule] = {
     import system.dispatcher
 
     implicit val timeout = Timeout(5 seconds)
     (core ? GetExecutionPlan(planId)).map {
       case state: ExecutionPlan.PlanState =>
-        ExecutionPlanDetails(
+        Schedule(
           state.jobId, state.planId, state.trigger, state.lastExecutionTime
         )
     }

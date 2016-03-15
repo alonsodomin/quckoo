@@ -16,25 +16,49 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 object Navigation extends ClientAuth {
   import SiteMap._
 
-  case class NavigationItem(name: String, page: ConsolePage, icon: Icon)
+  sealed trait NavigationMenu
+  case class NavigationList(icon: Icon, name: String, items: List[NavigationMenu]) extends NavigationMenu
+  case class NavigationItem(icon: Icon, name: String, page: ConsolePage) extends NavigationMenu
+  case object NavigationSeparator extends NavigationMenu
 
-  case class Props(initial: NavigationItem, menu: Seq[NavigationItem], routerCtl: RouterCtl[ConsolePage])
-  case class State(current: NavigationItem)
+  case class Props(initial: NavigationItem, menu: List[NavigationMenu], routerCtl: RouterCtl[ConsolePage], current: ConsolePage)
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
     def navigationItemClicked(item: NavigationItem): ReactEvent => Callback =
       e => preventDefault(e) >> stopPropagation(e) >>
-        $.modState(_.copy(current = item)) >>
         $.props.flatMap(_.routerCtl.set(item.page))
 
-    def renderNavItem(item: NavigationItem, props: Props, state: State) = {
-      <.li(^.classSet("active" -> (state.current == item)),
-        <.a(^.href := props.routerCtl.urlFor(item.page).value,
-          ^.onClick ==> navigationItemClicked(item),
-          item.icon, item.name
+    def renderNavMenu(menu: NavigationMenu, props: Props) = {
+      def navItem(item: NavigationItem): ReactNode = {
+        <.li(^.classSet("active" -> (props.current == item.page)),
+          <.a(^.href := props.routerCtl.urlFor(item.page).value,
+            ^.onClick ==> navigationItemClicked(item), item.icon, item.name
+          )
         )
-      )
+      }
+
+      def navSeparator: ReactNode = <.li(^.role := "separator", ^.`class` := "divider")
+
+      def navDropdown(list: NavigationList): ReactNode = {
+        <.li(^.classSet("dropdown" -> true),
+          <.a(^.href := "#", ^.`class` := "dropdown-toggle", ^.role := "button",
+            ^.aria.haspopup := true, ^.aria.expanded := false,
+            list.icon, list.name, <.span(^.`class` := "caret")
+          ),
+          <.ul(^.`class` := "dropdown-menu",
+            list.items.map(renderItem)
+          )
+        )
+      }
+
+      def renderItem(menuItem: NavigationMenu): ReactNode = menuItem match {
+        case item: NavigationItem => navItem(item)
+        case NavigationSeparator  => navSeparator
+        case list: NavigationList => navDropdown(list)
+      }
+
+      renderItem(menu)
     }
 
     def onLogoutClicked(e: ReactEventI): Callback = {
@@ -47,7 +71,7 @@ object Navigation extends ClientAuth {
       preventDefault(e) >> logoutAndRefresh
     }
 
-    def render(props: Props, state: State) =
+    def render(props: Props) =
       <.nav(^.`class` := "navbar navbar-default navbar-fixed-top",
         <.div(^.`class` := "container-fluid",
           <.div(^.`class` := "navbar-header",
@@ -58,7 +82,7 @@ object Navigation extends ClientAuth {
           ),
           <.div(^.`class` := "collapse navbar-collapse",
             <.ul(^.`class` := "nav navbar-nav",
-              props.menu.map(item => renderNavItem(item, props, state))
+              props.menu.map(item => renderNavMenu(item, props))
             ),
             <.ul(^.`class` := "nav navbar-nav navbar-right",
               <.li(^.`class` := "navbar-text", KairosCircuit.wrap(_.currentUser)(UserMenu.apply)),
@@ -71,11 +95,11 @@ object Navigation extends ClientAuth {
   }
 
   private[this] val component = ReactComponentB[Props]("Navigation").
-    initialState_P(p => State(p.initial)).
+    stateless.
     renderBackend[Backend].
     build
 
-  def apply(initial: NavigationItem, menu: Seq[NavigationItem], routerCtl: RouterCtl[ConsolePage]) =
-    component(Props(initial, menu, routerCtl))
+  def apply(initial: NavigationItem, menu: List[NavigationMenu], routerCtl: RouterCtl[ConsolePage], current: ConsolePage) =
+    component(Props(initial, menu, routerCtl, current))
 
 }

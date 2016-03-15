@@ -49,7 +49,7 @@ object Dependencies {
       val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka
       val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
       val http            = "com.typesafe.akka" %% "akka-http-experimental" % version.akka
-      val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % "1.5.0"
+      val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % "1.5.2"
       val sse             = "de.heikoseeberger" %% "akka-sse"               % "1.6.1"
       val distributedData = "com.typesafe.akka" %% "akka-distributed-data-experimental" % version.akka
 

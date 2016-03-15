@@ -5,7 +5,7 @@ import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializerSettings, ActorMaterializer}
 import io.kairos.JobSpec
 import io.kairos.cluster.KairosClusterSettings
 import io.kairos.cluster.core.KairosJournal
@@ -20,18 +20,21 @@ object Registry {
 
   final val PersistenceId = "registry"
 
-  def props(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer) =
-    Props(classOf[Registry], settings, materializer)
+  def props(settings: KairosClusterSettings) = Props(classOf[Registry], settings)
 
 }
 
-class Registry(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer)
+class Registry(settings: KairosClusterSettings)
     extends Actor with ActorLogging with KairosJournal {
 
   import Registry._
   import RegistryProtocol._
 
   ClusterClientReceptionist(context.system).registerService(self)
+
+  final implicit val materializer = ActorMaterializer(
+    ActorMaterializerSettings(context.system), "registry"
+  )
 
   private val cluster = Cluster(context.system)
   private val shardRegion = startShardRegion

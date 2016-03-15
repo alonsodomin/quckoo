@@ -5,26 +5,18 @@ import io.kairos.JobSpec
 import io.kairos.console.auth.User
 import io.kairos.console.client.components.Notification
 import io.kairos.console.client.security.ClientAuth
-import io.kairos.id.JobId
+import io.kairos.console.model.Schedule
+import io.kairos.id.{PlanId, JobId}
 
 /**
   * Created by alonsodomin on 20/02/2016.
   */
 
-object JobSpecFetch extends Fetch[JobId] {
-
-  override def fetch(key: JobId): Unit =
-    KairosCircuit.dispatch(UpdateJobSpecs(keys = Set(key)))
-
-  override def fetch(keys: Traversable[JobId]): Unit =
-    KairosCircuit.dispatch(UpdateJobSpecs(keys.toSet))
-
-}
-
 case class KairosModel private (
     currentUser: Option[User],
     notification: Option[Notification],
-    jobSpecs: PotMap[JobId, JobSpec]
+    jobSpecs: PotMap[JobId, JobSpec],
+    schedules: PotMap[PlanId, Schedule]
 )
 
 case class LoggedIn(username: String)
@@ -34,9 +26,10 @@ object KairosModel extends ClientAuth {
 
   def initial =
     KairosModel(
-      currentUser = authInfo.map(auth => User(auth.userId)),
+      currentUser  = authInfo.map(auth => User(auth.userId)),
       notification = None,
-      jobSpecs = PotMap(JobSpecFetch)
+      jobSpecs     = PotMap(JobSpecFetcher),
+      schedules    = PotMap(ScheduleFetcher)
     )
 
 }
