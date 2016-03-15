@@ -1,63 +1,98 @@
 package io.kairos.console.client.scheduler
 
-import io.kairos.console.client.components.AmountOfTimeInput
-import io.kairos.console.client.core.ClientApi
+import diode.react.ModelProxy
+import diode.react.ReactPot._
+import io.kairos.console.client.components._
+import io.kairos.console.client.core.KairosModel
 import io.kairos.console.client.time.AmountOfTime
+import io.kairos.console.model.Schedule
 import io.kairos.id.JobId
 import io.kairos.protocol._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._
-import monocle.Optional
 import monocle.macros.Lenses
 import monocle.std.option.some
-import org.scalajs.dom
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scalacss.ScalaCssReact._
 
 /**
   * Created by alonsodomin on 30/01/2016.
   */
-object ExecutionPlanForm {
-  import MonocleReact._
+object ScheduleForm {
   import SchedulerProtocol._
 
-  type ScheduleHandler = ScheduleJob => Callback
+  @inline
+  private def lnf = lookAndFeel
 
-  case class Props()
+  type ScheduleHandler = ScheduleJob => Callback
 
   object TriggerOption extends Enumeration {
     val Immediate, After, Every, At = Value
   }
 
   @Lenses
-  case class ScheduleDetails(jobId: Option[JobId] = None,
-                             trigger: TriggerOption.Value = TriggerOption.Immediate,
-                             timeout: AmountOfTime = AmountOfTime())
+  case class ScheduleDetails(
+      jobId: Option[JobId] = None,
+      trigger: TriggerOption.Value = TriggerOption.Immediate,
+      timeout: AmountOfTime = AmountOfTime()
+  )
+
+  case class Props(proxy: ModelProxy[KairosModel], schedule: Option[Schedule], handler: ScheduleHandler)
 
   @Lenses
-  case class FormState(availableJobIds: Map[String, (JobId, String)] = Map.empty,
-                       enableTimeout: Boolean = false,
-                       details: ScheduleDetails = ScheduleDetails()) {
+  case class State(
+      schedule: ScheduleDetails = ScheduleDetails(),
+      enableTimeout: Boolean = false,
+      cancelled: Boolean = true
+  )
 
-    def toScheduleJob: CallbackTo[ScheduleJob] = ???
+  class Backend($: BackendScope[Props, State]) {
 
-  }
+    val jobId   = State.schedule ^|-> ScheduleDetails.jobId ^<-? some
+    val trigger = State.schedule ^|-> ScheduleDetails.trigger
+    val timeout = State.schedule ^|-> ScheduleDetails.timeout
 
-  class ExecutionPlanFormBackend($: BackendScope[ScheduleHandler, FormState]) {
+    def formClosed(props: Props, state: State) = {
+      if (state.cancelled) Callback.empty
+      else {
+        def detailsToSchedule: ScheduleJob = ???
+        props.handler(detailsToSchedule)
+      }
+    }
 
-    val jobId   = FormState.details ^|-> ScheduleDetails.jobId ^<-? some
-    val trigger = FormState.details ^|-> ScheduleDetails.trigger
-    val timeout = FormState.details ^|-> ScheduleDetails.timeout
+    def submitForm(): Callback =
+      $.modState(_.copy(cancelled = false))
 
-    def submitSchedule(event: ReactEventI): Callback = {
-      event.preventDefaultCB >>
-        $.state.flatMap(form => $.props.flatMap(handler => handler(form.toScheduleJob.runNow())))
+    def render(props: Props, state: State) = {
+      <.form(^.name := "scheduleDetails", Modal(
+        Modal.Props(
+          header = hide => <.span(
+            <.button(^.tpe:= "button", lnf.close, ^.onClick --> hide, Icons.close),
+            <.h4("Schedule job")
+          ),
+          footer = hide => <.span(
+            Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
+            Button(Button.Props(Some(submitForm() >> hide), style = ContextStyle.primary), "Ok")
+          ),
+          closed = formClosed(props, state)
+        ),
+        <.div(lnf.formGroup,
+          <.label(lnf.controlLabel, ^.`for` := "jobId", "Job"),
+          <.select(lnf.formControl, ^.id := "jobId",
+            props.proxy().jobSpecs.seq.map { case (id, spec) =>
+              spec.renderReady { s =>
+                val desc = s.description.map(d => s"| $d").getOrElse("")
+                <.option(^.value := id.toString(), s"${s.displayName} $desc")
+              }
+            }
+          )
+        )
+      ))
     }
 
   }
 
-  private[this] val component = ReactComponentB[ScheduleHandler]("ExecutionPlanForm").
+  /*private[this] val component = ReactComponentB[ScheduleHandler]("ExecutionPlanForm").
     initialState(FormState()).
     backend(new ExecutionPlanFormBackend(_)).
     render { $ =>
@@ -133,8 +168,14 @@ object ExecutionPlanForm {
         $.modState(_.copy(availableJobIds = idMap))
       }
     }).
+    build*/
+
+  private[this] val component = ReactComponentB[Props]("ScheduleForm").
+    initialState(State()).
+    renderBackend[Backend].
     build
 
-  def apply(scheduleHandler: ScheduleHandler) = component(scheduleHandler)
+  def apply(proxy: ModelProxy[KairosModel], schedule: Option[Schedule], handler: ScheduleHandler) =
+    component(Props(proxy, schedule, handler))
 
 }

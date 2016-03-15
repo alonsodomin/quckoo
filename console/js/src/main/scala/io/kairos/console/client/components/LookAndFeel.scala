@@ -46,4 +46,6 @@ class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
   val formGroup   = wrap("form-group")
   val formControl = wrap("form-control")
 
+  val controlLabel = wrap("control-label")
+
 }

@@ -1,8 +1,9 @@
 package io.kairos.console.client.scheduler
 
 import diode.react.ModelProxy
+import io.kairos.console.client.components.{Button, Icons}
 import io.kairos.console.client.core.KairosModel
-import io.kairos.console.client.layout._
+import io.kairos.console.model.Schedule
 import io.kairos.protocol.SchedulerProtocol.ScheduleJob
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
@@ -22,7 +23,7 @@ object SchedulerPage {
   }
 
   case class Props(proxy: ModelProxy[KairosModel])
-  case class State()
+  case class State(selectedSchedule: Option[Schedule] = None, showForm: Boolean = false)
 
   class ExecutionsBackend($: BackendScope[Props, State]) {
 
@@ -31,13 +32,16 @@ object SchedulerPage {
       Callback.empty
     }
 
+    def scheduleForm(schedule: Option[Schedule]) =
+      $.modState(_.copy(selectedSchedule = schedule, showForm = true))
+
     def render(props: Props, state: State) = {
       <.div(Style.content,
-        <.h2("Executions"),
-        Panel("Schedule a job",
-          //NotificationDisplay(state.notifications),
-          ExecutionPlanForm(handleSchedule)
-        ),
+        <.h2("Scheduler"),
+        props.proxy().notification,
+        Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Create Schedule"),
+        if (state.showForm) ScheduleForm(props.proxy, state.selectedSchedule, handleSchedule)
+        else EmptyTag,
         props.proxy.wrap(_.schedules)(SchedulesList(_))
       )
     }

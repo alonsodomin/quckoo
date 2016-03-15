@@ -14,6 +14,7 @@ import scalacss.ScalaCssReact._
   * Created by alonsodomin on 23/12/2015.
   */
 object JobForm {
+  import MonocleReact._
 
   @inline
   private def lnf = lookAndFeel
@@ -35,22 +36,22 @@ object JobForm {
     val jobClass        = State.spec ^|-> JobSpec.jobClass
 
     def updateDisplayName(evt: ReactEventI) =
-      $.modState(state => displayName.set(evt.target.value)(state))
+      $.setStateL(displayName)(evt.target.value)
 
     def updateDescription(evt: ReactEventI) =
-      $.modState(state => description.set(evt.target.value)(state))
+      $.setStateL(description)(evt.target.value)
 
     def updateArtifactName(evt: ReactEventI) =
-      $.modState(state => artifactName.set(evt.target.value)(state))
+      $.setStateL(artifactName)(evt.target.value)
 
     def updateArtifactGroup(evt: ReactEventI) =
-      $.modState(state => artifactGroup.set(evt.target.value)(state))
+      $.setStateL(artifactGroup)(evt.target.value)
 
     def updateArtifactVersion(evt: ReactEventI) =
-      $.modState(state => artifactVersion.set(evt.target.value)(state))
+      $.setStateL(artifactVersion)(evt.target.value)
 
     def updateJobClass(evt: ReactEventI) =
-      $.modState(state => jobClass.set(evt.target.value)(state))
+      $.setStateL(jobClass)(evt.target.value)
 
     def submitForm(): Callback =
       $.modState(_.copy(cancelled = false))
@@ -61,10 +62,18 @@ object JobForm {
 
     def render(props: Props, state: State) = {
       <.form(^.name := "jobDetails",
-        Modal(Modal.Props(
-          header = hide => <.span(<.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close), <.h4("Register Job")),
-          footer = hide => <.span(Button(Button.Props(Some(submitForm() >> hide), style = ContextStyle.primary), "Ok")),
-          closed = formClosed(props, state)),
+        Modal(
+          Modal.Props(
+            header = hide => <.span(
+              <.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close),
+              <.h4("Register Job")
+            ),
+            footer = hide => <.span(
+              Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
+              Button(Button.Props(Some(submitForm() >> hide), style = ContextStyle.primary), "Ok")
+            ),
+            closed = formClosed(props, state)
+          ),
           <.div(lnf.formGroup,
             <.label(^.`for` := "displayName", "Display Name"),
             <.input.text(lnf.formControl, ^.id := "displayName",
