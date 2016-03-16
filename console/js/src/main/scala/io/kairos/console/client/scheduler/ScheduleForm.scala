@@ -142,7 +142,7 @@ object ScheduleForm {
             case TriggerOption.At    => Some(atTriggerField)
             case TriggerOption.Every => Some(everyTriggerField)
             case _                   => None
-          }).map[ReactNode]((html: ReactNode) => <.div(^.`class` := "col-sm-offset-2", html))
+          }).map(html => <.div(^.`class` := "col-sm-offset-2", html))
 
           val triggerSelector: ReactNode = {
             <.div(lnf.formGroup,
