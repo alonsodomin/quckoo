@@ -15,7 +15,7 @@ package object components {
   val lookAndFeel = new LookAndFeel
 
   implicit def icon2VDom(icon: Icon): ReactNode = {
-    <.span(^.classSet1M("fa", icon.classSet), ^.paddingRight := 5.px)
+    <.span(^.classSet1M("fa", icon.classSet), icon.state.padding ?= (^.paddingRight := 5.px))
   }
 
   implicit def jq2bootstrap(jq: JQuery): BootstrapJQuery = jq.asInstanceOf[BootstrapJQuery]

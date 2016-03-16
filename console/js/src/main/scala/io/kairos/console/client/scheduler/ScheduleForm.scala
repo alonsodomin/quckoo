@@ -33,10 +33,13 @@ object ScheduleForm {
   }
 
   @Lenses
+  case class Param(name: String, value: String)
+
+  @Lenses
   case class ScheduleDetails(
       jobId: Option[JobId] = None,
       trigger: Option[Trigger] = None,
-      params: Map[String, String] = Map.empty,
+      params: Vector[Param] = Vector.empty,
       timeout: Option[FiniteDuration] = None
   )
 
@@ -56,6 +59,7 @@ object ScheduleForm {
     val triggerOp = State.triggerOp
     val trigger   = State.schedule ^|-> ScheduleDetails.trigger ^<-? some
     val timeout   = State.schedule ^|-> ScheduleDetails.timeout ^<-? some
+    val params    = State.schedule ^|-> ScheduleDetails.params
 
     def mounted(props: Props) =
       Callback.ifTrue(props.proxy().jobSpecs.size == 0, props.proxy.dispatch(LoadJobSpecs))
@@ -104,40 +108,47 @@ object ScheduleForm {
         def updateAfterTrigger(duration: FiniteDuration): Callback =
           $.setStateL(trigger)(Trigger.After(duration))
 
-        def afterTriggerField: ReactNode = {
-          FiniteDurationInput(
-            "afterTrigger",
-            trigger.getOption(state).
-              filter(_.isInstanceOf[Trigger.After]).
-              map(_.asInstanceOf[Trigger.After].delay).
-              getOrElse(0 seconds),
-            updateAfterTrigger
+        def afterTriggerField: ReactNode =
+          <.div(lnf.formGroup,
+            <.label(^.`class` := "col-sm-2 control-label", "Delay"),
+            <.div(^.`class` := "col-sm-12",
+              FiniteDurationInput(
+                "afterTrigger",
+                trigger.getOption(state).
+                  filter(_.isInstanceOf[Trigger.After]).
+                  map(_.asInstanceOf[Trigger.After].delay).
+                  getOrElse(0 seconds),
+                updateAfterTrigger
+              )
+            )
           )
-        }
 
-        def atTriggerField: ReactNode = Seq(
-          <.div(^.`class` := "col-sm-4",
-            <.input.date()
-          ),
-          <.div(^.`class` := "col-sm-4",
-            <.input.time()
+        def atTriggerField: ReactNode =
+          <.div(lnf.formGroup,
+            <.label(^.`class` := "col-sm-2 control-label", "DateTime"),
+            <.div(^.`class` := "col-sm-12",
+              <.input.datetime(lnf.formControl, ^.id := "atTrigger_datetime")
+            )
           )
-        )
 
         def everyTriggerField: ReactNode = Seq(
           <.div(lnf.formGroup,
-            <.label(lnf.controlLabel, "Frequency"),
-            FiniteDurationInput("everyTrigger_freq", _ => Callback.empty)
+            <.label(^.`class` := "col-sm-4 control-label", "Frequency"),
+            <.div(^.`class` := "col-sm-12",
+              FiniteDurationInput("everyTrigger_freq", _ => Callback.empty)
+            )
           ),
           <.div(lnf.formGroup,
-            <.label(lnf.controlLabel, "Initial delay"),
-            FiniteDurationInput("everyTrigger_delay", _ => Callback.empty)
+            <.label(^.`class` := "col-sm-4 control-label", "Initial delay"),
+            <.div(^.`class` := "col-sm-12",
+              FiniteDurationInput("everyTrigger_delay", _ => Callback.empty)
+            )
           )
         )
 
         def fieldBody: ReactNode = {
           val triggerOpValue = triggerOp.get(state)
-          val triggerField = (triggerOp.get(state) match {
+          val triggerField = (triggerOpValue match {
             case TriggerOption.After => Some(afterTriggerField)
             case TriggerOption.At    => Some(atTriggerField)
             case TriggerOption.Every => Some(everyTriggerField)
@@ -165,7 +176,7 @@ object ScheduleForm {
         fieldBody
       }
 
-      def timeoutField = {
+      def timeoutField: ReactNode = <.div(
         <.div(lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", "Timeout"),
           <.div(^.`class` := "col-sm-10",
@@ -179,15 +190,50 @@ object ScheduleForm {
                 "Enabled"
               )
             )
-          ),
-          if (state.enableTimeout) {
-            <.div(^.`class` := "col-sm-offset-2",
-              FiniteDurationInput("timeout",
-                timeout.getOption(state).getOrElse(0 seconds),
-                $._setStateL(timeout)
-              )
+          )
+        ),
+        if (state.enableTimeout) {
+          <.div(^.`class` := "col-sm-offset-2",
+            FiniteDurationInput("timeout",
+              timeout.getOption(state).getOrElse(0 seconds),
+              $._setStateL(timeout)
             )
-          } else EmptyTag
+          )
+        } else EmptyTag
+      )
+
+      def parameterListField: ReactNode = {
+        def parameterField(param: Param): ReactNode = <.div(
+          <.div(^.`class` := "col-sm-5",
+            <.input.text(lnf.formControl, ^.value := param.name)
+          ),
+          <.div(^.`class` := "col-sm-5",
+            <.input.text(lnf.formControl, ^.value := param.value)
+          ),
+          <.div(^.`class` := "col-sm-2",
+            Button(Button.Props(None, style = ContextStyle.default), Icons.minus.noPadding)
+          )
+        )
+
+        def addParam(): Callback =
+          $.modStateL(State.schedule)(st => st.copy(params = st.params :+ Param("", "")))
+
+        <.div(
+          <.div(lnf.formGroup,
+            <.label(^.`class` := "col-sm-2 control-label", "Parameters"),
+            <.div(^.`class` := "col-sm-10",
+              Button(Button.Props(Some(addParam()), style = ContextStyle.default), Icons.plus.noPadding)
+            )
+          ),
+          <.div(^.`class` := "col-sm-offset-2",
+            <.div(^.`class` := "col-sm-5",
+              <.label(^.`class` := "control-label", "Name")
+            ),
+            <.div(^.`class` := "col-sm-5",
+              <.label(^.`class` := "control-label", "Value")
+            ),
+            state.schedule.params.map(parameterField)
+          )
         )
       }
 
@@ -199,13 +245,15 @@ object ScheduleForm {
           ),
           footer = hide => <.span(
             Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
+            Button(Button.Props(None, style = ContextStyle.default), "Preview"),
             Button(Button.Props(Some(submitForm() >> hide), style = ContextStyle.primary), "Ok")
           ),
           closed = formClosed(props, state)
         ),
         jobSelectorField,
         triggerSelectorField,
-        timeoutField
+        timeoutField,
+        parameterListField
       ))
     }
 

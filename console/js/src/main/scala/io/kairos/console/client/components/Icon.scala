@@ -15,7 +15,8 @@ final case class IconState(
     inverse: Boolean = false,
     pulse: Boolean = false,
     flipHorizontal: Boolean = false,
-    flipVertical: Boolean = false
+    flipVertical: Boolean = false,
+    padding: Boolean = true
 )
 
 final case class Icon private[components](name: String, state: IconState = IconState()) {
@@ -30,6 +31,7 @@ final case class Icon private[components](name: String, state: IconState = IconS
   def pulse = copy(state = state.copy(pulse = true))
   def flipHorizontal = copy(state = state.copy(flipHorizontal = true))
   def flipVertical = copy(state = state.copy(flipVertical = true))
+  def noPadding = copy(state = state.copy(padding = false))
 
   private[components] def classSet = {
     val classSetMap = mutable.Map(

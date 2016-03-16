@@ -11,6 +11,7 @@ import scalacss.ScalaCssReact._
   * Created by alonsodomin on 20/02/2016.
   */
 object Modal {
+
   case class Props(header: Callback => ReactNode,
                    footer: Callback => ReactNode,
                    closed: Callback,
