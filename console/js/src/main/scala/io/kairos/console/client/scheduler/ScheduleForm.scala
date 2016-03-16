@@ -36,6 +36,7 @@ object ScheduleForm {
   case class ScheduleDetails(
       jobId: Option[JobId] = None,
       trigger: Option[Trigger] = None,
+      params: Map[String, String] = Map.empty,
       timeout: Option[FiniteDuration] = None
   )
 
@@ -98,40 +99,70 @@ object ScheduleForm {
         )
       }
 
-      def triggerSelectorField = {
+      def triggerSelectorField: ReactNode = {
 
         def updateAfterTrigger(duration: FiniteDuration): Callback =
           $.setStateL(trigger)(Trigger.After(duration))
 
-        def afterTriggerField = {
-          <.div(^.`class` := "col-sm-offset-2",
-            FiniteDurationInput(
-              "afterTrigger",
-              trigger.getOption(state).
-                filter(_.isInstanceOf[Trigger.After]).
-                map(_.asInstanceOf[Trigger.After].delay).
-                getOrElse(0 seconds),
-              updateAfterTrigger
-            )
+        def afterTriggerField: ReactNode = {
+          FiniteDurationInput(
+            "afterTrigger",
+            trigger.getOption(state).
+              filter(_.isInstanceOf[Trigger.After]).
+              map(_.asInstanceOf[Trigger.After].delay).
+              getOrElse(0 seconds),
+            updateAfterTrigger
           )
         }
 
-        <.div(lnf.formGroup,
-          <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "trigger", "Trigger"),
-          <.div(^.`class` := "col-sm-10",
-            <.select(lnf.formControl, ^.`for` := "trigger",
-              ^.value := triggerOp.get(state).id,
-              ^.onChange ==> updateTriggerOp,
-              TriggerOption.values.map { triggerOp =>
-                <.option(^.value := triggerOp.id, triggerOp.toString())
-              }
-            )
+        def atTriggerField: ReactNode = Seq(
+          <.div(^.`class` := "col-sm-4",
+            <.input.date()
           ),
-          triggerOp.get(state) match {
-            case TriggerOption.After => afterTriggerField
-            case _ => EmptyTag
-          }
+          <.div(^.`class` := "col-sm-4",
+            <.input.time()
+          )
         )
+
+        def everyTriggerField: ReactNode = Seq(
+          <.div(lnf.formGroup,
+            <.label(lnf.controlLabel, "Frequency"),
+            FiniteDurationInput("everyTrigger_freq", _ => Callback.empty)
+          ),
+          <.div(lnf.formGroup,
+            <.label(lnf.controlLabel, "Initial delay"),
+            FiniteDurationInput("everyTrigger_delay", _ => Callback.empty)
+          )
+        )
+
+        def fieldBody: ReactNode = {
+          val triggerOpValue = triggerOp.get(state)
+          val triggerField = (triggerOp.get(state) match {
+            case TriggerOption.After => Some(afterTriggerField)
+            case TriggerOption.At    => Some(atTriggerField)
+            case TriggerOption.Every => Some(everyTriggerField)
+            case _                   => None
+          }).map[ReactNode]((html: ReactNode) => <.div(^.`class` := "col-sm-offset-2", html))
+
+          val triggerSelector: ReactNode = {
+            <.div(lnf.formGroup,
+              <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "trigger", "Trigger"),
+              <.div(^.`class` := "col-sm-10",
+                <.select(lnf.formControl, ^.`for` := "trigger",
+                  ^.value := triggerOpValue.id,
+                  ^.onChange ==> updateTriggerOp,
+                  TriggerOption.values.map { triggerOp =>
+                    <.option(^.value := triggerOp.id, triggerOp.toString())
+                  }
+                )
+              )
+            )
+          }
+
+          <.div(triggerSelector, triggerField)
+        }
+
+        fieldBody
       }
 
       def timeoutField = {

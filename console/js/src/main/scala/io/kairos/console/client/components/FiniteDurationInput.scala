@@ -42,10 +42,10 @@ object FiniteDurationInput {
 
       <.div(^.`class` := "container-fluid",
         <.div(^.`class` := "row",
-          <.div(^.`class` := "col-sm-4",
+          <.div(^.`class` := "col-sm-2",
             Input.long(state.length, updateAmount, ^.id := s"${id}_amount", ^.placeholder := "0")
           ),
-          <.div(^.`class` := "col-sm-8",
+          <.div(^.`class` := "col-sm-6",
             <.select(^.id := s"${id}_unit", ^.`class` := "form-control",
               ^.value := state.unit.toString(),
               ^.onChange ==> updateUnit,
