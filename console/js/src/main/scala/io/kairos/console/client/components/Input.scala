@@ -32,6 +32,10 @@ object Input {
     override def from: String => Int = _.toInt
   }
 
+  private[this] val LongConverter: Converter[Long] = new BaseConverter[Long] {
+    override def from: String => Long = _.toLong
+  }
+
   case class Props[A](
       initial: A,
       converter: Converter[A],
@@ -107,5 +111,8 @@ object Input {
 
   def int(initial: Int, onChange: Int => Callback, tagMods: TagMod*) =
     component[Int](Props(initial, IntConverter, onChange, (^.tpe := "number") :: tagMods.toList))
+
+  def long(initial: Long, onChange: Long => Callback, tagMods: TagMod*) =
+    component[Long](Props(initial, LongConverter, onChange, (^.tpe := "number") :: tagMods.toList))
 
 }

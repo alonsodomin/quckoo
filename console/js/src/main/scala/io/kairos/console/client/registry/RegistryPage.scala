@@ -38,12 +38,12 @@ object RegistryPage {
       def dispatchAction(props: Props): Callback =
         props.proxy.dispatch(RegisterJob(spec))
 
-      def updateState: Callback =
+      def updateState(): Callback =
         $.modState(_.copy(showForm = false))
 
       Callback.log("Registering job...") >>
         ($.props >>= dispatchAction) >>
-        updateState
+        updateState()
     }
 
     def render(props: Props, state: State) =
