@@ -44,8 +44,11 @@ trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
         headerValueByName(Auth.XSRFTokenHeader).flatMap { header =>
           if (header != cookie.value) {
             reject(AuthorizationFailedRejection)
-          } else pass & cancelRejection(AuthorizationFailedRejection)
+          } else {
+            pass & cancelRejection(AuthorizationFailedRejection) & refreshAuthInfo
+          }
         }
+
       case None =>
         reject(AuthorizationFailedRejection)
     }
