@@ -11,7 +11,9 @@ import io.kairos.protocol._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import monocle.macros.Lenses
-import monocle.std.option.some
+import monocle.std.option._
+import monocle.std.vector._
+import monocle.function.all._
 
 import scala.concurrent.duration._
 import scalacss.ScalaCssReact._
@@ -88,12 +90,13 @@ object ScheduleForm {
           <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobId", "Job"),
           <.div(^.`class` := "col-sm-10",
             <.select(lnf.formControl, ^.id := "jobId",
+              jobId.getOption(state).map(id => ^.value := id.toString()),
+              ^.onChange ==> $._setStateL(jobId),
               <.option("Select a job"),
               props.proxy().jobSpecs.seq.map { case (id, spec) =>
                 spec.renderReady { s =>
                   val desc = s.description.map(d => s"| $d").getOrElse("")
                   <.option(^.value := id.toString(),
-                    jobId.getOption(state).map(x => ^.selected := (id == x)),
                     s"${s.displayName} $desc"
                   )
                 }
@@ -123,28 +126,58 @@ object ScheduleForm {
             )
           )
 
-        def atTriggerField: ReactNode =
+        def atTriggerField: ReactNode = {
           <.div(lnf.formGroup,
-            <.label(^.`class` := "col-sm-2 control-label", "DateTime"),
-            <.div(^.`class` := "col-sm-12",
-              <.input.datetime(lnf.formControl, ^.id := "atTrigger_datetime")
+            <.div(^.`class` := "row",
+              <.label(^.`class` := "col-sm-2 control-label", "DateTime")
+            ),
+            <.div(^.`class` := "row",
+              <.div(^.`class` := "col-sm-5",
+                <.input.date(lnf.formControl, ^.id := "atTrigger_date")
+              ),
+              <.div(^.`class` := "col-sm-5",
+                <.input.time(lnf.formControl, ^.id := "atTrigger_time")
+              )
             )
           )
+        }
 
-        def everyTriggerField: ReactNode = Seq(
-          <.div(lnf.formGroup,
-            <.label(^.`class` := "col-sm-4 control-label", "Frequency"),
-            <.div(^.`class` := "col-sm-12",
-              FiniteDurationInput("everyTrigger_freq", _ => Callback.empty)
-            )
-          ),
-          <.div(lnf.formGroup,
-            <.label(^.`class` := "col-sm-4 control-label", "Initial delay"),
-            <.div(^.`class` := "col-sm-12",
-              FiniteDurationInput("everyTrigger_delay", _ => Callback.empty)
+        def everyTriggerField: ReactNode = {
+          def everyTriggerFreq = trigger.getOption(state).
+            filter(_.isInstanceOf[Trigger.Every]).
+            map(_.asInstanceOf[Trigger.Every].frequency).
+            getOrElse(0 seconds)
+
+          def everyTriggerDelay = trigger.getOption(state).
+            filter(_.isInstanceOf[Trigger.Every]).
+            flatMap(_.asInstanceOf[Trigger.Every].startingIn)
+
+          def updateEveryTriggerFreq(duration: FiniteDuration): Callback =
+            $.setStateL(trigger)(Trigger.Every(duration, everyTriggerDelay))
+
+          def updateEveryTriggerDelay(duration: FiniteDuration): Callback =
+            $.setStateL(trigger)(Trigger.Every(everyTriggerFreq, Some(duration)))
+
+          Seq(
+            <.div(lnf.formGroup,
+              <.label(^.`class` := "col-sm-4 control-label", "Frequency"),
+              <.div(^.`class` := "col-sm-12",
+                FiniteDurationInput("everyTrigger_freq",
+                  everyTriggerFreq, updateEveryTriggerFreq
+                )
+              )
+            ),
+            <.div(lnf.formGroup,
+              <.label(^.`class` := "col-sm-4 control-label", "Initial delay"),
+              <.div(^.`class` := "col-sm-12",
+                FiniteDurationInput("everyTrigger_delay",
+                  everyTriggerDelay.getOrElse(0 seconds),
+                  updateEveryTriggerDelay
+                )
+              )
             )
           )
-        )
+        }
 
         def fieldBody: ReactNode = {
           val triggerOpValue = triggerOp.get(state)
@@ -203,17 +236,37 @@ object ScheduleForm {
       )
 
       def parameterListField: ReactNode = {
-        def parameterField(param: Param): ReactNode = <.div(
-          <.div(^.`class` := "col-sm-5",
-            <.input.text(lnf.formControl, ^.value := param.name)
-          ),
-          <.div(^.`class` := "col-sm-5",
-            <.input.text(lnf.formControl, ^.value := param.value)
-          ),
-          <.div(^.`class` := "col-sm-2",
-            Button(Button.Props(None, style = ContextStyle.default), Icons.minus.noPadding)
+
+        def deleteParam(idx: Int): Callback = {
+          def removeIdxFromVector(ps: Vector[Param]): Vector[Param] =
+            ps.take(idx) ++ ps.drop(idx + 1)
+
+          $.modState(st => params.modify(removeIdxFromVector)(st))
+        }
+
+        def parameterField(idx: Int, param: Param): ReactNode = {
+          val indexFocus = params ^|-? index(idx)
+          val paramName  = indexFocus ^|-> Param.name
+          val paramValue = indexFocus ^|-> Param.value
+
+          def updateParamName(evt: ReactEventI): Callback =
+            $.setStateL(paramName)(evt.target.value)
+
+          def updateParamValue(evt: ReactEventI): Callback =
+            $.setStateL(paramValue)(evt.target.value)
+
+          <.div(
+            <.div(^.`class` := "col-sm-5",
+              <.input.text(lnf.formControl, ^.value := param.name, ^.onChange ==> updateParamName)
+            ),
+            <.div(^.`class` := "col-sm-5",
+              <.input.text(lnf.formControl, ^.value := param.value, ^.onChange ==> updateParamValue)
+            ),
+            <.div(^.`class` := "col-sm-2",
+              Button(Button.Props(Some(deleteParam(idx)), style = ContextStyle.default), Icons.minus.noPadding)
+            )
           )
-        )
+        }
 
         def addParam(): Callback =
           $.modStateL(State.schedule)(st => st.copy(params = st.params :+ Param("", "")))
@@ -225,15 +278,19 @@ object ScheduleForm {
               Button(Button.Props(Some(addParam()), style = ContextStyle.default), Icons.plus.noPadding)
             )
           ),
-          <.div(^.`class` := "col-sm-offset-2",
-            <.div(^.`class` := "col-sm-5",
-              <.label(^.`class` := "control-label", "Name")
+          if (state.schedule.params.nonEmpty) <.div(
+            <.div(^.`class` := "col-sm-offset-2",
+              <.div(^.`class` := "col-sm-5",
+                <.label(^.`class` := "control-label", "Name")
+              ),
+              <.div(^.`class` := "col-sm-5",
+                <.label(^.`class` := "control-label", "Value")
+              )
             ),
-            <.div(^.`class` := "col-sm-5",
-              <.label(^.`class` := "control-label", "Value")
-            ),
-            state.schedule.params.map(parameterField)
-          )
+            state.schedule.params.zipWithIndex.map { case (p, idx) =>
+              <.div(^.`class` := "col-sm-offset-2", parameterField(idx, p))
+            }
+          ) else EmptyTag
         )
       }
 
@@ -262,7 +319,7 @@ object ScheduleForm {
   private[this] val component = ReactComponentB[Props]("ScheduleForm").
     initialState(State()).
     renderBackend[Backend].
-    componentWillMount($ => $.backend.mounted($.props)).
+    componentDidMount($ => $.backend.mounted($.props)).
     build
 
   def apply(proxy: ModelProxy[KairosModel], schedule: Option[Schedule], handler: ScheduleHandler) =
