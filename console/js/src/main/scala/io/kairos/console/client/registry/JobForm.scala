@@ -3,12 +3,15 @@ package io.kairos.console.client.registry
 import io.kairos.JobSpec
 import io.kairos.console.client.components._
 import io.kairos.id.ArtifactId
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+
 import monocle.macros.Lenses
 import monocle.std.option._
 
 import scalacss.ScalaCssReact._
+import scalaz.-\/
 
 /**
   * Created by alonsodomin on 23/12/2015.
@@ -29,7 +32,7 @@ object JobForm {
   class JobFormBackend($: BackendScope[Props, State]) {
 
     val displayName     = State.spec ^|-> JobSpec.displayName
-    val description     = State.spec ^|-> JobSpec.description ^<-? some
+    val description     = State.spec ^|-> JobSpec.description
     val artifactGroup   = State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.group
     val artifactName    = State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.artifact
     val artifactVersion = State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.version
@@ -39,7 +42,7 @@ object JobForm {
       $.setStateL(displayName)(evt.target.value)
 
     def updateDescription(evt: ReactEventI) =
-      $.setStateL(description)(evt.target.value)
+      $.setStateL(description)(Some(evt.target.value))
 
     def updateArtifactName(evt: ReactEventI) =
       $.setStateL(artifactName)(evt.target.value)
@@ -78,6 +81,7 @@ object JobForm {
             <.label(^.`for` := "displayName", "Display Name"),
             <.input.text(lnf.formControl, ^.id := "displayName",
               ^.placeholder := "Job's name",
+              ^.value := displayName.get(state),
               ^.onChange ==> updateDisplayName
             )
           ),
@@ -85,6 +89,7 @@ object JobForm {
             <.label(^.`for` := "description", "Description"),
             <.input.text(lnf.formControl, ^.id := "description",
               ^.placeholder := "Job's description",
+              description.get(state).map(desc => ^.value := desc),
               ^.onChange ==> updateDescription
             )
           ),
@@ -93,6 +98,7 @@ object JobForm {
             <.div(^.`class` := "row",
               <.div(^.`class` := "col-sm-4",
                 <.input.text(lnf.formControl, ^.id := "artifactGroup",
+                  ^.value := artifactGroup.get(state),
                   ^.placeholder := "Group",
                   ^.onChange ==> updateArtifactGroup
                 )
@@ -100,12 +106,14 @@ object JobForm {
               <.div(^.`class` := "col-sm-4",
                 <.input.text(lnf.formControl, ^.id := "artifactName",
                   ^.placeholder := "Name",
+                  ^.value := artifactName.get(state),
                   ^.onChange ==> updateArtifactName
                 )
               ),
               <.div(^.`class` := "col-sm-4",
                 <.input.text(lnf.formControl, ^.id := "artifactVersion",
                   ^.placeholder := "Version",
+                  ^.value := artifactVersion.get(state),
                   ^.onChange ==> updateArtifactVersion
                 )
               )
@@ -115,6 +123,7 @@ object JobForm {
             <.label(^.`for` := "jobClass", "Job Class"),
             <.input.text(lnf.formControl, ^.id := "jobClass",
               ^.placeholder := "Fully classified job class name",
+              ^.value := jobClass.get(state),
               ^.onChange ==> updateJobClass
             )
           )

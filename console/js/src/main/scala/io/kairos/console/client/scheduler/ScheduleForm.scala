@@ -9,16 +9,19 @@ import io.kairos.console.client.core.{KairosModel, LoadJobSpecs}
 import io.kairos.console.model.Schedule
 import io.kairos.id.JobId
 import io.kairos.protocol._
+import io.kairos.time._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import monocle.macros.Lenses
-import monocle.std.option._
-import monocle.std.vector._
 import monocle.function.all._
+import monocle.macros.Lenses
+import monocle.std.vector._
+
+import org.widok.moment.{Date => MDate, Moment}
 
 import scala.concurrent.duration._
+import scala.scalajs.js.Date
 import scalacss.ScalaCssReact._
 
 /**
@@ -31,7 +34,13 @@ object ScheduleForm {
   @inline
   private def lnf = lookAndFeel
 
+  // Component properties
+
   type ScheduleHandler = ScheduleJob => Callback
+
+  case class Props(proxy: ModelProxy[KairosModel], schedule: Option[Schedule], handler: ScheduleHandler)
+
+  // Component model / state
 
   object TriggerOption extends Enumeration {
     val Immediate, After, Every, At = Value
@@ -48,8 +57,6 @@ object ScheduleForm {
       timeout: Option[FiniteDuration] = None
   )
 
-  case class Props(proxy: ModelProxy[KairosModel], schedule: Option[Schedule], handler: ScheduleHandler)
-
   @Lenses
   case class State(
       schedule: ScheduleDetails = ScheduleDetails(),
@@ -60,11 +67,10 @@ object ScheduleForm {
 
   class Backend($: BackendScope[Props, State]) {
 
-    val jobId     = State.schedule ^|-> ScheduleDetails.jobId   ^<-? some
-    val noJobId   = State.schedule ^|-> ScheduleDetails.jobId   ^<-? none
+    val jobId     = State.schedule ^|-> ScheduleDetails.jobId
     val triggerOp = State.triggerOp
-    val trigger   = State.schedule ^|-> ScheduleDetails.trigger ^<-? some
-    val timeout   = State.schedule ^|-> ScheduleDetails.timeout ^<-? some
+    val trigger   = State.schedule ^|-> ScheduleDetails.trigger
+    val timeout   = State.schedule ^|-> ScheduleDetails.timeout
     val params    = State.schedule ^|-> ScheduleDetails.params
 
     def mounted(props: Props) =
@@ -87,16 +93,16 @@ object ScheduleForm {
 
         def updateJobId(evt: ReactEventI): Callback = {
           if (evt.target.value isEmpty)
-            $.setStateL(noJobId)(())
+            $.setStateL(jobId)(None)
           else
-            $.setStateL(jobId)(JobId(evt.target.value))
+            $.setStateL(jobId)(Some(JobId(evt.target.value)))
         }
 
         <.div(lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobId", "Job"),
           <.div(^.`class` := "col-sm-10",
             <.select(lnf.formControl, ^.id := "jobId",
-              jobId.getOption(state).map(id => ^.value := id.toString()),
+              jobId.get(state).map(id => ^.value := id.toString()),
               ^.onChange ==> updateJobId,
               <.option("Select a job"),
               props.proxy().jobSpecs.seq.map { case (id, spec) =>
@@ -120,14 +126,14 @@ object ScheduleForm {
         def afterTriggerField: ReactNode = {
 
           def updateAfterTrigger(duration: FiniteDuration): Callback =
-            $.setStateL(trigger)(Trigger.After(duration))
+            $.setStateL(trigger)(Some(Trigger.After(duration)))
 
           <.div(lnf.formGroup,
             <.label(^.`class` := "col-sm-2 control-label", "Delay"),
             <.div(^.`class` := "col-sm-12",
               FiniteDurationInput(
                 "afterTrigger",
-                trigger.getOption(state).
+                trigger.get(state).
                   filter(_.isInstanceOf[Trigger.After]).
                   map(_.asInstanceOf[Trigger.After].delay).
                   getOrElse(0 seconds),
@@ -138,36 +144,81 @@ object ScheduleForm {
         }
 
         def atTriggerField: ReactNode = {
-          <.div(lnf.formGroup,
-            <.div(^.`class` := "row",
-              <.label(^.`class` := "col-sm-2 control-label", "DateTime")
-            ),
-            <.div(^.`class` := "row",
-              <.div(^.`class` := "col-sm-5",
-                <.input.date(lnf.formControl, ^.id := "atTrigger_date")
+          lazy val atTrigger = trigger.get(state).
+            filter(_.isInstanceOf[Trigger.At]).
+            map(_.asInstanceOf[Trigger.At])
+
+          lazy val underlyingDate = atTrigger.
+            map(t => t.when).
+            map(dt => dt.underlying.asInstanceOf[MDate])
+
+          lazy val datePart = underlyingDate.
+            orElse(Some(Moment())).
+            map(d => d.format("YYYY-MM-DD")).get
+          lazy val timePart = underlyingDate.
+            map(d => d.format("HH:mm")).getOrElse("00:00")
+
+          def dateTimeOf(date: MDate, time: MDate): DateTime = {
+            val jsDate = date.toDate()
+            val jsTime = time.toDate()
+            val jsDateTime = new Date(
+              jsDate.getFullYear(), jsDate.getMonth(), jsDate.getDate(),
+              jsTime.getHours(), jsTime.getMinutes()
+            )
+            new MomentJSDateTime(Moment(jsDateTime))
+          }
+
+          def updateDate(evt: ReactEventI): Callback = {
+            val date = Moment(evt.target.value)
+            val time = Moment(timePart, "HH:mm")
+
+            $.setStateL(trigger)(Some(Trigger.At(dateTimeOf(date, time))))
+          }
+
+          def updateTime(evt: ReactEventI): Callback = {
+            val date = Moment(datePart, "YYYY-MM-DD")
+            val time = Moment(evt.target.value, "HH:mm")
+
+            $.setStateL(trigger)(Some(Trigger.At(dateTimeOf(date, time))))
+          }
+
+          <.div(
+            <.div(lnf.formGroup,
+              <.label(^.`class` := "col-sm-2 control-label", "Date"),
+              <.div(^.`class` := "col-sm-4"),
+              <.label(^.`class` := "col-sm-2 control-label", "Time"),
+              <.div(^.`class` := "col-sm-4"),
+              <.div(^.`class` := "col-sm-6",
+                <.input.date(lnf.formControl, ^.id := "atTrigger_date",
+                  ^.value := datePart,
+                  ^.onChange ==> updateDate
+                )
               ),
-              <.div(^.`class` := "col-sm-5",
-                <.input.time(lnf.formControl, ^.id := "atTrigger_time")
+              <.div(^.`class` := "col-sm-6",
+                <.input.time(lnf.formControl, ^.id := "atTrigger_time",
+                  ^.value := timePart,
+                  ^.onChange ==> updateTime
+                )
               )
             )
           )
         }
 
         def everyTriggerField: ReactNode = {
-          lazy val everyTriggerFreq = trigger.getOption(state).
+          lazy val everyTriggerFreq = trigger.get(state).
             filter(_.isInstanceOf[Trigger.Every]).
             map(_.asInstanceOf[Trigger.Every].frequency).
             getOrElse(0 seconds)
 
-          lazy val everyTriggerDelay = trigger.getOption(state).
+          lazy val everyTriggerDelay = trigger.get(state).
             filter(_.isInstanceOf[Trigger.Every]).
             flatMap(_.asInstanceOf[Trigger.Every].startingIn)
 
           def updateEveryTriggerFreq(duration: FiniteDuration): Callback =
-            $.setStateL(trigger)(Trigger.Every(duration, everyTriggerDelay))
+            $.setStateL(trigger)(Some(Trigger.Every(duration, everyTriggerDelay)))
 
           def updateEveryTriggerDelay(duration: FiniteDuration): Callback =
-            $.setStateL(trigger)(Trigger.Every(everyTriggerFreq, Some(duration)))
+            $.setStateL(trigger)(Some(Trigger.Every(everyTriggerFreq, Some(duration))))
 
           Seq(
             <.div(lnf.formGroup,
@@ -243,8 +294,8 @@ object ScheduleForm {
           if (state.enableTimeout) {
             <.div(^.`class` := "col-sm-offset-2",
               FiniteDurationInput("timeout",
-                timeout.getOption(state).getOrElse(0 seconds),
-                $._setStateL(timeout)
+                timeout.get(state).getOrElse(0 seconds),
+                value => $.modState(st => timeout.set(Some(value))(st))
               )
             )
           } else EmptyTag
@@ -320,7 +371,7 @@ object ScheduleForm {
             Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
             Button(Button.Props(None, style = ContextStyle.default), "Preview"),
             Button(Button.Props(Some(submitForm() >> hide),
-              disabled = jobId.getOption(state).isEmpty,
+              disabled = jobId.get(state).isEmpty || trigger.get(state).isEmpty,
               style = ContextStyle.primary
             ), "Ok")
           ),

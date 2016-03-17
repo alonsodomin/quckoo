@@ -4,6 +4,7 @@ package io.kairos.time
   * Created by alonsodomin on 14/03/2016.
   */
 class DummyDateTime(val value: Long) extends DateTime {
+  type Repr = Long
 
   override def diff(that: DateTime): Duration =
     new DummyDuration(value - that.toEpochMillis)
@@ -26,6 +27,8 @@ class DummyDateTime(val value: Long) extends DateTime {
   }
 
   override def hashCode: Int = value.hashCode()
+
+  override def underlying = value
 
   override def toUTC: DateTime = this
 

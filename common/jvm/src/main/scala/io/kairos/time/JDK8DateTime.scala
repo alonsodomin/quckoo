@@ -7,6 +7,7 @@ import java.time.{Duration => JDuration, Instant, ZoneId, ZonedDateTime}
   * Created by alonsodomin on 22/12/2015.
   */
 class JDK8DateTime(private[JDK8DateTime] val zonedDateTime: ZonedDateTime) extends DateTime {
+  type Repr = ZonedDateTime
 
   def diff(that: DateTime): Duration =
     new JDK8Duration(JDuration.ofMillis(this.toEpochMillis - that.toEpochMillis))
@@ -29,6 +30,8 @@ class JDK8DateTime(private[JDK8DateTime] val zonedDateTime: ZonedDateTime) exten
   }
 
   override def hashCode(): Int = zonedDateTime.hashCode()
+
+  def underlying: ZonedDateTime = zonedDateTime
 
   def toUTC: DateTime = {
     val zdt = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"))

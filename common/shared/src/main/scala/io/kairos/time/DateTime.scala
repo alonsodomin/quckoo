@@ -4,6 +4,7 @@ package io.kairos.time
   * Created by alonsodomin on 22/12/2015.
   */
 abstract class DateTime extends Ordered[DateTime] with Serializable {
+  type Repr
 
   def - (that: DateTime): Duration = diff(that)
 
@@ -40,6 +41,8 @@ abstract class DateTime extends Ordered[DateTime] with Serializable {
 
   final def isEqual(dateTime: DateTime): Boolean =
     compareTo(dateTime) == 0
+
+  def underlying: Repr
 
   def toUTC: DateTime
 
