@@ -15,3 +15,30 @@
   margin-left: -150px;
   margin-top: 40px;
 }
+
+.modal-dialog {
+  max-height: 80%;
+}
+
+/*.modal-dialog,*/
+.modal-content {
+  /* 80% of window height */
+  height: 100%;
+}
+
+.modal-body {
+  /* 100% = dialog height, 120px = header + footer */
+  max-height: 600px;
+  overflow-y: scroll;
+}
+
+.modal-footer {
+  overflow-y: initial !important;
+  height: 70%;
+  max-height: calc(100% - 120px);
+}
+
+.modal-header {
+  max-height: 70%;
+}
+
