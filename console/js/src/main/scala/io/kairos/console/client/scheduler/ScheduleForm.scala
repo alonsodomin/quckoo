@@ -2,14 +2,17 @@ package io.kairos.console.client.scheduler
 
 import diode.react.ModelProxy
 import diode.react.ReactPot._
+
 import io.kairos.Trigger
 import io.kairos.console.client.components._
 import io.kairos.console.client.core.{KairosModel, LoadJobSpecs}
 import io.kairos.console.model.Schedule
 import io.kairos.id.JobId
 import io.kairos.protocol._
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+
 import monocle.macros.Lenses
 import monocle.std.option._
 import monocle.std.vector._
@@ -58,6 +61,7 @@ object ScheduleForm {
   class Backend($: BackendScope[Props, State]) {
 
     val jobId     = State.schedule ^|-> ScheduleDetails.jobId   ^<-? some
+    val noJobId   = State.schedule ^|-> ScheduleDetails.jobId   ^<-? none
     val triggerOp = State.triggerOp
     val trigger   = State.schedule ^|-> ScheduleDetails.trigger ^<-? some
     val timeout   = State.schedule ^|-> ScheduleDetails.timeout ^<-? some
@@ -77,21 +81,23 @@ object ScheduleForm {
     def submitForm(): Callback =
       $.modState(_.copy(cancelled = false))
 
-    def updateTriggerOp(evt: ReactEventI): Callback =
-      $.setStateL(triggerOp)(TriggerOption(evt.target.value.toInt))
-
-    def updateTimeoutFlag(evt: ReactEventI): Callback =
-      $.modStateL(State.enableTimeout)(!_)
-
     def render(props: Props, state: State) = {
 
       def jobSelectorField = {
+
+        def updateJobId(evt: ReactEventI): Callback = {
+          if (evt.target.value isEmpty)
+            $.setStateL(noJobId)(())
+          else
+            $.setStateL(jobId)(JobId(evt.target.value))
+        }
+
         <.div(lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobId", "Job"),
           <.div(^.`class` := "col-sm-10",
             <.select(lnf.formControl, ^.id := "jobId",
               jobId.getOption(state).map(id => ^.value := id.toString()),
-              ^.onChange ==> $._setStateL(jobId),
+              ^.onChange ==> updateJobId,
               <.option("Select a job"),
               props.proxy().jobSpecs.seq.map { case (id, spec) =>
                 spec.renderReady { s =>
@@ -108,10 +114,14 @@ object ScheduleForm {
 
       def triggerSelectorField: ReactNode = {
 
-        def updateAfterTrigger(duration: FiniteDuration): Callback =
-          $.setStateL(trigger)(Trigger.After(duration))
+        def updateTriggerOp(evt: ReactEventI): Callback =
+          $.setStateL(triggerOp)(TriggerOption(evt.target.value.toInt))
 
-        def afterTriggerField: ReactNode =
+        def afterTriggerField: ReactNode = {
+
+          def updateAfterTrigger(duration: FiniteDuration): Callback =
+            $.setStateL(trigger)(Trigger.After(duration))
+
           <.div(lnf.formGroup,
             <.label(^.`class` := "col-sm-2 control-label", "Delay"),
             <.div(^.`class` := "col-sm-12",
@@ -125,6 +135,7 @@ object ScheduleForm {
               )
             )
           )
+        }
 
         def atTriggerField: ReactNode = {
           <.div(lnf.formGroup,
@@ -143,12 +154,12 @@ object ScheduleForm {
         }
 
         def everyTriggerField: ReactNode = {
-          def everyTriggerFreq = trigger.getOption(state).
+          lazy val everyTriggerFreq = trigger.getOption(state).
             filter(_.isInstanceOf[Trigger.Every]).
             map(_.asInstanceOf[Trigger.Every].frequency).
             getOrElse(0 seconds)
 
-          def everyTriggerDelay = trigger.getOption(state).
+          lazy val everyTriggerDelay = trigger.getOption(state).
             filter(_.isInstanceOf[Trigger.Every]).
             flatMap(_.asInstanceOf[Trigger.Every].startingIn)
 
@@ -209,31 +220,36 @@ object ScheduleForm {
         fieldBody
       }
 
-      def timeoutField: ReactNode = <.div(
-        <.div(lnf.formGroup,
-          <.label(^.`class` := "col-sm-2 control-label", "Timeout"),
-          <.div(^.`class` := "col-sm-10",
-            <.div(^.`class` := "checkbox",
-              <.label(
-                <.input.checkbox(
-                  ^.id := "enableTimeout",
-                  ^.value := State.enableTimeout.get(state),
-                  ^.onChange ==> updateTimeoutFlag
-                ),
-                "Enabled"
+      def timeoutField: ReactNode = {
+        def updateTimeoutFlag(evt: ReactEventI): Callback =
+          $.modStateL(State.enableTimeout)(!_)
+
+        <.div(
+          <.div(lnf.formGroup,
+            <.label(^.`class` := "col-sm-2 control-label", "Timeout"),
+            <.div(^.`class` := "col-sm-10",
+              <.div(^.`class` := "checkbox",
+                <.label(
+                  <.input.checkbox(
+                    ^.id := "enableTimeout",
+                    ^.value := State.enableTimeout.get(state),
+                    ^.onChange ==> updateTimeoutFlag
+                  ),
+                  "Enabled"
+                )
               )
             )
-          )
-        ),
-        if (state.enableTimeout) {
-          <.div(^.`class` := "col-sm-offset-2",
-            FiniteDurationInput("timeout",
-              timeout.getOption(state).getOrElse(0 seconds),
-              $._setStateL(timeout)
+          ),
+          if (state.enableTimeout) {
+            <.div(^.`class` := "col-sm-offset-2",
+              FiniteDurationInput("timeout",
+                timeout.getOption(state).getOrElse(0 seconds),
+                $._setStateL(timeout)
+              )
             )
-          )
-        } else EmptyTag
-      )
+          } else EmptyTag
+        )
+      }
 
       def parameterListField: ReactNode = {
 
@@ -303,7 +319,10 @@ object ScheduleForm {
           footer = hide => <.span(
             Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
             Button(Button.Props(None, style = ContextStyle.default), "Preview"),
-            Button(Button.Props(Some(submitForm() >> hide), style = ContextStyle.primary), "Ok")
+            Button(Button.Props(Some(submitForm() >> hide),
+              disabled = jobId.getOption(state).isEmpty,
+              style = ContextStyle.primary
+            ), "Ok")
           ),
           closed = formClosed(props, state)
         ),
