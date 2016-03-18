@@ -56,10 +56,10 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
       val handler = context.actorOf(jobFetcherProps(cmd.jobId, sender(), cmd), "handler")
       registry.tell(GetJob(cmd.jobId), handler)
 
-    case cmd @ CreateExecutionPlan(_, config, requestor) =>
-      val factoryProps = Props(classOf[ExecutionPlanFactory], config.jobId, cmd,
-        taskQueue, shardRegion)
-      context.actorOf(factoryProps, s"execution-plan-factory-${config.jobId}")
+    case cmd @ CreateExecutionPlan(_, config, _) =>
+      log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
+      val props = factoryProps(config.jobId, cmd, taskQueue, shardRegion)
+      context.actorOf(props, s"execution-plan-factory-${config.jobId}")
 
     case get: GetExecutionPlan =>
       shardRegion.tell(get, sender())
@@ -85,6 +85,10 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
   private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
     Props(classOf[JobFetcher], jobId, requestor, config)
 
+  private[this] def factoryProps(jobId: JobId, createCmd: CreateExecutionPlan,
+                                 taskQueue: ActorRef, shardRegion: ActorRef): Props =
+    Props(classOf[ExecutionPlanFactory], jobId, createCmd, taskQueue, shardRegion)
+
 }
 
 private class JobFetcher(jobId: JobId, requestor: ActorRef, config: SchedulerProtocol.ScheduleJob)
@@ -99,7 +103,7 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: SchedulerPro
       context.stop(self)
 
     case None =>
-      log.warning("No job with id {} could be retrieved.", jobId)
+      log.info("No enabled job with id {} could be retrieved.", jobId)
       requestor ! JobNotFound(jobId)
       context.stop(self)
   }
@@ -117,11 +121,10 @@ private class ExecutionPlanFactory(jobId: JobId, cmd: Scheduler.CreateExecutionP
   override def preStart(): Unit =
     mediator ! DistributedPubSubMediator.Subscribe(SchedulerTopic, self)
 
-  override def postStop(): Unit =
-    mediator ! DistributedPubSubMediator.Unsubscribe(SchedulerTopic, self)
+  def receive: Receive = initializing
 
-  def receive: Receive = {
-    case DistributedPubSubMediator.SubscribeAck =>
+  def initializing: Receive = {
+    case DistributedPubSubMediator.SubscribeAck(_) =>
       import cmd._
 
       val planId = UUID.randomUUID()
@@ -130,11 +133,18 @@ private class ExecutionPlanFactory(jobId: JobId, cmd: Scheduler.CreateExecutionP
         val task = Task(taskId, jobSpec.artifactId, Map.empty, jobSpec.jobClass)
         Execution.props(planId, task, taskQueue, executionTimeout = config.timeout)
       }
-      log.info("Starting execution plan for job {}.", config.jobId)
+      log.debug("Starting execution plan for job {}.", config.jobId)
       shardRegion ! ExecutionPlan.New(config.jobId, spec, planId, config.trigger, executionProps)
 
     case response @ ExecutionPlanStarted(`jobId`, _) =>
+      log.info("Execution plan for job {} has been started.", jobId)
       cmd.requestor ! response
+      mediator ! DistributedPubSubMediator.Unsubscribe(SchedulerTopic, self)
+      context.become(shuttingDown)
+  }
+
+  def shuttingDown: Receive = {
+    case DistributedPubSubMediator.UnsubscribeAck(_) =>
       context.stop(self)
   }
 

@@ -60,6 +60,8 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
 
       eventListener.expectMsgType[ExecutionPlanStarted].jobId should be (TestJobId)
       eventListener.expectMsgType[TaskScheduled].jobId should be (TestJobId)
+
+      expectMsgType[ExecutionPlanStarted].jobId should be (TestJobId)
     }
 
     "should reply not found if the job is not present" in {
