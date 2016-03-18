@@ -40,7 +40,6 @@ class Kairos(settings: KairosClusterSettings)
   implicit val apiDispatcher = system.dispatchers.lookup("kairos.api-dispatcher")
 
   val core = system.actorOf(KairosCluster.props(settings), "kairos")
-
   val userAuth = system.actorSelection(core.path / "authenticator")
 
   def start(implicit timeout: Timeout): Future[Unit] = {
