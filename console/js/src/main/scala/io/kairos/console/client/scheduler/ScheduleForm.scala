@@ -52,7 +52,7 @@ object ScheduleForm {
   @Lenses
   case class ScheduleDetails(
       jobId: Option[JobId] = None,
-      trigger: Option[Trigger] = None,
+      trigger: Trigger = Trigger.Immediate,
       params: Vector[Param] = Vector.empty,
       timeout: Option[FiniteDuration] = None
   )
@@ -79,7 +79,11 @@ object ScheduleForm {
     def formClosed(props: Props, state: State) = {
       if (state.cancelled) Callback.empty
       else {
-        def detailsToSchedule: ScheduleJob = ???
+        def detailsToSchedule: ScheduleJob =
+          ScheduleJob(state.schedule.jobId.get,
+            trigger = state.schedule.trigger,
+            timeout = state.schedule.timeout)
+
         props.handler(detailsToSchedule)
       }
     }
@@ -120,20 +124,25 @@ object ScheduleForm {
 
       def triggerSelectorField: ReactNode = {
 
-        def updateTriggerOp(evt: ReactEventI): Callback =
-          $.setStateL(triggerOp)(TriggerOption(evt.target.value.toInt))
+        def updateTriggerOp(evt: ReactEventI): Callback = {
+          val selection = TriggerOption(evt.target.value.toInt)
+          $.setStateL(triggerOp)(selection).ret(selection) flatMap {
+            case TriggerOption.Immediate => $.setStateL(trigger)(Trigger.Immediate)
+            case _ => Callback.empty
+          }
+        }
 
         def afterTriggerField: ReactNode = {
 
           def updateAfterTrigger(duration: FiniteDuration): Callback =
-            $.setStateL(trigger)(Some(Trigger.After(duration)))
+            $.setStateL(trigger)(Trigger.After(duration))
 
           <.div(lnf.formGroup,
             <.label(^.`class` := "col-sm-2 control-label", "Delay"),
             <.div(^.`class` := "col-sm-12",
               FiniteDurationInput(
                 "afterTrigger",
-                trigger.get(state).
+                Option(trigger.get(state)).
                   filter(_.isInstanceOf[Trigger.After]).
                   map(_.asInstanceOf[Trigger.After].delay).
                   getOrElse(0 seconds),
@@ -144,7 +153,7 @@ object ScheduleForm {
         }
 
         def atTriggerField: ReactNode = {
-          lazy val atTrigger = trigger.get(state).
+          lazy val atTrigger = Option(trigger.get(state)).
             filter(_.isInstanceOf[Trigger.At]).
             map(_.asInstanceOf[Trigger.At])
 
@@ -172,14 +181,14 @@ object ScheduleForm {
             val date = Moment(evt.target.value)
             val time = Moment(timePart, "HH:mm")
 
-            $.setStateL(trigger)(Some(Trigger.At(dateTimeOf(date, time))))
+            $.setStateL(trigger)(Trigger.At(dateTimeOf(date, time)))
           }
 
           def updateTime(evt: ReactEventI): Callback = {
             val date = Moment(datePart, "YYYY-MM-DD")
             val time = Moment(evt.target.value, "HH:mm")
 
-            $.setStateL(trigger)(Some(Trigger.At(dateTimeOf(date, time))))
+            $.setStateL(trigger)(Trigger.At(dateTimeOf(date, time)))
           }
 
           <.div(
@@ -205,20 +214,20 @@ object ScheduleForm {
         }
 
         def everyTriggerField: ReactNode = {
-          lazy val everyTriggerFreq = trigger.get(state).
+          lazy val everyTriggerFreq = Option(trigger.get(state)).
             filter(_.isInstanceOf[Trigger.Every]).
             map(_.asInstanceOf[Trigger.Every].frequency).
             getOrElse(0 seconds)
 
-          lazy val everyTriggerDelay = trigger.get(state).
+          lazy val everyTriggerDelay = Option(trigger.get(state)).
             filter(_.isInstanceOf[Trigger.Every]).
             flatMap(_.asInstanceOf[Trigger.Every].startingIn)
 
           def updateEveryTriggerFreq(duration: FiniteDuration): Callback =
-            $.setStateL(trigger)(Some(Trigger.Every(duration, everyTriggerDelay)))
+            $.setStateL(trigger)(Trigger.Every(duration, everyTriggerDelay))
 
           def updateEveryTriggerDelay(duration: FiniteDuration): Callback =
-            $.setStateL(trigger)(Some(Trigger.Every(everyTriggerFreq, Some(duration))))
+            $.setStateL(trigger)(Trigger.Every(everyTriggerFreq, Some(duration)))
 
           Seq(
             <.div(lnf.formGroup,
@@ -371,7 +380,7 @@ object ScheduleForm {
             Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
             Button(Button.Props(None, style = ContextStyle.default), "Preview"),
             Button(Button.Props(Some(submitForm() >> hide),
-              disabled = jobId.get(state).isEmpty || trigger.get(state).isEmpty,
+              disabled = jobId.get(state).isEmpty,
               style = ContextStyle.primary
             ), "Ok")
           ),

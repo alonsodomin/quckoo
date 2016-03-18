@@ -65,6 +65,16 @@ class Kairos(settings: KairosClusterSettings)
     }
   }
 
+  def schedule(schedule: ScheduleJob): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
+    import system.dispatcher
+
+    implicit val timeout = Timeout(5 seconds)
+    (core ? schedule) map {
+      case invalid: JobNotFound        => Left(invalid)
+      case valid: ExecutionPlanStarted => Right(valid)
+    }
+  }
+
   def fetchJob(jobId: JobId): Future[Option[JobSpec]] = {
     implicit val timeout = Timeout(5 seconds)
     (core ? GetJob(jobId)).mapTo[Option[JobSpec]]

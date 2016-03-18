@@ -27,9 +27,14 @@ object SchedulerPage {
 
   class ExecutionsBackend($: BackendScope[Props, State]) {
 
-    def handleSchedule(scheduleJob: ScheduleJob): Callback = {
-      //$.modState(st => st.copy(notifications = Seq()))
-      Callback.empty
+    def scheduleJob(scheduleJob: ScheduleJob): Callback = {
+      def dispatchAction(props: Props): Callback =
+        props.proxy.dispatch(scheduleJob)
+
+      def updateState(): Callback =
+        $.modState(_.copy(showForm = false))
+
+      ($.props >>= dispatchAction) >> updateState()
     }
 
     def scheduleForm(schedule: Option[Schedule]) =
@@ -40,7 +45,7 @@ object SchedulerPage {
         <.h2("Scheduler"),
         props.proxy().notification,
         Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Create Schedule"),
-        if (state.showForm) ScheduleForm(props.proxy, state.selectedSchedule, handleSchedule)
+        if (state.showForm) ScheduleForm(props.proxy, state.selectedSchedule, scheduleJob)
         else EmptyTag,
         props.proxy.wrap(_.schedules)(SchedulesList(_))
       )

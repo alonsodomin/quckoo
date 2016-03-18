@@ -120,6 +120,7 @@ lazy val console = (crossProject in file("console")).
         "me.chrons" %%% "diode-react" % "0.5.0",
         "org.monifu" %%% "monifu" % "1.0",
         "be.doeraene" %%% "scalajs-jquery" % "0.9.0",
+        "org.singlespaced" %%% "scalajs-d3" % "0.3.1",
         "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
         "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % scalaJsReact,

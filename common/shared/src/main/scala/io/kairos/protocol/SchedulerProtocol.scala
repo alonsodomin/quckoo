@@ -21,7 +21,7 @@ object SchedulerProtocol {
 
   @Lenses
   case class ScheduleJob(jobId: JobId,
-      params: Map[String, AnyVal] = Map.empty,
+      //params: Map[String, String] = Map.empty,
       trigger: Trigger = Immediate,
       timeout: Option[FiniteDuration] = None
   ) extends SchedulerCommand

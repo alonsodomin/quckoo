@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
+import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
 import akka.stream.{ActorMaterializerSettings, ActorMaterializer}
@@ -20,7 +21,7 @@ import io.kairos.{JobSpec, Task}
 object Scheduler {
   import SchedulerProtocol._
 
-  private[scheduler] case class CreateExecutionPlan(spec: JobSpec, config: ScheduleJob)
+  private[scheduler] case class CreateExecutionPlan(spec: JobSpec, config: ScheduleJob, requestor: ActorRef)
 
   def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource) =
     Props(classOf[Scheduler], registry, queueProps, timeSource)
@@ -28,7 +29,7 @@ object Scheduler {
 }
 
 class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource)
-  extends Actor with ActorLogging with KairosJournal {
+    extends Actor with ActorLogging with KairosJournal {
 
   import RegistryProtocol._
   import Scheduler._
@@ -52,17 +53,13 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>
-      val handler = context.actorOf(handlerProps(cmd.jobId, sender(), cmd), "handler")
+      val handler = context.actorOf(jobFetcherProps(cmd.jobId, sender(), cmd), "handler")
       registry.tell(GetJob(cmd.jobId), handler)
 
-    case CreateExecutionPlan(spec, config) =>
-      val planId = UUID.randomUUID()
-      def executionProps(taskId: TaskId, jobSpec: JobSpec): Props = {
-        val task = Task(taskId, jobSpec.artifactId, config.params, jobSpec.jobClass)
-        Execution.props(planId, task, taskQueue, executionTimeout = config.timeout)
-      }
-      log.info("Starting execution plan for job {}.", config.jobId)
-      shardRegion ! ExecutionPlan.New(config.jobId, spec, planId, config.trigger, executionProps)
+    case cmd @ CreateExecutionPlan(_, config, requestor) =>
+      val factoryProps = Props(classOf[ExecutionPlanFactory], config.jobId, cmd,
+        taskQueue, shardRegion)
+      context.actorOf(factoryProps, s"execution-plan-factory-${config.jobId}")
 
     case get: GetExecutionPlan =>
       shardRegion.tell(get, sender())
@@ -85,12 +82,12 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
       taskQueue.tell(msg, sender())
   }
 
-  private[this] def handlerProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
-    Props(classOf[ScheduleHandler], jobId, requestor, config)
+  private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
+    Props(classOf[JobFetcher], jobId, requestor, config)
 
 }
 
-private class ScheduleHandler(jobId: JobId, requestor: ActorRef, config: SchedulerProtocol.ScheduleJob)
+private class JobFetcher(jobId: JobId, requestor: ActorRef, config: SchedulerProtocol.ScheduleJob)
     extends Actor with ActorLogging {
 
   import Scheduler._
@@ -98,12 +95,46 @@ private class ScheduleHandler(jobId: JobId, requestor: ActorRef, config: Schedul
 
   def receive: Receive = {
     case Some(spec: JobSpec) => // create execution plan
-      context.parent ! CreateExecutionPlan(spec, config)
+      context.parent ! CreateExecutionPlan(spec, config, requestor)
       context.stop(self)
 
     case None =>
       log.warning("No job with id {} could be retrieved.", jobId)
       requestor ! JobNotFound(jobId)
+      context.stop(self)
+  }
+
+}
+
+private class ExecutionPlanFactory(jobId: JobId, cmd: Scheduler.CreateExecutionPlan,
+                                   taskQueue: ActorRef, shardRegion: ActorRef)
+  extends Actor with ActorLogging {
+
+  import SchedulerProtocol._
+
+  private[this] val mediator = DistributedPubSub(context.system).mediator
+
+  override def preStart(): Unit =
+    mediator ! DistributedPubSubMediator.Subscribe(SchedulerTopic, self)
+
+  override def postStop(): Unit =
+    mediator ! DistributedPubSubMediator.Unsubscribe(SchedulerTopic, self)
+
+  def receive: Receive = {
+    case DistributedPubSubMediator.SubscribeAck =>
+      import cmd._
+
+      val planId = UUID.randomUUID()
+      def executionProps(taskId: TaskId, jobSpec: JobSpec): Props = {
+        // FIXME
+        val task = Task(taskId, jobSpec.artifactId, Map.empty, jobSpec.jobClass)
+        Execution.props(planId, task, taskQueue, executionTimeout = config.timeout)
+      }
+      log.info("Starting execution plan for job {}.", config.jobId)
+      shardRegion ! ExecutionPlan.New(config.jobId, spec, planId, config.trigger, executionProps)
+
+    case response @ ExecutionPlanStarted(`jobId`, _) =>
+      cmd.requestor ! response
       context.stop(self)
   }
 

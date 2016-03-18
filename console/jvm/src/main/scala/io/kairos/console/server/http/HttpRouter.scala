@@ -6,17 +6,21 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
+
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
+
 import io.kairos.JobSpec
 import io.kairos.console.server.ServerFacade
 import io.kairos.id.JobId
+import io.kairos.protocol.SchedulerProtocol
 import io.kairos.serialization
 
 trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMarshalling {
   this: ServerFacade =>
 
   import StatusCodes._
+  import SchedulerProtocol._
   import serialization.default._
   import serialization.time._
 
@@ -53,7 +57,7 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
       pathEnd {
         get {
           complete(registeredJobs)
-        } ~ post {
+        } ~ put {
           entity(as[JobSpec]) { jobSpec =>
             complete(registerJob(jobSpec))
           }
@@ -70,6 +74,10 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
       pathEnd {
         get {
           complete(allExecutionPlanIds)
+        } ~ put {
+          entity(as[ScheduleJob]) { sch =>
+            complete(schedule(sch))
+          }
         }
       } ~ path(JavaUUID) { planId =>
         get {
@@ -95,7 +103,7 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
   private[this] def rejectionHandler(log: LoggingAdapter) = RejectionHandler.newBuilder().
     handle { case ValidationRejection(msg, cause) =>
         log.error(s"$msg - reason: $cause")
-        complete(HttpResponse(Unauthorized, entity = msg))
+        complete(HttpResponse(BadRequest, entity = msg))
     } result()
 
   def router(implicit system: ActorSystem, materializer: ActorMaterializer): Route =

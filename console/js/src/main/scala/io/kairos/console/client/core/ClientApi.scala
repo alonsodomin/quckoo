@@ -6,6 +6,7 @@ import io.kairos.console.model.Schedule
 import io.kairos.console.protocol.LoginRequest
 import io.kairos.console.{SchedulerApi, KairosApi, RegistryApi}
 import io.kairos.id.{PlanId, JobId}
+import io.kairos.protocol.SchedulerProtocol.{ExecutionPlanStarted, JobNotFound, ScheduleJob}
 import io.kairos.serialization
 import io.kairos.{JobSpec, Validated}
 import io.kairos.time.MomentJSDateTime
@@ -66,7 +67,7 @@ object ClientApi extends KairosApi with RegistryApi with SchedulerApi with Clien
   override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]] = {
     import upickle.default._
 
-    Ajax.post(JobsURI, write(jobSpec), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
+    Ajax.put(JobsURI, write(jobSpec), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
       console.log(xhr.responseText)
       read[Validated[JobId]](xhr.responseText)
     }
@@ -93,6 +94,15 @@ object ClientApi extends KairosApi with RegistryApi with SchedulerApi with Clien
 
     Ajax.get(ExecutionsURI, headers = authHeaders).map { xhr =>
       read[List[PlanId]](xhr.responseText)
+    }
+  }
+
+  override def schedule(scheduleJob: ScheduleJob)
+                       (implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
+    import upickle.default._
+
+    Ajax.put(ExecutionsURI, headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
+      read[Either[JobNotFound, ExecutionPlanStarted]](xhr.responseText)
     }
   }
 }
