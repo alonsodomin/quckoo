@@ -135,16 +135,19 @@ class ExecutionPlan(implicit timeSource: TimeSource)
 
   override def receiveCommand: Receive = initial()
 
+  private def activatePlan(state: PlanState): Unit = {
+    log.info("Activating execution plan. planId={}", state.planId)
+    self ! scheduleOrFinish(state)
+    mediator ! DistributedPubSubMediator.Publish(
+      SchedulerTopic, ExecutionPlanStarted(state.jobId, state.planId)
+    )
+    context.become(active(state))
+  }
+
   private def initial(subscribed: Boolean = false, state: Option[PlanState] = None): Receive = {
     case DistributedPubSubMediator.SubscribeAck(_) =>
       if (state.isDefined) {
-        val st = state.get
-        log.info("Activating execution plan. planId={}", st.planId)
-        self ! scheduleOrFinish(st)
-        mediator ! DistributedPubSubMediator.Publish(
-          SchedulerTopic, ExecutionPlanStarted(st.jobId, st.planId)
-        )
-        context.become(active(st))
+        activatePlan(state.get)
       } else {
         context.become(initial(subscribed = true, state))
       }
@@ -155,11 +158,7 @@ class ExecutionPlan(implicit timeSource: TimeSource)
         log.info("Creating new execution plan. planId={}", st.planId)
 
         if (subscribed) {
-          self ! scheduleOrFinish(st)
-          mediator ! DistributedPubSubMediator.Publish(
-            SchedulerTopic, ExecutionPlanStarted(st.jobId, st.planId)
-          )
-          context.become(active(st))
+          activatePlan(st)
         } else {
           context.become(initial(subscribed, state = Some(st)))
         }
