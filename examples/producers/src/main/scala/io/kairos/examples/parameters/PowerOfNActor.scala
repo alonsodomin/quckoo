@@ -67,7 +67,8 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
     case Tick =>
       n += 1
       log.info("Produced work: {}", n)
-      client ! ScheduleJob(jobId, Map("n" -> n), jobTrigger)
+      //client ! ScheduleJob(jobId, Map("n" -> n), jobTrigger)
+      client ! ScheduleJob(jobId, jobTrigger)
       context.become(waitAccepted, discardOld = false)
   }
 
