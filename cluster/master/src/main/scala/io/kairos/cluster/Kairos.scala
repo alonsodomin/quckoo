@@ -37,13 +37,13 @@ class Kairos(settings: KairosClusterSettings)
   import SchedulerProtocol._
   import UserAuthenticator._
 
+  implicit val apiDispatcher = system.dispatchers.lookup("kairos.api-dispatcher")
+
   val core = system.actorOf(KairosCluster.props(settings), "kairos")
 
   val userAuth = system.actorSelection(core.path / "authenticator")
 
   def start(implicit timeout: Timeout): Future[Unit] = {
-    import system.dispatcher
-
     Http().bindAndHandle(router, settings.httpInterface, settings.httpPort).
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
   }
@@ -54,9 +54,8 @@ class Kairos(settings: KairosClusterSettings)
   }
 
   def executionPlan(planId: PlanId): Future[Schedule] = {
-    import system.dispatcher
-
     implicit val timeout = Timeout(5 seconds)
+
     (core ? GetExecutionPlan(planId)).map {
       case state: ExecutionPlan.PlanState =>
         Schedule(
@@ -66,9 +65,8 @@ class Kairos(settings: KairosClusterSettings)
   }
 
   def schedule(schedule: ScheduleJob): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
-    import system.dispatcher
-
     implicit val timeout = Timeout(5 seconds)
+
     (core ? schedule) map {
       case invalid: JobNotFound        => Left(invalid)
       case valid: ExecutionPlanStarted => Right(valid)
@@ -88,7 +86,6 @@ class Kairos(settings: KairosClusterSettings)
     if (valid.isFailure) {
       Future.successful(valid.asInstanceOf[Validated[JobId]])
     } else {
-      import system.dispatcher
       log.info(s"Registering job spec: $jobSpec")
 
       implicit val timeout = Timeout(30 seconds)
@@ -111,8 +108,8 @@ class Kairos(settings: KairosClusterSettings)
     })
 
   def clusterDetails: Future[ClusterInfo] = {
-    import system.dispatcher
     implicit val timeout = Timeout(5 seconds)
+
     (core ? GetClusterStatus).mapTo[KairosStatus] map { status =>
       val nodeInfo = NodeInfo(status.members.size)
       ClusterInfo(nodeInfo, 0)
@@ -120,9 +117,8 @@ class Kairos(settings: KairosClusterSettings)
   }
 
   def authenticate(username: String, password: Array[Char]): Future[Option[AuthInfo]] = {
-    import system.dispatcher
-
     implicit val timeout = Timeout(5 seconds)
+
     userAuth ? Authenticate(username, password) map {
       case AuthenticationSuccess(authInfo) => Some(authInfo)
       case AuthenticationFailed => None
