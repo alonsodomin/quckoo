@@ -37,7 +37,8 @@ lazy val commonJsSettins = Seq(
 )
 
 lazy val scoverageSettings = Seq(
-  coverageHighlighting := true
+  coverageHighlighting := true,
+  coverageExcludedPackages := "io\\.kairos\\.console\\.client\\..*"
 )
 
 lazy val kairos = (project in file(".")).
@@ -57,6 +58,7 @@ lazy val common = (crossProject in file("common")).
     name := "common"
   ).
   settings(commonSettings: _*).
+  settings(scoverageSettings: _*).
   settings(addCompilerPlugin(Dependencies.compiler.macroParadise)).
   settings(
     libraryDependencies ++= Seq(
@@ -105,6 +107,7 @@ lazy val console = (crossProject in file("console")).
   settings(addCompilerPlugin(Dependencies.compiler.macroParadise)).
   settings(
     name := "console",
+    coverageEnabled := false,
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "scalatags" % "0.4.6",
       "com.lihaoyi" %%% "upickle" % "0.3.8"
@@ -201,8 +204,9 @@ lazy val consoleResources = (project in file("console/resources")).
 // Cluster ==================================================
 
 lazy val cluster = (project in file("cluster")).
-  aggregate(clusterShared, master, worker).
-  settings(noPublishSettings)
+  settings(noPublishSettings).
+  settings(scoverageSettings).
+  aggregate(clusterShared, master, worker)
 
 lazy val clusterShared = Project("cluster-shared", file("cluster/shared")).
   settings(commonSettings: _*).
@@ -257,3 +261,8 @@ lazy val exampleProducers = Project("example-producers", file("examples/producer
   settings(Packaging.universalSettings: _*).
   settings(Packaging.dockerSettings: _*).
   dependsOn(commonJVM, exampleJobs, client)
+
+// Command aliases ==================================================
+
+addCommandAlias("testJS", ";commonJS/test;consoleJS/test")
+addCommandAlias("testJVM", ";commonJVM/test;client/test;consoleJVM/test;cluster/test;examples/test")
