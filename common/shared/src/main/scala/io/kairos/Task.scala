@@ -18,8 +18,8 @@ object Task {
 
   sealed trait Outcome extends Serializable
   case object NotStarted extends Outcome
-  case class Success(result: Any) extends Outcome
-  case class Failure(cause: Faults) extends Outcome
+  case object Success extends Outcome
+  case class Failure(cause: Fault) extends Outcome
   case class Interrupted(reason: String) extends Outcome
   case class NeverRun(reason: String) extends Outcome
   case object NeverEnding extends Outcome

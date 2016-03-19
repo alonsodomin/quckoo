@@ -5,6 +5,7 @@ import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.Normal
 import io.kairos.Task
 import io.kairos.cluster.scheduler.TaskQueue.EnqueueAck
+import io.kairos.fault.Fault
 import io.kairos.id.PlanId
 
 import scala.concurrent.duration._
@@ -21,7 +22,7 @@ object Execution {
   sealed trait Command
   case class WakeUp(task: Task) extends Command
   case object Start extends Command
-  case class Finish(result: TaskResult) extends Command
+  case class Finish(fault: Option[Fault]) extends Command
   case class Cancel(reason: String) extends Command
   case object TimeOut extends Command
   case object Get extends Command
@@ -45,7 +46,7 @@ object Execution {
   case class Cancelled(reason: String) extends ExecutionEvent
   case object Triggered extends ExecutionEvent
   case object Started extends ExecutionEvent
-  case class Completed(result: TaskResult) extends ExecutionEvent
+  case class Completed(fault: Option[Fault]) extends ExecutionEvent
   case object TimedOut extends ExecutionEvent
 
   case class Result(outcome: Outcome)
@@ -157,8 +158,8 @@ class Execution(
     case Awaken(t) => previous.copy(task = Some(t))
 
     case Completed(result) => result match {
-      case Left(cause)  => previous <<= Failure(cause)
-      case Right(value) => previous <<= Success(value)
+      case Some(fault) => previous <<= Failure(fault)
+      case _           => previous <<= Success
     }
 
     case Cancelled(reason) => stateName match {

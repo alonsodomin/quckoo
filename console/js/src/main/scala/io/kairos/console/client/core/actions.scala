@@ -2,7 +2,6 @@ package io.kairos.console.client.core
 
 import diode.data.{AsyncAction, Pot, PotState}
 import io.kairos._
-import io.kairos.console.model.Schedule
 import io.kairos.id.{JobId, PlanId}
 
 import scala.util.{Failure, Try}
@@ -10,13 +9,13 @@ import scala.util.{Failure, Try}
 case object LoadJobSpecs
 case class JobSpecsLoaded(value: Map[JobId, Pot[JobSpec]])
 
-case class UpdateJobSpecs(
+case class RefreshJobSpecs(
     keys: Set[JobId],
     state: PotState = PotState.PotEmpty,
     result: Try[Map[JobId, Pot[JobSpec]]] = Failure(new AsyncAction.PendingException)
-  ) extends AsyncAction[Map[JobId, Pot[JobSpec]], UpdateJobSpecs] {
+  ) extends AsyncAction[Map[JobId, Pot[JobSpec]], RefreshJobSpecs] {
 
-  override def next(newState: PotState, newValue: Try[Map[JobId, Pot[JobSpec]]]): UpdateJobSpecs =
+  override def next(newState: PotState, newValue: Try[Map[JobId, Pot[JobSpec]]]): RefreshJobSpecs =
     copy(state = newState, result = newValue)
 
 }
@@ -24,16 +23,16 @@ case class UpdateJobSpecs(
 case class RegisterJob(spec: JobSpec)
 case class RegisterJobResult(jobId: Validated[JobId])
 
-case object LoadSchedules
+case object LoadExecutionPlans
 case class ScheduleIds(planIds: Set[PlanId])
 
-case class UpdateSchedules(
+case class RefreshExecutionPlans(
     keys: Set[PlanId],
     state: PotState = PotState.PotEmpty,
-    result: Try[Map[PlanId, Pot[Schedule]]] = Failure(new AsyncAction.PendingException)
-  ) extends AsyncAction[Map[PlanId, Pot[Schedule]], UpdateSchedules] {
+    result: Try[Map[PlanId, Pot[ExecutionPlan]]] = Failure(new AsyncAction.PendingException)
+  ) extends AsyncAction[Map[PlanId, Pot[ExecutionPlan]], RefreshExecutionPlans] {
 
-  override def next(newState: PotState, newValue: Try[Map[PlanId, Pot[Schedule]]]): UpdateSchedules =
+  override def next(newState: PotState, newValue: Try[Map[PlanId, Pot[ExecutionPlan]]]): RefreshExecutionPlans =
     copy(state = newState, result = newValue)
 
 }

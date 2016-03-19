@@ -3,8 +3,8 @@ package io.kairos.console.client.scheduler
 import diode.data.PotMap
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-import io.kairos.console.client.core.LoadSchedules
-import io.kairos.console.model.Schedule
+import io.kairos.ExecutionPlan
+import io.kairos.console.client.core.LoadExecutionPlans
 import io.kairos.fault.ExceptionThrown
 import io.kairos.id.PlanId
 import japgolly.scalajs.react._
@@ -13,16 +13,16 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 /**
   * Created by alonsodomin on 30/01/2016.
   */
-object SchedulesList {
+object ExecutionPlanList {
 
-  case class Props(proxy: ModelProxy[PotMap[PlanId, Schedule]])
+  case class Props(proxy: ModelProxy[PotMap[PlanId, ExecutionPlan]])
 
   class Backend($: BackendScope[Props, Unit]) {
 
     def mounted(props: Props): Callback = {
       def perform: Callback =
-        Callback.log("Loading list of schedules from backend...") >>
-          props.proxy.dispatch(LoadSchedules)
+        Callback.log("Loading list of execution plans from backend...") >>
+          props.proxy.dispatch(LoadExecutionPlans)
 
       Callback.ifTrue(props.proxy().size == 0, perform)
     }
@@ -55,12 +55,12 @@ object SchedulesList {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("SchedulesList").
+  private[this] val component = ReactComponentB[Props]("ExecutionPlanList").
     stateless.
     renderBackend[Backend].
     componentDidMount($ => $.backend.mounted($.props)).
     build
 
-  def apply(proxy: ModelProxy[PotMap[PlanId, Schedule]]) = component(Props(proxy))
+  def apply(proxy: ModelProxy[PotMap[PlanId, ExecutionPlan]]) = component(Props(proxy))
 
 }

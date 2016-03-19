@@ -1,6 +1,6 @@
 package io.kairos.console
 
-import io.kairos.console.model.Schedule
+import io.kairos.ExecutionPlan
 import io.kairos.id._
 import io.kairos.protocol.SchedulerProtocol
 
@@ -12,7 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 trait SchedulerApi {
   import SchedulerProtocol._
 
-  def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Schedule]
+  def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[ExecutionPlan]
 
   def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]]
 

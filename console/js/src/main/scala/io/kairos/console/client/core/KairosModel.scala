@@ -1,12 +1,11 @@
 package io.kairos.console.client.core
 
 import diode.data._
-import io.kairos.JobSpec
+import io.kairos.{ExecutionPlan, JobSpec}
 import io.kairos.console.auth.User
 import io.kairos.console.client.components.Notification
 import io.kairos.console.client.security.ClientAuth
-import io.kairos.console.model.Schedule
-import io.kairos.id.{PlanId, JobId}
+import io.kairos.id.{JobId, PlanId}
 
 /**
   * Created by alonsodomin on 20/02/2016.
@@ -16,7 +15,7 @@ case class KairosModel private (
     currentUser: Option[User],
     notification: Option[Notification],
     jobSpecs: PotMap[JobId, JobSpec],
-    schedules: PotMap[PlanId, Schedule]
+    schedules: PotMap[PlanId, ExecutionPlan]
 )
 
 case class LoggedIn(username: String)
@@ -29,7 +28,7 @@ object KairosModel extends ClientAuth {
       currentUser  = authInfo.map(auth => User(auth.userId)),
       notification = None,
       jobSpecs     = PotMap(JobSpecFetcher),
-      schedules    = PotMap(ScheduleFetcher)
+      schedules    = PotMap(ExecutionPlanFetcher)
     )
 
 }

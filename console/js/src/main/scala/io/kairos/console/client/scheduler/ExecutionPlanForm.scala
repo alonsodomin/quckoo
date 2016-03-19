@@ -3,10 +3,9 @@ package io.kairos.console.client.scheduler
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 
-import io.kairos.Trigger
+import io.kairos.{ExecutionPlan, Trigger}
 import io.kairos.console.client.components._
 import io.kairos.console.client.core.{KairosModel, LoadJobSpecs}
-import io.kairos.console.model.Schedule
 import io.kairos.id.JobId
 import io.kairos.protocol._
 import io.kairos.time._
@@ -18,7 +17,7 @@ import monocle.function.all._
 import monocle.macros.Lenses
 import monocle.std.vector._
 
-import org.widok.moment.{Date => MDate, Moment}
+import org.widok.moment.{Moment, Date => MDate}
 
 import scala.concurrent.duration._
 import scala.scalajs.js.Date
@@ -27,7 +26,7 @@ import scalacss.ScalaCssReact._
 /**
   * Created by alonsodomin on 30/01/2016.
   */
-object ScheduleForm {
+object ExecutionPlanForm {
   import MonocleReact._
   import SchedulerProtocol._
 
@@ -38,7 +37,7 @@ object ScheduleForm {
 
   type ScheduleHandler = ScheduleJob => Callback
 
-  case class Props(proxy: ModelProxy[KairosModel], schedule: Option[Schedule], handler: ScheduleHandler)
+  case class Props(proxy: ModelProxy[KairosModel], plan: Option[ExecutionPlan], handler: ScheduleHandler)
 
   // Component model / state
 
@@ -50,7 +49,7 @@ object ScheduleForm {
   case class Param(name: String, value: String)
 
   @Lenses
-  case class ScheduleDetails(
+  case class PlanDetails(
       jobId: Option[JobId] = None,
       trigger: Trigger = Trigger.Immediate,
       params: Vector[Param] = Vector.empty,
@@ -59,7 +58,7 @@ object ScheduleForm {
 
   @Lenses
   case class State(
-      schedule: ScheduleDetails = ScheduleDetails(),
+      plan: PlanDetails = PlanDetails(),
       triggerOp: TriggerOption.Value = TriggerOption.Immediate,
       enableTimeout: Boolean = false,
       cancelled: Boolean = true
@@ -67,11 +66,11 @@ object ScheduleForm {
 
   class Backend($: BackendScope[Props, State]) {
 
-    val jobId     = State.schedule ^|-> ScheduleDetails.jobId
+    val jobId     = State.plan ^|-> PlanDetails.jobId
     val triggerOp = State.triggerOp
-    val trigger   = State.schedule ^|-> ScheduleDetails.trigger
-    val timeout   = State.schedule ^|-> ScheduleDetails.timeout
-    val params    = State.schedule ^|-> ScheduleDetails.params
+    val trigger   = State.plan ^|-> PlanDetails.trigger
+    val timeout   = State.plan ^|-> PlanDetails.timeout
+    val params    = State.plan ^|-> PlanDetails.params
 
     def mounted(props: Props) =
       Callback.ifTrue(props.proxy().jobSpecs.size == 0, props.proxy.dispatch(LoadJobSpecs))
@@ -80,9 +79,9 @@ object ScheduleForm {
       if (state.cancelled) Callback.empty
       else {
         def detailsToSchedule: ScheduleJob =
-          ScheduleJob(state.schedule.jobId.get,
-            trigger = state.schedule.trigger,
-            timeout = state.schedule.timeout)
+          ScheduleJob(state.plan.jobId.get,
+            trigger = state.plan.trigger,
+            timeout = state.plan.timeout)
 
         props.handler(detailsToSchedule)
       }
@@ -345,7 +344,7 @@ object ScheduleForm {
         }
 
         def addParam(): Callback =
-          $.modStateL(State.schedule)(st => st.copy(params = st.params :+ Param("", "")))
+          $.modStateL(State.plan)(st => st.copy(params = st.params :+ Param("", "")))
 
         <.div(
           <.div(lnf.formGroup,
@@ -354,7 +353,7 @@ object ScheduleForm {
               Button(Button.Props(Some(addParam()), style = ContextStyle.default), Icons.plus.noPadding)
             )
           ),
-          if (state.schedule.params.nonEmpty) <.div(
+          if (state.plan.params.nonEmpty) <.div(
             <.div(^.`class` := "col-sm-offset-2",
               <.div(^.`class` := "col-sm-5",
                 <.label(^.`class` := "control-label", "Name")
@@ -363,18 +362,18 @@ object ScheduleForm {
                 <.label(^.`class` := "control-label", "Value")
               )
             ),
-            state.schedule.params.zipWithIndex.map { case (p, idx) =>
+            state.plan.params.zipWithIndex.map { case (p, idx) =>
               <.div(^.`class` := "col-sm-offset-2", parameterField(idx, p))
             }
           ) else EmptyTag
         )
       }
 
-      <.form(^.name := "scheduleDetails", ^.`class` := "form-horizontal", Modal(
+      <.form(^.name := "executionPlanForm", ^.`class` := "form-horizontal", Modal(
         Modal.Props(
           header = hide => <.span(
             <.button(^.tpe:= "button", lnf.close, ^.onClick --> hide, Icons.close),
-            <.h4("Schedule job")
+            <.h4("Execution plan")
           ),
           footer = hide => <.span(
             Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
@@ -395,13 +394,13 @@ object ScheduleForm {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("ScheduleForm").
+  private[this] val component = ReactComponentB[Props]("ExecutionPlanForm").
     initialState(State()).
     renderBackend[Backend].
     componentDidMount($ => $.backend.mounted($.props)).
     build
 
-  def apply(proxy: ModelProxy[KairosModel], schedule: Option[Schedule], handler: ScheduleHandler) =
+  def apply(proxy: ModelProxy[KairosModel], schedule: Option[ExecutionPlan], handler: ScheduleHandler) =
     component(Props(proxy, schedule, handler))
 
 }

@@ -7,7 +7,7 @@ import scala.concurrent.duration._
 /**
  * Created by aalonsodominguez on 08/07/15.
  */
-sealed trait Trigger extends Serializable {
+sealed trait Trigger {
   import Trigger.ReferenceTime
 
   def nextExecutionTime(referenceTime: ReferenceTime)
@@ -19,7 +19,7 @@ sealed trait Trigger extends Serializable {
 
 object Trigger {
 
-  sealed trait ReferenceTime extends Serializable {
+  sealed trait ReferenceTime {
     val when: DateTime
   }
   case class ScheduledTime(when: DateTime) extends ReferenceTime
@@ -35,7 +35,7 @@ object Trigger {
 
   }
 
-  case class After(delay: FiniteDuration) extends Trigger {
+  final case class After(delay: FiniteDuration) extends Trigger {
 
     override def nextExecutionTime(referenceTime: ReferenceTime)
                                   (implicit timeSource: TimeSource): Option[DateTime] =
@@ -49,7 +49,7 @@ object Trigger {
 
   }
 
-  case class At(when: DateTime, graceTime: Option[FiniteDuration] = None) extends Trigger {
+  final case class At(when: DateTime, graceTime: Option[FiniteDuration] = None) extends Trigger {
 
     override def nextExecutionTime(referenceTime: ReferenceTime)
                                   (implicit timeSource: TimeSource): Option[DateTime] =
@@ -70,7 +70,7 @@ object Trigger {
 
   }
 
-  case class Every(frequency: FiniteDuration, startingIn: Option[FiniteDuration] = None) extends Trigger {
+  final case class Every(frequency: FiniteDuration, startingIn: Option[FiniteDuration] = None) extends Trigger {
 
     override def nextExecutionTime(referenceTime: ReferenceTime)
                                   (implicit timeSource: TimeSource): Option[DateTime] =

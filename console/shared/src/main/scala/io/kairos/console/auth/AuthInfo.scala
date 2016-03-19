@@ -1,6 +1,6 @@
 package io.kairos.console.auth
 
-import io.kairos.console.base64.Base64._
+import io.kairos.serialization.Base64._
 
 /**
  * Created by alonsodomin on 14/10/2015.

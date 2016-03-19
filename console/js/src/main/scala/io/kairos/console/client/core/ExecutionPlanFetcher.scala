@@ -6,10 +6,10 @@ import io.kairos.id.PlanId
 /**
   * Created by alonsodomin on 14/03/2016.
   */
-object ScheduleFetcher extends Fetch[PlanId] {
+object ExecutionPlanFetcher extends Fetch[PlanId] {
   override def fetch(key: PlanId): Unit =
-    KairosCircuit.dispatch(UpdateSchedules(keys = Set(key)))
+    KairosCircuit.dispatch(RefreshExecutionPlans(keys = Set(key)))
 
   override def fetch(keys: Traversable[PlanId]): Unit =
-    KairosCircuit.dispatch(UpdateSchedules(keys.toSet))
+    KairosCircuit.dispatch(RefreshExecutionPlans(keys.toSet))
 }

@@ -1,20 +1,22 @@
-package io.kairos.serialization
+package io.kairos.serialization.json
 
-import java.time.{ZonedDateTime, Instant, ZoneId}
+import java.time.{Instant, ZoneId, ZonedDateTime}
 
-import io.kairos.time.{JDK8DateTime, DateTime}
+import io.kairos.time.{DateTime, JDK8DateTime}
+
+import upickle.Js
+import upickle.default._
 
 /**
-  * Created by alonsodomin on 14/03/2016.
+  * Created by alonsodomin on 19/03/2016.
   */
-object time {
-  import upickle.Js
-  import upickle.default._
+trait JVMTimeJson {
 
   implicit val writer: Writer[DateTime] = Writer[DateTime] {
     case dateTime =>
-      writeJs(dateTime.toUTC.toEpochMillis)
+      Js.Num(dateTime.toUTC.toEpochMillis)
   }
+
   implicit val reader: Reader[DateTime] = Reader[DateTime] {
     case Js.Num(millis) =>
       val instant = Instant.ofEpochMilli(millis.toLong)
@@ -22,4 +24,5 @@ object time {
         withZoneSameInstant(ZoneId.systemDefault())
       new JDK8DateTime(zonedDateTime = zdt)
   }
+
 }

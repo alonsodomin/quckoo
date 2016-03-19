@@ -1,4 +1,4 @@
-package io.kairos.console.base64
+package io.kairos.serialization
 
 import scala.collection.immutable.HashMap
 

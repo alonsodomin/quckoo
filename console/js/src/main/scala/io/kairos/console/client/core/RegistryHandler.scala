@@ -37,7 +37,7 @@ class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) exten
     case JobSpecsLoaded(specs) if specs.nonEmpty =>
       updated(PotMap(JobSpecFetcher, specs))
 
-    case action: UpdateJobSpecs =>
+    case action: RefreshJobSpecs =>
       val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
       action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
   }
@@ -53,7 +53,7 @@ class RegistryHandler(model: ModelRW[KairosModel, KairosModel]) extends ActionHa
     case RegisterJobResult(validated) =>
       validated.disjunction match {
         case \/-(id) =>
-          effectOnly(Effect.action(UpdateJobSpecs(Set(id))))
+          updated(value.copy(notification = Some(Notification.info(s"Job registered with id $id"))), Effect.action(RefreshJobSpecs(Set(id))))
 
         case -\/(errors) =>
           updated(value.copy(notification = Some(Notification.danger(errors))))

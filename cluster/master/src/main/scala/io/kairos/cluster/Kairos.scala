@@ -9,18 +9,17 @@ import akka.util.Timeout
 import de.heikoseeberger.akkasse.ServerSentEvent
 import io.kairos.cluster.core._
 import io.kairos.cluster.protocol.GetClusterStatus
-import io.kairos.cluster.scheduler.ExecutionPlan
+import io.kairos.cluster.scheduler.ExecutionDriver
 import io.kairos.console.auth.AuthInfo
 import io.kairos.console.info.{ClusterInfo, NodeInfo}
-import io.kairos.console.model.Schedule
 import io.kairos.console.server.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.fault.Fault
-import io.kairos.id.{PlanId, JobId}
+import io.kairos.id.{JobId, PlanId}
 import io.kairos.protocol.RegistryProtocol
 import io.kairos.protocol.SchedulerProtocol
 import io.kairos.time.TimeSource
-import io.kairos.{JobSpec, Validated}
+import io.kairos.{ExecutionPlan, JobSpec, Validated}
 import org.slf4s.Logging
 
 import scala.concurrent.Future
@@ -52,15 +51,10 @@ class Kairos(settings: KairosClusterSettings)
     (core ? GetExecutionPlans).mapTo[List[PlanId]]
   }
 
-  def executionPlan(planId: PlanId): Future[Schedule] = {
+  def executionPlan(planId: PlanId): Future[ExecutionPlan] = {
     implicit val timeout = Timeout(5 seconds)
 
-    (core ? GetExecutionPlan(planId)).map {
-      case state: ExecutionPlan.PlanState =>
-        Schedule(
-          state.jobId, state.planId, state.trigger, state.lastExecutionTime
-        )
-    }
+    (core ? GetExecutionPlan(planId)).mapTo[ExecutionPlan]
   }
 
   def schedule(schedule: ScheduleJob): Future[Either[JobNotFound, ExecutionPlanStarted]] = {

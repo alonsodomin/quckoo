@@ -6,10 +6,12 @@ import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.testkit._
+
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
 import io.kairos.{JobSpec, Task, Trigger}
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
@@ -18,7 +20,7 @@ import scala.concurrent.duration._
 /**
  * Created by aalonsodominguez on 20/08/15.
  */
-object ExecutionPlanSpec {
+object ExecutionDriverSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "test")
   final val TestJobSpec = JobSpec("foo", Some("foo desc"), TestArtifactId, "com.example.Job")
@@ -26,15 +28,14 @@ object ExecutionPlanSpec {
 
 }
 
-class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
+class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec"))
     with ImplicitSender with ImplicitTimeSource
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers
     with Inside with MockFactory {
 
-  import ExecutionPlan._
-  import ExecutionPlanSpec._
+  import ExecutionDriver._
+  import ExecutionDriverSpec._
   import SchedulerProtocol._
-  import Trigger._
 
   val mediator = DistributedPubSub(system).mediator
   ignoreMsg {
@@ -61,7 +62,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val executionPlan = TestActorRef(ExecutionPlan.props, self, "executionPlanWithRecurringTrigger")
+    val executionPlan = TestActorRef(ExecutionDriver.props, self, "executionPlanWithRecurringTrigger")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -81,7 +82,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
     }
 
     "re-schedule the execution once it finishes" in {
-      val successOutcome = Task.Success("foo")
+      val successOutcome = Task.Success
       executionProbe.send(executionPlan, Execution.Result(successOutcome))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
@@ -121,7 +122,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val executionPlan = TestActorRef(ExecutionPlan.props, self, "executionPlanWithOneShotTrigger")
+    val executionPlan = TestActorRef(ExecutionDriver.props, self, "executionPlanWithOneShotTrigger")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -139,7 +140,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
     }
 
     "terminate once the execution finishes" in {
-      val successOutcome = Task.Success("bar")
+      val successOutcome = Task.Success
       executionProbe.send(executionPlan, Execution.Result(successOutcome))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
@@ -165,7 +166,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val executionPlan = TestActorRef(ExecutionPlan.props, self, "executionPlanThatNeverFires")
+    val executionPlan = TestActorRef(ExecutionDriver.props, self, "executionPlanThatNeverFires")
     watch(executionPlan)
 
     "create an execution from a job specification and terminate it right after" in {

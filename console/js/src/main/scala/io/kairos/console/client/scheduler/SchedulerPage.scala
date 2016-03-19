@@ -1,9 +1,9 @@
 package io.kairos.console.client.scheduler
 
 import diode.react.ModelProxy
+import io.kairos.ExecutionPlan
 import io.kairos.console.client.components.{Button, Icons}
 import io.kairos.console.client.core.KairosModel
-import io.kairos.console.model.Schedule
 import io.kairos.protocol.SchedulerProtocol.ScheduleJob
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
@@ -23,7 +23,7 @@ object SchedulerPage {
   }
 
   case class Props(proxy: ModelProxy[KairosModel])
-  case class State(selectedSchedule: Option[Schedule] = None, showForm: Boolean = false)
+  case class State(selectedSchedule: Option[ExecutionPlan] = None, showForm: Boolean = false)
 
   class ExecutionsBackend($: BackendScope[Props, State]) {
 
@@ -37,7 +37,7 @@ object SchedulerPage {
       ($.props >>= dispatchAction) >> updateState()
     }
 
-    def scheduleForm(schedule: Option[Schedule]) =
+    def scheduleForm(schedule: Option[ExecutionPlan]) =
       $.modState(_.copy(selectedSchedule = schedule, showForm = true))
 
     def render(props: Props, state: State) = {
@@ -45,9 +45,9 @@ object SchedulerPage {
         <.h2("Scheduler"),
         props.proxy().notification,
         Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Create Schedule"),
-        if (state.showForm) ScheduleForm(props.proxy, state.selectedSchedule, scheduleJob)
+        if (state.showForm) ExecutionPlanForm(props.proxy, state.selectedSchedule, scheduleJob)
         else EmptyTag,
-        props.proxy.wrap(_.schedules)(SchedulesList(_))
+        props.proxy.wrap(_.schedules)(ExecutionPlanList(_))
       )
     }
 

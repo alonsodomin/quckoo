@@ -9,9 +9,9 @@ import io.kairos.id.JobId
 object JobSpecFetcher extends Fetch[JobId] {
 
   override def fetch(key: JobId): Unit =
-    KairosCircuit.dispatch(UpdateJobSpecs(keys = Set(key)))
+    KairosCircuit.dispatch(RefreshJobSpecs(keys = Set(key)))
 
   override def fetch(keys: Traversable[JobId]): Unit =
-    KairosCircuit.dispatch(UpdateJobSpecs(keys.toSet))
+    KairosCircuit.dispatch(RefreshJobSpecs(keys.toSet))
 
 }

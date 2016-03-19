@@ -1,14 +1,14 @@
-package io.kairos.serialization
+package io.kairos.serialization.json
 
-import upickle.Js
+import upickle.{AttributeTagged, Js}
 import upickle.default._
 
-import scalaz.{Success, Failure, Validation, NonEmptyList}
+import scalaz.{Failure, NonEmptyList, Success, Validation}
 
 /**
-  * Created by alonsodomin on 13/03/2016.
+  * Created by alonsodomin on 19/03/2016.
   */
-object default {
+trait ScalazJson {
   import scala.language.implicitConversions
 
   implicit def nonEmptyListW[T: Writer]: Writer[NonEmptyList[T]] = Writer[NonEmptyList[T]] {

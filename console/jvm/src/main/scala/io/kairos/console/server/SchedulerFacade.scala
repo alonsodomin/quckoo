@@ -1,6 +1,6 @@
 package io.kairos.console.server
 
-import io.kairos.console.model.Schedule
+import io.kairos.ExecutionPlan
 import io.kairos.id._
 import io.kairos.protocol.SchedulerProtocol
 
@@ -12,7 +12,7 @@ import scala.concurrent.Future
 trait SchedulerFacade {
   import SchedulerProtocol._
 
-  def executionPlan(planId: PlanId): Future[Schedule]
+  def executionPlan(planId: PlanId): Future[ExecutionPlan]
 
   def allExecutionPlanIds: Future[List[PlanId]]
 

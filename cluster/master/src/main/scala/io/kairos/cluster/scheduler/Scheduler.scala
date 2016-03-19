@@ -22,7 +22,7 @@ import io.kairos.time.TimeSource
 object Scheduler {
   import SchedulerProtocol._
 
-  private[scheduler] case class CreateExecutionPlan(spec: JobSpec, config: ScheduleJob, requestor: ActorRef)
+  private[scheduler] case class CreateExecutionDriver(spec: JobSpec, config: ScheduleJob, requestor: ActorRef)
 
   def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource) =
     Props(classOf[Scheduler], registry, queueProps, timeSource)
@@ -43,11 +43,11 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
 
   private[this] val taskQueue = context.actorOf(queueProps, "queue")
   private[this] val shardRegion = ClusterSharding(context.system).start(
-    ExecutionPlan.ShardName,
-    entityProps     = ExecutionPlan.props,
+    ExecutionDriver.ShardName,
+    entityProps     = ExecutionDriver.props,
     settings        = ClusterShardingSettings(context.system),
-    extractEntityId = ExecutionPlan.idExtractor,
-    extractShardId  = ExecutionPlan.shardResolver
+    extractEntityId = ExecutionDriver.idExtractor,
+    extractShardId  = ExecutionDriver.shardResolver
   )
 
   override implicit def actorSystem: ActorSystem = context.system
@@ -57,7 +57,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
       val handler = context.actorOf(jobFetcherProps(cmd.jobId, sender(), cmd), "handler")
       registry.tell(GetJob(cmd.jobId), handler)
 
-    case cmd @ CreateExecutionPlan(_, config, _) =>
+    case cmd @ CreateExecutionDriver(_, config, _) =>
       log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
       val props = factoryProps(config.jobId, cmd, shardRegion)
       context.actorOf(props, s"execution-plan-factory-${config.jobId}")
@@ -70,11 +70,11 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
       readJournal.eventsByTag(SchedulerTagEventAdapter.tags.ExecutionPlan, 0).
         filter(env =>
           env.event match {
-            case evt: ExecutionPlan.Created => true
-            case _                          => false
+            case evt: ExecutionDriver.Created => true
+            case _                               => false
           }
         ).map(env =>
-          env.event.asInstanceOf[ExecutionPlan.Created].planId
+          env.event.asInstanceOf[ExecutionDriver.Created].planId
         ).runFold(List.empty[PlanId]) {
           case (list, planId) => planId :: list
         } pipeTo sender()
@@ -86,9 +86,9 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
   private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
     Props(classOf[JobFetcher], jobId, requestor, config)
 
-  private[this] def factoryProps(jobId: JobId, createCmd: CreateExecutionPlan,
+  private[this] def factoryProps(jobId: JobId, createCmd: CreateExecutionDriver,
                                  shardRegion: ActorRef): Props =
-    Props(classOf[ExecutionPlanFactory], jobId, createCmd, shardRegion)
+    Props(classOf[ExecutionDriverFactory], jobId, createCmd, shardRegion)
 
 }
 
@@ -100,7 +100,7 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: SchedulerPro
 
   def receive: Receive = {
     case Some(spec: JobSpec) => // create execution plan
-      context.parent ! CreateExecutionPlan(spec, config, requestor)
+      context.parent ! CreateExecutionDriver(spec, config, requestor)
       context.stop(self)
 
     case None =>
@@ -111,8 +111,8 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: SchedulerPro
 
 }
 
-private class ExecutionPlanFactory(jobId: JobId, cmd: Scheduler.CreateExecutionPlan,
-                                   shardRegion: ActorRef)
+private class ExecutionDriverFactory(jobId: JobId, cmd: Scheduler.CreateExecutionDriver,
+                                     shardRegion: ActorRef)
     extends Actor with ActorLogging {
 
   import SchedulerProtocol._
@@ -133,7 +133,7 @@ private class ExecutionPlanFactory(jobId: JobId, cmd: Scheduler.CreateExecutionP
       val executionProps = Execution.props(
         planId, executionTimeout = cmd.config.timeout
       )
-      shardRegion ! ExecutionPlan.New(config.jobId, spec, planId, config.trigger, executionProps)
+      shardRegion ! ExecutionDriver.New(config.jobId, spec, planId, config.trigger, executionProps)
 
     case response @ ExecutionPlanStarted(`jobId`, _) =>
       log.info("Execution plan for job {} has been started.", jobId)

@@ -103,7 +103,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       } else {
         log.info("Execution finished by worker. workerId={}, taskId={}", workerId, taskId)
         changeWorkerToIdle(workerId, taskId)
-        inProgressTasks(taskId) ! Execution.Finish(Right(result))
+        inProgressTasks(taskId) ! Execution.Finish(None)
         inProgressTasks -= taskId
         sender ! TaskDoneAck(taskId)
         notifyWorkers()
@@ -112,7 +112,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     case TaskFailed(workerId, taskId, cause) if inProgressTasks.contains(taskId) =>
       log.error("Worker failed executing given task. workerId={}, taskId={}", workerId, taskId)
       changeWorkerToIdle(workerId, taskId)
-      inProgressTasks(taskId) ! Execution.Finish(Left(cause))
+      inProgressTasks(taskId) ! Execution.Finish(Some(cause.head))
       inProgressTasks -= taskId
       notifyWorkers()
 

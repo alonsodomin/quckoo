@@ -21,8 +21,7 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
 
   import StatusCodes._
   import SchedulerProtocol._
-  import serialization.default._
-  import serialization.time._
+  import serialization.json.jvm._
 
   private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     path("login") {

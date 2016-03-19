@@ -6,22 +6,21 @@ import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.PersistentActor
-
-import io.kairos.fault.{ExceptionThrown, Faults}
+import io.kairos.fault.{ExceptionThrown, Fault, Faults}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.{DateTime, TimeSource}
-import io.kairos.{JobSpec, Task, Trigger}
+import io.kairos.{ExecutionPlan, JobSpec, Task, Trigger}
 
 import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 16/08/15.
  */
-object ExecutionPlan {
+object ExecutionDriver {
   import SchedulerProtocol._
 
-  final val ShardName      = "ExecutionPlan"
+  final val ShardName      = "ExecutionDriver"
   final val NumberOfShards = 100
 
   val idExtractor: ShardRegion.ExtractEntityId = {
@@ -50,55 +49,45 @@ object ExecutionPlan {
   private case object FinishPlan
 
   // Public execution plan state
-  object PlanState {
-    private[scheduler] def apply(created: Created)(implicit timeSource: TimeSource): PlanState = PlanState(
-      created.jobId,
+  object DriverState {
+    private[scheduler] def apply(created: Created)(implicit timeSource: TimeSource): DriverState = DriverState(
+      ExecutionPlan(created.jobId, created.planId, created.trigger, created.time),
       created.spec,
-      created.planId,
-      created.trigger,
-      created.time,
       created.executionProps
     )
   }
-  final case class PlanState(
-      jobId: JobId,
+  final case class DriverState(
+      plan: ExecutionPlan,
       jobSpec: JobSpec,
-      planId: PlanId,
-      trigger: Trigger,
-      createdTime: DateTime,
-      executionProps: Props,
-      currentTaskId: Option[TaskId] = None,
-      lastOutcome: Option[Task.Outcome] = None,
-      lastScheduledTime: Option[DateTime] = None,
-      lastExecutionTime: Option[DateTime] = None,
-      finishedTime: Option[DateTime] = None
+      executionProps: Props
   )(implicit timeSource: TimeSource) {
     import SchedulerProtocol._
 
-    def finished: Boolean = finishedTime.isDefined
+    val jobId = plan.jobId
+    val planId = plan.planId
 
-    def nextExecutionTime: Option[DateTime] = {
-      import Trigger._
-
-      val referenceTime = lastExecutionTime match {
-        case Some(time) => LastExecutionTime(time)
-        case None       => ScheduledTime(lastScheduledTime.getOrElse(createdTime))
-      }
-      trigger.nextExecutionTime(referenceTime)
-    }
-
-    def updated(event: SchedulerEvent): PlanState = {
-      if (finished) this
+    def updated(event: SchedulerEvent): DriverState = {
+      if (plan.finished) this
       else {
         event match {
-          case TaskScheduled(`jobId`, `planId`, taskId) if currentTaskId.isEmpty =>
-            copy(currentTaskId = Some(taskId), lastScheduledTime = Some(timeSource.currentDateTime))
+          case TaskScheduled(`jobId`, `planId`, taskId) if plan.currentTaskId.isEmpty =>
+            copy(plan = plan.copy(
+              currentTaskId = Some(taskId),
+              lastScheduledTime = Some(timeSource.currentDateTime)
+            ))
 
-          case TaskCompleted(`jobId`, `planId`, taskId, outcome) if currentTaskId.contains(taskId) =>
-            copy(currentTaskId = None, lastExecutionTime = Some(timeSource.currentDateTime), lastOutcome = Some(outcome))
+          case TaskCompleted(`jobId`, `planId`, taskId, outcome) if plan.currentTaskId.contains(taskId) =>
+            copy(plan = plan.copy(
+              currentTaskId = None,
+              lastExecutionTime = Some(timeSource.currentDateTime),
+              lastOutcome = outcome
+            ))
 
           case ExecutionPlanFinished(`jobId`, `planId`) =>
-            copy(currentTaskId = None, finishedTime = Some(timeSource.currentDateTime))
+            copy(plan = plan.copy(
+              currentTaskId = None,
+              finishedTime = Some(timeSource.currentDateTime)
+            ))
 
           case _ => this
         }
@@ -108,14 +97,14 @@ object ExecutionPlan {
   }
 
   def props(implicit timeSource: TimeSource) =
-    Props(classOf[ExecutionPlan], timeSource)
+    Props(classOf[ExecutionDriver], timeSource)
 
 }
 
-class ExecutionPlan(implicit timeSource: TimeSource)
+class ExecutionDriver(implicit timeSource: TimeSource)
     extends PersistentActor with ActorLogging {
 
-  import ExecutionPlan._
+  import ExecutionDriver._
   import RegistryProtocol._
   import SchedulerProtocol._
   import ShardRegion.Passivate
@@ -133,9 +122,9 @@ class ExecutionPlan(implicit timeSource: TimeSource)
 
   override def receiveRecover = replaying()
 
-  def replaying(state: Option[PlanState] = None): Receive = {
+  def replaying(state: Option[DriverState] = None): Receive = {
     case create: Created =>
-      context.become(replaying(Some(PlanState(create))))
+      context.become(replaying(Some(DriverState(create))))
 
     case event: SchedulerEvent =>
       context.become(replaying(state.map(_.updated(event))))
@@ -143,7 +132,7 @@ class ExecutionPlan(implicit timeSource: TimeSource)
 
   override def receiveCommand: Receive = initial()
 
-  private def activatePlan(state: PlanState): Unit = {
+  private def activatePlan(state: DriverState): Unit = {
     log.info("Activating execution plan. planId={}", state.planId)
     self ! scheduleOrFinish(state)
     mediator ! DistributedPubSubMediator.Publish(
@@ -152,7 +141,7 @@ class ExecutionPlan(implicit timeSource: TimeSource)
     context.become(active(state))
   }
 
-  private def initial(subscribed: Boolean = false, state: Option[PlanState] = None): Receive = {
+  private def initial(subscribed: Boolean = false, state: Option[DriverState] = None): Receive = {
     case DistributedPubSubMediator.SubscribeAck(_) =>
       if (state.isDefined) {
         activatePlan(state.get)
@@ -164,7 +153,7 @@ class ExecutionPlan(implicit timeSource: TimeSource)
       val created = Created(cmd.jobId, cmd.spec, cmd.planId, cmd.trigger,
           cmd.executionProps, timeSource.currentDateTime)
       persist(created) { evt =>
-        val st = PlanState(evt)
+        val st = DriverState(evt)
         log.info("Creating new execution plan. planId={}", st.planId)
 
         if (subscribed) {
@@ -175,16 +164,16 @@ class ExecutionPlan(implicit timeSource: TimeSource)
       }
   }
 
-  private def active(state: PlanState, triggerTask: Option[Cancellable] = None): Receive = {
+  private def active(state: DriverState, triggerTask: Option[Cancellable] = None): Receive = {
     case JobDisabled(id) if id == state.jobId =>
       log.info("Job has been disabled, finishing execution plan. jobId={}, planId={}", id, state.planId)
       self ! FinishPlan
 
     case GetExecutionPlan(_) =>
-      sender() ! state
+      sender() ! state.plan
 
     case Execution.Result(outcome) =>
-      state.currentTaskId.foreach { taskId =>
+      state.plan.currentTaskId.foreach { taskId =>
         persist(TaskCompleted(state.jobId, state.planId, taskId, outcome)) { event =>
           log.debug("Task finished. taskId={}", taskId)
           mediator ! DistributedPubSubMediator.Publish(SchedulerTopic, event)
@@ -239,13 +228,13 @@ class ExecutionPlan(implicit timeSource: TimeSource)
       }
   }
 
-  private def scheduleOrFinish(state: PlanState) =
-    state.nextExecutionTime.map(ScheduleTask).getOrElse(FinishPlan)
+  private def scheduleOrFinish(state: DriverState) =
+    state.plan.nextExecutionTime.map(ScheduleTask).getOrElse(FinishPlan)
 
-  private def nextCommand(state: PlanState, outcome: Task.Outcome) = {
-    if (state.trigger.isRecurring) {
+  private def nextCommand(state: DriverState, outcome: Task.Outcome) = {
+    if (state.plan.trigger.isRecurring) {
       outcome match {
-        case Task.Success(_) =>
+        case Task.Success =>
           scheduleOrFinish(state)
 
         case Task.Failure(cause) =>
@@ -261,12 +250,14 @@ class ExecutionPlan(implicit timeSource: TimeSource)
     } else FinishPlan
   }
 
-  private def shuttingDown(state: PlanState): Receive = {
+  private def shuttingDown(state: DriverState): Receive = {
     case _ =>
       log.warning("Execution plan '{}' has finished, shutting down.", state.planId)
   }
 
-  private def shouldRetry(cause: Faults): Boolean =
-    !cause.list.exists(_.isInstanceOf[ExceptionThrown])
+  private def shouldRetry(cause: Fault): Boolean = cause match {
+    case ex: ExceptionThrown => false
+    case _                   => true
+  }
 
 }
