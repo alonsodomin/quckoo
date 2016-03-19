@@ -6,7 +6,8 @@ import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.PersistentActor
-import io.kairos.fault.{ExceptionThrown, Fault, Faults}
+
+import io.kairos.fault.{ExceptionThrown, Fault}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.{DateTime, TimeSource}
