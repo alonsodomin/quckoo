@@ -28,16 +28,16 @@ object Execution {
   case object Get extends Command
 
   sealed trait Phase extends PersistentFSM.FSMState
-  object Scheduled extends Phase {
+  case object Scheduled extends Phase {
     override def identifier = "Scheduled"
   }
-  object Waiting extends Phase {
+  case object Waiting extends Phase {
     override def identifier = "Waiting"
   }
-  object InProgress extends Phase {
+  case object InProgress extends Phase {
     override def identifier = "InProgress"
   }
-  object Done extends Phase {
+  case object Done extends Phase {
     override def identifier = "Done"
   }
 
