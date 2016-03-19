@@ -118,6 +118,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
     case Enqueue(task) =>
       // Enqueue messages will always come from inside the cluster so accept them all
+      log.debug("Enqueueing task {} before sending to workers.", task.id)
       pendingTasks = pendingTasks.enqueue((task, sender()))
       sender ! EnqueueAck(task.id)
       notifyWorkers()

@@ -118,6 +118,9 @@ class Execution(
       goto(Done) applying Cancelled(reason)
     case Event(Get, data) =>
       stay replying data
+    case Event(WakeUp(task), _) =>
+      log.error("--> AAAAAAAAAAAAAAAAAAAHHHHHHHHHHHHHHHH taskId={}", task.id)
+      stay
   }
 
   when(InProgress) {
