@@ -38,7 +38,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
   "A full running execution" should {
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      Execution.props(planId, task, taskQueue.ref),
+      Execution.props(planId),
       self, "FullPathExecution"
     )
     watch(execution)
@@ -46,7 +46,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
         execution ! Get
-        expectMsg(NotRunYet)
+        expectMsg(NotStarted)
       }
 
       within(1 second) {
@@ -74,7 +74,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
   "An execution cancelled while sleeping" should {
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      Execution.props(planId, task, taskQueue.ref),
+      Execution.props(planId),
       self, "SleepingExecution"
     )
     watch(execution)
@@ -93,7 +93,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
   "A waiting execution that is cancelled" should {
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      Execution.props(planId, task, taskQueue.ref),
+      Execution.props(planId),
       self, "WaitingExecution"
     )
     watch(execution)
@@ -101,7 +101,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
     "return a never run outcome with the cancellation reason" in {
       within(1 second) {
         execution ! Get
-        expectMsg(NotRunYet)
+        expectMsg(NotStarted)
       }
 
       within(1 second) {
@@ -117,7 +117,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
   "An in progress execution that gets cancelled" should {
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      Execution.props(planId, task, taskQueue.ref),
+      Execution.props(planId),
       self, "CancelledExecution"
     )
     watch(execution)
@@ -125,7 +125,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
         execution ! Get
-        expectMsg(NotRunYet)
+        expectMsg(NotStarted)
       }
 
       within(1 second) {
@@ -145,7 +145,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
 
       within(1 second) {
         execution ! Get
-        expectMsg(NotRunYet)
+        expectMsg(NotStarted)
       }
     }
 
@@ -171,7 +171,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
   "An in progress execution that times out by the queue" should {
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      Execution.props(planId, task, taskQueue.ref),
+      Execution.props(planId),
       self, "ExecutionTimedOutByQueue"
     )
     watch(execution)
@@ -179,7 +179,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
         execution ! Get
-        expectMsg(NotRunYet)
+        expectMsg(NotStarted)
       }
 
       within(1 second) {
@@ -199,7 +199,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
 
       within(1 second) {
         execution ! Get
-        expectMsg(NotRunYet)
+        expectMsg(NotStarted)
       }
     }
 
@@ -225,7 +225,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
     val expectedTimeout = 100 millis
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      Execution.props(planId, task, taskQueue.ref, executionTimeout = Some(expectedTimeout)),
+      Execution.props(planId, executionTimeout = Some(expectedTimeout)),
       self, "TimingOutExecution"
     )
     watch(execution)
@@ -233,7 +233,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
     "become Waiting and send enqueue to the task queue on a WakeUp event" in {
       within(1 second) {
         execution ! Get
-        expectMsg(NotRunYet)
+        expectMsg(NotStarted)
       }
 
       within(1 second) {
@@ -253,7 +253,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
 
       within(1 second) {
         execution ! Get
-        expectMsg(NotRunYet)
+        expectMsg(NotStarted)
       }
     }
 
@@ -280,7 +280,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
     val expectedTimeout = 100 millis
     val taskQueue = TestProbe()
     val execution = TestActorRef(
-      Execution.props(planId, task, taskQueue.ref, expectedTimeout),
+      Execution.props(planId, expectedTimeout),
       self, "NeverAckedExecution"
     )
     watch(execution)
@@ -288,7 +288,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionFSMSpec")) with Im
     "become cancelled after the ack timeout" in {
       within(1 second) {
         execution ! Get
-        expectMsg(NotRunYet)
+        expectMsg(NotStarted)
       }
 
       within(1 second) {

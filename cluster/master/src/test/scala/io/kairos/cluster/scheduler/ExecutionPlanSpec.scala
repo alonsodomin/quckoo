@@ -58,8 +58,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
   "An execution plan with a recurring trigger that eventually gets disabled" should  {
     val trigger = Trigger.Every(50 millis)
     val executionProbe = TestProbe()
-    val executionProps: ExecutionProps =
-      (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
+    val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
     val executionPlan = TestActorRef(ExecutionPlan.props, self, "executionPlanWithRecurringTrigger")
@@ -77,7 +76,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
       scheduledMsg.planId should be (planId)
 
       within(50 millis) {
-        executionProbe.expectMsg[Execution.Command](Execution.WakeUp)
+        executionProbe.expectMsgType[Execution.WakeUp]
       }
     }
 
@@ -95,7 +94,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
       scheduledMsg.planId should be (planId)
 
       within(80 millis) {
-        executionProbe.expectMsg[Execution.Command](Execution.WakeUp)
+        executionProbe.expectMsgType[Execution.WakeUp]
       }
     }
 
@@ -119,8 +118,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
   "An execution plan with non recurring trigger" should {
     val trigger = Trigger.Immediate
     val executionProbe = TestProbe()
-    val executionProps: ExecutionProps =
-      (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
+    val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
     val executionPlan = TestActorRef(ExecutionPlan.props, self, "executionPlanWithOneShotTrigger")
@@ -137,7 +135,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (planId)
 
-      executionProbe.expectMsg[Execution.Command](Execution.WakeUp)
+      executionProbe.expectMsgType[Execution.WakeUp]
     }
 
     "terminate once the execution finishes" in {
@@ -164,8 +162,7 @@ class ExecutionPlanSpec extends TestKit(TestActorSystem("ExecutionPlanSpec"))
   "An execution plan that never gets fired" should {
     val trigger = Trigger.At(currentDateTime.minusHours(1), graceTime = Some(5 seconds))
     val executionProbe = TestProbe()
-    val executionProps: ExecutionProps =
-      (taskId, jobSpec) => TestActors.forwardActorProps(executionProbe.ref)
+    val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
     val executionPlan = TestActorRef(ExecutionPlan.props, self, "executionPlanThatNeverFires")

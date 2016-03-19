@@ -1,6 +1,6 @@
 package io.kairos.cluster.scheduler
 
-import akka.actor.{ActorLogging, ActorRef, Props}
+import akka.actor.{ActorLogging, ActorRef, Props, RootActorPath}
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.Normal
 import io.kairos.Task
@@ -19,7 +19,7 @@ object Execution {
   final val DefaultEnqueueTimeout = 10 seconds
 
   sealed trait Command
-  case object WakeUp extends Command
+  case class WakeUp(task: Task) extends Command
   case object Start extends Command
   case class Finish(result: TaskResult) extends Command
   case class Cancel(reason: String) extends Command
@@ -41,6 +41,7 @@ object Execution {
   }
 
   sealed trait ExecutionEvent
+  case class Awaken(task: Task) extends ExecutionEvent
   case class Cancelled(reason: String) extends ExecutionEvent
   case object Triggered extends ExecutionEvent
   case object Started extends ExecutionEvent
@@ -49,28 +50,26 @@ object Execution {
 
   case class Result(outcome: Outcome)
 
-  case class ExecutionState private (val planId: PlanId, val task: Task, val outcome: Outcome) {
+  final case class ExecutionState private (
+      planId: PlanId,
+      task: Option[Task] = None,
+      outcome: Outcome = NotStarted
+  ) {
 
     private[scheduler] def <<= (out: Outcome): ExecutionState =
       this.copy(outcome = out)
 
   }
-  object ExecutionState {
-    def apply(planId: PlanId, task: Task): ExecutionState =
-      ExecutionState(planId, task, NotRunYet)
-  }
 
-  def props(planId: PlanId, task: Task, taskQueue: ActorRef,
+  def props(planId: PlanId,
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
             executionTimeout: Option[FiniteDuration] = None) =
-    Props(classOf[Execution], planId, task, taskQueue, enqueueTimeout, executionTimeout)
+    Props(classOf[Execution], planId, enqueueTimeout, executionTimeout)
 
 }
 
 class Execution(
     planId: PlanId,
-    task: Task,
-    taskQueue: ActorRef,
     enqueueTimeout: FiniteDuration,
     executionTimeout: Option[FiniteDuration]
   ) extends PersistentFSM[Execution.Phase, Execution.ExecutionState, Execution.ExecutionEvent]
@@ -79,30 +78,41 @@ class Execution(
   import Execution._
   import Task._
 
-  private var enqueueAttempts = 0
+  private[this] val taskQueue = context.actorSelection(
+    RootActorPath(self.path.address) / "user" / "kairos" / "scheduler" / "queue"
+  )
+  private[this] var enqueueAttempts = 0
 
-  startWith(Scheduled, ExecutionState(planId, task))
+  startWith(Scheduled, ExecutionState(planId))
+
+  private def sendToQueue(task: Task) = {
+    taskQueue ! TaskQueue.Enqueue(task)
+    stay forMax enqueueTimeout
+  }
 
   when(Scheduled) {
-    case Event(WakeUp, _) =>
+    case Event(WakeUp(task), _) =>
       log.debug("Execution waking up. taskId={}", task.id)
-      sendToQueue()
+      sendToQueue(task) applying Awaken(task)
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
     case Event(Get, data) =>
       stay replying data
-    case Event(EnqueueAck(taskId), _) if taskId == task.id =>
+    case Event(EnqueueAck(taskId), data) if data.task.exists(_.id == taskId) =>
       goto(Waiting) applying Triggered
-    case Event(StateTimeout, _) =>
+    case Event(StateTimeout, ExecutionState(_, Some(task), _))  =>
       enqueueAttempts += 1
-      if (enqueueAttempts < 2) sendToQueue()
+      if (enqueueAttempts < 2) {
+        sendToQueue(task)
+      }
       else goto(Done) applying Cancelled(s"Could not enqueue task! taskId=${task.id}")
   }
 
   when(Waiting) {
-    case Event(Start, _) =>
+    case Event(Start, ExecutionState(_, Some(task), _)) =>
       log.debug("Execution starting. taskId={}", task.id)
-      startExecution()
+      val st = goto(InProgress) applying Started
+      executionTimeout.map(duration => st forMax duration).getOrElse(st)
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
     case Event(Get, data) =>
@@ -114,12 +124,12 @@ class Execution(
       stay replying data
     case Event(Cancel(reason), _) =>
       goto(Done) applying Cancelled(reason)
-    case Event(Finish(result), _) =>
+    case Event(Finish(result), ExecutionState(_, Some(task), _)) =>
       log.debug("Execution finishing. taskId={}", task.id)
       goto(Done) applying Completed(result)
     case Event(TimeOut, _) =>
       goto(Done) applying TimedOut
-    case Event(StateTimeout, _) =>
+    case Event(StateTimeout, ExecutionState(_, Some(task), _)) =>
       log.debug("Execution has timed out, notifying queue. taskId={}", task.id)
       taskQueue ! TaskQueue.TimeOut(task.id)
       stay()
@@ -139,31 +149,25 @@ class Execution(
 
   initialize()
 
-  override val persistenceId: String = task.id.toString
+  override val persistenceId: String = "Execution-" + self.path.address
 
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 
   override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState = event match {
+    case Awaken(t) => previous.copy(task = Some(t))
+
     case Completed(result) => result match {
       case Left(cause)  => previous <<= Failure(cause)
       case Right(value) => previous <<= Success(value)
     }
+
     case Cancelled(reason) => stateName match {
       case InProgress => previous <<= Interrupted(reason)
       case _          => previous <<= NeverRun(reason)
     }
+
     case TimedOut => previous <<= NeverEnding
     case _        => previous
-  }
-
-  private def startExecution() = {
-    val st = goto(InProgress) applying Started
-    executionTimeout.map(duration => st forMax duration).getOrElse(st)
-  }
-
-  private def sendToQueue() = {
-    taskQueue ! TaskQueue.Enqueue(task)
-    stay forMax enqueueTimeout
   }
 
 }

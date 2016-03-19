@@ -6,6 +6,7 @@ import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.PersistentActor
+
 import io.kairos.fault.{ExceptionThrown, Faults}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
@@ -34,23 +35,29 @@ object ExecutionPlan {
   }
 
   // Only for internal usage from the Scheduler actor
-  private[scheduler] case class New(jobId: JobId, spec: JobSpec, planId: PlanId,
-                                    trigger: Trigger, executionProps: ExecutionProps)
+  private[scheduler] case class New(
+      jobId: JobId, spec: JobSpec, planId: PlanId,
+      trigger: Trigger, executionProps: Props
+  )
 
   // Private messages, used for managing the internal lifecycle
-  private[scheduler] case class Created(cmd: New, time: DateTime)
+  private[scheduler] case class Created(
+      jobId: JobId, spec: JobSpec, planId: PlanId,
+      trigger: Trigger, executionProps: Props,
+      time: DateTime
+  )
   private case class ScheduleTask(time: DateTime)
   private case object FinishPlan
 
   // Public execution plan state
   object PlanState {
     private[scheduler] def apply(created: Created)(implicit timeSource: TimeSource): PlanState = PlanState(
-      created.cmd.jobId,
-      created.cmd.spec,
-      created.cmd.planId,
-      created.cmd.trigger,
-      created.cmd.executionProps,
-      created.time
+      created.jobId,
+      created.spec,
+      created.planId,
+      created.trigger,
+      created.time,
+      created.executionProps
     )
   }
   final case class PlanState(
@@ -58,8 +65,8 @@ object ExecutionPlan {
       jobSpec: JobSpec,
       planId: PlanId,
       trigger: Trigger,
-      executionProps: ExecutionProps,
       createdTime: DateTime,
+      executionProps: Props,
       currentTaskId: Option[TaskId] = None,
       lastOutcome: Option[Task.Outcome] = None,
       lastScheduledTime: Option[DateTime] = None,
@@ -114,6 +121,7 @@ class ExecutionPlan(implicit timeSource: TimeSource)
   import ShardRegion.Passivate
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
+  private[this] val triggerDispatcher = context.system.dispatchers.lookup("kairos.trigger-dispatcher")
 
   override def persistenceId = "ExecutionPlan-" + self.path.name
 
@@ -153,7 +161,9 @@ class ExecutionPlan(implicit timeSource: TimeSource)
       }
 
     case cmd: New =>
-      persist(Created(cmd, timeSource.currentDateTime)) { evt =>
+      val created = Created(cmd.jobId, cmd.spec, cmd.planId, cmd.trigger,
+          cmd.executionProps, timeSource.currentDateTime)
+      persist(created) { evt =>
         val st = PlanState(evt)
         log.info("Creating new execution plan. planId={}", st.planId)
 
@@ -186,8 +196,6 @@ class ExecutionPlan(implicit timeSource: TimeSource)
       }
 
     case ScheduleTask(time) =>
-      import context.dispatcher
-
       val delay = {
         val now = timeSource.currentDateTime
         if (time.isBefore(now) || time.isEqual(now)) 0 millis
@@ -197,12 +205,21 @@ class ExecutionPlan(implicit timeSource: TimeSource)
         }
       }
 
-      // Create a new execution
-      val taskId = UUID.randomUUID()
-      log.info("Scheduling a new execution. jobId={}, planId={}, taskId={}", state.jobId, state.planId, taskId)
-      val execution = context.actorOf(state.executionProps(taskId, state.jobSpec), "exec-" + taskId)
-      val internalTrigger = context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp)
+      def scheduleTask(task: Task): Cancellable = {
+        implicit val dispatcher = triggerDispatcher
 
+        // Schedule a new execution instance
+        log.info("Scheduling a new execution. jobId={}, planId={}, taskId={}", state.jobId, state.planId, task.id)
+        val execution = context.actorOf(state.executionProps, "exec-" + task.id)
+        context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp(task))
+      }
+
+      // Create a new task
+      val taskId = UUID.randomUUID()
+      val task = Task(taskId, state.jobSpec.artifactId, Map.empty, state.jobSpec.jobClass)
+
+      // Create a trigger to fire the task
+      val internalTrigger = scheduleTask(task)
       persist(TaskScheduled(state.jobId, state.planId, taskId)) { event =>
         mediator ! DistributedPubSubMediator.Publish(SchedulerTopic, event)
         context.become(active(state.updated(event), Some(internalTrigger)))

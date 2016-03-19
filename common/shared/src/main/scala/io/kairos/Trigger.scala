@@ -19,7 +19,7 @@ sealed trait Trigger extends Serializable {
 
 object Trigger {
 
-  sealed trait ReferenceTime {
+  sealed trait ReferenceTime extends Serializable {
     val when: DateTime
   }
   case class ScheduledTime(when: DateTime) extends ReferenceTime

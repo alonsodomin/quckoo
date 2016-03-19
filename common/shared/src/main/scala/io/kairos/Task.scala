@@ -7,7 +7,7 @@ import io.kairos.id._
  * Created by aalonsodominguez on 05/07/15.
  */
 
-case class Task(
+final case class Task(
     id: TaskId,
     artifactId: ArtifactId,
     params: Map[String, AnyVal] = Map.empty,
@@ -16,8 +16,8 @@ case class Task(
 
 object Task {
 
-  sealed trait Outcome
-  case object NotRunYet extends Outcome
+  sealed trait Outcome extends Serializable
+  case object NotStarted extends Outcome
   case class Success(result: Any) extends Outcome
   case class Failure(cause: Faults) extends Outcome
   case class Interrupted(reason: String) extends Outcome

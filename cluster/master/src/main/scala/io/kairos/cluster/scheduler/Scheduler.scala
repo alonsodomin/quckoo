@@ -4,16 +4,17 @@ import java.util.UUID
 
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
-import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.stream.{ActorMaterializerSettings, ActorMaterializer}
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
+
+import io.kairos.JobSpec
 import io.kairos.cluster.core.KairosJournal
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.TimeSource
-import io.kairos.{JobSpec, Task}
 
 /**
  * Created by aalonsodominguez on 16/08/15.
@@ -40,7 +41,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
 
   final implicit val materializer = ActorMaterializer(ActorMaterializerSettings(context.system))
 
-  private[this] val taskQueue = context.actorOf(queueProps, "taskQueue")
+  private[this] val taskQueue = context.actorOf(queueProps, "queue")
   private[this] val shardRegion = ClusterSharding(context.system).start(
     ExecutionPlan.ShardName,
     entityProps     = ExecutionPlan.props,
@@ -58,7 +59,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
 
     case cmd @ CreateExecutionPlan(_, config, _) =>
       log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
-      val props = factoryProps(config.jobId, cmd, taskQueue, shardRegion)
+      val props = factoryProps(config.jobId, cmd, shardRegion)
       context.actorOf(props, s"execution-plan-factory-${config.jobId}")
 
     case get: GetExecutionPlan =>
@@ -73,7 +74,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
             case _                          => false
           }
         ).map(env =>
-          env.event.asInstanceOf[ExecutionPlan.Created].cmd.planId
+          env.event.asInstanceOf[ExecutionPlan.Created].planId
         ).runFold(List.empty[PlanId]) {
           case (list, planId) => planId :: list
         } pipeTo sender()
@@ -86,8 +87,8 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
     Props(classOf[JobFetcher], jobId, requestor, config)
 
   private[this] def factoryProps(jobId: JobId, createCmd: CreateExecutionPlan,
-                                 taskQueue: ActorRef, shardRegion: ActorRef): Props =
-    Props(classOf[ExecutionPlanFactory], jobId, createCmd, taskQueue, shardRegion)
+                                 shardRegion: ActorRef): Props =
+    Props(classOf[ExecutionPlanFactory], jobId, createCmd, shardRegion)
 
 }
 
@@ -111,8 +112,8 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: SchedulerPro
 }
 
 private class ExecutionPlanFactory(jobId: JobId, cmd: Scheduler.CreateExecutionPlan,
-                                   taskQueue: ActorRef, shardRegion: ActorRef)
-  extends Actor with ActorLogging {
+                                   shardRegion: ActorRef)
+    extends Actor with ActorLogging {
 
   import SchedulerProtocol._
 
@@ -128,12 +129,10 @@ private class ExecutionPlanFactory(jobId: JobId, cmd: Scheduler.CreateExecutionP
       import cmd._
 
       val planId = UUID.randomUUID()
-      def executionProps(taskId: TaskId, jobSpec: JobSpec): Props = {
-        // FIXME
-        val task = Task(taskId, jobSpec.artifactId, Map.empty, jobSpec.jobClass)
-        Execution.props(planId, task, taskQueue, executionTimeout = config.timeout)
-      }
       log.debug("Starting execution plan for job {}.", config.jobId)
+      val executionProps = Execution.props(
+        planId, executionTimeout = cmd.config.timeout
+      )
       shardRegion ! ExecutionPlan.New(config.jobId, spec, planId, config.trigger, executionProps)
 
     case response @ ExecutionPlanStarted(`jobId`, _) =>

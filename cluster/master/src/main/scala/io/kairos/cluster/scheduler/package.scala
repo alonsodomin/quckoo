@@ -11,6 +11,5 @@ import io.kairos.id._
 package object scheduler {
 
   type TaskResult = Either[Faults, Any]
-  type ExecutionProps = (TaskId, JobSpec) => Props
 
 }

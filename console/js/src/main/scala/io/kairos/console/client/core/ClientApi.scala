@@ -101,7 +101,7 @@ object ClientApi extends KairosApi with RegistryApi with SchedulerApi with Clien
                        (implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
     import upickle.default._
 
-    Ajax.put(ExecutionsURI, headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
+    Ajax.put(ExecutionsURI, write(scheduleJob), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
       read[Either[JobNotFound, ExecutionPlanStarted]](xhr.responseText)
     }
   }
