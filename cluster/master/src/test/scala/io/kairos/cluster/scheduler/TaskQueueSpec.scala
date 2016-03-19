@@ -9,7 +9,7 @@ import io.kairos.cluster.protocol.WorkerProtocol._
 import io.kairos.fault.ExceptionThrown
 import io.kairos.id.ArtifactId
 import io.kairos.test.TestActorSystem
-import io.kairos.fault.Faults
+import io.kairos.fault.{Fault, Faults}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
@@ -29,7 +29,7 @@ object TaskQueueSpec {
 }
 
 class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with ImplicitSender
-  with WordSpecLike with BeforeAndAfterAll with Matchers with ScalaFutures {
+    with WordSpecLike with BeforeAndAfterAll with Matchers with ScalaFutures {
 
   import TaskQueue._
   import TaskQueueSpec._
@@ -97,7 +97,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
       taskQueue.tell(TaskDone(workerId, task.id, taskResult), workerProbe.ref)
 
       workerProbe.expectMsgType[TaskDoneAck].taskId should be (task.id)
-      executionProbe.expectMsgType[Execution.Finish].result should be (Right(taskResult))
+      executionProbe.expectMsgType[Execution.Finish].fault should be (None)
     }
   }
 
@@ -121,10 +121,10 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
       failingWorker.expectMsg(task)
       failingExec.expectMsg(Execution.Start)
 
-      val cause: Faults = NonEmptyList(ExceptionThrown(new Exception("TEST EXCEPTION")))
-      taskQueue.tell(TaskFailed(failingWorkerId, task.id, cause), failingWorker.ref)
+      val cause: Fault = ExceptionThrown(new Exception("TEST EXCEPTION"))
+      taskQueue.tell(TaskFailed(failingWorkerId, task.id, NonEmptyList(cause)), failingWorker.ref)
 
-      failingExec.expectMsgType[Execution.Finish].result should be(Left(cause))
+      failingExec.expectMsgType[Execution.Finish].fault should be(Some(cause))
     }
 
     "perform a timeout if the execution does notify it" in {

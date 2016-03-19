@@ -112,6 +112,9 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
   private[this] val triggerDispatcher = context.system.dispatchers.lookup("kairos.trigger-dispatcher")
+  private[this] val taskQueue = context.actorSelection(
+    RootActorPath(self.path.address) / "user" / "kairos" / "scheduler" / "queue"
+  )
 
   override def persistenceId = "ExecutionPlan-" + self.path.name
 
@@ -196,12 +199,12 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       }
 
       def scheduleTask(task: Task): Cancellable = {
-        implicit val dispatcher = triggerDispatcher
-
         // Schedule a new execution instance
         log.info("Scheduling a new execution. jobId={}, planId={}, taskId={}", state.jobId, state.planId, task.id)
-        val execution = context.actorOf(state.executionProps, "exec-" + task.id)
-        context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp(task))
+        val execution = context.watch(context.actorOf(state.executionProps, "exec-" + task.id))
+
+        implicit val dispatcher = triggerDispatcher
+        context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp(task, taskQueue))
       }
 
       // Create a new task
