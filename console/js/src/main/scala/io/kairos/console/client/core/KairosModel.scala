@@ -15,7 +15,7 @@ case class KairosModel private (
     currentUser: Option[User],
     notification: Option[Notification],
     jobSpecs: PotMap[JobId, JobSpec],
-    schedules: PotMap[PlanId, ExecutionPlan]
+    executionPlans: PotMap[PlanId, ExecutionPlan]
 )
 
 case class LoggedIn(username: String)
@@ -25,10 +25,10 @@ object KairosModel extends ClientAuth {
 
   def initial =
     KairosModel(
-      currentUser  = authInfo.map(auth => User(auth.userId)),
-      notification = None,
-      jobSpecs     = PotMap(JobSpecFetcher),
-      schedules    = PotMap(ExecutionPlanFetcher)
+      currentUser    = authInfo.map(auth => User(auth.userId)),
+      notification   = None,
+      jobSpecs       = PotMap(JobSpecFetcher),
+      executionPlans = PotMap(ExecutionPlanFetcher)
     )
 
 }

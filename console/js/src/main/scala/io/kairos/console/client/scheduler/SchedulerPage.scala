@@ -47,7 +47,7 @@ object SchedulerPage {
         Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Create Schedule"),
         if (state.showForm) ExecutionPlanForm(props.proxy, state.selectedSchedule, scheduleJob)
         else EmptyTag,
-        props.proxy.wrap(_.schedules)(ExecutionPlanList(_))
+        props.proxy.wrap(_.executionPlans)(ExecutionPlanList(_))
       )
     }
 

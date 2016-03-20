@@ -19,19 +19,21 @@ object KairosCircuit extends Circuit[KairosModel] with ReactConnector[KairosMode
     new LoginHandler(zoomRW(_.currentUser) { (model, value) => model.copy(currentUser = value) }),
     new RegistryHandler(zoomRW(identity)((_, m) => m)),
     new JobSpecsHandler(zoomRW(_.jobSpecs) { (model, specs) => model.copy(jobSpecs = specs) } ),
-    scheduleHandler
+    scheduleHandler,
+    new ExecutionPlanMapHandler(zoomRW(_.executionPlans) { (model, plans) => model.copy(executionPlans = plans) })
   )
 
-  val scheduleHandler = new ActionHandler[KairosModel, KairosModel](zoomRW(identity)((_, m) => m)) {
+  val scheduleHandler = new ActionHandler(zoomRW(_.notification)((m, notif) => m.copy(notification = notif))) {
     override def handle = {
       case msg: ScheduleJob =>
-        updated(value.copy(notification = None), Effect(ClientApi.schedule(msg).map(_.fold(identity, identity))))
+        updated(None, Effect(ClientApi.schedule(msg).map(_.fold(identity, identity))))
 
       case JobNotFound(jobId) =>
-        updated(value.copy(notification = Some(Notification.danger(s"Job not found $jobId"))))
+        updated(Some(Notification.danger(s"Job not found $jobId")))
 
       case ExecutionPlanStarted(jobId, planId) =>
-        updated(value.copy(notification = Some(Notification.info(s"Started excution plan for job"))))
+        updated(Some(Notification.info(s"Started excution plan for job")),
+          Effect.action(RefreshExecutionPlans(Set(planId))))
     }
   }
 

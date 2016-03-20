@@ -24,7 +24,8 @@ case class RegisterJob(spec: JobSpec)
 case class RegisterJobResult(jobId: Validated[JobId])
 
 case object LoadExecutionPlans
-case class ScheduleIds(planIds: Set[PlanId])
+case class ExecutionPlanIdsLoaded(planIds: Set[PlanId])
+case class ExecutionPlansLoaded(plans: Map[PlanId, Pot[ExecutionPlan]])
 
 case class RefreshExecutionPlans(
     keys: Set[PlanId],

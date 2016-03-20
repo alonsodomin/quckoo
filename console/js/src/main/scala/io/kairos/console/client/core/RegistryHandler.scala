@@ -2,6 +2,7 @@ package io.kairos.console.client.core
 
 import diode._
 import diode.data._
+
 import io.kairos.JobSpec
 import io.kairos.console.client.components.Notification
 import io.kairos.id.JobId
