@@ -17,6 +17,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 import scalaz._
 
 /**
@@ -69,7 +70,9 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
 
     "return none when asked for a random job id" in {
       registry ! GetJob(JobId(UUID.randomUUID()))
-      expectMsg(None)
+      within(1 second) {
+        expectMsg(None)
+      }
     }
 
     "reject a job if it fails to resolve its dependencies" in {
