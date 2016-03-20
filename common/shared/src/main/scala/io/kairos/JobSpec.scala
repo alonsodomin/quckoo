@@ -1,5 +1,6 @@
 package io.kairos
 
+import io.kairos.fault.Fault
 import io.kairos.id._
 import io.kairos.validation._
 import monocle.macros.Lenses
@@ -32,7 +33,7 @@ object JobSpec {
     def validJobClass: Validated[String] =
       notNullOrEmpty(jobClass)("jobClass")
 
-    (validDisplayName |@| validDescription |@| validArtifactId |@| validJobClass)(JobSpec.apply)
+    (validDisplayName |@| validDescription |@| validArtifactId |@| validJobClass |@| false.successNel[Fault])(JobSpec.apply)
   }
 
 }
@@ -41,5 +42,6 @@ object JobSpec {
     displayName: String,
     description: Option[String] = None,
     artifactId: ArtifactId,
-    jobClass: String
+    jobClass: String,
+    disabled: Boolean = false
 )

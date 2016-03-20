@@ -38,7 +38,6 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
     with Matchers with MockFactory {
 
   import RegistryProtocol._
-  import Registry._
   import RegistryShardSpec._
   import Scalaz._
 
@@ -49,9 +48,7 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
   }
 
   val eventListener = TestProbe()
-
   var testJobId : Option[JobId] = None
-
   val mockResolve = mock[Resolve]
 
   before {
@@ -119,7 +116,7 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
       testJobId.foreach { id =>
         registry ! GetJob(id)
 
-        expectMsg(Some(TestJobSpec -> JobState(enabled = true)))
+        expectMsg(Some(TestJobSpec))
       }
     }
 
@@ -137,7 +134,7 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
         registry ! DisableJob(id)
 
         eventListener.expectNoMsg()
-        expectNoMsg()
+        expectMsgType[JobDisabled].jobId should be (id)
       }
     }
 
@@ -145,7 +142,7 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
       testJobId.foreach { id =>
         registry ! GetJob(id)
 
-        expectMsg(Some(TestJobSpec -> JobState(enabled = false)))
+        expectMsg(Some(TestJobSpec.copy(disabled = true)))
       }
     }
 
@@ -163,7 +160,7 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
         registry ! EnableJob(id)
 
         eventListener.expectNoMsg()
-        expectNoMsg()
+        expectMsgType[JobEnabled].jobId should be (id)
       }
     }
 
@@ -171,7 +168,7 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
       testJobId.foreach { id =>
         registry ! GetJob(id)
 
-        expectMsg(Some(TestJobSpec -> JobState(enabled = true)))
+        expectMsg(Some(TestJobSpec))
       }
     }
 

@@ -45,6 +45,7 @@ object Dependencies {
 
     object Akka {
       val actor           = "com.typesafe.akka" %% "akka-actor"             % version.akka
+      val slf4j           = "com.typesafe.akka" %% "akka-slf4j"             % version.akka
       val clusterTools    = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka
       val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka
       val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
@@ -111,7 +112,7 @@ object Dependencies {
   object module {
     import libs._
 
-    private[this] val akka = Seq(Akka.actor, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit)
+    private[this] val akka = Seq(Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit)
     private[this] val logging = Seq(slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl)
     private[this] val testing = Seq(scalaTest, scalaMock)
 

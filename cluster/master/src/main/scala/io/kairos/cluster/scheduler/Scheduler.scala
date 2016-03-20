@@ -72,7 +72,7 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
         filter(env =>
           env.event match {
             case evt: ExecutionDriver.Created => true
-            case _                               => false
+            case _                            => false
           }
         ).map(env =>
           env.event.asInstanceOf[ExecutionDriver.Created].planId
@@ -98,11 +98,10 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: SchedulerPro
 
   import Scheduler._
   import SchedulerProtocol._
-  import Registry._
 
   def receive: Receive = {
-    case Some((spec: JobSpec, state: JobState)) =>
-      if (state.enabled) {
+    case Some(spec: JobSpec) =>
+      if (!spec.disabled) {
         // create execution plan
         context.parent ! CreateExecutionDriver(spec, config, requestor)
       } else {

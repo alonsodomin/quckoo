@@ -1,15 +1,13 @@
 package io.kairos.console.server.http
 
 import akka.actor.ActorSystem
-import akka.event.LoggingAdapter
+import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
-
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
-
 import io.kairos.JobSpec
 import io.kairos.console.server.ServerFacade
 import io.kairos.id.JobId
@@ -36,8 +34,9 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
       } ~ pathPrefix("cluster") {
         path("events") {
           get {
-            import system.dispatcher
-            complete(events)
+            extractExecutionContext { implicit ec =>
+              complete(events)
+            }
           }
         } ~ path("info") {
           get {
@@ -61,9 +60,24 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
             complete(registerJob(jobSpec))
           }
         }
-      } ~ path(JavaUUID) { jobId =>
-        get {
-          complete(fetchJob(JobId(jobId)))
+      } ~ pathPrefix(JavaUUID) { jobId =>
+        pathEnd {
+          get {
+            extractExecutionContext { implicit ec =>
+              onSuccess(fetchJob(JobId(jobId))) {
+                case Some(jobSpec) => complete(jobSpec)
+                case _             => complete(NotFound)
+              }
+            }
+          }
+        } ~ path("enable") {
+          post {
+            complete(enableJob(JobId(jobId)))
+          }
+        } ~ path("disable") {
+          post {
+            complete(disableJob(JobId(jobId)))
+          }
         }
       }
     }
@@ -106,8 +120,8 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
     } result()
 
   def router(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
-    logRequest("HTTPRequest") {
-      logResult("HTTPResponse") {
+    logRequest("HTTPRequest", Logging.InfoLevel) {
+      logResult("HTTPResponse", Logging.InfoLevel) {
         handleExceptions(exceptionHandler(system.log)) {
           handleRejections(rejectionHandler(system.log)) {
             pathPrefix("api") {

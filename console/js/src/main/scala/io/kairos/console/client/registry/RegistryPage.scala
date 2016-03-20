@@ -1,10 +1,12 @@
 package io.kairos.console.client.registry
 
 import diode.react.ModelProxy
+
 import io.kairos._
 import io.kairos.console.client.components._
-import io.kairos.console.client.core.{RegisterJob, KairosModel}
-import io.kairos.id.JobId
+import io.kairos.console.client.core.KairosModel
+import io.kairos.protocol.RegistryProtocol
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -15,6 +17,7 @@ import scalacss.ScalaCssReact._
  * Created by alonsodomin on 17/10/2015.
  */
 object RegistryPage {
+  import RegistryProtocol._
 
   object Style extends StyleSheet.Inline {
     import dsl._

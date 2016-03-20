@@ -25,7 +25,6 @@ object SchedulerSpec {
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender with ImplicitTimeSource
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 
-  import Registry._
   import SchedulerProtocol._
   import SchedulerSpec._
 
@@ -60,7 +59,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       scheduler ! ScheduleJob(TestJobId)
 
       registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
-      registryProbe.reply(Some(TestJobSpec -> JobState(enabled = true)))
+      registryProbe.reply(Some(TestJobSpec))
 
       eventListener.expectMsgType[ExecutionPlanStarted].jobId should be (TestJobId)
       eventListener.expectMsgType[TaskScheduled].jobId should be (TestJobId)
@@ -72,7 +71,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       scheduler ! ScheduleJob(TestJobId)
 
       registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
-      registryProbe.reply(Some(TestJobSpec -> JobState(enabled = false)))
+      registryProbe.reply(Some(TestJobSpec.copy(disabled = true)))
 
       eventListener.expectNoMsg()
       expectMsgType[JobNotEnabled].jobId should be (TestJobId)

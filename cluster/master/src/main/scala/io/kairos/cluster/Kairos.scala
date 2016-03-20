@@ -9,6 +9,7 @@ import akka.util.Timeout
 import de.heikoseeberger.akkasse.ServerSentEvent
 import io.kairos.cluster.core._
 import io.kairos.cluster.protocol.GetClusterStatus
+import io.kairos.cluster.registry.Registry
 import io.kairos.cluster.scheduler.ExecutionDriver
 import io.kairos.console.auth.AuthInfo
 import io.kairos.console.info.{ClusterInfo, NodeInfo}
@@ -22,7 +23,7 @@ import io.kairos.time.TimeSource
 import io.kairos.{ExecutionPlan, JobSpec, Validated}
 import org.slf4s.Logging
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 /**
@@ -36,10 +37,10 @@ class Kairos(settings: KairosClusterSettings)
   import SchedulerProtocol._
   import UserAuthenticator._
 
-  implicit val apiDispatcher = system.dispatchers.lookup("kairos.api-dispatcher")
-
   val core = system.actorOf(KairosCluster.props(settings), "kairos")
   val userAuth = system.actorSelection(core.path / "authenticator")
+
+  implicit final val dispatcher = system.dispatchers.lookup("kairos.api-dispatcher")
 
   def start(implicit timeout: Timeout): Future[Unit] = {
     Http().bindAndHandle(router, settings.httpInterface, settings.httpPort).
@@ -64,6 +65,16 @@ class Kairos(settings: KairosClusterSettings)
       case invalid: JobNotFound        => Left(invalid)
       case valid: ExecutionPlanStarted => Right(valid)
     }
+  }
+
+  def enableJob(jobId: JobId): Future[JobEnabled] = {
+    implicit val timeout = Timeout(5 seconds)
+    (core ? EnableJob(jobId)).mapTo[JobEnabled]
+  }
+
+  def disableJob(jobId: JobId): Future[JobDisabled] = {
+    implicit val timeout = Timeout(5 seconds)
+    (core ? DisableJob(jobId)).mapTo[JobDisabled]
   }
 
   def fetchJob(jobId: JobId): Future[Option[JobSpec]] = {
@@ -114,7 +125,7 @@ class Kairos(settings: KairosClusterSettings)
 
     userAuth ? Authenticate(username, password) map {
       case AuthenticationSuccess(authInfo) => Some(authInfo)
-      case AuthenticationFailed => None
+      case AuthenticationFailed            => None
     }
   }
 

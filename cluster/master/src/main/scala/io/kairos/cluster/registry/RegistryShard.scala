@@ -20,7 +20,6 @@ import scalaz._
  * Created by aalonsodominguez on 10/08/15.
  */
 object RegistryShard {
-  import Registry._
   import RegistryProtocol._
 
   val DefaultSnapshotFrequency = 15 minutes
@@ -53,30 +52,27 @@ object RegistryShard {
   }
 
   private case class RegistryStore private (
-      private val jobs: Map[JobId, (JobSpec, JobState)]) {
+      private val jobs: Map[JobId, JobSpec]) {
 
-    def get(id: JobId): Option[(JobSpec, JobState)] = jobs.get(id)
+    def get(id: JobId): Option[JobSpec] = jobs.get(id)
 
-    def list: Seq[(JobSpec, JobState)] = jobs.values.toSeq
+    def list: Seq[JobSpec] = jobs.values.toSeq
 
     def contains(jobId: JobId): Boolean =
       jobs.contains(jobId)
 
     def isEnabled(jobId: JobId): Boolean =
-      get(jobId).exists(_._2.enabled)
+      get(jobId).exists(!_.disabled)
 
     def updated(event: RegistryEvent): RegistryStore = event match {
       case JobAccepted(jobId, jobSpec) =>
-        val jobState = JobState()
-        copy(jobs = jobs + (jobId -> (jobSpec, jobState)))
+        copy(jobs = jobs + (jobId -> jobSpec))
 
       case JobEnabled(jobId) if contains(jobId) && !isEnabled(jobId) =>
-        val (spec, state) = jobs(jobId)
-        copy(jobs = jobs + (jobId -> (spec, state.copy(enabled = true))))
+        copy(jobs = jobs + (jobId -> jobs(jobId).copy(disabled = false)))
 
       case JobDisabled(jobId) if isEnabled(jobId) =>
-        val (spec, state) = jobs(jobId)
-        copy(jobs = jobs + (jobId -> (spec, state.copy(enabled = false))))
+        copy(jobs = jobs + (jobId -> jobs(jobId).copy(disabled = true)))
 
       // Any event other than the previous ones have no impact in the state
       case _ => this
@@ -141,19 +137,25 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
         response
       } pipeTo sender()
 
-    case EnableJob(jobId) if store.contains(jobId) && !store.isEnabled(jobId) =>
-      persist(JobEnabled(jobId)) { event =>
-        store = store.updated(event)
-        mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
-        sender() ! event
+    case EnableJob(jobId) if store.contains(jobId) =>
+      val answer = JobEnabled(jobId)
+      if (!store.isEnabled(jobId)) {
+        persist(answer) { event =>
+          store = store.updated(event)
+          mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
+        }
       }
+      sender() ! answer
 
-    case DisableJob(jobId) if store.contains(jobId) && store.isEnabled(jobId) =>
-      persist(JobDisabled(jobId)) { event =>
-        store = store.updated(event)
-        mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
-        sender() ! event
+    case DisableJob(jobId) if store.contains(jobId) =>
+      val answer = JobDisabled(jobId)
+      if (store.isEnabled(jobId)) {
+        persist(answer) { event =>
+          store = store.updated(event)
+          mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
+        }
       }
+      sender() ! answer
 
     case GetJob(jobId) =>
       sender() ! store.get(jobId)

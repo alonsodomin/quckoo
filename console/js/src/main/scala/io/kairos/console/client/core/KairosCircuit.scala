@@ -32,8 +32,7 @@ object KairosCircuit extends Circuit[KairosModel] with ReactConnector[KairosMode
         updated(Some(Notification.danger(s"Job not found $jobId")))
 
       case ExecutionPlanStarted(jobId, planId) =>
-        updated(Some(Notification.info(s"Started excution plan for job")),
-          Effect.action(RefreshExecutionPlans(Set(planId))))
+        updated(Some(Notification.info(s"Started excution plan for job. planId=$planId")))
     }
   }
 

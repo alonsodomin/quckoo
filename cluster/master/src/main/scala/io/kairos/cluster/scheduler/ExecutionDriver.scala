@@ -5,8 +5,7 @@ import java.util.UUID
 import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
-import akka.persistence.PersistentActor
-
+import akka.persistence.{PersistentActor, RecoveryCompleted}
 import io.kairos.fault.{ExceptionThrown, Fault}
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
@@ -130,8 +129,13 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     case create: Created =>
       context.become(replaying(Some(DriverState(create))))
 
-    case event: SchedulerEvent =>
+    case event: SchedulerEvent if state.isDefined =>
       context.become(replaying(state.map(_.updated(event))))
+
+    case RecoveryCompleted if state.isDefined =>
+      state.filterNot(_.plan.finished).
+        map(active(_)).
+        foreach(context.become)
   }
 
   override def receiveCommand: Receive = initial()

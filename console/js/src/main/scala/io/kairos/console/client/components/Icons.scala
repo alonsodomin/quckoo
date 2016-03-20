@@ -497,6 +497,8 @@ object Icons {
   def stepForward = icon("step-forward")
   def stethoscope = icon("stethoscope")
   def stop = icon("stop")
+  def stopCircle = icon("stop-circle")
+  def stopCircleO = icon("stop-circle-o")
   def streetView = icon("street-view")
   def strikethrough = icon("strikethrough")
   def stumbleupon = icon("stumbleupon")

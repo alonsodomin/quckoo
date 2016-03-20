@@ -20,7 +20,6 @@ case class RefreshJobSpecs(
 
 }
 
-case class RegisterJob(spec: JobSpec)
 case class RegisterJobResult(jobId: Validated[JobId])
 
 case object LoadExecutionPlans

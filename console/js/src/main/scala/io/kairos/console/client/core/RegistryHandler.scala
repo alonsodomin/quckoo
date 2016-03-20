@@ -6,6 +6,7 @@ import diode.data._
 import io.kairos.JobSpec
 import io.kairos.console.client.components.Notification
 import io.kairos.id.JobId
+import io.kairos.protocol.RegistryProtocol
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -16,6 +17,7 @@ import scalaz._
   */
 
 class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) extends ActionHandler(model) {
+  import RegistryProtocol._
 
   def loadJobSpec(jobId: JobId): Future[(JobId, Pot[JobSpec])] =
     ClientApi.fetchJob(jobId).map {
@@ -38,6 +40,12 @@ class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) exten
     case JobSpecsLoaded(specs) if specs.nonEmpty =>
       updated(PotMap(JobSpecFetcher, specs))
 
+    case JobEnabled(jobId) =>
+      effectOnly(Effect.action(RefreshJobSpecs(Set(jobId))))
+
+    case JobDisabled(jobId) =>
+      effectOnly(Effect.action(RefreshJobSpecs(Set(jobId))))
+
     case action: RefreshJobSpecs =>
       val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
       action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
@@ -46,6 +54,7 @@ class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) exten
 }
 
 class RegistryHandler(model: ModelRW[KairosModel, KairosModel]) extends ActionHandler(model) {
+  import RegistryProtocol._
 
   override def handle = {
     case RegisterJob(spec) =>
@@ -59,6 +68,12 @@ class RegistryHandler(model: ModelRW[KairosModel, KairosModel]) extends ActionHa
         case -\/(errors) =>
           updated(value.copy(notification = Some(Notification.danger(errors))))
       }
+
+    case EnableJob(jobId) =>
+      updated(value.copy(notification = None), Effect(ClientApi.enableJob(jobId)))
+
+    case DisableJob(jobId) =>
+      updated(value.copy(notification = None), Effect(ClientApi.disableJob(jobId)))
   }
 
 }

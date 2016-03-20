@@ -20,8 +20,6 @@ object Registry {
 
   final val PersistenceId = "registry"
 
-  final case class JobState(enabled: Boolean = true)
-
   def props(settings: KairosClusterSettings) = Props(classOf[Registry], settings)
 
 }
@@ -51,8 +49,10 @@ class Registry(settings: KairosClusterSettings)
           case (map, envelope) => envelope.event match {
             case JobAccepted(jobId, jobSpec) =>
               map + (jobId -> jobSpec)
-            case JobDisabled(jobId) if map.contains(jobId) =>
-              map - jobId
+            case JobDisabled(jobId) =>
+              map + (jobId -> map(jobId).copy(disabled = true))
+            case JobEnabled(jobId) =>
+              map + (jobId -> map(jobId).copy(disabled = false))
             case _ => map
           }
         } pipeTo sender()

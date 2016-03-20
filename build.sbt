@@ -173,7 +173,7 @@ lazy val consoleResources = (project in file("console/resources")).
     name := "console-resources",
     libraryDependencies ++= Seq(
       "org.webjars" % "bootstrap-sass" % "3.3.1",
-      "org.webjars" % "font-awesome"   % "4.3.0-1"
+      "org.webjars" % "font-awesome"   % "4.5.0"
     ),
     exportJars := true,
     unmanagedResourceDirectories in Compile += (crossTarget in consoleJS).value,
