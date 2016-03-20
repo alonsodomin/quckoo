@@ -70,8 +70,8 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
 
     "return none when asked for a random job id" in {
       registry ! GetJob(JobId(UUID.randomUUID()))
-      within(1 second) {
-        expectMsg(None)
+      within(5 second) {
+        awaitAssert(expectMsg(None))
       }
     }
 
