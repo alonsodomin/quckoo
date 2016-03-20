@@ -5,6 +5,7 @@ import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
 import akka.cluster.sharding.ShardRegion
 import akka.pattern._
 import akka.persistence.{PersistentActor, SnapshotOffer}
+
 import io.kairos.fault.ExceptionThrown
 import io.kairos.id._
 import io.kairos.protocol._
@@ -19,6 +20,7 @@ import scalaz._
  * Created by aalonsodominguez on 10/08/15.
  */
 object RegistryShard {
+  import Registry._
   import RegistryProtocol._
 
   val DefaultSnapshotFrequency = 15 minutes
@@ -34,40 +36,47 @@ object RegistryShard {
     case r: RegisterJob => (JobId(r.job).toString, r)
     case g: GetJob      => (g.jobId.toString, g)
     case d: DisableJob  => (d.jobId.toString, d)
+    case e: EnableJob   => (e.jobId.toString, e)
   }
 
   val shardResolver: ShardRegion.ExtractShardId = {
     case RegisterJob(jobSpec) => (JobId(jobSpec).hashCode % NumberOfShards).toString
     case GetJob(jobId)        => (jobId.hashCode % NumberOfShards).toString
     case DisableJob(jobId)    => (jobId.hashCode % NumberOfShards).toString
+    case EnableJob(jobId)     => (jobId.hashCode % NumberOfShards).toString
   }
 
   private object RegistryStore {
 
-    def empty: RegistryStore = new RegistryStore(Map.empty, Map.empty)
+    def empty: RegistryStore = new RegistryStore(Map.empty)
 
   }
 
   private case class RegistryStore private (
-      private val enabledJobs: Map[JobId, JobSpec],
-      private val disabledJobs: Map[JobId, JobSpec]) {
+      private val jobs: Map[JobId, (JobSpec, JobState)]) {
 
-    def get(id: JobId): Option[JobSpec] =
-      enabledJobs.get(id)
+    def get(id: JobId): Option[(JobSpec, JobState)] = jobs.get(id)
+
+    def list: Seq[(JobSpec, JobState)] = jobs.values.toSeq
+
+    def contains(jobId: JobId): Boolean =
+      jobs.contains(jobId)
 
     def isEnabled(jobId: JobId): Boolean =
-      enabledJobs.contains(jobId)
-
-    def listEnabled: Seq[JobSpec] = enabledJobs.values.toSeq
+      get(jobId).exists(_._2.enabled)
 
     def updated(event: RegistryEvent): RegistryStore = event match {
       case JobAccepted(jobId, jobSpec) =>
-        copy(enabledJobs = enabledJobs + (jobId -> jobSpec))
+        val jobState = JobState()
+        copy(jobs = jobs + (jobId -> (jobSpec, jobState)))
 
-      case JobDisabled(jobId) =>
-        val job = enabledJobs(jobId)
-        copy(enabledJobs = enabledJobs - jobId,
-            disabledJobs = disabledJobs + (jobId -> job))
+      case JobEnabled(jobId) if contains(jobId) && !isEnabled(jobId) =>
+        val (spec, state) = jobs(jobId)
+        copy(jobs = jobs + (jobId -> (spec, state.copy(enabled = true))))
+
+      case JobDisabled(jobId) if isEnabled(jobId) =>
+        val (spec, state) = jobs(jobId)
+        copy(jobs = jobs + (jobId -> (spec, state.copy(enabled = false))))
 
       // Any event other than the previous ones have no impact in the state
       case _ => this
@@ -132,15 +141,18 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
         response
       } pipeTo sender()
 
-    case DisableJob(jobId) =>
-      if (!store.isEnabled(jobId)) {
-        sender() ! JobNotEnabled(jobId)
-      } else {
-        persist(JobDisabled(jobId)) { event =>
-          store = store.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
-          sender() ! event
-        }
+    case EnableJob(jobId) if store.contains(jobId) && !store.isEnabled(jobId) =>
+      persist(JobEnabled(jobId)) { event =>
+        store = store.updated(event)
+        mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
+        sender() ! event
+      }
+
+    case DisableJob(jobId) if store.contains(jobId) && store.isEnabled(jobId) =>
+      persist(JobDisabled(jobId)) { event =>
+        store = store.updated(event)
+        mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
+        sender() ! event
       }
 
     case GetJob(jobId) =>

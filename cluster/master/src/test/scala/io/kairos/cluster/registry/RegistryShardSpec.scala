@@ -1,15 +1,18 @@
 package io.kairos.cluster.registry
 
 import java.net.URL
+import java.util.UUID
 
-import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.testkit._
+
 import io.kairos._
-import io.kairos.fault.{UnresolvedDependency, ExceptionThrown, Fault}
+import io.kairos.fault.{ExceptionThrown, Fault, UnresolvedDependency}
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.RegistryProtocol
 import io.kairos.resolver.{Artifact, Resolve}
 import io.kairos.test.TestActorSystem
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
@@ -34,8 +37,8 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
     with Matchers with MockFactory {
 
   import RegistryProtocol._
+  import Registry._
   import RegistryShardSpec._
-
   import Scalaz._
 
   val mediator = DistributedPubSub(system).mediator
@@ -61,8 +64,13 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
-  "A job registry" should {
+  "A job registry shard" should {
     val registry = TestActorRef(RegistryShard.props(mockResolve))
+
+    "return none when asked for a random job id" in {
+      registry ! GetJob(JobId(UUID.randomUUID()))
+      expectMsg(None)
+    }
 
     "reject a job if it fails to resolve its dependencies" in {
       val unresolvedDependency = UnresolvedDependency(TestArtifactId)
@@ -90,16 +98,6 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
       eventListener.expectMsgType[JobRejected].cause should be (NonEmptyList(ExceptionThrown(expectedException)))
     }
 
-    "notify that a specific job is not enabled when attempting to disabling it" in {
-      val otherModuleId = ArtifactId("com.example", "foo", "latest")
-      val otherJobSpec = JobSpec("foo", Some("foo desc"), otherModuleId, "com.example.Job")
-
-      val nonExistentJobId = JobId(otherJobSpec)
-      registry ! DisableJob(nonExistentJobId)
-
-      expectMsgType[JobNotEnabled].jobId should be (nonExistentJobId)
-    }
-
     "return job accepted if resolution of dependencies succeeds" in {
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
         expects(TestArtifactId, false, *).
@@ -114,11 +112,11 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
       eventListener.expectMsgType[JobAccepted].job should be (TestJobSpec)
     }
 
-    "return the registered job spec when asked for it" in {
+    "return the registered job spec with its status when asked for it" in {
       testJobId.foreach { id =>
         registry ! GetJob(id)
 
-        expectMsg(Some(TestJobSpec))
+        expectMsg(Some(TestJobSpec -> JobState(enabled = true)))
       }
     }
 
@@ -126,16 +124,51 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
       testJobId.foreach { id =>
         registry ! DisableJob(id)
 
-        expectMsgType[JobDisabled].jobId should be (id)
         eventListener.expectMsgType[JobDisabled].jobId should be (id)
+        expectMsgType[JobDisabled].jobId should be (id)
       }
     }
 
-    "return None when asked for a job after disabling it" in {
+    "do nothing when trying to disable it again" in {
+      testJobId.foreach { id =>
+        registry ! DisableJob(id)
+
+        eventListener.expectNoMsg()
+        expectNoMsg()
+      }
+    }
+
+    "return the registered job spec with disabled status" in {
       testJobId.foreach { id =>
         registry ! GetJob(id)
 
-        expectMsg(None)
+        expectMsg(Some(TestJobSpec -> JobState(enabled = false)))
+      }
+    }
+
+    "enable a job that has been previously disabled and publish the event" in {
+      testJobId.foreach { id =>
+        registry ! EnableJob(id)
+
+        eventListener.expectMsgType[JobEnabled].jobId should be (id)
+        expectMsgType[JobEnabled].jobId should be (id)
+      }
+    }
+
+    "do nothing when trying to enable it again" in {
+      testJobId.foreach { id =>
+        registry ! EnableJob(id)
+
+        eventListener.expectNoMsg()
+        expectNoMsg()
+      }
+    }
+
+    "double check that the job is finally enabled" in {
+      testJobId.foreach { id =>
+        registry ! GetJob(id)
+
+        expectMsg(Some(TestJobSpec -> JobState(enabled = true)))
       }
     }
 

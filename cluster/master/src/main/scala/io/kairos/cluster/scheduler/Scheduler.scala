@@ -12,6 +12,7 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import io.kairos.JobSpec
 import io.kairos.cluster.core.KairosJournal
 import io.kairos.cluster.protocol.WorkerProtocol
+import io.kairos.cluster.registry.Registry
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.TimeSource
@@ -97,10 +98,17 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: SchedulerPro
 
   import Scheduler._
   import SchedulerProtocol._
+  import Registry._
 
   def receive: Receive = {
-    case Some(spec: JobSpec) => // create execution plan
-      context.parent ! CreateExecutionDriver(spec, config, requestor)
+    case Some((spec: JobSpec, state: JobState)) =>
+      if (state.enabled) {
+        // create execution plan
+        context.parent ! CreateExecutionDriver(spec, config, requestor)
+      } else {
+        log.info("Found job {} in the registry but is not enabled.", jobId)
+        requestor ! JobNotEnabled(jobId)
+      }
       context.stop(self)
 
     case None =>

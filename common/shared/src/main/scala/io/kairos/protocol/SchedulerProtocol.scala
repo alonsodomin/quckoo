@@ -30,6 +30,7 @@ object SchedulerProtocol {
   case class TaskCompleted(jobId: JobId, planId: PlanId, taskId: TaskId, outcome: Task.Outcome) extends SchedulerEvent
 
   case class JobNotFound(jobId: JobId) extends SchedulerMessage
+  case class JobNotEnabled(jobId: JobId) extends SchedulerMessage
   case class JobFailedToSchedule(jobId: JobId, cause: Throwable) extends SchedulerMessage
 
   case class ExecutionPlanStarted(jobId: JobId, planId: PlanId) extends SchedulerEvent

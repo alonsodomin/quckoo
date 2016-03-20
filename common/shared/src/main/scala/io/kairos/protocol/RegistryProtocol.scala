@@ -16,7 +16,6 @@ object RegistryProtocol {
 
   case class GetJob(jobId: JobId) extends RegistryCommand
   case object GetJobs extends RegistryCommand
-  case class JobNotEnabled(jobId: JobId)
 
   case class RegisterJob(job: JobSpec) extends RegistryCommand
   case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryEvent
@@ -24,5 +23,8 @@ object RegistryProtocol {
 
   case class DisableJob(jobId: JobId) extends RegistryCommand
   case class JobDisabled(jobId: JobId) extends RegistryEvent
+
+  case class EnableJob(jobId: JobId) extends RegistryCommand
+  case class JobEnabled(jobId: JobId) extends RegistryEvent
 
 }

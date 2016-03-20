@@ -2,10 +2,13 @@ package io.kairos.cluster.scheduler
 
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.testkit._
+
 import io.kairos.JobSpec
 import io.kairos.id.{ArtifactId, JobId}
+import io.kairos.cluster.registry.Registry
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
+
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
@@ -22,6 +25,7 @@ object SchedulerSpec {
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender with ImplicitTimeSource
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 
+  import Registry._
   import SchedulerProtocol._
   import SchedulerSpec._
 
@@ -52,16 +56,26 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       TestActors.forwardActorProps(taskQueueProbe.ref)
     ), "scheduler")
 
-    "create an execution plan job to schedule is enabled" in {
+    "create an execution driver for an enabled job" in {
       scheduler ! ScheduleJob(TestJobId)
 
       registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
-      registryProbe.reply(Some(TestJobSpec))
+      registryProbe.reply(Some(TestJobSpec -> JobState(enabled = true)))
 
       eventListener.expectMsgType[ExecutionPlanStarted].jobId should be (TestJobId)
       eventListener.expectMsgType[TaskScheduled].jobId should be (TestJobId)
 
       expectMsgType[ExecutionPlanStarted].jobId should be (TestJobId)
+    }
+
+    "do nothing but reply if the job is not enabled" in {
+      scheduler ! ScheduleJob(TestJobId)
+
+      registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
+      registryProbe.reply(Some(TestJobSpec -> JobState(enabled = false)))
+
+      eventListener.expectNoMsg()
+      expectMsgType[JobNotEnabled].jobId should be (TestJobId)
     }
 
     "should reply not found if the job is not present" in {
@@ -70,6 +84,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
       registryProbe.reply(None)
 
+      eventListener.expectNoMsg()
       expectMsgType[JobNotFound].jobId should be (TestJobId)
     }
   }

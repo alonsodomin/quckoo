@@ -20,6 +20,8 @@ object Registry {
 
   final val PersistenceId = "registry"
 
+  final case class JobState(enabled: Boolean = true)
+
   def props(settings: KairosClusterSettings) = Props(classOf[Registry], settings)
 
 }
