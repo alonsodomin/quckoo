@@ -14,10 +14,12 @@ class SchedulerTagEventAdapter extends WriteEventAdapter {
 
   override def toJournal(event: Any): Any = event match {
     case evt: ExecutionDriver.Created => Tagged(evt, Set(tags.ExecutionPlan))
-    case evt: TaskScheduled         => Tagged(evt, Set(tags.ExecutionPlan, tags.Task))
-    case evt: TaskCompleted         => Tagged(evt, Set(tags.ExecutionPlan, tags.Task))
-    case evt: ExecutionPlanStarted  => Tagged(evt, Set(tags.ExecutionPlan))
-    case evt: ExecutionPlanFinished => Tagged(evt, Set(tags.ExecutionPlan))
+    case evt: TaskScheduled           => Tagged(evt, Set(tags.ExecutionPlan, tags.Task))
+    case evt: TaskCompleted           => Tagged(evt, Set(tags.ExecutionPlan, tags.Task))
+    case evt: ExecutionPlanStarted    => Tagged(evt, Set(tags.ExecutionPlan))
+    case evt: ExecutionPlanFinished   => Tagged(evt, Set(tags.ExecutionPlan))
+
+    case _ => event
   }
 
 }
