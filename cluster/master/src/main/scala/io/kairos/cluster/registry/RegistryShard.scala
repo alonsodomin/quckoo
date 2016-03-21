@@ -105,7 +105,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
   override def receiveRecover: Receive = {
     case event: RegistryEvent =>
       store = store.updated(event)
-      log.info("Replayed registry event. event={}", event)
+      log.debug("Replayed registry event. event={}", event)
 
     case SnapshotOffer(_, snapshot: RegistryStore) =>
       store = snapshot

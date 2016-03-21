@@ -9,6 +9,7 @@ import io.kairos.id.JobId
 import io.kairos.protocol.RegistryProtocol
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalaz._
 
@@ -53,27 +54,31 @@ class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) exten
 
 }
 
-class RegistryHandler(model: ModelRW[KairosModel, KairosModel]) extends ActionHandler(model) {
+class RegistryHandler(model: ModelRW[KairosModel, Option[Notification]]) extends ActionHandler(model) {
   import RegistryProtocol._
+  import Implicits._
 
   override def handle = {
     case RegisterJob(spec) =>
-      updated(value.copy(notification = None), Effect(ClientApi.registerJob(spec).map(RegisterJobResult)))
+      updated(None, Effect(ClientApi.registerJob(spec).map(RegisterJobResult)))
 
     case RegisterJobResult(validated) =>
       validated.disjunction match {
         case \/-(id) =>
-          updated(value.copy(notification = Some(Notification.info(s"Job registered with id $id"))), Effect.action(RefreshJobSpecs(Set(id))))
+          updated(
+            Some(Notification.info(s"Job registered with id $id")),
+            Effect.action(RefreshJobSpecs(Set(id))).after(2 seconds)
+          )
 
         case -\/(errors) =>
-          updated(value.copy(notification = Some(Notification.danger(errors))))
+          updated(Some(Notification.danger(errors)))
       }
 
     case EnableJob(jobId) =>
-      updated(value.copy(notification = None), Effect(ClientApi.enableJob(jobId)))
+      updated(None, Effect(ClientApi.enableJob(jobId)))
 
     case DisableJob(jobId) =>
-      updated(value.copy(notification = None), Effect(ClientApi.disableJob(jobId)))
+      updated(None, Effect(ClientApi.disableJob(jobId)))
   }
 
 }
