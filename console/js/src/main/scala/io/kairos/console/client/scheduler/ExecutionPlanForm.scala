@@ -1,22 +1,20 @@
 package io.kairos.console.client.scheduler
 
+import diode.data.{Empty, PotMap}
+import diode.data.PotState.PotEmpty
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-
-import io.kairos.{ExecutionPlan, Trigger}
+import io.kairos.{ExecutionPlan, JobSpec, Trigger}
 import io.kairos.console.client.components._
 import io.kairos.console.client.core.{KairosModel, LoadJobSpecs}
 import io.kairos.id.JobId
 import io.kairos.protocol._
 import io.kairos.time._
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-
 import monocle.function.all._
 import monocle.macros.Lenses
 import monocle.std.vector._
-
 import org.widok.moment.{Moment, Date => MDate}
 
 import scala.concurrent.duration._
@@ -101,6 +99,14 @@ object ExecutionPlanForm {
             $.setStateL(jobId)(Some(JobId(evt.target.value)))
         }
 
+        def enabledJobs = {
+          val jobs = props.proxy().jobSpecs
+          jobs.seq.map { case (id, pot) =>
+            if (pot.exists(_.disabled)) (id, Empty)
+            else (id, pot)
+          }
+        }
+
         <.div(lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobId", "Job"),
           <.div(^.`class` := "col-sm-10",
@@ -108,7 +114,7 @@ object ExecutionPlanForm {
               jobId.get(state).map(id => ^.value := id.toString()),
               ^.onChange ==> updateJobId,
               <.option("Select a job"),
-              props.proxy().jobSpecs.seq.map { case (id, spec) =>
+              enabledJobs.map { case (id, spec) =>
                 spec.renderReady { s =>
                   val desc = s.description.map(d => s"| $d").getOrElse("")
                   <.option(^.value := id.toString(),
