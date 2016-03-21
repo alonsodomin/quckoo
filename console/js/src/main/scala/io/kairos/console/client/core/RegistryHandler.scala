@@ -27,7 +27,7 @@ class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) exten
 
   def loadJobSpecs(keys: Set[JobId] = Set.empty): Future[Map[JobId, Pot[JobSpec]]] = {
     if (keys.isEmpty) {
-      ClientApi.enabledJobs.map(_.map { case (k, v) => (k, Ready(v)) })
+      ClientApi.fetchJobs.map(_.map { case (k, v) => (k, Ready(v)) })
     } else {
       Future.sequence(keys.map(loadJobSpec)).map(_.toMap)
     }

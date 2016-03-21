@@ -89,7 +89,7 @@ case class Notification private (level: Level, private val renderer: Notificatio
   def render: ReactNode = {
     Alert(AlertStyle(level), <.div(^.`class` := "row",
       <.div(^.`class` := "col-sm-2", AlertIcon(level)),
-      <.div(^.`class` := "col-sm-12", renderer.runNow())
+      <.div(^.`class` := "col-sm-10", renderer.runNow())
     ))
   }
 

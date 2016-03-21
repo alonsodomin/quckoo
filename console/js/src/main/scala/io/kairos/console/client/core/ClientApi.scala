@@ -78,7 +78,7 @@ object ClientApi extends KairosApi with RegistryApi with SchedulerApi with Clien
     }
   }
 
-  override def enabledJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
+  override def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
     Ajax.get(JobsURI, headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
       read[Map[JobId, JobSpec]](xhr.responseText)
     }
