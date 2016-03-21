@@ -8,14 +8,18 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-
-import io.kairos.JobSpec
+import akka.util.Timeout
+import io.kairos.{ExecutionPlan, JobSpec}
 import io.kairos.cluster.core.KairosJournal
 import io.kairos.cluster.protocol.WorkerProtocol
-import io.kairos.cluster.registry.Registry
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.time.TimeSource
+
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scalaz.ListT
+import scalaz.std.scalaFuture._
 
 /**
  * Created by aalonsodominguez on 16/08/15.
@@ -64,24 +68,37 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
       context.actorOf(props, s"execution-plan-factory-${config.jobId}")
 
     case get: GetExecutionPlan =>
-      shardRegion.tell(get, sender())
+      import context.dispatcher
+
+      val requestor = sender()
+      ListT(executionPlanIds).find(_ == get.planId).isEmpty.flatMap { empty =>
+        if (empty) Future.successful(None)
+        else {
+          implicit val timeout = Timeout(2 seconds)
+          (shardRegion ? get).mapTo[ExecutionPlan]
+        }
+      } pipeTo requestor
 
     case GetExecutionPlans =>
       import context.dispatcher
-      readJournal.eventsByTag(SchedulerTagEventAdapter.tags.ExecutionPlan, 0).
-        filter(env =>
-          env.event match {
-            case evt: ExecutionDriver.Created => true
-            case _                            => false
-          }
-        ).map(env =>
-          env.event.asInstanceOf[ExecutionDriver.Created].planId
-        ).runFold(List.empty[PlanId]) {
-          case (list, planId) => planId :: list
-        } pipeTo sender()
+      executionPlanIds pipeTo sender()
 
     case msg: WorkerMessage =>
       taskQueue.tell(msg, sender())
+  }
+
+  private def executionPlanIds: Future[List[PlanId]] = {
+    readJournal.eventsByTag(SchedulerTagEventAdapter.tags.ExecutionPlan, 0).
+      filter(env =>
+        env.event match {
+          case evt: ExecutionDriver.Created => true
+          case _                            => false
+        }
+      ).map(env =>
+      env.event.asInstanceOf[ExecutionDriver.Created].planId
+    ).runFold(List.empty[PlanId]) {
+      case (list, planId) => planId :: list
+    }
   }
 
   private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =

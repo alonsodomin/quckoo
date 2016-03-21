@@ -1,6 +1,7 @@
 package io.kairos.console.server.http
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
@@ -16,6 +17,7 @@ import io.kairos.serialization
   */
 trait SchedulerHttpRouter extends UpickleSupport { this: SchedulerFacade =>
 
+  import StatusCodes._
   import SchedulerProtocol._
   import serialization.json.jvm._
 
@@ -24,14 +26,24 @@ trait SchedulerHttpRouter extends UpickleSupport { this: SchedulerFacade =>
       pathEnd {
         get {
           complete(allExecutionPlanIds)
-        } ~ put {
-          entity(as[ScheduleJob]) { sch =>
-            complete(schedule(sch))
+        } ~ post {
+          entity(as[ScheduleJob]) { req =>
+            extractExecutionContext { implicit ec =>
+              onSuccess(schedule(req)) {
+                case Left(notFound) => complete(NotFound -> notFound.jobId)
+                case Right(plan)    => complete(plan)
+              }
+            }
           }
         }
       } ~ path(JavaUUID) { planId =>
         get {
-          complete(executionPlan(planId))
+          extractExecutionContext { implicit ec =>
+            onSuccess(executionPlan(planId)) {
+              case Some(plan) => complete(plan)
+              case _          => complete(NotFound)
+            }
+          }
         }
       }
     }

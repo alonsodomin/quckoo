@@ -1,7 +1,7 @@
 package io.kairos.console.client.core
 
 import diode.{ActionHandler, Effect, ModelRW}
-import diode.data.{AsyncAction, Pot, PotMap, Ready}
+import diode.data._
 import io.kairos.ExecutionPlan
 import io.kairos.id.PlanId
 
@@ -17,14 +17,16 @@ class ExecutionPlanMapHandler(model: ModelRW[KairosModel, PotMap[PlanId, Executi
   def loadPlanIds: Future[List[PlanId]] = ClientApi.allExecutionPlanIds
 
   def loadPlans(ids: Set[PlanId]): Future[Map[PlanId, Pot[ExecutionPlan]]] = {
-    Future.sequence(ids.map(loadPlan)).
-      map(_.foldRight(Map.empty[PlanId, Pot[ExecutionPlan]]) { (plan, map) =>
-        map + (plan.planId -> Ready(plan))
-      })
+    Future.sequence(ids.map { id =>
+      loadPlan(id).map(plan => id -> plan)
+    }) map(_.toMap)
   }
 
-  def loadPlan(id: PlanId): Future[ExecutionPlan] =
-    ClientApi.executionPlan(id)
+  def loadPlan(id: PlanId): Future[Pot[ExecutionPlan]] =
+    ClientApi.executionPlan(id) map {
+      case Some(plan) => Ready(plan)
+      case None       => Unavailable
+    }
 
   override def handle = {
     case LoadExecutionPlans =>

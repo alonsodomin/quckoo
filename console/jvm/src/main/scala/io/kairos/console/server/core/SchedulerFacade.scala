@@ -12,7 +12,7 @@ import scala.concurrent.Future
 trait SchedulerFacade {
   import SchedulerProtocol._
 
-  def executionPlan(planId: PlanId): Future[ExecutionPlan]
+  def executionPlan(planId: PlanId): Future[Option[ExecutionPlan]]
 
   def allExecutionPlanIds: Future[List[PlanId]]
 

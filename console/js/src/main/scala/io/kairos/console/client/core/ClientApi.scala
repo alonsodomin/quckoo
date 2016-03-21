@@ -5,10 +5,11 @@ import io.kairos.console.info.ClusterInfo
 import io.kairos.console.protocol.LoginRequest
 import io.kairos.console.{KairosApi, RegistryApi, SchedulerApi}
 import io.kairos.id.{JobId, PlanId}
-import io.kairos.protocol.RegistryProtocol.{JobDisabled, JobEnabled}
-import io.kairos.protocol.SchedulerProtocol.{ExecutionPlanStarted, JobNotFound, ScheduleJob}
+import io.kairos.protocol.RegistryProtocol
+import io.kairos.protocol.SchedulerProtocol
 import io.kairos.serialization
 import io.kairos.{ExecutionPlan, JobSpec, Validated}
+
 import org.scalajs.dom
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,10 +18,12 @@ import scala.concurrent.{ExecutionContext, Future}
  * Created by alonsodomin on 13/10/2015.
  */
 object ClientApi extends KairosApi with RegistryApi with SchedulerApi with ClientAuth {
-  import dom.console
   import dom.ext.Ajax
   import upickle.default._
   import serialization.json.scalajs._
+
+  import RegistryProtocol._
+  import SchedulerProtocol._
 
   private[this] val BaseURI = "/api"
   private[this] val LoginURI = BaseURI + "/login"
@@ -67,8 +70,9 @@ object ClientApi extends KairosApi with RegistryApi with SchedulerApi with Clien
 
   override def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] = {
     Ajax.get(JobsURI + "/" + jobId, headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
-      if (xhr.status == 404) None
-      else Some(read[JobSpec](xhr.responseText))
+      Some(read[JobSpec](xhr.responseText))
+    } recover {
+      case _ => None
     }
   }
 
@@ -84,9 +88,11 @@ object ClientApi extends KairosApi with RegistryApi with SchedulerApi with Clien
     }
   }
 
-  override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[ExecutionPlan] = {
+  override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {
     Ajax.get(ExecutionPlansURI + "/" + planId, headers = authHeaders).map { xhr =>
-      read[ExecutionPlan](xhr.responseText)
+      Some(read[ExecutionPlan](xhr.responseText))
+    } recover {
+      case _ => None
     }
   }
 
@@ -98,8 +104,10 @@ object ClientApi extends KairosApi with RegistryApi with SchedulerApi with Clien
 
   override def schedule(scheduleJob: ScheduleJob)
                        (implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
-    Ajax.put(ExecutionPlansURI, write(scheduleJob), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
-      read[Either[JobNotFound, ExecutionPlanStarted]](xhr.responseText)
+    Ajax.post(ExecutionPlansURI, write(scheduleJob), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
+      Right(read[ExecutionPlanStarted](xhr.responseText))
+    } recover {
+      case _ => Left(JobNotFound(scheduleJob.jobId))
     }
   }
 }

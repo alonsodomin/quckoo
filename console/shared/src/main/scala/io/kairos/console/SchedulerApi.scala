@@ -12,7 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 trait SchedulerApi {
   import SchedulerProtocol._
 
-  def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[ExecutionPlan]
+  def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]]
 
   def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]]
 
