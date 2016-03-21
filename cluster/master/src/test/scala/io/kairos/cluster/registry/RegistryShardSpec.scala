@@ -63,7 +63,7 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
     TestKit.shutdownActorSystem(system)
 
   "A job registry shard" should {
-    val registry = TestActorRef(RegistryShard.props(mockResolve).withDispatcher("akka.actor.default-dispatcher"))
+    val registry = TestActorRef(RegistryShard.props(mockResolve))
 
     "return none when asked for a random job id" in {
       registry ! GetJob(JobId(UUID.randomUUID()))
