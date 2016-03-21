@@ -42,7 +42,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   import StatusCodes._
   import serialization.json.jvm._
 
-  val wrappingRoute = pathPrefix("api" / "registry") {
+  val entryPoint = pathPrefix("api" / "registry") {
     registryApi
   }
 
@@ -66,7 +66,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   "The Registry API" should {
 
     "return a map of jobs" in {
-      Get(endpoint("/jobs")) ~> wrappingRoute ~> check {
+      Get(endpoint("/jobs")) ~> entryPoint ~> check {
         responseAs[Map[JobId, JobSpec]] should be (TestJobMap)
       }
     }
@@ -74,40 +74,40 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
     "return a JobId if the job spec is valid" in {
       import Scalaz._
 
-      Put(endpoint("/jobs"), Some(TestJobSpec)) ~> wrappingRoute ~> check {
+      Put(endpoint("/jobs"), Some(TestJobSpec)) ~> entryPoint ~> check {
         responseAs[Validated[JobId]] should be (JobId(TestJobSpec).successNel[Fault])
       }
     }
 
     "return validation errors if the job spec is invalid" in {
-      Put(endpoint("/jobs"), Some(TestInvalidJobSpec)) ~> wrappingRoute ~> check {
+      Put(endpoint("/jobs"), Some(TestInvalidJobSpec)) ~> entryPoint ~> check {
         responseAs[Validated[JobId]] should be (JobSpec.validate(TestInvalidJobSpec))
       }
     }
 
     "return 404 if the job id does not exist" in {
       val randomId = UUID.randomUUID()
-      Get(endpoint(s"/jobs/$randomId")) ~> wrappingRoute ~> check {
+      Get(endpoint(s"/jobs/$randomId")) ~> entryPoint ~> check {
         status === NotFound
       }
     }
 
     "return a job spec if the ID exists" in {
-      Get(endpoint(s"/jobs/${JobId(TestJobSpec)}")) ~> wrappingRoute ~> check {
+      Get(endpoint(s"/jobs/${JobId(TestJobSpec)}")) ~> entryPoint ~> check {
         responseAs[JobSpec] should be (TestJobSpec)
       }
     }
 
     "return a job enabled message if enabling succeeds" in {
       val jobId = JobId(TestJobSpec)
-      Post(endpoint(s"/jobs/$jobId/enable")) ~> wrappingRoute ~> check {
+      Post(endpoint(s"/jobs/$jobId/enable")) ~> entryPoint ~> check {
         responseAs[JobEnabled] should be (JobEnabled(jobId))
       }
     }
 
     "return a job disabled message if enabling succeeds" in {
       val jobId = JobId(TestJobSpec)
-      Post(endpoint(s"/jobs/$jobId/disable")) ~> wrappingRoute ~> check {
+      Post(endpoint(s"/jobs/$jobId/disable")) ~> entryPoint ~> check {
         responseAs[JobDisabled] should be (JobDisabled(jobId))
       }
     }
