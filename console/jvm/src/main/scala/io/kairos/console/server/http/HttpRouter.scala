@@ -39,7 +39,9 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
           }
         } ~ path("info") {
           get {
-            complete(clusterDetails)
+            extractExecutionContext { implicit ec =>
+              complete(clusterDetails)
+            }
           }
         }
       } ~ pathPrefix("registry") {

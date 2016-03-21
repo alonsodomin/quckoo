@@ -4,7 +4,7 @@ import io.kairos.ExecutionPlan
 import io.kairos.id._
 import io.kairos.protocol.SchedulerProtocol
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Created by alonsodomin on 13/03/2016.
@@ -12,10 +12,10 @@ import scala.concurrent.Future
 trait SchedulerFacade {
   import SchedulerProtocol._
 
-  def executionPlan(planId: PlanId): Future[Option[ExecutionPlan]]
+  def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]]
 
-  def allExecutionPlanIds: Future[List[PlanId]]
+  def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]]
 
-  def schedule(schedule: ScheduleJob): Future[Either[JobNotFound, ExecutionPlanStarted]]
+  def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]]
 
 }

@@ -25,7 +25,9 @@ trait SchedulerHttpRouter extends UpickleSupport { this: SchedulerFacade =>
     pathPrefix("plans") {
       pathEnd {
         get {
-          complete(allExecutionPlanIds)
+          extractExecutionContext { implicit ec =>
+            complete(allExecutionPlanIds)
+          }
         } ~ post {
           entity(as[ScheduleJob]) { req =>
             extractExecutionContext { implicit ec =>

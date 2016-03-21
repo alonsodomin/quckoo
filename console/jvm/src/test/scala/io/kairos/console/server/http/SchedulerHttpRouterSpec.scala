@@ -5,14 +5,16 @@ import java.util.UUID
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+
 import io.kairos.{ExecutionPlan, Trigger, serialization}
 import io.kairos.console.server.core.SchedulerFacade
 import io.kairos.id.{JobId, PlanId}
 import io.kairos.protocol.SchedulerProtocol
 import io.kairos.time.JDK8TimeSource
+
 import org.scalatest.{Matchers, WordSpec}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Created by domingueza on 21/03/16.
@@ -44,10 +46,10 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     schedulerApi
   }
 
-  override def executionPlan(planId: PlanId): Future[Option[ExecutionPlan]] =
+  override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] =
     Future.successful(TestPlanMap.get(planId))
 
-  override def schedule(schedule: ScheduleJob): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
+  override def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
     val response = TestPlanMap.values.find(_.jobId == schedule.jobId) match {
       case Some(plan) => Right(ExecutionPlanStarted(schedule.jobId, plan.planId))
       case _          => Left(JobNotFound(schedule.jobId))
@@ -55,7 +57,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     Future.successful(response)
   }
 
-  override def allExecutionPlanIds: Future[List[PlanId]] =
+  override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]] =
     Future.successful(TestPlanIds)
 
   private[this] def endpoint(target: String) = s"/api/scheduler$target"

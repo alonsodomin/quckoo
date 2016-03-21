@@ -6,9 +6,7 @@ import akka.pattern._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
-
 import de.heikoseeberger.akkasse.ServerSentEvent
-
 import io.kairos.cluster.core._
 import io.kairos.cluster.protocol.GetClusterStatus
 import io.kairos.console.auth.AuthInfo
@@ -21,10 +19,9 @@ import io.kairos.protocol.RegistryProtocol
 import io.kairos.protocol.SchedulerProtocol
 import io.kairos.time.TimeSource
 import io.kairos.{ExecutionPlan, JobSpec, Validated}
-
 import org.slf4s.Logging
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 /**
@@ -41,25 +38,23 @@ class Kairos(settings: KairosClusterSettings)
   val core = system.actorOf(KairosCluster.props(settings), "kairos")
   val userAuth = system.actorSelection(core.path / "authenticator")
 
-  implicit final val dispatcher = system.dispatchers.lookup("kairos.api-dispatcher")
-
-  def start(implicit timeout: Timeout): Future[Unit] = {
+  def start(implicit ec: ExecutionContext, timeout: Timeout): Future[Unit] = {
     Http().bindAndHandle(router, settings.httpInterface, settings.httpPort).
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
   }
 
-  def allExecutionPlanIds: Future[List[PlanId]] = {
+  def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]] = {
     implicit val timeout = Timeout(5 seconds)
     (core ? GetExecutionPlans).mapTo[List[PlanId]]
   }
 
-  def executionPlan(planId: PlanId): Future[ExecutionPlan] = {
+  def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {
     implicit val timeout = Timeout(5 seconds)
 
-    (core ? GetExecutionPlan(planId)).mapTo[ExecutionPlan]
+    (core ? GetExecutionPlan(planId)).mapTo[Option[ExecutionPlan]]
   }
 
-  def schedule(schedule: ScheduleJob): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
+  def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
     implicit val timeout = Timeout(5 seconds)
 
     (core ? schedule) map {
@@ -68,22 +63,22 @@ class Kairos(settings: KairosClusterSettings)
     }
   }
 
-  def enableJob(jobId: JobId): Future[JobEnabled] = {
+  def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] = {
     implicit val timeout = Timeout(5 seconds)
     (core ? EnableJob(jobId)).mapTo[JobEnabled]
   }
 
-  def disableJob(jobId: JobId): Future[JobDisabled] = {
+  def disableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobDisabled] = {
     implicit val timeout = Timeout(5 seconds)
     (core ? DisableJob(jobId)).mapTo[JobDisabled]
   }
 
-  def fetchJob(jobId: JobId): Future[Option[JobSpec]] = {
+  def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] = {
     implicit val timeout = Timeout(5 seconds)
     (core ? GetJob(jobId)).mapTo[Option[JobSpec]]
   }
 
-  def registerJob(jobSpec: JobSpec): Future[Validated[JobId]] = {
+  def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]] = {
     import scalaz._
     import Scalaz._
 
@@ -101,7 +96,7 @@ class Kairos(settings: KairosClusterSettings)
     }
   }
 
-  def registeredJobs: Future[Map[JobId, JobSpec]] = {
+  def registeredJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
     implicit val timeout = Timeout(5 seconds)
     (core ? GetJobs).mapTo[Map[JobId, JobSpec]]
   }
@@ -112,7 +107,7 @@ class Kairos(settings: KairosClusterSettings)
       ServerSentEvent(write[KairosClusterEvent](evt))
     })
 
-  def clusterDetails: Future[ClusterInfo] = {
+  def clusterDetails(implicit ec: ExecutionContext): Future[ClusterInfo] = {
     implicit val timeout = Timeout(5 seconds)
 
     (core ? GetClusterStatus).mapTo[KairosStatus] map { status =>
@@ -121,7 +116,7 @@ class Kairos(settings: KairosClusterSettings)
     }
   }
 
-  def authenticate(username: String, password: Array[Char]): Future[Option[AuthInfo]] = {
+  def authenticate(username: String, password: Array[Char])(implicit ec: ExecutionContext): Future[Option[AuthInfo]] = {
     implicit val timeout = Timeout(5 seconds)
 
     userAuth ? Authenticate(username, password) map {

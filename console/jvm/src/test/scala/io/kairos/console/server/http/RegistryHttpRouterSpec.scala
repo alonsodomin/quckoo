@@ -5,16 +5,14 @@ import java.util.UUID
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-
 import io.kairos.console.server.core.RegistryFacade
 import io.kairos.fault.Fault
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.RegistryProtocol.{JobDisabled, JobEnabled}
 import io.kairos.{JobSpec, Validated, serialization}
-
 import org.scalatest.{Matchers, WordSpec}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scalaz._
 
 /**
@@ -46,19 +44,19 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
     registryApi
   }
 
-  override def enableJob(jobId: JobId): Future[JobEnabled] =
+  override def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] =
     Future.successful(JobEnabled(jobId))
 
-  override def disableJob(jobId: JobId): Future[JobDisabled] =
+  override def disableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobDisabled] =
     Future.successful(JobDisabled(jobId))
 
-  override def registerJob(jobSpec: JobSpec): Future[Validated[JobId]] =
+  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]] =
     Future.successful(JobSpec.validate(jobSpec)).map(validSpec => validSpec.map(JobId(_)))
 
-  override def registeredJobs: Future[Map[JobId, JobSpec]] =
+  override def registeredJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] =
     Future.successful(TestJobMap)
 
-  override def fetchJob(jobId: JobId): Future[Option[JobSpec]] =
+  override def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] =
     Future.successful(TestJobMap.get(jobId))
 
   private[this] def endpoint(target: String) = s"/api/registry$target"

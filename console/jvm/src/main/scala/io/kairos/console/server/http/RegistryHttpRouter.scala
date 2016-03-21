@@ -24,10 +24,14 @@ trait RegistryHttpRouter extends UpickleSupport { this: RegistryFacade =>
     pathPrefix("jobs") {
       pathEnd {
         get {
-          complete(registeredJobs)
+          extractExecutionContext { implicit ec =>
+            complete(registeredJobs)
+          }
         } ~ put {
           entity(as[JobSpec]) { jobSpec =>
-            complete(registerJob(jobSpec))
+            extractExecutionContext { implicit ec =>
+              complete(registerJob(jobSpec))
+            }
           }
         }
       } ~ pathPrefix(JavaUUID) { jobId =>
@@ -42,11 +46,15 @@ trait RegistryHttpRouter extends UpickleSupport { this: RegistryFacade =>
           }
         } ~ path("enable") {
           post {
-            complete(enableJob(JobId(jobId)))
+            extractExecutionContext { implicit ec =>
+              complete(enableJob(JobId(jobId)))
+            }
           }
         } ~ path("disable") {
           post {
-            complete(disableJob(JobId(jobId)))
+            extractExecutionContext { implicit ec =>
+              complete(disableJob(JobId(jobId)))
+            }
           }
         }
       }

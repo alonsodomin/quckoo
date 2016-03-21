@@ -54,6 +54,7 @@ object Boot extends App {
     val kairos = new Kairos(settings)
 
     implicit val timeout = Timeout(5 seconds)
+    implicit val dispatcher = system.dispatcher
     val startUp: Future[Unit] = kairos.start recover {
       case ex: Exception =>
         ex.printStackTrace()
