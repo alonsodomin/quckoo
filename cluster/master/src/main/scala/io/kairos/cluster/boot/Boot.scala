@@ -8,7 +8,6 @@ import io.kairos.cluster.{Kairos, KairosClusterSettings}
 import io.kairos.time.JDK8TimeSource
 import scopt.OptionParser
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 

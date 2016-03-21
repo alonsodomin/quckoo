@@ -1,4 +1,4 @@
-package io.kairos.console.auth
+package io.kairos.auth
 
 import io.kairos.serialization.Base64._
 

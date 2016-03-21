@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import io.kairos.console.server.core.RegistryFacade
+import io.kairos.api.Registry
 import io.kairos.fault.Fault
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.RegistryProtocol.{JobDisabled, JobEnabled}
@@ -34,7 +34,7 @@ object RegistryHttpRouterSpec {
 }
 
 class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matchers
-    with RegistryHttpRouter with RegistryFacade {
+    with RegistryHttpRouter with Registry {
 
   import RegistryHttpRouterSpec._
   import StatusCodes._
@@ -53,7 +53,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]] =
     Future.successful(JobSpec.validate(jobSpec)).map(validSpec => validSpec.map(JobId(_)))
 
-  override def registeredJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] =
+  override def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] =
     Future.successful(TestJobMap)
 
   override def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] =

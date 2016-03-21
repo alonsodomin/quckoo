@@ -1,8 +1,9 @@
 package io.kairos.cluster.core
 
 import akka.actor.{Actor, Props}
-import io.kairos.console.auth.{AuthInfo, UserId}
-import io.kairos.console.server.security._
+import io.kairos.auth.AuthInfo
+import io.kairos.auth.UserId
+import io.kairos.security._
 
 import scala.concurrent.duration.FiniteDuration
 

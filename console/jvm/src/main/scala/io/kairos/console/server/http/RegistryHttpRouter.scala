@@ -5,17 +5,15 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
-
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-
-import io.kairos.console.server.core.RegistryFacade
+import io.kairos.api.Registry
 import io.kairos.{JobSpec, serialization}
 import io.kairos.id.JobId
 
 /**
   * Created by domingueza on 21/03/16.
   */
-trait RegistryHttpRouter extends UpickleSupport { this: RegistryFacade =>
+trait RegistryHttpRouter extends UpickleSupport { this: Registry =>
 
   import StatusCodes._
   import serialization.json.jvm._
@@ -25,7 +23,7 @@ trait RegistryHttpRouter extends UpickleSupport { this: RegistryFacade =>
       pathEnd {
         get {
           extractExecutionContext { implicit ec =>
-            complete(registeredJobs)
+            complete(fetchJobs)
           }
         } ~ put {
           entity(as[JobSpec]) { jobSpec =>

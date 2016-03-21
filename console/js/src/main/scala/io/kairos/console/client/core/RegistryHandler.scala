@@ -21,14 +21,14 @@ class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) exten
   import RegistryProtocol._
 
   def loadJobSpec(jobId: JobId): Future[(JobId, Pot[JobSpec])] =
-    ClientApi.fetchJob(jobId).map {
+    HttpClient.fetchJob(jobId).map {
       case Some(spec) => (jobId, Ready(spec))
       case None       => (jobId, Unavailable)
     }
 
   def loadJobSpecs(keys: Set[JobId] = Set.empty): Future[Map[JobId, Pot[JobSpec]]] = {
     if (keys.isEmpty) {
-      ClientApi.fetchJobs.map(_.map { case (k, v) => (k, Ready(v)) })
+      HttpClient.fetchJobs.map(_.map { case (k, v) => (k, Ready(v)) })
     } else {
       Future.sequence(keys.map(loadJobSpec)).map(_.toMap)
     }
@@ -60,7 +60,7 @@ class RegistryHandler(model: ModelRW[KairosModel, Option[Notification]]) extends
 
   override def handle = {
     case RegisterJob(spec) =>
-      updated(None, Effect(ClientApi.registerJob(spec).map(RegisterJobResult)))
+      updated(None, Effect(HttpClient.registerJob(spec).map(RegisterJobResult)))
 
     case RegisterJobResult(validated) =>
       validated.disjunction match {
@@ -75,10 +75,10 @@ class RegistryHandler(model: ModelRW[KairosModel, Option[Notification]]) extends
       }
 
     case EnableJob(jobId) =>
-      updated(None, Effect(ClientApi.enableJob(jobId)))
+      updated(None, Effect(HttpClient.enableJob(jobId)))
 
     case DisableJob(jobId) =>
-      updated(None, Effect(ClientApi.disableJob(jobId)))
+      updated(None, Effect(HttpClient.disableJob(jobId)))
   }
 
 }

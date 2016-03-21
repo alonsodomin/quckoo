@@ -1,9 +1,10 @@
 package io.kairos.console.client.core
 
+import io.kairos.api.{Registry, Scheduler}
 import io.kairos.console.client.security.ClientAuth
 import io.kairos.console.info.ClusterInfo
 import io.kairos.console.protocol.LoginRequest
-import io.kairos.console.{KairosApi, RegistryApi, SchedulerApi}
+import io.kairos.console.ConsoleAuth
 import io.kairos.id.{JobId, PlanId}
 import io.kairos.protocol.RegistryProtocol
 import io.kairos.protocol.SchedulerProtocol
@@ -17,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
  * Created by alonsodomin on 13/10/2015.
  */
-object ClientApi extends KairosApi with RegistryApi with SchedulerApi with ClientAuth {
+object HttpClient extends ConsoleAuth with Registry with Scheduler with ClientAuth {
   import dom.ext.Ajax
   import upickle.default._
   import serialization.json.scalajs._

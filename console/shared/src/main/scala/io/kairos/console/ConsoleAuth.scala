@@ -7,7 +7,7 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
  * Created by alonsodomin on 13/10/2015.
  */
-trait KairosApi {
+trait ConsoleAuth {
 
   def login(username: String, password: String)(implicit ec: ExecutionContext): Future[Unit]
 

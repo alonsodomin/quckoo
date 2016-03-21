@@ -1,4 +1,4 @@
-package io.kairos.console.server
+package io.kairos
 
 import java.util.UUID
 

@@ -6,15 +6,13 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
-
 import de.heikoseeberger.akkasse.EventStreamMarshalling
-
-import io.kairos.console.server.core.ServerFacade
+import io.kairos.console.server.core.Server
 import io.kairos.protocol.SchedulerProtocol
 import io.kairos.serialization
 
 trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives with EventStreamMarshalling {
-  this: ServerFacade =>
+  this: Server =>
 
   import StatusCodes._
   import SchedulerProtocol._

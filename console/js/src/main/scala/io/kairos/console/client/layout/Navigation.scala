@@ -2,7 +2,7 @@ package io.kairos.console.client.layout
 
 import io.kairos.console.client.SiteMap
 import io.kairos.console.client.components._
-import io.kairos.console.client.core.{KairosCircuit, ClientApi}
+import io.kairos.console.client.core.{KairosCircuit, HttpClient}
 import io.kairos.console.client.security.{UserMenu, ClientAuth}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -63,7 +63,7 @@ object Navigation extends ClientAuth {
 
     def onLogoutClicked(e: ReactEventI): Callback = {
       def logoutAndRefresh: Callback = Callback.future(
-        ClientApi.logout() map { _ => $.props.flatMap(_.routerCtl.refresh) } recover {
+        HttpClient.logout() map { _ => $.props.flatMap(_.routerCtl.refresh) } recover {
           case error: Throwable => Callback.alert(error.getMessage)
         }
       )

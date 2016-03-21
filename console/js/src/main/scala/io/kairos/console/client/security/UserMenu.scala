@@ -1,7 +1,7 @@
 package io.kairos.console.client.security
 
 import diode.react.ModelProxy
-import io.kairos.console.auth.User
+import io.kairos.auth.User
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 

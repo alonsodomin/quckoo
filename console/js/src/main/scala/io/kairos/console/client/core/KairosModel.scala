@@ -1,8 +1,8 @@
 package io.kairos.console.client.core
 
 import diode.data._
+import io.kairos.auth.User
 import io.kairos.{ExecutionPlan, JobSpec}
-import io.kairos.console.auth.User
 import io.kairos.console.client.components.Notification
 import io.kairos.console.client.security.ClientAuth
 import io.kairos.id.{JobId, PlanId}

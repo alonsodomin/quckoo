@@ -7,11 +7,11 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import de.heikoseeberger.akkasse.ServerSentEvent
+import io.kairos.auth.AuthInfo
 import io.kairos.cluster.core._
 import io.kairos.cluster.protocol.GetClusterStatus
-import io.kairos.console.auth.AuthInfo
 import io.kairos.console.info.{ClusterInfo, NodeInfo}
-import io.kairos.console.server.core.ServerFacade
+import io.kairos.console.server.core.Server
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.fault.Fault
 import io.kairos.id.{JobId, PlanId}
@@ -29,7 +29,7 @@ import scala.concurrent.duration._
   */
 class Kairos(settings: KairosClusterSettings)
             (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
-    extends HttpRouter with ServerFacade with Logging {
+    extends HttpRouter with Server with Logging {
 
   import RegistryProtocol._
   import SchedulerProtocol._
@@ -96,7 +96,7 @@ class Kairos(settings: KairosClusterSettings)
     }
   }
 
-  def registeredJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
+  def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
     implicit val timeout = Timeout(5 seconds)
     (core ? GetJobs).mapTo[Map[JobId, JobSpec]]
   }

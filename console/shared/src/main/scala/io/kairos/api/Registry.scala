@@ -1,4 +1,4 @@
-package io.kairos.console.server.core
+package io.kairos.api
 
 import io.kairos._
 import io.kairos.id.JobId
@@ -9,7 +9,7 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Created by alonsodomin on 13/12/2015.
   */
-trait RegistryFacade {
+trait Registry {
 
   def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled]
 
@@ -19,6 +19,6 @@ trait RegistryFacade {
 
   def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]]
 
-  def registeredJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]]
+  def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]]
 
 }

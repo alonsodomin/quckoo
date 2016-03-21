@@ -26,7 +26,7 @@ object KairosCircuit extends Circuit[KairosModel] with ReactConnector[KairosMode
   val scheduleHandler = new ActionHandler(zoomRW(_.notification)((m, notif) => m.copy(notification = notif))) {
     override def handle = {
       case msg: ScheduleJob =>
-        updated(None, Effect(ClientApi.schedule(msg).map(_.fold(identity, identity))))
+        updated(None, Effect(HttpClient.schedule(msg).map(_.fold(identity, identity))))
 
       case JobNotFound(jobId) =>
         updated(Some(Notification.danger(s"Job not found $jobId")))

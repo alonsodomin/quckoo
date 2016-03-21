@@ -6,24 +6,22 @@ import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
-
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-
-import io.kairos.console.auth.{Auth, AuthInfo}
+import io.kairos.api.Auth
+import io.kairos.auth._
 import io.kairos.console.protocol.LoginRequest
-import io.kairos.console.server.core.SecurityFacade
-import io.kairos.console.server.security._
+import io.kairos.security._
 
 import scala.concurrent.duration._
 
 /**
  * Created by alonsodomin on 14/10/2015.
  */
-trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
+trait AuthDirectives extends UpickleSupport { auth: Auth =>
   import StatusCodes._
 
   def extractAuthInfo: Directive1[AuthInfo] =
-    headerValueByName(Auth.XSRFTokenHeader).flatMap { header =>
+    headerValueByName(XSRFTokenHeader).flatMap { header =>
       provide(AuthInfo(header))
     }
 
@@ -42,9 +40,9 @@ trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
     }
 
   def authorizeRequest: Directive0 = {
-    optionalCookie(Auth.XSRFTokenCookie).flatMap {
+    optionalCookie(XSRFTokenCookie).flatMap {
       case Some(cookie) =>
-        headerValueByName(Auth.XSRFTokenHeader).flatMap { header =>
+        headerValueByName(XSRFTokenHeader).flatMap { header =>
           if (header != cookie.value) {
             reject(AuthorizationFailedRejection)
           } else {
@@ -60,7 +58,7 @@ trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
   def invalidateAuth: Directive0 =
     extractAuthInfo.flatMap { authInfo =>
       setCookie(HttpCookie(
-        Auth.XSRFTokenCookie, authInfo.expire().toString, path = Some("/"), expires = Some(DateTime.now)
+        XSRFTokenCookie, authInfo.expire().toString, path = Some("/"), expires = Some(DateTime.now)
       ))
     }
 
@@ -71,7 +69,7 @@ trait AuthDirectives extends UpickleSupport { auth: SecurityFacade =>
 
   private[this] def addAuthCookies(auth: AuthInfo): Directive0 =
     setCookie(HttpCookie(
-      Auth.XSRFTokenCookie, auth.toString, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
+      XSRFTokenCookie, auth.toString, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
     ))
 
 }

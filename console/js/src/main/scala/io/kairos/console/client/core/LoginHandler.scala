@@ -2,8 +2,9 @@ package io.kairos.console.client.core
 
 import diode.data.{Empty, Pot, Ready}
 import diode.{ActionHandler, Effect, ModelRW}
-import io.kairos.console.auth.User
+import io.kairos.auth.User
 import io.kairos.console.protocol._
+
 import scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
@@ -14,12 +15,12 @@ class LoginHandler[M](model: ModelRW[M, Option[User]]) extends ActionHandler(mod
   override def handle = {
     case action: LoginRequest =>
       effectOnly(Effect(
-        ClientApi.login(action.username, action.password).
+        HttpClient.login(action.username, action.password).
           map(_ => LoggedIn(action.username))
       ))
 
     case LogoutRequest =>
-      effectOnly(Effect(ClientApi.logout().map(_ => LoggedOut)))
+      effectOnly(Effect(HttpClient.logout().map(_ => LoggedOut)))
 
     case LoggedIn(username) =>
       updated(Some(User(username)))
