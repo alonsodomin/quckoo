@@ -6,9 +6,12 @@ import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
+
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-import io.kairos.console.auth.{AuthInfo, Auth}
+
+import io.kairos.console.auth.{Auth, AuthInfo}
 import io.kairos.console.protocol.LoginRequest
+import io.kairos.console.server.core.SecurityFacade
 import io.kairos.console.server.security._
 
 import scala.concurrent.duration._

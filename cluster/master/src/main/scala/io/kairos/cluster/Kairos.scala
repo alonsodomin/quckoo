@@ -6,14 +6,14 @@ import akka.pattern._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
+
 import de.heikoseeberger.akkasse.ServerSentEvent
+
 import io.kairos.cluster.core._
 import io.kairos.cluster.protocol.GetClusterStatus
-import io.kairos.cluster.registry.Registry
-import io.kairos.cluster.scheduler.ExecutionDriver
 import io.kairos.console.auth.AuthInfo
 import io.kairos.console.info.{ClusterInfo, NodeInfo}
-import io.kairos.console.server.ServerFacade
+import io.kairos.console.server.core.ServerFacade
 import io.kairos.console.server.http.HttpRouter
 import io.kairos.fault.Fault
 import io.kairos.id.{JobId, PlanId}
@@ -21,9 +21,10 @@ import io.kairos.protocol.RegistryProtocol
 import io.kairos.protocol.SchedulerProtocol
 import io.kairos.time.TimeSource
 import io.kairos.{ExecutionPlan, JobSpec, Validated}
+
 import org.slf4s.Logging
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**

@@ -1,8 +1,8 @@
-package io.kairos.console.server
+package io.kairos.console.server.core
 
+import io.kairos._
 import io.kairos.id.JobId
 import io.kairos.protocol.RegistryProtocol.{JobDisabled, JobEnabled}
-import io.kairos.{JobSpec, Validated}
 
 import scala.concurrent.Future
 

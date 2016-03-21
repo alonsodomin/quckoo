@@ -1,4 +1,4 @@
-package io.kairos.console.server
+package io.kairos.console.server.core
 
 import io.kairos.ExecutionPlan
 import io.kairos.id._

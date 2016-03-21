@@ -8,8 +8,8 @@ import akka.stream.ActorMaterializer
 
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 
+import io.kairos.console.server.core.RegistryFacade
 import io.kairos.{JobSpec, serialization}
-import io.kairos.console.server.RegistryFacade
 import io.kairos.id.JobId
 
 /**

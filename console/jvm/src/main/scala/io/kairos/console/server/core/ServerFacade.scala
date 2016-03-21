@@ -1,10 +1,11 @@
-package io.kairos.console.server
+package io.kairos.console.server.core
 
 import akka.actor.ActorRef
 import akka.stream.scaladsl.Source
+
 import de.heikoseeberger.akkasse.ServerSentEvent
+
 import io.kairos.console.info.ClusterInfo
-import io.kairos.console.server.security.SecurityFacade
 
 import scala.concurrent.Future
 

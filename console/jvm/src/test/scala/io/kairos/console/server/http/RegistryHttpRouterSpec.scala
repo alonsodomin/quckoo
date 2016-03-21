@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 
-import io.kairos.console.server.RegistryFacade
+import io.kairos.console.server.core.RegistryFacade
 import io.kairos.fault.Fault
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.RegistryProtocol.{JobDisabled, JobEnabled}

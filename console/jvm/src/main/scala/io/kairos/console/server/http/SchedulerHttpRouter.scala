@@ -4,8 +4,10 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
+
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-import io.kairos.console.server.SchedulerFacade
+
+import io.kairos.console.server.core.SchedulerFacade
 import io.kairos.protocol.SchedulerProtocol
 import io.kairos.serialization
 

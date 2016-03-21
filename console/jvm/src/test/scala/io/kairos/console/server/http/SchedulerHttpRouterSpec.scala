@@ -4,10 +4,12 @@ import java.util.UUID
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+
 import io.kairos.ExecutionPlan
-import io.kairos.console.server.SchedulerFacade
+import io.kairos.console.server.core.SchedulerFacade
 import io.kairos.id.PlanId
 import io.kairos.protocol.SchedulerProtocol.{ExecutionPlanStarted, JobNotFound, ScheduleJob}
+
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.Future

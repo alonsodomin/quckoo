@@ -6,11 +6,10 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
-import de.heikoseeberger.akkahttpupickle.UpickleSupport
+
 import de.heikoseeberger.akkasse.EventStreamMarshalling
-import io.kairos.JobSpec
-import io.kairos.console.server.ServerFacade
-import io.kairos.id.JobId
+
+import io.kairos.console.server.core.ServerFacade
 import io.kairos.protocol.SchedulerProtocol
 import io.kairos.serialization
 

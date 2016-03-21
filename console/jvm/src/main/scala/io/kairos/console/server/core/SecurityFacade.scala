@@ -1,4 +1,4 @@
-package io.kairos.console.server.security
+package io.kairos.console.server.core
 
 import io.kairos.console.auth.AuthInfo
 
