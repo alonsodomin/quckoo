@@ -32,7 +32,7 @@ object ClientApi extends KairosApi with RegistryApi with SchedulerApi with Clien
   private[this] val JobsURI = RegistryBaseURI + "/jobs"
 
   private[this] val SchedulerBaseURI = BaseURI + "/scheduler"
-  private[this] val ExecutionsURI = SchedulerBaseURI + "/executions"
+  private[this] val ExecutionPlansURI = SchedulerBaseURI + "/plans"
 
   private[this] val JsonRequestHeaders = Map(
     "Content-Type" -> "application/json"
@@ -85,20 +85,20 @@ object ClientApi extends KairosApi with RegistryApi with SchedulerApi with Clien
   }
 
   override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[ExecutionPlan] = {
-    Ajax.get(ExecutionsURI + "/" + planId, headers = authHeaders).map { xhr =>
+    Ajax.get(ExecutionPlansURI + "/" + planId, headers = authHeaders).map { xhr =>
       read[ExecutionPlan](xhr.responseText)
     }
   }
 
   override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]] = {
-    Ajax.get(ExecutionsURI, headers = authHeaders).map { xhr =>
+    Ajax.get(ExecutionPlansURI, headers = authHeaders).map { xhr =>
       read[List[PlanId]](xhr.responseText)
     }
   }
 
   override def schedule(scheduleJob: ScheduleJob)
                        (implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
-    Ajax.put(ExecutionsURI, write(scheduleJob), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
+    Ajax.put(ExecutionPlansURI, write(scheduleJob), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
       read[Either[JobNotFound, ExecutionPlanStarted]](xhr.responseText)
     }
   }

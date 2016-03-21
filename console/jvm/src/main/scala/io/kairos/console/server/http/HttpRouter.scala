@@ -14,7 +14,7 @@ import io.kairos.id.JobId
 import io.kairos.protocol.SchedulerProtocol
 import io.kairos.serialization
 
-trait HttpRouter extends RegistryHttpRouter with AuthDirectives with EventStreamMarshalling {
+trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives with EventStreamMarshalling {
   this: ServerFacade =>
 
   import StatusCodes._
@@ -47,23 +47,6 @@ trait HttpRouter extends RegistryHttpRouter with AuthDirectives with EventStream
         registryApi
       } ~ pathPrefix("scheduler") {
         schedulerApi
-      }
-    }
-
-  private[this] def schedulerApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
-    pathPrefix("executions") {
-      pathEnd {
-        get {
-          complete(allExecutionPlanIds)
-        } ~ put {
-          entity(as[ScheduleJob]) { sch =>
-            complete(schedule(sch))
-          }
-        }
-      } ~ path(JavaUUID) { planId =>
-        get {
-          complete(executionPlan(planId))
-        }
       }
     }
 
