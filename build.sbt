@@ -110,7 +110,8 @@ lazy val console = (crossProject in file("console")).
     coverageEnabled := false,
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "scalatags" % "0.4.6",
-      "com.lihaoyi" %%% "upickle" % "0.3.8"
+      "com.lihaoyi" %%% "upickle" % "0.3.8",
+      "org.scalatest"  %%% "scalatest" % Dependencies.version.scalaTest % Test
     )
   ).
   jsSettings(
@@ -157,7 +158,7 @@ lazy val console = (crossProject in file("console")).
     libraryDependencies ++= {
       import Dependencies.libs._
 
-      Seq(Akka.http, Akka.httpUpickle, Akka.sse)
+      Seq(Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse)
     }
   ).
   dependsOn(common)

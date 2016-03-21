@@ -14,7 +14,7 @@ import io.kairos.id.JobId
 import io.kairos.protocol.SchedulerProtocol
 import io.kairos.serialization
 
-trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMarshalling {
+trait HttpRouter extends RegistryHttpRouter with AuthDirectives with EventStreamMarshalling {
   this: ServerFacade =>
 
   import StatusCodes._
@@ -47,38 +47,6 @@ trait HttpRouter extends UpickleSupport with AuthDirectives with EventStreamMars
         registryApi
       } ~ pathPrefix("scheduler") {
         schedulerApi
-      }
-    }
-
-  private[this] def registryApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
-    pathPrefix("jobs") {
-      pathEnd {
-        get {
-          complete(registeredJobs)
-        } ~ put {
-          entity(as[JobSpec]) { jobSpec =>
-            complete(registerJob(jobSpec))
-          }
-        }
-      } ~ pathPrefix(JavaUUID) { jobId =>
-        pathEnd {
-          get {
-            extractExecutionContext { implicit ec =>
-              onSuccess(fetchJob(JobId(jobId))) {
-                case Some(jobSpec) => complete(jobSpec)
-                case _             => complete(NotFound)
-              }
-            }
-          }
-        } ~ path("enable") {
-          post {
-            complete(enableJob(JobId(jobId)))
-          }
-        } ~ path("disable") {
-          post {
-            complete(disableJob(JobId(jobId)))
-          }
-        }
       }
     }
 
