@@ -19,7 +19,7 @@ before_install:
   - gem install compass
 script:
   #- sbt ++$TRAVIS_SCALA_VERSION clean coverage test && sbt coverageAggregate
-  - sbt ++$TRAVIS_SCALA_VERSION clean test updateImpactSubmit
+  - sbt ++$TRAVIS_SCALA_VERSION clean test
 after_success:
   - codecov
 #  - sbt coveralls

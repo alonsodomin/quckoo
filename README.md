@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/alonsodomin/kairos.svg)](https://travis-ci.org/alonsodomin/kairos)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
-[![Dependencies](https://app.updateimpact.com/badge/712400462963412992/kairos.svg?config=compile)](https://app.updateimpact.com/latest/712400462963412992/kairos)
 
 Kairos is a fault-tolerant distributed task scheduler platform that runs on the JVM. The aim of the project is
 the implementation of a reliable system able to run large amount of scheduled tasks without single points of failure.
