@@ -9,5 +9,6 @@ package object auth {
   val XSRFTokenHeader = "X-" + XSRFTokenCookie
 
   type UserId = String
+  type Token = String
 
 }

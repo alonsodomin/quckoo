@@ -19,7 +19,7 @@ object AuthInfo {
 
 }
 
-case class AuthInfo(userId: UserId, token: String) {
+case class AuthInfo(userId: UserId, token: Token) {
   import AuthInfo._
 
   def expire(): AuthInfo =
