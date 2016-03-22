@@ -9,7 +9,6 @@ scala:
    - 2.11.8
 
 cache:
-  - pip
   directories:
     - $HOME/.m2
     - $HOME/.sbt
