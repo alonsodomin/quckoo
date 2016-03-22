@@ -76,6 +76,11 @@ object ExecutionDriver {
               lastScheduledTime = Some(timeSource.currentDateTime)
             ))
 
+          case TaskTriggered(`jobId`, `planId`, taskId) if plan.currentTaskId.contains(taskId) =>
+            copy(plan = plan.copy(
+              lastTriggeredTime = Some(timeSource.currentDateTime)
+            ))
+
           case TaskCompleted(`jobId`, `planId`, taskId, outcome) if plan.currentTaskId.contains(taskId) =>
             copy(plan = plan.copy(
               currentTaskId = None,
@@ -137,9 +142,8 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       context.become(replaying(state.map(_.updated(event))))
 
     case RecoveryCompleted if state.isDefined =>
-      log.debug("Execution driver recovery finished. state={}", state)
       state.foreach { st =>
-        self ! scheduleOrFinish(st)
+        log.debug("Execution driver recovery finished. state={}", st)
         context.become(active(st))
       }
   }
@@ -188,6 +192,13 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
     case GetExecutionPlan(_) =>
       sender() ! Some(state.plan)
+
+    case Execution.Triggered =>
+      state.plan.currentTaskId.foreach { taskId =>
+        persist(TaskTriggered(state.jobId, state.planId, taskId)) { event =>
+          context.become(active(state.updated(event), None))
+        }
+      }
 
     case Execution.Result(outcome) =>
       state.plan.currentTaskId.foreach { taskId =>

@@ -100,7 +100,9 @@ class Execution(
 
     case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
       log.debug("Queue has accepted task {}. Waiting for worker to accept it.", taskId)
-      goto(Waiting) applying Triggered
+      goto(Waiting) applying Triggered andThen { _ =>
+        context.parent ! Triggered
+      }
 
     case Event(StateTimeout, ExecutionState(_, Some(task), Some(queue), _))  =>
       enqueueAttempts += 1

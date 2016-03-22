@@ -66,7 +66,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
     "reply a list of plan ids" in {
       Get(endpoint("/plans")) ~> entryPoint ~> check {
-        responseAs[List[PlanId]] should be (TestPlanIds)
+        responseAs[Set[PlanId]] should be (TestPlanIds)
       }
     }
 

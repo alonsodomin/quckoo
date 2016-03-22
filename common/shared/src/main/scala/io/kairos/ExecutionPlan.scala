@@ -14,6 +14,7 @@ import monocle.macros.Lenses
     createdTime: DateTime,
     currentTaskId: Option[TaskId] = None,
     lastOutcome: Task.Outcome = Task.NotStarted,
+    lastTriggeredTime: Option[DateTime] = None,
     lastScheduledTime: Option[DateTime] = None,
     lastExecutionTime: Option[DateTime] = None,
     finishedTime: Option[DateTime] = None

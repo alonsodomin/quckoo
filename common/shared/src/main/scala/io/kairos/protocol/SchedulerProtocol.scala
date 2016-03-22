@@ -27,6 +27,7 @@ object SchedulerProtocol {
   ) extends SchedulerCommand
 
   case class TaskScheduled(jobId: JobId, planId: PlanId, taskId: TaskId) extends SchedulerEvent
+  case class TaskTriggered(jobId: JobId, planId: PlanId, taskId: TaskId) extends SchedulerEvent
   case class TaskCompleted(jobId: JobId, planId: PlanId, taskId: TaskId, outcome: Task.Outcome) extends SchedulerEvent
 
   case class JobNotFound(jobId: JobId) extends SchedulerMessage
