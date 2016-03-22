@@ -155,9 +155,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
 
         awaitAssert(execution.underlyingActor.stateName should be (Waiting))
       }
+
+      expectMsg(Triggered)
     }
 
-    "terminate when if requested to be cancelled" in {
+    "terminate when requested to be cancelled" in {
       execution ! Cancel("foo")
 
       within(2 seconds) {
@@ -200,6 +202,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
 
         awaitAssert(execution.underlyingActor.stateName should be (Waiting))
       }
+
+      expectMsg(Triggered)
     }
 
     "move to InProgress after receiving the Start signal" in {
@@ -251,6 +255,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
 
         awaitAssert(execution.underlyingActor.stateName should be (Waiting))
       }
+
+      expectMsg(Triggered)
     }
 
     "move to InProgress after receiving the Start signal" in {
@@ -308,6 +314,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
 
         awaitAssert(execution.underlyingActor.stateName should be (Waiting))
       }
+
+      expectMsg(Triggered)
     }
 
     "move to InProgress after receiving the Start signal" in {
@@ -360,6 +368,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
 
         awaitAssert(execution.underlyingActor.stateName should be (Waiting))
       }
+
+      expectMsg(Triggered)
     }
 
     "move to InProgress after receiving the Start signal" in {
