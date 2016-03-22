@@ -76,7 +76,7 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
     val expectedResult = (validatedDep |@| validatedDown) { case (_, a) => a }
 
     When("Attempting to resolve the artifact")
-    whenReady(ivyResolve(TestArtifactId, download = false), Timeout(2 seconds)) { result =>
+    whenReady(ivyResolve(TestArtifactId, download = false), Timeout(5 seconds)) { result =>
       Then("Result should be the expected errors")
       result should be (expectedResult)
 
