@@ -20,10 +20,10 @@ object ExceptionThrown {
 
 // == Artifact resolution errors ============
 
-sealed trait ResolutionFailed extends Fault
+sealed trait ResolutionFault extends Fault
 
-case class UnresolvedDependency(artifactId: ArtifactId) extends ResolutionFailed
-case class DownloadFailed(artifactName: String) extends ResolutionFailed
+case class UnresolvedDependency(artifactId: ArtifactId) extends ResolutionFault
+case class DownloadFailed(artifactName: String) extends ResolutionFault
 
 // == Validation errors ====================
 
