@@ -120,6 +120,8 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     RootActorPath(self.path.address) / "user" / "kairos" / "scheduler" / "queue"
   )
 
+  private[this] var stateDuringRecovery: Option[DriverState] = None
+
   override def persistenceId = "ExecutionPlan-" + self.path.name
 
   override def preStart(): Unit =
@@ -128,24 +130,23 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   override def postStop(): Unit =
     mediator ! DistributedPubSubMediator.Unsubscribe(RegistryTopic, self)
 
-  override def receiveRecover = replaying()
-
-  def replaying(state: Option[DriverState] = None): Receive = {
+  override def receiveRecover: Receive = {
     case create: Created =>
       log.debug("Execution driver recreated for plan: {}", create.planId)
-      context.become(replaying(Some(DriverState(create))))
+      stateDuringRecovery = Some(DriverState(create))
       // will be delivered at the end of the recovery process
       self ! RecoveryCompleted
 
-    case event: SchedulerEvent if state.isDefined =>
+    case event: SchedulerEvent =>
       log.debug("Execution driver event replayed. event={}", event)
-      context.become(replaying(state.map(_.updated(event))))
+      stateDuringRecovery = stateDuringRecovery.map(_.updated(event))
 
-    case RecoveryCompleted if state.isDefined =>
-      state.foreach { st =>
+    case RecoveryCompleted =>
+      stateDuringRecovery.foreach { st =>
         log.debug("Execution driver recovery finished. state={}", st)
         context.become(active(st))
       }
+      stateDuringRecovery = None
   }
 
   override def receiveCommand: Receive = initial()
