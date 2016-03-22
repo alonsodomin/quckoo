@@ -1,6 +1,6 @@
 package io.kairos.cluster.core
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
@@ -33,7 +33,7 @@ object KairosCluster {
 
 class KairosCluster(settings: KairosClusterSettings)
                    (implicit materializer: ActorMaterializer, timeSource: TimeSource)
-    extends Actor with ActorLogging {
+    extends Actor with ActorLogging with KairosJournal {
 
   import ClientProtocol._
   import KairosCluster._
@@ -49,10 +49,12 @@ class KairosCluster(settings: KairosClusterSettings)
   private val registry = context.actorOf(Registry.props(settings), "registry")
 
   private val scheduler = context.watch(context.actorOf(
-    Scheduler.props(registry, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
+    Scheduler.props(registry, readJournal, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
 
   private var clients = Set.empty[ActorRef]
   private var kairosStatus = KairosStatus()
+
+  override implicit def actorSystem: ActorSystem = context.system
 
   override def preStart(): Unit = {
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[ReachabilityEvent])

@@ -6,10 +6,10 @@ import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
+import akka.persistence.query.scaladsl.{AllPersistenceIdsQuery, EventsByPersistenceIdQuery}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 
 import io.kairos.JobSpec
-import io.kairos.cluster.core.KairosJournal
 import io.kairos.cluster.protocol.WorkerProtocol
 import io.kairos.id._
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
@@ -21,15 +21,17 @@ import io.kairos.time.TimeSource
 object Scheduler {
   import SchedulerProtocol._
 
+  type Journal = AllPersistenceIdsQuery with EventsByPersistenceIdQuery
+
   private[scheduler] case class CreateExecutionDriver(spec: JobSpec, config: ScheduleJob, requestor: ActorRef)
 
-  def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource) =
-    Props(classOf[Scheduler], registry, queueProps, timeSource)
+  def props(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: Props)(implicit timeSource: TimeSource) =
+    Props(classOf[Scheduler], registry, readJournal, queueProps, timeSource)
 
 }
 
-class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource)
-    extends Actor with ActorLogging with KairosJournal {
+class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: Props)(implicit timeSource: TimeSource)
+    extends Actor with ActorLogging {
 
   import RegistryProtocol._
   import Scheduler._
@@ -51,8 +53,6 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
   private[this] val executionPlanView = context.actorOf(
     Props(classOf[ExecutionPlanView], shardRegion), "plans"
   )
-
-  override implicit def actorSystem: ActorSystem = context.system
 
   override def preStart(): Unit = {
     readJournal.allPersistenceIds().

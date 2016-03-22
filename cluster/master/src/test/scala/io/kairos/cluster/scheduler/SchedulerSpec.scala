@@ -1,13 +1,13 @@
 package io.kairos.cluster.scheduler
 
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import akka.persistence.inmemory.query.journal.scaladsl.InMemoryReadJournal
+import akka.persistence.query.PersistenceQuery
 import akka.testkit._
-
 import io.kairos.JobSpec
 import io.kairos.id.{ArtifactId, JobId}
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
-
 import org.scalatest._
 
 /**
@@ -21,7 +21,6 @@ object SchedulerSpec {
 
 }
 
-@Ignore
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender with ImplicitTimeSource
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 
@@ -46,12 +45,15 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
     mediator ! DistributedPubSubMediator.Unsubscribe(SchedulerTopic, eventListener.ref)
   }
 
+  val readJournal = PersistenceQuery(system).
+    readJournalFor[InMemoryReadJournal](InMemoryReadJournal.Identifier)
+
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
   "A scheduler" should {
     val scheduler = TestActorRef(Scheduler.props(
-      registryProbe.ref,
+      registryProbe.ref, readJournal,
       TestActors.forwardActorProps(taskQueueProbe.ref)
     ), "scheduler")
 
