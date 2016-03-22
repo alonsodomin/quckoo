@@ -1,11 +1,5 @@
 sudo: false
 
-cache:
-  directories:
-    - $HOME/.m2
-    - $HOME/.sbt
-    - $HOME/.ivy2
-
 language: scala
 
 jdk:
@@ -13,6 +7,13 @@ jdk:
 
 scala:
    - 2.11.8
+
+cache:
+  - pip
+  directories:
+    - $HOME/.m2
+    - $HOME/.sbt
+    - $HOME/.ivy2
 
 before_install:
   - pip install --user codecov
