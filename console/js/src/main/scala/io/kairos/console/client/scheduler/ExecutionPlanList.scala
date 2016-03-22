@@ -4,6 +4,7 @@ import diode.data.PotMap
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.kairos.ExecutionPlan
+import io.kairos.console.client.components.Notification
 import io.kairos.console.client.core.LoadExecutionPlans
 import io.kairos.fault.ExceptionThrown
 import io.kairos.id.PlanId
@@ -33,22 +34,32 @@ object ExecutionPlanList {
         <.thead(
           <.tr(
             <.th("Job ID"),
-            <.th("Plan ID")
+            <.th("Plan ID"),
+            <.th("Trigger"),
+            <.th("Last Scheduled"),
+            <.th("Last Execution"),
+            <.th("Last Outcome")
           )
         ),
         <.tbody(
-          model.seq.map { case (planId, schedule) =>
-            <.tr(^.key := planId.toString(),
-              schedule.renderFailed { ex =>
-                <.td(^.colSpan := 4, ExceptionThrown(ex).toString())
-              },
-              schedule.renderPending(_ > 500, _ => "Loading ..."),
-              schedule.render { item => List(
+          model.seq.map { case (planId, schedule) => List(
+            schedule.renderFailed { ex =>
+              <.tr(<.td(^.colSpan := 6, Notification.danger(ExceptionThrown(ex))))
+            },
+            schedule.renderPending(_ > 500, _ =>
+              <.tr(<.td(^.colSpan := 6, "Loading ..."))
+            ),
+            schedule.render { item =>
+              <.tr(
                 <.td(item.jobId.toString()),
-                <.td(item.planId.toString())
-              )}
-            )
-          }
+                <.td(item.planId.toString()),
+                <.td(item.trigger.toString()),
+                <.td(item.lastScheduledTime.map(_.toString())),
+                <.td(item.lastExecutionTime.map(_.toString())),
+                <.td(item.lastOutcome.toString())
+              )
+            }
+          )}
         )
       )
     }

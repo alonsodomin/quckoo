@@ -127,26 +127,32 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
   def replaying(state: Option[DriverState] = None): Receive = {
     case create: Created =>
+      log.debug("Execution driver recreated for plan: {}", create.planId)
       context.become(replaying(Some(DriverState(create))))
+      // will be delivered at the end of the recovery process
+      self ! RecoveryCompleted
 
     case event: SchedulerEvent if state.isDefined =>
+      log.debug("Execution driver event replayed. event={}", event)
       context.become(replaying(state.map(_.updated(event))))
 
     case RecoveryCompleted if state.isDefined =>
-      state.filterNot(_.plan.finished).
-        map(active(_)).
-        foreach(context.become)
+      log.debug("Execution driver recovery finished. state={}", state)
+      state.foreach { st =>
+        self ! scheduleOrFinish(st)
+        context.become(active(st))
+      }
   }
 
   override def receiveCommand: Receive = initial()
 
   private def activatePlan(state: DriverState): Unit = {
     log.info("Activating execution plan. planId={}", state.planId)
-    self ! scheduleOrFinish(state)
-    mediator ! DistributedPubSubMediator.Publish(
-      SchedulerTopic, ExecutionPlanStarted(state.jobId, state.planId)
-    )
-    context.become(active(state))
+    persist(ExecutionPlanStarted(state.jobId, state.planId)) { event =>
+      mediator ! DistributedPubSubMediator.Publish(SchedulerTopic, event)
+      self ! scheduleOrFinish(state)
+      context.become(active(state))
+    }
   }
 
   private def initial(subscribed: Boolean = false, state: Option[DriverState] = None): Receive = {
@@ -156,6 +162,9 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       } else {
         context.become(initial(subscribed = true, state))
       }
+
+    case GetExecutionPlan(_) =>
+      sender() ! None
 
     case cmd: New =>
       val created = Created(cmd.jobId, cmd.spec, cmd.planId, cmd.trigger,
@@ -178,7 +187,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       self ! FinishPlan
 
     case GetExecutionPlan(_) =>
-      sender() ! state.plan
+      sender() ! Some(state.plan)
 
     case Execution.Result(outcome) =>
       state.plan.currentTaskId.foreach { taskId =>
@@ -236,6 +245,14 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       }
   }
 
+  private def shuttingDown(state: DriverState): Receive = {
+    case GetExecutionPlan(_) =>
+      sender() ! Some(state)
+
+    case _ =>
+      log.warning("Execution plan '{}' has finished, shutting down.", state.planId)
+  }
+
   private def scheduleOrFinish(state: DriverState) =
     state.plan.nextExecutionTime.map(ScheduleTask).getOrElse(FinishPlan)
 
@@ -256,11 +273,6 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         case _ => FinishPlan
       }
     } else FinishPlan
-  }
-
-  private def shuttingDown(state: DriverState): Receive = {
-    case _ =>
-      log.warning("Execution plan '{}' has finished, shutting down.", state.planId)
   }
 
   private def shouldRetry(cause: Fault): Boolean = cause match {

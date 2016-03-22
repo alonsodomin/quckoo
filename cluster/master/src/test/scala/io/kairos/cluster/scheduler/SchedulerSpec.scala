@@ -5,11 +5,10 @@ import akka.testkit._
 
 import io.kairos.JobSpec
 import io.kairos.id.{ArtifactId, JobId}
-import io.kairos.cluster.registry.Registry
 import io.kairos.protocol.{RegistryProtocol, SchedulerProtocol}
 import io.kairos.test.{ImplicitTimeSource, TestActorSystem}
 
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
+import org.scalatest._
 
 /**
  * Created by aalonsodominguez on 18/08/15.
@@ -22,6 +21,7 @@ object SchedulerSpec {
 
 }
 
+@Ignore
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender with ImplicitTimeSource
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 

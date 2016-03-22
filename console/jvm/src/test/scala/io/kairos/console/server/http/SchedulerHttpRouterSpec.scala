@@ -5,11 +5,13 @@ import java.util.UUID
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+
 import io.kairos.api.Scheduler
 import io.kairos.{ExecutionPlan, Trigger, serialization}
 import io.kairos.id.{JobId, PlanId}
 import io.kairos.protocol.SchedulerProtocol
 import io.kairos.time.JDK8TimeSource
+
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,7 +21,7 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 object SchedulerHttpRouterSpec {
 
-  final val TestPlanIds = List(UUID.randomUUID())
+  final val TestPlanIds = Set(UUID.randomUUID())
 
   final val TestPlanMap = Map(
     TestPlanIds.head -> ExecutionPlan(
@@ -55,7 +57,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     Future.successful(response)
   }
 
-  override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]] =
+  override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] =
     Future.successful(TestPlanIds)
 
   private[this] def endpoint(target: String) = s"/api/scheduler$target"

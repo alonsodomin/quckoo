@@ -18,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
  * Created by alonsodomin on 13/10/2015.
  */
-object HttpClient extends ConsoleAuth with Registry with Scheduler with ClientAuth {
+object ConsoleClient extends ConsoleAuth with Registry with Scheduler with ClientAuth {
   import dom.ext.Ajax
   import upickle.default._
   import serialization.json.scalajs._
@@ -97,9 +97,9 @@ object HttpClient extends ConsoleAuth with Registry with Scheduler with ClientAu
     }
   }
 
-  override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]] = {
+  override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] = {
     Ajax.get(ExecutionPlansURI, headers = authHeaders).map { xhr =>
-      read[List[PlanId]](xhr.responseText)
+      read[Set[PlanId]](xhr.responseText)
     }
   }
 

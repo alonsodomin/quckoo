@@ -14,7 +14,7 @@ import scalajs.concurrent.JSExecutionContext.Implicits.queue
 class ExecutionPlanMapHandler(model: ModelRW[KairosModel, PotMap[PlanId, ExecutionPlan]])
     extends ActionHandler(model) {
 
-  def loadPlanIds: Future[List[PlanId]] = HttpClient.allExecutionPlanIds
+  def loadPlanIds: Future[Set[PlanId]] = ConsoleClient.allExecutionPlanIds
 
   def loadPlans(ids: Set[PlanId]): Future[Map[PlanId, Pot[ExecutionPlan]]] = {
     Future.sequence(ids.map { id =>
@@ -23,14 +23,16 @@ class ExecutionPlanMapHandler(model: ModelRW[KairosModel, PotMap[PlanId, Executi
   }
 
   def loadPlan(id: PlanId): Future[Pot[ExecutionPlan]] =
-    HttpClient.executionPlan(id) map {
+    ConsoleClient.executionPlan(id) map {
       case Some(plan) => Ready(plan)
       case None       => Unavailable
+    } recover {
+      case ex => Failed(ex)
     }
 
   override def handle = {
     case LoadExecutionPlans =>
-      effectOnly(Effect(loadPlanIds.map(ids => ExecutionPlanIdsLoaded(ids.toSet))))
+      effectOnly(Effect(loadPlanIds.map(ExecutionPlanIdsLoaded)))
 
     case ExecutionPlanIdsLoaded(ids) =>
       effectOnly(Effect(loadPlans(ids).map(ExecutionPlansLoaded)))

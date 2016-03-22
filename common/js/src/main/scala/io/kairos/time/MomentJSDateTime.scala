@@ -39,4 +39,7 @@ class MomentJSDateTime(private val date: Date) extends DateTime {
   def toEpochMillis: Long =
     date.milliseconds()
 
+  override def toString: String =
+    date.toISOString()
+
 }

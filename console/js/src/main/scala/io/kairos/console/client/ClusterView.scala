@@ -1,6 +1,6 @@
 package io.kairos.console.client
 
-import io.kairos.console.client.core.{HttpClient, ClusterEvent, ClusterEventListener}
+import io.kairos.console.client.core.{ConsoleClient, ClusterEvent, ClusterEventListener}
 import io.kairos.console.info.ClusterInfo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -78,7 +78,7 @@ object ClusterView {
     initialState(State()).
     renderBackend[Backend].
     componentDidMount($ => Callback.future {
-      HttpClient.clusterDetails map { details =>
+      ConsoleClient.clusterDetails map { details =>
         $.modState(_.copy(info = details))
       }
     }).buildU

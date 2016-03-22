@@ -14,7 +14,7 @@ trait Scheduler {
 
   def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]]
 
-  def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]]
+  def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]]
 
   def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]]
 

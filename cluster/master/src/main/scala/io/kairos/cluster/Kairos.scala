@@ -43,13 +43,13 @@ class Kairos(settings: KairosClusterSettings)
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
   }
 
-  def allExecutionPlanIds(implicit ec: ExecutionContext): Future[List[PlanId]] = {
+  def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] = {
     implicit val timeout = Timeout(5 seconds)
-    (core ? GetExecutionPlans).mapTo[List[PlanId]]
+    (core ? GetExecutionPlans).mapTo[Set[PlanId]]
   }
 
   def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {
-    implicit val timeout = Timeout(5 seconds)
+    implicit val timeout = Timeout(10 seconds)
 
     (core ? GetExecutionPlan(planId)).mapTo[Option[ExecutionPlan]]
   }

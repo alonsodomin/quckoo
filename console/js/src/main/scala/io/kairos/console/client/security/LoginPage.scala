@@ -1,7 +1,7 @@
 package io.kairos.console.client.security
 
 import io.kairos.console.client.SiteMap.{ConsolePage, Home, Login}
-import io.kairos.console.client.core.HttpClient
+import io.kairos.console.client.core.ConsoleClient
 import io.kairos.console.client.components._
 import io.kairos.console.protocol.LoginRequest
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -43,7 +43,7 @@ object LoginPage {
         holder.copy(notifications = Some(Notification.danger("Username or password incorrect")))
 
       def performLogin(): Future[Callback] =
-        HttpClient.login(loginReq.username, loginReq.password).map { _ =>
+        ConsoleClient.login(loginReq.username, loginReq.password).map { _ =>
           props.routerCtl.set(props.referral.getOrElse(Home))
         } recover { case _ =>
           $.modState(holder => authFailedNotification(holder)).

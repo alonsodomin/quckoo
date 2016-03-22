@@ -15,12 +15,12 @@ class LoginHandler[M](model: ModelRW[M, Option[User]]) extends ActionHandler(mod
   override def handle = {
     case action: LoginRequest =>
       effectOnly(Effect(
-        HttpClient.login(action.username, action.password).
+        ConsoleClient.login(action.username, action.password).
           map(_ => LoggedIn(action.username))
       ))
 
     case LogoutRequest =>
-      effectOnly(Effect(HttpClient.logout().map(_ => LoggedOut)))
+      effectOnly(Effect(ConsoleClient.logout().map(_ => LoggedOut)))
 
     case LoggedIn(username) =>
       updated(Some(User(username)))
