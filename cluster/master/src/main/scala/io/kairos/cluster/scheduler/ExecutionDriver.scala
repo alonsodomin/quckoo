@@ -134,8 +134,6 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     case create: Created =>
       log.debug("Execution driver recreated for plan: {}", create.planId)
       stateDuringRecovery = Some(DriverState(create))
-      // will be delivered at the end of the recovery process
-      self ! RecoveryCompleted
 
     case event: SchedulerEvent =>
       log.debug("Execution driver event replayed. event={}", event)
