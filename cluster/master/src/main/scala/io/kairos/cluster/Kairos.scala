@@ -29,7 +29,7 @@ import scala.concurrent.duration._
   */
 class Kairos(settings: KairosClusterSettings)
             (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
-    extends HttpRouter with Server with Logging {
+    extends HttpRouter with Server with Logging with Retrying {
 
   import RegistryProtocol._
   import SchedulerProtocol._
@@ -49,9 +49,13 @@ class Kairos(settings: KairosClusterSettings)
   }
 
   def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {
-    implicit val timeout = Timeout(10 seconds)
+    def internalRequest: Future[Option[ExecutionPlan]] = {
+      implicit val timeout = Timeout(2 seconds)
+      (core ? GetExecutionPlan(planId)).mapTo[Option[ExecutionPlan]]
+    }
 
-    (core ? GetExecutionPlan(planId)).mapTo[Option[ExecutionPlan]]
+    implicit val sch = system.scheduler
+    retry(internalRequest, 250 millis, 3)
   }
 
   def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
