@@ -32,8 +32,12 @@ lazy val noPublishSettings = Seq(
   publishArtifact := false
 )
 
-lazy val commonJsSettins = Seq(
-  scalaJSStage in Test := FastOptStage
+lazy val commonJsSettings = Seq(
+  coverageEnabled := false,
+  persistLauncher in Compile := true,
+  persistLauncher in Test := false,
+  scalaJSStage in Test := FastOptStage,
+  jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
 )
 
 lazy val scoverageSettings = Seq(
@@ -60,6 +64,7 @@ lazy val common = (crossProject in file("common")).
   settings(commonSettings: _*).
   settings(scoverageSettings: _*).
   settings(Dependencies.common: _*).
+  jsSettings(commonJsSettings: _*).
   jsSettings(Dependencies.commonJS: _*).
   jvmSettings(Dependencies.commonJVM: _*)
 
@@ -79,19 +84,15 @@ lazy val consoleRoot = (project in file("console")).
   aggregate(consoleJS, consoleJVM, consoleResources)
 
 lazy val console = (crossProject in file("console")).
-  settings(commonSettings: _*).
   settings(name := "console").
+  settings(commonSettings: _*).
   settings(Dependencies.console: _*).
+  jsSettings(commonJsSettings: _*).
   jsSettings(Dependencies.consoleJS: _*).
   jsSettings(
-    requiresDOM := true,
-    coverageEnabled := false,
-    persistLauncher in Compile := true,
-    persistLauncher in Test := false,
-    scalaJSStage in Test := FastOptStage,
-    jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
-  )
-  .jvmSettings(Dependencies.consoleJVM: _*).
+    requiresDOM := true
+  ).
+  jvmSettings(Dependencies.consoleJVM: _*).
   dependsOn(common)
 
 lazy val consoleJS = console.js
