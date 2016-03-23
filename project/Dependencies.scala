@@ -202,7 +202,7 @@ object Dependencies {
   lazy val clusterWorker = Def.settings {
     import libs._
     libraryDependencies ++= Seq(
-      scopt, scalaTest, scalaMock
+      Akka.testKit, scopt, scalaTest, scalaMock
     )
   }
 
@@ -214,7 +214,7 @@ object Dependencies {
   }
   lazy val exampleProducers = Def.settings {
     import libs._
-    libraryDependencies += scopt
+    libraryDependencies ++= Seq(Akka.testKit, scopt)
   }
 
 }
