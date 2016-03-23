@@ -93,21 +93,6 @@ object Dependencies {
       val core    = "com.github.julien-truffaut"  %%  "monocle-core"    % version.monocle
       val `macro` = "com.github.julien-truffaut"  %%  "monocle-macro"   % version.monocle
     }
-    object MonocleSJS {
-      val core    = Def.setting { "com.github.japgolly.fork.monocle" %%% "monocle-core" % version.monocle }
-      val `macro` = Def.setting { "com.github.japgolly.fork.monocle" %%% "monocle-macro" % version.monocle }
-    }
-
-    object ScalaJsReact {
-      val core  = Def.setting { "com.github.japgolly.scalajs-react" %%% "core"  % version.scalaJsReact }
-      val extra = Def.setting { "com.github.japgolly.scalajs-react" %%% "extra" % version.scalaJsReact }
-      val test  = Def.setting { "com.github.japgolly.scalajs-react" %%% "test"  % version.scalaJsReact % Test }
-    }
-
-    object ScalaCss {
-      val core  = Def.setting { "com.github.japgolly.scalacss" %%% "core"      % version.scalaCss }
-      val react = Def.setting { "com.github.japgolly.scalacss" %%% "ext-react" % version.scalaCss }
-    }
 
   }
 
