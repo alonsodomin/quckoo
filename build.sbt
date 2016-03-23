@@ -59,40 +59,16 @@ lazy val common = (crossProject in file("common")).
   ).
   settings(commonSettings: _*).
   settings(scoverageSettings: _*).
-  settings(addCompilerPlugin(Dependencies.compiler.macroParadise)).
-  settings(
-    libraryDependencies ++= Seq(
-      "com.lihaoyi"    %%% "upickle" % "0.3.6",
-      "org.scalatest"  %%% "scalatest" % Dependencies.version.scalaTest % Test
-    )
-  ).
-  jsSettings(
-    libraryDependencies ++= {
-      import Dependencies.version._
-
-      Seq(
-        "io.github.widok" %%% "scala-js-momentjs" % "0.1.4",
-        "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % scalaz,
-        "com.github.japgolly.fork.monocle" %%% "monocle-core" % monocle,
-        "com.github.japgolly.fork.monocle" %%% "monocle-macro" % monocle
-      )
-    }
-  ).jvmSettings(
-    libraryDependencies ++= {
-      import Dependencies.libs._
-
-      Seq(scalaz, Monocle.core, Monocle.`macro`)
-    }
-  )
+  settings(Dependencies.common: _*).
+  jsSettings(Dependencies.commonJS: _*).
+  jvmSettings(Dependencies.commonJVM: _*)
 
 lazy val commonJS = common.js
 lazy val commonJVM = common.jvm
 
 lazy val client = (project in file("client")).
   settings(commonSettings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.module.client
-  ).
+  settings(Dependencies.client: _*).
   dependsOn(commonJVM)
 
 // Console ==================================================
@@ -104,49 +80,10 @@ lazy val consoleRoot = (project in file("console")).
 
 lazy val console = (crossProject in file("console")).
   settings(commonSettings: _*).
-  settings(addCompilerPlugin(Dependencies.compiler.macroParadise)).
-  settings(
-    name := "console",
-    coverageEnabled := false,
-    libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "scalatags" % "0.4.6",
-      "com.lihaoyi" %%% "upickle" % "0.3.8",
-      "org.scalatest"  %%% "scalatest" % Dependencies.version.scalaTest % Test
-    )
-  ).
+  settings(name := "console").
+  settings(Dependencies.console: _*).
+  jsSettings(Dependencies.consoleJS: _*).
   jsSettings(
-    libraryDependencies ++= {
-      import Dependencies.version._
-
-      Seq(
-        "biz.enef" %%% "slogging" % "0.3",
-        "me.chrons" %%% "diode" % "0.5.0",
-        "me.chrons" %%% "diode-react" % "0.5.0",
-        "org.monifu" %%% "monifu" % "1.0",
-        "be.doeraene" %%% "scalajs-jquery" % "0.9.0",
-        "org.singlespaced" %%% "scalajs-d3" % "0.3.1",
-        "com.github.japgolly.scalajs-react" %%% "core" % scalaJsReact,
-        "com.github.japgolly.scalajs-react" %%% "extra" % scalaJsReact,
-        "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % scalaJsReact,
-        "com.github.japgolly.scalajs-react" %%% "ext-monocle" % scalaJsReact,
-        "com.github.japgolly.scalajs-react" %%% "test" % scalaJsReact % "test",
-        "com.github.japgolly.scalacss" %%% "core" % scalaCss,
-        "com.github.japgolly.scalacss" %%% "ext-react" % scalaCss,
-
-        "com.github.japgolly.fork.monocle" %%% "monocle-macro" % monocle
-      )
-    },
-    jsDependencies ++= {
-      import Dependencies.version._
-
-      Seq(
-        "org.webjars.bower" % "react" % reactJs / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
-        "org.webjars.bower" % "react" % reactJs / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM",
-        "org.webjars.bower" % "react" % reactJs % "test" / "react-with-addons.js" commonJSName "React",
-        "org.webjars" % "jquery" % "1.11.1" / "jquery.js" minified "jquery.min.js",
-        "org.webjars" % "bootstrap" % "3.3.2" / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js"
-      )
-    },
     requiresDOM := true,
     coverageEnabled := false,
     persistLauncher in Compile := true,
@@ -154,13 +91,7 @@ lazy val console = (crossProject in file("console")).
     scalaJSStage in Test := FastOptStage,
     jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
   )
-  .jvmSettings(
-    libraryDependencies ++= {
-      import Dependencies.libs._
-
-      Seq(Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse)
-    }
-  ).
+  .jvmSettings(Dependencies.consoleJVM: _*).
   dependsOn(common)
 
 lazy val consoleJS = console.js
@@ -170,12 +101,9 @@ lazy val consoleResources = (project in file("console/resources")).
   aggregate(consoleJS).
   enablePlugins(SbtSass).
   settings(commonSettings: _*).
+  settings(Dependencies.consoleResources).
   settings(
     name := "console-resources",
-    libraryDependencies ++= Seq(
-      "org.webjars" % "bootstrap-sass" % "3.3.1",
-      "org.webjars" % "font-awesome"   % "4.5.0"
-    ),
     exportJars := true,
     unmanagedResourceDirectories in Compile += (crossTarget in consoleJS).value,
     includeFilter in (Compile, unmanagedResources) := ("*.js" || "*.css" || "*.js.map"),
@@ -210,17 +138,15 @@ lazy val cluster = (project in file("cluster")).
   aggregate(clusterShared, master, worker)
 
 lazy val clusterShared = Project("cluster-shared", file("cluster/shared")).
-  settings(commonSettings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.module.cluster
-  ).
+  settings(commonSettings).
+  settings(Dependencies.clusterShared).
   dependsOn(commonJVM)
 
 lazy val master = MultiNode(Project("cluster-master", file("cluster/master"))).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
+  settings(Dependencies.clusterMaster).
   settings(
-    libraryDependencies ++= Dependencies.module.master,
     reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
   ).
   enablePlugins(JavaServerAppPackaging, DockerPlugin).
@@ -231,9 +157,7 @@ lazy val master = MultiNode(Project("cluster-master", file("cluster/master"))).
 lazy val worker = Project("cluster-worker", file("cluster/worker")).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.module.worker
-  ).
+  settings(Dependencies.clusterWorker).
   enablePlugins(JavaServerAppPackaging, DockerPlugin).
   settings(Packaging.universalServerSettings: _*).
   settings(Packaging.workerDockerSettings: _*).
@@ -247,17 +171,13 @@ lazy val examples = (project in file("examples")).
 
 lazy val exampleJobs = Project("example-jobs", file("examples/jobs")).
   settings(commonSettings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.module.exampleJobs
-  ).
+  settings(Dependencies.exampleJobs).
   dependsOn(commonJVM)
 
 lazy val exampleProducers = Project("example-producers", file("examples/producers")).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
-  settings(
-    libraryDependencies ++= Dependencies.module.exampleProducers
-  ).
+  settings(Dependencies.exampleProducers).
   enablePlugins(JavaAppPackaging, DockerPlugin).
   settings(Packaging.universalSettings: _*).
   settings(Packaging.dockerSettings: _*).

@@ -1,5 +1,6 @@
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import sbt._
+import Keys._
 
 object Dependencies {
 
@@ -25,6 +26,11 @@ object Dependencies {
 
     val scalaJsReact = "0.10.4"
     val scalaCss = "0.3.1"
+
+    val diode = "0.5.0"
+
+    val upickle = "0.3.8"
+    val scalatags = "0.4.6"
 
     val reactJs = "0.14.3"
 
@@ -109,39 +115,121 @@ object Dependencies {
     val macroParadise = "org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full
   }
 
-  object module {
+  // Common module ===============================
+
+  lazy val common = Def.settings {
+    libraryDependencies ++= Seq(
+      compilerPlugin(Dependencies.compiler.macroParadise),
+
+      "com.lihaoyi"   %%% "upickle"   % version.upickle,
+      "org.scalatest" %%% "scalatest" % version.scalaTest % Test
+    )
+  }
+  lazy val commonJS = Def.settings {
+    libraryDependencies ++= Seq(
+      "io.github.widok"                  %%% "scala-js-momentjs" % "0.1.4",
+      "com.github.japgolly.fork.scalaz"  %%% "scalaz-core"       % version.scalaz,
+      "com.github.japgolly.fork.monocle" %%% "monocle-core"      % version.monocle,
+      "com.github.japgolly.fork.monocle" %%% "monocle-macro"     % version.monocle
+    )
+  }
+  lazy val commonJVM = Def.settings {
     import libs._
+    libraryDependencies ++= Seq(scalaz, Monocle.core, Monocle.`macro`)
+  }
 
-    private[this] val akka = Seq(Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit)
-    private[this] val logging = Seq(slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl)
-    private[this] val testing = Seq(scalaTest, scalaMock)
+  // Client module ===============================
 
-    val common   = testing :+ scalaXml
-    val network  = logging ++ testing ++ akka
-    val client   = logging ++ testing ++ akka
-    val cluster  = logging ++ testing ++ akka ++ Seq(
-      ivy, scalaXml, scalaz, mockito
+  lazy val client = Def.settings {
+    import libs._
+    libraryDependencies ++= Seq(
+      slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
+      Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
+      Akka.kryoSerialization, scalaTest, scalaMock
     )
+  }
 
-    val master = logging ++ testing ++ akka ++ Seq(
-      Akka.persistence.core,
-      Akka.persistence.cassandra,
-      Akka.persistence.query,
-      Akka.persistence.memory,
-      Akka.sharding, Akka.http, Akka.httpUpickle, Akka.sse,
-      Akka.distributedData, Akka.kryoSerialization,
-      scopt, scalaz
+  // Console module ===============================
+
+  lazy val console = Def.settings {
+    libraryDependencies ++= Seq(
+      compilerPlugin(Dependencies.compiler.macroParadise),
+
+      "com.lihaoyi"   %%% "scalatags" % version.scalatags,
+      "org.scalatest" %%% "scalatest" % version.scalaTest % Test
     )
+  }
+  lazy val consoleJS = Def.settings(
+    libraryDependencies ++= Seq(
+      "biz.enef"         %%% "slogging"       % "0.3",
+      "me.chrons"        %%% "diode"          % version.diode,
+      "me.chrons"        %%% "diode-react"    % version.diode,
+      "org.monifu"       %%% "monifu"         % "1.0",
+      "be.doeraene"      %%% "scalajs-jquery" % "0.9.0",
+      "org.singlespaced" %%% "scalajs-d3"     % "0.3.1",
 
-    val worker = logging ++ testing ++ akka ++ Seq(
-      scopt, Akka.kryoSerialization
+      "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "extra"        % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-monocle"  % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "test"         % version.scalaJsReact % Test,
+      "com.github.japgolly.scalacss"      %%% "core"         % version.scalaCss,
+      "com.github.japgolly.scalacss"      %%% "ext-react"    % version.scalaCss
+    ),
+    jsDependencies ++= Seq(
+      "org.webjars.bower" % "react" % version.reactJs / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
+      "org.webjars.bower" % "react" % version.reactJs / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM",
+      "org.webjars.bower" % "react" % version.reactJs % Test / "react-with-addons.js" commonJSName "React",
+
+      "org.webjars" % "jquery"    % "1.11.1" / "jquery.js"    minified "jquery.min.js",
+      "org.webjars" % "bootstrap" % "3.3.2"  / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js"
     )
-
-    val exampleJobs = logging
-    val exampleProducers = logging ++ testing ++ akka ++ Seq(
-      scopt, Akka.kryoSerialization
+  )
+  lazy val consoleJVM = Def.settings {
+    import libs._
+    libraryDependencies ++= Seq(Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse)
+  }
+  lazy val consoleResources = Def.settings {
+    libraryDependencies ++= Seq(
+      "org.webjars" % "bootstrap-sass" % "3.3.1",
+      "org.webjars" % "font-awesome"   % "4.5.0"
     )
+  }
 
+  // Cluster modules ===============================
+
+  lazy val clusterShared = Def.settings {
+    import libs._
+    libraryDependencies ++= Seq(
+      slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
+      Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
+      Akka.kryoSerialization, ivy, scalaXml, mockito, scalaTest, scalaMock
+    )
+  }
+  lazy val clusterMaster = Def.settings {
+    import libs._
+    libraryDependencies ++= Seq(
+      Akka.sharding, Akka.http, Akka.httpUpickle, Akka.sse, Akka.distributedData,
+      Akka.persistence.core, Akka.persistence.cassandra, Akka.persistence.query,
+      Akka.persistence.memory, scopt, scalaTest, scalaMock
+    )
+  }
+  lazy val clusterWorker = Def.settings {
+    import libs._
+    libraryDependencies ++= Seq(
+      scopt, scalaTest, scalaMock
+    )
+  }
+
+  // Examples modules ===============================
+
+  lazy val exampleJobs = Def.settings {
+    import libs._
+    libraryDependencies ++= Seq(slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl)
+  }
+  lazy val exampleProducers = Def.settings {
+    import libs._
+    libraryDependencies += scopt
   }
 
 }
