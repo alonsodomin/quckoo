@@ -13,7 +13,7 @@
       <AppenderRef ref="Console"/>
     </Logger>
 
-    <Logger name="io.kairos" level="debug" additivity="false">
+    <Logger name="io.quckoo" level="debug" additivity="false">
       <AppenderRef ref="Console"/>
     </Logger>
 
