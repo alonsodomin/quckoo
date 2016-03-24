@@ -58,9 +58,7 @@ lazy val commonRoot = (project in file("common")).
   aggregate(commonJS, commonJVM)
 
 lazy val common = (crossProject in file("common")).
-  settings(
-    name := "common"
-  ).
+  settings(name := "common").
   settings(commonSettings: _*).
   settings(scoverageSettings: _*).
   settings(Dependencies.common: _*).
@@ -134,16 +132,17 @@ lazy val consoleResources = (project in file("console/resources")).
 // Cluster ==================================================
 
 lazy val cluster = (project in file("cluster")).
+  settings(name := "quckoo-cluster").
   settings(noPublishSettings).
   settings(scoverageSettings).
   aggregate(clusterShared, master, worker)
 
-lazy val clusterShared = Project("cluster-shared", file("cluster/shared")).
+lazy val clusterShared = (project in file("cluster/shared")).
   settings(commonSettings).
   settings(Dependencies.clusterShared).
   dependsOn(commonJVM)
 
-lazy val master = MultiNode(Project("cluster-master", file("cluster/master"))).
+lazy val master = MultiNode(project in file("cluster/master")).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterMaster).
@@ -155,7 +154,7 @@ lazy val master = MultiNode(Project("cluster-master", file("cluster/master"))).
   settings(Packaging.masterDockerSettings: _*).
   dependsOn(clusterShared, consoleResources, consoleJVM)
 
-lazy val worker = Project("cluster-worker", file("cluster/worker")).
+lazy val worker = (project in file("cluster/worker")).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterWorker).
@@ -170,12 +169,12 @@ lazy val examples = (project in file("examples")).
   aggregate(exampleJobs, exampleProducers).
   settings(noPublishSettings)
 
-lazy val exampleJobs = Project("example-jobs", file("examples/jobs")).
+lazy val exampleJobs = (project in file("examples/jobs")).
   settings(commonSettings: _*).
   settings(Dependencies.exampleJobs).
   dependsOn(commonJVM)
 
-lazy val exampleProducers = Project("example-producers", file("examples/producers")).
+lazy val exampleProducers = (project in file("examples/producers")).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.exampleProducers).
