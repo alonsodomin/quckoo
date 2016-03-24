@@ -51,7 +51,7 @@ vagrant provision
 
 ## Contributing
 
-Kairos is still right now in _experimental_ phase, current codebase will be evolving until it reaches the level of
+Quckoo is still right now in _experimental_ phase, current codebase will be evolving until it reaches the level of
 robustness necessary to be able to trust on the system to be able to handle the big load we are aiming for. Feel
 free to fork this repository and contribute with your knowledge to make this project a reliable and really
 fault-tolerant task scheduling platform.
