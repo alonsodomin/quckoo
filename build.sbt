@@ -48,7 +48,7 @@ lazy val scoverageSettings = Seq(
 lazy val quckoo = (project in file(".")).
   settings(moduleName := "root").
   settings(noPublishSettings).
-  aggregate(commonRoot, client, cluster, consoleRoot, examples, worker)
+  aggregate(commonRoot, apiRoot, client, cluster, consoleRoot, examples, clusterWorker)
 
 // Common ==================================================
 
@@ -69,10 +69,28 @@ lazy val common = (crossProject in file("common")).
 lazy val commonJS = common.js
 lazy val commonJVM = common.jvm
 
+// API ==================================================
+
+lazy val apiRoot = (project in file("api")).
+  settings(moduleName := "api").
+  settings(noPublishSettings).
+  aggregate(apiJS, apiJVM)
+
+lazy val api = (crossProject.crossType(CrossType.Pure) in file("api")).
+  settings(name := "api").
+  settings(commonSettings: _*).
+  jsSettings(commonJsSettings: _*).
+  dependsOn(common)
+
+lazy val apiJS = api.js
+lazy val apiJVM = api.jvm
+
+// Client ==================================================
+
 lazy val client = (project in file("client")).
   settings(commonSettings: _*).
   settings(Dependencies.client: _*).
-  dependsOn(commonJVM)
+  dependsOn(apiJVM)
 
 // Console ==================================================
 
@@ -91,7 +109,7 @@ lazy val console = (crossProject in file("console")).
     requiresDOM := true
   ).
   jvmSettings(Dependencies.consoleJVM: _*).
-  dependsOn(common)
+  dependsOn(api)
 
 lazy val consoleJS = console.js
 lazy val consoleJVM = console.jvm
@@ -135,14 +153,14 @@ lazy val cluster = (project in file("cluster")).
   settings(name := "quckoo-cluster").
   settings(noPublishSettings).
   settings(scoverageSettings).
-  aggregate(clusterShared, master, worker)
+  aggregate(clusterShared, clusterMaster, clusterWorker)
 
 lazy val clusterShared = (project in file("cluster/shared")).
   settings(commonSettings).
   settings(Dependencies.clusterShared).
-  dependsOn(commonJVM)
+  dependsOn(apiJVM)
 
-lazy val master = MultiNode(project in file("cluster/master")).
+lazy val clusterMaster = MultiNode(project in file("cluster/master")).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterMaster).
@@ -154,7 +172,7 @@ lazy val master = MultiNode(project in file("cluster/master")).
   settings(Packaging.masterDockerSettings: _*).
   dependsOn(clusterShared, consoleResources, consoleJVM)
 
-lazy val worker = (project in file("cluster/worker")).
+lazy val clusterWorker = (project in file("cluster/worker")).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterWorker).
@@ -181,7 +199,7 @@ lazy val exampleProducers = (project in file("examples/producers")).
   enablePlugins(JavaAppPackaging, DockerPlugin).
   settings(Packaging.universalSettings: _*).
   settings(Packaging.dockerSettings: _*).
-  dependsOn(commonJVM, exampleJobs, client)
+  dependsOn(client, exampleJobs)
 
 // Command aliases ==================================================
 
