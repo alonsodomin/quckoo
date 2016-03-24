@@ -13,36 +13,36 @@ import scopt.OptionParser
  */
 object Boot extends App {
 
-  final val SystemName = "KairosWorkerSystem"
-
-  val parser = new OptionParser[Options]("worker") {
-    head("worker", "0.1.0")
+  val parser = new OptionParser[Options]("quckoo-worker") {
+    head("quckoo-worker", "0.1.0")
     opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
       options.copy(bindAddress = Some(b))
     } text "Bind to this external host and port. Useful when using inside Docker containers"
+
     opt[Int]('p', "port") valueName "<port>" action { (p, options) =>
       options.copy(port = p)
     } text "Worker node port"
+
     opt[Seq[String]]("master") required() valueName "<host:port>,<host:port>" action { (nodes, options) =>
       options.copy(masterNodes = nodes)
-    } text "Comma separated list of Kairos cluster master nodes"
+    } text "Comma separated list of Quckoo master nodes"
   }
 
   def loadConfig(opts: Options): Config =
     opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
-    val system = ActorSystem(SystemName, config)
+    val system = ActorSystem(Options.SystemName, config)
     sys.addShutdownHook { system.terminate() }
 
-    val initialContacts = immutableSeq(config.getStringList(Options.KairosContactPoints)).map {
+    val initialContacts = immutableSeq(config.getStringList(Options.QuckooContactPoints)).map {
       case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
     }.toSet
 
     val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
     val clusterClient  = system.actorOf(ClusterClient.props(clientSettings), "client")
 
-    val ivyConfig  = IvyConfiguration(config.getConfig("kairos"))
+    val ivyConfig  = IvyConfiguration(config.getConfig("quckoo"))
     val ivyResolve = IvyResolve(ivyConfig)
     val jobExecutorProps = JobExecutor.props(ivyResolve)
     system.actorOf(Worker.props(clusterClient, jobExecutorProps), "worker")

@@ -2,7 +2,7 @@ package io.quckoo.console.client.layout
 
 import io.quckoo.console.client.SiteMap
 import io.quckoo.console.client.components._
-import io.quckoo.console.client.core.{KairosCircuit, ConsoleClient}
+import io.quckoo.console.client.core.{ConsoleCircuit, ConsoleClient}
 import io.quckoo.console.client.security.{UserMenu, ClientAuth}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -85,7 +85,7 @@ object Navigation extends ClientAuth {
               props.menu.map(item => renderNavMenu(item, props))
             ),
             <.ul(^.`class` := "nav navbar-nav navbar-right",
-              <.li(^.`class` := "navbar-text", KairosCircuit.wrap(_.currentUser)(UserMenu.apply)),
+              <.li(^.`class` := "navbar-text", ConsoleCircuit.wrap(_.currentUser)(UserMenu.apply)),
               <.li(<.a(^.href := "#", ^.onClick ==> onLogoutClicked, Icons.signOut, "Logout"))
             )
           )

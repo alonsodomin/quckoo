@@ -4,7 +4,7 @@ import java.net.InetAddress
 import java.util.{HashMap => JHashMap}
 
 import com.typesafe.config.{Config, ConfigFactory}
-import io.quckoo.cluster.KairosClusterSettings
+import io.quckoo.cluster.QuckooClusterSettings
 
 import scala.collection.JavaConversions._
 
@@ -12,6 +12,8 @@ import scala.collection.JavaConversions._
  * Created by aalonsodominguez on 03/10/2015.
  */
 object Options {
+
+  final val SystemName = "QuckooClusterSystem"
 
   final val AkkaRemoteNettyHost = "akka.remote.netty.tcp.hostname"
   final val AkkaRemoteNettyPort = "akka.remote.netty.tcp.port"
@@ -23,18 +25,20 @@ object Options {
   final val CassandraJournalContactPoints = "cassandra-journal.contact-points"
   final val CassandraSnapshotContactPoints = "cassandra-snapshot-store.contact-points"
 
-  final val KairosHttpBindPort = "kairos.http.bind-port"
+  final val KairosHttpBindPort = "quckoo.http.bind-port"
 
   private final val HostAndPort = """(.+?):(\d+)""".r
 
 }
 
-case class Options(bindAddress: Option[String] = None,
-    port: Int = KairosClusterSettings.DefaultTcpPort,
+case class Options(
+    bindAddress: Option[String] = None,
+    port: Int = QuckooClusterSettings.DefaultTcpPort,
     httpPort: Option[Int] = None,
     seed: Boolean = false,
     seedNodes: Seq[String] = Seq(),
-    cassandraSeedNodes: Seq[String] = Seq()) {
+    cassandraSeedNodes: Seq[String] = Seq()
+) {
   import Options._
 
   def toConfig: Config = {
@@ -43,7 +47,7 @@ case class Options(bindAddress: Option[String] = None,
     val (bindHost, bindPort) = bindAddress.map { addr =>
       val HostAndPort(h, p) = addr
       (h, p.toInt)
-    } getOrElse((KairosClusterSettings.DefaultTcpInterface, port))
+    } getOrElse((QuckooClusterSettings.DefaultTcpInterface, port))
 
     valueMap.put(AkkaRemoteNettyHost, bindHost)
     valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))
@@ -58,11 +62,11 @@ case class Options(bindAddress: Option[String] = None,
 
     val clusterSeedNodes: Seq[String] = {
       if (seed || seedNodes.isEmpty)
-        List(s"akka.tcp://KairosClusterSystem@$bindHost:$bindPort")
+        List(s"akka.tcp://$SystemName@$bindHost:$bindPort")
       else
         List.empty[String]
     } ::: seedNodes.map({ node =>
-      s"akka.tcp://KairosClusterSystem@$node"
+      s"akka.tcp://$SystemName@$node"
     }).toList
 
     valueMap.put(AkkaClusterSeedNodes, seqAsJavaList(clusterSeedNodes))

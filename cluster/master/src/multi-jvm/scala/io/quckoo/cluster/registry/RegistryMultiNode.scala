@@ -5,7 +5,7 @@ import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
-import io.quckoo.cluster.KairosClusterSettings
+import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.fault.Fault
 import io.quckoo.id.ArtifactId
 import io.quckoo.multijvm.MultiNodeClusterSpec
@@ -50,7 +50,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
   val mockResolve = mock[Resolve]
 
   "A Registry cluster" should {
-    val settings = KairosClusterSettings(system)
+    val settings = QuckooClusterSettings(system)
 
     "distribute jobs specs across shards" in {
       awaitClusterUp(registry, proxy)

@@ -10,7 +10,7 @@ import akka.stream.ActorMaterializer
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.registry.{Registry, RegistryShard}
 import io.quckoo.cluster.scheduler.{Scheduler, TaskQueue}
-import io.quckoo.cluster.{KairosClusterSettings, KairosStatus}
+import io.quckoo.cluster.{QuckooClusterSettings, KairosStatus}
 import io.quckoo.protocol._
 import io.quckoo.resolver.ivy.IvyResolve
 import io.quckoo.time.TimeSource
@@ -20,23 +20,23 @@ import scala.concurrent.duration._
 /**
  * Created by domingueza on 24/08/15.
  */
-object KairosCluster {
+object QuckooCluster {
 
   final val DefaultSessionTimeout: FiniteDuration = 30 minutes
 
-  def props(settings: KairosClusterSettings)(implicit materializer: ActorMaterializer, timeSource: TimeSource) =
-    Props(classOf[KairosCluster], settings, materializer, timeSource)
+  def props(settings: QuckooClusterSettings)(implicit materializer: ActorMaterializer, timeSource: TimeSource) =
+    Props(classOf[QuckooCluster], settings, materializer, timeSource)
 
   case object Shutdown
 
 }
 
-class KairosCluster(settings: KairosClusterSettings)
+class QuckooCluster(settings: QuckooClusterSettings)
                    (implicit materializer: ActorMaterializer, timeSource: TimeSource)
-    extends Actor with ActorLogging with KairosJournal {
+    extends Actor with ActorLogging with QuckooJournal {
 
   import ClientProtocol._
-  import KairosCluster._
+  import QuckooCluster._
   import WorkerProtocol.{WorkerJoined, WorkerRemoved}
 
   ClusterClientReceptionist(context.system).registerService(self)

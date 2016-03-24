@@ -2,7 +2,7 @@ import sbt.Keys._
 import sbt._
 
 lazy val commonSettings = Seq(
-  organization := "io.kairos",
+  organization := "io.quckoo",
   version := "0.1.0-SNAPSHOT",
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   scalaVersion := "2.11.8",
@@ -42,10 +42,10 @@ lazy val commonJsSettings = Seq(
 
 lazy val scoverageSettings = Seq(
   coverageHighlighting := true,
-  coverageExcludedPackages := "io\\.kairos\\.console\\.client\\..*"
+  coverageExcludedPackages := "io\\.quckoo\\.console\\.client\\..*"
 )
 
-lazy val kairos = (project in file(".")).
+lazy val quckoo = (project in file(".")).
   settings(moduleName := "root").
   settings(noPublishSettings).
   aggregate(commonRoot, client, cluster, consoleRoot, examples, worker)
@@ -115,7 +115,7 @@ lazy val consoleResources = (project in file("console/resources")).
           else if (file.getName.indexOf(".js") >= 0) "js/"
           else ""
         }
-        (file, s"kairos/$prefix${file.getName}")
+        (file, s"quckoo/$prefix${file.getName}")
       }
     },
     mappings in (Compile, packageBin) <++= (WebKeys.webJarsDirectory in Assets).map { path =>
@@ -125,7 +125,7 @@ lazy val consoleResources = (project in file("console/resources")).
       )
 
       fontPaths.flatMap { p =>
-        p.listFiles().map { src => (src, "kairos/fonts/" + src.getName) }
+        p.listFiles().map { src => (src, "quckoo/fonts/" + src.getName) }
       }
     },
     packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleJS)

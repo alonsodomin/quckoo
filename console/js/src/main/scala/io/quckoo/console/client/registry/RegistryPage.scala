@@ -4,7 +4,7 @@ import diode.react.ModelProxy
 
 import io.quckoo._
 import io.quckoo.console.client.components._
-import io.quckoo.console.client.core.KairosModel
+import io.quckoo.console.client.core.ConsoleModel$
 import io.quckoo.protocol.RegistryProtocol
 
 import japgolly.scalajs.react._
@@ -26,7 +26,7 @@ object RegistryPage {
 
   }
 
-  case class Props(proxy: ModelProxy[KairosModel])
+  case class Props(proxy: ModelProxy[ConsoleModel])
   case class State(
       selectedJob: Option[JobSpec] = None,
       showForm: Boolean = false
@@ -66,6 +66,6 @@ object RegistryPage {
     renderBackend[RegistryBackend].
     build
 
-  def apply(proxy: ModelProxy[KairosModel]) = component(Props(proxy))
+  def apply(proxy: ModelProxy[ConsoleModel]) = component(Props(proxy))
 
 }

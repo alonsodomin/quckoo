@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 /**
  * Created by domingueza on 28/08/15.
  */
-object KairosClusterSettings {
+object QuckooClusterSettings {
 
   final val DefaultHttpInterface = "0.0.0.0"
   final val DefaultHttpPort = 8095
@@ -18,9 +18,9 @@ object KairosClusterSettings {
   final val DefaultTcpInterface = "127.0.0.1"
   final val DefaultTcpPort = 2551
 
-  def apply(system: ActorSystem): KairosClusterSettings = {
+  def apply(system: ActorSystem): QuckooClusterSettings = {
     val config = system.settings.config.getConfig(BaseConfigNamespace)
-    KairosClusterSettings(
+    QuckooClusterSettings(
       IvyConfiguration(config),
       config.getDuration("task-queue.max-work-timeout", TimeUnit.MILLISECONDS) millis,
       config.getString("http.bind-interface"),
@@ -30,9 +30,9 @@ object KairosClusterSettings {
 
 }
 
-case class KairosClusterSettings private (
+case class QuckooClusterSettings private(
     ivyConfiguration: IvyConfiguration,
     queueMaxWorkTimeout: FiniteDuration,
-    httpInterface: String = KairosClusterSettings.DefaultHttpInterface,
-    httpPort: Int = KairosClusterSettings.DefaultHttpPort
+    httpInterface: String = QuckooClusterSettings.DefaultHttpInterface,
+    httpPort: Int = QuckooClusterSettings.DefaultHttpPort
 )

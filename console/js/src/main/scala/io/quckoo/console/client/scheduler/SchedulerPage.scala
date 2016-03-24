@@ -3,7 +3,7 @@ package io.quckoo.console.client.scheduler
 import diode.react.ModelProxy
 import io.quckoo.ExecutionPlan
 import io.quckoo.console.client.components.{Button, Icons}
-import io.quckoo.console.client.core.KairosModel
+import io.quckoo.console.client.core.ConsoleModel$
 import io.quckoo.protocol.SchedulerProtocol.ScheduleJob
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
@@ -22,7 +22,7 @@ object SchedulerPage {
     val content = style(addClassName("container"))
   }
 
-  case class Props(proxy: ModelProxy[KairosModel])
+  case class Props(proxy: ModelProxy[ConsoleModel])
   case class State(selectedSchedule: Option[ExecutionPlan] = None, showForm: Boolean = false)
 
   class ExecutionsBackend($: BackendScope[Props, State]) {
@@ -58,6 +58,6 @@ object SchedulerPage {
     renderBackend[ExecutionsBackend].
     build
 
-  def apply(proxy: ModelProxy[KairosModel]) = component(Props(proxy))
+  def apply(proxy: ModelProxy[ConsoleModel]) = component(Props(proxy))
 
 }

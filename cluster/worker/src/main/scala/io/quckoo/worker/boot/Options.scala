@@ -4,7 +4,7 @@ import java.net.InetAddress
 import java.util.{HashMap => JHashMap, Map => JMap}
 
 import com.typesafe.config.{Config, ConfigFactory}
-import io.quckoo.worker.KairosWorkerSettings
+import io.quckoo.worker.QuckooWorkerSettings
 
 import scala.collection.JavaConversions._
 
@@ -13,6 +13,8 @@ import scala.collection.JavaConversions._
  */
 object Options {
 
+  final val SystemName = "QuckooWorkerSystem"
+
   final val DefaultPort = 5001
 
   final val AkkaRemoteNettyHost = "akka.remote.netty.tcp.hostname"
@@ -20,14 +22,14 @@ object Options {
   final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
   final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
 
-  final val KairosContactPoints = "kairos.contact-points"
+  final val QuckooContactPoints = "quckoo.contact-points"
 
   private final val HostAndPort = """(.+?):(\d+)""".r
 
 }
 
 case class Options(bindAddress: Option[String] = None,
-                   port: Int = KairosWorkerSettings.DefaultTcpPort,
+                   port: Int = QuckooWorkerSettings.DefaultTcpPort,
                    masterNodes: Seq[String] = Seq()) {
   import Options._
 
@@ -37,7 +39,7 @@ case class Options(bindAddress: Option[String] = None,
     val (bindHost, bindPort) = bindAddress.map { addr =>
       val HostAndPort(h, p) = addr
       (h, p.toInt)
-    } getOrElse((KairosWorkerSettings.DefaultTcpInterface, port))
+    } getOrElse((QuckooWorkerSettings.DefaultTcpInterface, port))
 
     valueMap.put(AkkaRemoteNettyHost, bindHost)
     valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))
@@ -49,8 +51,8 @@ case class Options(bindAddress: Option[String] = None,
     }
 
     if (masterNodes.nonEmpty) {
-      valueMap.put(KairosContactPoints, seqAsJavaList(masterNodes.map { node =>
-        s"akka.tcp://KairosClusterSystem@$node"
+      valueMap.put(QuckooContactPoints, seqAsJavaList(masterNodes.map { node =>
+        s"akka.tcp://QuckooClusterSystem@$node"
       }))
     }
     ConfigFactory.parseMap(valueMap)

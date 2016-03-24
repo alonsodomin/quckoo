@@ -11,7 +11,7 @@ import scalajs.concurrent.JSExecutionContext.Implicits.queue
 /**
   * Created by alonsodomin on 19/03/2016.
   */
-class ExecutionPlanMapHandler(model: ModelRW[KairosModel, PotMap[PlanId, ExecutionPlan]])
+class ExecutionPlanMapHandler(model: ModelRW[ConsoleModel, PotMap[PlanId, ExecutionPlan]])
     extends ActionHandler(model) {
 
   def loadPlanIds: Future[Set[PlanId]] = ConsoleClient.allExecutionPlanIds

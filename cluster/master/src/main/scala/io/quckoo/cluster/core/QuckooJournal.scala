@@ -7,8 +7,8 @@ import akka.persistence.query.PersistenceQuery
 /**
   * Created by alonsodomin on 23/12/2015.
   */
-trait KairosJournal {
-  import KairosJournal._
+trait QuckooJournal {
+  import QuckooJournal._
 
   implicit def actorSystem: ActorSystem
 
@@ -17,7 +17,7 @@ trait KairosJournal {
 
 }
 
-object KairosJournal {
+object QuckooJournal {
 
   final val CassandraReadJournalId = "cassandra-query-journal"
 

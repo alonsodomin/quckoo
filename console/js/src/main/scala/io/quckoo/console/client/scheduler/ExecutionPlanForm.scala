@@ -6,7 +6,7 @@ import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.quckoo.{ExecutionPlan, JobSpec, Trigger}
 import io.quckoo.console.client.components._
-import io.quckoo.console.client.core.{KairosModel, LoadJobSpecs}
+import io.quckoo.console.client.core.{ConsoleModel, LoadJobSpecs}
 import io.quckoo.id.JobId
 import io.quckoo.protocol._
 import io.quckoo.time._
@@ -35,7 +35,7 @@ object ExecutionPlanForm {
 
   type ScheduleHandler = ScheduleJob => Callback
 
-  case class Props(proxy: ModelProxy[KairosModel], plan: Option[ExecutionPlan], handler: ScheduleHandler)
+  case class Props(proxy: ModelProxy[ConsoleModel], plan: Option[ExecutionPlan], handler: ScheduleHandler)
 
   // Component model / state
 
@@ -406,7 +406,7 @@ object ExecutionPlanForm {
     componentDidMount($ => $.backend.mounted($.props)).
     build
 
-  def apply(proxy: ModelProxy[KairosModel], schedule: Option[ExecutionPlan], handler: ScheduleHandler) =
+  def apply(proxy: ModelProxy[ConsoleModel], schedule: Option[ExecutionPlan], handler: ScheduleHandler) =
     component(Props(proxy, schedule, handler))
 
 }

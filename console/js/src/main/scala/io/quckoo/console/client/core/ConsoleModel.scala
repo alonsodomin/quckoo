@@ -11,7 +11,7 @@ import io.quckoo.id.{JobId, PlanId}
   * Created by alonsodomin on 20/02/2016.
   */
 
-case class KairosModel private (
+case class ConsoleModel private(
     currentUser: Option[User],
     notification: Option[Notification],
     jobSpecs: PotMap[JobId, JobSpec],
@@ -21,10 +21,10 @@ case class KairosModel private (
 case class LoggedIn(username: String)
 case object LoggedOut
 
-object KairosModel extends ClientAuth {
+object ConsoleModel extends ClientAuth {
 
   def initial =
-    KairosModel(
+    ConsoleModel(
       currentUser    = authInfo.map(auth => User(auth.userId)),
       notification   = None,
       jobSpecs       = PotMap(JobSpecFetcher),

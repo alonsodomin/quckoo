@@ -27,7 +27,7 @@ import scala.concurrent.duration._
 /**
   * Created by alonsodomin on 13/12/2015.
   */
-class Kairos(settings: KairosClusterSettings)
+class Quckoo(settings: QuckooClusterSettings)
             (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
     extends HttpRouter with Server with Logging with Retrying {
 
@@ -35,7 +35,7 @@ class Kairos(settings: KairosClusterSettings)
   import SchedulerProtocol._
   import UserAuthenticator._
 
-  val core = system.actorOf(KairosCluster.props(settings), "kairos")
+  val core = system.actorOf(QuckooCluster.props(settings), "kairos")
   val userAuth = system.actorSelection(core.path / "authenticator")
 
   def start(implicit ec: ExecutionContext, timeout: Timeout): Future[Unit] = {

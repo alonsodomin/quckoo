@@ -10,21 +10,21 @@ import scala.concurrent.duration._
 /**
  * Created by aalonsodominguez on 21/08/15.
  */
-object KairosClient {
+object QuckooClient {
 
   private[client] final val KairosPath   = "/user/kairos"
   private[client] final val SchedulerPath = KairosPath + "/scheduler"
   private[client] final val RegistryPath =  KairosPath + "/registry"
 
   def props(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int = 3) =
-    Props(classOf[KairosClient], clientSettings, maxConnectionAttempts)
+    Props(classOf[QuckooClient], clientSettings, maxConnectionAttempts)
 
 }
 
-class KairosClient(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int)
+class QuckooClient(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int)
   extends Actor with ActorLogging {
 
-  import KairosClient._
+  import QuckooClient._
   import ClientProtocol._
   import RegistryProtocol._
   import SchedulerProtocol._
@@ -78,7 +78,7 @@ private class ConnectHandler(clusterClient: ActorRef, requestor: ActorRef, timeo
   extends Actor with ActorLogging {
 
   import ClientProtocol._
-  import KairosClient._
+  import QuckooClient._
 
   private var connectionAttempts = 0
   attemptConnect()

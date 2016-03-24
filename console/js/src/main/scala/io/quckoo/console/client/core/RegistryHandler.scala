@@ -17,7 +17,7 @@ import scalaz._
   * Created by alonsodomin on 06/03/2016.
   */
 
-class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) extends ActionHandler(model) {
+class JobSpecsHandler(model: ModelRW[ConsoleModel, PotMap[JobId, JobSpec]]) extends ActionHandler(model) {
   import RegistryProtocol._
 
   def loadJobSpec(jobId: JobId): Future[(JobId, Pot[JobSpec])] =
@@ -54,7 +54,7 @@ class JobSpecsHandler(model: ModelRW[KairosModel, PotMap[JobId, JobSpec]]) exten
 
 }
 
-class RegistryHandler(model: ModelRW[KairosModel, Option[Notification]]) extends ActionHandler(model) {
+class RegistryHandler(model: ModelRW[ConsoleModel, Option[Notification]]) extends ActionHandler(model) {
   import RegistryProtocol._
   import Implicits._
 

@@ -10,10 +10,10 @@ import scalajs.concurrent.JSExecutionContext.Implicits.queue
 /**
   * Created by alonsodomin on 20/02/2016.
   */
-object KairosCircuit extends Circuit[KairosModel] with ReactConnector[KairosModel] {
+object ConsoleCircuit extends Circuit[ConsoleModel] with ReactConnector[ConsoleModel] {
   import SchedulerProtocol._
 
-  protected def initialModel: KairosModel = KairosModel.initial
+  protected def initialModel: ConsoleModel = ConsoleModel.initial
 
   override protected def actionHandler = combineHandlers(
     new LoginHandler(zoomRW(_.currentUser) { (model, value) => model.copy(currentUser = value) }),

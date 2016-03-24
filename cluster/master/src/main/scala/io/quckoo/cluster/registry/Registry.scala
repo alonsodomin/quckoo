@@ -7,8 +7,8 @@ import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
 import akka.stream.{ActorMaterializerSettings, ActorMaterializer}
 import io.quckoo.JobSpec
-import io.quckoo.cluster.KairosClusterSettings
-import io.quckoo.cluster.core.KairosJournal
+import io.quckoo.cluster.QuckooClusterSettings
+import io.quckoo.cluster.core.QuckooJournal$
 import io.quckoo.id.JobId
 import io.quckoo.protocol.RegistryProtocol
 import io.quckoo.resolver.ivy.IvyResolve
@@ -20,12 +20,12 @@ object Registry {
 
   final val PersistenceId = "registry"
 
-  def props(settings: KairosClusterSettings) = Props(classOf[Registry], settings)
+  def props(settings: QuckooClusterSettings) = Props(classOf[Registry], settings)
 
 }
 
-class Registry(settings: KairosClusterSettings)
-    extends Actor with ActorLogging with KairosJournal {
+class Registry(settings: QuckooClusterSettings)
+    extends Actor with ActorLogging with QuckooJournal {
 
   import Registry._
   import RegistryProtocol._

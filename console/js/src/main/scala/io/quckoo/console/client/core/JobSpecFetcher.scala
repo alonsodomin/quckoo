@@ -9,9 +9,9 @@ import io.quckoo.id.JobId
 object JobSpecFetcher extends Fetch[JobId] {
 
   override def fetch(key: JobId): Unit =
-    KairosCircuit.dispatch(RefreshJobSpecs(keys = Set(key)))
+    ConsoleCircuit.dispatch(RefreshJobSpecs(keys = Set(key)))
 
   override def fetch(keys: Traversable[JobId]): Unit =
-    KairosCircuit.dispatch(RefreshJobSpecs(keys.toSet))
+    ConsoleCircuit.dispatch(RefreshJobSpecs(keys.toSet))
 
 }

@@ -4,7 +4,7 @@ import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
-import io.quckoo.cluster.core.KairosCluster
+import io.quckoo.cluster.core.{QuckooCluster, QuckooCluster$}
 import io.quckoo.id.ArtifactId
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.ClientProtocol
@@ -13,7 +13,7 @@ import io.quckoo.test.ImplicitTimeSource
 /**
  * Created by domingueza on 26/08/15.
  */
-object KairosNodesConfig extends MultiNodeConfig {
+object QuckooNodesConfig extends MultiNodeConfig {
   val scheduler = role("scheduler")
   val registry  = role("registry")
 
@@ -25,31 +25,31 @@ object KairosNodesConfig extends MultiNodeConfig {
     withFallback(MultiNodeClusterSpec.clusterConfig))
 }
 
-class KairosMultiNodeClusterSpecMultiJvmNode1 extends KairosMultiNodeCluster
-class KairosMultiNodeClusterSpecMultiJvmNode2 extends KairosMultiNodeCluster
+class QuckooMultiNodeClusterSpecMultiJvmNode1 extends QuckooMultiNodeCluster
+class QuckooMultiNodeClusterSpecMultiJvmNode2 extends QuckooMultiNodeCluster
 
-object KairosMultiNodeCluster {
+object QuckooMultiNodeCluster {
 
   val TestArtifactId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
 
 }
 
-abstract class KairosMultiNodeCluster extends MultiNodeSpec(KairosNodesConfig) with ImplicitSender
+abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) with ImplicitSender
   with MultiNodeClusterSpec with ImplicitTimeSource {
 
   import ClientProtocol._
-  import KairosNodesConfig._
+  import QuckooNodesConfig._
 
   implicit val materializer = ActorMaterializer()
 
   "A Chronos cluster" must {
-    val settings = KairosClusterSettings(system)
+    val settings = QuckooClusterSettings(system)
 
     "send connect commands from one node to the other one" in {
       awaitClusterUp(registry, scheduler)
 
       runOn(registry) {
-        system.actorOf(KairosCluster.props(settings), "chronos")
+        system.actorOf(QuckooCluster.props(settings), "chronos")
         enterBarrier("deployed")
 
         val schedulerGuardian = system.actorSelection(node(scheduler) / "user" / "chronos")
@@ -61,7 +61,7 @@ abstract class KairosMultiNodeCluster extends MultiNodeSpec(KairosNodesConfig) w
       }
 
       runOn(scheduler) {
-        system.actorOf(KairosCluster.props(settings), "chronos")
+        system.actorOf(QuckooCluster.props(settings), "chronos")
         enterBarrier("deployed")
 
         val registryGuardian = system.actorSelection(node(registry) / "user" / "chronos")

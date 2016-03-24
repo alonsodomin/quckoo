@@ -18,6 +18,8 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
   import SchedulerProtocol._
   import serialization.json.jvm._
 
+  final val ResourcesDir = "quckoo"
+
   private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     path("login") {
       post { authenticateRequest }
@@ -51,8 +53,8 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
 
   private[this] def staticResources: Route = get {
     pathSingleSlash {
-      getFromResource("kairos/index.html")
-    } ~ getFromResourceDirectory("kairos")
+      getFromResource(s"$ResourcesDir/index.html")
+    } ~ getFromResourceDirectory(ResourcesDir)
   }
 
   private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {

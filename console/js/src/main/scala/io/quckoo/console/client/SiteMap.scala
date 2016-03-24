@@ -1,7 +1,7 @@
 package io.quckoo.console.client
 
 import io.quckoo.console.client.components.Icons
-import io.quckoo.console.client.core.KairosCircuit
+import io.quckoo.console.client.core.ConsoleCircuit
 import io.quckoo.console.client.scheduler.SchedulerPage
 import io.quckoo.console.client.layout.Navigation
 import io.quckoo.console.client.layout.Navigation.NavigationItem
@@ -37,9 +37,9 @@ object SiteMap extends ClientAuth {
     implicit val redirectMethod = Redirect.Push
 
     def registryPage =
-      KairosCircuit.connect(identity(_))(RegistryPage(_))
+      ConsoleCircuit.connect(identity(_))(RegistryPage(_))
     def schedulerPage =
-      KairosCircuit.connect(identity(_))(SchedulerPage(_))
+      ConsoleCircuit.connect(identity(_))(SchedulerPage(_))
 
     (emptyRule
     | staticRoute("#home", Home) ~> render(HomePage())
