@@ -35,7 +35,7 @@ class Quckoo(settings: QuckooClusterSettings)
   import SchedulerProtocol._
   import UserAuthenticator._
 
-  val core = system.actorOf(QuckooCluster.props(settings), "kairos")
+  val core = system.actorOf(QuckooCluster.props(settings), "quckoo")
   val userAuth = system.actorSelection(core.path / "authenticator")
 
   def start(implicit ec: ExecutionContext, timeout: Timeout): Future[Unit] = {

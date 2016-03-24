@@ -8,7 +8,7 @@ import akka.pattern._
 import akka.stream.{ActorMaterializerSettings, ActorMaterializer}
 import io.quckoo.JobSpec
 import io.quckoo.cluster.QuckooClusterSettings
-import io.quckoo.cluster.core.QuckooJournal$
+import io.quckoo.cluster.core.QuckooJournal
 import io.quckoo.id.JobId
 import io.quckoo.protocol.RegistryProtocol
 import io.quckoo.resolver.ivy.IvyResolve

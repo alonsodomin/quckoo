@@ -3,7 +3,7 @@ package io.quckoo.console.client.scheduler
 import diode.react.ModelProxy
 import io.quckoo.ExecutionPlan
 import io.quckoo.console.client.components.{Button, Icons}
-import io.quckoo.console.client.core.ConsoleModel$
+import io.quckoo.console.client.core.ConsoleModel
 import io.quckoo.protocol.SchedulerProtocol.ScheduleJob
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}

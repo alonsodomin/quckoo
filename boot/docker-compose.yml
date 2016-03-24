@@ -17,8 +17,8 @@ master:
     - 8095:8095
     - 2551:2551
   volumes:
-    - /vagrant/boot/etc/kairos:/opt/kairos/conf
-    - /home/vagrant/.ivy2/local:/opt/kairos/resolver/repository:rw
+    - /vagrant/boot/etc/quckoo:/opt/quckoo/conf
+    - /home/vagrant/.ivy2/local:/opt/quckoo/resolver/repository:rw
   command: -b 192.168.50.25:2551 --cs 192.168.50.25:9042
 
 worker:
@@ -29,5 +29,5 @@ worker:
   ports:
     - 5001:5001
   volumes:
-    - /home/vagrant/.ivy2/local:/opt/kairos/resolver/repository:rw
+    - /home/vagrant/.ivy2/local:/opt/quckoo/resolver/repository:rw
   command: --master 192.168.50.25:2551 -b 192.168.50.25:5001

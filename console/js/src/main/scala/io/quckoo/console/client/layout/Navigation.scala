@@ -77,7 +77,7 @@ object Navigation extends ClientAuth {
           <.div(^.`class` := "navbar-header",
             <.a(^.`class` := "navbar-brand", ^.href := props.routerCtl.urlFor(Home).value,
               ^.onClick ==> navigationItemClicked(props.initial),
-              Icons.home, <.span("Kairos Console")
+              Icons.home, <.span("Quckoo Console")
             )
           ),
           <.div(^.`class` := "collapse navbar-collapse",

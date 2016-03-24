@@ -57,7 +57,7 @@ object LoginPage {
     def render(props: Props, holder: NotificationHolder) =
       <.div(Style.formPlacement,
         holder.notifications.map(_.render),
-        Panel(Panel.Props("Sign in into Kairos Console", ContextStyle.primary),
+        Panel(Panel.Props("Sign in into the console", ContextStyle.primary),
           LoginForm(loginHandler(props))
         )
       )

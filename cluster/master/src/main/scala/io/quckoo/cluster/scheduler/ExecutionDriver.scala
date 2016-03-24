@@ -115,9 +115,9 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   import ShardRegion.Passivate
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
-  private[this] val triggerDispatcher = context.system.dispatchers.lookup("kairos.trigger-dispatcher")
+  private[this] val triggerDispatcher = context.system.dispatchers.lookup("quckoo.trigger-dispatcher")
   private[this] val taskQueue = context.actorSelection(
-    RootActorPath(self.path.address) / "user" / "kairos" / "scheduler" / "queue"
+    RootActorPath(self.path.address) / "user" / "quckoo" / "scheduler" / "queue"
   )
 
   private[this] var stateDuringRecovery: Option[DriverState] = None

@@ -4,7 +4,7 @@ import diode.react.ModelProxy
 
 import io.quckoo._
 import io.quckoo.console.client.components._
-import io.quckoo.console.client.core.ConsoleModel$
+import io.quckoo.console.client.core.ConsoleModel
 import io.quckoo.protocol.RegistryProtocol
 
 import japgolly.scalajs.react._
