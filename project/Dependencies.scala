@@ -191,7 +191,7 @@ object Dependencies {
   }
   lazy val clusterMaster = Def.settings {
     import libs._
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= Seq(Log4j.slf4jImpl,
       Akka.sharding, Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
       Akka.persistence.query, Akka.persistence.memory, scopt, scalaTest, scalaMock
@@ -199,7 +199,7 @@ object Dependencies {
   }
   lazy val clusterWorker = Def.settings {
     import libs._
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= Seq(Log4j.slf4jImpl,
       Akka.testKit, scopt, scalaTest, scalaMock
     )
   }
