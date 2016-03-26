@@ -10,7 +10,7 @@ import akka.persistence.query.scaladsl.{AllPersistenceIdsQuery, EventsByPersiste
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 
 import io.quckoo.JobSpec
-import io.quckoo.cluster.protocol.WorkerProtocol
+import io.quckoo.cluster.protocol._
 import io.quckoo.id._
 import io.quckoo.protocol.topics
 import io.quckoo.protocol.registry._
@@ -35,7 +35,6 @@ class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: 
     extends Actor with ActorLogging {
 
   import Scheduler._
-  import WorkerProtocol._
 
   ClusterClientReceptionist(context.system).registerService(self)
 

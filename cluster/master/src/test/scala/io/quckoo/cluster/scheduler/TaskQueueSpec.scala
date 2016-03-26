@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import akka.testkit._
 import io.quckoo.Task
-import io.quckoo.cluster.protocol.WorkerProtocol._
+import io.quckoo.cluster.protocol._
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.ArtifactId
 import io.quckoo.test.TestActorSystem

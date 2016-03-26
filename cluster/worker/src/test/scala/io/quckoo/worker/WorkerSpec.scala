@@ -7,7 +7,7 @@ import akka.actor.ActorSystem
 import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
 import io.quckoo.Task
-import io.quckoo.cluster.protocol.WorkerProtocol
+import io.quckoo.cluster.protocol._
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.ArtifactId
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -34,7 +34,6 @@ object WorkerSpec {
 class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
     with WordSpecLike with BeforeAndAfterAll with Matchers with ScalaFutures {
 
-  import WorkerProtocol._
   import WorkerSpec._
   import system.dispatcher
 

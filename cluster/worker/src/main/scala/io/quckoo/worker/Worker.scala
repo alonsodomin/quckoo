@@ -6,7 +6,7 @@ import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.cluster.client.ClusterClient.SendToAll
 import io.quckoo.Task
-import io.quckoo.cluster.protocol.WorkerProtocol
+import io.quckoo.cluster.protocol._
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.TaskId
 
@@ -37,7 +37,6 @@ class Worker(clusterClient: ActorRef,
     extends Actor with ActorLogging {
 
   import Worker._
-  import WorkerProtocol._
   import context.dispatcher
 
   val workerId = UUID.randomUUID()

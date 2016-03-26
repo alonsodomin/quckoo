@@ -4,7 +4,7 @@ import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
 import io.quckoo.Task
-import io.quckoo.cluster.protocol.WorkerProtocol
+import io.quckoo.cluster.protocol._
 import io.quckoo.id.{TaskId, WorkerId}
 import io.quckoo.protocol.topics
 import io.quckoo.protocol.worker._
@@ -44,7 +44,6 @@ object TaskQueue {
 
 class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging {
   import TaskQueue._
-  import WorkerProtocol._
   import WorkerState._
 
   private val mediator = DistributedPubSub(context.system).mediator
