@@ -13,7 +13,7 @@ object AuthInfo {
   private final val ExpiredToken = "EXPIRED"
 
   def apply(encoded: String): AuthInfo = {
-    val TokenPattern(userId, token) = new String(encoded.toByteArray, "UTF-8")
+    val TokenPattern(token, userId) = new String(encoded.toByteArray, "UTF-8")
     AuthInfo(userId, token)
   }
 
@@ -26,6 +26,6 @@ case class AuthInfo(userId: UserId, private val token: Token) {
     new AuthInfo(userId, ExpiredToken)
 
   override def toString: String =
-    s"$userId$TokenSeparator$token".getBytes("UTF-8").toBase64
+    s"$token$TokenSeparator$userId".getBytes("UTF-8").toBase64
 
 }

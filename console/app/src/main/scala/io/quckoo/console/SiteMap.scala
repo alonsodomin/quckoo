@@ -1,12 +1,13 @@
 package io.quckoo.console
 
+import io.quckoo.client.ajax.isAuthenticated
 import io.quckoo.console.components.Icons
 import io.quckoo.console.core.{ConsoleCircuit, LoginProcessor}
 import io.quckoo.console.layout.Navigation
 import io.quckoo.console.layout.Navigation.NavigationItem
 import io.quckoo.console.registry.RegistryPageView
 import io.quckoo.console.scheduler.SchedulerPageView
-import io.quckoo.console.security.{ClientAuth, LoginPageView}
+import io.quckoo.console.security.LoginPageView
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
@@ -15,7 +16,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 /**
  * Created by aalonsodominguez on 12/10/2015.
  */
-object SiteMap extends ClientAuth {
+object SiteMap {
 
   sealed trait ConsoleRoute
   case object RootRoute extends ConsoleRoute
@@ -49,7 +50,7 @@ object SiteMap extends ClientAuth {
     | staticRoute("#home", DashboardRoute) ~> render(DashboardView())
     | staticRoute("#registry", RegistryRoute) ~> render(registryPage)
     | staticRoute("#scheduler", SchedulerRoute) ~> render(schedulerPage)
-    ).addCondition(isAuthenticatedC)(referral => Some(render(loginPage(Some(referral)))))
+    ).addCondition(CallbackTo(isAuthenticated))(referral => Some(render(loginPage(Some(referral)))))
   }
 
   private[this] val config = RouterConfigDsl[ConsoleRoute].buildConfig { dsl =>

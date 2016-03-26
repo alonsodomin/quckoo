@@ -5,7 +5,7 @@ import diode.react.ModelProxy
 import io.quckoo.console.SiteMap
 import io.quckoo.console.components._
 import io.quckoo.console.core.{ConsoleScope, Logout}
-import io.quckoo.console.security.{ClientAuth, UserMenu}
+import io.quckoo.console.security.UserMenu
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -14,7 +14,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 /**
  * Created by alonsodomin on 16/10/2015.
  */
-object Navigation extends ClientAuth {
+object Navigation {
   import SiteMap._
 
   sealed trait NavigationMenu
@@ -71,7 +71,8 @@ object Navigation extends ClientAuth {
       <.nav(^.`class` := "navbar navbar-default navbar-fixed-top",
         <.div(^.`class` := "container-fluid",
           <.div(^.`class` := "navbar-header",
-            <.a(^.`class` := "navbar-brand", ^.href := props.routerCtl.urlFor(DashboardRoute).value,
+            <.a(^.`class` := "navbar-brand",
+              ^.href := props.routerCtl.urlFor(DashboardRoute).value,
               ^.onClick ==> navigationItemClicked(props.initial),
               Icons.home, <.span("Quckoo")
             )

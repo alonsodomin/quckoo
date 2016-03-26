@@ -20,7 +20,7 @@ private object AjaxQuckooClient extends QuckooClient {
   import serialization.json.scalajs._
 
   private[this] def authHeaders: Map[String, String] =
-    Map(XSRFTokenHeader -> authInfo.toString)
+    authInfo.fold(Map.empty[String, String])(auth => Map(XSRFTokenHeader -> auth.toString))
 
   override def principal: User = authInfo.map(auth => User(auth.userId)).get
 
