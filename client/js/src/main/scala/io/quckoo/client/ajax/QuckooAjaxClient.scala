@@ -1,40 +1,25 @@
-package io.quckoo.console.core
+package io.quckoo.client.ajax
 
-import io.quckoo.api.{Registry, Scheduler}
+import io.quckoo._
 import io.quckoo.auth.AuthInfo
 import io.quckoo.auth.http._
-import io.quckoo.console.security.ClientAuth
-import io.quckoo.console.ConsoleAuth
-import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.client.QuckooClient
+import io.quckoo.id._
 import io.quckoo.protocol.client.SignIn
-import io.quckoo.protocol.cluster.ClusterInfo
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization
-import io.quckoo.{ExecutionPlan, JobSpec, Validated}
-import org.scalajs.dom
+
+import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
- * Created by alonsodomin on 13/10/2015.
- */
-object ConsoleClient extends ConsoleAuth with Registry with Scheduler with ClientAuth {
-  import dom.ext.Ajax
+  * Created by alonsodomin on 26/03/2016.
+  */
+object QuckooAjaxClient extends QuckooClient {
   import upickle.default._
   import serialization.json.scalajs._
-
-  private[this] val BaseURI = "/api"
-  private[this] val LoginURI = BaseURI + "/login"
-  private[this] val LogoutURI = BaseURI + "/logout"
-
-  private[this] val ClusterDetailsURI = BaseURI + "/cluster/info"
-
-  private[this] val RegistryBaseURI = BaseURI + "/registry"
-  private[this] val JobsURI = RegistryBaseURI + "/jobs"
-
-  private[this] val SchedulerBaseURI = BaseURI + "/scheduler"
-  private[this] val ExecutionPlansURI = SchedulerBaseURI + "/plans"
 
   private[this] val JsonRequestHeaders = Map(
     "Content-Type" -> "application/json"
@@ -43,25 +28,17 @@ object ConsoleClient extends ConsoleAuth with Registry with Scheduler with Clien
   private[this] def authHeaders(implicit authInfo: AuthInfo): Map[String, String] =
     Map(XSRFTokenHeader -> authInfo.toString)
 
-  override def login(username: String, password: String)(implicit ec: ExecutionContext): Future[Option[AuthInfo]] = {
-    dom.console.log("Attempting login")
-    Ajax.post(LoginURI, write(SignIn(username, password)), headers = JsonRequestHeaders).
+  override def authenticate(username: String, password: Array[Char])(implicit ec: ExecutionContext): Future[Option[AuthInfo]] = {
+    Ajax.post(LoginURI, write(SignIn(username, password.mkString)), headers = JsonRequestHeaders).
       map {
-        _ => super.authInfo
+        _ => Cookie(XSRFTokenCookie).map(AuthInfo(_))
       } recover {
-        case _ => None
-      }
-  }
-
-  override def logout()(implicit ec: ExecutionContext, authInfo: AuthInfo): Future[Unit] = {
-    Ajax.post(LogoutURI, headers = authHeaders) map { xhr => () }
-  }
-
-  override def clusterDetails(implicit ec: ExecutionContext, auth: AuthInfo): Future[ClusterInfo] = {
-    Ajax.get(ClusterDetailsURI, headers = authHeaders) map { xhr =>
-      read[ClusterInfo](xhr.responseText)
+      case _ => None
     }
   }
+
+  override def signOut()(implicit ec: ExecutionContext, auth: AuthInfo): Future[Unit] =
+    Ajax.post(LogoutURI, headers = authHeaders) map { xhr => () }
 
   override def enableJob(jobId: JobId)(implicit ec: ExecutionContext, authInfo: AuthInfo): Future[JobEnabled] = {
     Ajax.post(JobsURI + "/" + jobId + "/enable", headers = authHeaders).map { xhr =>
@@ -117,4 +94,5 @@ object ConsoleClient extends ConsoleAuth with Registry with Scheduler with Clien
       case _ => Left(JobNotFound(scheduleJob.jobId))
     }
   }
+
 }

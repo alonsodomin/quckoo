@@ -126,4 +126,5 @@ class Quckoo(settings: QuckooClusterSettings)
     }
   }
 
+  override def signOut()(implicit ec: ExecutionContext, auth: AuthInfo): Future[Unit] = ???
 }

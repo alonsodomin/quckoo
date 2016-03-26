@@ -48,7 +48,7 @@ lazy val scoverageSettings = Seq(
 lazy val quckoo = (project in file(".")).
   settings(moduleName := "quckoo-root").
   settings(noPublishSettings).
-  aggregate(commonRoot, apiJS, apiJVM, client, cluster, consoleRoot, examples)
+  aggregate(commonRoot, apiJS, apiJVM, clientRoot, cluster, consoleRoot, examples)
 
 // Common ==================================================
 
@@ -89,11 +89,27 @@ lazy val apiJVM = api.jvm
 
 // Client ==================================================
 
-lazy val client = (project in file("client")).
+lazy val clientRoot = (project in file("client")).
   settings(moduleName := "quckoo-client").
+  settings(noPublishSettings).
+  aggregate(clientJS, clientJVM)
+
+lazy val client = (crossProject in file("client")).
+  settings(
+    name := "client",
+    moduleName := "quckoo-client",
+    requiresDOM := true
+  ).
   settings(commonSettings: _*).
+  settings(scoverageSettings: _*).
   settings(Dependencies.client: _*).
-  dependsOn(apiJVM)
+  jsSettings(commonJsSettings: _*).
+  jsSettings(Dependencies.clientJS: _*).
+  jvmSettings(Dependencies.clientJVM: _*).
+  dependsOn(api)
+
+lazy val clientJS = client.js
+lazy val clientJVM = client.jvm
 
 // Console ==================================================
 
@@ -112,7 +128,7 @@ lazy val consoleApp = (project in file("console/app")).
   settings(commonSettings: _*).
   settings(commonJsSettings: _*).
   settings(Dependencies.consoleApp: _*).
-  dependsOn(commonJS, apiJS)
+  dependsOn(commonJS, apiJS, clientJS)
 
 lazy val consoleResources = (project in file("console/resources")).
   dependsOn(consoleApp).
@@ -205,7 +221,7 @@ lazy val exampleProducers = (project in file("examples/producers")).
   enablePlugins(JavaAppPackaging, DockerPlugin).
   settings(Packaging.universalSettings: _*).
   settings(Packaging.dockerSettings: _*).
-  dependsOn(client, exampleJobs)
+  dependsOn(clientJVM, exampleJobs)
 
 // Command aliases ==================================================
 

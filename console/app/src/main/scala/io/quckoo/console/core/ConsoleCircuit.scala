@@ -4,8 +4,9 @@ import diode.Implicits.runAfterImpl
 import diode._
 import diode.data.{AsyncAction, PotMap}
 import diode.react.ReactConnector
-
 import io.quckoo.auth.AuthInfo
+import io.quckoo.client.QuckooClient
+import io.quckoo.client.ajax.QuckooAjaxClient
 import io.quckoo.console.components.Notification
 import io.quckoo.console.security.ClientAuth
 import io.quckoo.id.{JobId, PlanId}
@@ -22,6 +23,8 @@ import scalaz.{-\/, \/-}
   * Created by alonsodomin on 20/02/2016.
   */
 object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleScope] with ConsoleOps {
+
+  override protected def client: QuckooClient = QuckooAjaxClient
 
   protected def initialModel: ConsoleScope = ConsoleScope.initial
 
@@ -55,7 +58,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
     override def handle = {
       case Login(SignIn(username, password), referral) =>
         effectOnly(Effect(
-          ConsoleClient.login(username, password).
+          client.authenticate(username, password.toCharArray).
             map { authOpt =>
               authOpt.map(auth => LoggedIn(auth, referral)).
                 getOrElse(LoginFailed)
@@ -64,7 +67,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
       case SignOut =>
         value.map { implicit auth =>
-          effectOnly(Effect(ConsoleClient.logout().map(_ => LoggedOut)))
+          effectOnly(Effect(client.signOut().map(_ => LoggedOut)))
         } getOrElse ActionResult.NoChange
     }
   }
@@ -75,7 +78,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
     override def handle = {
       case RegisterJob(spec) =>
         handleWithAuth { implicit auth =>
-          updated(None, Effect(ConsoleClient.registerJob(spec).map(RegisterJobResult)))
+          updated(None, Effect(client.registerJob(spec).map(RegisterJobResult)))
         }
 
       case RegisterJobResult(validated) =>
@@ -92,12 +95,12 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
       case EnableJob(jobId) =>
         handleWithAuth { implicit auth =>
-          updated(None, Effect(ConsoleClient.enableJob(jobId)))
+          updated(None, Effect(client.enableJob(jobId)))
         }
 
       case DisableJob(jobId) =>
         handleWithAuth { implicit auth =>
-          updated(None, Effect(ConsoleClient.disableJob(jobId)))
+          updated(None, Effect(client.disableJob(jobId)))
         }
     }
 
@@ -109,7 +112,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
     override def handle = {
       case msg: ScheduleJob =>
         handleWithAuth { implicit auth: AuthInfo =>
-          updated(None, Effect(ConsoleClient.schedule(msg).map(_.fold(identity, identity))))
+          updated(None, Effect(client.schedule(msg).map(_.fold(identity, identity))))
         }
 
       case JobNotFound(jobId) =>

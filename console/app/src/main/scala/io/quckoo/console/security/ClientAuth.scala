@@ -1,8 +1,8 @@
 package io.quckoo.console.security
 
 import io.quckoo.auth._
-import io.quckoo.console.core.Cookie
 import io.quckoo.auth.http._
+import io.quckoo.client.ajax.Cookie
 import japgolly.scalajs.react.CallbackTo
 
 /**

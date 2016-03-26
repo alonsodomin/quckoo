@@ -6,7 +6,7 @@ import akka.japi.Util._
 
 import com.typesafe.config.{Config, ConfigFactory}
 
-import io.quckoo.client.QuckooClient
+import io.quckoo.client.tcp.QuckooTcpClient
 import io.quckoo.examples.parameters.PowerOfNActor
 import io.quckoo.protocol.client._
 
@@ -29,14 +29,14 @@ object ExamplesMain extends App {
       withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
-    val system = ActorSystem("KairosExamplesSystem", config)
+    val system = ActorSystem("QuckooExamplesSystem", config)
 
     val initialContacts = immutableSeq(config.getStringList(CliOptions.KairosContactPoints)).map {
       case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
     }.toSet
 
     val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
-    val client = system.actorOf(QuckooClient.props(clientSettings), "client")
+    val client = system.actorOf(QuckooTcpClient.props(clientSettings), "client")
     client ! Connect
 
     system.actorOf(Props(classOf[PowerOfNActor], client), "powerOfN")

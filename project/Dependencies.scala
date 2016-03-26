@@ -132,6 +132,20 @@ object Dependencies {
   // Client module ===============================
 
   lazy val client = Def.settings {
+    libraryDependencies ++= Seq(
+      compilerPlugin(Dependencies.compiler.macroParadise),
+
+      "org.scalatest" %%% "scalatest" % version.scalaTest % Test
+    )
+  }
+
+  lazy val clientJS = Def.settings {
+    libraryDependencies ++= Seq(
+      "org.scala-js" %%% "scalajs-dom" % "0.9.0"
+    )
+  }
+
+  lazy val clientJVM = Def.settings {
     import libs._
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,

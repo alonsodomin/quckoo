@@ -11,4 +11,6 @@ trait Auth {
 
   def authenticate(username: String, password: Array[Char])(implicit ec: ExecutionContext): Future[Option[AuthInfo]]
 
+  def signOut()(implicit ec: ExecutionContext, auth: AuthInfo): Future[Unit]
+
 }

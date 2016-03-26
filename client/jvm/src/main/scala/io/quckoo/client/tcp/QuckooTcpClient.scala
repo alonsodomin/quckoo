@@ -1,4 +1,4 @@
-package io.quckoo.client
+package io.quckoo.client.tcp
 
 import akka.actor._
 import akka.cluster.client.ClusterClient.Send
@@ -12,21 +12,21 @@ import scala.concurrent.duration._
 /**
  * Created by aalonsodominguez on 21/08/15.
  */
-object QuckooClient {
+object QuckooTcpClient {
 
-  private[client] final val KairosPath   = "/user/kairos"
-  private[client] final val SchedulerPath = KairosPath + "/scheduler"
-  private[client] final val RegistryPath =  KairosPath + "/registry"
+  private[tcp] final val BasePath   = "/user/quckoo"
+  private[tcp] final val SchedulerPath = BasePath + "/scheduler"
+  private[tcp] final val RegistryPath =  BasePath + "/registry"
 
   def props(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int = 3) =
-    Props(classOf[QuckooClient], clientSettings, maxConnectionAttempts)
+    Props(classOf[QuckooTcpClient], clientSettings, maxConnectionAttempts)
 
 }
 
-class QuckooClient(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int)
+class QuckooTcpClient(clientSettings: ClusterClientSettings, maxConnectionAttempts: Int)
   extends Actor with ActorLogging {
 
-  import QuckooClient._
+  import QuckooTcpClient._
 
   private val connectTimeout = 3 seconds
 
@@ -54,7 +54,7 @@ class QuckooClient(clientSettings: ClusterClientSettings, maxConnectionAttempts:
 
   private def connected: Receive = {
     case Disconnect =>
-      clusterClient ! Send(KairosPath, Disconnect, localAffinity = true)
+      clusterClient ! Send(BasePath, Disconnect, localAffinity = true)
 
     case Disconnected =>
       log.info("Disconnected from Kaitos cluster.")
@@ -76,7 +76,7 @@ class QuckooClient(clientSettings: ClusterClientSettings, maxConnectionAttempts:
 private class ConnectHandler(clusterClient: ActorRef, requestor: ActorRef, timeout: FiniteDuration, maxConnectionAttempts: Int)
   extends Actor with ActorLogging {
 
-  import QuckooClient._
+  import QuckooTcpClient._
 
   private var connectionAttempts = 0
   attemptConnect()
@@ -99,7 +99,7 @@ private class ConnectHandler(clusterClient: ActorRef, requestor: ActorRef, timeo
   }
 
   private def attemptConnect(): Unit = {
-    clusterClient ! Send(KairosPath, Connect, localAffinity = true)
+    clusterClient ! Send(BasePath, Connect, localAffinity = true)
     context.setReceiveTimeout(timeout)
     connectionAttempts += 1
   }

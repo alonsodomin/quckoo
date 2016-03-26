@@ -1,0 +1,20 @@
+package io.quckoo.client
+
+/**
+  * Created by alonsodomin on 26/03/2016.
+  */
+package object ajax {
+
+  private[ajax] val BaseURI = "/api"
+  private[ajax] val LoginURI = BaseURI + "/login"
+  private[ajax] val LogoutURI = BaseURI + "/logout"
+
+  private[ajax] val ClusterDetailsURI = BaseURI + "/cluster/info"
+
+  private[ajax] val RegistryBaseURI = BaseURI + "/registry"
+  private[ajax] val JobsURI = RegistryBaseURI + "/jobs"
+
+  private[ajax] val SchedulerBaseURI = BaseURI + "/scheduler"
+  private[ajax] val ExecutionPlansURI = SchedulerBaseURI + "/plans"
+
+}

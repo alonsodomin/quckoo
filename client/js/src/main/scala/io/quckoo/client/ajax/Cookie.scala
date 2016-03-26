@@ -1,4 +1,4 @@
-package io.quckoo.console.core
+package io.quckoo.client.ajax
 
 import org.scalajs.dom
 
@@ -19,10 +19,6 @@ object Cookie {
   }
 
   def apply(name: String): Option[String] =
-    rawCookies.get(name)
-
-  @deprecated
-  def cookie(name: String): Option[String] =
     rawCookies.get(name)
 
 }
