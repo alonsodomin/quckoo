@@ -1,92 +1,77 @@
 package io.quckoo.console
 
-import io.quckoo.client.ajax.isAuthenticated
-import io.quckoo.console.components.Icons
-import io.quckoo.console.core.{ConsoleCircuit, LoginProcessor}
-import io.quckoo.console.layout.Navigation
-import io.quckoo.console.layout.Navigation.NavigationItem
+import diode.react.ModelProxy
+
+import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, LoginProcessor}
+import io.quckoo.console.dashboard.DashboardView
 import io.quckoo.console.registry.RegistryPageView
 import io.quckoo.console.scheduler.SchedulerPageView
 import io.quckoo.console.security.LoginPageView
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
-import japgolly.scalajs.react.vdom.prefix_<^._
 
 /**
  * Created by aalonsodominguez on 12/10/2015.
  */
 object SiteMap {
+  import ConsoleRoute._
 
-  sealed trait ConsoleRoute
-  case object RootRoute extends ConsoleRoute
-  case object DashboardRoute extends ConsoleRoute
-  case object LoginRoute extends ConsoleRoute
-  case object RegistryRoute extends ConsoleRoute
-  case object SchedulerRoute extends ConsoleRoute
+  def loginPage(proxy: ModelProxy[ConsoleScope])(referral: Option[ConsoleRoute]) =
+    proxy.connect(identity(_))(p => LoginPageView(p, referral))
+  def registryPage(proxy: ModelProxy[ConsoleScope]) =
+    proxy.connect(identity(_))(RegistryPageView(_))
+  def schedulerPage(proxy: ModelProxy[ConsoleScope]) =
+    proxy.connect(identity(_))(SchedulerPageView(_))
 
-  def loginPage(referral: Option[ConsoleRoute]) =
-    ConsoleCircuit.connect(identity(_))(proxy => LoginPageView(proxy, referral))
-  def registryPage =
-    ConsoleCircuit.connect(identity(_))(RegistryPageView(_))
-  def schedulerPage =
-    ConsoleCircuit.connect(identity(_))(SchedulerPageView(_))
-
-  private[this] val publicPages = RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
+  private[this] def publicPages(proxy: ModelProxy[ConsoleScope]) = RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
     import dsl._
 
     (emptyRule
     | staticRoute(root, RootRoute) ~> redirectToPage(DashboardRoute)(Redirect.Push)
-    | staticRoute("#login", LoginRoute) ~> render(loginPage(None))
+    | staticRoute("#login", LoginRoute) ~> render(loginPage(proxy)(None))
     )
   }
 
-  private[this] val privatePages = RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
+  private[this] def privatePages(proxy: ModelProxy[ConsoleScope]) = RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
     import dsl._
 
     implicit val redirectMethod = Redirect.Push
 
     (emptyRule
     | staticRoute("#home", DashboardRoute) ~> render(DashboardView())
-    | staticRoute("#registry", RegistryRoute) ~> render(registryPage)
-    | staticRoute("#scheduler", SchedulerRoute) ~> render(schedulerPage)
-    ).addCondition(CallbackTo(isAuthenticated))(referral => Some(render(loginPage(Some(referral)))))
+    | staticRoute("#registry", RegistryRoute) ~> render(registryPage(proxy))
+    | staticRoute("#scheduler", SchedulerRoute) ~> render(schedulerPage(proxy))
+    ).addCondition(CallbackTo(proxy().currentUser.isDefined))(referral => Some(render(loginPage(proxy)(Some(referral)))))
   }
 
-  private[this] val config = RouterConfigDsl[ConsoleRoute].buildConfig { dsl =>
+  private[this] def config(proxy: ModelProxy[ConsoleScope]) = RouterConfigDsl[ConsoleRoute].buildConfig { dsl =>
     import dsl._
 
     (emptyRule
-    | publicPages
-    | privatePages
+    | publicPages(proxy)
+    | privatePages(proxy)
     ).notFound(redirectToPage(RootRoute)(Redirect.Replace)).
-      renderWith(layout).
+      renderWith(layout(proxy)).
       logToConsole
   }
 
-  val mainMenu = List(
-    NavigationItem(Icons.dashboard, "Dashboard", DashboardRoute),
-    NavigationItem(Icons.book, "Registry", RegistryRoute),
-    NavigationItem(Icons.clockO, "Scheduler", SchedulerRoute)
-  )
-
-  def layout(ctrl: RouterCtl[ConsoleRoute], res: Resolution[ConsoleRoute]) =
-    <.div(
-      if (isAuthenticated) {
-        ConsoleCircuit.wrap(identity(_))(proxy => Navigation(mainMenu.head, mainMenu, ctrl, res.page, proxy))
-      } else EmptyTag,
-      res.render()
-    )
+  def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute], res: Resolution[ConsoleRoute]) =
+    proxy.connect(identity(_))(p => ViewPort(p, ctrl, res))
 
   val baseUrl = BaseUrl.fromWindowOrigin_/
-  val router = {
-    val logic = new RouterLogic(baseUrl, config)
+
+  def apply(proxy: ModelProxy[ConsoleScope]) = {
+    val cfg = config(proxy)
+    val logic = new RouterLogic(baseUrl, cfg)
     val processor = new LoginProcessor(logic.ctl)
 
-    Router.componentUnbuiltC(baseUrl, config, logic).
+    val component = Router.componentUnbuiltC(baseUrl, cfg, logic).
       componentWillMount(_ => Callback(ConsoleCircuit.addProcessor(processor))).
       componentWillUnmount(_ => Callback(ConsoleCircuit.removeProcessor(processor))).
       buildU
+
+    component()
   }
 
 }

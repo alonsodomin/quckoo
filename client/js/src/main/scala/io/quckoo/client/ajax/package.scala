@@ -24,9 +24,6 @@ package object ajax {
     "Content-Type" -> "application/json"
   )
 
-  def isAuthenticated: Boolean =
-    authInfo.isDefined
-
   private[ajax] def authInfo: Option[AuthInfo] =
     Cookie(XSRFTokenCookie).map(AuthInfo(_))
 

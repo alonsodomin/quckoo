@@ -2,6 +2,7 @@ package io.quckoo.console.core
 
 import diode.data._
 import io.quckoo.client.QuckooClient
+import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.{ExecutionPlan, JobSpec}
@@ -25,7 +26,7 @@ object ConsoleScope {
 
   def initial =
     ConsoleScope(
-      client         = None,
+      client         = AjaxQuckooClientFactory.autoConnect(),
       notification   = None,
       jobSpecs       = PotMap(JobSpecFetcher),
       executionPlans = PotMap(ExecutionPlanFetcher)

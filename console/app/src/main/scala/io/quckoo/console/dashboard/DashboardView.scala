@@ -1,11 +1,11 @@
-package io.quckoo.console
+package io.quckoo.console.dashboard
 
 import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scalacss.Defaults._
-import scalacss.mutable.StyleSheet
 import scalacss.ScalaCssReact._
+import scalacss.mutable.StyleSheet
 
 /**
  * Created by alonsodomin on 13/10/2015.

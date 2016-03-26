@@ -1,7 +1,7 @@
 package io.quckoo.console.core
 
 import diode.{ActionProcessor, ActionResult, Dispatcher}
-import io.quckoo.console.SiteMap.{ConsoleRoute, DashboardRoute, LoginRoute}
+import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
 import japgolly.scalajs.react.extra.router.RouterCtl
 
@@ -9,6 +9,7 @@ import japgolly.scalajs.react.extra.router.RouterCtl
   * Created by alonsodomin on 26/03/2016.
   */
 class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor[ConsoleScope] {
+  import ConsoleRoute._
 
   val authFailedNotification = Notification.danger("Username or password incorrect")
 

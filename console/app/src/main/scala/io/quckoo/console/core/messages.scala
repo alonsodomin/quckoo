@@ -4,7 +4,7 @@ import diode.data.{AsyncAction, Pot, PotState}
 
 import io.quckoo._
 import io.quckoo.client.QuckooClient
-import io.quckoo.console.SiteMap.ConsoleRoute
+import io.quckoo.console.ConsoleRoute
 import io.quckoo.id.{JobId, PlanId}
 
 import scala.util.{Failure, Try}

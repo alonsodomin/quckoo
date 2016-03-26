@@ -1,12 +1,10 @@
 package io.quckoo.console.layout
 
 import diode.react.ModelProxy
-
-import io.quckoo.console.SiteMap
+import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components._
 import io.quckoo.console.core.{ConsoleScope, Logout}
 import io.quckoo.console.security.UserMenu
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -15,7 +13,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
  * Created by alonsodomin on 16/10/2015.
  */
 object Navigation {
-  import SiteMap._
+  import ConsoleRoute.DashboardRoute
 
   sealed trait NavigationMenu
   case class NavigationList(icon: Icon, name: String, items: List[NavigationMenu]) extends NavigationMenu

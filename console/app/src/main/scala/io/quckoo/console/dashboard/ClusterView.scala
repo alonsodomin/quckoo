@@ -1,13 +1,13 @@
-package io.quckoo.console
+package io.quckoo.console.dashboard
 
 import io.quckoo.console.core.{ClusterEvent, ClusterEventListener}
 import io.quckoo.protocol.cluster.ClusterInfo
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
 import scalacss.Defaults._
-import scalacss.mutable.StyleSheet
 import scalacss.ScalaCssReact._
+import scalacss.mutable.StyleSheet
 
 /**
   * Created by alonsodomin on 13/12/2015.

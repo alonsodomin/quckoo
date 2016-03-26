@@ -1,10 +1,12 @@
 package io.quckoo.console.boot
 
-import io.quckoo.console.scheduler.SchedulerPageView
+import io.quckoo.console.SiteMap
+import io.quckoo.console.core.ConsoleCircuit
+import io.quckoo.console.dashboard.DashboardView
 import io.quckoo.console.layout._
 import io.quckoo.console.registry.RegistryPageView
+import io.quckoo.console.scheduler.SchedulerPageView
 import io.quckoo.console.security.LoginPageView
-import io.quckoo.console.{DashboardView, SiteMap}
 import org.scalajs.dom
 
 import scala.scalajs.js.JSApp
@@ -33,6 +35,6 @@ object App extends JSApp {
 
     val container = dom.document.getElementById("viewport")
     //dom.document.head.appendChild(GlobalStyle.contents)
-    SiteMap.router().render(container)
+    ConsoleCircuit.connect(identity(_))(p => SiteMap(p)).render(container)
   }
 }
