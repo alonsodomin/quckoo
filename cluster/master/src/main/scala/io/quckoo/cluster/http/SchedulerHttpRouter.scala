@@ -19,7 +19,7 @@ trait SchedulerHttpRouter extends UpickleSupport { this: Scheduler =>
   import StatusCodes._
   import serialization.json.jvm._
 
-  def schedulerApi(implicit system: ActorSystem, materializer: ActorMaterializer, auth: AuthInfo): Route =
+  def schedulerApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     pathPrefix("plans") {
       pathEnd {
         get {

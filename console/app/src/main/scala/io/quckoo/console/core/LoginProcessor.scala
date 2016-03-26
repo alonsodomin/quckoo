@@ -19,13 +19,13 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor
       case LoginFailed =>
         ActionResult.ModelUpdate(currentModel.copy(notification = Some(authFailedNotification)))
 
-      case LoggedIn(authInfo, referral) =>
+      case LoggedIn(client, referral) =>
         routerCtl.set(referral.getOrElse(DashboardRoute)).runNow()
-        ActionResult.ModelUpdate(currentModel.copy(authInfo = Some(authInfo), notification = None))
+        ActionResult.ModelUpdate(currentModel.copy(client = Some(client), notification = None))
 
       case LoggedOut =>
         routerCtl.set(LoginRoute).runNow()
-        ActionResult.ModelUpdate(currentModel.copy(authInfo = None))
+        ActionResult.ModelUpdate(currentModel.copy(client = None))
 
       case _ =>
         next(action)

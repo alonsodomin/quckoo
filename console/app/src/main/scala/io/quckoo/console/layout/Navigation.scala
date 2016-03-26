@@ -4,9 +4,8 @@ import diode.react.ModelProxy
 
 import io.quckoo.console.SiteMap
 import io.quckoo.console.components._
-import io.quckoo.console.core.ConsoleScope
+import io.quckoo.console.core.{ConsoleScope, Logout}
 import io.quckoo.console.security.{ClientAuth, UserMenu}
-import io.quckoo.protocol.client.SignOut
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -66,7 +65,7 @@ object Navigation extends ClientAuth {
     }
 
     def onLogoutClicked(e: ReactEventI): Callback =
-      preventDefault(e) >> $.props.flatMap(_.proxy.dispatch(SignOut))
+      preventDefault(e) >> $.props.flatMap(_.proxy.dispatch(Logout))
 
     def render(props: Props) =
       <.nav(^.`class` := "navbar navbar-default navbar-fixed-top",

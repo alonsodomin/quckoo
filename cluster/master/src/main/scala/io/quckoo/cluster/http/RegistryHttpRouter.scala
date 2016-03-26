@@ -19,7 +19,7 @@ trait RegistryHttpRouter extends UpickleSupport { this: Registry =>
   import StatusCodes._
   import serialization.json.jvm._
 
-  def registryApi(implicit system: ActorSystem, materializer: ActorMaterializer, auth: AuthInfo): Route =
+  def registryApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     pathPrefix("jobs") {
       pathEnd {
         get {

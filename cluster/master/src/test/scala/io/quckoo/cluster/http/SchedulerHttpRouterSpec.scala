@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 
 import io.quckoo.api.Scheduler
-import io.quckoo.auth.AuthInfo
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.protocol.scheduler._
 import io.quckoo.time.JDK8TimeSource
@@ -44,14 +43,13 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
   import serialization.json.jvm._
 
   val entryPoint = pathPrefix("api" / "scheduler") {
-    implicit val authInfo = AuthInfo("foo", "bar")
     schedulerApi
   }
 
-  override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext, auth: AuthInfo): Future[Option[ExecutionPlan]] =
+  override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] =
     Future.successful(TestPlanMap.get(planId))
 
-  override def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext, auth: AuthInfo): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
+  override def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
     val response = TestPlanMap.values.find(_.jobId == schedule.jobId) match {
       case Some(plan) => Right(ExecutionPlanStarted(schedule.jobId, plan.planId))
       case _          => Left(JobNotFound(schedule.jobId))
@@ -59,7 +57,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     Future.successful(response)
   }
 
-  override def allExecutionPlanIds(implicit ec: ExecutionContext, auth: AuthInfo): Future[Set[PlanId]] =
+  override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] =
     Future.successful(TestPlanIds)
 
   private[this] def endpoint(target: String) = s"/api/scheduler$target"

@@ -36,8 +36,8 @@ object LoginPageView {
 
   class LoginBackend($: BackendScope[Props, Unit]) {
 
-    def loginHandler(props: Props)(loginReq: SignIn): Callback =
-      props.proxy.dispatch(Login(loginReq, props.referral))
+    def loginHandler(props: Props)(username: String, password: String): Callback =
+      props.proxy.dispatch(Login(username, password, props.referral))
 
     def render(props: Props) =
       <.div(Style.formPlacement,

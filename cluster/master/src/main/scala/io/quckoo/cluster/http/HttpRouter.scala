@@ -20,32 +20,30 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
     path("login") {
       post { authenticateRequest }
     } ~ authorizeRequest {
-      extractAuthInfo { implicit auth =>
-        path("logout") {
-          post {
-            invalidateAuth {
-              complete(OK)
-            }
+      path("logout") {
+        post {
+          invalidateAuth {
+            complete(OK)
           }
-        } ~ pathPrefix("cluster") {
-          path("events") {
-            get {
-              extractExecutionContext { implicit ec =>
-                complete(events)
-              }
-            }
-          } ~ path("info") {
-            get {
-              extractExecutionContext { implicit ec =>
-                complete(clusterDetails)
-              }
-            }
-          }
-        } ~ pathPrefix("registry") {
-          registryApi
-        } ~ pathPrefix("scheduler") {
-          schedulerApi
         }
+      } ~ pathPrefix("cluster") {
+        path("events") {
+          get {
+            extractExecutionContext { implicit ec =>
+              complete(events)
+            }
+          }
+        } ~ path("info") {
+          get {
+            extractExecutionContext { implicit ec =>
+              complete(clusterDetails)
+            }
+          }
+        }
+      } ~ pathPrefix("registry") {
+        registryApi
+      } ~ pathPrefix("scheduler") {
+        schedulerApi
       }
     }
 

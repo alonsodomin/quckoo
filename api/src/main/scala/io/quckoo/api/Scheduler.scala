@@ -12,10 +12,10 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait Scheduler {
 
-  def executionPlan(planId: PlanId)(implicit ec: ExecutionContext, auth: AuthInfo): Future[Option[ExecutionPlan]]
+  def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]]
 
-  def allExecutionPlanIds(implicit ec: ExecutionContext, auth: AuthInfo): Future[Set[PlanId]]
+  def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]]
 
-  def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext, auth: AuthInfo): Future[Either[JobNotFound, ExecutionPlanStarted]]
+  def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]]
 
 }

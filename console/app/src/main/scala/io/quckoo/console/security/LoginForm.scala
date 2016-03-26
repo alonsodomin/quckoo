@@ -15,28 +15,28 @@ import monocle.macros.Lenses
 object LoginForm {
   import MonocleReact._
 
-  type LoginHandler = SignIn => Callback
+  type LoginHandler = (String, String) => Callback
 
   @Lenses
-  case class State(request: SignIn)
+  case class State(username: String, password: String)
 
   class LoginBackend($: BackendScope[LoginHandler, State]) {
 
     def handleSubmit(event: ReactEventI): Callback = {
-      def invokeHandler(loginReq: SignIn): Callback =
-        $.props.flatMap(handler => handler(loginReq))
+      def invokeHandler(state: State): Callback =
+        $.props.flatMap(handler => handler(state.username, state.password))
 
-      event.preventDefaultCB >> $.state.map(_.request) >>= invokeHandler
+      event.preventDefaultCB >> $.state >>= invokeHandler
     }
 
   }
 
   private[this] val component = ReactComponentB[LoginHandler]("LoginForm").
-    initialState(State(SignIn("", ""))).
+    initialState(State("", "")).
     backend(new LoginBackend(_)).
     render { $ =>
-      val username = ExternalVar.state($.zoomL(State.request ^|-> SignIn.username))
-      val password = ExternalVar.state($.zoomL(State.request ^|-> SignIn.password))
+      val username = ExternalVar.state($.zoomL(State.username))
+      val password = ExternalVar.state($.zoomL(State.password))
 
       def usernameChange(evt: ReactEventI): Callback =
         username.set(evt.target.value)

@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 
 import io.quckoo.api.Registry
-import io.quckoo.auth.AuthInfo
 import io.quckoo.fault.Fault
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
@@ -45,23 +44,22 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   import serialization.json.jvm._
 
   val entryPoint = pathPrefix("api" / "registry") {
-    implicit val authInfo = AuthInfo("foo", "bar")
     registryApi
   }
 
-  override def enableJob(jobId: JobId)(implicit ec: ExecutionContext, auth: AuthInfo): Future[JobEnabled] =
+  override def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] =
     Future.successful(JobEnabled(jobId))
 
-  override def disableJob(jobId: JobId)(implicit ec: ExecutionContext, auth: AuthInfo): Future[JobDisabled] =
+  override def disableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobDisabled] =
     Future.successful(JobDisabled(jobId))
 
-  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext, auth: AuthInfo): Future[Validated[JobId]] =
+  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]] =
     Future.successful(JobSpec.validate(jobSpec)).map(validSpec => validSpec.map(JobId(_)))
 
-  override def fetchJobs(implicit ec: ExecutionContext, auth: AuthInfo): Future[Map[JobId, JobSpec]] =
+  override def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] =
     Future.successful(TestJobMap)
 
-  override def fetchJob(jobId: JobId)(implicit ec: ExecutionContext, auth: AuthInfo): Future[Option[JobSpec]] =
+  override def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] =
     Future.successful(TestJobMap.get(jobId))
 
   private[this] def endpoint(target: String) = s"/api/registry$target"

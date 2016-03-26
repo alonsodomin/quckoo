@@ -9,9 +9,9 @@ import akka.stream.ActorMaterializer
 
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 
-import io.quckoo.api.Auth
 import io.quckoo.auth._
 import io.quckoo.auth.http._
+import io.quckoo.cluster.core.Auth
 import io.quckoo.protocol.client.SignIn
 
 import scala.concurrent.duration._
@@ -30,7 +30,7 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
   def authenticateRequest(implicit system: ActorSystem, materizalizer: ActorMaterializer): Route =
     entity(as[SignIn]) { req =>
       extractExecutionContext { implicit ec =>
-        onSuccess(auth.authenticate(req.username, req.password.toCharArray)) {
+        onSuccess(auth.authenticate(req.username, req.password)) {
           case Some(authInfo) =>
             addAuthCookies(authInfo) {
               complete(OK)

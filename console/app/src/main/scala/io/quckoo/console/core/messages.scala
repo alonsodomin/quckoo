@@ -1,16 +1,18 @@
 package io.quckoo.console.core
 
 import diode.data.{AsyncAction, Pot, PotState}
+
 import io.quckoo._
-import io.quckoo.auth.AuthInfo
+import io.quckoo.client.QuckooClient
 import io.quckoo.console.SiteMap.ConsoleRoute
 import io.quckoo.id.{JobId, PlanId}
-import io.quckoo.protocol.client.SignIn
 
 import scala.util.{Failure, Try}
 
-case class Login(signIn: SignIn, referral: Option[ConsoleRoute] = None)
-case class LoggedIn(authInfo: AuthInfo, referral: Option[ConsoleRoute])
+case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None)
+case class LoggedIn(client: QuckooClient, referral: Option[ConsoleRoute])
+
+case object Logout
 case object LoggedOut
 case object LoginFailed
 

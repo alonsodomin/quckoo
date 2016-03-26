@@ -1,4 +1,4 @@
-package io.quckoo.api
+package io.quckoo.cluster.core
 
 import io.quckoo.auth.AuthInfo
 
@@ -10,7 +10,5 @@ import scala.concurrent.{ExecutionContext, Future}
 trait Auth {
 
   def authenticate(username: String, password: Array[Char])(implicit ec: ExecutionContext): Future[Option[AuthInfo]]
-
-  def signOut()(implicit ec: ExecutionContext, auth: AuthInfo): Future[Unit]
 
 }

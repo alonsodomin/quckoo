@@ -4,13 +4,12 @@ import diode.Implicits.runAfterImpl
 import diode._
 import diode.data.{AsyncAction, PotMap}
 import diode.react.ReactConnector
-import io.quckoo.auth.AuthInfo
+
 import io.quckoo.client.QuckooClient
-import io.quckoo.client.ajax.QuckooAjaxClient
+import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
-import io.quckoo.console.security.ClientAuth
 import io.quckoo.id.{JobId, PlanId}
-import io.quckoo.protocol.client.{SignIn, SignOut}
+import io.quckoo.protocol.client.SignOut
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.{ExecutionPlan, JobSpec}
@@ -24,23 +23,21 @@ import scalaz.{-\/, \/-}
   */
 object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleScope] with ConsoleOps {
 
-  override protected def client: QuckooClient = QuckooAjaxClient
-
   protected def initialModel: ConsoleScope = ConsoleScope.initial
 
   override protected def actionHandler = composeHandlers(
     loginHandler,
-    foldHandlers(registryHandler, refreshAuthHandler),
-    foldHandlers(jobSpecMapHandler, refreshAuthHandler),
-    foldHandlers(scheduleHandler, refreshAuthHandler),
-    foldHandlers(executionPlanMapHandler, refreshAuthHandler)
+    jobSpecMapHandler,
+    registryHandler,
+    scheduleHandler,
+    executionPlanMapHandler
   )
 
   def zoomIntoNotification: ModelRW[ConsoleScope, Option[Notification]] =
     zoomRW(_.notification)((model, notif) => model.copy(notification = notif))
 
-  def zoomIntoAuth: ModelRW[ConsoleScope, Option[AuthInfo]] =
-    zoomRW(_.authInfo) { (model, user) => model.copy(authInfo = user) }
+  def zoomIntoClient: ModelRW[ConsoleScope, Option[QuckooClient]] =
+    zoomRW(_.client) { (model, c) => model.copy(client = c) }
 
   def zoomIntoExecutionPlans: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]] =
     zoomRW(_.executionPlans) { (model, plans) => model.copy(executionPlans = plans) }
@@ -48,36 +45,29 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   def zoomIntoJobSpecs: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]] =
     zoomRW(_.jobSpecs) { (model, specs) => model.copy(jobSpecs = specs) }
 
-  val refreshAuthHandler = new ActionHandler(zoomIntoAuth) with ClientAuth {
-    override protected def handle = {
-      case _ if value.isDefined => updated(authInfo)
-    }
-  }
+  val loginHandler = new ActionHandler(zoomIntoClient) {
 
-  val loginHandler = new ActionHandler(zoomIntoAuth) {
     override def handle = {
-      case Login(SignIn(username, password), referral) =>
+      case Login(username, password, referral) =>
         effectOnly(Effect(
-          client.authenticate(username, password.toCharArray).
-            map { authOpt =>
-              authOpt.map(auth => LoggedIn(auth, referral)).
-                getOrElse(LoginFailed)
-            }
+          AjaxQuckooClientFactory.connect(username, password).
+            map(client => LoggedIn(client, referral)).
+            recover { case _ => LoginFailed }
         ))
 
-      case SignOut =>
-        value.map { implicit auth =>
-          effectOnly(Effect(client.signOut().map(_ => LoggedOut)))
+      case Logout =>
+        value.map { client =>
+          effectOnly(Effect(client.close().map(_ => LoggedOut)))
         } getOrElse ActionResult.NoChange
     }
   }
 
   val registryHandler = new ActionHandler(zoomIntoNotification)
-      with AuthHandler[Option[Notification]] {
+      with ConnectedHandler[Option[Notification]] {
 
     override def handle = {
       case RegisterJob(spec) =>
-        handleWithAuth { implicit auth =>
+        withClient { client =>
           updated(None, Effect(client.registerJob(spec).map(RegisterJobResult)))
         }
 
@@ -94,12 +84,12 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         }
 
       case EnableJob(jobId) =>
-        handleWithAuth { implicit auth =>
+        withClient { client =>
           updated(None, Effect(client.enableJob(jobId)))
         }
 
       case DisableJob(jobId) =>
-        handleWithAuth { implicit auth =>
+        withClient { client =>
           updated(None, Effect(client.disableJob(jobId)))
         }
     }
@@ -107,11 +97,11 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val scheduleHandler = new ActionHandler(zoomIntoNotification)
-      with AuthHandler[Option[Notification]] {
+      with ConnectedHandler[Option[Notification]] {
 
     override def handle = {
       case msg: ScheduleJob =>
-        handleWithAuth { implicit auth: AuthInfo =>
+        withClient { client =>
           updated(None, Effect(client.schedule(msg).map(_.fold(identity, identity))))
         }
 
@@ -125,11 +115,11 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val jobSpecMapHandler = new ActionHandler(zoomIntoJobSpecs)
-      with AuthHandler[PotMap[JobId, JobSpec]] {
+      with ConnectedHandler[PotMap[JobId, JobSpec]] {
 
     override protected def handle = {
       case LoadJobSpecs =>
-        handleWithAuth { implicit auth =>
+        withClient { implicit client =>
           effectOnly(Effect(loadJobSpecs().map(JobSpecsLoaded)))
         }
 
@@ -143,7 +133,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         effectOnly(Effect.action(RefreshJobSpecs(Set(jobId))))
 
       case action: RefreshJobSpecs =>
-        handleWithAuth { implicit auth =>
+        withClient { implicit client =>
           val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
           action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
         }
@@ -152,16 +142,16 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val executionPlanMapHandler = new ActionHandler(zoomIntoExecutionPlans)
-      with AuthHandler[PotMap[PlanId, ExecutionPlan]] {
+      with ConnectedHandler[PotMap[PlanId, ExecutionPlan]] {
 
     override protected def handle = {
       case LoadExecutionPlans =>
-        handleWithAuth { implicit auth =>
+        withClient { implicit client =>
           effectOnly(Effect(loadPlanIds))
         }
 
       case ExecutionPlanIdsLoaded(ids) =>
-        handleWithAuth { implicit auth =>
+        withClient { implicit client =>
           effectOnly(Effect(loadPlans(ids).map(ExecutionPlansLoaded)))
         }
 
@@ -169,7 +159,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         updated(PotMap(ExecutionPlanFetcher, plans))
 
       case action: RefreshExecutionPlans =>
-        handleWithAuth { implicit auth =>
+        withClient { implicit client =>
           val refreshEffect = action.effect(loadPlans(action.keys))(identity)
           action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
         }
