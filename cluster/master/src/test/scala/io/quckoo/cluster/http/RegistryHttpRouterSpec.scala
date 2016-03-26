@@ -5,12 +5,15 @@ import java.util.UUID
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+
 import io.quckoo.api.Registry
 import io.quckoo.auth.AuthInfo
 import io.quckoo.fault.Fault
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.{JobSpec, Validated}
+import io.quckoo.serialization
+
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,6 +42,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
 
   import RegistryHttpRouterSpec._
   import StatusCodes._
+  import serialization.json.jvm._
 
   val entryPoint = pathPrefix("api" / "registry") {
     implicit val authInfo = AuthInfo("foo", "bar")

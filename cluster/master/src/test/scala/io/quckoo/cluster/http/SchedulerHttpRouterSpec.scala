@@ -12,6 +12,7 @@ import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.protocol.scheduler._
 import io.quckoo.time.JDK8TimeSource
 import io.quckoo.{ExecutionPlan, Trigger}
+import io.quckoo.serialization
 
 import org.scalatest.{Matchers, WordSpec}
 
@@ -40,6 +41,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
   import SchedulerHttpRouterSpec._
   import StatusCodes._
+  import serialization.json.jvm._
 
   val entryPoint = pathPrefix("api" / "scheduler") {
     implicit val authInfo = AuthInfo("foo", "bar")
