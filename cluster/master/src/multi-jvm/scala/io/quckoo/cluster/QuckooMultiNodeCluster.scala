@@ -4,10 +4,10 @@ import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
-import io.quckoo.cluster.core.{QuckooCluster, QuckooCluster$}
+import io.quckoo.cluster.core.QuckooCluster
 import io.quckoo.id.ArtifactId
 import io.quckoo.multijvm.MultiNodeClusterSpec
-import io.quckoo.protocol.ClientProtocol
+import io.quckoo.protocol.client._
 import io.quckoo.test.ImplicitTimeSource
 
 /**
@@ -37,7 +37,6 @@ object QuckooMultiNodeCluster {
 abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) with ImplicitSender
   with MultiNodeClusterSpec with ImplicitTimeSource {
 
-  import ClientProtocol._
   import QuckooNodesConfig._
 
   implicit val materializer = ActorMaterializer()

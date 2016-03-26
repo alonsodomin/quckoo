@@ -6,7 +6,9 @@ import akka.persistence.query.PersistenceQuery
 import akka.testkit._
 import io.quckoo.JobSpec
 import io.quckoo.id.{ArtifactId, JobId}
-import io.quckoo.protocol.{RegistryProtocol, SchedulerProtocol}
+import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler._
+import io.quckoo.protocol.topics
 import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
 import org.scalatest._
 
@@ -24,7 +26,6 @@ object SchedulerSpec {
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender with ImplicitTimeSource
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 
-  import SchedulerProtocol._
   import SchedulerSpec._
 
   val registryProbe = TestProbe("registry")
@@ -38,11 +39,11 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
   }
 
   before {
-    mediator ! DistributedPubSubMediator.Subscribe(SchedulerTopic, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.SchedulerTopic, eventListener.ref)
   }
 
   after {
-    mediator ! DistributedPubSubMediator.Unsubscribe(SchedulerTopic, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.SchedulerTopic, eventListener.ref)
   }
 
   val readJournal = PersistenceQuery(system).
@@ -60,7 +61,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
     "create an execution driver for an enabled job" in {
       scheduler ! ScheduleJob(TestJobId)
 
-      registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
+      registryProbe.expectMsgType[GetJob].jobId should be (TestJobId)
       registryProbe.reply(Some(TestJobSpec))
 
       eventListener.expectMsgType[ExecutionPlanStarted].jobId should be (TestJobId)
@@ -72,7 +73,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
     "do nothing but reply if the job is not enabled" in {
       scheduler ! ScheduleJob(TestJobId)
 
-      registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
+      registryProbe.expectMsgType[GetJob].jobId should be (TestJobId)
       registryProbe.reply(Some(TestJobSpec.copy(disabled = true)))
 
       eventListener.expectNoMsg()
@@ -82,7 +83,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
     "should reply not found if the job is not present" in {
       scheduler ! ScheduleJob(TestJobId)
 
-      registryProbe.expectMsgType[RegistryProtocol.GetJob].jobId should be (TestJobId)
+      registryProbe.expectMsgType[GetJob].jobId should be (TestJobId)
       registryProbe.reply(None)
 
       eventListener.expectNoMsg()

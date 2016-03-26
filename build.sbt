@@ -46,19 +46,22 @@ lazy val scoverageSettings = Seq(
 )
 
 lazy val quckoo = (project in file(".")).
-  settings(moduleName := "root").
+  settings(moduleName := "quckoo-root").
   settings(noPublishSettings).
-  aggregate(commonRoot, apiRoot, client, cluster, consoleRoot, examples, clusterWorker)
+  aggregate(commonRoot, apiJS, apiJVM, client, cluster, consoleRoot, examples)
 
 // Common ==================================================
 
 lazy val commonRoot = (project in file("common")).
-  settings(moduleName := "common").
+  settings(moduleName := "quckoo-common-root").
   settings(noPublishSettings).
   aggregate(commonJS, commonJVM)
 
 lazy val common = (crossProject in file("common")).
-  settings(name := "common").
+  settings(
+    name := "common",
+    moduleName := "quckoo-common"
+  ).
   settings(commonSettings: _*).
   settings(scoverageSettings: _*).
   settings(Dependencies.common: _*).
@@ -71,14 +74,13 @@ lazy val commonJVM = common.jvm
 
 // API ==================================================
 
-lazy val apiRoot = (project in file("api")).
-  settings(moduleName := "api").
-  settings(noPublishSettings).
-  aggregate(apiJS, apiJVM)
-
 lazy val api = (crossProject.crossType(CrossType.Pure) in file("api")).
-  settings(name := "api").
+  settings(
+    name := "api",
+    moduleName := "quckoo-api"
+  ).
   settings(commonSettings: _*).
+  settings(Dependencies.api: _*).
   jsSettings(commonJsSettings: _*).
   dependsOn(common)
 
@@ -88,6 +90,7 @@ lazy val apiJVM = api.jvm
 // Client ==================================================
 
 lazy val client = (project in file("client")).
+  settings(moduleName := "quckoo-client").
   settings(commonSettings: _*).
   settings(Dependencies.client: _*).
   dependsOn(apiJVM)
@@ -95,34 +98,33 @@ lazy val client = (project in file("client")).
 // Console ==================================================
 
 lazy val consoleRoot = (project in file("console")).
-  settings(moduleName := "console").
+  settings(moduleName := "quckoo-console-root").
   settings(noPublishSettings).
-  aggregate(consoleJS, consoleJVM, consoleResources)
+  aggregate(consoleApp)
 
-lazy val console = (crossProject in file("console")).
-  settings(name := "console").
-  settings(commonSettings: _*).
-  settings(Dependencies.console: _*).
-  jsSettings(commonJsSettings: _*).
-  jsSettings(Dependencies.consoleJS: _*).
-  jsSettings(
+lazy val consoleApp = (project in file("console/app")).
+  enablePlugins(ScalaJSPlugin).
+  settings(
+    name := "console",
+    moduleName := "quckoo-console-app",
     requiresDOM := true
   ).
-  jvmSettings(Dependencies.consoleJVM: _*).
-  dependsOn(api)
+  settings(commonSettings: _*).
+  settings(commonJsSettings: _*).
+  settings(Dependencies.consoleApp: _*).
+  dependsOn(commonJS, apiJS)
 
-lazy val consoleJS = console.js
-lazy val consoleJVM = console.jvm
-
+/*
 lazy val consoleResources = (project in file("console/resources")).
-  aggregate(consoleJS).
+  aggregate(consoleApp).
   enablePlugins(SbtSass).
   settings(commonSettings: _*).
   settings(Dependencies.consoleResources).
   settings(
     name := "console-resources",
+    moduleName := "quckoo-console-resources",
     exportJars := true,
-    unmanagedResourceDirectories in Compile += (crossTarget in consoleJS).value,
+    unmanagedResourceDirectories in Compile += (crossTarget in consoleApp).value,
     includeFilter in (Compile, unmanagedResources) := ("*.js" || "*.css" || "*.js.map"),
     mappings in (Compile, packageBin) ~= { (ms: Seq[(File, String)]) =>
       ms.filter(!_._1.getName.endsWith("scss")).map { case (file, path) =>
@@ -144,8 +146,9 @@ lazy val consoleResources = (project in file("console/resources")).
         p.listFiles().map { src => (src, "quckoo/fonts/" + src.getName) }
       }
     },
-    packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleJS)
+    packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleApp)
   )
+*/
 
 // Cluster ==================================================
 
@@ -156,23 +159,26 @@ lazy val cluster = (project in file("cluster")).
   aggregate(clusterShared, clusterMaster, clusterWorker)
 
 lazy val clusterShared = (project in file("cluster/shared")).
+  settings(moduleName := "quckoo-cluster-shared").
   settings(commonSettings).
   settings(Dependencies.clusterShared).
   dependsOn(apiJVM)
 
 lazy val clusterMaster = MultiNode(project in file("cluster/master")).
+  settings(moduleName := "quckoo-cluster-master").
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterMaster).
   settings(
-    reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
+    //reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
   ).
   enablePlugins(JavaServerAppPackaging, DockerPlugin).
   settings(Packaging.universalServerSettings: _*).
   settings(Packaging.masterDockerSettings: _*).
-  dependsOn(clusterShared, consoleResources, consoleJVM)
+  dependsOn(clusterShared)
 
 lazy val clusterWorker = (project in file("cluster/worker")).
+  settings(moduleName := "quckoo-cluster-worker").
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterWorker).
@@ -188,11 +194,13 @@ lazy val examples = (project in file("examples")).
   settings(noPublishSettings)
 
 lazy val exampleJobs = (project in file("examples/jobs")).
+  settings(moduleName := "quckoo-example-jobs").
   settings(commonSettings: _*).
   settings(Dependencies.exampleJobs).
   dependsOn(commonJVM)
 
 lazy val exampleProducers = (project in file("examples/producers")).
+  settings(moduleName := "quckoo-example-producers").
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.exampleProducers).

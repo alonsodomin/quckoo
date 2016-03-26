@@ -3,7 +3,9 @@ package io.quckoo.client
 import akka.actor._
 import akka.cluster.client.ClusterClient.Send
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
-import io.quckoo.protocol._
+import io.quckoo.protocol.client._
+import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler._
 
 import scala.concurrent.duration._
 
@@ -25,9 +27,6 @@ class QuckooClient(clientSettings: ClusterClientSettings, maxConnectionAttempts:
   extends Actor with ActorLogging {
 
   import QuckooClient._
-  import ClientProtocol._
-  import RegistryProtocol._
-  import SchedulerProtocol._
 
   private val connectTimeout = 3 seconds
 
@@ -77,7 +76,6 @@ class QuckooClient(clientSettings: ClusterClientSettings, maxConnectionAttempts:
 private class ConnectHandler(clusterClient: ActorRef, requestor: ActorRef, timeout: FiniteDuration, maxConnectionAttempts: Int)
   extends Actor with ActorLogging {
 
-  import ClientProtocol._
   import QuckooClient._
 
   private var connectionAttempts = 0

@@ -10,7 +10,7 @@ import io.quckoo.JobSpec
 import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.cluster.core.QuckooJournal
 import io.quckoo.id.JobId
-import io.quckoo.protocol.RegistryProtocol
+import io.quckoo.protocol.registry._
 import io.quckoo.resolver.ivy.IvyResolve
 
 /**
@@ -28,7 +28,6 @@ class Registry(settings: QuckooClusterSettings)
     extends Actor with ActorLogging with QuckooJournal {
 
   import Registry._
-  import RegistryProtocol._
 
   ClusterClientReceptionist(context.system).registerService(self)
 

@@ -3,7 +3,7 @@ package io.quckoo.cluster.core
 import akka.actor.{Actor, Props}
 import io.quckoo.auth.AuthInfo
 import io.quckoo.auth.UserId
-import io.quckoo.security._
+import io.quckoo.cluster.http._
 
 import scala.concurrent.duration.FiniteDuration
 

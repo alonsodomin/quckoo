@@ -3,7 +3,8 @@ package io.quckoo.examples.parameters
 import akka.actor._
 import io.quckoo._
 import io.quckoo.id.{ArtifactId, JobId}
-import io.quckoo.protocol.{RegistryProtocol, SchedulerProtocol}
+import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler._
 
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ThreadLocalRandom
@@ -20,8 +21,6 @@ object PowerOfNActor {
 
 class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
   import PowerOfNActor._
-  import RegistryProtocol._
-  import SchedulerProtocol._
   import context.dispatcher
 
   def scheduler = context.system.scheduler

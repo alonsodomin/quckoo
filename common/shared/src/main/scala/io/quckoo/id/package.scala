@@ -1,14 +1,14 @@
 package io.quckoo
 
 import java.util.UUID
-import derive.key
 
 /**
   * Created by alonsodomin on 14/03/2016.
   */
 package object id {
 
-  @key("PlanId") type PlanId = UUID
-  @key("TaskId") type TaskId = UUID
+  type PlanId = UUID
+  type TaskId = UUID
+  type WorkerId = UUID
 
 }

@@ -9,7 +9,8 @@ import akka.testkit._
 import io.quckoo._
 import io.quckoo.fault.{ExceptionThrown, Fault, UnresolvedDependency}
 import io.quckoo.id.{ArtifactId, JobId}
-import io.quckoo.protocol.RegistryProtocol
+import io.quckoo.protocol.topics
+import io.quckoo.protocol.registry._
 import io.quckoo.resolver.{Artifact, Resolve}
 import io.quckoo.test.TestActorSystem
 
@@ -37,7 +38,6 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll
     with Matchers with MockFactory {
 
-  import RegistryProtocol._
   import RegistryShardSpec._
   import Scalaz._
 
@@ -52,11 +52,11 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
   val mockResolve = mock[Resolve]
 
   before {
-    mediator ! DistributedPubSubMediator.Subscribe(RegistryTopic, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.RegistryTopic, eventListener.ref)
   }
 
   after {
-    mediator ! DistributedPubSubMediator.Unsubscribe(RegistryTopic, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.RegistryTopic, eventListener.ref)
   }
 
   override def afterAll(): Unit =

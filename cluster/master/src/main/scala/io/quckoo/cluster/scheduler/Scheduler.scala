@@ -12,14 +12,15 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import io.quckoo.JobSpec
 import io.quckoo.cluster.protocol.WorkerProtocol
 import io.quckoo.id._
-import io.quckoo.protocol.{RegistryProtocol, SchedulerProtocol}
+import io.quckoo.protocol.topics
+import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler._
 import io.quckoo.time.TimeSource
 
 /**
  * Created by aalonsodominguez on 16/08/15.
  */
 object Scheduler {
-  import SchedulerProtocol._
 
   type Journal = AllPersistenceIdsQuery with EventsByPersistenceIdQuery
 
@@ -33,9 +34,7 @@ object Scheduler {
 class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: Props)(implicit timeSource: TimeSource)
     extends Actor with ActorLogging {
 
-  import RegistryProtocol._
   import Scheduler._
-  import SchedulerProtocol._
   import WorkerProtocol._
 
   ClusterClientReceptionist(context.system).registerService(self)
@@ -96,11 +95,10 @@ class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: 
 
 }
 
-private class JobFetcher(jobId: JobId, requestor: ActorRef, config: SchedulerProtocol.ScheduleJob)
+private class JobFetcher(jobId: JobId, requestor: ActorRef, config: ScheduleJob)
     extends Actor with ActorLogging {
 
   import Scheduler._
-  import SchedulerProtocol._
 
   def receive: Receive = {
     case Some(spec: JobSpec) =>
@@ -125,12 +123,10 @@ private class ExecutionDriverFactory(jobId: JobId, cmd: Scheduler.CreateExecutio
                                      shardRegion: ActorRef)
     extends Actor with ActorLogging {
 
-  import SchedulerProtocol._
-
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart(): Unit =
-    mediator ! DistributedPubSubMediator.Subscribe(SchedulerTopic, self)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.SchedulerTopic, self)
 
   def receive: Receive = initializing
 
@@ -148,7 +144,7 @@ private class ExecutionDriverFactory(jobId: JobId, cmd: Scheduler.CreateExecutio
     case response @ ExecutionPlanStarted(`jobId`, _) =>
       log.info("Execution plan for job {} has been started.", jobId)
       cmd.requestor ! response
-      mediator ! DistributedPubSubMediator.Unsubscribe(SchedulerTopic, self)
+      mediator ! DistributedPubSubMediator.Unsubscribe(topics.SchedulerTopic, self)
       context.become(shuttingDown)
   }
 
@@ -160,7 +156,6 @@ private class ExecutionDriverFactory(jobId: JobId, cmd: Scheduler.CreateExecutio
 }
 
 private class ExecutionPlanView(shardRegion: ActorRef) extends Actor {
-  import SchedulerProtocol._
 
   private[this] var finishedExecutionPlans = Set.empty[PlanId]
   private[this] var activeExecutionPlans = Set.empty[PlanId]

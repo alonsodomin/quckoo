@@ -11,8 +11,11 @@ import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.registry.{Registry, RegistryShard}
 import io.quckoo.cluster.scheduler.{Scheduler, TaskQueue}
 import io.quckoo.cluster.{QuckooClusterSettings, KairosStatus}
-import io.quckoo.protocol._
-import io.quckoo.resolver.ivy.IvyResolve
+import io.quckoo.protocol.topics
+import io.quckoo.protocol.client._
+import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler._
+import io.quckoo.protocol.worker._
 import io.quckoo.time.TimeSource
 
 import scala.concurrent.duration._
@@ -35,9 +38,7 @@ class QuckooCluster(settings: QuckooClusterSettings)
                    (implicit materializer: ActorMaterializer, timeSource: TimeSource)
     extends Actor with ActorLogging with QuckooJournal {
 
-  import ClientProtocol._
   import QuckooCluster._
-  import WorkerProtocol.{WorkerJoined, WorkerRemoved}
 
   ClusterClientReceptionist(context.system).registerService(self)
 
@@ -52,48 +53,48 @@ class QuckooCluster(settings: QuckooClusterSettings)
     Scheduler.props(registry, readJournal, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
 
   private var clients = Set.empty[ActorRef]
-  private var kairosStatus = KairosStatus()
+  private var clusterStatus = KairosStatus()
 
   override implicit def actorSystem: ActorSystem = context.system
 
   override def preStart(): Unit = {
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[ReachabilityEvent])
-    mediator ! DistributedPubSubMediator.Subscribe(WorkerProtocol.WorkerTopic, self)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.WorkerTopic, self)
   }
 
   override def postStop(): Unit = {
     cluster.unsubscribe(self)
-    mediator ! DistributedPubSubMediator.Unsubscribe(WorkerProtocol.WorkerTopic, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.WorkerTopic, self)
   }
 
   def receive: Receive = {
     case Connect =>
       clients += sender()
-      log.info("Kairos client connected to cluster node. address={}", sender().path.address)
+      log.info("Quckoo client connected to cluster node. address={}", sender().path.address)
       sender() ! Connected
 
     case Disconnect =>
       clients -= sender()
-      log.info("Kairos client disconnected from cluster node. address={}", sender().path.address)
+      log.info("Quckoo client disconnected from cluster node. address={}", sender().path.address)
       sender() ! Disconnected
 
     case GetClusterStatus =>
-      sender() ! kairosStatus
+      sender() ! clusterStatus
 
-    case cmd: RegistryProtocol.RegistryCommand =>
+    case cmd: RegistryCommand =>
       registry.tell(cmd, sender())
 
-    case cmd: SchedulerProtocol.SchedulerCommand =>
+    case cmd: SchedulerCommand =>
       scheduler.tell(cmd, sender())
 
     case evt: MemberEvent =>
-      kairosStatus = kairosStatus.update(evt)
+      clusterStatus = clusterStatus.update(evt)
 
     case WorkerJoined(_) =>
-      kairosStatus = kairosStatus.copy(workers = kairosStatus.workers + 1)
+      clusterStatus = clusterStatus.copy(workers = clusterStatus.workers + 1)
 
     case WorkerRemoved(_) =>
-      kairosStatus = kairosStatus.copy(workers = kairosStatus.workers - 1)
+      clusterStatus = clusterStatus.copy(workers = clusterStatus.workers - 1)
 
     case Shutdown =>
       // Perform graceful shutdown of the cluster

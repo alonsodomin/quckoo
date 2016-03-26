@@ -1,15 +1,13 @@
 package io.quckoo.cluster.core
 
-import akka.actor.Actor.Receive
 import akka.actor.Props
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.{MemberUp, ReachabilityEvent, MemberEvent, InitialStateAsEvents}
-import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
+import akka.cluster.ClusterEvent.{InitialStateAsEvents, MemberEvent, ReachabilityEvent}
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.{Cancel, Request}
-import de.heikoseeberger.akkasse.ServerSentEvent
-import io.quckoo.cluster.protocol.WorkerProtocol
-import io.quckoo.cluster.protocol.WorkerProtocol.{WorkerEvent, WorkerJoined}
+import io.quckoo.protocol.topics
+import io.quckoo.protocol.worker.WorkerEvent
 
 import scala.annotation.tailrec
 
@@ -26,6 +24,7 @@ object KairosEventEmitter {
 
 class KairosEventEmitter extends ActorPublisher[KairosClusterEvent] {
   import KairosEventEmitter._
+
   import scala.language.implicitConversions
 
   private val cluster = Cluster(context.system)
@@ -35,12 +34,12 @@ class KairosEventEmitter extends ActorPublisher[KairosClusterEvent] {
 
   override def preStart(): Unit = {
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[ReachabilityEvent])
-    mediator ! DistributedPubSubMediator.Subscribe(WorkerProtocol.WorkerTopic, self)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.WorkerTopic, self)
   }
 
   override def postStop(): Unit = {
     cluster.unsubscribe(self)
-    mediator ! DistributedPubSubMediator.Unsubscribe(WorkerProtocol.WorkerTopic, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.WorkerTopic, self)
   }
 
   override def receive: Receive = {

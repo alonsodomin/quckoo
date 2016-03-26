@@ -9,6 +9,4 @@ package object cluster {
 
   final val BaseConfigNamespace = "kairos"
 
-  type WorkerId = UUID
-
 }

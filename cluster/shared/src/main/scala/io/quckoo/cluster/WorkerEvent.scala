@@ -1,5 +1,7 @@
 package io.quckoo.cluster
 
+import io.quckoo.id.WorkerId
+
 /**
   * Created by alonsodomin on 28/12/2015.
   */

@@ -2,10 +2,12 @@ package io.quckoo.cluster.scheduler
 
 import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+
 import io.quckoo.Task
 import io.quckoo.cluster.protocol.WorkerProtocol
-import io.quckoo.cluster.WorkerId
-import io.quckoo.id.TaskId
+import io.quckoo.id.{TaskId, WorkerId}
+import io.quckoo.protocol.topics
+import io.quckoo.protocol.worker._
 
 import scala.collection.immutable.Queue
 import scala.concurrent.duration._
@@ -66,7 +68,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       } else {
         workers += (workerId -> WorkerState(sender(), status = WorkerState.Idle))
         log.info("Worker registered. workerId={}, location={}", workerId, sender().path.address)
-        mediator ! DistributedPubSubMediator.Publish(WorkerTopic, WorkerJoined(workerId))
+        mediator ! DistributedPubSubMediator.Publish(topics.WorkerTopic, WorkerJoined(workerId))
         if (pendingTasks.nonEmpty) {
           sender ! TaskReady
         }
@@ -155,7 +157,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     workers -= workerId
     inProgressTasks(taskId) ! Execution.TimeOut
     inProgressTasks -= taskId
-    mediator ! DistributedPubSubMediator.Publish(WorkerTopic, WorkerRemoved(workerId))
+    mediator ! DistributedPubSubMediator.Publish(topics.WorkerTopic, WorkerRemoved(workerId))
     notifyWorkers()
   }
 

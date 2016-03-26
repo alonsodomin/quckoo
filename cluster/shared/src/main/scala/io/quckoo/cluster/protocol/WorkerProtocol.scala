@@ -1,8 +1,7 @@
 package io.quckoo.cluster.protocol
 
-import io.quckoo.cluster._
 import io.quckoo.fault.Faults
-import io.quckoo.id.TaskId
+import io.quckoo.id.{TaskId, WorkerId}
 
 /**
  * Created by aalonsodominguez on 05/07/15.
@@ -20,10 +19,4 @@ object WorkerProtocol {
   case object TaskReady extends MasterMessage
   case class TaskDoneAck(taskId: TaskId) extends MasterMessage
 
-  // Worker related events
-  final val WorkerTopic = "Workers"
-
-  sealed trait WorkerEvent
-  case class WorkerJoined(workerId: WorkerId) extends WorkerEvent
-  case class WorkerRemoved(workerId: WorkerId) extends WorkerEvent
 }

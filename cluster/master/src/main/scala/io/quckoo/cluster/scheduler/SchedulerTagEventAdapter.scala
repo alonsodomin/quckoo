@@ -1,13 +1,12 @@
 package io.quckoo.cluster.scheduler
 
 import akka.persistence.journal.{Tagged, WriteEventAdapter}
-import io.quckoo.protocol.SchedulerProtocol
+import io.quckoo.protocol.scheduler._
 
 /**
   * Created by alonsodomin on 13/03/2016.
   */
 class SchedulerTagEventAdapter extends WriteEventAdapter {
-  import SchedulerProtocol._
   import SchedulerTagEventAdapter._
 
   override def manifest(event: Any): String = ""

@@ -9,7 +9,7 @@ import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.fault.Fault
 import io.quckoo.id.ArtifactId
 import io.quckoo.multijvm.MultiNodeClusterSpec
-import io.quckoo.protocol.RegistryProtocol.{JobAccepted, RegisterJob}
+import io.quckoo.protocol.registry._
 import io.quckoo.resolver.{Artifact, Resolve}
 import io.quckoo.JobSpec
 import org.scalamock.scalatest.MockFactory

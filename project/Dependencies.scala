@@ -27,7 +27,7 @@ object Dependencies {
     val scalaJsReact = "0.10.4"
     val scalaCss = "0.3.1"
 
-    val diode = "0.5.0"
+    val diode = "0.5.1-SNAPSHOT"
 
     val upickle = "0.3.8"
     val scalatags = "0.4.6"
@@ -123,6 +123,12 @@ object Dependencies {
     libraryDependencies ++= Seq(scalaz, Monocle.core, Monocle.`macro`)
   }
 
+  // API module ===============================
+
+  lazy val api = Def.settings {
+    addCompilerPlugin(compiler.macroParadise)
+  }
+
   // Client module ===============================
 
   lazy val client = Def.settings {
@@ -136,16 +142,12 @@ object Dependencies {
 
   // Console module ===============================
 
-  lazy val console = Def.settings {
+  lazy val consoleApp = Def.settings(
     libraryDependencies ++= Seq(
       compilerPlugin(Dependencies.compiler.macroParadise),
 
-      "com.lihaoyi"   %%% "scalatags" % version.scalatags,
-      "org.scalatest" %%% "scalatest" % version.scalaTest % Test
-    )
-  }
-  lazy val consoleJS = Def.settings(
-    libraryDependencies ++= Seq(
+      "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
+      "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
       "biz.enef"         %%% "slogging"       % "0.3",
       "me.chrons"        %%% "diode"          % version.diode,
       "me.chrons"        %%% "diode-react"    % version.diode,
@@ -170,10 +172,6 @@ object Dependencies {
       "org.webjars" % "bootstrap" % "3.3.2"  / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js"
     )
   )
-  lazy val consoleJVM = Def.settings {
-    import libs._
-    libraryDependencies ++= Seq(Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse)
-  }
   lazy val consoleResources = Def.settings {
     libraryDependencies ++= Seq(
       "org.webjars" % "bootstrap-sass" % "3.3.1",
@@ -194,9 +192,9 @@ object Dependencies {
   lazy val clusterMaster = Def.settings {
     import libs._
     libraryDependencies ++= Seq(
-      Akka.sharding, Akka.http, Akka.httpUpickle, Akka.sse, Akka.distributedData,
-      Akka.persistence.core, Akka.persistence.cassandra, Akka.persistence.query,
-      Akka.persistence.memory, scopt, scalaTest, scalaMock
+      Akka.sharding, Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse,
+      Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
+      Akka.persistence.query, Akka.persistence.memory, scopt, scalaTest, scalaMock
     )
   }
   lazy val clusterWorker = Def.settings {

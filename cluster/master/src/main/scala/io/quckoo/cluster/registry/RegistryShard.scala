@@ -8,7 +8,8 @@ import akka.persistence.{PersistentActor, SnapshotOffer}
 
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id._
-import io.quckoo.protocol._
+import io.quckoo.protocol.topics
+import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolve
 import io.quckoo.JobSpec
 
@@ -20,7 +21,6 @@ import scalaz._
  * Created by aalonsodominguez on 10/08/15.
  */
 object RegistryShard {
-  import RegistryProtocol._
 
   val DefaultSnapshotFrequency = 15 minutes
 
@@ -89,7 +89,6 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
 
   import Registry._
   import RegistryShard._
-  import RegistryProtocol._
 
   import context.dispatcher
   private val snapshotTask = context.system.scheduler.schedule(
@@ -132,7 +131,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
       } map { response =>
         persist(response) { event =>
           store = store.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
+          mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, event)
         }
         response
       } pipeTo sender()
@@ -142,7 +141,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
       if (!store.isEnabled(jobId)) {
         persist(answer) { event =>
           store = store.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
+          mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, event)
         }
       }
       sender() ! answer
@@ -152,7 +151,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
       if (store.isEnabled(jobId)) {
         persist(answer) { event =>
           store = store.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(RegistryTopic, event)
+          mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, event)
         }
       }
       sender() ! answer

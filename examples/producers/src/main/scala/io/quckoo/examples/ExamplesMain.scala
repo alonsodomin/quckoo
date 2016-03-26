@@ -3,10 +3,13 @@ package io.quckoo.examples
 import akka.actor.{ActorSystem, AddressFromURIString, Props, RootActorPath}
 import akka.cluster.client.ClusterClientSettings
 import akka.japi.Util._
+
 import com.typesafe.config.{Config, ConfigFactory}
+
 import io.quckoo.client.QuckooClient
 import io.quckoo.examples.parameters.PowerOfNActor
-import io.quckoo.protocol.ClientProtocol
+import io.quckoo.protocol.client._
+
 import scopt.OptionParser
 
 /**
@@ -33,10 +36,10 @@ object ExamplesMain extends App {
     }.toSet
 
     val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
-    val kairosClient = system.actorOf(QuckooClient.props(clientSettings), "kairosClient")
-    kairosClient ! ClientProtocol.Connect
+    val client = system.actorOf(QuckooClient.props(clientSettings), "client")
+    client ! Connect
 
-    system.actorOf(Props(classOf[PowerOfNActor], kairosClient), "powerOfN")
+    system.actorOf(Props(classOf[PowerOfNActor], client), "powerOfN")
   }
 
   parser.parse(args, CliOptions()).foreach { opts =>
