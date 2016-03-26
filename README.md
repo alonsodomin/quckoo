@@ -1,6 +1,6 @@
 # Quckoo
 
-[![Build Status](https://travis-ci.org/alonsodomin/kairos.svg)](https://travis-ci.org/alonsodomin/kairos)
+[![Build Status](https://travis-ci.org/alonsodomin/quckoo.svg?branch=master)](https://travis-ci.org/alonsodomin/quckoo)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
 Quckoo is a fault-tolerant distributed task scheduler platform that runs on the JVM. The aim of the project is
