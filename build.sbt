@@ -100,7 +100,7 @@ lazy val client = (project in file("client")).
 lazy val consoleRoot = (project in file("console")).
   settings(moduleName := "quckoo-console-root").
   settings(noPublishSettings).
-  aggregate(consoleApp)
+  aggregate(consoleApp, consoleResources)
 
 lazy val consoleApp = (project in file("console/app")).
   enablePlugins(ScalaJSPlugin).
@@ -114,9 +114,8 @@ lazy val consoleApp = (project in file("console/app")).
   settings(Dependencies.consoleApp: _*).
   dependsOn(commonJS, apiJS)
 
-/*
 lazy val consoleResources = (project in file("console/resources")).
-  aggregate(consoleApp).
+  dependsOn(consoleApp).
   enablePlugins(SbtSass).
   settings(commonSettings: _*).
   settings(Dependencies.consoleResources).
@@ -148,7 +147,6 @@ lazy val consoleResources = (project in file("console/resources")).
     },
     packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleApp)
   )
-*/
 
 // Cluster ==================================================
 
@@ -175,7 +173,7 @@ lazy val clusterMaster = MultiNode(project in file("cluster/master")).
   enablePlugins(JavaServerAppPackaging, DockerPlugin).
   settings(Packaging.universalServerSettings: _*).
   settings(Packaging.masterDockerSettings: _*).
-  dependsOn(clusterShared)
+  dependsOn(clusterShared, consoleResources)
 
 lazy val clusterWorker = (project in file("cluster/worker")).
   settings(moduleName := "quckoo-cluster-worker").
