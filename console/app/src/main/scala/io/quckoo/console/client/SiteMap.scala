@@ -7,6 +7,7 @@ import io.quckoo.console.client.layout.Navigation
 import io.quckoo.console.client.layout.Navigation.NavigationItem
 import io.quckoo.console.client.registry.RegistryPageView
 import io.quckoo.console.client.security.{ClientAuth, LoginPageView}
+
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -23,12 +24,19 @@ object SiteMap extends ClientAuth {
   case object RegistryRoute extends ConsoleRoute
   case object SchedulerRoute extends ConsoleRoute
 
+  def loginPage(referral: Option[ConsoleRoute]) =
+    ConsoleCircuit.connect(identity(_))(proxy => LoginPageView(proxy, referral))
+  def registryPage =
+    ConsoleCircuit.connect(identity(_))(RegistryPageView(_))
+  def schedulerPage =
+    ConsoleCircuit.connect(identity(_))(SchedulerPageView(_))
+
   private[this] val publicPages = RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
     import dsl._
 
     (emptyRule
     | staticRoute(root, RootRoute) ~> redirectToPage(DashboardRoute)(Redirect.Push)
-    | staticRoute("#login", LoginRoute) ~> renderR(LoginPageView(_))
+    | staticRoute("#login", LoginRoute) ~> render(loginPage(None))
     )
   }
 
@@ -37,16 +45,11 @@ object SiteMap extends ClientAuth {
 
     implicit val redirectMethod = Redirect.Push
 
-    def registryPage =
-      ConsoleCircuit.connect(identity(_))(RegistryPageView(_))
-    def schedulerPage =
-      ConsoleCircuit.connect(identity(_))(SchedulerPageView(_))
-
     (emptyRule
     | staticRoute("#home", DashboardRoute) ~> render(DashboardView())
     | staticRoute("#registry", RegistryRoute) ~> render(registryPage)
     | staticRoute("#scheduler", SchedulerRoute) ~> render(schedulerPage)
-    ).addCondition(isAuthenticatedC)(referral => Some(renderR(router => LoginPageView(router, Some(referral)))))
+    ).addCondition(isAuthenticatedC)(referral => Some(render(loginPage(Some(referral)))))
   }
 
   private[this] val config = RouterConfigDsl[ConsoleRoute].buildConfig { dsl =>
@@ -78,11 +81,11 @@ object SiteMap extends ClientAuth {
   val router = {
     val logic = new RouterLogic(baseUrl, config)
     val processor = new LoginProcessor(logic.ctl)
-    val customRouter = Router.componentUnbuiltC(baseUrl, config, logic).
+
+    Router.componentUnbuiltC(baseUrl, config, logic).
       componentWillMount(_ => Callback(ConsoleCircuit.addProcessor(processor))).
       componentWillUnmount(_ => Callback(ConsoleCircuit.removeProcessor(processor))).
       buildU
-    customRouter
   }
 
 }

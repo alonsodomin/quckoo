@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait ConsoleAuth {
 
-  def login(username: String, password: String)(implicit ec: ExecutionContext): Future[AuthInfo]
+  def login(username: String, password: String)(implicit ec: ExecutionContext): Future[Option[AuthInfo]]
 
   def logout()(implicit ec: ExecutionContext, auth: AuthInfo): Future[Unit]
 

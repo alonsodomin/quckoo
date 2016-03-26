@@ -1,16 +1,15 @@
 package io.quckoo.console.client.security
 
-import io.quckoo.console.client.SiteMap.{ConsoleRoute, DashboardRoute, LoginRoute}
-import io.quckoo.console.client.core.ConsoleClient
-import io.quckoo.console.client.components._
-import io.quckoo.protocol.client.Login
+import diode.react.ModelProxy
 
-import japgolly.scalajs.react.extra.router.RouterCtl
+import io.quckoo.console.client.SiteMap.ConsoleRoute
+import io.quckoo.console.client.components._
+import io.quckoo.console.client.core.{ConsoleScope, Login}
+import io.quckoo.protocol.client.SignIn
+
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
-import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
@@ -33,43 +32,28 @@ object LoginPageView {
     )
   }
 
-  case class Props(routerCtl: RouterCtl[ConsoleRoute], referral: Option[ConsoleRoute])
-  case class NotificationHolder(notifications: Option[Notification] = None)
+  case class Props(proxy: ModelProxy[ConsoleScope], referral: Option[ConsoleRoute])
 
-  class LoginBackend($: BackendScope[Props, NotificationHolder]) {
+  class LoginBackend($: BackendScope[Props, Unit]) {
 
-    def loginHandler(props: Props)(loginReq: Login): Callback = {
+    def loginHandler(props: Props)(loginReq: SignIn): Callback =
+      props.proxy.dispatch(Login(loginReq, props.referral))
 
-      def authFailedNotification(holder: NotificationHolder): NotificationHolder =
-        holder.copy(notifications = Some(Notification.danger("Username or password incorrect")))
-
-      def performLogin(): Future[Callback] =
-        ConsoleClient.login(loginReq.username, loginReq.password).map { _ =>
-          props.routerCtl.set(props.referral.getOrElse(DashboardRoute))
-        } recover { case _ =>
-          $.modState(holder => authFailedNotification(holder)).
-            flatMap(_ => props.routerCtl.set(LoginRoute))
-        }
-
-      $.modState(holder => holder.copy(notifications = None)) >>
-        Callback.future(performLogin())
-    }
-
-    def render(props: Props, holder: NotificationHolder) =
+    def render(props: Props) =
       <.div(Style.formPlacement,
-        holder.notifications.map(_.render),
-        Panel(Panel.Props("Sign in into the console", ContextStyle.primary),
+        props.proxy().notification,
+        Panel(Panel.Props("Sign in", ContextStyle.primary),
           LoginForm(loginHandler(props))
         )
       )
   }
 
   private[this] val component = ReactComponentB[Props]("LoginPage").
-    initialState(NotificationHolder()).
+    stateless.
     renderBackend[LoginBackend].
     build
 
-  def apply(router: RouterCtl[ConsoleRoute], referral: Option[ConsoleRoute] = None) =
-    component(Props(router, referral))
+  def apply(proxy: ModelProxy[ConsoleScope], referral: Option[ConsoleRoute] = None) =
+    component(Props(proxy, referral))
 
 }

@@ -2,9 +2,17 @@ package io.quckoo.console.client.core
 
 import diode.data.{AsyncAction, Pot, PotState}
 import io.quckoo._
+import io.quckoo.auth.AuthInfo
+import io.quckoo.console.client.SiteMap.ConsoleRoute
 import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.protocol.client.SignIn
 
 import scala.util.{Failure, Try}
+
+case class Login(signIn: SignIn, referral: Option[ConsoleRoute] = None)
+case class LoggedIn(authInfo: AuthInfo, referral: Option[ConsoleRoute])
+case object LoggedOut
+case object LoginFailed
 
 case object LoadJobSpecs
 case class JobSpecsLoaded(value: Map[JobId, Pot[JobSpec]])

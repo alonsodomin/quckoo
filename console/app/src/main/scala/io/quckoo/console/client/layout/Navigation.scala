@@ -5,7 +5,7 @@ import io.quckoo.console.client.SiteMap
 import io.quckoo.console.client.components._
 import io.quckoo.console.client.core.{ConsoleCircuit, ConsoleClient, ConsoleScope}
 import io.quckoo.console.client.security.{ClientAuth, UserMenu}
-import io.quckoo.protocol.client.Logout
+import io.quckoo.protocol.client.SignOut
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -66,7 +66,7 @@ object Navigation extends ClientAuth {
     }
 
     def onLogoutClicked(e: ReactEventI): Callback =
-      preventDefault(e) >> $.props.flatMap(_.proxy.dispatch(Logout))
+      preventDefault(e) >> $.props.flatMap(_.proxy.dispatch(SignOut))
 
     def render(props: Props) =
       <.nav(^.`class` := "navbar navbar-default navbar-fixed-top",
@@ -74,7 +74,7 @@ object Navigation extends ClientAuth {
           <.div(^.`class` := "navbar-header",
             <.a(^.`class` := "navbar-brand", ^.href := props.routerCtl.urlFor(DashboardRoute).value,
               ^.onClick ==> navigationItemClicked(props.initial),
-              Icons.home, <.span("Quckoo Console")
+              Icons.home, <.span("Quckoo")
             )
           ),
           <.div(^.`class` := "collapse navbar-collapse",

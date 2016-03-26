@@ -8,14 +8,14 @@ import io.quckoo.auth.AuthInfo
 import io.quckoo.console.client.components.Notification
 import io.quckoo.console.client.security.ClientAuth
 import io.quckoo.id.{JobId, PlanId}
-import io.quckoo.protocol.client.{Login, Logout}
+import io.quckoo.protocol.client.{SignIn, SignOut}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.{ExecutionPlan, JobSpec}
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scalaz.{-\/, \/-}
+import scalaz.{-\/, OptionT, \/-}
 
 /**
   * Created by alonsodomin on 20/02/2016.
@@ -52,22 +52,19 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
   val loginHandler = new ActionHandler(zoomIntoAuth) {
     override def handle = {
-      case action: Login =>
+      case Login(SignIn(username, password), referral) =>
         effectOnly(Effect(
-          ConsoleClient.login(action.username, action.password).
-            map(auth => LoggedIn(auth))
+          ConsoleClient.login(username, password).
+            map { authOpt =>
+              authOpt.map(auth => LoggedIn(auth, referral)).
+                getOrElse(LoginFailed)
+            }
         ))
 
-      case Logout =>
+      case SignOut =>
         value.map { implicit auth =>
           effectOnly(Effect(ConsoleClient.logout().map(_ => LoggedOut)))
         } getOrElse ActionResult.NoChange
-
-      case LoggedIn(auth) =>
-        updated(Some(auth))
-
-      case LoggedOut =>
-        updated(None)
     }
   }
 

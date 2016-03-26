@@ -2,6 +2,7 @@ package io.quckoo.console.client.core
 
 import diode.data._
 import io.quckoo.auth.{AuthInfo, User}
+import io.quckoo.console.client.SiteMap.ConsoleRoute
 import io.quckoo.{ExecutionPlan, JobSpec}
 import io.quckoo.console.client.components.Notification
 import io.quckoo.console.client.security.ClientAuth
@@ -21,9 +22,6 @@ case class ConsoleScope private (
   def currentUser = authInfo.map(auth => User(auth.userId))
 
 }
-
-case class LoggedIn(authInfo: AuthInfo)
-case object LoggedOut
 
 object ConsoleScope extends ClientAuth {
 

@@ -6,7 +6,7 @@ import io.quckoo.auth.http._
 import io.quckoo.console.client.security.ClientAuth
 import io.quckoo.console.ConsoleAuth
 import io.quckoo.id.{JobId, PlanId}
-import io.quckoo.protocol.client.Login
+import io.quckoo.protocol.client.SignIn
 import io.quckoo.protocol.cluster.ClusterInfo
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -41,15 +41,15 @@ object ConsoleClient extends ConsoleAuth with Registry with Scheduler with Clien
   )
 
   private[this] def authHeaders(implicit authInfo: AuthInfo): Map[String, String] =
-    Map(XSRFTokenHeader -> authInfo.token)
+    Map(XSRFTokenHeader -> authInfo.toString)
 
-  override def login(username: String, password: String)(implicit ec: ExecutionContext): Future[AuthInfo] = {
-    Ajax.post(LoginURI, write(Login(username, password)), headers = JsonRequestHeaders).
-      flatMap { _ =>
-        super.authInfo match {
-          case Some(auth) => Future.successful(auth)
-          case None       => Future.failed(new Exception("No authentication information found in response."))
-        }
+  override def login(username: String, password: String)(implicit ec: ExecutionContext): Future[Option[AuthInfo]] = {
+    dom.console.log("Attempting login")
+    Ajax.post(LoginURI, write(SignIn(username, password)), headers = JsonRequestHeaders).
+      map {
+        _ => super.authInfo
+      } recover {
+        case _ => None
       }
   }
 

@@ -1,7 +1,7 @@
 package io.quckoo.console.client.security
 
 import io.quckoo.auth._
-import io.quckoo.console.client.core.DomScope
+import io.quckoo.console.client.core.Cookie
 import io.quckoo.auth.http._
 import japgolly.scalajs.react.CallbackTo
 
@@ -11,10 +11,10 @@ import japgolly.scalajs.react.CallbackTo
 trait ClientAuth {
 
   final def isAuthenticated: Boolean =
-    DomScope.cookie(XSRFTokenCookie).isDefined
+    Cookie(XSRFTokenCookie).isDefined
 
   final def authInfo: Option[AuthInfo] =
-    DomScope.cookie(XSRFTokenCookie).map(AuthInfo(_))
+    Cookie(XSRFTokenCookie).map(AuthInfo(_))
 
   final def isAuthenticatedC: CallbackTo[Boolean] =
     CallbackTo { isAuthenticated }

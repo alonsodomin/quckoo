@@ -1,7 +1,7 @@
 package io.quckoo.console.client.security
 
 import io.quckoo.console.client.components._
-import io.quckoo.protocol.client.Login
+import io.quckoo.protocol.client.SignIn
 import japgolly.scalajs.react.extra.ExternalVar
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, _}
@@ -13,15 +13,15 @@ import monocle.macros.Lenses
 object LoginForm {
   import MonocleReact._
 
-  type LoginHandler = Login => Callback
+  type LoginHandler = SignIn => Callback
 
   @Lenses
-  case class State(request: Login)
+  case class State(request: SignIn)
 
   class LoginBackend($: BackendScope[LoginHandler, State]) {
 
     def handleSubmit(event: ReactEventI): Callback = {
-      def invokeHandler(loginReq: Login): Callback =
+      def invokeHandler(loginReq: SignIn): Callback =
         $.props.flatMap(handler => handler(loginReq))
 
       event.preventDefaultCB >> $.state.map(_.request) >>= invokeHandler
@@ -30,11 +30,11 @@ object LoginForm {
   }
 
   private[this] val component = ReactComponentB[LoginHandler]("LoginForm").
-    initialState(State(Login("", ""))).
+    initialState(State(SignIn("", ""))).
     backend(new LoginBackend(_)).
     render { $ =>
-      val username = ExternalVar.state($.zoomL(State.request ^|-> Login.username))
-      val password = ExternalVar.state($.zoomL(State.request ^|-> Login.password))
+      val username = ExternalVar.state($.zoomL(State.request ^|-> SignIn.username))
+      val password = ExternalVar.state($.zoomL(State.request ^|-> SignIn.password))
 
       def usernameChange(evt: ReactEventI): Callback =
         username.set(evt.target.value)

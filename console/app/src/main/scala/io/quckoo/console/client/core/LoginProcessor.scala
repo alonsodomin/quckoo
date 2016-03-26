@@ -1,8 +1,8 @@
 package io.quckoo.console.client.core
 
 import diode.{ActionProcessor, ActionResult, Dispatcher}
-import io.quckoo.console.client.SiteMap
-import io.quckoo.console.client.SiteMap.ConsoleRoute
+import io.quckoo.console.client.SiteMap.{ConsoleRoute, DashboardRoute, LoginRoute}
+import io.quckoo.console.client.components.Notification
 import japgolly.scalajs.react.extra.router.RouterCtl
 
 /**
@@ -10,16 +10,24 @@ import japgolly.scalajs.react.extra.router.RouterCtl
   */
 class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor[ConsoleScope] {
 
+  val authFailedNotification = Notification.danger("Username or password incorrect")
+
   override def process(dispatch: Dispatcher, action: AnyRef,
                        next: (AnyRef) => ActionResult[ConsoleScope],
                        currentModel: ConsoleScope): ActionResult[ConsoleScope] = {
     action match {
+      case LoginFailed =>
+        ActionResult.ModelUpdate(currentModel.copy(notification = Some(authFailedNotification)))
+
+      case LoggedIn(authInfo, referral) =>
+        routerCtl.set(referral.getOrElse(DashboardRoute)).runNow()
+        ActionResult.ModelUpdate(currentModel.copy(authInfo = Some(authInfo), notification = None))
+
       case LoggedOut =>
-        routerCtl.set(SiteMap.LoginRoute).runNow()
+        routerCtl.set(LoginRoute).runNow()
         ActionResult.ModelUpdate(currentModel.copy(authInfo = None))
 
       case _ =>
-        val result = next(action)
         next(action)
     }
   }

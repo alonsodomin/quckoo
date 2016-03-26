@@ -5,9 +5,9 @@ import org.scalajs.dom
 /**
  * Created by alonsodomin on 13/10/2015.
  */
-object DomScope {
+object Cookie {
 
-  private def rawCookies: Map[String, String] = {
+  private[this] def rawCookies: Map[String, String] = {
     import dom.document
 
     val pairs = document.cookie.split("; ").map { c =>
@@ -18,6 +18,10 @@ object DomScope {
     Map(pairs: _*)
   }
 
+  def apply(name: String): Option[String] =
+    rawCookies.get(name)
+
+  @deprecated
   def cookie(name: String): Option[String] =
     rawCookies.get(name)
 

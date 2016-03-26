@@ -12,7 +12,7 @@ import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import io.quckoo.api.Auth
 import io.quckoo.auth._
 import io.quckoo.auth.http._
-import io.quckoo.protocol.client.Login
+import io.quckoo.protocol.client.SignIn
 
 import scala.concurrent.duration._
 
@@ -28,7 +28,7 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
     }
 
   def authenticateRequest(implicit system: ActorSystem, materizalizer: ActorMaterializer): Route =
-    entity(as[Login]) { req =>
+    entity(as[SignIn]) { req =>
       extractExecutionContext { implicit ec =>
         onSuccess(auth.authenticate(req.username, req.password.toCharArray)) {
           case Some(authInfo) =>

@@ -13,5 +13,5 @@ case object Disconnected extends ClientEvent
 case object UnableToConnect extends ClientEvent
 
 @Lenses
-case class Login(username: String, password: String)
-case object Logout
+case class SignIn(username: String, password: String)
+case object SignOut
