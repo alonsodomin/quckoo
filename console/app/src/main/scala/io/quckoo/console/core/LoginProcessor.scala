@@ -1,9 +1,11 @@
 package io.quckoo.console.core
 
-import diode.{ActionProcessor, ActionResult, Dispatcher}
+import diode.{ActionProcessor, ActionResult, Dispatcher, Effect}
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
 import japgolly.scalajs.react.extra.router.RouterCtl
+
+import scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
   * Created by alonsodomin on 26/03/2016.
@@ -21,12 +23,16 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor
         ActionResult.ModelUpdate(currentModel.copy(notification = Some(authFailedNotification)))
 
       case LoggedIn(client, referral) =>
-        routerCtl.set(referral.getOrElse(DashboardRoute)).runNow()
-        ActionResult.ModelUpdate(currentModel.copy(client = Some(client), notification = None))
+        val action = Effect.action(NavigateTo(referral.getOrElse(DashboardRoute)))
+        ActionResult.ModelUpdateEffect(currentModel.copy(client = Some(client), notification = None), action)
 
       case LoggedOut =>
-        routerCtl.set(LoginRoute).runNow()
-        ActionResult.ModelUpdate(currentModel.copy(client = None))
+        val action = Effect.action(NavigateTo(LoginRoute))
+        ActionResult.ModelUpdateEffect(currentModel.copy(client = None, notification = None), action)
+
+      case NavigateTo(route) =>
+        routerCtl.set(route).runNow()
+        ActionResult.NoChange
 
       case _ =>
         next(action)

@@ -16,6 +16,8 @@ case object Logout
 case object LoggedOut
 case object LoginFailed
 
+case class NavigateTo(route: ConsoleRoute)
+
 case object LoadJobSpecs
 case class JobSpecsLoaded(value: Map[JobId, Pot[JobSpec]])
 
