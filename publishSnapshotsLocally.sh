@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 git clone https://github.com/ochrons/diode.git .diode
 cd .diode
