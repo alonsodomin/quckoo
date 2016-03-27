@@ -34,7 +34,7 @@ object SchedulerPageView {
       def updateState(): Callback =
         $.modState(_.copy(showForm = false))
 
-      ($.props >>= dispatchAction) >> updateState()
+      updateState() >> ($.props >>= dispatchAction)
     }
 
     def scheduleForm(schedule: Option[ExecutionPlan]) =

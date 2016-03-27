@@ -44,8 +44,7 @@ object RegistryPageView {
         $.modState(_.copy(showForm = false))
 
       Callback.log("Registering job...") >>
-        ($.props >>= dispatchAction) >>
-        updateState()
+        updateState() >> ($.props >>= dispatchAction)
     }
 
     def render(props: Props, state: State) =
