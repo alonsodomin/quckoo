@@ -1,11 +1,10 @@
 package io.quckoo.cluster.registry
 
-import akka.actor.{ActorLogging, Props}
-import akka.cluster.pubsub.{DistributedPubSubMediator, DistributedPubSub}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.pattern._
 import akka.persistence.{PersistentActor, SnapshotOffer}
-
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id._
 import io.quckoo.protocol.topics
@@ -112,29 +111,28 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
 
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
+      val handler = context.actorOf(Props(classOf[ResolutionHandler], sender()), "handler")
       resolve(jobSpec.artifactId, download = false) map {
 
         case Success(_) =>
-          log.debug("Job artifact has been successfully resolved. artifactId={}",
-              jobSpec.artifactId)
           val jobId = JobId(jobSpec)
           JobAccepted(jobId, jobSpec)
 
         case Failure(errors) =>
-          log.error("Couldn't validate the job artifact id. " + errors)
           JobRejected(jobSpec.artifactId, errors)
 
       } recover {
         case NonFatal(ex) =>
           JobRejected(jobSpec.artifactId, NonEmptyList(ExceptionThrown(ex)))
 
-      } map { response =>
-        persist(response) { event =>
-          store = store.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, event)
-        }
-        response
-      } pipeTo sender()
+      } pipeTo handler
+
+    case event: RegistryResolutionEvent =>
+      persist(event) { evt =>
+        store = store.updated(evt)
+        mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, event)
+        sender() ! evt
+      }
 
     case EnableJob(jobId) if store.contains(jobId) =>
       val answer = JobEnabled(jobId)
@@ -161,6 +159,26 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
 
     case Snap =>
       saveSnapshot(store)
+  }
+
+}
+
+private class ResolutionHandler(requestor: ActorRef) extends Actor with ActorLogging {
+
+  def receive = {
+    case msg: JobAccepted =>
+      log.debug("Job artifact has been successfully resolved. artifactId={}",
+        msg.job.artifactId)
+      reply(msg)
+
+    case msg: JobRejected =>
+      log.error("Couldn't validate the job artifact id. " + msg.cause)
+      reply(msg)
+  }
+
+  private def reply(msg: Any): Unit = {
+    context.parent.tell(msg, requestor)
+    context.stop(self)
   }
 
 }
