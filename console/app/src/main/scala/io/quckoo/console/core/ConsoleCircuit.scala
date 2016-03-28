@@ -75,7 +75,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         validated.disjunction match {
           case \/-(id) =>
             updated(
-              Some(Notification.info(s"Job registered with id $id")),
+              Some(Notification.success(s"Job registered with id $id")),
               Effect.action(RefreshJobSpecs(Set(id))).after(2 seconds)
             )
 
@@ -109,7 +109,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         updated(Some(Notification.danger(s"Job not found $jobId")))
 
       case ExecutionPlanStarted(jobId, planId) =>
-        updated(Some(Notification.info(s"Started execution plan for job. planId=$planId")))
+        updated(Some(Notification.success(s"Started execution plan for job. planId=$planId")))
     }
 
   }
