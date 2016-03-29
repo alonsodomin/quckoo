@@ -39,6 +39,8 @@ object Dependencies {
     val scopt = "3.3.0"
     val monocle = "1.1.1"
     val scalaz = "7.1.3"
+    val monifu = "1.2"
+    val monix  = "2.0-M1"
   }
 
   // Common library definitions
@@ -125,9 +127,13 @@ object Dependencies {
 
   // API module ===============================
 
-  lazy val api = Def.settings {
-    addCompilerPlugin(compiler.macroParadise)
-  }
+  lazy val api = Def.settings(
+    addCompilerPlugin(compiler.macroParadise),
+    libraryDependencies ++= Seq(
+      "org.monifu"    %%% "monifu"    % version.monifu
+      //"io.monix"      %%% "monix"     % version.monix
+    )
+  )
 
   // Client module ===============================
 
@@ -165,7 +171,6 @@ object Dependencies {
       "biz.enef"         %%% "slogging"       % "0.3",
       "me.chrons"        %%% "diode"          % version.diode,
       "me.chrons"        %%% "diode-react"    % version.diode,
-      "org.monifu"       %%% "monifu"         % "1.0",
       "be.doeraene"      %%% "scalajs-jquery" % "0.9.0",
       "org.singlespaced" %%% "scalajs-d3"     % "0.3.1",
 
@@ -183,13 +188,15 @@ object Dependencies {
       "org.webjars.bower" % "react" % version.reactJs % Test / "react-with-addons.js" commonJSName "React",
 
       "org.webjars" % "jquery"    % "1.11.1" / "jquery.js"    minified "jquery.min.js",
-      "org.webjars" % "bootstrap" % "3.3.2"  / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js"
+      "org.webjars" % "bootstrap" % "3.3.2"  / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js",
+      "org.webjars" % "bootstrap-notify" % "3.1.3" / "bootstrap-notify.js" minified "bootstrap-notify.min.js" dependsOn ("jquery.js", "bootstrap.js")
     )
   )
   lazy val consoleResources = Def.settings {
     libraryDependencies ++= Seq(
       "org.webjars" % "bootstrap-sass" % "3.3.1",
-      "org.webjars" % "font-awesome"   % "4.5.0"
+      "org.webjars" % "font-awesome"   % "4.5.0",
+      "org.webjars" % "animate.css"    % "3.3.0"
     )
   }
 

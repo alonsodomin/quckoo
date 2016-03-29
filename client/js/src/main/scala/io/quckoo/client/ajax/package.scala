@@ -16,6 +16,7 @@ package object ajax {
 
   private[ajax] val RegistryBaseURI = BaseURI + "/registry"
   private[ajax] val JobsURI = RegistryBaseURI + "/jobs"
+  private[ajax] val RegistryEventsURI = RegistryBaseURI + "/events"
 
   private[ajax] val SchedulerBaseURI = BaseURI + "/scheduler"
   private[ajax] val ExecutionPlansURI = SchedulerBaseURI + "/plans"

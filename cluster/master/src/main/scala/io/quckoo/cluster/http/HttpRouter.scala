@@ -6,11 +6,15 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
+
 import de.heikoseeberger.akkasse.EventStreamMarshalling
-import io.quckoo.cluster.core.Server
+
+import io.quckoo.cluster.core.QuckooServer
+import io.quckoo.cluster.registry.RegistryHttpRouter
+import io.quckoo.cluster.scheduler.SchedulerHttpRouter
 
 trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives with EventStreamMarshalling {
-  this: Server =>
+  this: QuckooServer =>
 
   import StatusCodes._
 
@@ -19,6 +23,7 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
   private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     path("login") {
       post { authenticateRequest }
+      authenticateBasic()
     } ~ authorizeRequest {
       path("logout") {
         post {
@@ -29,9 +34,7 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
       } ~ pathPrefix("cluster") {
         path("events") {
           get {
-            extractExecutionContext { implicit ec =>
-              complete(events)
-            }
+            complete(events)
           }
         } ~ path("info") {
           get {

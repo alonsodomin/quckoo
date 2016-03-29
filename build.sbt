@@ -37,6 +37,7 @@ lazy val commonJsSettings = Seq(
   persistLauncher in Compile := true,
   persistLauncher in Test := false,
   scalaJSStage in Test := FastOptStage,
+  scalaJSUseRhino in Global := false,
   jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
 )
 

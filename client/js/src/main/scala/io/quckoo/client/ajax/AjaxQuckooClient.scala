@@ -8,6 +8,10 @@ import io.quckoo.id._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization
+
+import monifu.reactive.Observable
+
+import org.scalajs.dom.EventSource
 import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -58,6 +62,26 @@ private object AjaxQuckooClient extends QuckooClient {
     Ajax.get(JobsURI, headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
       println(xhr.responseText)
       read[Map[JobId, JobSpec]](xhr.responseText)
+    }
+  }
+
+  def registryEvents: Observable[RegistryEvent] = {
+    Observable.create[RegistryEvent] { subscriber =>
+      val source = new EventSource(RegistryEventsURI)
+
+      source.onerror = event => {
+        if (source.readyState == EventSource.CLOSED) {
+          subscriber.onComplete()
+        } else {
+          subscriber.onError(new Exception(event.toString))
+        }
+      }
+
+      source.onmessage = message => {
+        val sse = read[ServerSentEvent](message.data.toString)
+        val event = read[RegistryEvent](sse.data)
+        subscriber.onNext(event)
+      }
     }
   }
 

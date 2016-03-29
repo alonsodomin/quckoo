@@ -1,4 +1,4 @@
-package io.quckoo.cluster.http
+package io.quckoo.cluster.scheduler
 
 import java.util.UUID
 
@@ -6,12 +6,11 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 
-import io.quckoo.api.Scheduler
+import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.protocol.scheduler._
 import io.quckoo.time.JDK8TimeSource
 import io.quckoo.{ExecutionPlan, Trigger}
-import io.quckoo.serialization
 
 import org.scalatest.{Matchers, WordSpec}
 
@@ -36,11 +35,10 @@ object SchedulerHttpRouterSpec {
 }
 
 class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matchers
-    with SchedulerHttpRouter with Scheduler {
+    with SchedulerHttpRouter with SchedulerApi {
 
   import SchedulerHttpRouterSpec._
   import StatusCodes._
-  import serialization.json.jvm._
 
   val entryPoint = pathPrefix("api" / "scheduler") {
     schedulerApi

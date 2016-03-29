@@ -1,23 +1,26 @@
-package io.quckoo.cluster.http
+package io.quckoo.cluster.registry
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
+
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-import io.quckoo.api.Registry
-import io.quckoo.auth.AuthInfo
+
+import io.quckoo.JobSpec
+import io.quckoo.api.{Registry => RegistryApi}
+import io.quckoo.client.ajax.ServerSentEvent
 import io.quckoo.id.JobId
-import io.quckoo.{JobSpec, serialization}
+import io.quckoo.protocol.registry.RegistryEvent
 
 /**
   * Created by domingueza on 21/03/16.
   */
-trait RegistryHttpRouter extends UpickleSupport { this: Registry =>
+trait RegistryHttpRouter extends UpickleSupport { this: RegistryApi with RegistryStreams =>
 
   import StatusCodes._
-  import serialization.json.jvm._
+  import upickle.default._
 
   def registryApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     pathPrefix("jobs") {
@@ -56,6 +59,13 @@ trait RegistryHttpRouter extends UpickleSupport { this: Registry =>
             }
           }
         }
+      }
+    } ~ path("events") {
+      get {
+        val sseSource = registryEvents.map { event =>
+          ServerSentEvent(write[RegistryEvent](event), event.getClass.getSimpleName)
+        }
+        complete(sseSource)
       }
     }
 

@@ -20,4 +20,6 @@ package object components {
 
   implicit def jq2bootstrap(jq: JQuery): BootstrapJQuery = jq.asInstanceOf[BootstrapJQuery]
 
+  implicit def jq2Notify(jq: JQuery): BootstrapNotify = jq.asInstanceOf[BootstrapNotify]
+
 }

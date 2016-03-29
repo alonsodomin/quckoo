@@ -1,16 +1,19 @@
 package io.quckoo.cluster
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.pattern._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
+
 import de.heikoseeberger.akkasse.ServerSentEvent
+
 import io.quckoo.auth.AuthInfo
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.protocol.GetClusterStatus
+import io.quckoo.cluster.registry.RegistryEventPublisher
 import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.protocol.registry._
@@ -18,6 +21,7 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.time.TimeSource
 import io.quckoo.{ExecutionPlan, JobSpec, Validated}
+
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,7 +32,7 @@ import scala.concurrent.duration._
   */
 class Quckoo(settings: QuckooClusterSettings)
             (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
-    extends HttpRouter with Server with Logging with Retrying {
+    extends HttpRouter with QuckooServer with Logging with Retrying {
 
   import UserAuthenticator._
 
@@ -101,6 +105,9 @@ class Quckoo(settings: QuckooClusterSettings)
     implicit val timeout = Timeout(5 seconds)
     (core ? GetJobs).mapTo[Map[JobId, JobSpec]]
   }
+
+  def registryEvents: Source[RegistryEvent, ActorRef] =
+    Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props)
 
   def events = Source.actorPublisher[KairosClusterEvent](KairosEventEmitter.props).
     map(evt => {

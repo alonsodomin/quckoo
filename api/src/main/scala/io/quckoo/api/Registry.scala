@@ -5,6 +5,7 @@ import io.quckoo.protocol.registry._
 import io.quckoo.{JobSpec, Validated}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.higherKinds
 
 /**
   * Created by alonsodomin on 13/12/2015.
