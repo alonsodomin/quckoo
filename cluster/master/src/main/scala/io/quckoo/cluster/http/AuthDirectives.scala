@@ -1,56 +1,72 @@
 package io.quckoo.cluster.http
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{HttpCookie, OAuth2BearerToken}
+import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import akka.http.scaladsl.server.directives.AuthenticationDirective
-import akka.stream.ActorMaterializer
+import akka.http.scaladsl.server.directives.{AuthenticationDirective, AuthenticationResult, Credentials}
+
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
+
 import io.quckoo.auth._
 import io.quckoo.auth.http._
 import io.quckoo.cluster.core.Auth
-import io.quckoo.protocol.client.SignIn
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.reflect.ClassTag
 
 /**
  * Created by alonsodomin on 14/10/2015.
  */
 trait AuthDirectives extends UpickleSupport { auth: Auth =>
-  import StatusCodes._
 
   def extractAuthInfo: Directive1[XSRFToken] =
     headerValueByName(XSRFTokenHeader).flatMap { header =>
       provide(XSRFToken(header))
     }
 
-  def authenticateUser: Route = {
+  def authenticateUser: Route =
     extractExecutionContext { implicit ec =>
-      authenticateBasicAsync[User](realm = auth.Realm, auth.authenticateCreds)(completeWithAuthToken)
+      implicit val ev = implicitly[ClassTag[BasicHttpCredentials]]
+      val directive = authenticate0[BasicHttpCredentials, User]("FormBased", auth.basic)
+      directive { completeWithAuthToken(_) }
     }
-  }
 
-  def refreshToken: Route = {
-    extractExecutionContext { implicit ec =>
-      authenticateOAuth2Async[User](realm = auth.Realm, auth.authenticateToken(acceptExpired = true))(completeWithAuthToken)
-    }
-  }
+  def refreshToken: Route =
+    authenticateToken(acceptExpired = true)(completeWithAuthToken)
 
-  def authenticated: Directive1[User] = {
+  def authenticated: Directive1[User] =
+    authenticateToken(acceptExpired = false) flatMap (provide(_))
+
+  private[this] def authenticate0[C <: HttpCredentials: ClassTag, U](
+    challengeScheme: String,
+    authenticator: Credentials => Future[Option[U]]
+  ): AuthenticationDirective[U] = {
     extractExecutionContext.flatMap { implicit ec =>
-      authenticateOAuth2Async[User](realm = auth.Realm, auth.authenticateToken(acceptExpired = false)) flatMap(provide(_))
+      authenticateOrRejectWithChallenge[C, U] { cred ⇒
+        authenticator(Credentials(cred)).map {
+          case Some(u) => AuthenticationResult.success(u)
+          case None    => AuthenticationResult.failWithChallenge(HttpChallenge(challengeScheme, auth.Realm))
+        }
+      }
+    }
+  }
+
+  private[this] def authenticateToken(acceptExpired: Boolean = false): AuthenticationDirective[User] = {
+    extractExecutionContext.flatMap { implicit ec =>
+      implicit val ev = implicitly[ClassTag[OAuth2BearerToken]]
+      authenticate0[OAuth2BearerToken, User]("Bearer", auth.token(acceptExpired))
     }
   }
 
   private[this] def completeWithAuthToken(user: User): Route = {
     val jwt = auth.generateToken(user)
     val authCookie = HttpCookie(
-      "X-Auth-Token", jwt, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
+      AuthCookie, jwt, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
     )
     setCookie(authCookie) {
-      complete(OK)
+      complete(jwt)
     }
   }
 

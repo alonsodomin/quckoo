@@ -15,7 +15,7 @@ trait Auth {
   val Realm = "QuckooRealm"
   val secretKey = "dqwjq0jd9wjd192u4ued9hd0ew".getBytes("UTF-8").toBase64
 
-  def authenticateCreds(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[User]] = {
+  def basic(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[User]] = {
     credentials match {
       case p @ Credentials.Provided(identifier) =>
         if (identifier == "admin" && p.verify("password"))
@@ -27,7 +27,7 @@ trait Auth {
     }
   }
 
-  def authenticateToken(acceptExpired: Boolean = false)(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[User]] = {
+  def token(acceptExpired: Boolean = false)(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[User]] = {
     credentials match {
       case p @ Credentials.Provided(token) =>
         if (isValidToken(token)) {

@@ -9,8 +9,10 @@ import io.quckoo.serialization.Base64._
   */
 package object ajax {
 
+  final val AuthorizationHeader = "Authorization"
+
   private[ajax] val BaseURI = "/api"
-  private[ajax] val LoginURI = BaseURI + "/login"
+  private[ajax] val LoginURI = BaseURI + "/auth/login"
   private[ajax] val LogoutURI = BaseURI + "/logout"
 
   private[ajax] val ClusterDetailsURI = BaseURI + "/cluster/info"

@@ -9,6 +9,7 @@ package object http {
   final val XSRFTokenHeader = "X-" + XSRFTokenCookie
 
   final val AuthScheme = "QuckooAuth"
+  final val AuthCookie = "Auth-Token"
   final val ApiTokenHeader = "X-QuckooToken"
 
 }

@@ -20,14 +20,14 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Created by alonsodomin on 26/03/2016.
   */
-private class AjaxQuckooClient(private var authToken: String) extends QuckooClient {
+private[ajax] class AjaxQuckooClient(private var authToken: String) extends QuckooClient {
   import upickle.default._
   import serialization.json.scalajs._
 
   private[this] def authHeaders: Map[String, String] =
-    Map("Authentication" -> s"Bearer $authToken")
+    Map(AuthorizationHeader -> s"Bearer $authToken")
 
-  override lazy val principal: User = {
+  override def principal: User = {
     val jwtClaims = jwtDecodeClaims(authToken)
     User(jwtClaims("sub"))
   }

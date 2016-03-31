@@ -18,7 +18,7 @@ package io.quckoo.client.ajax
 
 import scala.annotation.tailrec
 
-object ServerSentEvent {
+private[ajax] object ServerSentEvent {
 
   /**
     * An eventId which resets the last event ID to the empty string, meaning no `Last-Event-ID` header will be sent
@@ -110,7 +110,7 @@ object ServerSentEvent {
   * @param id event id, must not contain \n or \r
   * @param retry the reconnection time in milliseconds.
   */
-final case class ServerSentEvent(data: String, eventType: Option[String] = None, id: Option[String] = None, retry: Option[Int] = None) {
+private[ajax] final case class ServerSentEvent(data: String, eventType: Option[String] = None, id: Option[String] = None, retry: Option[Int] = None) {
   import ServerSentEvent._
   require(eventType.forall(_.forall(c => c != '\n' && c != '\r')), "Event type must not contain \\n or \\r!")
   require(id.forall(_.forall(c => c != '\n' && c != '\r')), "Id must not contain \\n or \\r!")
