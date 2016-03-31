@@ -1,6 +1,6 @@
 package io.quckoo.cluster.registry
 
-import akka.actor.ActorRef
+import akka.NotUsed
 import akka.stream.scaladsl.Source
 import io.quckoo.protocol.registry.RegistryEvent
 
@@ -9,6 +9,6 @@ import io.quckoo.protocol.registry.RegistryEvent
   */
 trait RegistryStreams {
 
-  def registryEvents: Source[RegistryEvent, ActorRef]
+  def registryEvents: Source[RegistryEvent, NotUsed]
 
 }

@@ -2,17 +2,16 @@ package io.quckoo.console.components
 
 import io.quckoo.Validated
 import io.quckoo.console.validation._
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.OnUnmount
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import monifu.concurrent.Cancelable
 import monifu.concurrent.Implicits.globalScheduler
+import monifu.concurrent.Cancelable
 import monifu.reactive.Ack.Continue
 import monifu.reactive.{Observable, Observer}
-
 import org.scalajs.dom.html.Span
+
 import scala.concurrent.duration._
 
 /**

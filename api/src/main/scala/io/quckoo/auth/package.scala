@@ -6,6 +6,5 @@ package io.quckoo
 package object auth {
 
   type UserId = String
-  type Token = String
 
 }

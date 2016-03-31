@@ -10,6 +10,7 @@ import de.heikoseeberger.akkahttpupickle.UpickleSupport
 
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.protocol.scheduler._
+import io.quckoo.serialization
 
 /**
   * Created by domingueza on 21/03/16.
@@ -17,6 +18,7 @@ import io.quckoo.protocol.scheduler._
 trait SchedulerHttpRouter extends UpickleSupport { this: SchedulerApi =>
 
   import StatusCodes._
+  import serialization.json.jvm._
 
   def schedulerApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     pathPrefix("plans") {

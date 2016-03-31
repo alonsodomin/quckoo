@@ -5,22 +5,22 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
-
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-
+import de.heikoseeberger.akkasse.{EventStreamMarshalling, ServerSentEvent}
 import io.quckoo.JobSpec
 import io.quckoo.api.{Registry => RegistryApi}
-import io.quckoo.client.ajax.ServerSentEvent
 import io.quckoo.id.JobId
 import io.quckoo.protocol.registry.RegistryEvent
+import io.quckoo.serialization
 
 /**
   * Created by domingueza on 21/03/16.
   */
-trait RegistryHttpRouter extends UpickleSupport { this: RegistryApi with RegistryStreams =>
+trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling { this: RegistryApi with RegistryStreams =>
 
   import StatusCodes._
   import upickle.default._
+  import serialization.json.jvm._
 
   def registryApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     pathPrefix("jobs") {

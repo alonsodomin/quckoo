@@ -1,7 +1,8 @@
 package io.quckoo.client
 
-import io.quckoo.auth.AuthInfo
+import io.quckoo.auth.XSRFToken
 import io.quckoo.auth.http._
+import io.quckoo.serialization.Base64._
 
 /**
   * Created by alonsodomin on 26/03/2016.
@@ -25,7 +26,13 @@ package object ajax {
     "Content-Type" -> "application/json"
   )
 
-  private[ajax] def authInfo: Option[AuthInfo] =
-    Cookie(XSRFTokenCookie).map(AuthInfo(_))
+  private[ajax] def xsrfToken: Option[XSRFToken] =
+    Cookie(XSRFTokenCookie).map(XSRFToken(_))
+
+  private[ajax] def jwtDecodeClaims(token: String) = {
+    import upickle.default._
+    val jwtClaims = token.split('.')(1).toByteArray
+    read[Map[String, String]](new String(jwtClaims, "UTF-8"))
+  }
 
 }

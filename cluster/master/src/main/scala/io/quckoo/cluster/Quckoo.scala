@@ -1,15 +1,14 @@
 package io.quckoo.cluster
 
+import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.pattern._
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
-
 import de.heikoseeberger.akkasse.ServerSentEvent
-
-import io.quckoo.auth.AuthInfo
+import io.quckoo.auth.XSRFToken
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.protocol.GetClusterStatus
@@ -21,7 +20,6 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.time.TimeSource
 import io.quckoo.{ExecutionPlan, JobSpec, Validated}
-
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,8 +31,6 @@ import scala.concurrent.duration._
 class Quckoo(settings: QuckooClusterSettings)
             (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
     extends HttpRouter with QuckooServer with Logging with Retrying {
-
-  import UserAuthenticator._
 
   val core = system.actorOf(QuckooCluster.props(settings), "quckoo")
   val userAuth = system.actorSelection(core.path / "authenticator")
@@ -106,14 +102,16 @@ class Quckoo(settings: QuckooClusterSettings)
     (core ? GetJobs).mapTo[Map[JobId, JobSpec]]
   }
 
-  def registryEvents: Source[RegistryEvent, ActorRef] =
-    Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props)
+  def registryEvents: Source[RegistryEvent, NotUsed] =
+    Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props).
+      mapMaterializedValue(_ => NotUsed)
 
   def events = Source.actorPublisher[KairosClusterEvent](KairosEventEmitter.props).
     map(evt => {
       import upickle.default._
       ServerSentEvent(write[KairosClusterEvent](evt))
-    })
+    }).
+    mapMaterializedValue(_ => NotUsed)
 
   def clusterDetails(implicit ec: ExecutionContext): Future[ClusterInfo] = {
     implicit val timeout = Timeout(5 seconds)
@@ -121,15 +119,6 @@ class Quckoo(settings: QuckooClusterSettings)
     (core ? GetClusterStatus).mapTo[KairosStatus] map { status =>
       val nodeInfo = NodeInfo(status.members.size)
       ClusterInfo(nodeInfo, 0)
-    }
-  }
-
-  def authenticate(username: String, password: Array[Char])(implicit ec: ExecutionContext): Future[Option[AuthInfo]] = {
-    implicit val timeout = Timeout(5 seconds)
-
-    userAuth ? Authenticate(username, password) map {
-      case AuthenticationSuccess(authInfo) => Some(authInfo)
-      case AuthenticationFailed            => None
     }
   }
 

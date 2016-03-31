@@ -12,7 +12,7 @@ object UserMenu {
 
   private[this] val component = ReactComponentB[ModelProxy[Option[User]]]("UserDisplay").
     render_P { proxy =>
-      <.div(proxy.value.map(user => <.span(user.name)).getOrElse(EmptyTag))
+      <.div(proxy.value.map(user => <.span(user.id)).getOrElse(EmptyTag))
     } build
 
   def apply(proxy: ModelProxy[Option[User]]) = component(proxy)

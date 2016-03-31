@@ -1,3 +1,3 @@
 package io.quckoo.auth
 
-case class User(name: UserId)
+case class User(id: UserId) extends Principal

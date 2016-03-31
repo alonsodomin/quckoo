@@ -10,6 +10,7 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization
 
 import monifu.reactive.Observable
+import org.reactivestreams.{Publisher, Subscriber}
 
 import org.scalajs.dom.EventSource
 import org.scalajs.dom.ext.Ajax
@@ -19,14 +20,17 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Created by alonsodomin on 26/03/2016.
   */
-private object AjaxQuckooClient extends QuckooClient {
+private class AjaxQuckooClient(private var authToken: String) extends QuckooClient {
   import upickle.default._
   import serialization.json.scalajs._
 
   private[this] def authHeaders: Map[String, String] =
-    authInfo.fold(Map.empty[String, String])(auth => Map(XSRFTokenHeader -> auth.toString))
+    Map("Authentication" -> s"Bearer $authToken")
 
-  override def principal: User = authInfo.map(auth => User(auth.userId)).get
+  override lazy val principal: User = {
+    val jwtClaims = jwtDecodeClaims(authToken)
+    User(jwtClaims("sub"))
+  }
 
   override def close()(implicit ec: ExecutionContext): Future[Unit] =
     Ajax.post(LogoutURI, headers = authHeaders) map { xhr => () }
@@ -66,7 +70,7 @@ private object AjaxQuckooClient extends QuckooClient {
   }
 
   def registryEvents: Observable[RegistryEvent] = {
-    Observable.create[RegistryEvent] { subscriber =>
+    Observable.fromReactivePublisher[RegistryEvent] { subscriber =>
       val source = new EventSource(RegistryEventsURI)
 
       source.onerror = event => {
@@ -77,11 +81,11 @@ private object AjaxQuckooClient extends QuckooClient {
         }
       }
 
-      source.onmessage = message => {
+      /*source.onmessage = message => {
         val sse = read[ServerSentEvent](message.data.toString)
         val event = read[RegistryEvent](sse.data)
         subscriber.onNext(event)
-      }
+      }*/
     }
   }
 

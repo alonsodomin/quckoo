@@ -26,7 +26,7 @@ object ConsoleScope {
 
   def initial =
     ConsoleScope(
-      client         = AjaxQuckooClientFactory.autoConnect(),
+      client         = None,
       notification   = None,
       jobSpecs       = PotMap(JobSpecFetcher),
       executionPlans = PotMap(ExecutionPlanFetcher)

@@ -2,8 +2,9 @@ package io.quckoo.console.components
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import monifu.concurrent.Cancelable
+
 import monifu.concurrent.Implicits.globalScheduler
+import monifu.concurrent.Cancelable
 import monifu.reactive.Ack.Continue
 import monifu.reactive.Observable
 

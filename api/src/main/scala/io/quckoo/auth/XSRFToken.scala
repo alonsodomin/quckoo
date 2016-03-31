@@ -5,27 +5,29 @@ import io.quckoo.serialization.Base64._
 /**
  * Created by alonsodomin on 14/10/2015.
  */
-object AuthInfo {
+object XSRFToken {
 
   private final val TokenSeparator = ":"
   private[this] final val TokenPattern = s"(.+?)$TokenSeparator(.+)".r
 
   private final val ExpiredToken = "EXPIRED"
 
-  def apply(encoded: String): AuthInfo = {
+  def apply(encoded: String): XSRFToken = {
     val TokenPattern(token, userId) = new String(encoded.toByteArray, "UTF-8")
-    AuthInfo(userId, token)
+    XSRFToken(userId, token)
   }
 
 }
 
-case class AuthInfo(userId: UserId, private val token: Token) {
-  import AuthInfo._
+case class XSRFToken(userId: UserId, private val value: String) {
+  import XSRFToken._
 
-  def expire(): AuthInfo =
-    new AuthInfo(userId, ExpiredToken)
+  def expire(): XSRFToken =
+    new XSRFToken(userId, ExpiredToken)
+
+  def expired: Boolean = value == ExpiredToken
 
   override def toString: String =
-    s"$token$TokenSeparator$userId".getBytes("UTF-8").toBase64
+    s"$value$TokenSeparator$userId".getBytes("UTF-8").toBase64
 
 }

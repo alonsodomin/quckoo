@@ -3,14 +3,13 @@ package io.quckoo.console.components
 import io.quckoo.Validated
 import io.quckoo.console.validation._
 import io.quckoo.fault.Faults
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.OnUnmount
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import monifu.concurrent.Implicits.globalScheduler
-import monifu.concurrent.cancelables.BooleanCancelable
+import monifu.concurrent.Cancelable
 import monifu.reactive.Ack
 import monifu.reactive.observables.ConnectableObservable
 import monifu.reactive.subjects.PublishSubject
@@ -72,19 +71,18 @@ object ValidatedInput {
         } foreach(_.runNow()))
       }
 
-      def connect: CallbackTo[BooleanCancelable] =
+      def connect: CallbackTo[Cancelable] =
         CallbackTo { stream.connect() }
 
-      def registerDispose(cancellable: BooleanCancelable): Callback = {
-        def cancelConnection: CallbackTo[Boolean] =
+      def registerDispose(cancellable: Cancelable): Callback = {
+        def cancelConnection: Callback =
           CallbackTo { cancellable.cancel() }
 
-        def completeStream(cancelled: Boolean): Callback = Callback {
-          if (cancelled) subject.onComplete()
-          else subject.onError(new Exception("Could not cancel event stream"))
+        def completeStream: Callback = Callback {
+          subject.onComplete()
         }
 
-        onUnmount(cancelConnection >>= completeStream)
+        onUnmount(cancelConnection >> completeStream)
       }
 
       subscribeSelf >> subscribeObserver >> connect >>= registerDispose

@@ -1,5 +1,6 @@
 package io.quckoo.cluster.core
 
+import akka.NotUsed
 import akka.actor.ActorRef
 import akka.stream.scaladsl.Source
 import de.heikoseeberger.akkasse.ServerSentEvent
@@ -14,7 +15,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait QuckooServer extends Auth with Registry with RegistryStreams with Scheduler {
 
-  def events: Source[ServerSentEvent, ActorRef]
+  def events: Source[ServerSentEvent, NotUsed]
 
   def clusterDetails(implicit ec: ExecutionContext): Future[ClusterInfo]
 

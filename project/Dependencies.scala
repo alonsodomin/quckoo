@@ -39,7 +39,7 @@ object Dependencies {
     val scopt = "3.3.0"
     val monocle = "1.1.1"
     val scalaz = "7.1.3"
-    val monifu = "1.2"
+    val monifu = "1.1"
     val monix  = "2.0-M1"
   }
 
@@ -60,7 +60,7 @@ object Dependencies {
       val http            = "com.typesafe.akka" %% "akka-http-experimental" % version.akka
       val httpTestkit     = "com.typesafe.akka" %% "akka-http-testkit"      % version.akka % Test
       val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % "1.5.2"
-      val sse             = "de.heikoseeberger" %% "akka-sse"               % "1.6.1"
+      val sse             = "de.heikoseeberger" %% "akka-sse"               % "1.7.1"
       val distributedData = "com.typesafe.akka" %% "akka-distributed-data-experimental" % version.akka
 
       object persistence {
@@ -130,8 +130,8 @@ object Dependencies {
   lazy val api = Def.settings(
     addCompilerPlugin(compiler.macroParadise),
     libraryDependencies ++= Seq(
-      "org.monifu"    %%% "monifu"    % version.monifu
-      //"io.monix"      %%% "monix"     % version.monix
+      "org.monifu" %%% "monifu" % version.monifu
+      //"io.monix" %%% "monix-reactive" % version.monix
     )
   )
 
@@ -188,15 +188,15 @@ object Dependencies {
       "org.webjars.bower" % "react" % version.reactJs % Test / "react-with-addons.js" commonJSName "React",
 
       "org.webjars" % "jquery"    % "1.11.1" / "jquery.js"    minified "jquery.min.js",
-      "org.webjars" % "bootstrap" % "3.3.2"  / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js",
-      "org.webjars" % "bootstrap-notify" % "3.1.3" / "bootstrap-notify.js" minified "bootstrap-notify.min.js" dependsOn ("jquery.js", "bootstrap.js")
+      "org.webjars" % "bootstrap" % "3.3.2"  / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js"
+      //"org.webjars" % "bootstrap-notify" % "3.1.3" / "bootstrap-notify.js" minified "bootstrap-notify.min.js" dependsOn ("jquery.js", "bootstrap.js")
     )
   )
   lazy val consoleResources = Def.settings {
     libraryDependencies ++= Seq(
       "org.webjars" % "bootstrap-sass" % "3.3.1",
-      "org.webjars" % "font-awesome"   % "4.5.0",
-      "org.webjars" % "animate.css"    % "3.3.0"
+      "org.webjars" % "font-awesome"   % "4.5.0" /*,
+      "org.webjars" % "animate.css"    % "3.3.0"*/
     )
   }
 
@@ -213,6 +213,7 @@ object Dependencies {
   lazy val clusterMaster = Def.settings {
     import libs._
     libraryDependencies ++= Seq(Log4j.slf4jImpl,
+      "com.jason-goodwin" %% "authentikat-jwt" % "0.4.1",
       Akka.sharding, Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
       Akka.persistence.query, Akka.persistence.memory, scopt, scalaTest, scalaMock

@@ -2,13 +2,12 @@ package io.quckoo.cluster.http
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.HttpCookie
+import akka.http.scaladsl.model.headers.{HttpCookie, OAuth2BearerToken}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.directives.AuthenticationDirective
 import akka.stream.ActorMaterializer
-
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-
 import io.quckoo.auth._
 import io.quckoo.auth.http._
 import io.quckoo.cluster.core.Auth
@@ -22,24 +21,38 @@ import scala.concurrent.duration._
 trait AuthDirectives extends UpickleSupport { auth: Auth =>
   import StatusCodes._
 
-  def extractAuthInfo: Directive1[AuthInfo] =
+  def extractAuthInfo: Directive1[XSRFToken] =
     headerValueByName(XSRFTokenHeader).flatMap { header =>
-      provide(AuthInfo(header))
+      provide(XSRFToken(header))
     }
 
-  def authenticateRequest(implicit system: ActorSystem, materizalizer: ActorMaterializer): Route =
-    entity(as[SignIn]) { req =>
-      extractExecutionContext { implicit ec =>
-        onSuccess(auth.authenticate(req.username, req.password)) {
-          case Some(authInfo) =>
-            addAuthCookies(authInfo) {
-              complete(OK)
-            }
-          case _ =>
-            complete(Unauthorized)
-        }
-      }
+  def authenticateUser: Route = {
+    extractExecutionContext { implicit ec =>
+      authenticateBasicAsync[User](realm = auth.Realm, auth.authenticateCreds)(completeWithAuthToken)
     }
+  }
+
+  def refreshToken: Route = {
+    extractExecutionContext { implicit ec =>
+      authenticateOAuth2Async[User](realm = Realm, auth.authenticateToken(acceptExpired = true))(completeWithAuthToken)
+    }
+  }
+
+  def authenticateRequest: AuthenticationDirective[User] = {
+    extractExecutionContext.flatMap { implicit ec =>
+      authenticateOAuth2Async[User](realm = Realm, auth.authenticateToken(acceptExpired = false))
+    }
+  }
+
+  private[this] def completeWithAuthToken(user: User): Route = {
+    val jwt = auth.generateToken(user)
+    val authCookie = HttpCookie(
+      "X-Auth-Token", jwt, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
+    )
+    setCookie(authCookie) {
+      complete(OK)
+    }
+  }
 
   def authorizeRequest: Directive0 = {
     optionalCookie(XSRFTokenCookie).flatMap {
@@ -64,12 +77,13 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
       ))
     }
 
+  // TODO remove this method
   def refreshAuthInfo: Directive0 =
     extractAuthInfo.flatMap { authInfo =>
-      addAuthCookies(authInfo.copy(token = generateAuthToken))
+      addAuthCookies(authInfo)
     }
 
-  private[this] def addAuthCookies(auth: AuthInfo): Directive0 =
+  private[this] def addAuthCookies(auth: XSRFToken): Directive0 =
     setCookie(HttpCookie(
       XSRFTokenCookie, auth.toString, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
     ))

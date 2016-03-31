@@ -13,11 +13,11 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 object AjaxQuckooClientFactory extends QuckooClientFactory {
 
-  def autoConnect(): Option[QuckooClient] = authInfo.map(_ => AjaxQuckooClient)
+  //def autoConnect(): Option[QuckooClient] = authInfo.map(_ => AjaxQuckooClient)
 
   def connect(username: String, password: String)(implicit ec: ExecutionContext): Future[QuckooClient] = {
     Ajax.post(LoginURI, write(SignIn(username, password.toCharArray)), headers = JsonRequestHeaders).
-      map { _ => AjaxQuckooClient }
+      map { xhr => new AjaxQuckooClient(xhr.responseText) }
   }
 
 }
