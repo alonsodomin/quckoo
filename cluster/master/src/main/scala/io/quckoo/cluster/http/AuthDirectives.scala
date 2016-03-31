@@ -34,13 +34,13 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
 
   def refreshToken: Route = {
     extractExecutionContext { implicit ec =>
-      authenticateOAuth2Async[User](realm = Realm, auth.authenticateToken(acceptExpired = true))(completeWithAuthToken)
+      authenticateOAuth2Async[User](realm = auth.Realm, auth.authenticateToken(acceptExpired = true))(completeWithAuthToken)
     }
   }
 
-  def authenticateRequest: AuthenticationDirective[User] = {
+  def authenticated: Directive1[User] = {
     extractExecutionContext.flatMap { implicit ec =>
-      authenticateOAuth2Async[User](realm = Realm, auth.authenticateToken(acceptExpired = false))
+      authenticateOAuth2Async[User](realm = auth.Realm, auth.authenticateToken(acceptExpired = false)) flatMap(provide(_))
     }
   }
 

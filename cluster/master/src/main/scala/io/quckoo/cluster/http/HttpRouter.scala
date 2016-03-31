@@ -32,7 +32,7 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
           refreshToken
         }
       }
-    } ~ authenticateRequest { user =>
+    } ~ authenticated { user =>
       path("logout") {
         post {
           invalidateAuth {
