@@ -87,11 +87,7 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
   }
 
   def invalidateAuth: Directive0 =
-    extractAuthInfo.flatMap { authInfo =>
-      setCookie(HttpCookie(
-        XSRFTokenCookie, authInfo.expire().toString, path = Some("/"), expires = Some(DateTime.now)
-      ))
-    }
+    setCookie(HttpCookie(AuthCookie, "", path = Some("/"), expires = Some(DateTime.now)))
 
   // TODO remove this method
   def refreshAuthInfo: Directive0 =

@@ -20,20 +20,24 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Created by alonsodomin on 26/03/2016.
   */
-private[ajax] class AjaxQuckooClient(private var authToken: String) extends QuckooClient {
+private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) extends QuckooClient {
   import upickle.default._
   import serialization.json.scalajs._
 
   private[this] def authHeaders: Map[String, String] =
-    Map(AuthorizationHeader -> s"Bearer $authToken")
+    authToken.fold(Map.empty[String, String])(token => Map(AuthorizationHeader -> s"Bearer $token"))
 
-  override def principal: User = {
-    val jwtClaims = jwtDecodeClaims(authToken)
+  override def principal: Option[User] = authToken.map { token =>
+    val jwtClaims = jwtDecodeClaims(token)
     User(jwtClaims("sub"))
   }
 
   override def close()(implicit ec: ExecutionContext): Future[Unit] =
-    Ajax.post(LogoutURI, headers = authHeaders) map { xhr => () }
+    Ajax.post(LogoutURI, headers = authHeaders) map { xhr =>
+      // Side effecting here for lacking a better way of doing this
+      authToken = None
+      ()
+    }
 
   override def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] = {
     Ajax.post(JobsURI + "/" + jobId + "/enable", headers = authHeaders).map { xhr =>

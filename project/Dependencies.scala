@@ -19,7 +19,7 @@ object Dependencies {
 
     // Akka ----------
 
-    val akka = "2.4.2"
+    val akka = "2.4.3"
     val kryo = "0.4.0"
 
     // ScalaJS -------

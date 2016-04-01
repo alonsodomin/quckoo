@@ -27,7 +27,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor
         ActionResult.ModelUpdateEffect(currentModel.copy(client = Some(client), notification = None), action)
 
       case LoggedOut =>
-        val action = Effect.action(NavigateTo(LoginRoute))
+        val action = Effect.action(NavigateTo(DashboardRoute))
         ActionResult.ModelUpdateEffect(currentModel.copy(client = None, notification = None), action)
 
       case NavigateTo(route) =>

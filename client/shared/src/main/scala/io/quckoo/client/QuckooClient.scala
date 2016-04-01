@@ -14,7 +14,7 @@ trait QuckooClient extends Registry with Scheduler {
 
   def registryEvents: Observable[RegistryEvent]
 
-  def principal: User
+  def principal: Option[User]
 
   def close()(implicit ec: ExecutionContext): Future[Unit]
 

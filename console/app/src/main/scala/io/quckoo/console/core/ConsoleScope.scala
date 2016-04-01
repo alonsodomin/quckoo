@@ -19,7 +19,7 @@ case class ConsoleScope private (
     executionPlans: PotMap[PlanId, ExecutionPlan]
 ) {
 
-  def currentUser = client.map(_.principal)
+  def currentUser = client.flatMap(_.principal)
 
 }
 
