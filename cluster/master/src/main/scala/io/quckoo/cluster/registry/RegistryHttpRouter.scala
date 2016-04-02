@@ -16,7 +16,8 @@ import io.quckoo.serialization
 /**
   * Created by domingueza on 21/03/16.
   */
-trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling { this: RegistryApi with RegistryStreams =>
+trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
+  this: RegistryApi with RegistryStreams =>
 
   import StatusCodes._
   import upickle.default._

@@ -1,7 +1,7 @@
 package io.quckoo.cluster
 
 import akka.NotUsed
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.pattern._
 import akka.stream.{ActorMaterializer, OverflowStrategy}
@@ -13,11 +13,13 @@ import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.protocol.GetClusterStatus
 import io.quckoo.cluster.registry.RegistryEventPublisher
+import io.quckoo.cluster.scheduler.WorkerEventPublisher
 import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
+import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.time.TimeSource
 import io.quckoo.{ExecutionPlan, JobSpec, Validated}
 import org.slf4s.Logging
@@ -64,6 +66,10 @@ class Quckoo(settings: QuckooClusterSettings)
     }
   }
 
+  def workerEvents: Source[WorkerEvent, NotUsed] =
+    Source.actorPublisher[WorkerEvent](WorkerEventPublisher.props).
+      mapMaterializedValue(_ => NotUsed)
+
   def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] = {
     implicit val timeout = Timeout(5 seconds)
     (core ? EnableJob(jobId)).mapTo[JobEnabled]
@@ -105,13 +111,6 @@ class Quckoo(settings: QuckooClusterSettings)
   def registryEvents: Source[RegistryEvent, NotUsed] =
     Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
-
-  def events = Source.actorPublisher[KairosClusterEvent](KairosEventEmitter.props).
-    map(evt => {
-      import upickle.default._
-      ServerSentEvent(write[KairosClusterEvent](evt))
-    }).
-    mapMaterializedValue(_ => NotUsed)
 
   def clusterDetails(implicit ec: ExecutionContext): Future[ClusterInfo] = {
     implicit val timeout = Timeout(5 seconds)

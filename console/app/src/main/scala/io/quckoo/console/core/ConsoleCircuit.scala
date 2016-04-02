@@ -9,10 +9,11 @@ import io.quckoo.client.QuckooClient
 import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
 import io.quckoo.id.{JobId, PlanId}
-import io.quckoo.protocol.client.SignOut
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.{ExecutionPlan, JobSpec}
+
+import org.scalajs.dom
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -55,10 +56,15 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
             recover { case _ => LoginFailed }
         ))
 
+      case LoggedIn(client, _) =>
+        import monifu.concurrent.Implicits.globalScheduler
+        client.workerEvents.foreach(evt => dom.console.log(evt.toString))
+        noChange
+
       case Logout =>
         value.map { client =>
           effectOnly(Effect(client.close().map(_ => LoggedOut)))
-        } getOrElse ActionResult.NoChange
+        } getOrElse noChange
     }
   }
 

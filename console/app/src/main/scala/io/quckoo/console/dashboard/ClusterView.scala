@@ -32,7 +32,6 @@ object ClusterView {
   case class State(info: ClusterInfo = ClusterInfo())
 
   class Backend($: BackendScope[Unit, State]) {
-    ClusterEventListener.onMessage(onEvent)
 
     def onEvent(clusterEvent: ClusterEvent): Unit = {
       println("Received event: " + clusterEvent)

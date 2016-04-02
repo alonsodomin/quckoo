@@ -7,14 +7,16 @@ import io.quckoo.client.QuckooClient
 import io.quckoo.id._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
+import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization
-
+import monifu.concurrent.Implicits.globalScheduler
 import monifu.reactive.Observable
 import org.reactivestreams.{Publisher, Subscriber}
 
-import org.scalajs.dom.EventSource
+import org.scalajs.dom.{EventSource, MessageEvent, Event}
 import org.scalajs.dom.ext.Ajax
 
+import scalajs.js
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -74,10 +76,10 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
   }
 
   def registryEvents: Observable[RegistryEvent] = {
-    Observable.fromReactivePublisher[RegistryEvent] { subscriber =>
-      val source = new EventSource(RegistryEventsURI)
+    val source = new EventSource(WorkerEventsURI)
+    Observable.create[RegistryEvent] { subscriber =>
 
-      source.onerror = event => {
+      source.onerror = (event: Event) => {
         if (source.readyState == EventSource.CLOSED) {
           subscriber.onComplete()
         } else {
@@ -85,11 +87,14 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
         }
       }
 
-      /*source.onmessage = message => {
+      val listener = (message: MessageEvent) => {
         val sse = read[ServerSentEvent](message.data.toString)
-        val event = read[RegistryEvent](sse.data)
-        subscriber.onNext(event)
-      }*/
+//        val event = read[RegistryEvent](sse.data)
+//        subscriber.onNext(event)
+        ()
+      }
+
+      source.addEventListener[MessageEvent]("RegistryEvent", listener)
     }
   }
 
@@ -112,6 +117,26 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
       Right(read[ExecutionPlanStarted](xhr.responseText))
     } recover {
       case _ => Left(JobNotFound(scheduleJob.jobId))
+    }
+  }
+
+  override def workerEvents: Observable[WorkerEvent] = {
+    val source = new EventSource(WorkerEventsURI)
+    Observable.create[WorkerEvent] { subscriber =>
+      source.onerror = (event: Event) => {
+        if (source.readyState == EventSource.CLOSED) {
+          subscriber.onComplete()
+        } else {
+          subscriber.onError(new Exception(event.toString))
+        }
+      }
+
+      source.addEventListener[MessageEvent]("WorkerEvent", (message: MessageEvent) => {
+        val sse = read[ServerSentEvent](message.data.toString)
+        val event = read[WorkerEvent](sse.data)
+        subscriber.onNext(event)
+        ()
+      })
     }
   }
 

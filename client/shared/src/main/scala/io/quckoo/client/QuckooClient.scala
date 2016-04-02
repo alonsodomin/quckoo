@@ -3,6 +3,7 @@ package io.quckoo.client
 import io.quckoo.api.{Registry, Scheduler}
 import io.quckoo.auth.User
 import io.quckoo.protocol.registry.RegistryEvent
+import io.quckoo.protocol.worker.WorkerEvent
 import monifu.reactive.Observable
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -13,6 +14,8 @@ import scala.concurrent.{ExecutionContext, Future}
 trait QuckooClient extends Registry with Scheduler {
 
   def registryEvents: Observable[RegistryEvent]
+
+  def workerEvents: Observable[WorkerEvent]
 
   def principal: Option[User]
 

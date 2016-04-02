@@ -1,7 +1,6 @@
 package io.quckoo.api
 
 import io.quckoo.ExecutionPlan
-import io.quckoo.auth.XSRFToken$
 import io.quckoo.id.PlanId
 import io.quckoo.protocol.scheduler._
 

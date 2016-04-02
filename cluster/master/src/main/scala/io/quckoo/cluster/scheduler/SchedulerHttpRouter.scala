@@ -5,19 +5,21 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
-
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-
+import de.heikoseeberger.akkasse.{EventStreamMarshalling, ServerSentEvent}
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.protocol.scheduler._
+import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization
 
 /**
   * Created by domingueza on 21/03/16.
   */
-trait SchedulerHttpRouter extends UpickleSupport { this: SchedulerApi =>
+trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
+  this: SchedulerApi with SchedulerStreams =>
 
   import StatusCodes._
+  import upickle.default._
   import serialization.json.jvm._
 
   def schedulerApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
@@ -46,6 +48,13 @@ trait SchedulerHttpRouter extends UpickleSupport { this: SchedulerApi =>
             }
           }
         }
+      }
+    } ~ path("workers" / "events") {
+      get {
+        val sseSource = workerEvents.map { event =>
+          ServerSentEvent(write[WorkerEvent](event), event.getClass.getSimpleName)
+        }
+        complete(sseSource)
       }
     }
 

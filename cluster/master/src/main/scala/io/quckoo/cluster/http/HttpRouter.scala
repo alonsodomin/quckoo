@@ -4,15 +4,14 @@ import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.directives.Credentials
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
+
 import de.heikoseeberger.akkasse.EventStreamMarshalling
-import io.quckoo.auth.User
+
 import io.quckoo.cluster.core.QuckooServer
 import io.quckoo.cluster.registry.RegistryHttpRouter
 import io.quckoo.cluster.scheduler.SchedulerHttpRouter
-import io.quckoo.protocol.client.SignIn
 
 trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives with EventStreamMarshalling {
   this: QuckooServer =>
@@ -40,11 +39,7 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
           }
         }
       } ~ pathPrefix("cluster") {
-        path("events") {
-          get {
-            complete(events)
-          }
-        } ~ path("info") {
+        path("info") {
           get {
             extractExecutionContext { implicit ec =>
               complete(clusterDetails)
