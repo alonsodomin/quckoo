@@ -49,29 +49,29 @@ lazy val scoverageSettings = Seq(
 lazy val quckoo = (project in file(".")).
   settings(moduleName := "quckoo-root").
   settings(noPublishSettings).
-  aggregate(commonRoot, apiJS, apiJVM, clientRoot, cluster, consoleRoot, examples)
+  aggregate(coreRoot, apiJS, apiJVM, clientRoot, cluster, consoleRoot, examples)
 
 // Common ==================================================
 
-lazy val commonRoot = (project in file("common")).
-  settings(moduleName := "quckoo-common-root").
+lazy val coreRoot = (project in file("core")).
+  settings(moduleName := "quckoo-core-root").
   settings(noPublishSettings).
-  aggregate(commonJS, commonJVM)
+  aggregate(coreJS, coreJVM)
 
-lazy val common = (crossProject in file("common")).
+lazy val core = (crossProject in file("core")).
   settings(
-    name := "common",
-    moduleName := "quckoo-common"
+    name := "core",
+    moduleName := "quckoo-core"
   ).
   settings(commonSettings: _*).
   settings(scoverageSettings: _*).
-  settings(Dependencies.common: _*).
+  settings(Dependencies.core: _*).
   jsSettings(commonJsSettings: _*).
-  jsSettings(Dependencies.commonJS: _*).
-  jvmSettings(Dependencies.commonJVM: _*)
+  jsSettings(Dependencies.coreJS: _*).
+  jvmSettings(Dependencies.coreJVM: _*)
 
-lazy val commonJS = common.js
-lazy val commonJVM = common.jvm
+lazy val coreJS = core.js
+lazy val coreJVM = core.jvm
 
 // API ==================================================
 
@@ -83,7 +83,7 @@ lazy val api = (crossProject.crossType(CrossType.Pure) in file("api")).
   settings(commonSettings: _*).
   settings(Dependencies.api: _*).
   jsSettings(commonJsSettings: _*).
-  dependsOn(common)
+  dependsOn(core)
 
 lazy val apiJS = api.js
 lazy val apiJVM = api.jvm
@@ -129,7 +129,7 @@ lazy val consoleApp = (project in file("console/app")).
   settings(commonSettings: _*).
   settings(commonJsSettings: _*).
   settings(Dependencies.consoleApp: _*).
-  dependsOn(commonJS, apiJS, clientJS)
+  dependsOn(coreJS, apiJS, clientJS)
 
 lazy val consoleResources = (project in file("console/resources")).
   dependsOn(consoleApp).
@@ -212,7 +212,7 @@ lazy val exampleJobs = (project in file("examples/jobs")).
   settings(moduleName := "quckoo-example-jobs").
   settings(commonSettings: _*).
   settings(Dependencies.exampleJobs).
-  dependsOn(commonJVM)
+  dependsOn(coreJVM)
 
 lazy val exampleProducers = (project in file("examples/producers")).
   settings(moduleName := "quckoo-example-producers").

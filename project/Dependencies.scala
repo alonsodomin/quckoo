@@ -102,9 +102,9 @@ object Dependencies {
     val macroParadise = "org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full
   }
 
-  // Common module ===============================
+  // Core module ===============================
 
-  lazy val common = Def.settings {
+  lazy val core = Def.settings {
     libraryDependencies ++= Seq(
       compilerPlugin(Dependencies.compiler.macroParadise),
 
@@ -112,7 +112,7 @@ object Dependencies {
       "org.scalatest" %%% "scalatest" % version.scalaTest % Test
     )
   }
-  lazy val commonJS = Def.settings {
+  lazy val coreJS = Def.settings {
     libraryDependencies ++= Seq(
       "io.github.widok"                  %%% "scala-js-momentjs" % "0.1.4",
       "com.github.japgolly.fork.scalaz"  %%% "scalaz-core"       % version.scalaz,
@@ -120,7 +120,7 @@ object Dependencies {
       "com.github.japgolly.fork.monocle" %%% "monocle-macro"     % version.monocle
     )
   }
-  lazy val commonJVM = Def.settings {
+  lazy val coreJVM = Def.settings {
     import libs._
     libraryDependencies ++= Seq(scalaz, Monocle.core, Monocle.`macro`)
   }
