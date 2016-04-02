@@ -19,6 +19,7 @@ private[ajax] class EventSourceObservable[A: Reader] private (url: String, event
       } else {
         subscriber.onError(new Exception(event.toString))
       }
+      source.close()
     }
 
     source.addEventListener[MessageEvent](eventType, (message: MessageEvent) => {
