@@ -141,9 +141,17 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       workers.find {
         case (_, WorkerState(`workerRef`, _)) => true
         case _ => false
-      } map(_._1) foreach { workerId =>
+      } foreach { case (workerId, workerState) =>
         log.info("Worker terminated! workerId={}", workerId)
         workers -= workerId
+        workerState.status match {
+          case WorkerState.Busy(taskId, _) =>
+            // TODO define a better message to interrupt the execution
+            inProgressTasks(taskId) ! Execution.TimeOut
+            inProgressTasks -= taskId
+
+          case _ =>
+        }
         mediator ! DistributedPubSubMediator.Publish(topics.WorkerTopic, WorkerRemoved(workerId))
       }
   }
