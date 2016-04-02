@@ -17,10 +17,12 @@ cache:
 before_install:
   - pip install --user codecov
   - gem install compass
+  - ./publishSnapshotsLocally.sh
+
 script:
-  - publishSnapshotsLocally.sh
   #- sbt ++$TRAVIS_SCALA_VERSION clean coverage test && sbt coverageAggregate
   - sbt ++$TRAVIS_SCALA_VERSION clean test
+  
 after_success:
   - codecov
 #  - sbt coveralls
