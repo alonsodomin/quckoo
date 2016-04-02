@@ -9,11 +9,11 @@ import io.quckoo.client.QuckooClient
 import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
 import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.protocol.cluster.ClusterInfo
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
+import io.quckoo.protocol.worker._
 import io.quckoo.{ExecutionPlan, JobSpec}
-
-import org.scalajs.dom
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -28,6 +28,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
   override protected def actionHandler = composeHandlers(
     loginHandler,
+    clusterStateHandler,
     jobSpecMapHandler,
     registryHandler,
     scheduleHandler,
@@ -39,6 +40,9 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
   def zoomIntoClient: ModelRW[ConsoleScope, Option[QuckooClient]] =
     zoomRW(_.client) { (model, c) => model.copy(client = c) }
+
+  def zoomIntoClusterState: ModelRW[ConsoleScope, ClusterInfo] =
+    zoomRW(_.clusterState) { (model, value) => model.copy(clusterState = value) }
 
   def zoomIntoExecutionPlans: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]] =
     zoomRW(_.executionPlans) { (model, plans) => model.copy(executionPlans = plans) }
@@ -61,6 +65,23 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
           effectOnly(Effect(client.close().map(_ => LoggedOut)))
         } getOrElse noChange
     }
+  }
+
+  val clusterStateHandler = new ActionHandler(zoomIntoClusterState) {
+    import monifu.concurrent.Implicits.globalScheduler
+
+    override def handle = {
+      case SubscribeToBackend(client) =>
+        client.workerEvents.subscribe(new WorkerEventSubscriber)
+        noChange
+
+      case WorkerJoined(workerId) =>
+        updated(value.copy(workers = value.workers + 1))
+
+      case WorkerRemoved(workerId) =>
+        updated(value.copy(workers = value.workers - 1))
+    }
+
   }
 
   val registryHandler = new ActionHandler(zoomIntoNotification)

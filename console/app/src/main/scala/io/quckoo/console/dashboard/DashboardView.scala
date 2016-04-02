@@ -1,6 +1,8 @@
 package io.quckoo.console.dashboard
 
-import japgolly.scalajs.react.ReactComponentB
+import diode.react.ModelProxy
+import io.quckoo.console.core.ConsoleScope
+import japgolly.scalajs.react.{BackendScope, ReactComponentB}
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scalacss.Defaults._
@@ -23,15 +25,26 @@ object DashboardView {
     )
   }
 
-  private[this] val component = ReactComponentB.static("HomePage",
-    <.div(^.`class` := "container-fluid",
-      <.div(^.`class` := "row-fluid",
-        <.div(Style.leftPanel, ClusterView()),
-        <.div(^.`class` := "container-fluid", "Here goes the contents")
-      )
-    )
-  ).buildU
+  case class Props(proxy: ModelProxy[ConsoleScope])
 
-  def apply() = component()
+  class Backend($: BackendScope[Props, Unit]) {
+
+    def render(props: Props) = {
+      <.div(^.`class` := "container-fluid",
+        <.div(^.`class` := "row-fluid",
+          <.div(Style.leftPanel, props.proxy.connect(_.clusterState)(ClusterView(_))),
+          <.div(^.`class` := "container-fluid", "Here goes the contents")
+        )
+      )
+    }
+
+  }
+
+  private[this] val component = ReactComponentB[Props]("HomePage").
+    stateless.
+    renderBackend[Backend].
+    build
+
+  def apply(proxy: ModelProxy[ConsoleScope]) = component(Props(proxy))
 
 }

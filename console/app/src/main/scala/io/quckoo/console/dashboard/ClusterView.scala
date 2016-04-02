@@ -1,5 +1,6 @@
 package io.quckoo.console.dashboard
 
+import diode.react.ModelProxy
 import io.quckoo.console.core.{ClusterEvent, ClusterEventListener}
 import io.quckoo.protocol.cluster.ClusterInfo
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -29,15 +30,12 @@ object ClusterView {
     initInnerObjects(section.title)
   }
 
-  case class State(info: ClusterInfo = ClusterInfo())
+  case class Props(proxy: ModelProxy[ClusterInfo])
 
-  class Backend($: BackendScope[Unit, State]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
-    def onEvent(clusterEvent: ClusterEvent): Unit = {
-      println("Received event: " + clusterEvent)
-    }
-
-    def render(state: State) =
+    def render(props: Props) = {
+      val state = props.proxy()
       <.div(Style.container,
         <.section(
           <.div(Style.section.title,
@@ -47,11 +45,11 @@ object ClusterView {
             <.tbody(
               <.tr(
                 <.td("Active"),
-                <.td(state.info.nodeInfo.active)
+                <.td(state.nodeInfo.active)
               ),
               <.tr(
                 <.td("Inactive"),
-                <.td(state.info.nodeInfo.inactive)
+                <.td(state.nodeInfo.inactive)
               )
             )
           )
@@ -64,27 +62,21 @@ object ClusterView {
             <.tbody(
               <.tr(
                 <.td("Active"),
-                <.td(state.info.workers)
+                <.td(state.workers)
               )
             )
           )
         )
       )
+    }
 
   }
 
-  private[this] val component = ReactComponentB[Unit]("ClusterView").
-    initialState(State()).
+  private[this] val component = ReactComponentB[Props]("ClusterView").
+    stateless.
     renderBackend[Backend].
-    componentDidMount($ =>
-      /*Callback.future {
-        ConsoleClient.clusterDetails map { details =>
-          $.modState(_.copy(info = details))
-        }
-      }*/
-      Callback.empty
-    ).buildU
+    build
 
-  def apply() = component()
+  def apply(proxy: ModelProxy[ClusterInfo]) = component(Props(proxy))
 
 }

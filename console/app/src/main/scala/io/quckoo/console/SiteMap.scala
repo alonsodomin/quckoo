@@ -17,6 +17,8 @@ import japgolly.scalajs.react.extra.router._
 object SiteMap {
   import ConsoleRoute._
 
+  def dashboardPage(proxy: ModelProxy[ConsoleScope]) =
+    proxy.wrap(identity(_))(DashboardView(_))
   def loginPage(proxy: ModelProxy[ConsoleScope])(referral: Option[ConsoleRoute]) =
     proxy.connect(identity(_))(p => LoginPageView(p, referral))
   def registryPage(proxy: ModelProxy[ConsoleScope]) =
@@ -39,7 +41,7 @@ object SiteMap {
     implicit val redirectMethod = Redirect.Push
 
     (emptyRule
-    | staticRoute("#home", DashboardRoute) ~> render(DashboardView())
+    | staticRoute("#home", DashboardRoute) ~> render(dashboardPage(proxy))
     | staticRoute("#registry", RegistryRoute) ~> render(registryPage(proxy))
     | staticRoute("#scheduler", SchedulerRoute) ~> render(schedulerPage(proxy))
     ).addCondition(CallbackTo(proxy().currentUser.isDefined))(referral => Some(render(loginPage(proxy)(Some(referral)))))

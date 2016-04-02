@@ -1,11 +1,12 @@
 package io.quckoo.console.core
 
 import diode.data._
-
 import io.quckoo.client.QuckooClient
 import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
-import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.id.{JobId, PlanId, WorkerId}
+import io.quckoo.protocol.cluster.ClusterInfo
+import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.{ExecutionPlan, JobSpec}
 
 /**
@@ -15,6 +16,7 @@ import io.quckoo.{ExecutionPlan, JobSpec}
 case class ConsoleScope private (
     client: Option[QuckooClient],
     notification: Option[Notification],
+    clusterState: ClusterInfo,
     jobSpecs: PotMap[JobId, JobSpec],
     executionPlans: PotMap[PlanId, ExecutionPlan]
 ) {
@@ -29,6 +31,7 @@ object ConsoleScope {
     ConsoleScope(
       client         = AjaxQuckooClientFactory.autoConnect(),
       notification   = None,
+      clusterState   = ClusterInfo(),
       jobSpecs       = PotMap(JobSpecFetcher),
       executionPlans = PotMap(ExecutionPlanFetcher)
     )

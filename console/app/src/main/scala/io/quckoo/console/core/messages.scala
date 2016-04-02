@@ -48,3 +48,5 @@ case class RefreshExecutionPlans(
     copy(state = newState, result = newValue)
 
 }
+
+case class SubscribeToBackend(client: QuckooClient)
