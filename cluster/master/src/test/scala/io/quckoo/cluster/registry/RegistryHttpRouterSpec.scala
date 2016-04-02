@@ -2,18 +2,17 @@ package io.quckoo.cluster.registry
 
 import java.util.UUID
 
+import akka.NotUsed
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
-
 import io.quckoo.fault.Fault
 import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.{JobSpec, Validated, serialization}
-
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -63,7 +62,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   override def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] =
     Future.successful(TestJobMap.get(jobId))
 
-  override def registryEvents: Source[RegistryEvent, ActorRef] = ???
+  override def registryEvents: Source[RegistryEvent, NotUsed] = ???
 
   private[this] def endpoint(target: String) = s"/api/registry$target"
 

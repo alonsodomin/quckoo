@@ -2,13 +2,17 @@ package io.quckoo.cluster.scheduler
 
 import java.util.UUID
 
+import akka.NotUsed
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.stream.scaladsl.Source
 
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.protocol.scheduler._
+import io.quckoo.protocol.worker.WorkerEvent
+import io.quckoo.serialization
 import io.quckoo.time.JDK8TimeSource
 import io.quckoo.{ExecutionPlan, Trigger}
 
@@ -35,10 +39,11 @@ object SchedulerHttpRouterSpec {
 }
 
 class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matchers
-    with SchedulerHttpRouter with SchedulerApi {
+    with SchedulerHttpRouter with SchedulerApi with SchedulerStreams {
 
   import SchedulerHttpRouterSpec._
   import StatusCodes._
+  import serialization.json.jvm._
 
   val entryPoint = pathPrefix("api" / "scheduler") {
     schedulerApi
@@ -57,6 +62,8 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
   override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] =
     Future.successful(TestPlanIds)
+
+  override def workerEvents: Source[WorkerEvent, NotUsed] = ???
 
   private[this] def endpoint(target: String) = s"/api/scheduler$target"
 
