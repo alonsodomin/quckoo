@@ -63,9 +63,12 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
     case RegisterWorker(workerId) =>
       if (workers.contains(workerId)) {
+        context.unwatch(workers(workerId).ref)
         workers += (workerId -> workers(workerId).copy(ref = sender()))
+        context.watch(sender())
       } else {
         workers += (workerId -> WorkerState(sender(), status = WorkerState.Idle))
+        context.watch(sender())
         log.info("Worker registered. workerId={}, location={}", workerId, sender().path.address)
         mediator ! DistributedPubSubMediator.Publish(topics.WorkerTopic, WorkerJoined(workerId))
         if (pendingTasks.nonEmpty) {
@@ -132,6 +135,16 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     case CleanupTick =>
       for ((workerId, s @ WorkerState(_, Busy(taskId, timeout))) <- workers) {
         if (timeout.isOverdue()) timeoutWorker(workerId, taskId)
+      }
+
+    case Terminated(workerRef) =>
+      workers.find {
+        case (_, WorkerState(`workerRef`, _)) => true
+        case _ => false
+      } map(_._1) foreach { workerId =>
+        log.info("Worker terminated! workerId={}", workerId)
+        workers -= workerId
+        mediator ! DistributedPubSubMediator.Publish(topics.WorkerTopic, WorkerRemoved(workerId))
       }
   }
 
