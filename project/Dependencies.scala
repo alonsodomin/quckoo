@@ -29,7 +29,7 @@ object Dependencies {
 
     val diode = "0.5.1-SNAPSHOT"
 
-    val upickle = "0.3.8"
+    val upickle = "0.3.9"
     val scalatags = "0.4.6"
 
     val reactJs = "0.14.3"

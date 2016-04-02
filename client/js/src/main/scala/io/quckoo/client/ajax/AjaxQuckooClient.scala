@@ -2,7 +2,6 @@ package io.quckoo.client.ajax
 
 import io.quckoo._
 import io.quckoo.auth.User
-import io.quckoo.auth.http._
 import io.quckoo.client.QuckooClient
 import io.quckoo.id._
 import io.quckoo.protocol.registry._
@@ -11,12 +10,9 @@ import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization
 
 import monifu.reactive.Observable
-import org.reactivestreams.{Publisher, Subscriber}
 
-import org.scalajs.dom.{EventSource, MessageEvent, Event}
 import org.scalajs.dom.ext.Ajax
 
-import scalajs.js
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -75,10 +71,8 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
     }
   }
 
-  def registryEvents: Observable[RegistryEvent] = {
-    //EventSourceObservable[RegistryEvent](RegistryEventsURI, "RegistryEvent")
-    ???
-  }
+  def registryEvents: Observable[RegistryEvent] =
+    EventSourceObservable[RegistryEvent](RegistryEventsURI, "RegistryEvent")
 
   override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {
     Ajax.get(ExecutionPlansURI + "/" + planId, headers = authHeaders).map { xhr =>

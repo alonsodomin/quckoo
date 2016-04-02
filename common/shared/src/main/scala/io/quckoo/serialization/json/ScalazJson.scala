@@ -1,15 +1,15 @@
 package io.quckoo.serialization.json
 
-import upickle.{AttributeTagged, Js}
+import upickle.Js
 import upickle.default._
 
+import scala.language.implicitConversions
 import scalaz.{Failure, NonEmptyList, Success, Validation}
 
 /**
   * Created by alonsodomin on 19/03/2016.
   */
 trait ScalazJson {
-  import scala.language.implicitConversions
 
   implicit def nonEmptyListW[T: Writer]: Writer[NonEmptyList[T]] = Writer[NonEmptyList[T]] {
     x => Js.Arr(x.list.toList.map(writeJs(_)).toArray: _*)
