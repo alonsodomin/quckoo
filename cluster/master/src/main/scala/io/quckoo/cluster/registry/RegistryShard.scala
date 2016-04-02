@@ -111,7 +111,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
 
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
-      val handler = context.actorOf(Props(classOf[ResolutionHandler], sender()), "handler")
+      val handler = context.actorOf(Props(classOf[ResolutionHandler], sender()), "resolutionHandler")
       resolve(jobSpec.artifactId, download = false) map {
 
         case Success(_) =>
@@ -130,7 +130,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
     case event: RegistryResolutionEvent =>
       persist(event) { evt =>
         store = store.updated(evt)
-        mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, event)
+        mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, evt)
         sender() ! evt
       }
 
