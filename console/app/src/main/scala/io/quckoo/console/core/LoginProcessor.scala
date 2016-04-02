@@ -4,6 +4,7 @@ import diode.{ActionProcessor, ActionResult, Dispatcher, Effect}
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
 import japgolly.scalajs.react.extra.router.RouterCtl
+import org.scalajs.dom
 
 import scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -24,6 +25,8 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor
 
       case LoggedIn(client, referral) =>
         val action = Effect.action(NavigateTo(referral.getOrElse(DashboardRoute)))
+        import monifu.concurrent.Implicits.globalScheduler
+        client.workerEvents.foreach(evt => dom.console.log(evt.toString))
         ActionResult.ModelUpdateEffect(currentModel.copy(client = Some(client), notification = None), action)
 
       case LoggedOut =>

@@ -9,7 +9,7 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization
-import monifu.concurrent.Implicits.globalScheduler
+
 import monifu.reactive.Observable
 import org.reactivestreams.{Publisher, Subscriber}
 
@@ -76,26 +76,8 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
   }
 
   def registryEvents: Observable[RegistryEvent] = {
-    val source = new EventSource(WorkerEventsURI)
-    Observable.create[RegistryEvent] { subscriber =>
-
-      source.onerror = (event: Event) => {
-        if (source.readyState == EventSource.CLOSED) {
-          subscriber.onComplete()
-        } else {
-          subscriber.onError(new Exception(event.toString))
-        }
-      }
-
-      val listener = (message: MessageEvent) => {
-        val sse = read[ServerSentEvent](message.data.toString)
-//        val event = read[RegistryEvent](sse.data)
-//        subscriber.onNext(event)
-        ()
-      }
-
-      source.addEventListener[MessageEvent]("RegistryEvent", listener)
-    }
+    //EventSourceObservable[RegistryEvent](RegistryEventsURI, "RegistryEvent")
+    ???
   }
 
   override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {
@@ -120,24 +102,7 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
     }
   }
 
-  override def workerEvents: Observable[WorkerEvent] = {
-    val source = new EventSource(WorkerEventsURI)
-    Observable.create[WorkerEvent] { subscriber =>
-      source.onerror = (event: Event) => {
-        if (source.readyState == EventSource.CLOSED) {
-          subscriber.onComplete()
-        } else {
-          subscriber.onError(new Exception(event.toString))
-        }
-      }
-
-      source.addEventListener[MessageEvent]("WorkerEvent", (message: MessageEvent) => {
-        val sse = read[ServerSentEvent](message.data.toString)
-        val event = read[WorkerEvent](sse.data)
-        subscriber.onNext(event)
-        ()
-      })
-    }
-  }
+  override def workerEvents: Observable[WorkerEvent] =
+    EventSourceObservable[WorkerEvent](WorkerEventsURI, "worker")
 
 }

@@ -49,13 +49,6 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
           }
         }
       }
-    } ~ path("workers" / "events") {
-      get {
-        val sseSource = workerEvents.map { event =>
-          ServerSentEvent(write[WorkerEvent](event), event.getClass.getSimpleName)
-        }
-        complete(sseSource)
-      }
     }
 
 }

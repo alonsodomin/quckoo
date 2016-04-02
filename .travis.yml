@@ -22,7 +22,7 @@ before_install:
 script:
   #- sbt ++$TRAVIS_SCALA_VERSION clean coverage test && sbt coverageAggregate
   - sbt ++$TRAVIS_SCALA_VERSION clean test
-  
+
 after_success:
   - codecov
 #  - sbt coveralls

@@ -56,11 +56,6 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
             recover { case _ => LoginFailed }
         ))
 
-      case LoggedIn(client, _) =>
-        import monifu.concurrent.Implicits.globalScheduler
-        client.workerEvents.foreach(evt => dom.console.log(evt.toString))
-        noChange
-
       case Logout =>
         value.map { client =>
           effectOnly(Effect(client.close().map(_ => LoggedOut)))
