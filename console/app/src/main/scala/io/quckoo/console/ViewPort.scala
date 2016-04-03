@@ -32,7 +32,7 @@ object ViewPort {
 
     def render(props: Props) = {
 
-      def navigation = ConsoleCircuit.wrap(identity(_)){ proxy =>
+      def navigation = ConsoleCircuit.connect(identity(_)){ proxy =>
         Navigation(mainMenu.head, mainMenu, props.ctrl, props.resolution.page, proxy)
       }
 

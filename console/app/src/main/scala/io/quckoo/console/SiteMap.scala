@@ -59,7 +59,7 @@ object SiteMap {
   }
 
   def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute], res: Resolution[ConsoleRoute]) =
-    proxy.connect(identity(_))(p => ViewPort(p, ctrl, res))
+    proxy.wrap(identity(_))(p => ViewPort(p, ctrl, res))
 
   val baseUrl = BaseUrl.fromWindowOrigin_/
 
