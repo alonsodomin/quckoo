@@ -17,10 +17,10 @@ object DashboardView {
   object Style extends StyleSheet.Inline {
     import dsl._
 
-    val content = style(addClassName("container-fluid"))
+    val content = style(addClassName("container"))
 
     val leftPanel = style(
-      addClassNames("col-md-4"),
+      addClassNames("col-md-2"),
       height(100 %%)
     )
   }
@@ -30,10 +30,10 @@ object DashboardView {
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(props: Props) = {
-      <.div(^.`class` := "container-fluid",
-        <.div(^.`class` := "row-fluid",
+      <.div(^.`class` := "container",
+        <.div(^.`class` := "row",
           <.div(Style.leftPanel, props.proxy.connect(_.clusterState)(ClusterView(_))),
-          <.div(^.`class` := "container-fluid", "Here goes the contents")
+          <.div(^.`class` := "container", "Here goes the contents")
         )
       )
     }

@@ -20,6 +20,16 @@ object ClusterView {
 
     val container = style(addClassName("well"))
 
+    val sectionTitle = style(
+      fontSize(16 px),
+      fontWeight.bold
+    )
+
+    val topBuffer = style(
+      addClassName("row"),
+      marginTop(20 px)
+    )
+
     object section {
       val title = style(
         fontSize(16 px),
@@ -37,33 +47,25 @@ object ClusterView {
     def render(props: Props) = {
       val state = props.proxy()
       <.div(Style.container,
-        <.section(
-          <.div(Style.section.title,
-            "Nodes"
-          ),
-          <.table(
-            <.tbody(
-              <.tr(
-                <.td("Active"),
-                <.td(state.nodeInfo.active)
-              ),
-              <.tr(
-                <.td("Inactive"),
-                <.td(state.nodeInfo.inactive)
-              )
+        <.div(^.`class` := "row",
+          <.div(^.`class` := "col-sm-12",
+            <.div(Style.sectionTitle, "Nodes"),
+            <.div(^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "Active"),
+              <.div(^.`class` := "col-sm-4 text-right", state.nodeInfo.active)
+            ),
+            <.div(^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "Unreachable"),
+              <.div(^.`class` := "col-sm-4 text-right", state.nodeInfo.inactive)
             )
           )
         ),
-        <.section(
-          <.div(Style.section.title,
-            "Workers"
-          ),
-          <.table(
-            <.tbody(
-              <.tr(
-                <.td("Active"),
-                <.td(state.workers)
-              )
+        <.div(Style.topBuffer,
+          <.div(^.`class` := "col-sm-12",
+            <.div(Style.sectionTitle, "Workers"),
+            <.div(^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "Available"),
+              <.div(^.`class` := "col-sm-4 text-right", state.workers)
             )
           )
         )

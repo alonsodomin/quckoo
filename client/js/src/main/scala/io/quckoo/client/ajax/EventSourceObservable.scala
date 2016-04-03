@@ -31,7 +31,7 @@ private[ajax] class EventSourceObservable[A: Reader] private (url: String, event
 
 }
 
-object EventSourceObservable {
+private[ajax] object EventSourceObservable {
 
   def apply[A: Reader](url: String, eventType: String): Observable[A] =
     Observable.create(new EventSourceObservable[A](url, eventType))

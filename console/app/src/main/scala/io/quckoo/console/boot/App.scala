@@ -2,7 +2,7 @@ package io.quckoo.console.boot
 
 import io.quckoo.console.SiteMap
 import io.quckoo.console.core.ConsoleCircuit
-import io.quckoo.console.dashboard.DashboardView
+import io.quckoo.console.dashboard.{ClusterView, DashboardView}
 import io.quckoo.console.layout._
 import io.quckoo.console.registry.RegistryPageView
 import io.quckoo.console.scheduler.SchedulerPageView
@@ -22,6 +22,7 @@ object App extends JSApp {
     GlobalRegistry.register(
       LoginPageView.Style,
       DashboardView.Style,
+      ClusterView.Style,
       RegistryPageView.Style,
       SchedulerPageView.Style
     )
