@@ -34,8 +34,14 @@ object DashboardView {
         <.div(^.`class` := "row",
           <.div(Style.leftPanel, props.proxy.connect(_.clusterState)(ClusterView(_))),
           <.div(Style.content,
-            props.proxy.connect(_.clusterState.masterNodes)(NodeList(_)),
-            props.proxy.connect(_.clusterState.workerNodes)(NodeList(_))
+            <.div(
+              <.h3("Master nodes"),
+              props.proxy.connect(_.clusterState.masterNodes)(NodeList(_))
+            ),
+            <.div(
+              <.h3("Worker nodes"),
+              props.proxy.connect(_.clusterState.workerNodes)(NodeList(_))
+            )
           )
         )
       )
