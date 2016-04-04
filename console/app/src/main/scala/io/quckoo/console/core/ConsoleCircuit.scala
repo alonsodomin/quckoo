@@ -9,7 +9,8 @@ import io.quckoo.client.QuckooClient
 import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
 import io.quckoo.id.{JobId, PlanId}
-import io.quckoo.protocol.cluster.ClusterInfo
+import io.quckoo.net.ClusterState
+import io.quckoo.protocol.cluster.{GetClusterStatus, MasterEvent}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
@@ -22,7 +23,8 @@ import scalaz.{-\/, \/-}
 /**
   * Created by alonsodomin on 20/02/2016.
   */
-object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleScope] with ConsoleOps {
+object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleScope]
+    with ConsoleOps with ConsoleSubscriptions {
 
   protected def initialModel: ConsoleScope = ConsoleScope.initial
 
@@ -41,7 +43,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   def zoomIntoClient: ModelRW[ConsoleScope, Option[QuckooClient]] =
     zoomRW(_.client) { (model, c) => model.copy(client = c) }
 
-  def zoomIntoClusterState: ModelRW[ConsoleScope, ClusterInfo] =
+  def zoomIntoClusterState: ModelRW[ConsoleScope, ClusterState] =
     zoomRW(_.clusterState) { (model, value) => model.copy(clusterState = value) }
 
   def zoomIntoExecutionPlans: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]] =
@@ -67,19 +69,29 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
     }
   }
 
-  val clusterStateHandler = new ActionHandler(zoomIntoClusterState) {
-    import monifu.concurrent.Implicits.globalScheduler
+  val clusterStateHandler = new ActionHandler(zoomIntoClusterState)
+      with ConnectedHandler[ClusterState] {
 
     override def handle = {
-      case SubscribeToBackend(client) =>
-        client.workerEvents.subscribe(new WorkerEventSubscriber)
-        noChange
+      case GetClusterStatus =>
+        withClient { implicit client =>
+          effectOnly(Effect(refreshClusterStatus))
+        }
 
-      case WorkerJoined(workerId) =>
-        updated(value.copy(workers = value.workers + 1))
+      case ClusterStateLoaded(state) =>
+        updated(state, Effect.action(StartClusterSubscription))
 
-      case WorkerRemoved(workerId) =>
-        updated(value.copy(workers = value.workers - 1))
+      case StartClusterSubscription =>
+        withClient { implicit client =>
+          subscribeClusterState
+          noChange
+        }
+
+      case evt: MasterEvent =>
+        updated(value.updated(evt))
+
+      case evt: WorkerEvent =>
+        updated(value.updated(evt))
     }
 
   }

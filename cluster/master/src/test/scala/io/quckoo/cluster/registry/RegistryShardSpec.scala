@@ -5,15 +5,13 @@ import java.util.UUID
 
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.testkit._
-
 import io.quckoo._
+import io.quckoo.cluster.topics
 import io.quckoo.fault.{ExceptionThrown, Fault, UnresolvedDependency}
 import io.quckoo.id.{ArtifactId, JobId}
-import io.quckoo.protocol.topics
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.{Artifact, Resolve}
 import io.quckoo.test.TestActorSystem
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
@@ -52,11 +50,11 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
   val mockResolve = mock[Resolve]
 
   before {
-    mediator ! DistributedPubSubMediator.Subscribe(topics.RegistryTopic, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, eventListener.ref)
   }
 
   after {
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.RegistryTopic, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, eventListener.ref)
   }
 
   override def afterAll(): Unit =

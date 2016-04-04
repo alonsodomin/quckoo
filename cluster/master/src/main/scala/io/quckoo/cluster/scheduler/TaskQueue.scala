@@ -2,11 +2,11 @@ package io.quckoo.cluster.scheduler
 
 import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-
 import io.quckoo.Task
+import io.quckoo.cluster.net._
 import io.quckoo.cluster.protocol._
-import io.quckoo.id.{TaskId, WorkerId}
-import io.quckoo.protocol.topics
+import io.quckoo.cluster.topics
+import io.quckoo.id.{TaskId, NodeId}
 import io.quckoo.protocol.worker._
 
 import scala.collection.immutable.Queue
@@ -48,7 +48,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
   private val mediator = DistributedPubSub(context.system).mediator
 
-  private var workers = Map.empty[WorkerId, WorkerState]
+  private var workers = Map.empty[NodeId, WorkerState]
   private var pendingTasks = Queue.empty[AcceptedTask]
   private var inProgressTasks = Map.empty[TaskId, ActorRef]
 
@@ -67,10 +67,13 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         workers += (workerId -> workers(workerId).copy(ref = sender()))
         context.watch(sender())
       } else {
-        workers += (workerId -> WorkerState(sender(), status = WorkerState.Idle))
-        context.watch(sender())
-        log.info("Worker registered. workerId={}, location={}", workerId, sender().path.address)
-        mediator ! DistributedPubSubMediator.Publish(topics.WorkerTopic, WorkerJoined(workerId))
+        val workerRef = sender()
+        workers += (workerId -> WorkerState(workerRef, status = WorkerState.Idle))
+        context.watch(workerRef)
+
+        val workerLocation = workerRef.location
+        log.info("Worker registered. workerId={}, location={}", workerId, workerLocation)
+        mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerJoined(workerId, workerLocation))
         if (pendingTasks.nonEmpty) {
           sender ! TaskReady
         }
@@ -152,12 +155,12 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
           case _ =>
         }
-        mediator ! DistributedPubSubMediator.Publish(topics.WorkerTopic, WorkerRemoved(workerId))
+        mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
       }
   }
 
   private def notifyWorkers(): Unit = if (pendingTasks.nonEmpty) {
-    def randomWorkers: Seq[(WorkerId, WorkerState)] = workers.toSeq
+    def randomWorkers: Seq[(NodeId, WorkerState)] = workers.toSeq
 
     randomWorkers.foreach {
       case (_, WorkerState(ref, WorkerState.Idle)) => ref ! TaskReady
@@ -165,7 +168,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     }
   }
 
-  private def changeWorkerToIdle(workerId: WorkerId, taskId: TaskId): Unit =
+  private def changeWorkerToIdle(workerId: NodeId, taskId: TaskId): Unit =
     workers.get(workerId) match {
       case Some(s @ WorkerState(_, WorkerState.Busy(`taskId`, _))) =>
         workers += (workerId -> s.copy(status = WorkerState.Idle))
@@ -173,11 +176,11 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       // ok, might happen after standby recovery, worker state is not persisted
     }
 
-  private def timeoutWorker(workerId: WorkerId, taskId: TaskId): Unit = if (inProgressTasks.contains(taskId)) {
+  private def timeoutWorker(workerId: NodeId, taskId: TaskId): Unit = if (inProgressTasks.contains(taskId)) {
     workers -= workerId
     inProgressTasks(taskId) ! Execution.TimeOut
     inProgressTasks -= taskId
-    mediator ! DistributedPubSubMediator.Publish(topics.WorkerTopic, WorkerRemoved(workerId))
+    mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
     notifyWorkers()
   }
 

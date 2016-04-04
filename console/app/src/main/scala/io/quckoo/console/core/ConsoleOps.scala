@@ -1,10 +1,10 @@
 package io.quckoo.console.core
 
 import diode.data.{Failed, Pot, Ready, Unavailable}
-
 import io.quckoo.{ExecutionPlan, JobSpec}
 import io.quckoo.client.QuckooClient
 import io.quckoo.id._
+import io.quckoo.net.ClusterState
 
 import scala.concurrent.Future
 import scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -13,6 +13,9 @@ import scalajs.concurrent.JSExecutionContext.Implicits.queue
   * Created by alonsodomin on 25/03/2016.
   */
 private[core] trait ConsoleOps {
+
+  def refreshClusterStatus(implicit client: QuckooClient): Future[ClusterStateLoaded] =
+    client.clusterState.map(ClusterStateLoaded(_))
 
   def loadJobSpec(jobId: JobId)(implicit client: QuckooClient): Future[(JobId, Pot[JobSpec])] =
     client.fetchJob(jobId).map {

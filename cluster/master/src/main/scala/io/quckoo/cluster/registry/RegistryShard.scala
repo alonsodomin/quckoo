@@ -7,10 +7,10 @@ import akka.pattern._
 import akka.persistence.{PersistentActor, SnapshotOffer}
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id._
-import io.quckoo.protocol.topics
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolve
 import io.quckoo.JobSpec
+import io.quckoo.cluster.topics
 
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
@@ -130,7 +130,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
     case event: RegistryResolutionEvent =>
       persist(event) { evt =>
         store = store.updated(evt)
-        mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, evt)
+        mediator ! DistributedPubSubMediator.Publish(topics.Registry, evt)
         sender() ! evt
       }
 
@@ -139,7 +139,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
       if (!store.isEnabled(jobId)) {
         persist(answer) { event =>
           store = store.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, event)
+          mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
         }
       }
       sender() ! answer
@@ -149,7 +149,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
       if (store.isEnabled(jobId)) {
         persist(answer) { event =>
           store = store.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, event)
+          mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
         }
       }
       sender() ! answer

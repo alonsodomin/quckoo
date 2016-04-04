@@ -15,7 +15,7 @@ package object ajax {
   private[ajax] val LoginURI = BaseURI + "/auth/login"
   private[ajax] val LogoutURI = BaseURI + "/logout"
 
-  private[ajax] val ClusterDetailsURI = BaseURI + "/cluster/info"
+  private[ajax] val ClusterStateURI = BaseURI + "/cluster/state"
 
   private[ajax] val RegistryBaseURI = BaseURI + "/registry"
   private[ajax] val JobsURI = RegistryBaseURI + "/jobs"

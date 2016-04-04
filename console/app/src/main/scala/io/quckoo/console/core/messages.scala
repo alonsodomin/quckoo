@@ -1,11 +1,11 @@
 package io.quckoo.console.core
 
 import diode.data.{AsyncAction, Pot, PotState}
-
 import io.quckoo._
 import io.quckoo.client.QuckooClient
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.net.ClusterState
 
 import scala.util.{Failure, Try}
 
@@ -17,6 +17,9 @@ case object LoggedOut
 case object LoginFailed
 
 case class NavigateTo(route: ConsoleRoute)
+
+case class ClusterStateLoaded(state: ClusterState)
+case object StartClusterSubscription
 
 case object LoadJobSpecs
 case class JobSpecsLoaded(value: Map[JobId, Pot[JobSpec]])
@@ -48,5 +51,3 @@ case class RefreshExecutionPlans(
     copy(state = newState, result = newValue)
 
 }
-
-case class SubscribeToBackend(client: QuckooClient)

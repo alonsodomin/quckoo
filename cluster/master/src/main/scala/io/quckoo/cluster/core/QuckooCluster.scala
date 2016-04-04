@@ -5,14 +5,15 @@ import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.stream.ActorMaterializer
-import io.quckoo.cluster.protocol._
-import io.quckoo.cluster.registry.{Registry, RegistryShard}
+
+import io.quckoo.cluster.net._
+import io.quckoo.cluster.registry.Registry
 import io.quckoo.cluster.scheduler.{Scheduler, TaskQueue}
-import io.quckoo.cluster.{QuckooClusterSettings, KairosStatus}
-import io.quckoo.protocol.topics
+import io.quckoo.cluster.{QuckooClusterSettings, topics}
+import io.quckoo.net.ClusterState
 import io.quckoo.protocol.client._
+import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
@@ -53,18 +54,18 @@ class QuckooCluster(settings: QuckooClusterSettings)
     Scheduler.props(registry, readJournal, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
 
   private var clients = Set.empty[ActorRef]
-  private var clusterStatus = KairosStatus()
+  private var clusterState = ClusterState(masterNodes = masterNodes(cluster))
 
   override implicit def actorSystem: ActorSystem = context.system
 
   override def preStart(): Unit = {
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[ReachabilityEvent])
-    mediator ! DistributedPubSubMediator.Subscribe(topics.WorkerTopic, self)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Worker, self)
   }
 
   override def postStop(): Unit = {
     cluster.unsubscribe(self)
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.WorkerTopic, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Worker, self)
   }
 
   def receive: Receive = {
@@ -79,7 +80,7 @@ class QuckooCluster(settings: QuckooClusterSettings)
       sender() ! Disconnected
 
     case GetClusterStatus =>
-      sender() ! clusterStatus
+      sender() ! clusterState
 
     case cmd: RegistryCommand =>
       registry.tell(cmd, sender())
@@ -87,14 +88,37 @@ class QuckooCluster(settings: QuckooClusterSettings)
     case cmd: SchedulerCommand =>
       scheduler.tell(cmd, sender())
 
-    case evt: MemberEvent =>
-      clusterStatus = clusterStatus.update(evt)
+    case evt: MemberEvent => evt match {
+      case MemberUp(member) =>
+        val event = MasterJoined(member.nodeId, member.address.toLocation)
+        clusterState = clusterState.updated(event)
+        mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
 
-    case WorkerJoined(_) =>
-      clusterStatus = clusterStatus.copy(workers = clusterStatus.workers + 1)
+      case MemberRemoved(member, _) =>
+        val event = MasterRemoved(member.nodeId)
+        clusterState = clusterState.updated(event)
+        mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
 
-    case WorkerRemoved(_) =>
-      clusterStatus = clusterStatus.copy(workers = clusterStatus.workers - 1)
+      case _ =>
+    }
+
+    case evt: ReachabilityEvent => evt match {
+      case ReachableMember(member) =>
+        val event = MasterReachable(member.nodeId)
+        clusterState = clusterState.updated(event)
+        mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
+
+      case UnreachableMember(member) =>
+        val event = MasterUnreachable(member.nodeId)
+        clusterState = clusterState.updated(event)
+        mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
+    }
+
+    case evt: WorkerJoined =>
+      clusterState = clusterState.updated(evt)
+
+    case evt: WorkerRemoved =>
+      clusterState = clusterState.updated(evt)
 
     case Shutdown =>
       // Perform graceful shutdown of the cluster

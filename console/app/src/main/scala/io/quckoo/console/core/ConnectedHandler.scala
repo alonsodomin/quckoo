@@ -9,6 +9,6 @@ import io.quckoo.client.QuckooClient
 private[core] trait ConnectedHandler[S] { this: ActionHandler[ConsoleScope, S] =>
 
   def withClient(f: QuckooClient => ActionResult[ConsoleScope]): ActionResult[ConsoleScope] =
-    this.modelRW.root.zoomMap(_.client)(identity).value.map(f).getOrElse(ActionResult.NoChange)
+    this.modelRW.root.zoomMap(_.client)(identity).value.map(f).getOrElse(noChange)
 
 }

@@ -6,11 +6,11 @@ import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted}
+import io.quckoo.cluster.topics
 import io.quckoo.fault.{ExceptionThrown, Fault}
 import io.quckoo.id._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.protocol.topics
 import io.quckoo.time.{DateTime, TimeSource}
 import io.quckoo.{ExecutionPlan, JobSpec, Task, Trigger}
 
@@ -123,10 +123,10 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   override def persistenceId = "ExecutionPlan-" + self.path.name
 
   override def preStart(): Unit =
-    mediator ! DistributedPubSubMediator.Subscribe(topics.RegistryTopic, self)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
 
   override def postStop(): Unit =
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.RegistryTopic, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
 
   override def receiveRecover: Receive = {
     case create: Created =>
@@ -153,7 +153,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   private def activatePlan(state: DriverState): Unit = {
     log.info("Activating execution plan. planId={}", state.planId)
     persist(ExecutionPlanStarted(state.jobId, state.planId)) { event =>
-      mediator ! DistributedPubSubMediator.Publish(topics.SchedulerTopic, event)
+      mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
       self ! scheduleOrFinish(state)
       context.become(active(state))
     }
@@ -204,7 +204,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       state.plan.currentTaskId.foreach { taskId =>
         persist(TaskCompleted(state.jobId, state.planId, taskId, outcome)) { event =>
           log.debug("Task finished. taskId={}", taskId)
-          mediator ! DistributedPubSubMediator.Publish(topics.SchedulerTopic, event)
+          mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
 
           val newState = state.updated(event)
           context.become(active(newState))
@@ -238,7 +238,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       // Create a trigger to fire the task
       val internalTrigger = scheduleTask(task)
       persist(TaskScheduled(state.jobId, state.planId, taskId)) { event =>
-        mediator ! DistributedPubSubMediator.Publish(topics.SchedulerTopic, event)
+        mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
         context.become(active(state.updated(event), Some(internalTrigger)))
       }
 
@@ -250,7 +250,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
       log.info("Stopping execution plan. planId={}", state.planId)
       persist(ExecutionPlanFinished(state.jobId, state.planId)) { event =>
-        mediator ! DistributedPubSubMediator.Publish(topics.SchedulerTopic, event)
+        mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
         context.parent ! Passivate(stopMessage = PoisonPill)
         context.become(shuttingDown(state.updated(event)))
       }

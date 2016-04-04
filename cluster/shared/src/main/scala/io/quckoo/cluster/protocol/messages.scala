@@ -5,10 +5,10 @@ import io.quckoo.id._
 
 // Messages from workers
 sealed trait WorkerMessage
-case class RegisterWorker(workerId: WorkerId) extends WorkerMessage
-case class RequestTask(workerId: WorkerId) extends WorkerMessage
-case class TaskDone(workerId: WorkerId, taskId: TaskId, result: Any) extends WorkerMessage
-case class TaskFailed(workerId: WorkerId, taskId: TaskId, cause: Faults) extends WorkerMessage
+case class RegisterWorker(workerId: NodeId) extends WorkerMessage
+case class RequestTask(workerId: NodeId) extends WorkerMessage
+case class TaskDone(workerId: NodeId, taskId: TaskId, result: Any) extends WorkerMessage
+case class TaskFailed(workerId: NodeId, taskId: TaskId, cause: Faults) extends WorkerMessage
 
 // Messages to workers
 sealed trait MasterMessage

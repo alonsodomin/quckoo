@@ -8,11 +8,10 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.persistence.query.scaladsl.{AllPersistenceIdsQuery, EventsByPersistenceIdQuery}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-
 import io.quckoo.JobSpec
 import io.quckoo.cluster.protocol._
+import io.quckoo.cluster.topics
 import io.quckoo.id._
-import io.quckoo.protocol.topics
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.time.TimeSource
@@ -125,7 +124,7 @@ private class ExecutionDriverFactory(jobId: JobId, cmd: Scheduler.CreateExecutio
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart(): Unit =
-    mediator ! DistributedPubSubMediator.Subscribe(topics.SchedulerTopic, self)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, self)
 
   def receive: Receive = initializing
 
@@ -143,7 +142,7 @@ private class ExecutionDriverFactory(jobId: JobId, cmd: Scheduler.CreateExecutio
     case response @ ExecutionPlanStarted(`jobId`, _) =>
       log.info("Execution plan for job {} has been started.", jobId)
       cmd.requestor ! response
-      mediator ! DistributedPubSubMediator.Unsubscribe(topics.SchedulerTopic, self)
+      mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
       context.become(shuttingDown)
   }
 

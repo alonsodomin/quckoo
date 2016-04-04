@@ -6,14 +6,12 @@ import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.testkit._
-
+import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.protocol.topics
 import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
 import io.quckoo.{JobSpec, Task, Trigger}
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
@@ -47,11 +45,11 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
   val eventListener = TestProbe()
 
   before {
-    mediator ! DistributedPubSubMediator.Subscribe(topics.SchedulerTopic, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, eventListener.ref)
   }
 
   after {
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.SchedulerTopic, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, eventListener.ref)
   }
 
   override protected def afterAll(): Unit =
@@ -101,7 +99,7 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
     }
 
     "not re-schedule the execution after the job is disabled" in {
-      mediator ! DistributedPubSubMediator.Publish(topics.RegistryTopic, JobDisabled(TestJobId))
+      mediator ! DistributedPubSubMediator.Publish(topics.Registry, JobDisabled(TestJobId))
 
       val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
       finishedMsg.jobId should be (TestJobId)

@@ -4,13 +4,12 @@ import io.quckoo._
 import io.quckoo.auth.User
 import io.quckoo.client.QuckooClient
 import io.quckoo.id._
+import io.quckoo.net.ClusterState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization
-
 import monifu.reactive.Observable
-
 import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,6 +35,12 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
       authToken = None
       ()
     }
+
+  override def clusterState(implicit ec: ExecutionContext): Future[ClusterState] = {
+    Ajax.get(ClusterStateURI, headers = authHeaders).map { xhr =>
+      read[ClusterState](xhr.responseText)
+    }
+  }
 
   override def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] = {
     Ajax.post(JobsURI + "/" + jobId + "/enable", headers = authHeaders).map { xhr =>

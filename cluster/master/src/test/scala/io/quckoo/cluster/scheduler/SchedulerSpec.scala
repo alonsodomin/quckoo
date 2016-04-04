@@ -5,10 +5,10 @@ import akka.persistence.inmemory.query.journal.scaladsl.InMemoryReadJournal
 import akka.persistence.query.PersistenceQuery
 import akka.testkit._
 import io.quckoo.JobSpec
+import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.protocol.topics
 import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
 import org.scalatest._
 
@@ -39,11 +39,11 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
   }
 
   before {
-    mediator ! DistributedPubSubMediator.Subscribe(topics.SchedulerTopic, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, eventListener.ref)
   }
 
   after {
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.SchedulerTopic, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, eventListener.ref)
   }
 
   val readJournal = PersistenceQuery(system).

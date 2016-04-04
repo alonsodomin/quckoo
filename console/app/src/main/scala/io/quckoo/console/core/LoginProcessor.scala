@@ -24,12 +24,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor
 
       case LoggedIn(client, referral) =>
         val navigate = Effect.action(NavigateTo(referral.getOrElse(DashboardRoute)))
-        val subscribe = Effect.action(SubscribeToBackend(client))
-
-        ActionResult.ModelUpdateEffect(
-          currentModel.copy(client = Some(client), notification = None),
-          subscribe >> navigate
-        )
+        ActionResult.ModelUpdateEffect(currentModel.copy(client = Some(client), notification = None), navigate)
 
       case LoggedOut =>
         val action = Effect.action(NavigateTo(DashboardRoute))

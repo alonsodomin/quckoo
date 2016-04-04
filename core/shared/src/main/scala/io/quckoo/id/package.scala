@@ -9,6 +9,6 @@ package object id {
 
   type PlanId = UUID
   type TaskId = UUID
-  type WorkerId = UUID
+  type NodeId = UUID
 
 }

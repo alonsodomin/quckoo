@@ -1,8 +1,10 @@
 package io.quckoo.console.dashboard
 
 import diode.react.ModelProxy
-import io.quckoo.console.core.{ClusterEvent, ClusterEventListener}
-import io.quckoo.protocol.cluster.ClusterInfo
+
+import io.quckoo.net.{NodeStatus, ClusterState}
+import io.quckoo.protocol.cluster.GetClusterStatus
+
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
@@ -40,23 +42,38 @@ object ClusterView {
     initInnerObjects(section.title)
   }
 
-  case class Props(proxy: ModelProxy[ClusterInfo])
+  case class Props(proxy: ModelProxy[ClusterState])
 
   class Backend($: BackendScope[Props, Unit]) {
 
+    def mounted(props: Props) = {
+      // We assume that if master node map is empty, then we haven't subscribed yet
+      val unsubscribed = props.proxy().masterNodes.isEmpty
+
+      Callback.ifTrue(unsubscribed, props.proxy.dispatch(GetClusterStatus))
+    }
+
     def render(props: Props) = {
-      val state = props.proxy()
+      def activeNodes: Int =
+        props.proxy().masterNodes.count(_._2.status == NodeStatus.Active)
+
+      def unreachableNodes: Int =
+        props.proxy().masterNodes.count(_._2.status == NodeStatus.Unreachable)
+
+      def activeWorkers: Int =
+        props.proxy().workerNodes.size
+
       <.div(Style.container,
         <.div(^.`class` := "row",
           <.div(^.`class` := "col-sm-12",
             <.div(Style.sectionTitle, "Nodes"),
             <.div(^.`class` := "row",
               <.div(^.`class` := "col-sm-8", "Active"),
-              <.div(^.`class` := "col-sm-4 text-right", state.nodeInfo.active)
+              <.div(^.`class` := "col-sm-4 text-right", activeNodes)
             ),
             <.div(^.`class` := "row",
               <.div(^.`class` := "col-sm-8", "Unreachable"),
-              <.div(^.`class` := "col-sm-4 text-right", state.nodeInfo.inactive)
+              <.div(^.`class` := "col-sm-4 text-right", unreachableNodes)
             )
           )
         ),
@@ -65,7 +82,7 @@ object ClusterView {
             <.div(Style.sectionTitle, "Workers"),
             <.div(^.`class` := "row",
               <.div(^.`class` := "col-sm-8", "Available"),
-              <.div(^.`class` := "col-sm-4 text-right", state.workers)
+              <.div(^.`class` := "col-sm-4 text-right", activeWorkers)
             )
           )
         )
@@ -77,8 +94,9 @@ object ClusterView {
   private[this] val component = ReactComponentB[Props]("ClusterView").
     stateless.
     renderBackend[Backend].
+    componentDidMount($ => $.backend.mounted($.props)).
     build
 
-  def apply(proxy: ModelProxy[ClusterInfo]) = component(Props(proxy))
+  def apply(proxy: ModelProxy[ClusterState]) = component(Props(proxy))
 
 }

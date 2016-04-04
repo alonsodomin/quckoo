@@ -2,7 +2,7 @@ package io.quckoo.cluster.scheduler
 
 import akka.actor.Props
 import io.quckoo.cluster.core.PubSubSubscribedEventPublisher
-import io.quckoo.protocol.topics
+import io.quckoo.cluster.topics
 import io.quckoo.protocol.worker.WorkerEvent
 
 /**
@@ -15,4 +15,4 @@ object WorkerEventPublisher {
 
 }
 
-class WorkerEventPublisher extends PubSubSubscribedEventPublisher[WorkerEvent](topics.WorkerTopic)
+class WorkerEventPublisher extends PubSubSubscribedEventPublisher[WorkerEvent](topics.Worker)

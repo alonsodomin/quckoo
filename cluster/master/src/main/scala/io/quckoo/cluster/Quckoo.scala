@@ -7,21 +7,21 @@ import akka.pattern._
 import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
-import de.heikoseeberger.akkasse.ServerSentEvent
-import io.quckoo.auth.XSRFToken
+
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
-import io.quckoo.cluster.protocol.GetClusterStatus
 import io.quckoo.cluster.registry.RegistryEventPublisher
 import io.quckoo.cluster.scheduler.WorkerEventPublisher
 import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.net.ClusterState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.time.TimeSource
 import io.quckoo.{ExecutionPlan, JobSpec, Validated}
+
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -112,13 +112,10 @@ class Quckoo(settings: QuckooClusterSettings)
     Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
 
-  def clusterDetails(implicit ec: ExecutionContext): Future[ClusterInfo] = {
+  def clusterState(implicit ec: ExecutionContext): Future[ClusterState] = {
     implicit val timeout = Timeout(5 seconds)
 
-    (core ? GetClusterStatus).mapTo[KairosStatus] map { status =>
-      val nodeInfo = NodeInfo(status.members.size)
-      ClusterInfo(nodeInfo, 0)
-    }
+    (core ? GetClusterStatus).mapTo[ClusterState]
   }
 
 }
