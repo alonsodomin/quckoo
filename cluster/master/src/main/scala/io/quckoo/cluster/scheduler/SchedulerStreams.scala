@@ -10,6 +10,6 @@ import io.quckoo.protocol.worker.WorkerEvent
   */
 trait SchedulerStreams {
 
-  def workerEvents: Source[WorkerEvent, NotUsed]
+
 
 }

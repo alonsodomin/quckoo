@@ -7,11 +7,9 @@ import akka.pattern._
 import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
-
-import io.quckoo.cluster.core._
+import io.quckoo.cluster.core.{WorkerEventPublisher, _}
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.registry.RegistryEventPublisher
-import io.quckoo.cluster.scheduler.WorkerEventPublisher
 import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.net.ClusterState
@@ -21,7 +19,6 @@ import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.time.TimeSource
 import io.quckoo.{ExecutionPlan, JobSpec, Validated}
-
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -65,6 +62,10 @@ class Quckoo(settings: QuckooClusterSettings)
       case valid: ExecutionPlanStarted => Right(valid)
     }
   }
+
+  def masterEvents: Source[MasterEvent, NotUsed] =
+    Source.actorPublisher[MasterEvent](MasterEventPublisher.props).
+      mapMaterializedValue(_ => NotUsed)
 
   def workerEvents: Source[WorkerEvent, NotUsed] =
     Source.actorPublisher[WorkerEvent](WorkerEventPublisher.props).

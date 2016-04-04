@@ -10,6 +10,7 @@ import de.heikoseeberger.akkasse.{EventStreamMarshalling, ServerSentEvent}
 import io.quckoo.JobSpec
 import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.id.JobId
+import io.quckoo.cluster.http._
 import io.quckoo.protocol.registry.RegistryEvent
 import io.quckoo.serialization
 
@@ -63,10 +64,7 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
       }
     } ~ path("events") {
       get {
-        val sseSource = registryEvents.map { event =>
-          ServerSentEvent(write[RegistryEvent](event), event.getClass.getSimpleName)
-        }
-        complete(sseSource)
+        complete(asSSE(registryEvents, "registry"))
       }
     }
 

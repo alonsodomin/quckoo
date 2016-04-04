@@ -1,7 +1,6 @@
-package io.quckoo.cluster.scheduler
+package io.quckoo.cluster.core
 
 import akka.actor.Props
-import io.quckoo.cluster.core.PubSubSubscribedEventPublisher
 import io.quckoo.cluster.topics
 import io.quckoo.protocol.worker.WorkerEvent
 

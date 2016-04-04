@@ -43,11 +43,15 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
           }
         }
       } ~ pathPrefix("cluster") {
-        path("state") {
+        pathEnd {
           get {
             extractExecutionContext { implicit ec =>
               complete(clusterState)
             }
+          }
+        } ~ path("master") {
+          get {
+            complete(asSSE(masterEvents, "master"))
           }
         }
       } ~ pathPrefix("registry") {
@@ -57,11 +61,7 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
       }
     } ~ path("workers" / "events") {
       get {
-        complete {
-          workerEvents.map { event =>
-            ServerSentEvent(write[WorkerEvent](event), "worker")
-          } keepAlive(1 second, () => ServerSentEvent.heartbeat)
-        }
+        complete(asSSE(workerEvents, "worker"))
       }
     }
 
