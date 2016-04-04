@@ -17,12 +17,12 @@ object DashboardView {
   object Style extends StyleSheet.Inline {
     import dsl._
 
-    val content = style(addClassName("container"))
-
     val leftPanel = style(
       addClassNames("col-md-2"),
       height(100 %%)
     )
+
+    val content = style(addClassName("col-md-10"))
   }
 
   case class Props(proxy: ModelProxy[ConsoleScope])
@@ -33,7 +33,10 @@ object DashboardView {
       <.div(^.`class` := "container",
         <.div(^.`class` := "row",
           <.div(Style.leftPanel, props.proxy.connect(_.clusterState)(ClusterView(_))),
-          <.div(^.`class` := "container", "Here goes the contents")
+          <.div(Style.content,
+            props.proxy.connect(_.clusterState.masterNodes)(NodeList(_)),
+            props.proxy.connect(_.clusterState.workerNodes)(NodeList(_))
+          )
         )
       )
     }
