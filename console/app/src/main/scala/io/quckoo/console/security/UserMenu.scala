@@ -1,6 +1,5 @@
 package io.quckoo.console.security
 
-import diode.react.ModelProxy
 import io.quckoo.auth.User
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -10,11 +9,11 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object UserMenu {
 
-  private[this] val component = ReactComponentB[ModelProxy[Option[User]]]("UserDisplay").
-    render_P { proxy =>
-      <.div(proxy.value.map(user => <.span(user.id)).getOrElse(EmptyTag))
+  private[this] val component = ReactComponentB[User]("UserDisplay").
+    render_P { user =>
+      <.span(user.id)
     } build
 
-  def apply(proxy: ModelProxy[Option[User]]) = component(proxy)
+  def apply(user: User) = component(user)
 
 }

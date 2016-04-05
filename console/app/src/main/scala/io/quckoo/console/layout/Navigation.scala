@@ -1,10 +1,13 @@
 package io.quckoo.console.layout
 
 import diode.react.ModelProxy
+
+import io.quckoo.auth.User
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components._
-import io.quckoo.console.core.{ConsoleScope, Logout}
+import io.quckoo.console.core.Logout
 import io.quckoo.console.security.UserMenu
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -22,7 +25,7 @@ object Navigation {
 
   case class Props(initial: NavigationItem, menu: List[NavigationMenu],
                    routerCtl: RouterCtl[ConsoleRoute], current: ConsoleRoute,
-                   proxy: ModelProxy[ConsoleScope])
+                   proxy: ModelProxy[Option[User]])
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -65,7 +68,7 @@ object Navigation {
     def onLogoutClicked(e: ReactEventI): Callback =
       preventDefault(e) >> $.props.flatMap(_.proxy.dispatch(Logout))
 
-    def render(props: Props) =
+    def render(props: Props): ReactElement = <.div(props.proxy().map { user =>
       <.nav(^.`class` := "navbar navbar-default navbar-fixed-top",
         <.div(^.`class` := "container-fluid",
           <.div(^.`class` := "navbar-header",
@@ -80,12 +83,13 @@ object Navigation {
               props.menu.map(item => renderNavMenu(item, props))
             ),
             <.ul(^.`class` := "nav navbar-nav navbar-right",
-              <.li(^.`class` := "navbar-text", props.proxy.wrap(_.currentUser)(UserMenu.apply)),
+              <.li(^.`class` := "navbar-text", UserMenu(user)),
               <.li(<.a(^.href := "#", ^.onClick ==> onLogoutClicked, Icons.signOut, "Logout"))
             )
           )
         )
       )
+    } getOrElse EmptyTag)
 
   }
 
@@ -96,7 +100,7 @@ object Navigation {
 
   def apply(initial: NavigationItem, menu: List[NavigationMenu],
             routerCtl: RouterCtl[ConsoleRoute], current: ConsoleRoute,
-            proxy: ModelProxy[ConsoleScope]) =
+            proxy: ModelProxy[Option[User]]) =
     component(Props(initial, menu, routerCtl, current, proxy))
 
 }

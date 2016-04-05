@@ -1,15 +1,17 @@
 package io.quckoo.console
 
 import diode.react.ModelProxy
-
+import io.quckoo.console.components.Icons
 import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, LoginProcessor}
 import io.quckoo.console.dashboard.DashboardView
+import io.quckoo.console.layout.Navigation
+import io.quckoo.console.layout.Navigation.NavigationItem
 import io.quckoo.console.registry.RegistryPageView
 import io.quckoo.console.scheduler.SchedulerPageView
 import io.quckoo.console.security.LoginPageView
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
+import japgolly.scalajs.react.vdom.prefix_<^._
 
 /**
  * Created by aalonsodominguez on 12/10/2015.
@@ -58,8 +60,22 @@ object SiteMap {
       logToConsole
   }
 
-  def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute], res: Resolution[ConsoleRoute]) =
-    proxy.wrap(identity(_))(p => ViewPort(p, ctrl, res))
+  val mainMenu = List(
+    NavigationItem(Icons.dashboard, "Dashboard", DashboardRoute),
+    NavigationItem(Icons.book, "Registry", RegistryRoute),
+    NavigationItem(Icons.clockO, "Scheduler", SchedulerRoute)
+  )
+
+  def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute], res: Resolution[ConsoleRoute]): ReactElement = {
+    def navigation = proxy.connect(_.currentUser){ user =>
+      Navigation(mainMenu.head, mainMenu, ctrl, res.page, user)
+    }
+
+    <.div(
+      navigation,
+      res.render()
+    )
+  }
 
   val baseUrl = BaseUrl.fromWindowOrigin_/
 
