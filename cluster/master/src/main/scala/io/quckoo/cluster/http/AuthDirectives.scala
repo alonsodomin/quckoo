@@ -2,11 +2,8 @@ package io.quckoo.cluster.http
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.AuthenticationFailedRejection._
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import akka.http.scaladsl.server.directives.RouteDirectives.{complete => _, reject => _, _}
-import akka.http.scaladsl.server.directives.{AuthenticationDirective, AuthenticationResult, Credentials}
+import akka.http.scaladsl.server.directives._
 
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 
@@ -22,6 +19,9 @@ import scala.reflect.ClassTag
  * Created by alonsodomin on 14/10/2015.
  */
 trait AuthDirectives extends UpickleSupport { auth: Auth =>
+  import Directives._
+  import RouteDirectives._
+  import AuthenticationFailedRejection._
 
   def extractAuthInfo: Directive1[XSRFToken] =
     headerValueByName(XSRFTokenHeader).flatMap { header =>
