@@ -2,8 +2,7 @@ package io.quckoo.console.dashboard
 
 import diode.react.ModelProxy
 import io.quckoo.id.NodeId
-import io.quckoo.net.QuckooNode
-
+import io.quckoo.net.{NodeStatus, QuckooNode}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -18,6 +17,11 @@ object NodeList {
 
     def render(props: Props[N]) = {
       val model = props.proxy()
+      def nodeDanger(node: QuckooNode): Boolean = node.status match {
+        case NodeStatus.Unreachable => true
+        case _                      => false
+      }
+
       <.table(^.`class` := "table table-striped table-hover",
         <.thead(
           <.tr(
@@ -28,7 +32,7 @@ object NodeList {
         ),
         <.tbody(
           model.values.map { node =>
-            <.tr(
+            <.tr(nodeDanger(node) ?= ^.color.red,
               <.td(node.id.toString()),
               <.td(node.location.host),
               <.td(node.status.toString())
