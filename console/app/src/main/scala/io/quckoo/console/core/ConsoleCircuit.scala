@@ -143,7 +143,8 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         updated(Some(Notification.danger(s"Job not found $jobId")))
 
       case ExecutionPlanStarted(jobId, planId) =>
-        updated(Some(Notification.success(s"Started execution plan for job. planId=$planId")))
+        val effect = Effect.action(RefreshExecutionPlans(Set(planId)))
+        updated(Some(Notification.success(s"Started execution plan for job. planId=$planId")), effect)
     }
 
   }
@@ -181,7 +182,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
     override protected def handle = {
       case LoadExecutionPlans =>
         withClient { implicit client =>
-          effectOnly(Effect(loadPlanIds))
+          effectOnly(Effect(loadPlanIds.map(ExecutionPlanIdsLoaded)))
         }
 
       case ExecutionPlanIdsLoaded(ids) =>

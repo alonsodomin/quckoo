@@ -37,7 +37,7 @@ object Boot extends App {
 
     opt[Seq[String]]("nodes") valueName "<host:port>,<host:port>" action { (nodes, options) =>
       options.copy(seedNodes = nodes)
-    } text "Comma separated list of Kairos cluster seed nodes"
+    } text "Comma separated list of Quckoo cluster seed nodes"
 
     opt[Seq[String]]("cs") valueName "<host:port>,<host:port>" action { (seedNodes, options) =>
       options.copy(cassandraSeedNodes = seedNodes)

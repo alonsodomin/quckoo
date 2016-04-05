@@ -1,6 +1,7 @@
 package io.quckoo.console
 
 import diode.react.ModelProxy
+
 import io.quckoo.console.components.Icons
 import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, LoginProcessor}
 import io.quckoo.console.dashboard.DashboardView
@@ -9,6 +10,7 @@ import io.quckoo.console.layout.Navigation.NavigationItem
 import io.quckoo.console.registry.RegistryPageView
 import io.quckoo.console.scheduler.SchedulerPageView
 import io.quckoo.console.security.LoginPageView
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.prefix_<^._

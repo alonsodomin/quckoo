@@ -2,8 +2,10 @@ package io.quckoo.cluster.http
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.server.AuthenticationFailedRejection._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.directives.RouteDirectives.{complete => _, reject => _, _}
 import akka.http.scaladsl.server.directives.{AuthenticationDirective, AuthenticationResult, Credentials}
 
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
@@ -37,7 +39,9 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
     authenticateToken(acceptExpired = true)(completeWithAuthToken)
 
   def authenticated: Directive1[User] =
-    authenticateToken(acceptExpired = false) flatMap (provide(_))
+    authenticateToken(acceptExpired = false).recoverPF {
+      case AuthenticationFailedRejection(CredentialsMissing, _) :: _ => authenticateTokenCookie
+    } flatMap(provide(_))
 
   private[this] def authenticate0[C <: HttpCredentials: ClassTag, U](
     challengeScheme: String,
@@ -47,7 +51,31 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
       authenticateOrRejectWithChallenge[C, U] { cred ⇒
         authenticator(Credentials(cred)).map {
           case Some(u) => AuthenticationResult.success(u)
-          case None    => AuthenticationResult.failWithChallenge(HttpChallenge(challengeScheme, auth.Realm))
+          case None => AuthenticationResult.failWithChallenge(HttpChallenge(challengeScheme, auth.Realm))
+        }
+      }
+    }
+  }
+
+  def authenticateWithCookie[U](
+    challengeScheme: String,
+    authenticator: Credentials => Future[Option[U]]
+  ): AuthenticationDirective[U] = {
+    extractExecutionContext.flatMap { implicit ec =>
+      optionalCookie(AuthCookie).flatMap { authCookie =>
+        val creds = Credentials(authCookie.map(cookie => OAuth2BearerToken(cookie.value)))
+        val authResult = authenticator(creds).map {
+          case Some(u) => AuthenticationResult.success(u)
+          case None => AuthenticationResult.failWithChallenge(HttpChallenge(challengeScheme, auth.Realm))
+        }
+        onSuccess(authResult).flatMap {
+          case Right(u) => provide(u)
+          case Left(challenge) =>
+            val cause = creds match {
+              case Credentials.Missing => CredentialsMissing
+              case _                   => CredentialsRejected
+            }
+            reject(AuthenticationFailedRejection(cause, challenge)): Directive1[U]
         }
       }
     }
@@ -60,13 +88,19 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
     }
   }
 
+  private[this] def authenticateTokenCookie: AuthenticationDirective[User] = {
+    extractExecutionContext.flatMap { implicit ec =>
+      authenticateWithCookie("Bearer", auth.token(acceptExpired = false))
+    }
+  }
+
   private[this] def completeWithAuthToken(user: User): Route = {
     val jwt = auth.generateToken(user)
     val authCookie = HttpCookie(
       AuthCookie, jwt, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
     )
     setCookie(authCookie) {
-      complete(jwt)
+      complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, jwt))
     }
   }
 
