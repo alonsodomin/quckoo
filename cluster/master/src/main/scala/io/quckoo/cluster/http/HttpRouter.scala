@@ -7,15 +7,13 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
 
-import de.heikoseeberger.akkasse.{EventStreamMarshalling, ServerSentEvent}
+import de.heikoseeberger.akkasse.EventStreamMarshalling
 
 import io.quckoo.cluster.core.QuckooServer
 import io.quckoo.cluster.registry.RegistryHttpRouter
 import io.quckoo.cluster.scheduler.SchedulerHttpRouter
-import io.quckoo.protocol.worker.WorkerEvent
-import upickle.default._
 
-import scala.concurrent.duration._
+import upickle.default._
 
 trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives with EventStreamMarshalling {
   this: QuckooServer =>
@@ -43,25 +41,21 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
           }
         }
       } ~ pathPrefix("cluster") {
-        pathEnd {
-          get {
+        get {
+          pathEnd {
             extractExecutionContext { implicit ec =>
               complete(clusterState)
             }
-          }
-        } ~ path("master") {
-          get {
+          } ~ path("master") {
             complete(asSSE(masterEvents, "master"))
+          } ~ path("worker") {
+            complete(asSSE(workerEvents, "worker"))
           }
         }
       } ~ pathPrefix("registry") {
         registryApi
       } ~ pathPrefix("scheduler") {
         schedulerApi
-      }
-    } ~ path("workers" / "events") {
-      get {
-        complete(asSSE(workerEvents, "worker"))
       }
     }
 

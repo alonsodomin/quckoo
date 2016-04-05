@@ -20,7 +20,7 @@ import scala.reflect.ClassTag
  */
 trait AuthDirectives extends UpickleSupport { auth: Auth =>
   import Directives._
-  import RouteDirectives._
+  //import RouteDirectives._
   import AuthenticationFailedRejection._
 
   def extractAuthInfo: Directive1[XSRFToken] =
