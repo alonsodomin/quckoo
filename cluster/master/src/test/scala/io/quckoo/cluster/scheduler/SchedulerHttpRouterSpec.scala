@@ -63,8 +63,6 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
   override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] =
     Future.successful(TestPlanIds)
 
-  override def workerEvents: Source[WorkerEvent, NotUsed] = ???
-
   private[this] def endpoint(target: String) = s"/api/scheduler$target"
 
   "The Scheduler API" should {

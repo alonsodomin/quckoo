@@ -95,6 +95,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
 
   private val mediator = DistributedPubSub(context.system).mediator
   private var store = RegistryStore.empty
+  private[this] var handlerRefCount = 0L
 
   override val persistenceId: String = PersistenceId
 
@@ -111,7 +112,8 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
 
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
-      val handler = context.actorOf(Props(classOf[ResolutionHandler], sender()), "resolutionHandler")
+      handlerRefCount += 1
+      val handler = context.actorOf(Props(classOf[ResolutionHandler], sender()), s"handler-$handlerRefCount")
       resolve(jobSpec.artifactId, download = false) map {
 
         case Success(_) =>
