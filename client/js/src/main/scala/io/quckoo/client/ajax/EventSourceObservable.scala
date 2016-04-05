@@ -29,6 +29,8 @@ private[ajax] class EventSourceObservable[A: Reader] private (url: String, event
     })
   }
 
+  def close(): Unit = source.close()
+
 }
 
 private[ajax] object EventSourceObservable {

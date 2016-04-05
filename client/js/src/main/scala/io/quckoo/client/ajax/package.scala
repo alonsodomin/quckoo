@@ -13,9 +13,12 @@ package object ajax {
 
   private[ajax] val BaseURI = "/api"
   private[ajax] val LoginURI = BaseURI + "/auth/login"
+  private[ajax] val AuthRefreshURI = BaseURI + "/auth/refresh"
   private[ajax] val LogoutURI = BaseURI + "/logout"
 
   private[ajax] val ClusterStateURI = BaseURI + "/cluster"
+  private[ajax] val MasterEventsURI = ClusterStateURI + "/master"
+  private[ajax] val WorkerEventsURI = BaseURI + "/workers/events"
 
   private[ajax] val RegistryBaseURI = BaseURI + "/registry"
   private[ajax] val JobsURI = RegistryBaseURI + "/jobs"
@@ -23,7 +26,6 @@ package object ajax {
 
   private[ajax] val SchedulerBaseURI = BaseURI + "/scheduler"
   private[ajax] val ExecutionPlansURI = SchedulerBaseURI + "/plans"
-  private[ajax] val WorkerEventsURI = BaseURI + "/workers/events"
 
   private[ajax] val JsonRequestHeaders = Map(
     "Content-Type" -> "application/json"
