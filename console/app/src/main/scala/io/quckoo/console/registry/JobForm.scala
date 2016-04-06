@@ -80,7 +80,8 @@ object JobForm {
             <.input.text(lnf.formControl, ^.id := "displayName",
               ^.placeholder := "Job's name",
               ^.value := displayName.get(state),
-              ^.onChange ==> updateDisplayName
+              ^.onChange ==> updateDisplayName,
+              ^.onBlur ==> updateDisplayName
             )
           ),
           <.div(lnf.formGroup,
@@ -88,7 +89,8 @@ object JobForm {
             <.input.text(lnf.formControl, ^.id := "description",
               ^.placeholder := "Job's description",
               description.get(state).map(desc => ^.value := desc),
-              ^.onChange ==> updateDescription
+              ^.onChange ==> updateDescription,
+              ^.onBlur ==> updateDescription
             )
           ),
           <.div(lnf.formGroup,
@@ -98,21 +100,24 @@ object JobForm {
                 <.input.text(lnf.formControl, ^.id := "artifactGroup",
                   ^.value := artifactGroup.get(state),
                   ^.placeholder := "Group",
-                  ^.onChange ==> updateArtifactGroup
+                  ^.onChange ==> updateArtifactGroup,
+                  ^.onBlur ==> updateArtifactGroup
                 )
               ),
               <.div(^.`class` := "col-sm-4",
                 <.input.text(lnf.formControl, ^.id := "artifactName",
                   ^.placeholder := "Name",
                   ^.value := artifactName.get(state),
-                  ^.onChange ==> updateArtifactName
+                  ^.onChange ==> updateArtifactName,
+                  ^.onBlur ==> updateArtifactName
                 )
               ),
               <.div(^.`class` := "col-sm-4",
                 <.input.text(lnf.formControl, ^.id := "artifactVersion",
                   ^.placeholder := "Version",
                   ^.value := artifactVersion.get(state),
-                  ^.onChange ==> updateArtifactVersion
+                  ^.onChange ==> updateArtifactVersion,
+                  ^.onBlur ==> updateArtifactVersion
                 )
               )
             )
@@ -122,7 +127,8 @@ object JobForm {
             <.input.text(lnf.formControl, ^.id := "jobClass",
               ^.placeholder := "Fully classified job class name",
               ^.value := jobClass.get(state),
-              ^.onChange ==> updateJobClass
+              ^.onChange ==> updateJobClass,
+              ^.onBlur ==> updateJobClass
             )
           )
         )
