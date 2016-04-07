@@ -175,7 +175,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
           cmd.executionProps, timeSource.currentDateTime)
       persist(created) { evt =>
         val st = DriverState(evt)
-        log.info("Creating new execution plan. planId={}", st.planId)
+        log.debug("Creating new execution plan. planId={}", st.planId)
 
         if (subscribed) {
           activatePlan(st)
