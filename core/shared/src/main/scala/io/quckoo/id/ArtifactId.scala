@@ -33,6 +33,15 @@ object ArtifactId {
     (validGroup |@| validArtifactId |@| validVersion)(ArtifactId.apply)
   }
 
+  implicit val instance = new Equal[ArtifactId] with Show[ArtifactId] {
+
+    override def equal(left: ArtifactId, right: ArtifactId): Boolean =
+      left.group == right.group &&
+        left.artifact == right.artifact &&
+        left.version == right.version
+
+  }
+
 }
 
 @Lenses case class ArtifactId(group: String, artifact: String, version: String) {
