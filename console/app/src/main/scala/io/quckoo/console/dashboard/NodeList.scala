@@ -11,17 +11,26 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object NodeList {
 
+  def NodeRow[N <: QuckooNode] = ReactComponentB[N]("NodeRow").
+    stateless.
+    render_P { node =>
+      val danger = node.status match {
+        case NodeStatus.Unreachable => true
+        case _                      => false
+      }
+      <.tr(danger ?= ^.color.red,
+        <.td(node.id.toString()),
+        <.td(node.location.host),
+        <.td(node.status.toString())
+      )
+    } build
+
   case class Props[N <: QuckooNode](proxy: ModelProxy[Map[NodeId, N]])
 
   class Backend[N <: QuckooNode]($: BackendScope[Props[N], Unit]) {
 
     def render(props: Props[N]) = {
       val model = props.proxy()
-      def nodeDanger(node: QuckooNode): Boolean = node.status match {
-        case NodeStatus.Unreachable => true
-        case _                      => false
-      }
-
       <.table(^.`class` := "table table-striped table-hover",
         <.thead(
           <.tr(
@@ -32,11 +41,7 @@ object NodeList {
         ),
         <.tbody(
           model.values.map { node =>
-            <.tr(nodeDanger(node) ?= ^.color.red,
-              <.td(node.id.toString()),
-              <.td(node.location.host),
-              <.td(node.status.toString())
-            )
+            NodeRow.withKey(node.id.toString())(node)
           }
         )
       )
