@@ -1,6 +1,6 @@
 package io.quckoo.console.scheduler
 
-import diode.data.PotMap
+import diode.data.{Pot, PotMap}
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.quckoo.ExecutionPlan
@@ -15,6 +15,29 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   * Created by alonsodomin on 30/01/2016.
   */
 object ExecutionPlanList {
+
+  case class RowProps(planId: PlanId, plan: Pot[ExecutionPlan])
+
+  val PlanRow = ReactComponentB[RowProps]("ExecutionPlanRow").
+    stateless.
+    render_P { case RowProps(planId, plan) =>
+      <.tr(
+        plan.renderFailed { ex =>
+          <.td(^.colSpan := 6, Notification.danger(ExceptionThrown(ex)))
+        },
+        plan.renderPending { _ =>
+          <.td(^.colSpan := 6, "Loading ...")
+        },
+        plan.render { item => List(
+          <.td(item.jobId.toString()),
+          <.td(item.planId.toString()),
+          <.td(item.trigger.toString()),
+          <.td(item.lastScheduledTime.map(_.toString())),
+          <.td(item.lastExecutionTime.map(_.toString())),
+          <.td(item.lastOutcome.toString())
+        )}
+      )
+    } build
 
   case class Props(proxy: ModelProxy[PotMap[PlanId, ExecutionPlan]])
 
@@ -41,24 +64,9 @@ object ExecutionPlanList {
           )
         ),
         <.tbody(
-          model.seq.map { case (planId, schedule) => List(
-            schedule.renderFailed { ex =>
-              <.tr(<.td(^.colSpan := 6, Notification.danger(ExceptionThrown(ex))))
-            },
-            schedule.renderPending(_ > 500, _ =>
-              <.tr(<.td(^.colSpan := 6, "Loading ..."))
-            ),
-            schedule.render { item =>
-              <.tr(
-                <.td(item.jobId.toString()),
-                <.td(item.planId.toString()),
-                <.td(item.trigger.toString()),
-                <.td(item.lastScheduledTime.map(_.toString())),
-                <.td(item.lastExecutionTime.map(_.toString())),
-                <.td(item.lastOutcome.toString())
-              )
-            }
-          )}
+          model.seq.map { case (planId, plan) =>
+            PlanRow.withKey(planId.toString)(RowProps(planId, plan))
+          }
         )
       )
     }
