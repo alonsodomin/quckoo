@@ -190,8 +190,8 @@ object Dependencies {
       "org.webjars.bower" % "react" % version.reactJs % Test / "react-with-addons.js" commonJSName "React",
 
       "org.webjars" % "jquery"    % "1.11.1" / "jquery.js"    minified "jquery.min.js",
-      "org.webjars" % "bootstrap" % "3.3.2"  / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js"
-      //"org.webjars" % "bootstrap-notify" % "3.1.3" / "bootstrap-notify.js" minified "bootstrap-notify.min.js" dependsOn ("jquery.js", "bootstrap.js")
+      "org.webjars" % "bootstrap" % "3.3.2"  / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js",
+      "org.webjars" % "bootstrap-notify" % "3.1.3" / "bootstrap-notify.js" minified "bootstrap-notify.min.js" dependsOn ("jquery.js", "bootstrap.js")
     )
   )
   lazy val consoleResources = Def.settings {
