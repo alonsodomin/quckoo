@@ -10,7 +10,7 @@ import scala.annotation.implicitNotFound
 /**
   * Created by alonsodomin on 07/04/2016.
   */
-object ReusableInput {
+object Input {
 
   @implicitNotFound("Type $A is not supported as Input component")
   sealed trait Converter[A] {
@@ -87,8 +87,8 @@ object ReusableInput {
 
 }
 
-class ReusableInput[A: Reusability](onUpdate: ReusableInput.OnUpdate[A]) {
-  import ReusableInput._
+class Input[A: Reusability](onUpdate: Input.OnUpdate[A]) {
+  import Input._
 
   implicit val propsReuse: Reusability[Props[A]] = Reusability.by[Props[A], Option[A]](_.value)
   val reuseConfig = Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode]

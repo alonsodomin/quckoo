@@ -35,8 +35,8 @@ object AtTriggerInput {
     def onTimeUpdate(value: Option[MomentJSTime]): Callback =
       $.modState(_.copy(time = value)) >> propagateUpdate
 
-    val DateInput = new ReusableInput[MomentJSDate](onDateUpdate)
-    val TimeInput = new ReusableInput[MomentJSTime](onTimeUpdate)
+    val DateInput = new Input[MomentJSDate](onDateUpdate)
+    val TimeInput = new Input[MomentJSTime](onTimeUpdate)
 
     def render(props: Props, state: State) = {
       <.div(
