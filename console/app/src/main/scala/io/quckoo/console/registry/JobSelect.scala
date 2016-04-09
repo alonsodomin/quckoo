@@ -13,6 +13,15 @@ object JobSelect {
 
   case class Props(jobs: Map[JobId, JobSpec], value: Option[JobId], onUpdate: Option[JobId] => Callback)
 
+  val JobOption = ReactComponentB[(JobId, JobSpec)]("JobOption").
+    stateless.
+    render_P { case (jobId, spec) =>
+      val desc = spec.description.map(text=> s"| $text").getOrElse("")
+      <.option(^.value := jobId.toString(),
+        s"${spec.displayName} $desc"
+      )
+    } build
+
   class Backend($: BackendScope[Props, Unit]) {
 
     def onUpdate(evt: ReactEventI): Callback = {
@@ -32,12 +41,7 @@ object JobSelect {
             props.value.map(id => ^.value := id.toString()),
             ^.onChange ==> onUpdate,
             <.option("Select a job"),
-            props.jobs.map { case (jobId, spec) =>
-              val desc = spec.description.map(text=> s"| $text").getOrElse("")
-              <.option(^.value := jobId.toString(),
-                s"${spec.displayName} $desc"
-              )
-            }
+            props.jobs.map(jobPair => JobOption.withKey(jobPair._1.toString)(jobPair))
           )
         )
       )

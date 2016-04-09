@@ -14,6 +14,15 @@ object TriggerSelect {
     val Immediate, After, Every, At = Value
   }
 
+  val TriggerOption = ReactComponentB[TriggerType.Value]("TriggerOption").
+    stateless.
+    render_P { triggerType =>
+      <.option(^.value := triggerType.id, triggerType.toString())
+    } build
+
+  def triggerOptions: Seq[ReactElement] =
+    TriggerType.values.toSeq.map(t => TriggerOption.withKey(t.id)(t))
+
   case class Props(value: Option[Trigger], onUpdate: Option[Trigger] => Callback)
   case class State(selected: Option[TriggerType.Value] = None, value: Option[Trigger])
 
@@ -44,7 +53,7 @@ object TriggerSelect {
     }
 
     def onUpdateValue[T <: Trigger](value: Option[T]): Callback =
-      $.modState(_.copy(value = value)) >> propagateChange
+      $.modState(_.copy(value = value), propagateChange)
 
     def render(props: Props, state: State) = {
       <.div(
@@ -54,9 +63,7 @@ object TriggerSelect {
             <.select(^.`class` := "form-control", ^.id := "trigger",
               state.selected.map(v => ^.value := v.id),
               ^.onChange ==> onUpdateSelection,
-              TriggerType.values.map { triggerType =>
-                <.option(^.value := triggerType.id, triggerType.toString())
-              }
+              triggerOptions
             )
           )
         ),
