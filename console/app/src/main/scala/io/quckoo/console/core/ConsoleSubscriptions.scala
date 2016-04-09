@@ -3,7 +3,8 @@ package io.quckoo.console.core
 import io.quckoo.client.QuckooClient
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.worker.WorkerEvent
-import monifu.concurrent.Implicits.globalScheduler
+
+import monix.execution.Scheduler.Implicits.global
 
 /**
   * Created by alonsodomin on 04/04/2016.

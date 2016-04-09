@@ -3,10 +3,10 @@ package io.quckoo.console.components
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import monifu.concurrent.Implicits.globalScheduler
-import monifu.concurrent.Cancelable
-import monifu.reactive.Ack.Continue
-import monifu.reactive.Observable
+import monix.execution.Scheduler.Implicits.global
+import monix.execution.Ack.Continue
+import monix.execution.Cancelable
+import monix.reactive.Observable
 
 /**
   * Created by alonsodomin on 21/02/2016.

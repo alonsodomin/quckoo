@@ -1,18 +1,22 @@
 package io.quckoo.console.components
 
+import io.quckoo.time.{MomentJSDate, MomentJSTime}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import scalaz._
+import scala.annotation.implicitNotFound
 
 /**
   * Created by alonsodomin on 07/04/2016.
   */
 object ReusableInput {
-  import Isomorphism._
 
-  trait Converter[A] extends (A <=> String)
+  @implicitNotFound("Type $A is not supported as Input component")
+  sealed trait Converter[A] {
+    def from: String => A
+    def to: A => String
+  }
   object Converter {
     abstract class BaseConverter[A] extends Converter[A] {
       override def to: A => String = _.toString
@@ -30,18 +34,30 @@ object ReusableInput {
     implicit val long: Converter[Long] = new BaseConverter[Long] {
       override def from: String => Long = _.toLong
     }
+
+    implicit val date: Converter[MomentJSDate] = new BaseConverter[MomentJSDate] {
+      override def from: String => MomentJSDate = MomentJSDate.parse
+    }
+
+    implicit val time: Converter[MomentJSTime] = new BaseConverter[MomentJSTime] {
+      override def from: String => MomentJSTime = MomentJSTime.parse
+    }
+
   }
 
+  @implicitNotFound("Type $A is not supported as Input component")
   sealed abstract class Type[A](val html: String)
   object Type {
     implicit val string = new Type[String]("text") {}
     implicit val int = new Type[Int]("number") {}
     implicit val long = new Type[Long]("number") {}
+    implicit val date = new Type[MomentJSDate]("date") {}
+    implicit val time = new Type[MomentJSTime]("time") {}
   }
 
-  type OnUpdate[A] = Option[A] ~=> Callback
+  type OnUpdate[A] = Option[A] => Callback
 
-  case class Props[A](value: Option[A], converter: Converter[A], `type`: Type[A], onUpdate: OnUpdate[A])
+  case class Props[A](value: Option[A], converter: Converter[A], `type`: Type[A], onUpdate: OnUpdate[A], attrs: Seq[TagMod])
 
   class Backend[A]($: BackendScope[Props[A], Unit]) {
 
@@ -61,18 +77,21 @@ object ReusableInput {
       <.input(^.`type` := props.`type`.html,
         ^.`class` := "form-control",
         props.value.map(v => ^.value := props.converter.to(v)),
-        ^.onChange ==> onUpdate(props)
+        ^.onChange ==> onUpdate(props),
+        ^.onBlur ==> onUpdate(props),
+        props.attrs
       )
     }
 
   }
 
 }
+
 class ReusableInput[A: Reusability](onUpdate: ReusableInput.OnUpdate[A]) {
   import ReusableInput._
 
   implicit val propsReuse: Reusability[Props[A]] = Reusability.by[Props[A], Option[A]](_.value)
-  val reuseConfig = Reusability.shouldComponentUpdateWithOverlay[Props[A], Unit, Backend[A], TopNode]
+  val reuseConfig = Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode]
 
   val component = ReactComponentB[Props[A]]("Input").
     stateless.
@@ -80,7 +99,7 @@ class ReusableInput[A: Reusability](onUpdate: ReusableInput.OnUpdate[A]) {
     configure(reuseConfig).
     build
 
-  def create(value: Option[A])(implicit C: Converter[A], T: Type[A]) =
-    component(Props(value, C, T, onUpdate))
+  def apply(value: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+    component(Props(value, C, T, onUpdate, attrs))
 
 }

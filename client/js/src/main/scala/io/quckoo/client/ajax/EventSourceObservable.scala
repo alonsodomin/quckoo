@@ -1,6 +1,7 @@
 package io.quckoo.client.ajax
 
-import monifu.reactive.{Observable, Subscriber}
+import monix.reactive.Observable
+import org.reactivestreams.{Publisher, Subscriber}
 import org.scalajs.dom.raw.{Event, EventSource, MessageEvent}
 import upickle.default._
 
@@ -8,11 +9,11 @@ import upickle.default._
   * Created by alonsodomin on 02/04/2016.
   */
 private[ajax] class EventSourceObservable[A: Reader] private (url: String, eventType: String)
-    extends (Subscriber[A] => Unit) {
+    extends Publisher[A] {
 
   val source = new EventSource(url)
 
-  def apply(subscriber: Subscriber[A]): Unit = {
+  def subscribe(subscriber: Subscriber[_ >: A]): Unit = {
     source.onerror = (event: Event) => {
       if (source.readyState == EventSource.CLOSED) {
         subscriber.onComplete()
@@ -36,6 +37,7 @@ private[ajax] class EventSourceObservable[A: Reader] private (url: String, event
 private[ajax] object EventSourceObservable {
 
   def apply[A: Reader](url: String, eventType: String): Observable[A] =
-    Observable.create(new EventSourceObservable[A](url, eventType))
+    Observable.fromReactivePublisher[A](new EventSourceObservable[A](url, eventType))
+    //Observable.create(new EventSourceObservable[A](url, eventType))
 
 }

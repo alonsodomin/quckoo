@@ -5,7 +5,7 @@ import io.quckoo.auth.User
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.registry.RegistryEvent
 import io.quckoo.protocol.worker.WorkerEvent
-import monifu.reactive.Observable
+import monix.reactive.Observable
 
 import scala.concurrent.{ExecutionContext, Future}
 

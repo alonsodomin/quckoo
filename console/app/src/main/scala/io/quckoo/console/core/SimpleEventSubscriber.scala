@@ -1,7 +1,8 @@
 package io.quckoo.console.core
 
-import monifu.reactive.Ack.Continue
-import monifu.reactive.{Ack, Observer}
+import monix.execution.Ack
+import monix.execution.Ack.Continue
+import monix.reactive.Observer
 import org.scalajs.dom.console
 
 import scala.concurrent.Future

@@ -8,11 +8,10 @@ import japgolly.scalajs.react.extra.OnUnmount
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import monifu.concurrent.Implicits.globalScheduler
-import monifu.concurrent.Cancelable
-import monifu.reactive.Ack
-import monifu.reactive.observables.ConnectableObservable
-import monifu.reactive.subjects.PublishSubject
+import monix.execution.{Ack, Cancelable}
+import monix.execution.Scheduler.Implicits.global
+import monix.reactive.observables.ConnectableObservable
+import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.duration._
 import scalaz._

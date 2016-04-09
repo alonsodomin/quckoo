@@ -5,9 +5,9 @@ import japgolly.scalajs.react.extra.OnUnmount
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import monifu.concurrent.Implicits.globalScheduler
-import monifu.concurrent.Cancelable
-import monifu.reactive.subjects.PublishSubject
+import monix.execution.Scheduler.Implicits.global
+import monix.execution.Cancelable
+import monix.reactive.subjects.PublishSubject
 
 import scala.concurrent.duration._
 import scalaz._

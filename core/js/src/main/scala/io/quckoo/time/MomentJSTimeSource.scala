@@ -1,6 +1,6 @@
 package io.quckoo.time
 
-import org.widok.moment.{Date, Moment}
+import org.widok.moment.{Date => MDate, Moment}
 
 /**
   * Created by alonsodomin on 22/12/2015.
@@ -19,7 +19,7 @@ object MomentJSTimeSource {
 
 }
 
-class MomentJSTimeSource private (moment: () => Date) extends TimeSource {
+class MomentJSTimeSource private (moment: () => MDate) extends TimeSource {
 
   def currentDateTime: DateTime = new MomentJSDateTime(moment())
 

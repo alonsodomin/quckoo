@@ -1,12 +1,18 @@
 package io.quckoo.time
 
-import org.widok.moment.{Moment, Units, Date}
+import org.widok.moment.{Moment, Units, Date => MDate}
+import scalajs.js
 
 /**
   * Created by alonsodomin on 22/12/2015.
   */
-class MomentJSDateTime(private val date: Date) extends DateTime {
-  type Repr = Date
+class MomentJSDateTime(private val date: MDate) extends DateTime {
+  type Repr = MDate
+
+  def this(date: Date, time: Time) =
+    this(Moment.utc(new js.Date(date.year, date.month, date.dayOfMonth,
+      time.hour, time.minute, time.seconds, time.milliseconds))
+    )
 
   def diff(that: DateTime): Duration = {
     val millis = this.toEpochMillis - that.toEpochMillis

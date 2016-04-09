@@ -6,10 +6,11 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.OnUnmount
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import monifu.concurrent.Implicits.globalScheduler
-import monifu.concurrent.Cancelable
-import monifu.reactive.Ack.Continue
-import monifu.reactive.{Observable, Observer}
+import monix.execution.Scheduler.Implicits.global
+import monix.execution.Ack.Continue
+import monix.execution.Cancelable
+import monix.reactive.{Observable, Observer}
+
 import org.scalajs.dom.html.Span
 
 import scala.concurrent.duration._

@@ -10,7 +10,7 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization
-import monifu.reactive.Observable
+import monix.reactive.Observable
 import org.scalajs.dom.ext.{Ajax, AjaxException}
 
 import scala.concurrent.{ExecutionContext, Future}

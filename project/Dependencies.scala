@@ -40,7 +40,7 @@ object Dependencies {
     val monocle = "1.1.1"
     val scalaz = "7.1.3"
     val monifu = "1.1"
-    val monix  = "2.0-M1"
+    val monix  = "2.0-M2"
   }
 
   // Common library definitions
@@ -132,8 +132,8 @@ object Dependencies {
   lazy val api = Def.settings(
     addCompilerPlugin(compiler.macroParadise),
     libraryDependencies ++= Seq(
-      "org.monifu" %%% "monifu" % version.monifu
-      //"io.monix" %%% "monix-reactive" % version.monix
+      //"org.monifu" %%% "monifu" % version.monifu
+      "io.monix" %%% "monix-reactive" % version.monix
     )
   )
 
