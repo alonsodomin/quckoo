@@ -1,5 +1,7 @@
 package io.quckoo.console
 
+import java.util.concurrent.TimeUnit
+
 import io.quckoo.Trigger
 import io.quckoo.time.{DateTime, MomentJSDate, MomentJSTime}
 import japgolly.scalajs.react.ReactNode
@@ -20,6 +22,7 @@ package object components {
   val lookAndFeel = new LookAndFeel
 
   // React's reusability instances for common types
+  implicit val timeUnitReuse = Reusability.byRef[TimeUnit]
   implicit val finiteDurationReuse = Reusability.byRef[FiniteDuration]
   implicit val dateReuse = Reusability.byRef[MomentJSDate]
   implicit val timeReuse = Reusability.byRef[MomentJSTime]

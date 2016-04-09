@@ -29,7 +29,6 @@ object FiniteDurationInput {
 
   }
 
-  implicit val timeUnitReuse = Reusability.byRef[TimeUnit]
   implicit val propsReuse: Reusability[Props] = Reusability.by(_.value)
   implicit val stateReuse = Reusability.caseClass[State]
 
