@@ -1,6 +1,6 @@
 package io.quckoo.console.registry
 
-import diode.data.PotMap
+import diode.data.{Pot, PotMap}
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 
@@ -18,6 +18,53 @@ import japgolly.scalajs.react.vdom.prefix_<^._
  * Created by alonsodomin on 17/10/2015.
  */
 object JobSpecList {
+
+  type RowAction = JobId => Callback
+
+  case class RowProps(jobId: JobId, spec: Pot[JobSpec],
+      selected: Boolean,
+      toggleSelected: RowAction,
+      enable: RowAction,
+      disable: RowAction
+  )
+
+  val JobRow = ReactComponentB[RowProps]("JobRow").
+    stateless.
+    render_P { case RowProps(jobId, spec, selected, toggle, enable, disable) =>
+      <.tr(selected ?= (^.`class` := "info"),
+        spec.renderFailed { ex =>
+          <.td(^.colSpan := 7, Notification.danger(ExceptionThrown(ex)))
+        },
+        spec.renderPending { _ =>
+          <.td(^.colSpan := 7, "Loading ...")
+        },
+        spec.render { item => List(
+          <.td(<.input.checkbox(
+            ^.id := s"selectJob_$jobId",
+            ^.value := selected,
+            ^.onChange --> toggle(jobId)
+          )),
+          <.td(item.displayName),
+          <.td(item.description),
+          <.td(item.artifactId.toString()),
+          <.td(item.jobClass),
+          <.td(
+            if (item.disabled) {
+              <.span(^.color.red, "DISABLED")
+            } else {
+              <.span(^.color.green, "ENABLED")
+            }
+          ),
+          <.td(
+            if (item.disabled) {
+              Button(Button.Props(Some(enable(jobId))), Icons.play, "Enable")
+            } else {
+              Button(Button.Props(Some(disable(jobId))), Icons.stop, "Disable")
+            }
+          ))
+        }
+      )
+    } build
 
   case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
   case class State(selected: Set[JobId], allSelected: Boolean = false)
@@ -37,7 +84,7 @@ object JobSpecList {
         else state.copy(selected = props.proxy().keys.toSet, allSelected = true)
       }
 
-    def toggleSelected(props: Props, jobId: JobId): Callback = {
+    def toggleSelected(props: Props)(jobId: JobId): Callback = {
       $.modState { state =>
         val newSet = {
           if (state.selected.contains(jobId))
@@ -48,10 +95,10 @@ object JobSpecList {
       }
     }
 
-    def enableJob(props: Props, jobId: JobId): Callback =
+    def enableJob(props: Props)(jobId: JobId): Callback =
       props.proxy.dispatch(EnableJob(jobId))
 
-    def disableJob(props: Props, jobId: JobId): Callback =
+    def disableJob(props: Props)(jobId: JobId): Callback =
       props.proxy.dispatch(DisableJob(jobId))
 
     def render(p: Props, state: State) = {
@@ -73,40 +120,16 @@ object JobSpecList {
           )
         ),
         <.tbody(
-          model.seq.map { case (jobId, spec) => List(
-            spec.renderFailed { ex =>
-              <.tr(<.td(^.colSpan := 7, Notification.danger(ExceptionThrown(ex))))
-            },
-            spec.renderPending(_ > 500, _ =>
-              <.tr(<.td(^.colSpan := 7, "Loading ..."))
-            ),
-            spec.render { item => <.tr(
-              state.selected.contains(jobId) ?= (^.`class` := "info"),
-              <.td(<.input.checkbox(
-                ^.id := s"selectJob_$jobId",
-                ^.value := state.selected.contains(jobId),
-                ^.onChange --> toggleSelected(p, jobId)
-              )),
-              <.td(item.displayName),
-              <.td(item.description),
-              <.td(item.artifactId.toString()),
-              <.td(item.jobClass),
-              <.td(
-                if (item.disabled) {
-                  <.span(^.color.red, "DISABLED")
-                } else {
-                  <.span(^.color.green, "ENABLED")
-                }
-              ),
-              <.td(
-                if (item.disabled) {
-                  Button(Button.Props(Some(enableJob(p, jobId))), Icons.play, "Enable")
-                } else {
-                  Button(Button.Props(Some(disableJob(p, jobId))), Icons.stop, "Disable")
-                }
+          model.seq.map { case (jobId, spec) =>
+            JobRow.withKey(jobId.toString)(
+              RowProps(jobId, spec,
+                state.selected.contains(jobId),
+                toggleSelected(p),
+                enableJob(p),
+                disableJob(p)
               )
-            )}
-          )}
+            )
+          }
         )
       )
     }
