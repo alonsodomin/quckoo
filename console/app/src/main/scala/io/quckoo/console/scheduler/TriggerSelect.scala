@@ -46,10 +46,10 @@ object TriggerSelect {
           case TriggerType.Immediate => Some(Trigger.Immediate)
           case _                     => None
         }
-        $.modState(_.copy(value = trigger))
+        $.modState(_.copy(value = trigger), propagateChange)
       }
 
-      (refreshNewSelection >>= updateTriggerValue) >> propagateChange
+      refreshNewSelection >>= updateTriggerValue
     }
 
     def onUpdateValue[T <: Trigger](value: Option[T]): Callback =
@@ -68,9 +68,9 @@ object TriggerSelect {
           )
         ),
         state.selected.flatMap {
-          case TriggerType.After => Some(AfterTriggerInput(None, onUpdateValue))
-          case TriggerType.Every => Some(EveryTriggerInput(None, onUpdateValue))
-          case TriggerType.At    => Some(AtTriggerInput(None, onUpdateValue))
+          case TriggerType.After => Some(AfterTriggerInput(state.value.map(_.asInstanceOf[Trigger.After]), onUpdateValue))
+          case TriggerType.Every => Some(EveryTriggerInput(state.value.map(_.asInstanceOf[Trigger.Every]), onUpdateValue))
+          case TriggerType.At    => Some(AtTriggerInput(state.value.map(_.asInstanceOf[Trigger.At]), onUpdateValue))
           case _                 => None
         }
       )

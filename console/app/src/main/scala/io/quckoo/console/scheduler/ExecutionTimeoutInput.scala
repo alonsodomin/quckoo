@@ -20,7 +20,8 @@ object ExecutionTimeoutInput {
     def onFlagUpdate: Callback =
       $.modState(st => st.copy(enabled = !st.enabled))
 
-    def onValueUpdate(value: Option[FiniteDuration]): Callback = ???
+    def onValueUpdate(value: Option[FiniteDuration]): Callback =
+      $.props.flatMap(_.onUpdate(value))
 
     def render(props: Props, state: State) = {
       <.div(

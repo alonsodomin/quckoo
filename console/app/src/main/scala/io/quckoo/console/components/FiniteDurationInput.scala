@@ -48,14 +48,14 @@ object FiniteDurationInput {
     }
 
     def onLengthUpdate(value: Option[Long]): Callback =
-      $.modState(_.copy(length = value)) >> propagateUpdate
+      $.modState(_.copy(length = value), propagateUpdate)
 
     def onUnitUpdate(evt: ReactEventI): Callback = {
       val value = {
         if (evt.target.value.isEmpty) None
         else Some(TimeUnit.valueOf(evt.target.value))
       }
-      $.modState(_.copy(unit = value)) >> propagateUpdate
+      $.modState(_.copy(unit = value), propagateUpdate)
     }
 
     val lengthInput = new Input[Long](onLengthUpdate)
