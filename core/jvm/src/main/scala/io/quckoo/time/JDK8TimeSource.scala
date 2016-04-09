@@ -7,7 +7,7 @@ import java.time.{ZoneId, Instant, ZonedDateTime, Clock}
   */
 object JDK8TimeSource {
 
-  def default: TimeSource = new JDK8TimeSource(Clock.systemDefaultZone())
+  def default: TimeSource = new JDK8TimeSource(Clock.systemUTC())
 
   def fixed(instant: Instant, zoneId: ZoneId): TimeSource =
     new JDK8TimeSource(Clock.fixed(instant, zoneId))

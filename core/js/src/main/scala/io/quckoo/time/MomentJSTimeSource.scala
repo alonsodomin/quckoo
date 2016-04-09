@@ -7,9 +7,9 @@ import org.widok.moment.{Date => MDate, Moment}
   */
 object MomentJSTimeSource {
 
-  def system: TimeSource = new MomentJSTimeSource(() => Moment())
+  def system: TimeSource = new MomentJSTimeSource(() => Moment.utc())
 
-  def fixed(millis: Double): TimeSource = new MomentJSTimeSource(() => Moment(millis))
+  def fixed(millis: Double): TimeSource = new MomentJSTimeSource(() => Moment.utc(millis))
 
   object Implicits {
 
