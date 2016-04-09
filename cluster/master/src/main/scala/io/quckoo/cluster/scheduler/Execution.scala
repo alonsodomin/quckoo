@@ -22,10 +22,10 @@ object Execution {
   final val DefaultMaxEnqueueAttempts = 3
 
   sealed trait Command
-  case class WakeUp(task: Task, queue: ActorSelection) extends Command
+  final case class WakeUp(task: Task, queue: ActorSelection) extends Command
   case object Start extends Command
-  case class Finish(fault: Option[Fault]) extends Command
-  case class Cancel(reason: String) extends Command
+  final case class Finish(fault: Option[Fault]) extends Command
+  final case class Cancel(reason: String) extends Command
   case object TimeOut extends Command
   case object Get extends Command
 
@@ -41,14 +41,14 @@ object Execution {
   }
 
   sealed trait ExecutionEvent
-  case class Awaken(task: Task, queue: ActorSelection) extends ExecutionEvent
-  case class Cancelled(reason: String) extends ExecutionEvent
+  final case class Awaken(task: Task, queue: ActorSelection) extends ExecutionEvent
+  final case class Cancelled(reason: String) extends ExecutionEvent
   case object Triggered extends ExecutionEvent
   case object Started extends ExecutionEvent
-  case class Completed(fault: Option[Fault]) extends ExecutionEvent
+  final case class Completed(fault: Option[Fault]) extends ExecutionEvent
   case object TimedOut extends ExecutionEvent
 
-  case class Result(outcome: Outcome)
+  final case class Result(outcome: Outcome)
 
   final case class ExecutionState private (
       planId: PlanId,

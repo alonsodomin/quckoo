@@ -41,12 +41,12 @@ object ExecutionDriver {
   )
 
   // Private messages, used for managing the internal lifecycle
-  private[scheduler] case class Created(
+  private[scheduler] final case class Created(
       jobId: JobId, spec: JobSpec, planId: PlanId,
       trigger: Trigger, executionProps: Props,
       time: DateTime
   )
-  private case class ScheduleTask(time: DateTime)
+  private final case class ScheduleTask(time: DateTime)
   private case object FinishPlan
 
   // Public execution driver state

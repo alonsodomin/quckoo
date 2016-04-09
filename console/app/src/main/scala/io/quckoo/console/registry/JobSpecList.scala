@@ -121,7 +121,7 @@ object JobSpecList {
         ),
         <.tbody(
           model.seq.map { case (jobId, spec) =>
-            JobRow.withKey(jobId.toString)(
+            JobRow.withKey(jobId.toString())(
               RowProps(jobId, spec,
                 state.selected.contains(jobId),
                 toggleSelected(p),
