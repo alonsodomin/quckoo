@@ -37,7 +37,12 @@ object ExecutionPlanForm {
   }
 
   case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]], plan: Option[ExecutionPlan], handler: ScheduleHandler)
-  @Lenses case class State(plan: EditableExecutionPlan, timeout: Option[FiniteDuration] = None, cancelled: Boolean = true)
+  @Lenses case class State(
+      plan: EditableExecutionPlan,
+      timeout: Option[FiniteDuration] = None,
+      showPreview: Boolean = false,
+      cancelled: Boolean = true
+  )
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -47,6 +52,9 @@ object ExecutionPlanForm {
 
     def mounted(props: Props) =
       Callback.ifTrue(props.proxy().size == 0, props.proxy.dispatch(LoadJobSpecs))
+
+    def togglePreview(): Callback =
+      $.modState(st => st.copy(showPreview = !st.showPreview))
 
     def submitForm(): Callback =
       $.modState(_.copy(cancelled = false))
@@ -91,7 +99,10 @@ object ExecutionPlanForm {
           ),
           footer = hide => <.span(
             Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
-            Button(Button.Props(None, style = ContextStyle.default), "Preview"),
+            Button(Button.Props(Some(togglePreview()), style = ContextStyle.default,
+              disabled = jobIdLens.get(state).isEmpty || triggerLens.get(state).isEmpty),
+              if (state.showPreview) "Back" else "Preview"
+            ),
             Button(Button.Props(Some(submitForm() >> hide),
               disabled = jobIdLens.get(state).isEmpty || triggerLens.get(state).isEmpty,
               style = ContextStyle.primary), "Ok"
@@ -99,10 +110,16 @@ object ExecutionPlanForm {
           ),
           closed = formClosed(props, state)
         ),
-        JobSelect(jobSpecs(props), jobIdLens.get(state), onJobUpdated),
-        TriggerSelect(triggerLens.get(state), onTriggerUpdate),
-        ExecutionTimeoutInput(timeoutLens.get(state), onTimeoutUpdate),
-        ExecutionParameterList(Map.empty, onParamUpdate)
+        if (!state.showPreview) {
+          <.div(
+            JobSelect(jobSpecs(props), jobIdLens.get(state), onJobUpdated),
+            TriggerSelect(triggerLens.get(state), onTriggerUpdate),
+            ExecutionTimeoutInput(timeoutLens.get(state), onTimeoutUpdate),
+            ExecutionParameterList(Map.empty, onParamUpdate)
+          )
+        } else {
+          triggerLens.get(state).map(ExecutionPlanPreview(_)).get
+        }
       ))
     }
 

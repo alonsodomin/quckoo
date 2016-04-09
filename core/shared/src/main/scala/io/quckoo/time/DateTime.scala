@@ -42,6 +42,8 @@ abstract class DateTime extends Ordered[DateTime] with Serializable {
   final def isEqual(dateTime: DateTime): Boolean =
     compareTo(dateTime) == 0
 
+  def format(pattern: String): String
+
   def underlying: Repr
 
   def toUTC: DateTime

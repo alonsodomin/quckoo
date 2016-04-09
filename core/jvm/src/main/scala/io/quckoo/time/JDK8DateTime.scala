@@ -1,7 +1,8 @@
 package io.quckoo.time
 
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.time.{Duration => JDuration, Instant, ZoneId, ZonedDateTime}
+import java.time.{Instant, ZoneId, ZonedDateTime, Duration => JDuration}
 
 /**
   * Created by alonsodomin on 22/12/2015.
@@ -32,6 +33,9 @@ class JDK8DateTime(private[JDK8DateTime] val zonedDateTime: ZonedDateTime) exten
   override def hashCode(): Int = zonedDateTime.hashCode()
 
   def underlying: ZonedDateTime = zonedDateTime
+
+  def format(pattern: String): String =
+    DateTimeFormatter.ofPattern(pattern).format(zonedDateTime)
 
   def toUTC: DateTime = {
     val zdt = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"))

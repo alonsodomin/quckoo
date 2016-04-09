@@ -38,6 +38,9 @@ class MomentJSDateTime(private val date: MDate) extends DateTime {
 
   override def hashCode(): Int = date.hashCode()
 
+  def format(pattern: String): String =
+    date.format(pattern)
+
   def underlying = date
 
   def toUTC: DateTime = new MomentJSDateTime(date.utc())
