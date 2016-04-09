@@ -39,10 +39,10 @@ object EveryTriggerInput {
     }
 
     def onFreqUpdate(value: Option[FiniteDuration]): Callback =
-      $.modState(_.copy(freq = value)) >> propagateUpdate
+      $.modState(_.copy(freq = value), propagateUpdate)
 
     def onDelayUpdate(value: Option[FiniteDuration]): Callback =
-      $.modState(_.copy(delay = value)) >> propagateUpdate
+      $.modState(_.copy(delay = value), propagateUpdate)
 
     def render(props: Props, state: State) = {
       <.div(

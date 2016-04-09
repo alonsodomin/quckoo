@@ -3,7 +3,9 @@ package io.quckoo.console.scheduler
 import io.quckoo.Trigger
 import io.quckoo.console.components._
 import io.quckoo.time.{MomentJSDate, MomentJSDateTime, MomentJSTime}
+
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 /**
@@ -13,6 +15,9 @@ object AtTriggerInput {
 
   case class Props(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback)
   case class State(date: Option[MomentJSDate], time: Option[MomentJSTime])
+
+  implicit val propsReuse = Reusability.by[Props, Option[Trigger.At]](_.value)
+  implicit val stateReuse = Reusability.caseClass[State]
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -30,10 +35,10 @@ object AtTriggerInput {
     }
 
     def onDateUpdate(value: Option[MomentJSDate]): Callback =
-      $.modState(_.copy(date = value)) >> propagateUpdate
+      $.modState(_.copy(date = value), propagateUpdate)
 
     def onTimeUpdate(value: Option[MomentJSTime]): Callback =
-      $.modState(_.copy(time = value)) >> propagateUpdate
+      $.modState(_.copy(time = value), propagateUpdate)
 
     val DateInput = new Input[MomentJSDate](onDateUpdate)
     val TimeInput = new Input[MomentJSTime](onTimeUpdate)
@@ -60,6 +65,7 @@ object AtTriggerInput {
   val component = ReactComponentB[Props]("AtTriggerInput").
     initialState_P(_ => State(None, None)).
     renderBackend[Backend].
+    configure(Reusability.shouldComponentUpdate).
     build
 
   def apply(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback) =

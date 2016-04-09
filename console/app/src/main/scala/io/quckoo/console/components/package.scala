@@ -1,7 +1,7 @@
 package io.quckoo.console
 
 import io.quckoo.Trigger
-import io.quckoo.time.{MomentJSDate, MomentJSTime}
+import io.quckoo.time.{DateTime, MomentJSDate, MomentJSTime}
 import japgolly.scalajs.react.ReactNode
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -23,10 +23,12 @@ package object components {
   implicit val finiteDurationReuse = Reusability.byRef[FiniteDuration]
   implicit val dateReuse = Reusability.byRef[MomentJSDate]
   implicit val timeReuse = Reusability.byRef[MomentJSTime]
+  implicit val dateTimeReuse = Reusability.byRef[DateTime]
 
   implicit val immediateTriggerReuse = Reusability.byRef[Trigger.Immediate.type]
   implicit val afterTriggerReuse = Reusability.caseClass[Trigger.After]
   implicit val everyTriggerReuse = Reusability.caseClass[Trigger.Every]
+  implicit val atTriggerReuse = Reusability.caseClass[Trigger.At]
 
   implicit def icon2VDom(icon: Icon): ReactNode = {
     <.span(^.classSet1M("fa", icon.classSet), icon.state.padding ?= (^.paddingRight := 5.px))
