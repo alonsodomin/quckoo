@@ -41,7 +41,7 @@ object ExecutionTimeoutInput {
         ),
         if (state.enabled) {
           <.div(^.`class` := "col-sm-offset-2",
-            ReusableFiniteDurationInput("timeout", props.value, onValueUpdate)
+            FiniteDurationInput("timeout", props.value, onValueUpdate)
           )
         } else EmptyTag
       )

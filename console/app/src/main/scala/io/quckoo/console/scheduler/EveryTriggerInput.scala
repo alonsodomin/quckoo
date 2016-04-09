@@ -49,13 +49,13 @@ object EveryTriggerInput {
         <.div(^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Frequency"),
           <.div(^.`class` := "col-sm-10",
-            ReusableFiniteDurationInput("everyTrigger_freq", state.freq, onFreqUpdate)
+            FiniteDurationInput("everyTrigger_freq", state.freq, onFreqUpdate)
           )
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Delay"),
           <.div(^.`class` := "col-sm-10",
-            ReusableFiniteDurationInput("everyTrigger_delay", state.delay, onDelayUpdate)
+            FiniteDurationInput("everyTrigger_delay", state.delay, onDelayUpdate)
           )
         )
       )

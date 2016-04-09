@@ -1,118 +1,105 @@
 package io.quckoo.console.components
 
+import io.quckoo.time.{MomentJSDate, MomentJSTime}
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.OnUnmount
-import japgolly.scalajs.react.vdom.TagMod
+import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import monix.execution.Scheduler.Implicits.global
-import monix.execution.Cancelable
-import monix.reactive.subjects.PublishSubject
-
-import scala.concurrent.duration._
-import scalaz._
+import scala.annotation.implicitNotFound
 
 /**
-  * Created by alonsodomin on 28/02/2016.
+  * Created by alonsodomin on 07/04/2016.
   */
-object Input {
-  import Isomorphism._
+object ReusableInput {
 
-  type Converter[A] = A <=> String
-
-  abstract class BaseConverter[A] extends Converter[A] {
-    override def to: A => String = _.toString
+  @implicitNotFound("Type $A is not supported as Input component")
+  sealed trait Converter[A] {
+    def from: String => A
+    def to: A => String
   }
-
-  private[this] val StringConverter: Converter[String] = new Converter[String] {
-    def to: String => String = identity
-    def from: String => String = identity
-  }
-
-  private[this] val IntConverter: Converter[Int] = new BaseConverter[Int] {
-    override def from: String => Int = _.toInt
-  }
-
-  private[this] val LongConverter: Converter[Long] = new BaseConverter[Long] {
-    override def from: String => Long = _.toLong
-  }
-
-  case class Props[A](
-      initial: A,
-      converter: Converter[A],
-      onChange: A => Callback,
-      tagMods: Seq[TagMod]
-  )
-  case class State[A](currentValue: A)
-
-  class Backend[A]($: BackendScope[Props[A], State[A]]) extends OnUnmount {
-    private[this] val subject = PublishSubject[A]()
-    private[this] lazy val stream = subject.debounce(250 millis).publish
-
-    def init(p: Props[A]): Callback = {
-      def subscribeHandlers: Callback = Callback {
-        stream.map(p.onChange).foreach(_.runNow())
-      }
-
-      def connect: CallbackTo[Cancelable] =
-        CallbackTo { stream.connect() }
-
-      def registerDispose(cancellable: Cancelable): Callback = {
-        def cancelConnection: Callback =
-          CallbackTo { cancellable.cancel() }
-
-        def completeStream: Callback = Callback {
-          subject.onComplete()
-        }
-
-        onUnmount(cancelConnection >> completeStream)
-      }
-
-      subscribeHandlers >> connect >>= registerDispose
+  object Converter {
+    abstract class BaseConverter[A] extends Converter[A] {
+      override def to: A => String = _.toString
     }
 
-    def onChange(event: ReactEventI): Callback = {
-      def convertValue: CallbackTo[A] =
-        $.props.map(_.converter.from(event.target.value))
-
-      def updateState(value: A): CallbackTo[A] =
-        $.modState(_.copy(currentValue = value)).ret(value)
-
-      def propagateValue(value: A): Callback =
-        Callback { subject.onNext(value) }
-
-      event.preventDefaultCB >> convertValue >>= updateState >>= propagateValue
+    implicit val string: Converter[String] = new Converter[String] {
+      def to: String => String = identity
+      def from: String => String = identity
     }
 
-    def render(p: Props[A], s: State[A]) = {
-      val tagMods = Seq(
-        ^.value := p.converter.to(s.currentValue),
+    implicit val int: Converter[Int] = new BaseConverter[Int] {
+      override def from: String => Int = _.toInt
+    }
+
+    implicit val long: Converter[Long] = new BaseConverter[Long] {
+      override def from: String => Long = _.toLong
+    }
+
+    implicit val date: Converter[MomentJSDate] = new BaseConverter[MomentJSDate] {
+      override def from: String => MomentJSDate = MomentJSDate.parse
+    }
+
+    implicit val time: Converter[MomentJSTime] = new BaseConverter[MomentJSTime] {
+      override def from: String => MomentJSTime = MomentJSTime.parse
+    }
+
+  }
+
+  @implicitNotFound("Type $A is not supported as Input component")
+  sealed abstract class Type[A](val html: String)
+  object Type {
+    implicit val string = new Type[String]("text") {}
+    implicit val int = new Type[Int]("number") {}
+    implicit val long = new Type[Long]("number") {}
+    implicit val date = new Type[MomentJSDate]("date") {}
+    implicit val time = new Type[MomentJSTime]("time") {}
+  }
+
+  type OnUpdate[A] = Option[A] => Callback
+
+  case class Props[A](value: Option[A], converter: Converter[A], `type`: Type[A], onUpdate: OnUpdate[A], attrs: Seq[TagMod])
+
+  class Backend[A]($: BackendScope[Props[A], Unit]) {
+
+    def onUpdate(props: Props[A])(evt: ReactEventI): Callback = {
+      def convertNewValue: CallbackTo[Option[A]] = CallbackTo {
+        if (evt.target.value.isEmpty) None
+        else Some(props.converter.from(evt.target.value))
+      }
+
+      def propagateChange(value: Option[A]): Callback =
+        props.onUpdate(value)
+
+      convertNewValue >>= propagateChange
+    }
+
+    def render(props: Props[A]) = {
+      <.input(^.`type` := props.`type`.html,
         ^.`class` := "form-control",
-        ^.onChange ==> onChange
-      ) ++ p.tagMods
-
-      <.input(tagMods: _*)
+        props.value.map(v => ^.value := props.converter.to(v)),
+        ^.onChange ==> onUpdate(props),
+        ^.onBlur ==> onUpdate(props),
+        props.attrs
+      )
     }
 
   }
 
-  def component[A] = ReactComponentB[Props[A]]("Input").
-    initialState_P(p => State(p.initial)).
+}
+
+class ReusableInput[A: Reusability](onUpdate: ReusableInput.OnUpdate[A]) {
+  import ReusableInput._
+
+  implicit val propsReuse: Reusability[Props[A]] = Reusability.by[Props[A], Option[A]](_.value)
+  val reuseConfig = Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode]
+
+  val component = ReactComponentB[Props[A]]("Input").
+    stateless.
     renderBackend[Backend[A]].
-    componentDidMount($ => $.backend.init($.props)).
-    configure(OnUnmount.install).
+    configure(reuseConfig).
     build
 
-  def text(initial: String, onChange: String => Callback, tagMods: TagMod*) =
-    component[String](Props(initial, StringConverter, onChange, (^.tpe := "text") :: tagMods.toList))
-
-  def password(initial: String, onChange: String => Callback, tagMods: TagMod*) =
-    component[String](Props(initial, StringConverter, onChange, (^.tpe := "password") :: tagMods.toList))
-
-  def int(initial: Int, onChange: Int => Callback, tagMods: TagMod*) =
-    component[Int](Props(initial, IntConverter, onChange, (^.tpe := "number") :: tagMods.toList))
-
-  def long(initial: Long, onChange: Long => Callback, tagMods: TagMod*) =
-    component[Long](Props(initial, LongConverter, onChange, (^.tpe := "number") :: tagMods.toList))
+  def apply(value: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+    component(Props(value, C, T, onUpdate, attrs))
 
 }

@@ -3,12 +3,13 @@ package io.quckoo.console.components
 import java.util.concurrent.TimeUnit
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scala.concurrent.duration._
 
 /**
-  * Created by alonsodomin on 31/01/2016.
+  * Created by alonsodomin on 08/04/2016.
   */
 object FiniteDurationInput {
 
@@ -20,35 +21,57 @@ object FiniteDurationInput {
     DAYS         -> "Days"
   )
 
-  case class Props(id: String, value: FiniteDuration, onChange: FiniteDuration => Callback)
+  case class Props(id: String, value: Option[FiniteDuration], onUpdate: Option[FiniteDuration] => Callback)
+  case class State(length: Option[Long], unit: Option[TimeUnit]) {
 
-  case class State(current: FiniteDuration)
+    def this(duration: Option[FiniteDuration]) =
+      this(duration.map(_.length), duration.map(_.unit))
 
-  class Backend($: BackendScope[Props, FiniteDuration]) {
+  }
 
-    def notifyOnChange: Callback =
-      $.props.map(_.onChange).flatMap { handler =>
-        $.state.flatMap(handler)
+  implicit val timeUnitReuse = Reusability.byRef[TimeUnit]
+  implicit val propsReuse: Reusability[Props] = Reusability.by(_.value)
+  implicit val stateReuse = Reusability.caseClass[State]
+
+  class Backend($: BackendScope[Props, State]) {
+
+    def propagateUpdate: Callback = {
+      val prod = $.state.map(st => st.length.flatMap(l => st.unit.map(u => (l, u))))
+
+      prod.flatMap {
+        case Some((length, unit)) =>
+          val duration = FiniteDuration(length, unit)
+          $.props.flatMap(_.onUpdate(Some(duration)))
+
+        case _ =>
+          $.props.flatMap(_.onUpdate(None))
       }
+    }
 
-    def updateAmount(x: Long): Callback =
-      $.modState(current => FiniteDuration(x, current.unit)) >> notifyOnChange
+    def onLengthUpdate(value: Option[Long]): Callback =
+      $.modState(_.copy(length = value)) >> propagateUpdate
 
-    def updateUnit(evt: ReactEventI): Callback =
-      $.modState(current => FiniteDuration(current.length, TimeUnit.valueOf(evt.target.value))) >> notifyOnChange
+    def onUnitUpdate(evt: ReactEventI): Callback = {
+      val value = {
+        if (evt.target.value.isEmpty) None
+        else Some(TimeUnit.valueOf(evt.target.value))
+      }
+      $.modState(_.copy(unit = value)) >> propagateUpdate
+    }
 
-    def render(props: Props, state: FiniteDuration) = {
+    val lengthInput = new ReusableInput[Long](onLengthUpdate)
+
+    def render(props: Props, state: State) = {
       val id = props.id
-
       <.div(^.`class` := "container-fluid",
         <.div(^.`class` := "row",
-          <.div(^.`class` := "col-sm-2",
-            Input.long(state.length, updateAmount, ^.id := s"${id}_amount", ^.placeholder := "0")
+          <.div(^.`class` := "col-sm-4",
+            lengthInput(state.length, ^.id := s"${id}_length")
           ),
           <.div(^.`class` := "col-sm-6",
             <.select(^.id := s"${id}_unit", ^.`class` := "form-control",
-              ^.value := state.unit.toString(),
-              ^.onChange ==> updateUnit,
+              state.unit.map(u => ^.value := u.toString()),
+              ^.onChange ==> onUnitUpdate,
               SupportedUnits.map { case (u, text) =>
                 <.option(^.value := u.name(), text)
               }
@@ -60,15 +83,13 @@ object FiniteDurationInput {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("AmountOfTime").
-    initialState_P(_.value).
+  val component = ReactComponentB[Props]("FiniteDurationInput").
+    initialState_P(props => new State(props.value)).
     renderBackend[Backend].
+    configure(Reusability.shouldComponentUpdate).
     build
 
-  def apply(id: String, onChange: FiniteDuration => Callback) =
-    component(Props(id, 0.seconds, onChange))
-
-  def apply(id: String, value: FiniteDuration, onChange: FiniteDuration => Callback) =
-    component(Props(id, value, onChange))
+  def apply(id: String, value: Option[FiniteDuration], onUpdate: Option[FiniteDuration] => Callback) =
+    component(Props(id, value, onUpdate))
 
 }
