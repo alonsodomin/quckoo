@@ -36,9 +36,9 @@ object RegistryPageView {
     def editJob(spec: Option[JobSpec]) =
       $.modState(_.copy(selectedJob = spec, showForm = true))
 
-    def jobEdited(spec: JobSpec): Callback = {
+    def jobEdited(spec: Option[JobSpec]): Callback = {
       def dispatchAction(props: Props): Callback =
-        props.proxy.dispatch(RegisterJob(spec))
+        spec.map(RegisterJob).map(props.proxy.dispatch).getOrElse(Callback.empty)
 
       def updateState(): Callback =
         $.modState(_.copy(showForm = false))

@@ -49,7 +49,7 @@ object ExecutionDriver {
   private case class ScheduleTask(time: DateTime)
   private case object FinishPlan
 
-  // Public execution plan state
+  // Public execution driver state
   object DriverState {
     private[scheduler] def apply(created: Created)(implicit timeSource: TimeSource): DriverState = DriverState(
       ExecutionPlan(created.jobId, created.planId, created.trigger, created.time),

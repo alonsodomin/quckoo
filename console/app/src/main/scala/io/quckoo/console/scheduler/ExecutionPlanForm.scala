@@ -27,7 +27,7 @@ object ExecutionPlanForm {
   @inline
   private def lnf = lookAndFeel
 
-  type ScheduleHandler = ScheduleJob => Callback
+  type ScheduleHandler = Option[ScheduleJob] => Callback
 
   @Lenses case class EditableExecutionPlan(jobId: Option[JobId] = None, trigger: Option[Trigger] = None) {
 
@@ -54,12 +54,12 @@ object ExecutionPlanForm {
     def formClosed(props: Props, state: State): Callback = {
       if (state.cancelled) Callback.empty
       else {
-        def buildCommand: Option[ScheduleJob] = for {
+        def command: Option[ScheduleJob] = for {
             jobId <- state.plan.jobId
             trigger <- state.plan.trigger
           } yield ScheduleJob(jobId, trigger, state.timeout)
 
-        buildCommand.map(cmd => props.handler(cmd)).getOrElse(Callback.empty)
+        props.handler(command)
       }
     }
 

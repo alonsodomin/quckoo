@@ -20,7 +20,7 @@ object JobForm {
   @inline
   private def lnf = lookAndFeel
 
-  type RegisterHandler = JobSpec => Callback
+  type RegisterHandler = Option[JobSpec] => Callback
 
   case class Props(spec: Option[JobSpec], handler: RegisterHandler)
 
@@ -57,9 +57,14 @@ object JobForm {
     def submitForm(): Callback =
       $.modState(_.copy(cancelled = false))
 
-    def formClosed(props: Props, state: State) =
-      if (state.cancelled) Callback.empty
-      else props.handler(state.spec)
+    def formClosed(props: Props, state: State) = {
+      val value = {
+        if (state.cancelled) None
+        else Some(state.spec)
+      }
+
+      props.handler(value)
+    }
 
     def render(props: Props, state: State) = {
       <.form(^.name := "jobDetails",

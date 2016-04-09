@@ -27,9 +27,9 @@ object SchedulerPageView {
 
   class ExecutionsBackend($: BackendScope[Props, State]) {
 
-    def scheduleJob(scheduleJob: ScheduleJob): Callback = {
+    def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
-        props.proxy.dispatch(scheduleJob)
+        scheduleJob.map(props.proxy.dispatch).getOrElse(Callback.empty)
 
       def updateState(): Callback =
         $.modState(_.copy(showForm = false))
@@ -44,7 +44,7 @@ object SchedulerPageView {
       <.div(Style.content,
         <.h2("Scheduler"),
         props.proxy().notification,
-        Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Create Schedule"),
+        Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan"),
         if (state.showForm) {
           props.proxy.connect(_.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
         } else EmptyTag,
