@@ -28,6 +28,9 @@ class DummyDateTime(val value: Long) extends DateTime {
 
   override def hashCode: Int = value.hashCode()
 
+  override def format(pattern: String): String =
+    value.toString
+
   override def underlying = value
 
   override def toUTC: DateTime = this
