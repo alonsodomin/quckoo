@@ -26,7 +26,7 @@ object JobSpecList {
 
     def mounted(props: Props) = {
       def dispatchJobLoading: Callback =
-        Callback.log("Loading job specs...") >> props.proxy.dispatch(LoadJobSpecs)
+        props.proxy.dispatch(LoadJobSpecs)
 
       Callback.ifTrue(props.proxy().size == 0, dispatchJobLoading)
     }

@@ -22,8 +22,7 @@ object ExecutionPlanList {
 
     def mounted(props: Props): Callback = {
       def perform: Callback =
-        Callback.log("Loading list of execution plans from backend...") >>
-          props.proxy.dispatch(LoadExecutionPlans)
+        props.proxy.dispatch(LoadExecutionPlans)
 
       Callback.ifTrue(props.proxy().size == 0, perform)
     }
