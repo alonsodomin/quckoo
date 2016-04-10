@@ -47,10 +47,10 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
     }
   }
 
-  override def masterEvents: Observable[MasterEvent] =
+  override lazy val masterEvents: Observable[MasterEvent] =
     EventSourceObservable[MasterEvent](MasterEventsURI, "master")
 
-  override def workerEvents: Observable[WorkerEvent] =
+  override lazy val workerEvents: Observable[WorkerEvent] =
     EventSourceObservable[WorkerEvent](WorkerEventsURI, "worker")
 
   override def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] = {
@@ -73,9 +73,9 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
     withAuthRefresh { () =>
       Ajax.get(JobsURI + "/" + jobId, headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
         Some(read[JobSpec](xhr.responseText))
-      } recover {
-        case _ => None
       }
+    } recover {
+      case _ => None
     }
   }
 
@@ -103,9 +103,9 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
     withAuthRefresh { () =>
       Ajax.get(ExecutionPlansURI + "/" + planId, headers = authHeaders).map { xhr =>
         Some(read[ExecutionPlan](xhr.responseText))
-      } recover {
-        case _ => None
       }
+    } recover {
+      case _ => None
     }
   }
 
@@ -121,9 +121,9 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
     withAuthRefresh { () =>
       Ajax.post(ExecutionPlansURI, write(scheduleJob), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
         Right(read[ExecutionPlanStarted](xhr.responseText))
-      } recover {
-        case _ => Left(JobNotFound(scheduleJob.jobId))
       }
+    } recover {
+      case _ => Left(JobNotFound(scheduleJob.jobId))
     }
   }
 
