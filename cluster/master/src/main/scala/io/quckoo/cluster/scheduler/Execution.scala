@@ -156,7 +156,7 @@ class Execution(
 
   initialize()
 
-  override val persistenceId: String = "Execution-" + self.path.address
+  override val persistenceId: String = "Execution-" + self.path.name
 
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 
