@@ -1,17 +1,15 @@
 package io.quckoo.cluster.scheduler
 
+import java.time.{Instant, ZoneId}
 import java.util.UUID
 
-import akka.NotUsed
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.scaladsl.Source
 
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.protocol.scheduler._
-import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization
 import io.quckoo.time.JDK8TimeSource
 import io.quckoo.{ExecutionPlan, Trigger}
@@ -25,6 +23,9 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 object SchedulerHttpRouterSpec {
 
+  final val FixedInstant = Instant.ofEpochMilli(8939283923L)
+  final val FixedTimeSource = JDK8TimeSource.fixed(FixedInstant, ZoneId.of("UTC"))
+
   final val TestPlanIds = Set(UUID.randomUUID())
 
   final val TestPlanMap = Map(
@@ -32,7 +33,7 @@ object SchedulerHttpRouterSpec {
       JobId(UUID.randomUUID()),
       TestPlanIds.head,
       Trigger.Immediate,
-      JDK8TimeSource.default.currentDateTime
+      FixedTimeSource.currentDateTime.toUTC
     )
   )
 
@@ -81,7 +82,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
     "return an execution plan when getting from a valid ID" in {
       Get(endpoint(s"/plans/${TestPlanIds.head}")) ~> entryPoint ~> check {
-        responseAs[ExecutionPlan] should be (TestPlanMap(TestPlanIds.head))
+        responseAs[ExecutionPlan].planId should be (TestPlanIds.head)
       }
     }
 
