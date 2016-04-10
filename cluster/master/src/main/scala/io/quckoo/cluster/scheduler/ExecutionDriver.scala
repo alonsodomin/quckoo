@@ -55,13 +55,15 @@ object ExecutionDriver {
     private[scheduler] def apply(created: Created)(implicit timeSource: TimeSource): DriverState = DriverState(
       ExecutionPlan(created.jobId, created.planId, created.trigger, created.time),
       created.spec,
-      created.executionProps
+      created.executionProps,
+      Vector.empty
     )
   }
   final case class DriverState(
       plan: ExecutionPlan,
       jobSpec: JobSpec,
-      executionProps: Props
+      executionProps: Props,
+      completedTasks: Vector[TaskId]
   )(implicit timeSource: TimeSource) {
 
     val jobId = plan.jobId
@@ -86,8 +88,9 @@ object ExecutionDriver {
             copy(plan = plan.copy(
               currentTaskId = None,
               lastExecutionTime = Some(timeSource.currentDateTime),
-              lastOutcome = outcome
-            ))
+              lastOutcome = outcome),
+              completedTasks = completedTasks :+ taskId
+            )
 
           case ExecutionPlanFinished(`jobId`, `planId`) =>
             copy(plan = plan.copy(
@@ -210,7 +213,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
           val newState = state.updated(event)
           context.become(active(newState))
-          self ! nextCommand(newState, outcome)
+          self ! nextCommand(newState, taskId, outcome)
         }
       }
 
@@ -218,10 +221,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       lazy val delay = {
         val now = timeSource.currentDateTime
         if (time.isBefore(now) || time.isEqual(now)) 0 millis
-        else {
-          val diff = time - now
-          diff.toMillis millis
-        }
+        else (time - now).toMillis millis
       }
 
       def scheduleTask(task: Task): Cancellable = {
@@ -280,7 +280,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   private def scheduleOrFinish(state: DriverState) =
     state.plan.nextExecutionTime.map(ScheduleTask).getOrElse(FinishPlan)
 
-  private def nextCommand(state: DriverState, outcome: Task.Outcome) = {
+  private def nextCommand(state: DriverState, lastTaskId: TaskId, outcome: Task.Outcome) = {
     if (state.plan.trigger.isRecurring) {
       outcome match {
         case Task.Success =>
@@ -291,6 +291,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
             // TODO improve retry process
             scheduleOrFinish(state)
           } else {
+            log.warning("Failed task {} won't be retried.", lastTaskId)
             FinishPlan
           }
 

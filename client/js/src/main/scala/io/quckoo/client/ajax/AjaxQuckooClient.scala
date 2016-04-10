@@ -11,6 +11,7 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization
 import monix.reactive.Observable
+import monix.reactive.subjects.PublishSubject
 import org.scalajs.dom.ext.{Ajax, AjaxException}
 
 import scala.concurrent.{ExecutionContext, Future}

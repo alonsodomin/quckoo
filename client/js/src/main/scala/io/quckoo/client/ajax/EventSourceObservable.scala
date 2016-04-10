@@ -1,7 +1,9 @@
 package io.quckoo.client.ajax
 
-import monix.reactive.Observable
-import org.reactivestreams.{Publisher, Subscriber}
+import monix.execution.Cancelable
+import monix.execution.cancelables.RefCountCancelable
+import monix.reactive.observers.SyncSubscriber
+import monix.reactive.{Observable, OverflowStrategy}
 import org.scalajs.dom.raw.{Event, EventSource, MessageEvent}
 import upickle.default._
 
@@ -9,11 +11,13 @@ import upickle.default._
   * Created by alonsodomin on 02/04/2016.
   */
 private[ajax] class EventSourceObservable[A: Reader] private (url: String, eventType: String)
-    extends Publisher[A] {
+    extends (SyncSubscriber[A] => Cancelable) {
 
   val source = new EventSource(url)
 
-  def subscribe(subscriber: Subscriber[_ >: A]): Unit = {
+  override def apply(subscriber: SyncSubscriber[A]): Cancelable = {
+    val cancelable = RefCountCancelable(source.close())
+
     source.onerror = (event: Event) => {
       if (source.readyState == EventSource.CLOSED) {
         subscriber.onComplete()
@@ -28,6 +32,8 @@ private[ajax] class EventSourceObservable[A: Reader] private (url: String, event
       subscriber.onNext(event)
       ()
     })
+
+    cancelable
   }
 
   def close(): Unit = source.close()
@@ -37,7 +43,6 @@ private[ajax] class EventSourceObservable[A: Reader] private (url: String, event
 private[ajax] object EventSourceObservable {
 
   def apply[A: Reader](url: String, eventType: String): Observable[A] =
-    Observable.fromReactivePublisher[A](new EventSourceObservable[A](url, eventType))
-    //Observable.create(new EventSourceObservable[A](url, eventType))
+    Observable.create[A](OverflowStrategy.DropOld(20))(new EventSourceObservable[A](url, eventType))
 
 }
