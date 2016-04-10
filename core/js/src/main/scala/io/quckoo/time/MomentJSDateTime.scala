@@ -43,6 +43,8 @@ class MomentJSDateTime(private val date: MDate) extends DateTime {
 
   def underlying = date
 
+  def toLocal: DateTime = new MomentJSDateTime(date.local())
+
   def toUTC: DateTime = new MomentJSDateTime(date.utc())
 
   def toEpochMillis: Long =

@@ -28,7 +28,7 @@ object ExecutionPlanPreview {
 
       val first = genNext(ScheduledTime(default.currentDateTime))
       val stream = Stream.iterate(first) { case (prev, _) => genNext(prev) }
-      stream.takeWhile { case (_, continue) => continue } map(_._1.when) take state.maxRows
+      stream.takeWhile { case (_, continue) => continue } map(_._1.when.toLocal) take state.maxRows
     }
 
     def onRowsSelectionUpdate(evt: ReactEventI): Callback =

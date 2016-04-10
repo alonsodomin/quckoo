@@ -33,6 +33,8 @@ class DummyDateTime(val value: Long) extends DateTime {
 
   override def underlying = value
 
+  override def toLocal: DateTime = this
+
   override def toUTC: DateTime = this
 
   override def toEpochMillis: Long = value

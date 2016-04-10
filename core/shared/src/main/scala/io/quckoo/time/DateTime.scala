@@ -46,6 +46,8 @@ abstract class DateTime extends Ordered[DateTime] with Serializable {
 
   def underlying: Repr
 
+  def toLocal: DateTime
+
   def toUTC: DateTime
 
   def toEpochMillis: Long

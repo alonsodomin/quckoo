@@ -37,6 +37,11 @@ class JDK8DateTime(private[JDK8DateTime] val zonedDateTime: ZonedDateTime) exten
   def format(pattern: String): String =
     DateTimeFormatter.ofPattern(pattern).format(zonedDateTime)
 
+  def toLocal: DateTime = {
+    val zdt = zonedDateTime.withZoneSameInstant(ZoneId.systemDefault())
+    new JDK8DateTime(zonedDateTime = zdt)
+  }
+
   def toUTC: DateTime = {
     val zdt = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"))
     new JDK8DateTime(zonedDateTime = zdt)
