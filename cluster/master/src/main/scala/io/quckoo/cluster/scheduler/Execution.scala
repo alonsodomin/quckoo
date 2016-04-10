@@ -99,7 +99,7 @@ class Execution(
       stay replying data
 
     case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
-      log.debug("Queue has accepted task {}. Waiting for worker to pull it.", taskId)
+      log.debug("Queue has accepted task {}.", taskId)
       goto(Waiting) applying Triggered andThen { _ =>
         context.parent ! Triggered
       }
@@ -116,12 +116,12 @@ class Execution(
 
   when(Waiting) {
     case Event(Start, ExecutionState(_, Some(task), _, _)) =>
-      log.debug("Execution starting. taskId={}", task.id)
+      log.info("Execution of task {} starting", task.id)
       val st = goto(InProgress) applying Started
       executionTimeout.map(duration => st forMax duration).getOrElse(st)
 
     case Event(Cancel(reason), data) =>
-      log.debug("Cancelling execution upon request. Reason: {}", reason)
+      log.debug("Cancelling execution of task {} upon request. Reason: {}", data.task.get.id, reason)
       stop applying Cancelled(reason)
 
     case Event(Get, data) =>

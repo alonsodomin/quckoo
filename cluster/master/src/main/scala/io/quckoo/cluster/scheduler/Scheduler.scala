@@ -2,11 +2,13 @@ package io.quckoo.cluster.scheduler
 
 import java.util.UUID
 
+import akka.NotUsed
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.persistence.query.scaladsl.{AllPersistenceIdsQuery, EventsByPersistenceIdQuery}
+import akka.stream.scaladsl.Sink
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import io.quckoo.JobSpec
 import io.quckoo.cluster.protocol._
@@ -56,9 +58,7 @@ class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: 
       filter(_.startsWith("ExecutionPlan-")).
       flatMapConcat { persistenceId =>
         readJournal.eventsByPersistenceId(persistenceId, 0, System.currentTimeMillis())
-      } runForeach { env =>
-        executionPlanView ! env.event
-      }
+      } runWith Sink.actorRef(executionPlanView, NotUsed)
   }
 
   override def postStop(): Unit =
@@ -156,7 +156,7 @@ private class ExecutionDriverFactory(
 
 }
 
-private class ExecutionPlanView(shardRegion: ActorRef) extends Actor {
+private class ExecutionPlanView(shardRegion: ActorRef) extends Actor with ActorLogging {
 
   private[this] var executionPlans = Map.empty[PlanId, Boolean]
 
@@ -172,9 +172,11 @@ private class ExecutionPlanView(shardRegion: ActorRef) extends Actor {
       sender() ! executionPlans.keySet
 
     case evt: ExecutionDriver.Created =>
+      log.debug("Received event: {}", evt)
       executionPlans += (evt.planId -> true)
 
     case evt: ExecutionPlanFinished =>
+      log.debug("Received event: {}", evt)
       executionPlans += (evt.planId -> false)
   }
 

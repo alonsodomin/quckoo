@@ -130,9 +130,6 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   override def preStart(): Unit =
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
 
-  override def postStop(): Unit =
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
-
   override def receiveRecover: Receive = {
     case create: Created =>
       log.debug("Execution driver recreated for plan: {}", create.planId)
@@ -228,7 +225,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         // Schedule a new execution instance
         log.info("Scheduling a new execution. jobId={}, planId={}, taskId={}", state.jobId, state.planId, task.id)
         val execution = context.actorOf(state.executionProps, "exec-" + task.id)
-        context.watch(execution)
+        //context.watch(execution)
 
         implicit val dispatcher = triggerDispatcher
         log.debug("Task {} in plan {} will be triggered after {}", task.id, state.planId, delay)
@@ -255,7 +252,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       log.info("Stopping execution plan. planId={}", state.planId)
       persist(ExecutionPlanFinished(state.jobId, state.planId)) { event =>
         mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
-        context.parent ! Passivate(stopMessage = PoisonPill)
+        mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
         context.become(shuttingDown(state.updated(event)))
       }
   }
@@ -272,6 +269,9 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   private def shuttingDown(state: DriverState): Receive = {
     case GetExecutionPlan(_) =>
       sender() ! Some(state)
+
+    case DistributedPubSubMediator.UnsubscribeAck(_) =>
+      context.parent ! Passivate(stopMessage = PoisonPill)
 
     case _ =>
       log.warning("Execution plan '{}' has finished, shutting down.", state.planId)
