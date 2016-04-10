@@ -41,7 +41,8 @@ object JobSelect {
             props.value.map(id => ^.value := id.toString()),
             ^.onChange ==> onUpdate,
             <.option("Select a job"),
-            props.jobs.map(jobPair => JobOption.withKey(jobPair._1.toString)(jobPair))
+            props.jobs.filter(!_._2.disabled).
+              map(jobPair => JobOption.withKey(jobPair._1.toString)(jobPair))
           )
         )
       )
