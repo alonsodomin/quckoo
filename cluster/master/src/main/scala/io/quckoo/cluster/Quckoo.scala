@@ -105,7 +105,7 @@ class Quckoo(settings: QuckooClusterSettings)
   }
 
   def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
-    implicit val timeout = Timeout(5 seconds)
+    implicit val timeout = Timeout(15 seconds)
     (core ? GetJobs).mapTo[Map[JobId, JobSpec]]
   }
 

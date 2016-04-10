@@ -18,7 +18,7 @@ import io.quckoo.resolver.ivy.IvyResolve
  */
 object Registry {
 
-  final val PersistenceId = "registry"
+  final val EventTag = "registry"
 
   def props(settings: QuckooClusterSettings) = Props(classOf[Registry], settings)
 
@@ -43,14 +43,19 @@ class Registry(settings: QuckooClusterSettings)
   def receive: Receive = {
     case GetJobs =>
       import context.dispatcher
-      readJournal.currentEventsByPersistenceId(PersistenceId, 0, System.currentTimeMillis()).
+      readJournal.currentEventsByTag(EventTag, 0).
+        filter(envelope => envelope.event match {
+          case evt: RegistryJobEvent => true
+          case _                     => false
+        }).
+        map(_.event.asInstanceOf[RegistryJobEvent]).
         runFold(Map.empty[JobId, JobSpec]) {
-          case (map, envelope) => envelope.event match {
+          case (map, event) => event match {
             case JobAccepted(jobId, jobSpec) =>
               map + (jobId -> jobSpec)
-            case JobDisabled(jobId) =>
+            case JobDisabled(jobId) if map.contains(jobId) =>
               map + (jobId -> map(jobId).copy(disabled = true))
-            case JobEnabled(jobId) =>
+            case JobEnabled(jobId) if map.contains(jobId) =>
               map + (jobId -> map(jobId).copy(disabled = false))
             case _ => map
           }

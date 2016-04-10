@@ -86,7 +86,6 @@ object RegistryShard {
 class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
     extends PersistentActor with ActorLogging {
 
-  import Registry._
   import RegistryShard._
 
   import context.dispatcher
@@ -97,7 +96,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
   private var store = RegistryStore.empty
   private[this] var handlerRefCount = 0L
 
-  override val persistenceId: String = PersistenceId
+  override val persistenceId: String = self.path.parent.name + "-" + self.path.name
 
   override def postStop(): Unit = snapshotTask.cancel()
 

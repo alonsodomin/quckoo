@@ -26,8 +26,8 @@ class SchedulerTagEventAdapter extends WriteEventAdapter {
 object SchedulerTagEventAdapter {
 
   object tags {
-    final val ExecutionPlan = "ExecutionPlan"
-    final val Task          = "Task"
+    final val ExecutionPlan = "execution-plan"
+    final val Task          = "task"
   }
 
 }
