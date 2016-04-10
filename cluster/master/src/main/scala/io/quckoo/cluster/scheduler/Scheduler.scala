@@ -70,9 +70,10 @@ class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: 
       registry.tell(GetJob(cmd.jobId), handler)
 
     case cmd @ CreateExecutionDriver(_, config, _) =>
+      val planId = UUID.randomUUID()
+      val props = factoryProps(config.jobId, planId, cmd, shardRegion)
       log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
-      val props = factoryProps(config.jobId, cmd, shardRegion)
-      context.actorOf(props, s"execution-plan-factory-${config.jobId}")
+      context.actorOf(props, s"execution-driver-factory-$planId")
 
     case get: GetExecutionPlan =>
       executionPlanView.tell(get, sender())
@@ -87,9 +88,9 @@ class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: 
   private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
     Props(classOf[JobFetcher], jobId, requestor, config)
 
-  private[this] def factoryProps(jobId: JobId, createCmd: CreateExecutionDriver,
+  private[this] def factoryProps(jobId: JobId, planId: PlanId, createCmd: CreateExecutionDriver,
                                  shardRegion: ActorRef): Props =
-    Props(classOf[ExecutionDriverFactory], jobId, createCmd, shardRegion)
+    Props(classOf[ExecutionDriverFactory], jobId, planId, createCmd, shardRegion)
 
 }
 
@@ -117,9 +118,12 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: ScheduleJob)
 
 }
 
-private class ExecutionDriverFactory(jobId: JobId, cmd: Scheduler.CreateExecutionDriver,
-                                     shardRegion: ActorRef)
-    extends Actor with ActorLogging {
+private class ExecutionDriverFactory(
+    jobId: JobId,
+    planId: PlanId,
+    cmd: Scheduler.CreateExecutionDriver,
+    shardRegion: ActorRef)
+  extends Actor with ActorLogging {
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
@@ -132,12 +136,11 @@ private class ExecutionDriverFactory(jobId: JobId, cmd: Scheduler.CreateExecutio
     case DistributedPubSubMediator.SubscribeAck(_) =>
       import cmd._
 
-      val planId = UUID.randomUUID()
-      log.debug("Starting execution plan for job {}.", config.jobId)
+      log.debug("Starting execution plan for job {}.", jobId)
       val executionProps = Execution.props(
         planId, executionTimeout = cmd.config.timeout
       )
-      shardRegion ! ExecutionDriver.New(config.jobId, spec, planId, config.trigger, executionProps)
+      shardRegion ! ExecutionDriver.New(jobId, spec, planId, config.trigger, executionProps)
 
     case response @ ExecutionPlanStarted(`jobId`, _) =>
       log.info("Execution plan for job {} has been started.", jobId)
@@ -155,26 +158,24 @@ private class ExecutionDriverFactory(jobId: JobId, cmd: Scheduler.CreateExecutio
 
 private class ExecutionPlanView(shardRegion: ActorRef) extends Actor {
 
-  private[this] var finishedExecutionPlans = Set.empty[PlanId]
-  private[this] var activeExecutionPlans = Set.empty[PlanId]
+  private[this] var executionPlans = Map.empty[PlanId, Boolean]
 
   def receive: Receive = {
     case get: GetExecutionPlan =>
-      if (activeExecutionPlans.contains(get.planId)) {
+      if (executionPlans.contains(get.planId)) {
         shardRegion.tell(get, sender())
       } else {
         sender() ! None
       }
 
     case GetExecutionPlans =>
-      sender() ! (activeExecutionPlans ++ finishedExecutionPlans)
+      sender() ! executionPlans.keySet
 
     case evt: ExecutionDriver.Created =>
-      activeExecutionPlans += evt.planId
+      executionPlans += (evt.planId -> true)
 
     case evt: ExecutionPlanFinished =>
-      activeExecutionPlans -= evt.planId
-      finishedExecutionPlans += evt.planId
+      executionPlans += (evt.planId -> false)
   }
 
 }

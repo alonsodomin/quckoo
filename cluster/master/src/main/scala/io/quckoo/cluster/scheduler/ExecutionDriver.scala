@@ -6,6 +6,7 @@ import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted}
+
 import io.quckoo.cluster.topics
 import io.quckoo.fault.{ExceptionThrown, Fault}
 import io.quckoo.id._
@@ -111,6 +112,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
   import ExecutionDriver._
   import ShardRegion.Passivate
+  import SupervisorStrategy._
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
   private[this] val triggerDispatcher = context.system.dispatchers.lookup("quckoo.trigger-dispatcher")
@@ -225,10 +227,11 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       def scheduleTask(task: Task): Cancellable = {
         // Schedule a new execution instance
         log.info("Scheduling a new execution. jobId={}, planId={}, taskId={}", state.jobId, state.planId, task.id)
-        val execution = context.watch(context.actorOf(state.executionProps, "exec-" + task.id))
+        val execution = context.actorOf(state.executionProps, "exec-" + task.id)
+        context.watch(execution)
 
         implicit val dispatcher = triggerDispatcher
-        log.debug("Task {} will be triggered after {}", task.id, delay)
+        log.debug("Task {} in plan {} will be triggered after {}", task.id, state.planId, delay)
         context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp(task, taskQueue))
       }
 
@@ -255,6 +258,15 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         context.parent ! Passivate(stopMessage = PoisonPill)
         context.become(shuttingDown(state.updated(event)))
       }
+  }
+
+
+  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy() {
+    case _: ActorInitializationException => Stop
+    case _: DeathPactException => Stop
+    case cause: Exception =>
+      log.error(cause, "Error thrown from the execution state manager")
+      Restart
   }
 
   private def shuttingDown(state: DriverState): Receive = {

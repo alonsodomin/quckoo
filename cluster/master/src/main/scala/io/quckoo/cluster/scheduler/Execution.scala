@@ -99,7 +99,7 @@ class Execution(
       stay replying data
 
     case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
-      log.debug("Queue has accepted task {}. Waiting for worker to accept it.", taskId)
+      log.debug("Queue has accepted task {}. Waiting for worker to pull it.", taskId)
       goto(Waiting) applying Triggered andThen { _ =>
         context.parent ! Triggered
       }
@@ -161,7 +161,9 @@ class Execution(
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 
   override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState = event match {
-    case Awaken(t, q) => previous.copy(task = Some(t), queue = Some(q))
+    case Awaken(t, q) =>
+      log.debug("Execution for task {} has awaken.", t.id)
+      previous.copy(task = Some(t), queue = Some(q))
 
     case Completed(result) => result match {
       case Some(fault) => previous <<= Failure(fault)
