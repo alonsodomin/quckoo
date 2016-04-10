@@ -3,11 +3,14 @@ package io.quckoo.console.scheduler
 import diode.data.{Pot, PotMap}
 import diode.react.ModelProxy
 import diode.react.ReactPot._
+
 import io.quckoo.ExecutionPlan
 import io.quckoo.console.components.Notification
 import io.quckoo.console.core.LoadExecutionPlans
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.PlanId
+import io.quckoo.time.MomentJSTimeSource.Implicits.default
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -34,7 +37,8 @@ object ExecutionPlanList {
           <.td(item.trigger.toString()),
           <.td(item.lastScheduledTime.map(_.toString())),
           <.td(item.lastExecutionTime.map(_.toString())),
-          <.td(item.lastOutcome.toString())
+          <.td(item.lastOutcome.toString()),
+          <.td(item.nextExecutionTime(default).toString())
         )}
       )
     } build
@@ -60,7 +64,8 @@ object ExecutionPlanList {
             <.th("Trigger"),
             <.th("Last Scheduled"),
             <.th("Last Execution"),
-            <.th("Last Outcome")
+            <.th("Last Outcome"),
+            <.th("Next Execution")
           )
         ),
         <.tbody(

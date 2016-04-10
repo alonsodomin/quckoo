@@ -213,11 +213,11 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       }
 
     case ScheduleTask(time) =>
-      val delay = {
+      lazy val delay = {
         val now = timeSource.currentDateTime
         if (time.isBefore(now) || time.isEqual(now)) 0 millis
         else {
-          val diff = now.diff(time)
+          val diff = time - now
           diff.toMillis millis
         }
       }
@@ -228,6 +228,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         val execution = context.watch(context.actorOf(state.executionProps, "exec-" + task.id))
 
         implicit val dispatcher = triggerDispatcher
+        log.debug("Task {} will be triggered after {}", task.id, delay)
         context.system.scheduler.scheduleOnce(delay, execution, Execution.WakeUp(task, taskQueue))
       }
 
