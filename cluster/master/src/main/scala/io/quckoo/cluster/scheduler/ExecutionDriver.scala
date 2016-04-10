@@ -125,7 +125,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
   private[this] var stateDuringRecovery: Option[DriverState] = None
 
-  override def persistenceId = "ExecutionPlan-" + self.path.name
+  override def persistenceId = "ExecutionDriver-" + self.path.name
 
   override def preStart(): Unit =
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
@@ -224,7 +224,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       def scheduleTask(task: Task): Cancellable = {
         // Schedule a new execution instance
         log.info("Scheduling a new execution. jobId={}, planId={}, taskId={}", state.jobId, state.planId, task.id)
-        val execution = context.actorOf(state.executionProps, "exec-" + task.id)
+        val execution = context.actorOf(state.executionProps, task.id.toString)
         //context.watch(execution)
 
         implicit val dispatcher = triggerDispatcher

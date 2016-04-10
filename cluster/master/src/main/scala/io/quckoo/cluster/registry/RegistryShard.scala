@@ -96,7 +96,7 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
   private var store = RegistryStore.empty
   private[this] var handlerRefCount = 0L
 
-  override val persistenceId: String = self.path.parent.name + "-" + self.path.name
+  override val persistenceId: String = "RegistryShard-" + self.path.name
 
   override def postStop(): Unit = snapshotTask.cancel()
 
