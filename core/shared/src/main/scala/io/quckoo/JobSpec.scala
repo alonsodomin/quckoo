@@ -26,8 +26,11 @@ object JobSpec {
     def validDescription: Validation[ValidationFault, Option[String]] =
       notNull(description)("description")
 
-    def validArtifactId: ValidationNel[ValidationFault, ArtifactId] =
-      (notNull(artifactId)("artifactId").toValidationNel |@| ArtifactId.validate(artifactId))((_, a) => a)
+    def validArtifactId: ValidationNel[ValidationFault, ArtifactId] = {
+      import Validation.FlatMap._
+      val nullcheck = notNull(artifactId)("artifactId").toValidationNel
+      nullcheck.flatMap(_ => ArtifactId.validate(artifactId))
+    }
 
     def validJobClass: Validation[ValidationFault, String] =
       notNullOrEmpty(jobClass)("jobClass")
