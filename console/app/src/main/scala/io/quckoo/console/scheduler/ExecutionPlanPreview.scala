@@ -31,8 +31,10 @@ object ExecutionPlanPreview {
       stream.takeWhile { case (_, continue) => continue } map(_._1.when.toLocal) take state.maxRows
     }
 
-    def onRowsSelectionUpdate(evt: ReactEventI): Callback =
-      $.modState(_.copy(maxRows = evt.target.value.toInt))
+    def onRowsSelectionUpdate(evt: ReactEventI): Callback = {
+      val value = evt.target.value.toInt
+      $.modState(_.copy(maxRows = value))
+    }
 
     def render(props: Props, state: State) = {
       <.div(

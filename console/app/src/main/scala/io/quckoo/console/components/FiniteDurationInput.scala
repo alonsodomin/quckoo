@@ -35,16 +35,15 @@ object FiniteDurationInput {
   class Backend($: BackendScope[Props, State]) {
 
     def propagateUpdate: Callback = {
-      val prod = $.state.map(st => st.length.flatMap(l => st.unit.map(u => (l, u))))
+      val valuePair = $.state.map(st => st.length.flatMap(l => st.unit.map(u => (l, u))))
 
-      prod.flatMap {
+      val value = valuePair.map {
         case Some((length, unit)) =>
-          val duration = FiniteDuration(length, unit)
-          $.props.flatMap(_.onUpdate(Some(duration)))
-
-        case _ =>
-          $.props.flatMap(_.onUpdate(None))
+          Some(FiniteDuration(length, unit))
+        case _ => None
       }
+
+      value.flatMap(v => $.props.flatMap(_.onUpdate(v)))
     }
 
     def onLengthUpdate(value: Option[Long]): Callback =
