@@ -3,7 +3,7 @@ package io.quckoo.resolver.ivy
 import java.net.URL
 
 import io.quckoo._
-import io.quckoo.fault.{DownloadFailed, UnresolvedDependency, Fault}
+import io.quckoo.fault.{DownloadFailed, Fault, ResolutionFault, UnresolvedDependency}
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver._
 import org.apache.ivy.Ivy
@@ -38,23 +38,26 @@ object IvyResolve {
 class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
 
   import IvyResolve._
-
   import Scalaz._
 
   def apply(artifactId: ArtifactId, download: Boolean)
-           (implicit ec: ExecutionContext): Future[Validated[Artifact]] = Future {
+           (implicit ec: ExecutionContext): Future[ValidationNel[ResolutionFault, Artifact]] = Future {
 
-    def unresolvedDependencies(report: ResolveReport): Validated[ResolveReport] = {
-      report.getUnresolvedDependencies.map(_.getId).map { moduleId =>
+    def unresolvedDependencies(report: ResolveReport): ValidationNel[ResolutionFault, ResolveReport] = {
+      val validations: List[Validation[ResolutionFault, ResolveReport]] = report.getUnresolvedDependencies.map(_.getId).map { moduleId =>
         val unresolvedId = ArtifactId(moduleId.getOrganisation, moduleId.getName, moduleId.getRevision)
-        UnresolvedDependency(unresolvedId).failureNel[ResolveReport]
-      }.foldLeft(report.successNel[Fault])((a, b) => (a |@| b) { case (_, r) => r })
+        UnresolvedDependency(unresolvedId).failure[ResolveReport]
+      } toList
+
+      validations.foldLeft(report.successNel[ResolutionFault])((acc, v) => (acc |@| v.toValidationNel) { (_, r) => r })
     }
 
-    def downloadFailed(report: ResolveReport): Validated[ResolveReport] = {
-      report.getFailedArtifactsReports.map { artifactReport =>
-        DownloadFailed(artifactReport.getName).failureNel[ResolveReport]
-      }.foldLeft(report.successNel[Fault])((a, b) => (a |@| b) { case (_, r) => r })
+    def downloadFailed(report: ResolveReport): ValidationNel[ResolutionFault, ResolveReport] = {
+      val validations: List[Validation[ResolutionFault, ResolveReport]] = report.getFailedArtifactsReports.map { artifactReport =>
+        DownloadFailed(artifactReport.getName).failure[ResolveReport]
+      } toList
+
+      validations.foldLeft(report.successNel[ResolutionFault])((acc, v) => (acc |@| v.toValidationNel) { (_, r) => r })
     }
 
     def artifactLocations(artifactReports: Seq[ArtifactDownloadReport]): Seq[URL] = {

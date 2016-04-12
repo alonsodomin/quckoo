@@ -1,6 +1,7 @@
 package io.quckoo.id
 
 import io.quckoo.Validated
+import io.quckoo.fault._
 import io.quckoo.validation._
 import monocle.macros.Lenses
 
@@ -15,22 +16,22 @@ object ArtifactId {
   val GroupSeparator : Char = ':'
   val VersionSeparator : Char = '#'
 
-  def validate(artifactId: ArtifactId): Validated[ArtifactId] =
+  def validate(artifactId: ArtifactId): ValidationNel[ValidationFault, ArtifactId] =
     validate(artifactId.group, artifactId.artifact, artifactId.version)
 
-  def validate(groupId: String, artifactId: String, version: String): Validated[ArtifactId] = {
+  def validate(groupId: String, artifactId: String, version: String): ValidationNel[ValidationFault, ArtifactId] = {
     import Validations._
 
-    def validGroup: Validated[String] =
+    def validGroup: Validation[ValidationFault, String] =
       notNullOrEmpty(groupId)("groupId")
 
-    def validArtifactId: Validated[String] =
+    def validArtifactId: Validation[ValidationFault, String] =
       notNullOrEmpty(artifactId)("artifactId")
 
-    def validVersion: Validated[String] =
+    def validVersion: Validation[ValidationFault, String] =
       notNullOrEmpty(version)("version")
 
-    (validGroup |@| validArtifactId |@| validVersion)(ArtifactId.apply)
+    (validGroup.toValidationNel |@| validArtifactId.toValidationNel |@| validVersion.toValidationNel)(ArtifactId.apply)
   }
 
   implicit val instance = new Equal[ArtifactId] with Show[ArtifactId] {

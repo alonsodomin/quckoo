@@ -4,7 +4,7 @@ import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
-import akka.testkit.ImplicitSender
+import akka.testkit.{ImplicitSender, TestProbe}
 import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.fault.Fault
 import io.quckoo.id.ArtifactId
@@ -69,13 +69,14 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
       }
 
       runOn(registry) {
-        (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
+        val resolverProbe = TestProbe()
+        /*(mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
           expects(TestArtifactId, false, *).
-          returning(Future.successful(TestArtifact.successNel[Fault]))
+          returning(Future.successful(TestArtifact.successNel[Fault]))*/
 
         val ref = ClusterSharding(system).start(
           typeName        = RegistryShard.ShardName,
-          entityProps     = RegistryShard.props(mockResolve),
+          entityProps     = RegistryShard.props(resolverProbe.ref),
           settings        = ClusterShardingSettings(system),
           extractEntityId = RegistryShard.idExtractor,
           extractShardId  = RegistryShard.shardResolver

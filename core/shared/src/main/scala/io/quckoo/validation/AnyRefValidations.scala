@@ -11,9 +11,9 @@ import scalaz._
 trait AnyRefValidations {
   import Scalaz._
 
-  def notNull[T <: AnyRef](t: T)(msg: => String): Validated[T] = {
-    if (t == null) NotNull(msg).failureNel[T]
-    else t.successNel[ValidationFault]
+  def notNull[T <: AnyRef](t: T)(msg: => String): Validation[ValidationFault, T] = {
+    if (t == null) NotNull(msg).failure[T]
+    else t.success[NotNull]
   }
 
 }

@@ -7,15 +7,14 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.testkit._
 import io.quckoo._
 import io.quckoo.cluster.topics
-import io.quckoo.fault.{ExceptionThrown, Fault, UnresolvedDependency}
+import io.quckoo.fault.UnresolvedDependency
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
-import io.quckoo.resolver.{Artifact, Resolve}
+import io.quckoo.resolver.{Artifact, Resolve, Resolver}
 import io.quckoo.test.TestActorSystem
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import scalaz._
 
@@ -24,11 +23,11 @@ import scalaz._
  */
 object RegistryShardSpec {
 
-  final val TestArtifactId = ArtifactId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec("foo", Some("foo desc"), TestArtifactId, "com.example.Job")
+  final val BarArtifactId = ArtifactId("com.example", "bar", "test")
+  final val BarJobSpec = JobSpec("bar", Some("bar desc"), BarArtifactId, "com.example.bar.Job")
 
   final val CommonsLoggingURL = new URL("http://repo1.maven.org/maven2/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar")
-  final val TestArtifact = Artifact(TestArtifactId, Seq(CommonsLoggingURL))
+  final val BarArtifact = Artifact(BarArtifactId, Seq(CommonsLoggingURL))
 
 }
 
@@ -37,7 +36,6 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
     with Matchers with MockFactory {
 
   import RegistryShardSpec._
-  import Scalaz._
 
   val mediator = DistributedPubSub(system).mediator
   ignoreMsg {
@@ -61,7 +59,9 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
     TestKit.shutdownActorSystem(system)
 
   "A job registry shard" should {
-    val registry = TestActorRef(RegistryShard.props(mockResolve).withDispatcher("akka.actor.default-dispatcher"))
+    val resolverProbe = TestProbe()
+    val registry = TestActorRef(RegistryShard.props(resolverProbe.ref).
+      withDispatcher("akka.actor.default-dispatcher"))
 
     "return none when asked for a random job id" in {
       registry ! GetJob(JobId(UUID.randomUUID()))
@@ -71,50 +71,35 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
     }
 
     "reject a job if it fails to resolve its dependencies" in {
-      val unresolvedDependency = UnresolvedDependency(TestArtifactId)
+      val unresolvedDependency = UnresolvedDependency(BarArtifactId)
 
-      (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
-        expects(TestArtifactId, false, *).
-        returning(Future.successful(unresolvedDependency.failureNel[Artifact]))
+      registry ! RegisterJob(BarJobSpec)
 
-      registry ! RegisterJob(TestJobSpec)
+      resolverProbe.expectMsg(Resolver.Validate(BarArtifactId))
+      resolverProbe.reply(Resolver.ResolutionFailed(NonEmptyList(unresolvedDependency)))
 
       expectMsgType[JobRejected].cause should be (NonEmptyList(unresolvedDependency))
       eventListener.expectMsgType[JobRejected].cause should be (NonEmptyList(unresolvedDependency))
     }
 
-    "reject a job if its resolution throws an unexpected exception" in {
-      val expectedException = new Exception("TEST EXCEPTION")
-
-      (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
-        expects(TestArtifactId, false, *).
-        returning(Future.failed[Validated[Artifact]](expectedException))
-
-      registry ! RegisterJob(TestJobSpec)
-
-      expectMsgType[JobRejected].cause should be (NonEmptyList(ExceptionThrown(expectedException)))
-      eventListener.expectMsgType[JobRejected].cause should be (NonEmptyList(ExceptionThrown(expectedException)))
-    }
-
     "return job accepted if resolution of dependencies succeeds" in {
-      (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
-        expects(TestArtifactId, false, *).
-        returning(Future.successful(TestArtifact.successNel[Fault]))
+      registry ! RegisterJob(BarJobSpec)
 
-      registry ! RegisterJob(TestJobSpec)
+      resolverProbe.expectMsg(Resolver.Validate(BarArtifactId))
+      resolverProbe.reply(Resolver.ArtifactResolved(BarArtifact))
 
       val registryResponse = expectMsgType[JobAccepted]
-      registryResponse.job should be (TestJobSpec)
-      testJobId = Some(registryResponse.jobId)
+      registryResponse.job should be (BarJobSpec)
 
-      eventListener.expectMsgType[JobAccepted].job should be (TestJobSpec)
+      testJobId = Some(registryResponse.jobId)
+      eventListener.expectMsgType[JobAccepted].job should be (BarJobSpec)
     }
 
     "return the registered job spec with its status when asked for it" in {
       testJobId.foreach { id =>
         registry ! GetJob(id)
 
-        expectMsg(Some(TestJobSpec))
+        expectMsg(Some(BarJobSpec))
       }
     }
 
@@ -140,7 +125,7 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
       testJobId.foreach { id =>
         registry ! GetJob(id)
 
-        expectMsg(Some(TestJobSpec.copy(disabled = true)))
+        expectMsg(Some(BarJobSpec.copy(disabled = true)))
       }
     }
 
@@ -166,7 +151,7 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
       testJobId.foreach { id =>
         registry ! GetJob(id)
 
-        expectMsg(Some(TestJobSpec))
+        expectMsg(Some(BarJobSpec))
       }
     }
 

@@ -30,7 +30,7 @@ object Navigation {
   class Backend($: BackendScope[Props, Unit]) {
 
     def navigationItemClicked(item: NavigationItem): ReactEvent => Callback =
-      e => preventDefault(e) >> stopPropagation(e) >>
+      e => e.preventDefaultCB >> e.stopPropagationCB >>
         $.props.flatMap(_.routerCtl.set(item.route))
 
     def renderNavMenu(menu: NavigationMenu, props: Props) = {
@@ -66,7 +66,7 @@ object Navigation {
     }
 
     def onLogoutClicked(e: ReactEventI): Callback =
-      preventDefault(e) >> $.props.flatMap(_.proxy.dispatch(Logout))
+      e.preventDefaultCB >> $.props.flatMap(_.proxy.dispatch(Logout))
 
     def render(props: Props): ReactElement = <.div(props.proxy().map { user =>
       <.nav(^.`class` := "navbar navbar-default navbar-fixed-top",

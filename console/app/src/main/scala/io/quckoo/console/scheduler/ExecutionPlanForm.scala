@@ -51,7 +51,7 @@ object ExecutionPlanForm {
     val timeoutLens = State.timeout
 
     def mounted(props: Props) =
-      Callback.ifTrue(props.proxy().size == 0, props.proxy.dispatch(LoadJobSpecs))
+      Callback.when(props.proxy().size == 0)(props.proxy.dispatch(LoadJobSpecs))
 
     def togglePreview(): Callback =
       $.modState(st => st.copy(showPreview = !st.showPreview))

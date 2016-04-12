@@ -8,8 +8,9 @@ import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
 import io.quckoo.Task
 import io.quckoo.cluster.protocol._
-import io.quckoo.fault.ExceptionThrown
+import io.quckoo.fault.{ExceptionThrown, ResolutionFault, UnresolvedDependency}
 import io.quckoo.id.ArtifactId
+import io.quckoo.resolver.{Artifact, Resolver}
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
@@ -26,8 +27,9 @@ object WorkerSpec {
 
   final val TestSchedulerPath = "/user/quckoo/scheduler"
 
-  final val TestJobClass = "com.example.FooClass"
-  final val TestArtifactId = ArtifactId("com.example", "foo", "latest")
+  final val FooJobClass = "com.example.FooClass"
+  final val FooArtifactId = ArtifactId("com.example", "foo", "latest")
+  final val FooArtifact = Artifact(FooArtifactId, Seq.empty)
 
 }
 
@@ -43,13 +45,16 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
     TestKit.shutdownActorSystem(system)
 
   "A worker" should {
+    val resolverProbe = TestProbe()
+    val resolverProps = TestActors.forwardActorProps(resolverProbe.ref)
+
     val executorProbe = TestProbe()
     val executorProps = TestActors.forwardActorProps(executorProbe.ref)
 
-    val task = Task(UUID.randomUUID(), TestArtifactId, Map.empty, TestJobClass)
+    val task = Task(UUID.randomUUID(), FooArtifactId, Map.empty, FooJobClass)
 
     val ackTimeout = 1 second
-    val worker = TestActorRef(Worker.props(clusterClientProbe.ref, executorProps, 1 day, ackTimeout))
+    val worker = TestActorRef(Worker.props(clusterClientProbe.ref, resolverProps, executorProps, 1 day, ackTimeout))
 
     "auto-register itself with the task queue" in {
       val registration = clusterClientProbe.expectMsgType[SendToAll]
@@ -65,17 +70,25 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       queueMsg.msg should matchPattern { case RequestTask(_) => }
     }
 
-    "instruct the executor to execute a task that arrives to it when it's idle" in {
+    "download the artifact for a task that arrives to it when it's idle" in {
       worker ! task
 
-      executorProbe.expectMsgType[JobExecutor.Execute].task should be (task)
+      resolverProbe.expectMsgType[Resolver.Download].artifactId should be (task.artifactId)
     }
 
-    "not overwhelm the executor with more tasks if we are busy" in {
-      val anotherTask = Task(UUID.randomUUID(), TestArtifactId, Map.empty, TestJobClass)
+    "reject subsequent tasks if we are busy" in {
+      val anotherTask = Task(UUID.randomUUID(), FooArtifactId, Map.empty, FooJobClass)
       worker ! anotherTask
 
       executorProbe.expectNoMsg(500 millis)
+    }
+
+    "send the task to the execution when it has been successfully resolved" in {
+      resolverProbe.reply(Resolver.ArtifactResolved(FooArtifact))
+
+      val executeMsg = executorProbe.expectMsgType[JobExecutor.Execute]
+      executeMsg.task should be (task)
+      executeMsg.artifact should be (FooArtifact)
     }
 
     "notify the task queue when the worker completes with a result" in {
@@ -92,7 +105,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       val taskId = task.id
 
       val waitingForTimeout = Future { blocking { TimeUnit.SECONDS.sleep(ackTimeout.toSeconds) } }
-      whenReady(waitingForTimeout, Timeout(Span(1, Seconds))) { _ =>
+      whenReady(waitingForTimeout, Timeout(Span(2, Seconds))) { _ =>
         val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
         queueMsg.path should be (TestSchedulerPath)
         queueMsg.msg should matchPattern { case TaskDone(_, `taskId`, _) => }
@@ -106,7 +119,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       worker ! TaskDoneAck(anotherTaskId)
 
       val waitingForTimeout = Future { blocking { TimeUnit.SECONDS.sleep(ackTimeout.toSeconds) } }
-      whenReady(waitingForTimeout, Timeout(Span(1, Seconds))) { _ =>
+      whenReady(waitingForTimeout, Timeout(Span(2, Seconds))) { _ =>
         val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
         queueMsg.path should be (TestSchedulerPath)
         queueMsg.msg should matchPattern { case TaskDone(_, `taskId`, _) => }
@@ -123,10 +136,29 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       queueMsg.msg should matchPattern { case RequestTask(_) => }
     }
 
-    "send another task to the executor" in {
+    "reply with a failure message when can not resolve the artifact of a task" in {
+      val taskId = task.id
+      val expectedError: ResolutionFault = UnresolvedDependency(ArtifactId("com.example", "bar", "latest"))
+
       worker ! task
 
-      executorProbe.expectMsgType[JobExecutor.Execute].task should be (task)
+      resolverProbe.expectMsgType[Resolver.Download].artifactId should be (task.artifactId)
+      resolverProbe.reply(Resolver.ResolutionFailed(NonEmptyList(expectedError)))
+
+      val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
+      queueMsg.path should be (TestSchedulerPath)
+      queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, NonEmptyList(`expectedError`, _)) => }
+    }
+
+    "send another task to the executor after downloading the artifact" in {
+      worker ! task
+
+      resolverProbe.expectMsgType[Resolver.Download].artifactId should be (task.artifactId)
+      resolverProbe.reply(Resolver.ArtifactResolved(FooArtifact))
+
+      val executeMsg = executorProbe.expectMsgType[JobExecutor.Execute]
+      executeMsg.task should be (task)
+      executeMsg.artifact should be (FooArtifact)
     }
 
     "become idle again if the executor notifies failure when running the task" in {
@@ -134,18 +166,13 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       val cause = new Exception("TEST EXCEPTION")
 
       val expectedError = ExceptionThrown(cause)
-      executorProbe.send(worker, JobExecutor.Failed(NonEmptyList(expectedError)))
+      executorProbe.send(worker, JobExecutor.Failed(expectedError))
 
       val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
       queueMsg.path should be (TestSchedulerPath)
-      queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, NonEmptyList(`expectedError`)) => }
+      queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, NonEmptyList(`expectedError`, _)) => }
     }
 
-    "send one more task to the executor" in {
-      worker ! task
-
-      executorProbe.expectMsgType[JobExecutor.Execute].task should be (task)
-    }
   }
 
 }

@@ -11,9 +11,9 @@ import scalaz._
 trait OptionValidations {
   import Scalaz._
 
-  def defined[T](t: Option[T])(msg: => String): Validated[Option[T]] = {
-    if (t.isEmpty) Required(msg).failureNel[Option[T]]
-    else t.successNel[ValidationFault]
+  def defined[T](t: Option[T])(msg: => String): Validation[ValidationFault, Option[T]] = {
+    if (t.isEmpty) Required(msg).failure[Option[T]]
+    else t.success[Required]
   }
 
 }

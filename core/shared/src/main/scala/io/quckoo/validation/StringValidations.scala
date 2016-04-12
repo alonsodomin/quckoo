@@ -11,9 +11,9 @@ import scalaz._
 trait StringValidations {
   import Scalaz._
 
-  def notNullOrEmpty(str: String)(msg: => String): Validated[String] = {
-    if (str == null || str.isEmpty) Required(msg).failureNel[String]
-    else str.successNel[ValidationFault]
+  def notNullOrEmpty(str: String)(msg: => String): Validation[ValidationFault, String] = {
+    if (str == null || str.isEmpty) Required(msg).failure[String]
+    else str.success[Required]
   }
 
 }

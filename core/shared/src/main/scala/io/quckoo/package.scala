@@ -13,6 +13,4 @@ package object quckoo {
 
   type JobClass = Class[_ <: Callable[_]]
 
-  type Validated[+A] = ValidationNel[Fault, A]
-
 }

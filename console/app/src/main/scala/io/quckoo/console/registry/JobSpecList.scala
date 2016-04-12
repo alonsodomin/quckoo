@@ -75,7 +75,7 @@ object JobSpecList {
       def dispatchJobLoading: Callback =
         props.proxy.dispatch(LoadJobSpecs)
 
-      Callback.ifTrue(props.proxy().size == 0, dispatchJobLoading)
+      Callback.when(props.proxy().size == 0)(dispatchJobLoading)
     }
 
     def toggleSelectAll(props: Props): Callback =

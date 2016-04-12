@@ -51,7 +51,7 @@ object ExecutionPlanList {
       def perform: Callback =
         props.proxy.dispatch(LoadExecutionPlans)
 
-      Callback.ifTrue(props.proxy().size == 0, perform)
+      Callback.when(props.proxy().size == 0)(perform)
     }
 
     def render(p: Props) = {

@@ -89,7 +89,7 @@ object SiteMap {
     val component = Router.componentUnbuiltC(baseUrl, cfg, logic).
       componentWillMount(_ => Callback(ConsoleCircuit.addProcessor(processor))).
       componentWillUnmount(_ => Callback(ConsoleCircuit.removeProcessor(processor))).
-      buildU
+      build
 
     component()
   }

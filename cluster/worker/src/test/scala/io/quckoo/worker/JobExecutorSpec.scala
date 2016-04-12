@@ -5,24 +5,23 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import akka.testkit._
+
 import io.quckoo.Task
-import io.quckoo.fault.{UnresolvedDependency, ExceptionThrown, Fault}
+import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.{ArtifactId, TaskId}
-import io.quckoo.resolver.{Artifact, Resolve}
+import io.quckoo.resolver.Artifact
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
-
-import scala.concurrent.{ExecutionContext, Future}
-import scalaz._
 
 /**
  * Created by aalonsodominguez on 04/08/15.
  */
 object JobExecutorSpec {
 
-  final val TestExecutionId: TaskId = UUID.randomUUID()
+  final val TestTaskId: TaskId = UUID.randomUUID()
   final val TestJobClass = "com.example.FooClass"
-  final val TestArtifactId = ArtifactId("io.kairos", "test", "latest")
+  final val TestArtifactId = ArtifactId("com.example", "test", "latest")
 
 }
 
@@ -31,42 +30,22 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
   import JobExecutorSpec._
 
-  import Scalaz._
-
-  val mockResolve = mock[Resolve]
-  val jobExecutor = TestActorRef(JobExecutor.props(mockResolve), self)
+  val jobExecutor = TestActorRef(JobExecutor.props, self)
 
   override protected def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
   }
 
-  "A job executor actor" must "fail an execution if the dependency resolution fails" in {
-    val task = Task(TestExecutionId, artifactId = TestArtifactId, jobClass = TestJobClass)
-    val unresolvedDependency = UnresolvedDependency(TestArtifactId)
-
-    (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
-      expects(TestArtifactId, true, *).
-      returning(Future.successful(unresolvedDependency.failureNel[Artifact]))
-
-    jobExecutor ! JobExecutor.Execute(task)
-
-    expectMsg(JobExecutor.Failed(NonEmptyList(unresolvedDependency)))
-  }
-
-  it must "fail if instantiation of the job failed" in {
+  "A job executor actor" must "fail if instantiation of the job failed" in {
     val params = Map("a" -> 7)
-    val task = Task(TestExecutionId, TestArtifactId, params, TestJobClass)
+    val task = Task(TestTaskId, TestArtifactId, params, TestJobClass)
 
     val expectedException = new ClassNotFoundException(TestJobClass)
     val failingPackage = Artifact(TestArtifactId, Seq(new URL("http://www.example.com")))
 
-    (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
-      expects(TestArtifactId, true, *).
-      returning(Future.successful(failingPackage.successNel[Fault]))
+    jobExecutor ! JobExecutor.Execute(task, failingPackage)
 
-    jobExecutor ! JobExecutor.Execute(task)
-
-    expectMsgType[JobExecutor.Failed].errors should be(NonEmptyList(ExceptionThrown(expectedException)))
+    expectMsgType[JobExecutor.Failed].error should be(ExceptionThrown(expectedException))
   }
 
 }

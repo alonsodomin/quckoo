@@ -4,10 +4,12 @@ import diode.data.{AsyncAction, Pot, PotState}
 import io.quckoo._
 import io.quckoo.client.QuckooClient
 import io.quckoo.console.ConsoleRoute
+import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.net.ClusterState
 
 import scala.util.{Failure, Try}
+import scalaz.ValidationNel
 
 case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None)
 case class LoggedIn(client: QuckooClient, referral: Option[ConsoleRoute])
@@ -35,7 +37,7 @@ case class RefreshJobSpecs(
 
 }
 
-case class RegisterJobResult(jobId: Validated[JobId])
+case class RegisterJobResult(jobId: ValidationNel[Fault, JobId])
 
 case object LoadExecutionPlans
 case class ExecutionPlanIdsLoaded(planIds: Set[PlanId])

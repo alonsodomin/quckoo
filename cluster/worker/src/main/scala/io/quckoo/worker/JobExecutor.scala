@@ -1,58 +1,41 @@
 package io.quckoo.worker
 
 import akka.actor.{Actor, ActorLogging, Props}
-import akka.pattern._
 import io.quckoo.Task
-import io.quckoo.fault.Faults
-import io.quckoo.fault.ExceptionThrown
+import io.quckoo.fault.{ExceptionThrown, Fault}
 import io.quckoo.resolver.{Artifact, Resolve}
 
-import scala.util.Try
-import scala.util.control.NonFatal
-import scalaz._
+import scala.util.{Failure, Success, Try}
 
 /**
  * Created by aalonsodominguez on 05/07/15.
  */
 object JobExecutor {
 
-  case class Execute(task: Task)
+  final case class Execute(task: Task, artifact: Artifact)
+  final case class Failed(error: Fault)
+  final case class Completed(result: Any)
 
-  case class Failed(errors: Faults)
-  case class Completed(result: Any)
-
-  def props(resolve: Resolve): Props =
-    Props(classOf[JobExecutor], resolve)
+  def props: Props = Props(classOf[JobExecutor])
 }
 
-class JobExecutor(resolve: Resolve) extends Actor with ActorLogging {
+class JobExecutor extends Actor with ActorLogging {
   import JobExecutor._
 
-  import Scalaz._
-
   def receive = {
-    case Execute(task) =>
-      import context.dispatcher
+    case Execute(task, artifact) =>
+      val result = for {
+        job    <- artifact.newJob(task.jobClass, task.params)
+        invoke <- Try(job.call())
+      } yield invoke
 
-      resolve(task.artifactId, download = true) recover {
-        case NonFatal(ex) => ExceptionThrown(ex).failureNel[Artifact]
-      } map {
-        _.disjunctioned {
-          import scala.util.{Failure, Success}
+      val response = result match {
+        case Success(value) => Completed(value)
+        case Failure(ex)    => Failed(ExceptionThrown(ex))
+      }
 
-          _.flatMap(artifact => runTaskFrom(artifact, task) match {
-            case Success(result) => \/-(result)
-            case Failure(cause)  => -\/(NonEmptyList(ExceptionThrown(cause)))
-          })
-        }
-      } map {
-        case Success(value)  => Completed(value)
-        case Failure(errors) => Failed(errors)
-      } pipeTo sender()
+      sender() ! response
   }
-
-  private[this] def runTaskFrom(artifact: Artifact, task: Task): Try[Any] =
-    artifact.newJob(task.jobClass, task.params) flatMap { job => Try(job.call()) }
 
 }
 

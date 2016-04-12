@@ -4,6 +4,7 @@ import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import akka.japi.Util._
 import com.typesafe.config.{Config, ConfigFactory}
+import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.{IvyConfiguration, IvyResolve}
 import io.quckoo.worker.{JobExecutor, Worker}
 import scopt.OptionParser
@@ -44,8 +45,11 @@ object Boot extends App {
 
     val ivyConfig  = IvyConfiguration(config.getConfig("quckoo"))
     val ivyResolve = IvyResolve(ivyConfig)
-    val jobExecutorProps = JobExecutor.props(ivyResolve)
-    system.actorOf(Worker.props(clusterClient, jobExecutorProps), "worker")
+
+    val resolverProps    = Resolver.props(ivyResolve).withDispatcher("quckoo.resolver.dispatcher")
+    val jobExecutorProps = JobExecutor.props.withDispatcher("quckoo.worker.dispatcher")
+
+    system.actorOf(Worker.props(clusterClient, resolverProps, jobExecutorProps), "worker")
   }
 
   parser.parse(args, Options()).foreach { opts =>

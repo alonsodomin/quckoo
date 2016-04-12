@@ -2,18 +2,19 @@ package io.quckoo.resolver.ivy
 
 import java.io.File
 import java.net.URL
-import java.util.concurrent.ForkJoinPool
 
-import io.quckoo.fault.{DownloadFailed, UnresolvedDependency, Fault}
+import io.quckoo.fault.{DownloadFailed, Fault, ResolutionFault, UnresolvedDependency}
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver.Artifact
-import io.quckoo.Validated
+
 import org.apache.ivy.Ivy
-import org.apache.ivy.core.module.descriptor.{Artifact => IvyArtifact, ModuleDescriptor}
+import org.apache.ivy.core.module.descriptor.{ModuleDescriptor, Artifact => IvyArtifact}
 import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.apache.ivy.core.report.{ArtifactDownloadReport, ResolveReport}
 import org.apache.ivy.core.resolve.{IvyNode, ResolveOptions}
-import org.mockito.{Matchers => Match, Mockito}
+
+import org.mockito.{Mockito, Matchers => Match}
+
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mockito.MockitoSugar
@@ -40,7 +41,7 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
   import Match._
   import Mockito._
 
-  implicit val executionContext = ExecutionContext.fromExecutorService(ForkJoinPool.commonPool())
+  import ExecutionContext.Implicits.global
 
   "IvyResolve" should "accumulate all the errors of the resolve operation" in {
     Given("An Ivy resolver")
@@ -71,8 +72,8 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
 
     And("the expected result as accumulation of errors")
     import Scalaz._
-    val validatedDep: Validated[Artifact] = expectedUnresolvedDependency.failureNel[Artifact]
-    val validatedDown: Validated[Artifact] = expectedDownloadFailed.failureNel[Artifact]
+    val validatedDep: ValidationNel[ResolutionFault, Artifact] = expectedUnresolvedDependency.failure[Artifact].toValidationNel
+    val validatedDown: ValidationNel[ResolutionFault, Artifact] = expectedDownloadFailed.failure[Artifact].toValidationNel
     val expectedResult = (validatedDep |@| validatedDown) { case (_, a) => a }
 
     When("Attempting to resolve the artifact")
@@ -96,8 +97,8 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
     val mockReport = mock[MockableResolveReport]
 
     And("some temporary files representing artifact downloads")
-    val unpackedLocalFile = File.createTempFile("kairos", "IvyResolveTest_unpacked")
-    val localFile = File.createTempFile("kairos", "IvyResolveTest_local")
+    val unpackedLocalFile = File.createTempFile("quckoo", "IvyResolveTest_unpacked")
+    val localFile = File.createTempFile("quckoo", "IvyResolveTest_local")
 
     val artifactReport1 = {
       val r = new ArtifactDownloadReport(null)

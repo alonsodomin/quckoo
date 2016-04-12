@@ -5,12 +5,13 @@ import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.stream.{ActorMaterializerSettings, ActorMaterializer}
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import io.quckoo.JobSpec
 import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.cluster.core.QuckooJournal
 import io.quckoo.id.JobId
 import io.quckoo.protocol.registry._
+import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
 
 /**
@@ -36,7 +37,10 @@ class Registry(settings: QuckooClusterSettings)
   )
 
   private val cluster = Cluster(context.system)
-  private val shardRegion = startShardRegion
+  private val resolver = context.actorOf(
+    Resolver.props(IvyResolve(settings.ivyConfiguration)).withDispatcher("quckoo.resolver.dispatcher"),
+    "resolver")
+  private lazy val shardRegion = startShardRegion
 
   def actorSystem = context.system
 
@@ -69,7 +73,7 @@ class Registry(settings: QuckooClusterSettings)
     log.info("Starting registry shards...")
     ClusterSharding(context.system).start(
       typeName        = RegistryShard.ShardName,
-      entityProps     = RegistryShard.props(IvyResolve(settings.ivyConfiguration)),
+      entityProps     = RegistryShard.props(resolver),
       settings        = ClusterShardingSettings(context.system).withRole("registry"),
       extractEntityId = RegistryShard.idExtractor,
       extractShardId  = RegistryShard.shardResolver

@@ -54,7 +54,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
     Future.successful(JobDisabled(jobId))
 
   override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]] =
-    Future.successful(JobSpec.validate(jobSpec)).map(validSpec => validSpec.map(JobId(_)))
+    Future.successful(JobSpec.validate(jobSpec)).map(validSpec => validSpec.map(JobId(_)).leftMap(_.map(_.asInstanceOf[Fault])))
 
   override def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] =
     Future.successful(TestJobMap)

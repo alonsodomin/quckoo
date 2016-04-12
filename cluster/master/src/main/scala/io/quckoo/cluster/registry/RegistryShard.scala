@@ -8,7 +8,7 @@ import akka.persistence.{PersistentActor, SnapshotOffer}
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id._
 import io.quckoo.protocol.registry._
-import io.quckoo.resolver.Resolve
+import io.quckoo.resolver.{Resolve, Resolver}
 import io.quckoo.JobSpec
 import io.quckoo.cluster.topics
 
@@ -23,9 +23,9 @@ object RegistryShard {
 
   val DefaultSnapshotFrequency = 15 minutes
 
-  def props(resolve: Resolve,
+  def props(resolver: ActorRef,
       snapshotFrequency: FiniteDuration = DefaultSnapshotFrequency): Props =
-    Props(classOf[RegistryShard], resolve, snapshotFrequency)
+    Props(classOf[RegistryShard], resolver, snapshotFrequency)
 
   final val ShardName      = "Registry"
   final val NumberOfShards = 100
@@ -83,7 +83,7 @@ object RegistryShard {
 
 }
 
-class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
+class RegistryShard(resolver: ActorRef, snapshotFrequency: FiniteDuration)
     extends PersistentActor with ActorLogging {
 
   import RegistryShard._
@@ -112,21 +112,8 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
   override def receiveCommand: Receive = {
     case RegisterJob(jobSpec) =>
       handlerRefCount += 1
-      val handler = context.actorOf(Props(classOf[ResolutionHandler], sender()), s"handler-$handlerRefCount")
-      resolve(jobSpec.artifactId, download = false) map {
-
-        case Success(_) =>
-          val jobId = JobId(jobSpec)
-          JobAccepted(jobId, jobSpec)
-
-        case Failure(errors) =>
-          JobRejected(jobSpec.artifactId, errors)
-
-      } recover {
-        case NonFatal(ex) =>
-          JobRejected(jobSpec.artifactId, NonEmptyList(ExceptionThrown(ex)))
-
-      } pipeTo handler
+      val handler = context.actorOf(handlerProps(jobSpec, sender()), s"handler-$handlerRefCount")
+      resolver.tell(Resolver.Validate(jobSpec.artifactId), handler)
 
     case event: RegistryResolutionEvent =>
       persist(event) { evt =>
@@ -162,19 +149,23 @@ class RegistryShard(resolve: Resolve, snapshotFrequency: FiniteDuration)
       saveSnapshot(store)
   }
 
+  def handlerProps(jobSpec: JobSpec, requestor: ActorRef): Props =
+    Props(classOf[ResolutionHandler], jobSpec, requestor)
+
 }
 
-private class ResolutionHandler(requestor: ActorRef) extends Actor with ActorLogging {
+private class ResolutionHandler(jobSpec: JobSpec, requestor: ActorRef) extends Actor with ActorLogging {
+  import Resolver._
 
   def receive = {
-    case msg: JobAccepted =>
+    case ArtifactResolved(artifact) =>
       log.debug("Job artifact has been successfully resolved. artifactId={}",
-        msg.job.artifactId)
-      reply(msg)
+        artifact.artifactId)
+      reply(JobAccepted(JobId(jobSpec), jobSpec))
 
-    case msg: JobRejected =>
-      log.error("Couldn't validate the job artifact id. " + msg.cause)
-      reply(msg)
+    case ResolutionFailed(cause) =>
+      log.error("Couldn't validate the job artifact id. " + cause)
+      reply(JobRejected(jobSpec.artifactId, cause))
   }
 
   private def reply(msg: Any): Unit = {

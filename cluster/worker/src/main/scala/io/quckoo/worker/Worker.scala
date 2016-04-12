@@ -7,8 +7,9 @@ import akka.actor._
 import akka.cluster.client.ClusterClient.SendToAll
 import io.quckoo.Task
 import io.quckoo.cluster.protocol._
-import io.quckoo.fault.ExceptionThrown
+import io.quckoo.fault.{ExceptionThrown, Fault}
 import io.quckoo.id.TaskId
+import io.quckoo.resolver.Resolver
 
 import scala.concurrent.duration._
 import scalaz.NonEmptyList
@@ -23,14 +24,15 @@ object Worker {
 
   protected[worker] final val SchedulerPath = "/user/quckoo/scheduler"
 
-  def props(clusterClient: ActorRef, jobExecutorProps: Props,
+  def props(clusterClient: ActorRef, resolverProps: Props, jobExecutorProps: Props,
             registerInterval: FiniteDuration = DefaultRegisterFrequency,
             queueAckTimeout: FiniteDuration = DefaultQueueAckTimeout): Props =
-    Props(classOf[Worker], clusterClient, jobExecutorProps, registerInterval, queueAckTimeout)
+    Props(classOf[Worker], clusterClient, resolverProps, jobExecutorProps, registerInterval, queueAckTimeout)
 
 }
 
 class Worker(clusterClient: ActorRef,
+             resolverProps: Props,
              jobExecutorProps: Props,
              registerInterval: FiniteDuration,
              queueAckTimeout: FiniteDuration)
@@ -46,6 +48,7 @@ class Worker(clusterClient: ActorRef,
     SendToAll(SchedulerPath, RegisterWorker(workerId))
   )
 
+  private val resolver = context.watch(context.actorOf(resolverProps, "resolver"))
   private val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "executor"))
   
   private var currentTaskId: Option[TaskId] = None
@@ -67,19 +70,27 @@ class Worker(clusterClient: ActorRef,
     case task: Task =>
       log.info("Received task for execution {}", task.id)
       currentTaskId = Some(task.id)
-      jobExecutor ! JobExecutor.Execute(task)
-      context.become(working)
+      resolver ! Resolver.Download(task.artifactId)
+      context.become(working(task))
   }
 
-  def working: Receive = {
+  def working(task: Task): Receive = {
+    case Resolver.ArtifactResolved(artifact) =>
+      jobExecutor ! JobExecutor.Execute(task, artifact)
+
+    case Resolver.ResolutionFailed(cause) =>
+      sendToQueue(TaskFailed(workerId, task.id, cause.map(_.asInstanceOf[Fault])))
+      context.setReceiveTimeout(Duration.Undefined)
+      context.become(idle)
+
     case JobExecutor.Completed(result) =>
       log.info("Task execution has completed. Result {}.", result)
-      sendToQueue(TaskDone(workerId, taskId, result))
+      sendToQueue(TaskDone(workerId, task.id, result))
       context.setReceiveTimeout(queueAckTimeout)
       context.become(waitForTaskDoneAck(result))
 
     case JobExecutor.Failed(reason) =>
-      sendToQueue(TaskFailed(workerId, taskId, reason))
+      sendToQueue(TaskFailed(workerId, task.id, NonEmptyList(reason)))
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 

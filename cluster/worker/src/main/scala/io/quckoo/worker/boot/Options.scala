@@ -22,7 +22,7 @@ object Options {
   final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
   final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
 
-  final val QuckooContactPoints = "quckoo.contact-points"
+  final val QuckooContactPoints = "quckoo.worker.contact-points"
 
   private final val HostAndPort = """(.+?):(\d+)""".r
 

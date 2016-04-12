@@ -18,7 +18,7 @@ case object GetJobs extends RegistryCommand
 
 final case class RegisterJob(job: JobSpec) extends RegistryCommand
 final case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryResolutionEvent with RegistryJobEvent
-final case class JobRejected(artifactId: ArtifactId, cause: NonEmptyList[Fault]) extends RegistryResolutionEvent
+final case class JobRejected(artifactId: ArtifactId, cause: NonEmptyList[ResolutionFault]) extends RegistryResolutionEvent
 
 final case class DisableJob(jobId: JobId) extends RegistryCommand
 final case class JobDisabled(jobId: JobId) extends RegistryJobEvent

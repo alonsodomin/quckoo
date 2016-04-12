@@ -10,7 +10,7 @@ import akka.util.Timeout
 import io.quckoo.cluster.core.{WorkerEventPublisher, _}
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.registry.RegistryEventPublisher
-import io.quckoo.fault.Fault
+import io.quckoo.fault.{Fault, ResolutionFault}
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.net.ClusterState
 import io.quckoo.protocol.registry._
@@ -23,6 +23,7 @@ import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scalaz.{Validation, ValidationNel}
 
 /**
   * Created by alonsodomin on 13/12/2015.
@@ -86,20 +87,20 @@ class Quckoo(settings: QuckooClusterSettings)
     (core ? GetJob(jobId)).mapTo[Option[JobSpec]]
   }
 
-  def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]] = {
+  def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[ValidationNel[Fault, JobId]] = {
     import scalaz._
     import Scalaz._
 
     val valid = JobSpec.validate(jobSpec)
     if (valid.isFailure) {
-      Future.successful(valid.asInstanceOf[Validated[JobId]])
+      Future.successful(valid.asInstanceOf[ValidationNel[Fault, JobId]])
     } else {
       log.info(s"Registering job spec: $jobSpec")
 
       implicit val timeout = Timeout(30 seconds)
       (core ? RegisterJob(jobSpec)) map {
         case JobAccepted(jobId, _)  => jobId.successNel[Fault]
-        case JobRejected(_, errors) => errors.failure[JobId]
+        case JobRejected(_, errors) => errors.map(_.asInstanceOf[Fault]).failure[JobId]
       }
     }
   }

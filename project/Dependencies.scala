@@ -24,21 +24,21 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact = "0.10.4"
-    val scalaCss = "0.3.1"
+    val scalaJsReact = "0.11.0"
+    val scalaCss = "0.4.1"
 
     val diode = "0.5.1"
 
     val upickle = "0.3.9"
     val scalatags = "0.4.6"
 
-    val reactJs = "0.14.3"
+    val reactJs = "15.0.1"
 
     // Other utils ---
 
     val scopt = "3.3.0"
-    val monocle = "1.1.1"
-    val scalaz = "7.1.3"
+    val monocle = "1.2.0"
+    val scalaz = "7.2.1"
     val monifu = "1.1"
     val monix  = "2.0-M2"
   }
@@ -110,21 +110,21 @@ object Dependencies {
     libraryDependencies ++= Seq(
       compilerPlugin(Dependencies.compiler.macroParadise),
 
-      "com.lihaoyi"   %%% "upickle"   % version.upickle,
-      "org.scalatest" %%% "scalatest" % version.scalaTest % Test
+      "com.lihaoyi"   %%% "upickle"     % version.upickle,
+      "org.scalaz"    %%% "scalaz-core" % version.scalaz,
+      "org.scalatest" %%% "scalatest"   % version.scalaTest % Test
     )
   }
   lazy val coreJS = Def.settings {
     libraryDependencies ++= Seq(
       "io.github.widok"                  %%% "scala-js-momentjs" % "0.1.4",
-      "com.github.japgolly.fork.scalaz"  %%% "scalaz-core"       % version.scalaz,
       "com.github.japgolly.fork.monocle" %%% "monocle-core"      % version.monocle,
       "com.github.japgolly.fork.monocle" %%% "monocle-macro"     % version.monocle
     )
   }
   lazy val coreJVM = Def.settings {
     import libs._
-    libraryDependencies ++= Seq(scalaz, Monocle.core, Monocle.`macro`)
+    libraryDependencies ++= Seq(Monocle.core, Monocle.`macro`)
   }
 
   // API module ===============================
@@ -178,20 +178,44 @@ object Dependencies {
 
       "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "extra"        % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "ext-scalaz71" % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "ext-monocle"  % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "test"         % version.scalaJsReact % Test,
       "com.github.japgolly.scalacss"      %%% "core"         % version.scalaCss,
       "com.github.japgolly.scalacss"      %%% "ext-react"    % version.scalaCss
     ),
     jsDependencies ++= Seq(
-      "org.webjars.bower" % "react" % version.reactJs / "react-with-addons.js" minified "react-with-addons.min.js" commonJSName "React",
-      "org.webjars.bower" % "react" % version.reactJs / "react-dom.js" minified "react-dom.min.js" dependsOn "react-with-addons.js" commonJSName "ReactDOM",
-      "org.webjars.bower" % "react" % version.reactJs % Test / "react-with-addons.js" commonJSName "React",
+      // ReactJS
+      "org.webjars.bower" % "react" % version.reactJs
+        /        "react-with-addons.js"
+        minified "react-with-addons.min.js"
+        commonJSName "React",
+      "org.webjars.bower" % "react" % version.reactJs
+        /         "react-dom.js"
+        minified  "react-dom.min.js"
+        dependsOn "react-with-addons.js"
+        commonJSName "ReactDOM",
+      "org.webjars.bower" % "react" % version.reactJs
+        /         "react-dom-server.js"
+        minified  "react-dom-server.min.js"
+        dependsOn "react-dom.js"
+        commonJSName "ReactDOMServer",
+      "org.webjars.bower" % "react" % version.reactJs % Test
+        /            "react-with-addons.js"
+        commonJSName "React",
 
-      "org.webjars" % "jquery"    % "1.11.1" / "jquery.js"    minified "jquery.min.js",
-      "org.webjars" % "bootstrap" % "3.3.2"  / "bootstrap.js" minified "bootstrap.min.js" dependsOn "jquery.js",
-      "org.webjars" % "bootstrap-notify" % "3.1.3" / "bootstrap-notify.js" minified "bootstrap-notify.min.js" dependsOn ("jquery.js", "bootstrap.js")
+      // JQuery & Bootstrap
+      "org.webjars" % "jquery"    % "1.11.1"
+        /        "jquery.js"
+        minified "jquery.min.js",
+      "org.webjars" % "bootstrap" % "3.3.2"
+        /         "bootstrap.js"
+        minified  "bootstrap.min.js"
+        dependsOn "jquery.js",
+      "org.webjars" % "bootstrap-notify" % "3.1.3"
+        /         "bootstrap-notify.js"
+        minified  "bootstrap-notify.min.js"
+        dependsOn ("jquery.js", "bootstrap.js")
     )
   )
   lazy val consoleResources = Def.settings {
