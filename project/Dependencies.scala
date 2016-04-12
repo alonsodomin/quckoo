@@ -118,8 +118,8 @@ object Dependencies {
   lazy val coreJS = Def.settings {
     libraryDependencies ++= Seq(
       "io.github.widok"                  %%% "scala-js-momentjs" % "0.1.4",
-      "com.github.japgolly.fork.monocle" %%% "monocle-core"      % version.monocle,
-      "com.github.japgolly.fork.monocle" %%% "monocle-macro"     % version.monocle
+      "com.github.japgolly.fork.monocle" %%% "monocle-core"      % s"${version.monocle}-2",
+      "com.github.japgolly.fork.monocle" %%% "monocle-macro"     % s"${version.monocle}-2"
     )
   }
   lazy val coreJVM = Def.settings {
