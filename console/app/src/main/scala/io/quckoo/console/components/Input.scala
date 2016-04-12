@@ -57,7 +57,14 @@ object Input {
 
   type OnUpdate[A] = Option[A] => Callback
 
-  case class Props[A](value: Option[A], converter: Converter[A], `type`: Type[A], onUpdate: OnUpdate[A], attrs: Seq[TagMod])
+  case class Props[A](
+      value: Option[A],
+      defaultValue: Option[A],
+      converter: Converter[A],
+      `type`: Type[A],
+      onUpdate: OnUpdate[A],
+      attrs: Seq[TagMod]
+  )
 
   class Backend[A]($: BackendScope[Props[A], Unit]) {
 
@@ -74,9 +81,14 @@ object Input {
     }
 
     def render(props: Props[A]) = {
+      def defaultValueAttr: Option[TagMod] =
+        props.defaultValue.map(v => ^.defaultValue := props.converter.to(v))
+      def valueAttr: TagMod =
+        ^.value := props.value.map(v => props.converter.to(v)).getOrElse("")
+
       <.input(^.`type` := props.`type`.html,
         ^.`class` := "form-control",
-        props.value.map(v => ^.value := props.converter.to(v)),
+        defaultValueAttr.getOrElse(valueAttr),
         ^.onChange ==> onUpdate(props),
         ^.onBlur ==> onUpdate(props),
         props.attrs
@@ -100,6 +112,9 @@ class Input[A: Reusability](onUpdate: Input.OnUpdate[A]) {
     build
 
   def apply(value: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
-    component(Props(value, C, T, onUpdate, attrs))
+    component(Props(value, None, C, T, onUpdate, attrs))
+
+  def apply(value: Option[A], defaultValue: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+    component(Props(value, defaultValue, C, T, onUpdate, attrs))
 
 }
