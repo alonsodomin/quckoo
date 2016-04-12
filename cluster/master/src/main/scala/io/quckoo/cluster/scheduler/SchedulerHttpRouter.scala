@@ -8,6 +8,7 @@ import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.{EventStreamMarshalling, ServerSentEvent}
 import io.quckoo.api.{Scheduler => SchedulerApi}
+import io.quckoo.cluster.http._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization
@@ -48,6 +49,10 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
             }
           }
         }
+      }
+    } ~ path("queue") {
+      get {
+        complete(asSSE(queueMetrics, "metrics"))
       }
     }
 

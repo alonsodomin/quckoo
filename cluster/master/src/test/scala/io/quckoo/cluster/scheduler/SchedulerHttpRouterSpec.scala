@@ -3,17 +3,17 @@ package io.quckoo.cluster.scheduler
 import java.time.{Instant, ZoneId}
 import java.util.UUID
 
+import akka.NotUsed
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-
+import akka.stream.scaladsl.Source
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization
 import io.quckoo.time.JDK8TimeSource
 import io.quckoo.{ExecutionPlan, Trigger}
-
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -63,6 +63,8 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
   override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] =
     Future.successful(TestPlanIds)
+
+  override def queueMetrics: Source[TaskQueueUpdated, NotUsed] = ???
 
   private[this] def endpoint(target: String) = s"/api/scheduler$target"
 

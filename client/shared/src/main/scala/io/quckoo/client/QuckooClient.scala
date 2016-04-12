@@ -4,6 +4,7 @@ import io.quckoo.api.{Cluster, Registry, Scheduler}
 import io.quckoo.auth.User
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.registry.RegistryEvent
+import io.quckoo.protocol.scheduler.TaskQueueUpdated
 import io.quckoo.protocol.worker.WorkerEvent
 import monix.reactive.Observable
 
@@ -19,6 +20,8 @@ trait QuckooClient extends Cluster with Registry with Scheduler {
   def masterEvents: Observable[MasterEvent]
 
   def workerEvents: Observable[WorkerEvent]
+
+  def queueMetrics: Observable[TaskQueueUpdated]
 
   def principal: Option[User]
 

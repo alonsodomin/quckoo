@@ -1,12 +1,16 @@
 package io.quckoo.cluster.scheduler
 
 import akka.actor._
+import akka.cluster.Cluster
+import akka.cluster.ddata._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import io.quckoo.Task
 import io.quckoo.cluster.net._
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.topics
-import io.quckoo.id.{TaskId, NodeId}
+import io.quckoo.cluster.net._
+import io.quckoo.id.{NodeId, TaskId}
+import io.quckoo.net.MasterNode
 import io.quckoo.protocol.worker._
 
 import scala.collection.immutable.Queue
@@ -18,6 +22,8 @@ import scala.concurrent.duration._
 object TaskQueue {
 
   type AcceptedTask = (Task, ActorRef)
+
+  val QueueSizeKey = PNCounterMapKey("queueSize")
 
   def props(maxWorkTimeout: FiniteDuration = 10 minutes) =
     Props(classOf[TaskQueue], maxWorkTimeout)
@@ -46,7 +52,9 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
   import TaskQueue._
   import WorkerState._
 
+  implicit val cluster = Cluster(context.system)
   private val mediator = DistributedPubSub(context.system).mediator
+  private val replicator = DistributedData(context.system).replicator
 
   private var workers = Map.empty[NodeId, WorkerState]
   private var pendingTasks = Queue.empty[AcceptedTask]
@@ -88,6 +96,9 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
             log.info("Delivering execution to worker. taskId={}, workerId={}", task.id, workerId)
             workerState.ref ! task
             executionActor ! Execution.Start
+            replicator ! Replicator.Update(QueueSizeKey, PNCounterMap(), Replicator.WriteLocal) {
+              _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
+            }
             inProgressTasks += (task.id -> executionActor)
           }
 
@@ -127,6 +138,9 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       // Enqueue messages will always come from inside the cluster so accept them all
       log.debug("Enqueueing task {} before sending to workers.", task.id)
       pendingTasks = pendingTasks.enqueue((task, sender()))
+      replicator ! Replicator.Update(QueueSizeKey, PNCounterMap(), Replicator.WriteLocal) {
+        _.increment(cluster.selfUniqueAddress.toNodeId.toString)
+      }
       sender ! EnqueueAck(task.id)
       notifyWorkers()
 
@@ -157,6 +171,11 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         }
         mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
       }
+  }
+
+  override def unhandled(message: Any): Unit = message match {
+    case Replicator.UpdateSuccess(`QueueSizeKey`, _) => // ignored
+    case _ => super.unhandled(message)
   }
 
   private def notifyWorkers(): Unit = if (pendingTasks.nonEmpty) {

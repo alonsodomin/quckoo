@@ -6,12 +6,11 @@ import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.stream.ActorMaterializer
-
 import io.quckoo.cluster.net._
 import io.quckoo.cluster.registry.Registry
 import io.quckoo.cluster.scheduler.{Scheduler, TaskQueue}
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
-import io.quckoo.net.ClusterState
+import io.quckoo.net.{QuckooState, QuckooMetrics}
 import io.quckoo.protocol.client._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.registry._
@@ -54,7 +53,7 @@ class QuckooCluster(settings: QuckooClusterSettings)
     Scheduler.props(registry, readJournal, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
 
   private var clients = Set.empty[ActorRef]
-  private var clusterState = ClusterState(masterNodes = masterNodes(cluster))
+  private var clusterState = QuckooState(masterNodes = masterNodes(cluster))
 
   override implicit def actorSystem: ActorSystem = context.system
 
@@ -119,6 +118,10 @@ class QuckooCluster(settings: QuckooClusterSettings)
 
     case evt: WorkerRemoved =>
       clusterState = clusterState.updated(evt)
+
+    case evt: TaskQueueUpdated =>
+      val pendingLens = QuckooState.metrics ^|-> QuckooMetrics.pendingTasks
+      clusterState = pendingLens.set(evt.pending)(clusterState)
 
     case Shutdown =>
       // Perform graceful shutdown of the cluster

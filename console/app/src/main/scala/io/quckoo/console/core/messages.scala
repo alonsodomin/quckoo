@@ -6,7 +6,7 @@ import io.quckoo.client.QuckooClient
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId}
-import io.quckoo.net.ClusterState
+import io.quckoo.net.QuckooState
 
 import scala.util.{Failure, Try}
 import scalaz.ValidationNel
@@ -20,7 +20,7 @@ case object LoginFailed
 
 case class NavigateTo(route: ConsoleRoute)
 
-case class ClusterStateLoaded(state: ClusterState)
+case class ClusterStateLoaded(state: QuckooState)
 case object StartClusterSubscription
 
 case object LoadJobSpecs

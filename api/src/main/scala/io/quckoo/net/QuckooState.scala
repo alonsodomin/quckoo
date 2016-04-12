@@ -3,16 +3,18 @@ package io.quckoo.net
 import io.quckoo.id.NodeId
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker._
+import monocle.macros.Lenses
 
 /**
   * Created by alonsodomin on 03/04/2016.
   */
-final case class ClusterState(
+@Lenses final case class QuckooState(
     masterNodes: Map[NodeId, MasterNode] = Map.empty,
-    workerNodes: Map[NodeId, WorkerNode] = Map.empty
+    workerNodes: Map[NodeId, WorkerNode] = Map.empty,
+    metrics: QuckooMetrics = QuckooMetrics(0)
 ) {
 
-  def updated(event: MasterEvent): ClusterState = event match {
+  def updated(event: MasterEvent): QuckooState = event match {
     case MasterJoined(nodeId, location) =>
       copy(masterNodes = masterNodes + (nodeId -> MasterNode(nodeId, location, NodeStatus.Active)))
 
@@ -28,7 +30,7 @@ final case class ClusterState(
       copy(masterNodes = masterNodes + (nodeId -> newNodeStatus))
   }
 
-  def updated(event: WorkerEvent): ClusterState = event match {
+  def updated(event: WorkerEvent): QuckooState = event match {
     case WorkerJoined(workerId, location) =>
       copy(workerNodes = workerNodes + (workerId -> WorkerNode(workerId, location, NodeStatus.Active)))
 

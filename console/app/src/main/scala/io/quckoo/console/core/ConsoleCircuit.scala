@@ -4,12 +4,11 @@ import diode.Implicits.runAfterImpl
 import diode._
 import diode.data.{AsyncAction, PotMap}
 import diode.react.ReactConnector
-
 import io.quckoo.client.QuckooClient
 import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
 import io.quckoo.id.{JobId, PlanId}
-import io.quckoo.net.ClusterState
+import io.quckoo.net.{QuckooState, QuckooMetrics}
 import io.quckoo.protocol.cluster.{GetClusterStatus, MasterEvent}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -43,7 +42,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   def zoomIntoClient: ModelRW[ConsoleScope, Option[QuckooClient]] =
     zoomRW(_.client) { (model, c) => model.copy(client = c) }
 
-  def zoomIntoClusterState: ModelRW[ConsoleScope, ClusterState] =
+  def zoomIntoClusterState: ModelRW[ConsoleScope, QuckooState] =
     zoomRW(_.clusterState) { (model, value) => model.copy(clusterState = value) }
 
   def zoomIntoExecutionPlans: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]] =
@@ -70,7 +69,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val clusterStateHandler = new ActionHandler(zoomIntoClusterState)
-      with ConnectedHandler[ClusterState] {
+      with ConnectedHandler[QuckooState] {
 
     override def handle = {
       case GetClusterStatus =>
@@ -92,6 +91,10 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
       case evt: WorkerEvent =>
         updated(value.updated(evt))
+
+      case evt: TaskQueueUpdated =>
+        val pendingLens = QuckooState.metrics ^|-> QuckooMetrics.pendingTasks
+        updated(pendingLens.set(evt.pending)(value))
     }
 
   }

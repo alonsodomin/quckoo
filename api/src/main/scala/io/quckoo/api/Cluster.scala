@@ -1,6 +1,6 @@
 package io.quckoo.api
 
-import io.quckoo.net.ClusterState
+import io.quckoo.net.QuckooState
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -9,6 +9,6 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait Cluster {
 
-  def clusterState(implicit ec: ExecutionContext): Future[ClusterState]
+  def clusterState(implicit ec: ExecutionContext): Future[QuckooState]
 
 }

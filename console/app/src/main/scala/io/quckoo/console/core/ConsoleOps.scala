@@ -4,7 +4,7 @@ import diode.data.{Failed, Pot, Ready, Unavailable}
 import io.quckoo.{ExecutionPlan, JobSpec}
 import io.quckoo.client.QuckooClient
 import io.quckoo.id._
-import io.quckoo.net.ClusterState
+import io.quckoo.net.QuckooState
 
 import scala.concurrent.Future
 import scalajs.concurrent.JSExecutionContext.Implicits.queue

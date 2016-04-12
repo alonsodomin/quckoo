@@ -10,9 +10,10 @@ import akka.util.Timeout
 import io.quckoo.cluster.core.{WorkerEventPublisher, _}
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.registry.RegistryEventPublisher
+import io.quckoo.cluster.scheduler.TaskQueueEventPublisher
 import io.quckoo.fault.{Fault, ResolutionFault}
 import io.quckoo.id.{JobId, PlanId}
-import io.quckoo.net.ClusterState
+import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
@@ -64,6 +65,10 @@ class Quckoo(settings: QuckooClusterSettings)
     }
   }
 
+  def queueMetrics: Source[TaskQueueUpdated, NotUsed] =
+    Source.actorPublisher[TaskQueueUpdated](Props(classOf[TaskQueueEventPublisher])).
+      mapMaterializedValue(_ => NotUsed)
+
   def masterEvents: Source[MasterEvent, NotUsed] =
     Source.actorPublisher[MasterEvent](MasterEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
@@ -114,10 +119,10 @@ class Quckoo(settings: QuckooClusterSettings)
     Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
 
-  def clusterState(implicit ec: ExecutionContext): Future[ClusterState] = {
+  def clusterState(implicit ec: ExecutionContext): Future[QuckooState] = {
     implicit val timeout = Timeout(5 seconds)
 
-    (core ? GetClusterStatus).mapTo[ClusterState]
+    (core ? GetClusterStatus).mapTo[QuckooState]
   }
 
 }

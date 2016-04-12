@@ -5,7 +5,7 @@ import io.quckoo.auth.User
 import io.quckoo.client.QuckooClient
 import io.quckoo.fault.Fault
 import io.quckoo.id._
-import io.quckoo.net.ClusterState
+import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -41,10 +41,10 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
       ()
     }
 
-  override def clusterState(implicit ec: ExecutionContext): Future[ClusterState] = {
+  override def clusterState(implicit ec: ExecutionContext): Future[QuckooState] = {
     withAuthRefresh { () =>
       Ajax.get(ClusterStateURI, headers = authHeaders).map { xhr =>
-        read[ClusterState](xhr.responseText)
+        read[QuckooState](xhr.responseText)
       }
     }
   }
@@ -54,6 +54,9 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
 
   override lazy val workerEvents: Observable[WorkerEvent] =
     EventSourceObservable[WorkerEvent](WorkerEventsURI, "worker")
+
+  override lazy val queueMetrics: Observable[TaskQueueUpdated] =
+    EventSourceObservable[TaskQueueUpdated](QueueMetricsURI, "metrics")
 
   override def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] = {
     withAuthRefresh { () =>

@@ -3,7 +3,7 @@ package io.quckoo.cluster
 import java.util.UUID
 
 import akka.actor.{ActorRef, Address}
-import akka.cluster.{Cluster, Member, MemberStatus}
+import akka.cluster.{Cluster, Member, MemberStatus, UniqueAddress}
 import io.quckoo.id.NodeId
 import io.quckoo.net._
 
@@ -19,10 +19,7 @@ package object net {
 
   implicit class RichMember(val member: Member) extends AnyVal {
 
-    def nodeId: NodeId = {
-      val addressUrl = s"${member.uniqueAddress.address.toString}#${member.uniqueAddress.uid}"
-      UUID.nameUUIDFromBytes(addressUrl.getBytes("UTF-8"))
-    }
+    def nodeId: NodeId = member.uniqueAddress.toNodeId
 
     def toQuckooMember: MasterNode = {
       def memberStatus = {
@@ -31,6 +28,15 @@ package object net {
       }
 
       MasterNode(member.nodeId, member.address.toLocation, memberStatus)
+    }
+
+  }
+
+  implicit class RichUniqueAddress(val uniqueAddress: UniqueAddress) extends AnyVal {
+
+    def toNodeId: NodeId = {
+      val addressUrl = s"${uniqueAddress.address.toString}#${uniqueAddress.uid}"
+      UUID.nameUUIDFromBytes(addressUrl.getBytes("UTF-8"))
     }
 
   }
