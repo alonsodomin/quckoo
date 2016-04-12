@@ -12,7 +12,7 @@ import io.quckoo.fault.Fault
 import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
-import io.quckoo.{JobSpec, Validated, serialization}
+import io.quckoo.{JobSpec, serialization}
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -53,7 +53,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   override def disableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobDisabled] =
     Future.successful(JobDisabled(jobId))
 
-  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]] =
+  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[ValidationNel[Fault, JobId]] =
     Future.successful(JobSpec.validate(jobSpec)).map(validSpec => validSpec.map(JobId(_)).leftMap(_.map(_.asInstanceOf[Fault])))
 
   override def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] =
@@ -78,13 +78,13 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
       import Scalaz._
 
       Put(endpoint("/jobs"), Some(TestJobSpec)) ~> entryPoint ~> check {
-        responseAs[Validated[JobId]] should be (JobId(TestJobSpec).successNel[Fault])
+        responseAs[ValidationNel[Fault, JobId]] should be (JobId(TestJobSpec).successNel[Fault])
       }
     }
 
     "return validation errors if the job spec is invalid" in {
       Put(endpoint("/jobs"), Some(TestInvalidJobSpec)) ~> entryPoint ~> check {
-        responseAs[Validated[JobId]] should be (JobSpec.validate(TestInvalidJobSpec))
+        responseAs[ValidationNel[Fault, JobId]] should be (JobSpec.validate(TestInvalidJobSpec))
       }
     }
 

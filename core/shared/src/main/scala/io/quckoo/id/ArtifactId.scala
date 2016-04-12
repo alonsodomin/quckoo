@@ -1,6 +1,5 @@
 package io.quckoo.id
 
-import io.quckoo.Validated
 import io.quckoo.fault._
 import io.quckoo.validation._
 import monocle.macros.Lenses

@@ -18,7 +18,7 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.time.TimeSource
-import io.quckoo.{ExecutionPlan, JobSpec, Validated}
+import io.quckoo.{ExecutionPlan, JobSpec}
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}

@@ -1,7 +1,6 @@
 package io.quckoo.validation
 
 import io.quckoo.fault.{NotNull, ValidationFault}
-import io.quckoo.Validated
 
 import scalaz._
 

@@ -3,6 +3,7 @@ package io.quckoo.client.ajax
 import io.quckoo._
 import io.quckoo.auth.User
 import io.quckoo.client.QuckooClient
+import io.quckoo.fault.Fault
 import io.quckoo.id._
 import io.quckoo.net.ClusterState
 import io.quckoo.protocol.cluster.MasterEvent
@@ -16,6 +17,7 @@ import org.scalajs.dom.ext.{Ajax, AjaxException}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
+import scalaz.ValidationNel
 
 /**
   * Created by alonsodomin on 26/03/2016.
@@ -79,10 +81,10 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
     }
   }
 
-  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[Validated[JobId]] = {
+  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[ValidationNel[Fault, JobId]] = {
     withAuthRefresh { () =>
       Ajax.put(JobsURI, write(jobSpec), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
-        read[Validated[JobId]](xhr.responseText)
+        read[ValidationNel[Fault, JobId]](xhr.responseText)
       }
     }
   }

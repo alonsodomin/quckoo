@@ -1,7 +1,6 @@
 package io.quckoo.console
 
-import io.quckoo._
-import io.quckoo.fault.{Required, Fault}
+import io.quckoo.fault.{Required, ValidationFault}
 
 import scalaz._
 
@@ -11,11 +10,11 @@ import scalaz._
 package object validation {
   import Scalaz._
 
-  type Validator[A] = A => Validated[A]
+  type Validator[A] = A => ValidationNel[ValidationFault, String]
 
-  def notEmptyStr(fieldId: String)(str: String): Validated[String] = {
-    if (str.isEmpty) Required(fieldId).asInstanceOf[Fault].failureNel[String]
-    else str.successNel[Fault]
+  def notEmptyStr(fieldId: String)(str: String): Validation[ValidationFault, String] = {
+    if (str.isEmpty) Required(fieldId).failure[String]
+    else str.success[ValidationFault]
   }
 
 }
