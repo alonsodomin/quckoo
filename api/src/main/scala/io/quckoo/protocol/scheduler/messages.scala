@@ -34,4 +34,4 @@ case object GetExecutionPlans extends SchedulerCommand
 final case class GetExecutionPlan(planId: PlanId) extends SchedulerCommand
 final case class CancelPlan(planId: PlanId) extends SchedulerCommand
 
-final case class TaskQueueUpdated(pending: Int) extends SchedulerEvent
+final case class TaskQueueUpdated(pendingTasks: Int, inProgressTasks: Int) extends SchedulerEvent

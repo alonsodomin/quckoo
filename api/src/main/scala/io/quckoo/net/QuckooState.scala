@@ -11,7 +11,7 @@ import monocle.macros.Lenses
 @Lenses final case class QuckooState(
     masterNodes: Map[NodeId, MasterNode] = Map.empty,
     workerNodes: Map[NodeId, WorkerNode] = Map.empty,
-    metrics: QuckooMetrics = QuckooMetrics(0)
+    metrics: QuckooMetrics = QuckooMetrics()
 ) {
 
   def updated(event: MasterEvent): QuckooState = event match {

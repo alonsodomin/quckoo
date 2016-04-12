@@ -6,11 +6,12 @@ import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.stream.ActorMaterializer
+
 import io.quckoo.cluster.net._
 import io.quckoo.cluster.registry.Registry
 import io.quckoo.cluster.scheduler.{Scheduler, TaskQueue}
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
-import io.quckoo.net.{QuckooState, QuckooMetrics}
+import io.quckoo.net.QuckooState
 import io.quckoo.protocol.client._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.registry._
@@ -120,8 +121,7 @@ class QuckooCluster(settings: QuckooClusterSettings)
       clusterState = clusterState.updated(evt)
 
     case evt: TaskQueueUpdated =>
-      val pendingLens = QuckooState.metrics ^|-> QuckooMetrics.pendingTasks
-      clusterState = pendingLens.set(evt.pending)(clusterState)
+      clusterState = clusterState.copy(metrics = clusterState.metrics.updated(evt))
 
     case Shutdown =>
       // Perform graceful shutdown of the cluster

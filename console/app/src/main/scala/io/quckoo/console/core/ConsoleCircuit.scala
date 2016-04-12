@@ -93,8 +93,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         updated(value.updated(evt))
 
       case evt: TaskQueueUpdated =>
-        val pendingLens = QuckooState.metrics ^|-> QuckooMetrics.pendingTasks
-        updated(pendingLens.set(evt.pending)(value))
+        updated(value.copy(metrics = value.metrics.updated(evt)))
     }
 
   }

@@ -92,6 +92,10 @@ object ClusterView {
             <.div(^.`class` := "row",
               <.div(^.`class` := "col-sm-8", "Pending"),
               <.div(^.`class` := "col-sm-4 text-right", props.proxy().metrics.pendingTasks)
+            ),
+            <.div(^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "In Progress"),
+              <.div(^.`class` := "col-sm-4 text-right", props.proxy().metrics.inProgressTasks)
             )
           )
         )
