@@ -143,9 +143,9 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       stateDuringRecovery.foreach { st =>
         log.debug("Execution driver recovery finished. state={}")
         context.become(active(st))
-        /*st.plan.currentTaskId.foreach { _ =>
+        st.plan.currentTaskId.foreach { _ =>
           self ! ScheduleTask(timeSource.currentDateTime)
-        }*/
+        }
       }
       stateDuringRecovery = None
   }
