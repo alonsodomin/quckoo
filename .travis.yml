@@ -27,6 +27,5 @@ after_success:
 #  - sbt coveralls
 
 branches:
- only:
-   - master
-   - cron-support
+  except:
+    - gh-pages
