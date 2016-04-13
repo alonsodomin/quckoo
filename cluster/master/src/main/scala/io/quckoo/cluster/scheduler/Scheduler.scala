@@ -41,12 +41,12 @@ class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: 
 
   final implicit val materializer = ActorMaterializer(ActorMaterializerSettings(context.system))
 
-  private[this] val taskQueue = context.actorOf(queueProps, "queue")
   private[this] val monitor = context.actorOf(TaskQueueMonitor.props, "monitor")
+  private[this] val taskQueue = context.actorOf(queueProps, "queue")
   private[this] val shardRegion = ClusterSharding(context.system).start(
     ExecutionDriver.ShardName,
     entityProps     = ExecutionDriver.props,
-    settings        = ClusterShardingSettings(context.system),
+    settings        = ClusterShardingSettings(context.system).withRememberEntities(true),
     extractEntityId = ExecutionDriver.idExtractor,
     extractShardId  = ExecutionDriver.shardResolver
   )
