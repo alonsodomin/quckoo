@@ -60,11 +60,9 @@ object Input {
   case class Props[A](
       value: Option[A],
       defaultValue: Option[A],
-      converter: Converter[A],
-      `type`: Type[A],
       onUpdate: OnUpdate[A],
       attrs: Seq[TagMod]
-  )
+  )(implicit val converter: Converter[A], val `type`: Type[A])
 
   class Backend[A]($: BackendScope[Props[A], Unit]) {
 
@@ -99,7 +97,7 @@ object Input {
 
 }
 
-class Input[A: Reusability](onUpdate: Input.OnUpdate[A]) {
+class Input[A: Reusability](val onUpdate: Input.OnUpdate[A]) {
   import Input._
 
   implicit val propsReuse: Reusability[Props[A]] = Reusability.by[Props[A], Option[A]](_.value)
@@ -112,9 +110,9 @@ class Input[A: Reusability](onUpdate: Input.OnUpdate[A]) {
     build
 
   def apply(value: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
-    component(Props(value, None, C, T, onUpdate, attrs))
+    component(Props(value, None, onUpdate, attrs))
 
   def apply(value: Option[A], defaultValue: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
-    component(Props(value, defaultValue, C, T, onUpdate, attrs))
+    component(Props(value, defaultValue, onUpdate, attrs))
 
 }
