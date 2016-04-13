@@ -60,11 +60,13 @@ class QuckooCluster(settings: QuckooClusterSettings)
 
   override def preStart(): Unit = {
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[ReachabilityEvent])
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Master, self)
     mediator ! DistributedPubSubMediator.Subscribe(topics.Worker, self)
   }
 
   override def postStop(): Unit = {
     cluster.unsubscribe(self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Master, self)
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Worker, self)
   }
 
