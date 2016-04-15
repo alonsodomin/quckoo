@@ -5,7 +5,8 @@ import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
+import akka.stream.scaladsl.{FileIO, Sink, Source}
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import io.quckoo.JobSpec
 import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.cluster.core.QuckooJournal
@@ -13,6 +14,8 @@ import io.quckoo.id.JobId
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
+
+import scala.concurrent._
 
 /**
  * Created by aalonsodominguez on 24/08/15.
@@ -28,63 +31,75 @@ object Registry {
 class Registry(settings: QuckooClusterSettings)
     extends Actor with ActorLogging with QuckooJournal {
 
-  import Registry._
-
   ClusterClientReceptionist(context.system).registerService(self)
 
   final implicit val materializer = ActorMaterializer(
     ActorMaterializerSettings(context.system), "registry"
   )
 
-  private val cluster = Cluster(context.system)
-  private val resolver = context.actorOf(
+  private[this] val cluster = Cluster(context.system)
+  private[this] val resolver = context.actorOf(
     Resolver.props(IvyResolve(settings.ivyConfiguration)).withDispatcher("quckoo.resolver.dispatcher"),
     "resolver")
-  private lazy val shardRegion = startShardRegion
+  private[this] val shardRegion = startShardRegion
+  private[this] val index = context.actorOf(RegistryPartitionIndex.props(), s"index")
 
   def actorSystem = context.system
+
+  override def preStart(): Unit = {
+    // Restart the indexes for the registry partitions
+    readJournal.currentPersistenceIds().
+      filter(_.startsWith(RegistryPartition.PersistenceIdPrefix)).
+      runForeach { partitionId =>
+        index ! RegistryPartitionIndex.IndexPartition(partitionId)
+      }
+  }
 
   def receive: Receive = {
     case GetJobs =>
       import context.dispatcher
-      readJournal.currentEventsByTag(EventTag, 0).
-        filter(envelope => envelope.event match {
-          case evt: RegistryJobEvent => true
-          case _                     => false
-        }).
-        map(_.event.asInstanceOf[RegistryJobEvent]).
-        runFold(Map.empty[JobId, JobSpec]) {
-          case (map, event) => event match {
-            case JobAccepted(jobId, jobSpec) =>
-              map + (jobId -> jobSpec)
-            case JobDisabled(jobId) if map.contains(jobId) =>
-              map + (jobId -> map(jobId).copy(disabled = true))
-            case JobEnabled(jobId) if map.contains(jobId) =>
-              map + (jobId -> map(jobId).copy(disabled = false))
-            case _ => map
-          }
-        } pipeTo sender()
+      val origSender = sender()
+      queryJobs pipeTo origSender
 
-    case msg: Any =>
+    case msg: GetJob =>
       shardRegion.tell(msg, sender())
+
+    case msg: RegistryWriteCommand =>
+      shardRegion.tell(msg, sender())
+  }
+
+  private def queryJobs: Future[Map[JobId, JobSpec]] = {
+    Source.actorRef[JobId](10, OverflowStrategy.fail).
+      mapMaterializedValue { idsStream =>
+        index.tell(RegistryPartitionIndex.GetJobIds, idsStream)
+      }.flatMapConcat { jobId =>
+        Source.actorRef[JobSpec](0, OverflowStrategy.dropHead).
+          mapMaterializedValue { jobStream =>
+            shardRegion.tell(GetJob(jobId), jobStream)
+          } map(jobId -> _)
+      }.
+      runFold(Map.empty[JobId, JobSpec]) {
+        case (map, (jobId, jobSpec)) =>
+          map + (jobId -> jobSpec)
+      }
   }
 
   private def startShardRegion: ActorRef = if (cluster.selfRoles.contains("registry")) {
     log.info("Starting registry shards...")
     ClusterSharding(context.system).start(
-      typeName        = RegistryShard.ShardName,
-      entityProps     = RegistryShard.props(resolver),
+      typeName        = RegistryPartition.ShardName,
+      entityProps     = RegistryPartition.props(resolver),
       settings        = ClusterShardingSettings(context.system).withRole("registry"),
-      extractEntityId = RegistryShard.idExtractor,
-      extractShardId  = RegistryShard.shardResolver
+      extractEntityId = RegistryPartition.idExtractor,
+      extractShardId  = RegistryPartition.shardResolver
     )
   } else {
     log.info("Starting registry proxy...")
     ClusterSharding(context.system).startProxy(
-      typeName        = RegistryShard.ShardName,
+      typeName        = RegistryPartition.ShardName,
       role            = None,
-      extractEntityId = RegistryShard.idExtractor,
-      extractShardId  = RegistryShard.shardResolver
+      extractEntityId = RegistryPartition.idExtractor,
+      extractShardId  = RegistryPartition.shardResolver
     )
   }
 

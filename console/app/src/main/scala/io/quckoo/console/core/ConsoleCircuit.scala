@@ -8,12 +8,13 @@ import io.quckoo.client.QuckooClient
 import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
 import io.quckoo.id.{JobId, PlanId}
-import io.quckoo.net.{QuckooState, QuckooMetrics}
+import io.quckoo.net.{QuckooMetrics, QuckooState}
 import io.quckoo.protocol.cluster.{GetClusterStatus, MasterEvent}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
 import io.quckoo.{ExecutionPlan, JobSpec}
+import org.scalajs.dom.raw.WebSocket
 
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -101,6 +102,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   val registryHandler = new ActionHandler(zoomIntoNotification)
       with ConnectedHandler[Option[Notification]] {
 
+    WebSocket
     override def handle = {
       case RegisterJob(spec) =>
         withClient { client =>
@@ -112,7 +114,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
           case \/-(id) =>
             updated(
               Some(Notification.success(s"Job registered with id $id")),
-              Effect.action(RefreshJobSpecs(Set(id))).after(2 seconds)
+              Effect.action(RefreshJobSpecs(Set(id)))
             )
 
           case -\/(errors) =>

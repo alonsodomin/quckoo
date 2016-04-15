@@ -23,7 +23,6 @@ final case class TaskScheduled(jobId: JobId, planId: PlanId, taskId: TaskId) ext
 final case class TaskTriggered(jobId: JobId, planId: PlanId, taskId: TaskId) extends SchedulerEvent
 final case class TaskCompleted(jobId: JobId, planId: PlanId, taskId: TaskId, outcome: Task.Outcome) extends SchedulerEvent
 
-final case class JobNotFound(jobId: JobId) extends SchedulerMessage
 final case class JobNotEnabled(jobId: JobId) extends SchedulerMessage
 final case class JobFailedToSchedule(jobId: JobId, cause: Throwable) extends SchedulerMessage
 

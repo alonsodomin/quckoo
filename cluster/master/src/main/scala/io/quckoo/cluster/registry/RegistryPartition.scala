@@ -1,31 +1,29 @@
 package io.quckoo.cluster.registry
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props, Status}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
-import akka.pattern._
 import akka.persistence.{PersistentActor, SnapshotOffer}
-import io.quckoo.fault.ExceptionThrown
-import io.quckoo.id._
-import io.quckoo.protocol.registry._
-import io.quckoo.resolver.{Resolve, Resolver}
 import io.quckoo.JobSpec
 import io.quckoo.cluster.topics
+import io.quckoo.id._
+import io.quckoo.protocol.registry._
+import io.quckoo.resolver.Resolver
 
 import scala.concurrent.duration._
-import scala.util.control.NonFatal
-import scalaz._
 
 /**
  * Created by aalonsodominguez on 10/08/15.
  */
-object RegistryShard {
+object RegistryPartition {
 
-  val DefaultSnapshotFrequency = 15 minutes
+  final val DefaultSnapshotFrequency = 15 minutes
+
+  final val PersistenceIdPrefix = "RegistryShard"
 
   def props(resolver: ActorRef,
       snapshotFrequency: FiniteDuration = DefaultSnapshotFrequency): Props =
-    Props(classOf[RegistryShard], resolver, snapshotFrequency)
+    Props(classOf[RegistryPartition], resolver, snapshotFrequency)
 
   final val ShardName      = "Registry"
   final val NumberOfShards = 100
@@ -83,11 +81,11 @@ object RegistryShard {
 
 }
 
-class RegistryShard(resolver: ActorRef, snapshotFrequency: FiniteDuration)
+class RegistryPartition(resolver: ActorRef, snapshotFrequency: FiniteDuration)
     extends PersistentActor with ActorLogging {
 
-  import RegistryShard._
-
+  import RegistryPartition._
+  import RegistryPartitionIndex._
   import context.dispatcher
   private val snapshotTask = context.system.scheduler.schedule(
       snapshotFrequency, snapshotFrequency, self, Snap)
@@ -96,7 +94,10 @@ class RegistryShard(resolver: ActorRef, snapshotFrequency: FiniteDuration)
   private var store = RegistryStore.empty
   private[this] var handlerRefCount = 0L
 
-  override val persistenceId: String = "RegistryShard-" + self.path.name
+  override val persistenceId: String = s"$PersistenceIdPrefix-${self.path.name}"
+
+  override def preStart(): Unit =
+    context.system.eventStream.publish(IndexPartition(persistenceId))
 
   override def postStop(): Unit = snapshotTask.cancel()
 
@@ -143,7 +144,9 @@ class RegistryShard(resolver: ActorRef, snapshotFrequency: FiniteDuration)
       sender() ! answer
 
     case GetJob(jobId) =>
-      sender() ! store.get(jobId)
+      val jobSpec = store.get(jobId)
+      jobSpec.foreach(sender() ! _)
+      sender() ! Status.Success(())
 
     case Snap =>
       saveSnapshot(store)

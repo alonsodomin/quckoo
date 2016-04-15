@@ -3,9 +3,10 @@ package io.quckoo.cluster
 import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.ws.Message
 import akka.pattern._
 import akka.stream.{ActorMaterializer, OverflowStrategy}
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{Flow, Source}
 import akka.util.Timeout
 import io.quckoo.cluster.core.{WorkerEventPublisher, _}
 import io.quckoo.cluster.http.HttpRouter

@@ -21,7 +21,7 @@ import scalaz._
 /**
  * Created by domingueza on 21/08/15.
  */
-object RegistryShardSpec {
+object RegistryPartitionSpec {
 
   final val BarArtifactId = ArtifactId("com.example", "bar", "test")
   final val BarJobSpec = JobSpec("bar", Some("bar desc"), BarArtifactId, "com.example.bar.Job")
@@ -31,11 +31,11 @@ object RegistryShardSpec {
 
 }
 
-class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) with ImplicitSender
+class RegistryPartitionSpec extends TestKit(TestActorSystem("RegistryShardSpec")) with ImplicitSender
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll
     with Matchers with MockFactory {
 
-  import RegistryShardSpec._
+  import RegistryPartitionSpec._
 
   val mediator = DistributedPubSub(system).mediator
   ignoreMsg {
@@ -60,7 +60,7 @@ class RegistryShardSpec extends TestKit(TestActorSystem("RegistryShardSpec")) wi
 
   "A job registry shard" should {
     val resolverProbe = TestProbe()
-    val registry = TestActorRef(RegistryShard.props(resolverProbe.ref).
+    val registry = TestActorRef(RegistryPartition.props(resolverProbe.ref).
       withDispatcher("akka.actor.default-dispatcher"))
 
     "return none when asked for a random job id" in {
