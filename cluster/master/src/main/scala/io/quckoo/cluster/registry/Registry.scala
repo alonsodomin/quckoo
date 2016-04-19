@@ -42,16 +42,16 @@ class Registry(settings: QuckooClusterSettings)
     Resolver.props(IvyResolve(settings.ivyConfiguration)).withDispatcher("quckoo.resolver.dispatcher"),
     "resolver")
   private[this] val shardRegion = startShardRegion
-  private[this] val index = context.actorOf(RegistryPartitionIndex.props(), s"index")
+  private[this] val index = context.actorOf(RegistryIndex.props(), s"index")
 
   def actorSystem = context.system
 
   override def preStart(): Unit = {
     // Restart the indexes for the registry partitions
     readJournal.currentPersistenceIds().
-      filter(_.startsWith(RegistryPartition.PersistenceIdPrefix)).
+      filter(_.startsWith(JobAggregate.PersistenceIdPrefix)).
       runForeach { partitionId =>
-        index ! RegistryPartitionIndex.IndexPartition(partitionId)
+        index ! RegistryIndex.IndexJob(partitionId)
       }
   }
 
@@ -62,16 +62,16 @@ class Registry(settings: QuckooClusterSettings)
       queryJobs pipeTo origSender
 
     case msg: GetJob =>
-      shardRegion.tell(msg, sender())
+      shardRegion forward msg
 
     case msg: RegistryWriteCommand =>
-      shardRegion.tell(msg, sender())
+      shardRegion forward msg
   }
 
   private def queryJobs: Future[Map[JobId, JobSpec]] = {
     Source.actorRef[JobId](10, OverflowStrategy.fail).
       mapMaterializedValue { idsStream =>
-        index.tell(RegistryPartitionIndex.GetJobIds, idsStream)
+        index.tell(RegistryIndex.GetJobIds, idsStream)
       }.flatMapConcat { jobId =>
         Source.actorRef[JobSpec](0, OverflowStrategy.dropHead).
           mapMaterializedValue { jobStream =>
@@ -87,19 +87,19 @@ class Registry(settings: QuckooClusterSettings)
   private def startShardRegion: ActorRef = if (cluster.selfRoles.contains("registry")) {
     log.info("Starting registry shards...")
     ClusterSharding(context.system).start(
-      typeName        = RegistryPartition.ShardName,
-      entityProps     = RegistryPartition.props(resolver),
+      typeName        = JobAggregate.ShardName,
+      entityProps     = JobAggregate.props,
       settings        = ClusterShardingSettings(context.system).withRole("registry"),
-      extractEntityId = RegistryPartition.idExtractor,
-      extractShardId  = RegistryPartition.shardResolver
+      extractEntityId = JobAggregate.idExtractor,
+      extractShardId  = JobAggregate.shardResolver
     )
   } else {
     log.info("Starting registry proxy...")
     ClusterSharding(context.system).startProxy(
-      typeName        = RegistryPartition.ShardName,
+      typeName        = JobAggregate.ShardName,
       role            = None,
-      extractEntityId = RegistryPartition.idExtractor,
-      extractShardId  = RegistryPartition.shardResolver
+      extractEntityId = JobAggregate.idExtractor,
+      extractShardId  = JobAggregate.shardResolver
     )
   }
 

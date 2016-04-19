@@ -106,7 +106,7 @@ class Quckoo(settings: QuckooClusterSettings)
       implicit val timeout = Timeout(30 seconds)
       (core ? RegisterJob(jobSpec)) map {
         case JobAccepted(jobId, _)  => jobId.successNel[Fault]
-        case JobRejected(_, errors) => errors.map(_.asInstanceOf[Fault]).failure[JobId]
+        case JobRejected(_, _, errors) => errors.map(_.asInstanceOf[Fault]).failure[JobId]
       }
     }
   }

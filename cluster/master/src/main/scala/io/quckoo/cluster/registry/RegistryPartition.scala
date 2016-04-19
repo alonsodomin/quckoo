@@ -85,7 +85,7 @@ class RegistryPartition(resolver: ActorRef, snapshotFrequency: FiniteDuration)
     extends PersistentActor with ActorLogging {
 
   import RegistryPartition._
-  import RegistryPartitionIndex._
+  import RegistryIndex._
   import context.dispatcher
   private val snapshotTask = context.system.scheduler.schedule(
       snapshotFrequency, snapshotFrequency, self, Snap)
@@ -97,7 +97,7 @@ class RegistryPartition(resolver: ActorRef, snapshotFrequency: FiniteDuration)
   override val persistenceId: String = s"$PersistenceIdPrefix-${self.path.name}"
 
   override def preStart(): Unit =
-    context.system.eventStream.publish(IndexPartition(persistenceId))
+    context.system.eventStream.publish(IndexJob(persistenceId))
 
   override def postStop(): Unit = snapshotTask.cancel()
 
@@ -160,6 +160,8 @@ class RegistryPartition(resolver: ActorRef, snapshotFrequency: FiniteDuration)
 private class ResolutionHandler(jobSpec: JobSpec, requestor: ActorRef) extends Actor with ActorLogging {
   import Resolver._
 
+  private val jobId = JobId(jobSpec)
+
   def receive = {
     case ArtifactResolved(artifact) =>
       log.debug("Job artifact has been successfully resolved. artifactId={}",
@@ -168,7 +170,7 @@ private class ResolutionHandler(jobSpec: JobSpec, requestor: ActorRef) extends A
 
     case ResolutionFailed(cause) =>
       log.error("Couldn't validate the job artifact id. " + cause)
-      reply(JobRejected(jobSpec.artifactId, cause))
+      reply(JobRejected(jobId, jobSpec.artifactId, cause))
   }
 
   private def reply(msg: Any): Unit = {
