@@ -84,7 +84,11 @@ build
 # Activator & SBT #
 ###################
 .history
-!activator-launch-*.jar
+
+# Ensime artifacts #
+###################
+.ensime
+.ensime_cache/
 
 # Kamon native libraries            #
 #####################################
