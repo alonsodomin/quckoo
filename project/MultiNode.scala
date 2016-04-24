@@ -1,5 +1,6 @@
 import com.typesafe.sbt.SbtMultiJvm
 import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
+import de.heikoseeberger.sbtheader.HeaderPlugin
 import sbt.Keys._
 import sbt._
 
@@ -23,10 +24,6 @@ object MultiNode {
           testResults.summaries ++ multiNodeResults.summaries
         )
     }*/
-  )
+  ) ++ HeaderPlugin.settingsFor(MultiJvm)
 
-  def apply(project: Project): Project = project.
-    settings(this.settings: _*).
-    configs(MultiJvm)
-  
 }

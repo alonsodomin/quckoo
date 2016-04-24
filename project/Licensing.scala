@@ -1,6 +1,7 @@
 import de.heikoseeberger.sbtheader._
 import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport._
 import de.heikoseeberger.sbtheader.license.Apache2_0
+import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
 object Licensing {
 

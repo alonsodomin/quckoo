@@ -26,7 +26,7 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("dnvriend", "maven")
   ),
   parallelExecution in Test := false
-)
+) ++ Licensing.settings
 
 lazy val noPublishSettings = Seq(
   publish := (),
@@ -52,7 +52,6 @@ lazy val quckoo = (project in file(".")).
   settings(moduleName := "quckoo-root").
   settings(noPublishSettings).
   enablePlugins(HeaderPlugin).
-  settings(Licensing.settings).
   aggregate(coreRoot, apiJS, apiJVM, clientRoot, cluster, consoleRoot, examples)
 
 // Common ==================================================
@@ -183,11 +182,13 @@ lazy val clusterShared = (project in file("cluster/shared")).
   settings(Dependencies.clusterShared).
   dependsOn(apiJVM)
 
-lazy val clusterMaster = MultiNode(project in file("cluster/master")).
+lazy val clusterMaster = (project in file("cluster/master")).
+  configs(MultiJvm).
   settings(moduleName := "quckoo-cluster-master").
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterMaster).
+  settings(MultiNode.settings).
   settings(
     //reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
   ).
