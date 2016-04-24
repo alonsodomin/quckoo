@@ -2,6 +2,7 @@ package io.quckoo.resolver
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern._
+
 import io.quckoo.fault.ResolutionFault
 import io.quckoo.id.ArtifactId
 

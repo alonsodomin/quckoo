@@ -90,7 +90,10 @@ class Quckoo(settings: QuckooClusterSettings)
 
   def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] = {
     implicit val timeout = Timeout(5 seconds)
-    (core ? GetJob(jobId)).mapTo[Option[JobSpec]]
+    (core ? GetJob(jobId)).map {
+      case JobNotFound(_)      => None
+      case (_, spec: JobSpec)  => Some(spec)
+    }
   }
 
   def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[ValidationNel[Fault, JobId]] = {
