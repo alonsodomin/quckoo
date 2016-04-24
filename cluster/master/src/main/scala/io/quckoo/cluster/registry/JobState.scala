@@ -55,6 +55,7 @@ class JobState extends PersistentActor with ActorLogging with Stash {
   override def receiveRecover: Receive = {
     case JobAccepted(jobId, jobSpec) =>
       stateDuringRecovery = Some(jobSpec)
+      log.debug("Recreated job {} with specification: {}", jobId, jobSpec)
       context.become(enabled(jobId, jobSpec))
 
     case JobEnabled(jobId) =>
