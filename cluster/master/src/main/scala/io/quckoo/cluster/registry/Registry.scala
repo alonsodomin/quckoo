@@ -1,21 +1,21 @@
 package io.quckoo.cluster.registry
 
+import scala.concurrent._
+
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.stream.scaladsl.{FileIO, Sink, Source}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
+import akka.stream.scaladsl.Source
 import io.quckoo.JobSpec
+import io.quckoo.id.JobId
 import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.cluster.core.QuckooJournal
-import io.quckoo.id.JobId
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
-
-import scala.concurrent._
 
 /**
  * Created by aalonsodominguez on 24/08/15.
@@ -42,7 +42,7 @@ class Registry(settings: QuckooClusterSettings)
     Resolver.props(IvyResolve(settings.ivyConfiguration)).withDispatcher("quckoo.resolver.dispatcher"),
     "resolver")
   private[this] val shardRegion = startShardRegion
-  private[this] val index = context.actorOf(RegistryIndex.props(), s"index")
+  private[this] val index = context.actorOf(RegistryIndex.props(shardRegion), s"index")
 
   def actorSystem = context.system
 
@@ -62,23 +62,17 @@ class Registry(settings: QuckooClusterSettings)
       queryJobs pipeTo origSender
 
     case msg: GetJob =>
-      shardRegion forward msg
+      index forward msg
 
     case msg: RegistryWriteCommand =>
       shardRegion forward msg
   }
 
   private def queryJobs: Future[Map[JobId, JobSpec]] = {
-    Source.actorRef[JobId](10, OverflowStrategy.fail).
+    Source.actorRef[(JobId, JobSpec)](10, OverflowStrategy.fail).
       mapMaterializedValue { idsStream =>
-        index.tell(RegistryIndex.GetJobIds, idsStream)
-      }.flatMapConcat { jobId =>
-        Source.actorRef[JobSpec](0, OverflowStrategy.dropHead).
-          mapMaterializedValue { jobStream =>
-            shardRegion.tell(GetJob(jobId), jobStream)
-          } map(jobId -> _)
-      }.
-      runFold(Map.empty[JobId, JobSpec]) {
+        index.tell(GetJobs, idsStream)
+      }.runFold(Map.empty[JobId, JobSpec]) {
         case (map, (jobId, jobSpec)) =>
           map + (jobId -> jobSpec)
       }

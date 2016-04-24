@@ -110,38 +110,45 @@ class JobAggregate extends PersistentActor with ActorLogging with Stash {
   }
 
   def enabled(jobId: JobId, spec: JobSpec): Receive = {
-    case EnableJob(`jobId`) =>
-      sender() ! JobEnabled(jobId)
+    def validCommands: Receive = {
+      case EnableJob(`jobId`) =>
+        sender() ! JobEnabled(jobId)
 
-    case DisableJob(`jobId`) =>
-      persist(JobDisabled(jobId)) { event =>
-        mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
-        sender() ! event
-        context.become(disabled(jobId, spec.copy(disabled = true)))
-      }
+      case DisableJob(`jobId`) =>
+        persist(JobDisabled(jobId)) { event =>
+          mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
+          sender() ! event
+          context.become(disabled(jobId, spec.copy(disabled = true)))
+        }
+    }
 
-    case GetJob(`jobId`) =>
-      sender() ! spec
+    validCommands orElse returnJob(jobId, spec)
   }
 
   def disabled(jobId: JobId, spec: JobSpec): Receive = {
-    case DisableJob(`jobId`) =>
-      sender() ! JobDisabled(jobId)
+    def validCommands: Receive = {
+      case DisableJob(`jobId`) =>
+        sender() ! JobDisabled(jobId)
 
-    case EnableJob(`jobId`) =>
-      persist(JobEnabled(jobId)) { event =>
-        mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
-        sender() ! event
-        context.become(enabled(jobId, spec.copy(disabled = false)))
-      }
+      case EnableJob(`jobId`) =>
+        persist(JobEnabled(jobId)) { event =>
+          mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
+          sender() ! event
+          context.become(enabled(jobId, spec.copy(disabled = false)))
+        }
+    }
 
-    case GetJob(`jobId`) =>
-      sender() ! spec
+    validCommands orElse returnJob(jobId, spec)
   }
 
   def disposing(jobId: JobId): Receive = {
     case _: RegistryCommand =>
       sender() ! JobNotFound(jobId)
+  }
+
+  private def returnJob(jobId: JobId, spec: JobSpec): Receive = {
+    case GetJob(`jobId`) =>
+      sender() ! (jobId -> spec)
   }
 
   private def handlerProps(jobSpec: JobSpec, requestor: ActorRef): Props =

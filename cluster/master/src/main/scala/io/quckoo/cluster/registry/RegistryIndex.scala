@@ -23,7 +23,6 @@ object RegistryIndex {
   final val DefaultHighWatermark = 100
 
   final case class Fetch(request: RegistryReadCommand, sender: ActorRef)
-
   final case class CollateResults(size: Int)
 
   final case class IndexJob(persistenceId: String)
@@ -75,18 +74,13 @@ class RegistryIndex(shardRegion: ActorRef, highWatermark: Int)
 
     case GetJobs =>
       log.debug("Grabbing all job ids from the index")
-      replicator ! Replicator.Get(IndexKey, ReadLocal, Some(Fetch(GetJobs, sender())))
+      val externalReq = Fetch(GetJobs, sender())
+      val replicatorReq = Replicator.Get(IndexKey, ReadLocal, Some(externalReq))
+      val queryHandler = context.actorOf(Props(classOf[RegistryQuery], shardRegion))
+      replicator.tell(replicatorReq, queryHandler)
 
     case msg: GetJob =>
       replicator ! Replicator.Get(IndexKey, ReadLocal, Some(Fetch(msg, sender())))
-
-    case r @ Replicator.GetSuccess(`IndexKey`, Some(Fetch(GetJobs, requestor))) =>
-      val elems = r.get(IndexKey).elements
-      log.debug("Found {} elements in the index", elems.size)
-      elems.foreach { jobId =>
-        requestor ! jobId
-      }
-      requestor ! Status.Success(())
 
     case r @ Replicator.GetSuccess(`IndexKey`, Some(Fetch(cmd: GetJob, requestor))) =>
       val elems = r.get(IndexKey).elements
@@ -96,14 +90,8 @@ class RegistryIndex(shardRegion: ActorRef, highWatermark: Int)
         requestor ! JobNotFound(cmd.jobId)
       }
 
-    case Replicator.NotFound(`IndexKey`, Some(req: Fetch)) =>
-      req match {
-        case Fetch(GetJob(jobId), requestor) =>
-          requestor ! JobNotFound(jobId)
-
-        case Fetch(GetJobs, requestor) =>
-          requestor ! Status.Success(())
-      }
+    case Replicator.NotFound(`IndexKey`, Some(Fetch(GetJob(jobId), requestor))) =>
+      requestor ! JobNotFound(jobId)
 
     case Replicator.GetFailure(`IndexKey`, Some(Fetch(_, requestor: ActorRef))) =>
       requestor ! Status.Failure(new Exception("Could not retrieve elements from the index"))
@@ -116,13 +104,53 @@ class RegistryIndex(shardRegion: ActorRef, highWatermark: Int)
 
 }
 
-private class RegistryQuery(indexSize: Long, requestor: ActorRef) extends Actor {
+private class RegistryQuery(shardRegion: ActorRef) extends Actor {
+  import RegistryIndex._
 
-  private[this] var counter = 0L
+  private[this] var expectedResultCount = 0
 
   def receive = {
-    case spec: JobSpec =>
+    case res @ Replicator.GetSuccess(`IndexKey`, Some(req @ Fetch(GetJobs, requestor))) =>
+      val elems = res.get(IndexKey).elements
+      if (elems.nonEmpty) {
+        expectedResultCount = elems.size
+        elems.foreach { jobId =>
+          shardRegion ! GetJob(jobId)
+        }
+        context become collateResults(requestor)
+      } else {
+        completeQuery(requestor)
+      }
 
+    case Replicator.NotFound(`IndexKey`, Some(Fetch(_, requestor))) =>
+      completeQuery(requestor)
+
+    case Replicator.GetFailure(`IndexKey`, Some(Fetch(_, requestor: ActorRef))) =>
+      requestor ! Status.Failure(new Exception("Could not retrieve elements from the index"))
+      context stop self
+  }
+
+  def collateResults(requestor: ActorRef): Receive = {
+    case JobNotFound(_) =>
+      // ignore "not found responses when collating query results"
+      decreaseCountAndComplete(requestor)
+
+    case (jobId: JobId, spec: JobSpec) =>
+      requestor ! (jobId -> spec)
+      decreaseCountAndComplete(requestor)
+
+  }
+
+  def decreaseCountAndComplete(requestor: ActorRef): Unit = {
+    expectedResultCount -= 1
+    if (expectedResultCount == 0) {
+      completeQuery(requestor)
+    }
+  }
+
+  def completeQuery(requestor: ActorRef): Unit = {
+    requestor ! Status.Success(())
+    context stop self
   }
 
 }

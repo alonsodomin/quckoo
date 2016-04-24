@@ -2,11 +2,9 @@ package io.quckoo.cluster.registry
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
-import akka.stream.scaladsl.Flow
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
 import io.quckoo.JobSpec
