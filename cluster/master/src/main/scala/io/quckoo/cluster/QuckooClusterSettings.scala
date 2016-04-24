@@ -30,7 +30,7 @@ object QuckooClusterSettings {
 
 }
 
-case class QuckooClusterSettings private(
+final case class QuckooClusterSettings private(
     ivyConfiguration: IvyConfiguration,
     queueMaxWorkTimeout: FiniteDuration,
     httpInterface: String = QuckooClusterSettings.DefaultHttpInterface,

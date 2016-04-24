@@ -5,10 +5,8 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
-
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
-
 import io.quckoo.JobSpec
 import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.id.JobId
@@ -68,5 +66,7 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
         complete(asSSE(registryEvents, "registry"))
       }
     }
+
+
 
 }

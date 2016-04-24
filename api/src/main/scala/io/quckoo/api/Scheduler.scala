@@ -2,6 +2,7 @@ package io.quckoo.api
 
 import io.quckoo.ExecutionPlan
 import io.quckoo.id.PlanId
+import io.quckoo.protocol.registry.JobNotFound
 import io.quckoo.protocol.scheduler._
 
 import scala.concurrent.{ExecutionContext, Future}

@@ -80,7 +80,7 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
         Some(read[JobSpec](xhr.responseText))
       }
     } recover {
-      case _ => None
+      case ex: AjaxException if ex.xhr.status == 404 => None
     }
   }
 

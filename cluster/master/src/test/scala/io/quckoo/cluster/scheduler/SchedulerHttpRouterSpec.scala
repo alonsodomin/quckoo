@@ -10,6 +10,7 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization
 import io.quckoo.time.JDK8TimeSource

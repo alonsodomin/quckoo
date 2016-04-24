@@ -63,7 +63,7 @@ object Repository {
   }
 
   def sbtLocal(name: String): Repository = {
-    val pList = ("${ivy.home}/" + name + "/" + sbtStylePattern) :: Nil
+    val pList = ("${" + "ivy.home}/" + name + "/" + sbtStylePattern) :: Nil
     val patterns = Patterns(pList, pList, mavenCompatible = false)
     FileRepository(name, patterns)
   }

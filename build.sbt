@@ -16,7 +16,8 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-deprecation",
     "-Xlint",
-    "-Ywarn-dead-code"
+    "-Ywarn-dead-code",
+    "-Xfatal-warnings"
   ),
   resolvers ++= Seq(
     Opts.resolver.mavenLocalFile,

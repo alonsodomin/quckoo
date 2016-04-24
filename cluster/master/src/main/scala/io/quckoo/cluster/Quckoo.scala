@@ -3,9 +3,10 @@ package io.quckoo.cluster
 import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.ws.Message
 import akka.pattern._
 import akka.stream.{ActorMaterializer, OverflowStrategy}
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{Flow, Source}
 import akka.util.Timeout
 import io.quckoo.cluster.core.{WorkerEventPublisher, _}
 import io.quckoo.cluster.http.HttpRouter
@@ -89,7 +90,10 @@ class Quckoo(settings: QuckooClusterSettings)
 
   def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] = {
     implicit val timeout = Timeout(5 seconds)
-    (core ? GetJob(jobId)).mapTo[Option[JobSpec]]
+    (core ? GetJob(jobId)).map {
+      case JobNotFound(_)      => None
+      case (_, spec: JobSpec)  => Some(spec)
+    }
   }
 
   def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[ValidationNel[Fault, JobId]] = {
@@ -105,7 +109,7 @@ class Quckoo(settings: QuckooClusterSettings)
       implicit val timeout = Timeout(30 seconds)
       (core ? RegisterJob(jobSpec)) map {
         case JobAccepted(jobId, _)  => jobId.successNel[Fault]
-        case JobRejected(_, errors) => errors.map(_.asInstanceOf[Fault]).failure[JobId]
+        case JobRejected(_, _, errors) => errors.map(_.asInstanceOf[Fault]).failure[JobId]
       }
     }
   }
