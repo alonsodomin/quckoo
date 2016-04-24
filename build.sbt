@@ -51,6 +51,8 @@ lazy val scoverageSettings = Seq(
 lazy val quckoo = (project in file(".")).
   settings(moduleName := "quckoo-root").
   settings(noPublishSettings).
+  enablePlugins(HeaderPlugin).
+  settings(Licensing.settings).
   aggregate(coreRoot, apiJS, apiJVM, clientRoot, cluster, consoleRoot, examples)
 
 // Common ==================================================

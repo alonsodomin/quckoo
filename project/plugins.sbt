@@ -13,3 +13,4 @@ addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.1.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.3.11")
 
 addSbtPlugin("org.madoushi.sbt" % "sbt-sass" % "0.9.3")
+addSbtPlugin("de.heikoseeberger" % "sbt-header" % "1.5.1")
