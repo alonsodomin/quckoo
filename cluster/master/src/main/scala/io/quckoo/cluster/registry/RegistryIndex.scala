@@ -1,16 +1,11 @@
 package io.quckoo.cluster.registry
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, Status}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Stash, Status}
 import akka.cluster.Cluster
 import akka.cluster.ddata.Replicator.{ReadLocal, WriteLocal}
 import akka.cluster.ddata._
-import akka.persistence.query.EventEnvelope
-import akka.stream.actor._
-import akka.stream.scaladsl.Sink
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 
 import io.quckoo.JobSpec
-import io.quckoo.cluster.core.QuckooJournal
 import io.quckoo.id.JobId
 import io.quckoo.protocol.registry._
 
@@ -21,30 +16,19 @@ object RegistryIndex {
 
   final val IndexKey = ORSetKey[JobId]("registryIndex")
 
-  final val DefaultHighWatermark = 100
-
   final case class Query(request: RegistryReadCommand, sender: ActorRef)
+  final case class IndexJob(jobId: JobId)
 
-  final case class IndexJob(persistenceId: String)
-  final case class JobDisposed(persistenceId: String)
-
-  def props(shardRegion: ActorRef, highWatermark: Int = DefaultHighWatermark): Props =
-    Props(classOf[RegistryIndex], shardRegion, highWatermark)
+  def props(shardRegion: ActorRef): Props =
+    Props(classOf[RegistryIndex], shardRegion)
 
 }
 
-class RegistryIndex(shardRegion: ActorRef, highWatermark: Int)
-    extends ActorSubscriber with ActorLogging with QuckooJournal {
+class RegistryIndex(shardRegion: ActorRef) extends Actor with ActorLogging with Stash {
   import RegistryIndex._
 
   implicit val cluster = Cluster(context.system)
   private[this] val replicator = DistributedData(context.system).replicator
-
-  final implicit val materializer = ActorMaterializer(
-    ActorMaterializerSettings(context.system), "registry"
-  )
-
-  private[this] var indexedPersistenceIds = Set.empty[String]
 
   override def preStart(): Unit = {
     log.info("Starting registry index...")
@@ -54,29 +38,13 @@ class RegistryIndex(shardRegion: ActorRef, highWatermark: Int)
   override def postStop(): Unit =
     context.system.eventStream.unsubscribe(self)
 
-  override def actorSystem = context.system
+  override def receive = ready
 
-  override def requestStrategy: RequestStrategy = OneByOneRequestStrategy
-
-  override def receive: Receive = {
-    case IndexJob(persistenceId) if !indexedPersistenceIds.contains(persistenceId) =>
-      log.debug("Indexing job {}", persistenceId)
-      indexedPersistenceIds += persistenceId
-      readJournal.eventsByPersistenceId(persistenceId, -1, Long.MaxValue).
-        runWith(Sink.actorRef(self, JobDisposed(persistenceId)))
-
-    case EventEnvelope(_, _, _, event) =>
-      event match {
-        case JobAccepted(jobId, _) =>
-          log.debug("Indexing job {}", jobId)
-          replicator ! Replicator.Update(IndexKey, ORSet.empty[JobId], WriteLocal)(_ + jobId)
-
-        case _ => // do nothing
-      }
-
-    case Status.Failure(ex) =>
-      log.error(ex, "Error indexing jobs.")
-      context stop self
+  def ready: Receive = {
+    case IndexJob(jobId) =>
+      log.debug("Indexing job {}", jobId)
+      addJobIdToIndex(jobId)
+      context become updatingIndex(jobId)
 
     case GetJobs =>
       val externalReq = Query(GetJobs, sender())
@@ -89,12 +57,28 @@ class RegistryIndex(shardRegion: ActorRef, highWatermark: Int)
       val replicatorReq = Replicator.Get(IndexKey, ReadLocal, Some(externalReq))
       val queryHandler = context.actorOf(Props(classOf[RegistrySingleQuery], shardRegion))
       replicator.tell(replicatorReq, queryHandler)
-
-    case JobDisposed(partitionId) =>
-      indexedPersistenceIds -= partitionId
-      if (indexedPersistenceIds.isEmpty)
-        context stop self
   }
+
+  def updatingIndex(jobId: JobId, attempts: Int = 1): Receive = {
+    case Replicator.UpdateSuccess(_, _) =>
+      unstashAll()
+      context become ready
+
+    case Replicator.UpdateTimeout(_, _) =>
+      if (attempts < 3) {
+        log.warning("Timed out when indexing job {}. Retrying...", jobId)
+        addJobIdToIndex(jobId)
+        context become updatingIndex(jobId, attempts + 1)
+      } else {
+        log.error("Could not add job {} to the index.", jobId)
+        context become ready
+      }
+
+    case _ => stash()
+  }
+
+  private[this] def addJobIdToIndex(jobId: JobId): Unit =
+    replicator ! Replicator.Update(IndexKey, ORSet.empty[JobId], WriteLocal)(_ + jobId)
 
 }
 

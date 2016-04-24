@@ -2,23 +2,16 @@ package io.quckoo.cluster.registry
 
 import java.util.UUID
 
-import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
-import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestActors, TestProbe}
-import io.quckoo.cluster.QuckooClusterSettings
-import io.quckoo.fault.Fault
+
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.registry._
-import io.quckoo.resolver.{Artifact, Resolve}
+import io.quckoo.resolver.Artifact
 import io.quckoo.resolver.Resolver
 import io.quckoo.JobSpec
-import org.scalamock.scalatest.MockFactory
-
-import scala.concurrent.{ExecutionContext, Future}
-import scalaz._
 
 /**
  * Created by domingueza on 28/08/15.
@@ -36,20 +29,18 @@ class RegistryMultiNodeSpecMultiJvmProxy extends RegistryMultiNode
 object RegistryMultiNode {
 
   final val TestArtifactId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
-  final val TestJobSpec = JobSpec("Examples", artifactId = TestArtifactId, jobClass = "io.kairos.examples.paramteters.PowerOfNJob")
+  final val TestJobSpec = JobSpec(
+    "Examples", artifactId = TestArtifactId,
+    jobClass = "io.kairos.examples.paramteters.PowerOfNJob"
+  )
 
 }
 
 abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
-    with ImplicitSender with MultiNodeClusterSpec with MockFactory {
+    with ImplicitSender with MultiNodeClusterSpec {
 
   import RegistryMultiNode._
   import RegistryNodesConfig._
-
-  import Scalaz._
-
-  implicit val materializer = ActorMaterializer()
-  val mockResolve = mock[Resolve]
 
   "A Registry cluster" should {
 

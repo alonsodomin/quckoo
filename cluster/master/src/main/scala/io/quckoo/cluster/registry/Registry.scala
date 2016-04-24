@@ -59,7 +59,8 @@ class Registry(settings: RegistrySettings)
     readJournal.currentPersistenceIds().
       filter(_.startsWith(JobState.PersistenceIdPrefix)).
       runForeach { partitionId =>
-        index ! RegistryIndex.IndexJob(partitionId)
+        val jobId = new JobId(partitionId.substring(JobState.PersistenceIdPrefix.length + 1))
+        index ! RegistryIndex.IndexJob(jobId)
       }
   }
 

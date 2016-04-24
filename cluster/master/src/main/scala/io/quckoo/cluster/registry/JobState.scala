@@ -49,13 +49,10 @@ class JobState extends PersistentActor with ActorLogging with Stash {
 
   override def persistenceId: String = s"$PersistenceIdPrefix-${self.path.name}"
 
-  override def preStart(): Unit =
-    context.system.eventStream.publish(IndexJob(persistenceId))
-
   override def receiveRecover: Receive = {
     case JobAccepted(jobId, jobSpec) =>
       stateDuringRecovery = Some(jobSpec)
-      log.debug("Recreated job {} with specification: {}", jobId, jobSpec)
+      log.debug("Loading job {}...", jobId)
       context.become(enabled(jobId, jobSpec))
 
     case JobEnabled(jobId) =>
@@ -79,6 +76,7 @@ class JobState extends PersistentActor with ActorLogging with Stash {
   def initialising: Receive = {
     case CreateJob(jobId, jobSpec) =>
       persist(JobAccepted(jobId, jobSpec)) { event =>
+        context.system.eventStream.publish(IndexJob(jobId))
         mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
         sender() ! event
         context.become(enabled(jobId, jobSpec))
