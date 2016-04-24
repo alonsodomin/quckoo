@@ -46,8 +46,10 @@ class RegistryIndex(shardRegion: ActorRef, highWatermark: Int)
 
   private[this] var indexedPersistenceIds = Set.empty[String]
 
-  override def preStart(): Unit =
+  override def preStart(): Unit = {
+    log.info("Starting registry index...")
     context.system.eventStream.subscribe(self, classOf[IndexJob])
+  }
 
   override def postStop(): Unit =
     context.system.eventStream.unsubscribe(self)
@@ -58,6 +60,7 @@ class RegistryIndex(shardRegion: ActorRef, highWatermark: Int)
 
   override def receive: Receive = {
     case IndexJob(persistenceId) if !indexedPersistenceIds.contains(persistenceId) =>
+      log.debug("Indexing job {}", persistenceId)
       indexedPersistenceIds += persistenceId
       readJournal.eventsByPersistenceId(persistenceId, -1, Long.MaxValue).
         runWith(Sink.actorRef(self, JobDisposed(persistenceId)))
