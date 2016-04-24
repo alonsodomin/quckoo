@@ -1,16 +1,19 @@
 package io.quckoo.cluster.registry
 
+import java.util.UUID
+
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
-import akka.testkit.{ImplicitSender, TestProbe}
+import akka.testkit.{ImplicitSender, TestActors, TestProbe}
 import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.fault.Fault
-import io.quckoo.id.ArtifactId
+import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.{Artifact, Resolve}
+import io.quckoo.resolver.Resolver
 import io.quckoo.JobSpec
 import org.scalamock.scalatest.MockFactory
 
@@ -34,7 +37,6 @@ object RegistryMultiNode {
 
   final val TestArtifactId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
   final val TestJobSpec = JobSpec("Examples", artifactId = TestArtifactId, jobClass = "io.kairos.examples.paramteters.PowerOfNJob")
-  final val TestArtifact = Artifact(TestArtifactId, Seq())
 
 }
 
@@ -50,7 +52,6 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
   val mockResolve = mock[Resolve]
 
   "A Registry cluster" should {
-    val settings = QuckooClusterSettings(system)
 
     "distribute jobs specs across shards" in {
       awaitClusterUp(registry, proxy)
@@ -58,33 +59,50 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
       Persistence(system)
 
       runOn(proxy) {
-        enterBarrier("shard-ready")
+        enterBarrier("registry-ready")
 
         val registryRef = system.actorSelection(node(registry) / "user" / "registry")
+
+        val invalidJobId = JobId(UUID.randomUUID())
+        registryRef ! GetJob(invalidJobId)
+
+        val notFoundMsg = expectMsgType[JobNotFound]
+        notFoundMsg.jobId shouldBe invalidJobId
+
+        enterBarrier("fetch-invalid-job")
+
         registryRef ! RegisterJob(TestJobSpec)
 
         enterBarrier("registering-job")
 
-        expectMsgType[JobAccepted].job should be(TestJobSpec)
+        val acceptedMsg = expectMsgType[JobAccepted]
+        acceptedMsg.job shouldBe TestJobSpec
+
+        registryRef ! GetJob(acceptedMsg.jobId)
+        expectMsg(acceptedMsg.jobId -> TestJobSpec)
+
+        enterBarrier("job-fetched")
+
       }
 
       runOn(registry) {
         val resolverProbe = TestProbe()
-        /*(mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
-          expects(TestArtifactId, false, *).
-          returning(Future.successful(TestArtifact.successNel[Fault]))*/
+        val settings = RegistrySettings(TestActors.forwardActorProps(resolverProbe.ref))
 
-        val ref = ClusterSharding(system).start(
-          typeName        = RegistryPartition.ShardName,
-          entityProps     = RegistryPartition.props(resolverProbe.ref),
-          settings        = ClusterShardingSettings(system),
-          extractEntityId = RegistryPartition.idExtractor,
-          extractShardId  = RegistryPartition.shardResolver
-        )
         system.actorOf(Registry.props(settings), "registry")
-        enterBarrier("shard-ready")
+        enterBarrier("registry-ready")
+
+        enterBarrier("fetch-invalid-job")
+
+        val validateMsg = resolverProbe.expectMsgType[Resolver.Validate]
+        validateMsg.artifactId shouldBe TestJobSpec.artifactId
+
+        val artifact = Artifact(validateMsg.artifactId, Seq())
+        resolverProbe.reply(Resolver.ArtifactResolved(artifact))
 
         enterBarrier("registering-job")
+
+        enterBarrier("job-fetched")
       }
 
       enterBarrier("finished")

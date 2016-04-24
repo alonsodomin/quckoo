@@ -25,11 +25,18 @@ object Registry {
 
   final val EventTag = "registry"
 
-  def props(settings: QuckooClusterSettings) = Props(classOf[Registry], settings)
+  def props(settings: QuckooClusterSettings) = {
+    val resolve = IvyResolve(settings.ivyConfiguration)
+    val props   = Resolver.props(resolve).withDispatcher("quckoo.resolver.dispatcher")
+    Props(classOf[Registry], RegistrySettings(props))
+  }
+
+  def props(settings: RegistrySettings) =
+    Props(classOf[Registry], settings)
 
 }
 
-class Registry(settings: QuckooClusterSettings)
+class Registry(settings: RegistrySettings)
     extends Actor with ActorLogging with QuckooJournal {
 
   ClusterClientReceptionist(context.system).registerService(self)
@@ -39,9 +46,7 @@ class Registry(settings: QuckooClusterSettings)
   )
 
   private[this] val cluster = Cluster(context.system)
-  private[this] val resolver = context.actorOf(
-    Resolver.props(IvyResolve(settings.ivyConfiguration)).withDispatcher("quckoo.resolver.dispatcher"),
-    "resolver")
+  private[this] val resolver = context.actorOf(settings.resolverProps, "resolver")
   private[this] val shardRegion = startShardRegion
   private[this] val index = context.actorOf(RegistryIndex.props(shardRegion), s"index")
 

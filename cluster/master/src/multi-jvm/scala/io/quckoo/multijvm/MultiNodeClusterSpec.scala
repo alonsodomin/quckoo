@@ -92,7 +92,7 @@ trait MultiNodeClusterSpec extends ScalaTestMultiNodeSpec { self: MultiNodeSpec 
                       canNotBePartOfMemberRing: Set[Address] = Set.empty,
                       timeout: FiniteDuration = 25 seconds): Unit = {
     within(timeout) {
-      if (!canNotBePartOfMemberRing.isEmpty) // don't run this on an empty set
+      if (canNotBePartOfMemberRing.nonEmpty) // don't run this on an empty set
         awaitAssert(canNotBePartOfMemberRing foreach (a ⇒ clusterState.members.map(_.address) should not contain (a)))
       awaitAssert(clusterState.members.size should ===(numberOfMembers))
       awaitAssert(clusterState.members.map(_.status) should ===(Set(MemberStatus.Up)))
