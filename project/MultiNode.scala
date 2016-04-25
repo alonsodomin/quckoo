@@ -11,7 +11,7 @@ object MultiNode {
       "com.typesafe.akka" %% "akka-multi-node-testkit" % Dependencies.version.akka
     ),
     compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
-    parallelExecution in Test := false /*,
+    parallelExecution in Test := false,
     executeTests in Test <<= (executeTests in Test, executeTests in MultiJvm) map {
       case (testResults, multiNodeResults) =>
         val overall =
@@ -23,7 +23,7 @@ object MultiNode {
           testResults.events ++ multiNodeResults.events,
           testResults.summaries ++ multiNodeResults.summaries
         )
-    }*/
+    }
   ) ++ HeaderPlugin.settingsFor(MultiJvm)
 
 }
