@@ -32,12 +32,16 @@ final case class Task(
 
 object Task {
 
+  sealed trait UncompleteReason
+  case object UserRequest extends UncompleteReason
+  case object FailedToEnqueue extends UncompleteReason
+
   sealed trait Outcome extends Serializable
   case object NotStarted extends Outcome
   case object Success extends Outcome
   case class Failure(cause: Fault) extends Outcome
-  case class Interrupted(reason: String) extends Outcome
-  case class NeverRun(reason: String) extends Outcome
+  case class Interrupted(reason: UncompleteReason) extends Outcome
+  case class NeverRun(reason: UncompleteReason) extends Outcome
   case object NeverEnding extends Outcome
 
 }

@@ -26,6 +26,7 @@ import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.persistence.query.scaladsl.{AllPersistenceIdsQuery, EventsByPersistenceIdQuery}
 import akka.stream.scaladsl.Sink
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
+
 import io.quckoo.JobSpec
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.topics
