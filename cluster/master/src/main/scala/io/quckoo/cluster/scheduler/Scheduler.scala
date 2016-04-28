@@ -18,14 +18,11 @@ package io.quckoo.cluster.scheduler
 
 import java.util.UUID
 
-import akka.NotUsed
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.persistence.query.scaladsl.{AllPersistenceIdsQuery, EventsByPersistenceIdQuery}
-import akka.stream.scaladsl.Sink
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 
 import io.quckoo.JobSpec
 import io.quckoo.cluster.protocol._
@@ -44,19 +41,17 @@ object Scheduler {
 
   private[scheduler] case class CreateExecutionDriver(spec: JobSpec, config: ScheduleJob, requestor: ActorRef)
 
-  def props(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: Props)(implicit timeSource: TimeSource) =
-    Props(classOf[Scheduler], registry, readJournal, queueProps, timeSource)
+  def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource) =
+    Props(classOf[Scheduler], registry, queueProps, timeSource)
 
 }
 
-class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: Props)(implicit timeSource: TimeSource)
+class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource)
     extends Actor with ActorLogging {
 
   import Scheduler._
 
   ClusterClientReceptionist(context.system).registerService(self)
-
-  final implicit val materializer = ActorMaterializer(ActorMaterializerSettings(context.system))
 
   private[this] val monitor = context.actorOf(TaskQueueMonitor.props, "monitor")
   private[this] val taskQueue = context.actorOf(queueProps, "queue")
@@ -67,20 +62,9 @@ class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: 
     extractEntityId = ExecutionDriver.idExtractor,
     extractShardId  = ExecutionDriver.shardResolver
   )
-  private[this] val executionPlanView = context.actorOf(
-    Props(classOf[ExecutionPlanView], shardRegion), "plans"
+  private[this] val executionPlanIndex = context.actorOf(
+    ExecutionPlanIndex.props(shardRegion), "executionPlanIndex"
   )
-
-  override def preStart(): Unit = {
-    readJournal.allPersistenceIds().
-      filter(_.startsWith("ExecutionPlan-")).
-      flatMapConcat { persistenceId =>
-        readJournal.eventsByPersistenceId(persistenceId, 0, System.currentTimeMillis())
-      } runWith Sink.actorRef(executionPlanView, NotUsed)
-  }
-
-  override def postStop(): Unit =
-    context.stop(executionPlanView)
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>
@@ -93,14 +77,11 @@ class Scheduler(registry: ActorRef, readJournal: Scheduler.Journal, queueProps: 
       log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
       context.actorOf(props, s"execution-driver-factory-$planId")
 
-    case get: GetExecutionPlan =>
-      executionPlanView.tell(get, sender())
-
-    case GetExecutionPlans =>
-      executionPlanView.tell(GetExecutionPlans, sender())
+    case cmd: SchedulerReadCommand =>
+      executionPlanIndex forward cmd
 
     case msg: WorkerMessage =>
-      taskQueue.tell(msg, sender())
+      taskQueue forward msg
   }
 
   private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
@@ -118,7 +99,7 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: ScheduleJob)
   import Scheduler._
 
   def receive: Receive = {
-    case Some(spec: JobSpec) =>
+    case (`jobId`, spec: JobSpec) =>
       if (!spec.disabled) {
         // create execution plan
         context.parent ! CreateExecutionDriver(spec, config, requestor)
@@ -128,10 +109,14 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: ScheduleJob)
       }
       context.stop(self)
 
-    case None =>
+    case JobNotFound(`jobId`) =>
       log.info("No enabled job with id {} could be retrieved.", jobId)
       requestor ! JobNotFound(jobId)
       context.stop(self)
+  }
+
+  override def unhandled(message: Any): Unit = {
+    log.warning("Unexpected message {} received when fetching job {}.", message, jobId)
   }
 
 }
@@ -170,32 +155,6 @@ private class ExecutionDriverFactory(
   def shuttingDown: Receive = {
     case DistributedPubSubMediator.UnsubscribeAck(_) =>
       context.stop(self)
-  }
-
-}
-
-private class ExecutionPlanView(shardRegion: ActorRef) extends Actor with ActorLogging {
-
-  private[this] var executionPlans = Map.empty[PlanId, Boolean]
-
-  def receive: Receive = {
-    case get: GetExecutionPlan =>
-      if (executionPlans.contains(get.planId)) {
-        shardRegion.tell(get, sender())
-      } else {
-        sender() ! None
-      }
-
-    case GetExecutionPlans =>
-      sender() ! executionPlans.keySet
-
-    case evt: ExecutionDriver.Created =>
-      log.debug("Received event: {}", evt)
-      executionPlans += (evt.planId -> true)
-
-    case evt: ExecutionPlanFinished =>
-      log.debug("Received event: {}", evt)
-      executionPlans += (evt.planId -> false)
   }
 
 }

@@ -154,11 +154,11 @@ private class RegistryMultiQuery(shardRegion: ActorRef) extends Actor with Actor
   }
 
   def collateResults(requestor: ActorRef): Receive = {
-    case JobNotFound(_) =>
+    case JobNotFound(_) if expectedResultCount > 0 =>
       // ignore "not found responses when collating query results"
       decreaseCountAndComplete(requestor)
 
-    case (jobId: JobId, spec: JobSpec) =>
+    case (jobId: JobId, spec: JobSpec) if expectedResultCount > 0 =>
       requestor ! (jobId -> spec)
       decreaseCountAndComplete(requestor)
 

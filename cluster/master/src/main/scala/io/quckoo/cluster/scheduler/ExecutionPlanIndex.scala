@@ -58,6 +58,12 @@ class ExecutionPlanIndex(shardRegion: ActorRef) extends Actor with ActorLogging 
       val replicatorReq = Replicator.Get(`ExecutionPlanKey`, ReadLocal, Some(externalReq))
       val handler = context.actorOf(Props(classOf[ExecutionPlanSingleQuery], shardRegion))
       replicator.tell(replicatorReq, handler)
+
+    case GetExecutionPlans =>
+      val externalReq = Query(GetExecutionPlans, sender())
+      val replicatorReq = Replicator.Get(`ExecutionPlanKey`, ReadLocal, Some(externalReq))
+      val handler = context.actorOf(Props(classOf[ExecutionPlanMultiQuery], shardRegion))
+      replicator.tell(replicatorReq, handler)
   }
 
   def updatingIndex(planId: PlanId, attempts: Int = 1): Receive = {
@@ -121,16 +127,39 @@ private class ExecutionPlanSingleQuery(shardRegion: ActorRef) extends Actor with
 private class ExecutionPlanMultiQuery(shardRegion: ActorRef) extends Actor with ActorLogging {
   import ExecutionPlanIndex._
 
+  private[this] var expectedResultCount = 0
+
   def receive = {
     case res @ Replicator.GetSuccess(`ExecutionPlanKey`, Some(Query(GetExecutionPlans, requestor))) =>
       val elems = res.get(ExecutionPlanKey).elements
       if (elems.nonEmpty) {
-
+        expectedResultCount = elems.size
+        log.debug("Found {} active execution plans", elems.size)
+        elems.foreach { planId =>
+          shardRegion ! GetExecutionPlan(planId)
+        }
+        context become collateResults(requestor)
       } else {
         log.debug("ExecutionPlan index is empty")
         completeQuery(requestor)
       }
 
+    case Replicator.NotFound(`ExecutionPlanKey`, Some(Query(_, requestor))) =>
+      // complete query normally
+      completeQuery(requestor)
+
+    case Replicator.GetFailure(`ExecutionPlanKey`, Some(Query(_, requestor))) =>
+      requestor ! Status.Failure(new Exception("Could not retrieve elements from the index"))
+      context stop self
+  }
+
+  private[this] def collateResults(requestor: ActorRef): Receive = {
+    case plan: ExecutionPlan if expectedResultCount > 0 =>
+      requestor ! plan
+      expectedResultCount -= 1
+      if (expectedResultCount == 0) {
+        completeQuery(requestor)
+      }
   }
 
   private[this] def completeQuery(requestor: ActorRef): Unit = {
