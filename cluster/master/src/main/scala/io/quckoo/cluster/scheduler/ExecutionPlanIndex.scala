@@ -34,7 +34,7 @@ class ExecutionPlanIndex(shardRegion: ActorRef) extends Actor with ActorLogging 
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart(): Unit = {
-    log.debug("Starting Scheduler index...")
+    log.debug("Starting execution plan index...")
     context.system.eventStream.subscribe(self, classOf[SchedulerEvent])
   }
 

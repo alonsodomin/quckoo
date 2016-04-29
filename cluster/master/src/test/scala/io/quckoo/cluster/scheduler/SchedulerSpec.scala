@@ -1,13 +1,15 @@
 package io.quckoo.cluster.scheduler
 
+import java.util.UUID
+
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.inmemory.query.journal.scaladsl.InMemoryReadJournal
 import akka.persistence.query.PersistenceQuery
 import akka.testkit._
 
-import io.quckoo.JobSpec
+import io.quckoo.{JobSpec, ExecutionPlan}
 import io.quckoo.cluster.topics
-import io.quckoo.id.{ArtifactId, JobId}
+import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
@@ -59,37 +61,97 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       registryProbe.ref, readJournal,
       TestActors.forwardActorProps(taskQueueProbe.ref)
     ), "scheduler")
+    var currentPlanId: Option[PlanId] = None
 
     "create an execution driver for an enabled job" in {
       scheduler ! ScheduleJob(TestJobId)
 
-      registryProbe.expectMsgType[GetJob].jobId should be (TestJobId)
+      registryProbe.expectMsgType[GetJob].jobId shouldBe TestJobId
       registryProbe.reply(TestJobId -> TestJobSpec)
 
-      eventListener.expectMsgType[ExecutionPlanStarted].jobId should be (TestJobId)
-      eventListener.expectMsgType[TaskScheduled].jobId should be (TestJobId)
+      eventListener.expectMsgType[ExecutionPlanStarted].jobId shouldBe TestJobId
+      eventListener.expectMsgType[TaskScheduled].jobId shouldBe TestJobId
 
-      expectMsgType[ExecutionPlanStarted].jobId should be (TestJobId)
+      val startedMsg = expectMsgType[ExecutionPlanStarted]
+      startedMsg.jobId shouldBe TestJobId
+
+      currentPlanId = Some(startedMsg.planId)
+    }
+
+    "return the execution plan details when requested" in {
+      currentPlanId shouldBe defined
+
+      currentPlanId.foreach { planId =>
+        scheduler ! GetExecutionPlan(planId)
+
+        val executionPlan = expectMsgType[ExecutionPlan]
+        executionPlan.jobId shouldBe TestJobId
+        executionPlan.planId shouldBe planId
+        executionPlan.finished shouldBe false
+      }
+    }
+
+    "return a map containing the current live execution plan" in {
+      currentPlanId shouldBe defined
+      currentPlanId.foreach { planId =>
+        scheduler ! GetExecutionPlans
+
+        val executionPlans = expectMsgType[Map[PlanId, ExecutionPlan]]
+        executionPlans should not be empty
+        executionPlans should contain key planId
+      }
+    }
+
+    "allow cancelling an execution plan" in {
+      currentPlanId shouldBe defined
+      currentPlanId foreach { planId =>
+        scheduler ! CancelPlan(planId)
+
+        val completedMsg = eventListener.expectMsgType[TaskCompleted]
+        completedMsg.planId shouldBe planId
+        completedMsg.jobId shouldBe TestJobId
+
+        val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
+        finishedMsg.planId shouldBe planId
+        finishedMsg.jobId shouldBe TestJobId
+      }
+
+      currentPlanId = None
+    }
+
+    "return an empty map of execution plans when there is none active" in {
+      scheduler ! GetExecutionPlans
+
+      val plans = expectMsgType[Map[PlanId, ExecutionPlan]]
+      plans shouldBe empty
+    }
+
+    "return execution plan not found when asked for a non-existent plan" in {
+      val randomPlanId = UUID.randomUUID()
+
+      scheduler ! GetExecutionPlan(randomPlanId)
+
+      expectMsg(ExecutionPlanNotFound(randomPlanId))
     }
 
     "do nothing but reply if the job is not enabled" in {
       scheduler ! ScheduleJob(TestJobId)
 
-      registryProbe.expectMsgType[GetJob].jobId should be (TestJobId)
+      registryProbe.expectMsgType[GetJob].jobId shouldBe TestJobId
       registryProbe.reply(TestJobId -> TestJobSpec.copy(disabled = true))
 
       eventListener.expectNoMsg()
-      expectMsgType[JobNotEnabled].jobId should be (TestJobId)
+      expectMsgType[JobNotEnabled].jobId shouldBe TestJobId
     }
 
     "should reply not found if the job is not present" in {
       scheduler ! ScheduleJob(TestJobId)
 
-      registryProbe.expectMsgType[GetJob].jobId should be (TestJobId)
+      registryProbe.expectMsgType[GetJob].jobId shouldBe TestJobId
       registryProbe.reply(JobNotFound(TestJobId))
 
       eventListener.expectNoMsg()
-      expectMsgType[JobNotFound].jobId should be (TestJobId)
+      expectMsgType[JobNotFound].jobId shouldBe TestJobId
     }
   }
 

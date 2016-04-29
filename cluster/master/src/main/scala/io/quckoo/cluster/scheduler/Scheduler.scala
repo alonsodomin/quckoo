@@ -22,6 +22,7 @@ import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import akka.pattern._
 import akka.persistence.query.scaladsl.CurrentPersistenceIdsQuery
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
@@ -92,8 +93,15 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
       log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
       context.actorOf(props, s"execution-driver-factory-$planId")
 
-    case cmd: SchedulerReadCommand =>
-      executionPlanIndex forward cmd
+    case cancel: CancelPlan =>
+      shardRegion forward cancel
+
+    case get: GetExecutionPlan =>
+      executionPlanIndex forward get
+
+    case GetExecutionPlans =>
+      import context.dispatcher
+      queryExecutionPlans pipeTo sender()
 
     case msg: WorkerMessage =>
       taskQueue forward msg

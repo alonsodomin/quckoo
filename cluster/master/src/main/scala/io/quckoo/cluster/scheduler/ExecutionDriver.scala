@@ -290,6 +290,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         trigger.foreach(_.cancel())
       }
       execution ! Execution.Cancel(Task.UserRequest)
+      context.unwatch(execution)
       context.become(runningExecution(state, execution))
 
     case Execution.Result(outcome) =>
