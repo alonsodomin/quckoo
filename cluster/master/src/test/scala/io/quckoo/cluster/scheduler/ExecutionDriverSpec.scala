@@ -6,12 +6,14 @@ import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.testkit._
+
 import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
 import io.quckoo.{JobSpec, Task, Trigger}
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
@@ -60,14 +62,14 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
-  "An execution plan with a recurring trigger that eventually gets disabled" should  {
+  "An execution driver with a recurring trigger that eventually gets disabled" should  {
     val trigger = Trigger.Every(50 millis)
     val executionProbe = TestProbe()
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
     val executionPlan = TestActorRef(executionDriverProps,
-      self, "executionPlanWithRecurringTrigger"
+      self, "executionDriverWithRecurringTrigger"
     )
     watch(executionPlan)
 
@@ -87,7 +89,7 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       }
     }
 
-    "re-schedule the execution once it finishes" in {
+    "re-schedule an execution once it finishes" in {
       val successOutcome = Task.Success
       executionProbe.reply(Execution.Result(successOutcome))
 
@@ -105,7 +107,7 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       }
     }
 
-    "not re-schedule the execution after the job is disabled" in {
+    "not re-schedule an execution after the job is disabled" in {
       mediator ! DistributedPubSubMediator.Publish(topics.Registry, JobDisabled(TestJobId))
       // Complete the execution so the driver can come back to ready state
       executionProbe.reply(Execution.Result(Task.Success))
@@ -126,7 +128,58 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
     }
   }
 
-  "An execution plan with non recurring trigger" should {
+  "An execution driver with a recurring trigger that eventually gets cancelled" should {
+    val trigger = Trigger.Every(50 millis)
+    val executionProbe = TestProbe()
+    val executionProps = TestActors.forwardActorProps(executionProbe.ref)
+
+    val planId = UUID.randomUUID()
+    val executionDriver = TestActorRef(executionDriverProps,
+      self, "executionDriverWithRecurringTriggerAndCancellation"
+    )
+    watch(executionDriver)
+
+    "create an execution from a job specification" in {
+      executionDriver ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+
+      val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
+      startedMsg.jobId should be (TestJobId)
+      startedMsg.planId should be (planId)
+
+      val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
+      scheduledMsg.jobId should be (TestJobId)
+      scheduledMsg.planId should be (planId)
+
+      within(50 millis) {
+        executionProbe.expectMsgType[Execution.WakeUp]
+      }
+    }
+
+    "instruct the execution to immediately stop when it's cancelled" in {
+      executionDriver ! CancelPlan(planId)
+
+      val cancelMsg = executionProbe.expectMsgType[Execution.Cancel]
+      cancelMsg.reason shouldBe Task.UserRequest
+
+      executionProbe.reply(Execution.Result(Task.Interrupted(Task.UserRequest)))
+
+      val completedMsg = eventListener.expectMsgType[TaskCompleted]
+      completedMsg.jobId shouldBe TestJobId
+      completedMsg.outcome shouldBe Task.Interrupted(Task.UserRequest)
+
+      val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
+      finishedMsg.jobId shouldBe TestJobId
+      finishedMsg.planId shouldBe planId
+
+      executionProbe.expectNoMsg()
+      expectMsg(ShardRegion.Passivate(PoisonPill))
+
+      executionDriver ! PoisonPill
+      expectTerminated(executionDriver)
+    }
+  }
+
+  "An execution driver with non recurring trigger" should {
     val trigger = Trigger.Immediate
     val executionProbe = TestProbe()
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
