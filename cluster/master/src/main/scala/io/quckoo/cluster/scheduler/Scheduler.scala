@@ -35,6 +35,7 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.time.TimeSource
 
 import scala.concurrent._
+import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 16/08/15.
@@ -82,7 +83,7 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>
-      val handler = context.actorOf(jobFetcherProps(cmd.jobId, sender(), cmd), "handler")
+      val handler = context.actorOf(jobFetcherProps(cmd.jobId, sender(), cmd))
       registry.tell(GetJob(cmd.jobId), handler)
 
     case cmd @ CreateExecutionDriver(_, config, _) =>
@@ -121,6 +122,8 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: ScheduleJob)
 
   import Scheduler._
 
+  context.setReceiveTimeout(3 seconds)
+
   def receive: Receive = {
     case (`jobId`, spec: JobSpec) =>
       if (!spec.disabled) {
@@ -130,12 +133,17 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: ScheduleJob)
         log.info("Found job {} in the registry but is not enabled.", jobId)
         requestor ! JobNotEnabled(jobId)
       }
-      context.stop(self)
+      context stop self
 
     case JobNotFound(`jobId`) =>
       log.info("No enabled job with id {} could be retrieved.", jobId)
       requestor ! JobNotFound(jobId)
-      context.stop(self)
+      context stop self
+
+    case ReceiveTimeout =>
+      log.error("Timed out while fetching job {} from the registry.", jobId)
+      requestor ! JobNotFound(jobId)
+      context stop self
   }
 
   override def unhandled(message: Any): Unit = {

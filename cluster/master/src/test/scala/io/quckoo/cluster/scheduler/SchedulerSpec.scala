@@ -4,12 +4,14 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.inmemory.query.journal.scaladsl.InMemoryReadJournal
 import akka.persistence.query.PersistenceQuery
 import akka.testkit._
+
 import io.quckoo.JobSpec
 import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
+
 import org.scalatest._
 
 /**
@@ -62,7 +64,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       scheduler ! ScheduleJob(TestJobId)
 
       registryProbe.expectMsgType[GetJob].jobId should be (TestJobId)
-      registryProbe.reply(Some(TestJobSpec))
+      registryProbe.reply(TestJobId -> TestJobSpec)
 
       eventListener.expectMsgType[ExecutionPlanStarted].jobId should be (TestJobId)
       eventListener.expectMsgType[TaskScheduled].jobId should be (TestJobId)
@@ -74,7 +76,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       scheduler ! ScheduleJob(TestJobId)
 
       registryProbe.expectMsgType[GetJob].jobId should be (TestJobId)
-      registryProbe.reply(Some(TestJobSpec.copy(disabled = true)))
+      registryProbe.reply(TestJobId -> TestJobSpec.copy(disabled = true))
 
       eventListener.expectNoMsg()
       expectMsgType[JobNotEnabled].jobId should be (TestJobId)
@@ -84,7 +86,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       scheduler ! ScheduleJob(TestJobId)
 
       registryProbe.expectMsgType[GetJob].jobId should be (TestJobId)
-      registryProbe.reply(None)
+      registryProbe.reply(JobNotFound(TestJobId))
 
       eventListener.expectNoMsg()
       expectMsgType[JobNotFound].jobId should be (TestJobId)
