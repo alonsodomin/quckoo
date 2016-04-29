@@ -66,7 +66,10 @@ class Quckoo(settings: QuckooClusterSettings)
   def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {
     def internalRequest: Future[Option[ExecutionPlan]] = {
       implicit val timeout = Timeout(2 seconds)
-      (core ? GetExecutionPlan(planId)).mapTo[Option[ExecutionPlan]]
+      (core ? GetExecutionPlan(planId)).map {
+        case ExecutionPlanNotFound(`planId`) => None
+        case plan: ExecutionPlan             => Some(plan)
+      }
     }
 
     implicit val sch = system.scheduler
