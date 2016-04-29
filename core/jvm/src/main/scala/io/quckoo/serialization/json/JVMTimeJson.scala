@@ -36,8 +36,7 @@ trait JVMTimeJson {
   implicit val reader: Reader[DateTime] = Reader[DateTime] {
     case Js.Num(millis) =>
       val instant = Instant.ofEpochMilli(millis.toLong)
-      val zdt = ZonedDateTime.ofInstant(instant, ZoneId.of("UTC")).
-        withZoneSameInstant(ZoneId.systemDefault())
+      val zdt = ZonedDateTime.ofInstant(instant, ZoneId.of("UTC"))
       new JDK8DateTime(zonedDateTime = zdt)
   }
 

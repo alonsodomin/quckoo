@@ -8,6 +8,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
+
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.id.{JobId, PlanId}
 import io.quckoo.protocol.registry._
@@ -15,6 +16,7 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization
 import io.quckoo.time.JDK8TimeSource
 import io.quckoo.{ExecutionPlan, Trigger}
+
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -62,8 +64,8 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     Future.successful(response)
   }
 
-  override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] =
-    Future.successful(TestPlanIds)
+  override def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]] =
+    Future.successful(TestPlanMap)
 
   override def queueMetrics: Source[TaskQueueUpdated, NotUsed] = ???
 
@@ -71,9 +73,9 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
   "The Scheduler API" should {
 
-    "reply a list of plan ids" in {
+    "reply with a map of execution plans" in {
       Get(endpoint("/plans")) ~> entryPoint ~> check {
-        responseAs[Set[PlanId]] should be (TestPlanIds)
+        responseAs[Map[PlanId, ExecutionPlan]] should be (TestPlanMap)
       }
     }
 
