@@ -67,7 +67,7 @@ class QuckooCluster(settings: QuckooClusterSettings)
   private val registry = context.actorOf(Registry.props(settings), "registry")
 
   private val scheduler = context.watch(context.actorOf(
-    Scheduler.props(registry, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
+    Scheduler.props(registry, readJournal, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
 
   private var clients = Set.empty[ActorRef]
   private var clusterState = QuckooState(masterNodes = masterNodes(cluster))

@@ -56,7 +56,6 @@ case class RefreshJobSpecs(
 case class RegisterJobResult(jobId: ValidationNel[Fault, JobId])
 
 case object LoadExecutionPlans
-case class ExecutionPlanIdsLoaded(planIds: Set[PlanId])
 case class ExecutionPlansLoaded(plans: Map[PlanId, Pot[ExecutionPlan]])
 
 case class RefreshExecutionPlans(

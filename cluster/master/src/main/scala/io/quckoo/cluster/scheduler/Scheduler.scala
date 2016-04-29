@@ -20,11 +20,13 @@ import java.util.UUID
 
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
-import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
-import akka.persistence.query.scaladsl.{AllPersistenceIdsQuery, EventsByPersistenceIdQuery}
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import akka.persistence.query.scaladsl.CurrentPersistenceIdsQuery
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
+import akka.stream.scaladsl.Source
 
-import io.quckoo.JobSpec
+import io.quckoo.{JobSpec, ExecutionPlan}
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.topics
 import io.quckoo.id._
@@ -32,26 +34,32 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.time.TimeSource
 
+import scala.concurrent._
+
 /**
  * Created by aalonsodominguez on 16/08/15.
  */
 object Scheduler {
 
-  type Journal = AllPersistenceIdsQuery with EventsByPersistenceIdQuery
+  type Journal = CurrentPersistenceIdsQuery
 
   private[scheduler] case class CreateExecutionDriver(spec: JobSpec, config: ScheduleJob, requestor: ActorRef)
 
-  def props(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource) =
-    Props(classOf[Scheduler], registry, queueProps, timeSource)
+  def props(registry: ActorRef, journal: Journal, queueProps: Props)(implicit timeSource: TimeSource) =
+    Props(classOf[Scheduler], registry, journal, queueProps, timeSource)
 
 }
 
-class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: TimeSource)
+class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Props)(implicit timeSource: TimeSource)
     extends Actor with ActorLogging {
 
   import Scheduler._
 
   ClusterClientReceptionist(context.system).registerService(self)
+
+  final implicit val materializer = ActorMaterializer(
+    ActorMaterializerSettings(context.system), "registry"
+  )
 
   private[this] val monitor = context.actorOf(TaskQueueMonitor.props, "monitor")
   private[this] val taskQueue = context.actorOf(queueProps, "queue")
@@ -65,6 +73,12 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
   private[this] val executionPlanIndex = context.actorOf(
     ExecutionPlanIndex.props(shardRegion), "executionPlanIndex"
   )
+
+  override def preStart(): Unit = {
+    journal.currentPersistenceIds().
+      filter(_.startsWith(ExecutionDriver.ShardName)).
+      runForeach { executionPlanIndex ! _ }
+  }
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>
@@ -84,11 +98,20 @@ class Scheduler(registry: ActorRef, queueProps: Props)(implicit timeSource: Time
       taskQueue forward msg
   }
 
+  def queryExecutionPlans: Future[Map[PlanId, ExecutionPlan]] = {
+    Source.actorRef[ExecutionPlan](100, OverflowStrategy.fail).
+      mapMaterializedValue { upstream =>
+        executionPlanIndex.tell(GetExecutionPlans, upstream)
+      }.runFold(Map.empty[PlanId, ExecutionPlan]) {
+        (map, plan) => map + (plan.planId -> plan)
+      }
+  }
+
   private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
     Props(classOf[JobFetcher], jobId, requestor, config)
 
   private[this] def factoryProps(jobId: JobId, planId: PlanId, createCmd: CreateExecutionDriver,
-                                 shardRegion: ActorRef): Props =
+      shardRegion: ActorRef): Props =
     Props(classOf[ExecutionDriverFactory], jobId, planId, createCmd, shardRegion)
 
 }

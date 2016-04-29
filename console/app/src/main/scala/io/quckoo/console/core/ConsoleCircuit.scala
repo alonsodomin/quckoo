@@ -202,12 +202,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
     override protected def handle = {
       case LoadExecutionPlans =>
         withClient { implicit client =>
-          effectOnly(Effect(loadPlanIds.map(ExecutionPlanIdsLoaded)))
-        }
-
-      case ExecutionPlanIdsLoaded(ids) =>
-        withClient { implicit client =>
-          effectOnly(Effect(loadPlans(ids).map(ExecutionPlansLoaded)))
+          effectOnly(Effect(loadPlans().map(ExecutionPlansLoaded)))
         }
 
       case ExecutionPlansLoaded(plans) if plans.nonEmpty =>

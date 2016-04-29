@@ -130,13 +130,21 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
     }
   }
 
-  override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] = {
+  override def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]] = {
     withAuthRefresh { () =>
       Ajax.get(ExecutionPlansURI, headers = authHeaders).map { xhr =>
-        read[Set[PlanId]](xhr.responseText)
+        read[Map[PlanId, ExecutionPlan]](xhr.responseText)
       }
     }
   }
+
+  // override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] = {
+  //   withAuthRefresh { () =>
+  //     Ajax.get(ExecutionPlansURI, headers = authHeaders).map { xhr =>
+  //       read[Set[PlanId]](xhr.responseText)
+  //     }
+  //   }
+  // }
 
   override def schedule(scheduleJob: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
     withAuthRefresh { () =>

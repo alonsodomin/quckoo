@@ -144,7 +144,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   // Only used to hold the current state of the actor during recovery
   private[this] var stateDuringRecovery: Option[DriverState] = None
 
-  override def persistenceId = "ExecutionDriver-" + self.path.name
+  override def persistenceId = s"$ShardName-" + self.path.name
 
   override def preStart(): Unit =
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)

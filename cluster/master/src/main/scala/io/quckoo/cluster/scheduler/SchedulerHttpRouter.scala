@@ -44,7 +44,7 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
       pathEnd {
         get {
           extractExecutionContext { implicit ec =>
-            complete(allExecutionPlanIds)
+            complete(executionPlans)
           }
         } ~ post {
           entity(as[ScheduleJob]) { req =>
