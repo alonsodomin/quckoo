@@ -138,14 +138,6 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
     }
   }
 
-  // override def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] = {
-  //   withAuthRefresh { () =>
-  //     Ajax.get(ExecutionPlansURI, headers = authHeaders).map { xhr =>
-  //       read[Set[PlanId]](xhr.responseText)
-  //     }
-  //   }
-  // }
-
   override def schedule(scheduleJob: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
     withAuthRefresh { () =>
       Ajax.post(ExecutionPlansURI, write(scheduleJob), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>

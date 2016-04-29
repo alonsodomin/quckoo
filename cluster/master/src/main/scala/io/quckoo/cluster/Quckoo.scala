@@ -58,11 +58,6 @@ class Quckoo(settings: QuckooClusterSettings)
       map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
   }
 
-  // def allExecutionPlanIds(implicit ec: ExecutionContext): Future[Set[PlanId]] = {
-  //   implicit val timeout = Timeout(5 seconds)
-  //   (core ? GetExecutionPlans).mapTo[Set[PlanId]]
-  // }
-
   def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]] = {
     implicit val timeout = Timeout(3 seconds)
     (core ? GetExecutionPlans).mapTo[Map[PlanId, ExecutionPlan]]
