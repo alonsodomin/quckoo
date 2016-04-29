@@ -129,7 +129,7 @@ object ExecutionDriver {
 }
 
 class ExecutionDriver(implicit timeSource: TimeSource)
-    extends PersistentActor with ActorLogging with Stash {
+    extends PersistentActor with ActorLogging {
 
   import ExecutionDriver._
   import ShardRegion.Passivate
@@ -175,9 +175,16 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     log.info("Activating execution plan. planId={}", state.planId)
     persist(ExecutionPlanStarted(state.jobId, state.planId)) { event =>
       context.system.eventStream.publish(event)
-      self ! scheduleOrFinish(state)
-      unstashAll()
-      context.become(ready(state))
+      scheduleOrFinish(state) match {
+        case FinishPlan =>
+          self ! FinishPlan
+          context become shuttingDown(state)
+
+        case other =>
+          self ! other
+          unstashAll()
+          context.become(ready(state))
+      }
     }
   }
 
@@ -217,6 +224,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     case JobDisabled(id) if id == state.jobId =>
       log.info("Job has been disabled, finishing execution plan. jobId={}, planId={}", id, state.planId)
       self ! FinishPlan
+      context become shuttingDown(state)
 
     case GetExecutionPlan(_) =>
       sender() ! state.plan
@@ -256,14 +264,6 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         context.become(runningExecution(state.updated(event), execution, Some(trigger)))
       }
 
-    case FinishPlan =>
-      log.info("Finishing execution plan. planId={}", state.planId)
-      persist(ExecutionPlanFinished(state.jobId, state.planId)) { event =>
-        context.system.eventStream.publish(event)
-        mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
-        context.become(shuttingDown(state.updated(event)))
-      }
-
     case _ => stash()
   }
 
@@ -275,6 +275,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
                                trigger: Option[Cancellable] = None): Receive = {
     case Execution.Triggered =>
       state.plan.currentTaskId.foreach { taskId =>
+        log.debug("Execution for task {} has been triggered.", taskId)
         persist(TaskTriggered(state.jobId, state.planId, taskId)) { event =>
           context.become(runningExecution(state.updated(event), execution, None))
         }
@@ -294,7 +295,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     case Execution.Result(outcome) =>
       state.plan.currentTaskId.foreach { taskId =>
         persist(TaskCompleted(state.jobId, state.planId, taskId, outcome)) { event =>
-          log.debug("Task finished. taskId={}", taskId)
+          log.debug("Task finished. taskId={}, outcome={}", taskId, outcome)
           // TODO replace mediator by event stream when the state has been moved out
           mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
           //context.system.eventStream.publish(event)
@@ -303,29 +304,39 @@ class ExecutionDriver(implicit timeSource: TimeSource)
           context.unwatch(execution)
 
           unstashAll()
-          context.become(ready(newState))
-          self ! nextCommand(newState, taskId, outcome)
+          proceedNext(newState, taskId, outcome)
         }
       }
 
     case ScheduleTask(time) =>
       log.warning("Received a `ScheduleTask` command while an execution is running!")
 
-    case _ => stash()
+    case msg: Any =>
+      log.debug("Stashing message {}", msg)
+      stash()
   }
 
   /**
    * State prior to fully stopping the actor.
    */
   private def shuttingDown(state: DriverState): Receive = {
-    case DistributedPubSubMediator.UnsubscribeAck(_) =>
+    case FinishPlan =>
+      log.info("Finishing execution plan. planId={}", state.planId)
+      persist(ExecutionPlanFinished(state.jobId, state.planId)) { event =>
+        context.system.eventStream.publish(event)
+        mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
+        context.become(shuttingDown(state.updated(event)))
+      }
+
+    case DistributedPubSubMediator.UnsubscribeAck(_) if state.plan.currentTaskId.isEmpty =>
       context.parent ! Passivate(stopMessage = PoisonPill)
 
     case GetExecutionPlan(_) =>
       sender() ! state.plan
 
-    case _ =>
-      log.warning("Execution plan '{}' has finished, shutting down.", state.planId)
+    case msg: Any =>
+      log.warning("Execution plan '{}' has finished. Ignoring message " +
+        "{} while shutting down.", state.planId, msg)
   }
 
   override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy() {
@@ -339,24 +350,36 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   private def scheduleOrFinish(state: DriverState) =
     state.plan.nextExecutionTime.map(ScheduleTask).getOrElse(FinishPlan)
 
-  private def nextCommand(state: DriverState, lastTaskId: TaskId, outcome: Task.Outcome) = {
-    if (state.plan.trigger.isRecurring) {
-      outcome match {
-        case Task.Success =>
-          scheduleOrFinish(state)
-
-        case Task.Failure(cause) =>
-          if (shouldRetry(cause)) {
-            // TODO improve retry process
+  private def proceedNext(state: DriverState, lastTaskId: TaskId, outcome: Task.Outcome): Unit = {
+    def nextCommand = {
+      if (state.plan.trigger.isRecurring) {
+        outcome match {
+          case Task.Success =>
             scheduleOrFinish(state)
-          } else {
-            log.warning("Failed task {} won't be retried.", lastTaskId)
-            FinishPlan
-          }
 
-        case _ => FinishPlan
-      }
-    } else FinishPlan
+          case Task.Failure(cause) =>
+            if (shouldRetry(cause)) {
+              // TODO improve retry process
+              scheduleOrFinish(state)
+            } else {
+              log.warning("Failed task {} won't be retried.", lastTaskId)
+              FinishPlan
+            }
+
+          case _ => FinishPlan
+        }
+      } else FinishPlan
+    }
+
+    nextCommand match {
+      case FinishPlan =>
+        self ! FinishPlan
+        context become shuttingDown(state)
+
+      case cmd: ScheduleTask =>
+        self ! cmd
+        context become ready(state)
+    }
   }
 
   private def shouldRetry(cause: Fault): Boolean = cause match {

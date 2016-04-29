@@ -46,11 +46,16 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
 
   before {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, eventListener.ref)
+    system.eventStream.subscribe(eventListener.ref, classOf[SchedulerEvent])
   }
 
   after {
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, eventListener.ref)
+    system.eventStream.unsubscribe(eventListener.ref)
   }
+
+  def executionDriverProps: Props = ExecutionDriver.props.
+    withDispatcher("akka.actor.default-dispatcher")
 
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
@@ -61,7 +66,9 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val executionPlan = TestActorRef(ExecutionDriver.props, self, "executionPlanWithRecurringTrigger")
+    val executionPlan = TestActorRef(executionDriverProps,
+      self, "executionPlanWithRecurringTrigger"
+    )
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -82,28 +89,34 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
 
     "re-schedule the execution once it finishes" in {
       val successOutcome = Task.Success
-      executionProbe.send(executionPlan, Execution.Result(successOutcome))
+      executionProbe.reply(Execution.Result(successOutcome))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
-      completedMsg.jobId should be (TestJobId)
-      completedMsg.planId should be (planId)
-      completedMsg.outcome should be (successOutcome)
+      completedMsg.jobId shouldBe TestJobId
+      completedMsg.planId shouldBe planId
+      completedMsg.outcome shouldBe successOutcome
 
       val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
-      scheduledMsg.jobId should be (TestJobId)
-      scheduledMsg.planId should be (planId)
+      scheduledMsg.jobId shouldBe TestJobId
+      scheduledMsg.planId shouldBe planId
 
-      within(80 millis) {
+      within(100 millis) {
         executionProbe.expectMsgType[Execution.WakeUp]
       }
     }
 
     "not re-schedule the execution after the job is disabled" in {
       mediator ! DistributedPubSubMediator.Publish(topics.Registry, JobDisabled(TestJobId))
+      // Complete the execution so the driver can come back to ready state
+      executionProbe.reply(Execution.Result(Task.Success))
+
+      val completedMsg = eventListener.expectMsgType[TaskCompleted]
+      completedMsg.jobId shouldBe TestJobId
+      completedMsg.outcome shouldBe Task.Success
 
       val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
-      finishedMsg.jobId should be (TestJobId)
-      finishedMsg.planId should be (planId)
+      finishedMsg.jobId shouldBe TestJobId
+      finishedMsg.planId shouldBe planId
 
       executionProbe.expectNoMsg()
       expectMsg(ShardRegion.Passivate(PoisonPill))
@@ -119,7 +132,7 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val executionPlan = TestActorRef(ExecutionDriver.props, self, "executionPlanWithOneShotTrigger")
+    val executionPlan = TestActorRef(executionDriverProps, self, "executionPlanWithOneShotTrigger")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -163,7 +176,7 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val executionPlan = TestActorRef(ExecutionDriver.props, self, "executionPlanThatNeverFires")
+    val executionPlan = TestActorRef(executionDriverProps, self, "executionPlanThatNeverFires")
     watch(executionPlan)
 
     "create an execution from a job specification and terminate it right after" in {
