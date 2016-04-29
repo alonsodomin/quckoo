@@ -62,11 +62,14 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   def zoomIntoClusterState: ModelRW[ConsoleScope, QuckooState] =
     zoomRW(_.clusterState) { (model, value) => model.copy(clusterState = value) }
 
+  def zoomIntoUserScope: ModelRW[ConsoleScope, UserScope] =
+    zoomRW(_.userScope) { (model, value) => model.copy(userScope = value) }
+
   def zoomIntoExecutionPlans: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]] =
-    zoomRW(_.executionPlans) { (model, plans) => model.copy(executionPlans = plans) }
+    zoomIntoUserScope.zoomRW(_.executionPlans) { (model, plans) => model.copy(executionPlans = plans) }
 
   def zoomIntoJobSpecs: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]] =
-    zoomRW(_.jobSpecs) { (model, specs) => model.copy(jobSpecs = specs) }
+    zoomIntoUserScope.zoomRW(_.jobSpecs) { (model, specs) => model.copy(jobSpecs = specs) }
 
   val loginHandler = new ActionHandler(zoomIntoClient) {
 
