@@ -311,9 +311,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     case ScheduleTask(time) =>
       log.warning("Received a `ScheduleTask` command while an execution is running!")
 
-    case msg: Any =>
-      log.debug("Stashing message {}", msg)
-      stash()
+    case _ => stash()
   }
 
   /**
