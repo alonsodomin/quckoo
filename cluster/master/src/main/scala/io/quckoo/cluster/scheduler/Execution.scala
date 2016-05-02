@@ -41,7 +41,7 @@ object Execution {
   final case class WakeUp(task: Task, queue: ActorSelection) extends Command
   case object Start extends Command
   final case class Finish(fault: Option[Fault]) extends Command
-  final case class Cancel(reason: String) extends Command
+  final case class Cancel(reason: UncompleteReason) extends Command
   case object TimeOut extends Command
   case object Get extends Command
 
@@ -58,7 +58,7 @@ object Execution {
 
   sealed trait ExecutionEvent
   final case class Awaken(task: Task, queue: ActorSelection) extends ExecutionEvent
-  final case class Cancelled(reason: String) extends ExecutionEvent
+  final case class Cancelled(reason: UncompleteReason) extends ExecutionEvent
   case object Triggered extends ExecutionEvent
   case object Started extends ExecutionEvent
   final case class Completed(fault: Option[Fault]) extends ExecutionEvent
@@ -126,7 +126,7 @@ class Execution(
         queue ! TaskQueue.Enqueue(task)
         stay forMax enqueueTimeout
       } else {
-        stop applying Cancelled(s"Could not enqueue task! taskId=${task.id}")
+        stop applying Cancelled(FailedToEnqueue)
       }
   }
 

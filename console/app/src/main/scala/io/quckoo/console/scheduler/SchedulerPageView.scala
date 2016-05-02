@@ -62,9 +62,9 @@ object SchedulerPageView {
         props.proxy().notification,
         Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan"),
         if (state.showForm) {
-          props.proxy.connect(_.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
+          props.proxy.connect(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
         } else EmptyTag,
-        props.proxy.wrap(_.executionPlans)(ExecutionPlanList(_))
+        props.proxy.wrap(_.userScope.executionPlans)(ExecutionPlanList(_))
       )
     }
 

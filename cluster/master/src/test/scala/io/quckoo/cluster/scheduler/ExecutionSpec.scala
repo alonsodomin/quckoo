@@ -64,10 +64,10 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
       state.queue should be (None)
       state.outcome should be (NotStarted)
 
-      execution ! Cancel("foo")
+      execution ! Cancel(UserRequest)
 
       val resultMsg = expectMsgType[Result]
-      resultMsg.outcome should be (NeverRun("foo"))
+      resultMsg.outcome should be (NeverRun(UserRequest))
 
       expectTerminated(execution)
     }
@@ -160,11 +160,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
     }
 
     "terminate when requested to be cancelled" in {
-      execution ! Cancel("foo")
+      execution ! Cancel(UserRequest)
 
       within(2 seconds) {
         val resultMsg = expectMsgType[Result]
-        resultMsg.outcome should be (NeverRun("foo"))
+        resultMsg.outcome should be (NeverRun(UserRequest))
       }
       expectTerminated(execution)
     }
@@ -212,11 +212,11 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
     }
 
     "send Interrupted as result when requested to Cancel" in {
-      execution ! Cancel("baz")
+      execution ! Cancel(UserRequest)
 
       within(2 seconds) {
         val resultMsg = expectMsgType[Result]
-        resultMsg.outcome should be (Interrupted("baz"))
+        resultMsg.outcome should be (Interrupted(UserRequest))
       }
       expectTerminated(execution)
     }

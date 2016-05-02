@@ -76,17 +76,18 @@ class RegistryIndex(shardRegion: ActorRef) extends Actor with ActorLogging with 
   }
 
   def updatingIndex(jobId: JobId, attempts: Int = 1): Receive = {
-    case Replicator.UpdateSuccess(_, _) =>
+    case Replicator.UpdateSuccess(`IndexKey`, _) =>
       unstashAll()
       context become ready
 
-    case Replicator.UpdateTimeout(_, _) =>
+    case Replicator.UpdateTimeout(`IndexKey`, _) =>
       if (attempts < 3) {
         log.warning("Timed out when indexing job {}. Retrying...", jobId)
         addJobIdToIndex(jobId)
         context become updatingIndex(jobId, attempts + 1)
       } else {
         log.error("Could not add job {} to the index.", jobId)
+        unstashAll()
         context become ready
       }
 
@@ -117,7 +118,7 @@ private class RegistrySingleQuery(shardRegion: ActorRef) extends Actor with Acto
       requestor ! JobNotFound(jobId)
       context stop self
 
-    case Replicator.GetFailure(`IndexKey`, Some(Query(_, requestor: ActorRef))) =>
+    case Replicator.GetFailure(`IndexKey`, Some(Query(_, requestor))) =>
       requestor ! Status.Failure(new Exception("Could not retrieve elements from the index"))
       context stop self
   }
@@ -153,11 +154,11 @@ private class RegistryMultiQuery(shardRegion: ActorRef) extends Actor with Actor
   }
 
   def collateResults(requestor: ActorRef): Receive = {
-    case JobNotFound(_) =>
+    case JobNotFound(_) if expectedResultCount > 0 =>
       // ignore "not found responses when collating query results"
       decreaseCountAndComplete(requestor)
 
-    case (jobId: JobId, spec: JobSpec) =>
+    case (jobId: JobId, spec: JobSpec) if expectedResultCount > 0 =>
       requestor ! (jobId -> spec)
       decreaseCountAndComplete(requestor)
 

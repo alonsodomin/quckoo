@@ -47,20 +47,19 @@ private[core] trait ConsoleOps {
     }
   }
 
-  def loadPlanIds(implicit client: QuckooClient): Future[Set[PlanId]] = client.allExecutionPlanIds
+  def loadPlans(ids: Set[PlanId] = Set.empty)(implicit client: QuckooClient): Future[Map[PlanId, Pot[ExecutionPlan]]] = {
+    if (ids.isEmpty) {
+      client.executionPlans.map(_.map { case (k, v) => (k, Ready(v)) })
+    } else {
+      Future.sequence(ids.map(loadPlan)).map(_.toMap)
+    }
 
-  def loadPlans(ids: Set[PlanId])(implicit client: QuckooClient): Future[Map[PlanId, Pot[ExecutionPlan]]] = {
-    Future.sequence(ids.map { id =>
-      loadPlan(id).map(plan => id -> plan)
-    }) map(_.toMap)
   }
 
-  def loadPlan(id: PlanId)(implicit client: QuckooClient): Future[Pot[ExecutionPlan]] =
-    client.executionPlan(id) map {
-      case Some(plan) => Ready(plan)
-      case None       => Unavailable
-    } recover {
-      case ex => Failed(ex)
+  def loadPlan(id: PlanId)(implicit client: QuckooClient): Future[(PlanId, Pot[ExecutionPlan])] =
+    client.executionPlan(id).map {
+      case Some(plan) => id -> Ready(plan)
+      case None       => id -> Unavailable
     }
 
 }
