@@ -23,7 +23,7 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.pattern._
-import akka.persistence.query.scaladsl.CurrentPersistenceIdsQuery
+import akka.persistence.query.scaladsl.{CurrentPersistenceIdsQuery, EventsByPersistenceIdQuery}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
 
@@ -43,7 +43,7 @@ import scala.concurrent.duration._
  */
 object Scheduler {
 
-  type Journal = CurrentPersistenceIdsQuery
+  type Journal = CurrentPersistenceIdsQuery with EventsByPersistenceIdQuery
 
   private[scheduler] case class CreateExecutionDriver(spec: JobSpec, config: ScheduleJob, requestor: ActorRef)
 
@@ -79,7 +79,8 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
   override def preStart(): Unit = {
     journal.currentPersistenceIds().
       filter(_.startsWith(ExecutionDriver.ShardName)).
-      runForeach { executionPlanIndex ! _ }
+      flatMapConcat(persistenceId => journal.eventsByPersistenceId(persistenceId, 0, Long.MaxValue)).
+      runForeach { envelope => executionPlanIndex ! envelope.event }
   }
 
   override def receive: Receive = {
