@@ -16,6 +16,9 @@ function install_devtools() {
     wget -nv https://dl.bintray.com/sbt/debian/sbt-0.13.9.deb -O ~/sbt-0.13.9.deb
     sudo dpkg -i ~/sbt-0.13.9.deb &> /dev/null
     rm ~/sbt-0.13.9.deb
+
+    #echo "Installing SASS..."
+    #sudo gem install compass
 }
 
 ########## PROGRAM STARTS HERE ##############
