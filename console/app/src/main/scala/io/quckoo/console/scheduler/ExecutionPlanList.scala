@@ -50,6 +50,7 @@ object ExecutionPlanList {
         plan.render { item => List(
           <.td(item.jobId.toString()),
           <.td(item.planId.toString()),
+          <.td(item.currentTaskId.map(_.toString())),
           <.td(item.trigger.toString()),
           <.td(item.lastScheduledTime.map(_.toString())),
           <.td(item.lastExecutionTime.map(_.toString())),
@@ -77,6 +78,7 @@ object ExecutionPlanList {
           <.tr(
             <.th("Job ID"),
             <.th("Plan ID"),
+            <.th("Task ID"),
             <.th("Trigger"),
             <.th("Last Scheduled"),
             <.th("Last Execution"),
