@@ -27,7 +27,7 @@ object Dependencies {
     val scalaJsReact = "0.11.0"
     val scalaCss = "0.4.1"
 
-    val diode = "0.5.1"
+    val diode = "0.5.2"
 
     val upickle = "0.3.9"
     val scalatags = "0.4.6"
