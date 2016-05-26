@@ -170,8 +170,6 @@ class Execution(
       context.parent ! Result(data.outcome)
   }
 
-  initialize()
-
   override val persistenceId: String = "Execution-" + self.path.name
 
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
