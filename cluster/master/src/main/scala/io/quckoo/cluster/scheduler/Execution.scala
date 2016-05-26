@@ -37,6 +37,8 @@ object Execution {
   final val DefaultEnqueueTimeout = 10 seconds
   final val DefaultMaxEnqueueAttempts = 3
 
+  final val PersistenceIdPrefix = "Execution-"
+
   sealed trait Command
   final case class WakeUp(task: Task, queue: ActorSelection) extends Command
   case object Start extends Command
@@ -104,7 +106,6 @@ class Execution(
   when(Scheduled) {
     case Event(WakeUp(task, queue), _) =>
       log.debug("Execution waking up. taskId={}", task.id)
-      queue ! TaskQueue.Enqueue(task)
       stay applying Awaken(task, queue) forMax enqueueTimeout
 
     case Event(Cancel(reason), data) =>
@@ -170,14 +171,15 @@ class Execution(
       context.parent ! Result(data.outcome)
   }
 
-  override val persistenceId: String = "Execution-" + self.path.name
+  override val persistenceId: String = PersistenceIdPrefix + self.path.name
 
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 
   override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState = event match {
-    case Awaken(t, q) =>
-      log.debug("Execution for task {} has awaken.", t.id)
-      previous.copy(task = Some(t), queue = Some(q))
+    case Awaken(task, queue) =>
+      log.debug("Execution for task {} has awaken.", task.id)
+      queue ! TaskQueue.Enqueue(task)
+      previous.copy(task = Some(task), queue = Some(queue))
 
     case Completed(result) => result match {
       case Some(fault) => previous <<= Failure(fault)
