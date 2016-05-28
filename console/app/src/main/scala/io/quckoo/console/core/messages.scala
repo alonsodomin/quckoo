@@ -21,28 +21,28 @@ import io.quckoo._
 import io.quckoo.client.QuckooClient
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.fault.Fault
-import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 
 import scala.util.{Failure, Try}
 import scalaz.ValidationNel
 
-case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None)
-case class LoggedIn(client: QuckooClient, referral: Option[ConsoleRoute])
+final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None)
+final case class LoggedIn(client: QuckooClient, referral: Option[ConsoleRoute])
 
 case object Logout
 case object LoggedOut
 case object LoginFailed
 
-case class NavigateTo(route: ConsoleRoute)
+final case class NavigateTo(route: ConsoleRoute)
 
-case class ClusterStateLoaded(state: QuckooState)
+final case class ClusterStateLoaded(state: QuckooState)
 case object StartClusterSubscription
 
 case object LoadJobSpecs
-case class JobSpecsLoaded(value: Map[JobId, Pot[JobSpec]])
+final case class JobSpecsLoaded(value: Map[JobId, Pot[JobSpec]])
 
-case class RefreshJobSpecs(
+final case class RefreshJobSpecs(
     keys: Set[JobId],
     state: PotState = PotState.PotEmpty,
     result: Try[Map[JobId, Pot[JobSpec]]] = Failure(new AsyncAction.PendingException)
@@ -53,18 +53,35 @@ case class RefreshJobSpecs(
 
 }
 
-case class RegisterJobResult(jobId: ValidationNel[Fault, JobId])
+final case class RegisterJobResult(jobId: ValidationNel[Fault, JobId])
 
 case object LoadExecutionPlans
-case class ExecutionPlansLoaded(plans: Map[PlanId, Pot[ExecutionPlan]])
+final case class ExecutionPlansLoaded(plans: Map[PlanId, Pot[ExecutionPlan]])
 
-case class RefreshExecutionPlans(
+final case class RefreshExecutionPlans(
     keys: Set[PlanId],
     state: PotState = PotState.PotEmpty,
     result: Try[Map[PlanId, Pot[ExecutionPlan]]] = Failure(new AsyncAction.PendingException)
   ) extends AsyncAction[Map[PlanId, Pot[ExecutionPlan]], RefreshExecutionPlans] {
 
   override def next(newState: PotState, newValue: Try[Map[PlanId, Pot[ExecutionPlan]]]): RefreshExecutionPlans =
+    copy(state = newState, result = newValue)
+
+}
+
+// TODO this is dummy object
+final case class TaskItem()
+case object LoadTasks
+
+final case class TasksLoaded(tasks: Map[TaskId, Pot[TaskItem]])
+
+final case class RefreshTasks(
+    keys: Set[TaskId],
+    state: PotState = PotState.PotEmpty,
+    result: Try[Map[TaskId, Pot[TaskItem]]] = Failure(new AsyncAction.PendingException)
+  ) extends AsyncAction[Map[TaskId, Pot[TaskItem]], RefreshTasks] {
+
+  override def next(newState: PotState, newValue: Try[Map[TaskId, Pot[TaskItem]]]): RefreshTasks =
     copy(state = newState, result = newValue)
 
 }

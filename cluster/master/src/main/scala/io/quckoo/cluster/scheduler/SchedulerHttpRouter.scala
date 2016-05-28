@@ -51,7 +51,7 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
             extractExecutionContext { implicit ec =>
               onSuccess(schedule(req)) {
                 case Left(notFound) => complete(NotFound -> notFound.jobId)
-                case Right(plan)    => complete(plan)
+                case Right(plan) => complete(plan)
               }
             }
           }
@@ -61,8 +61,16 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
           extractExecutionContext { implicit ec =>
             onSuccess(executionPlan(planId)) {
               case Some(plan) => complete(plan)
-              case _          => complete(NotFound)
+              case _ => complete(NotFound)
             }
+          }
+        }
+      }
+    } ~ pathPrefix("tasks") {
+      pathEnd {
+        get {
+          extractExecutionContext { implicit ec =>
+            complete(tasks)
           }
         }
       }

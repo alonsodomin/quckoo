@@ -29,7 +29,7 @@ import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.registry.RegistryEventPublisher
 import io.quckoo.cluster.scheduler.TaskQueueEventPublisher
 import io.quckoo.fault.{Fault, ResolutionFault}
-import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -74,6 +74,10 @@ class Quckoo(settings: QuckooClusterSettings)
 
     implicit val sch = system.scheduler
     retry(internalRequest, 250 millis, 3)
+  }
+
+  def tasks(implicit ec: ExecutionContext): Future[Seq[TaskId]] = {
+    Future.successful(Seq.empty)
   }
 
   def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {

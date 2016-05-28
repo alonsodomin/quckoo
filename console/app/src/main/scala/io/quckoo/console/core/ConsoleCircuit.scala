@@ -23,7 +23,7 @@ import diode.react.ReactConnector
 import io.quckoo.client.QuckooClient
 import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
-import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.{QuckooMetrics, QuckooState}
 import io.quckoo.protocol.cluster.{GetClusterStatus, MasterEvent}
 import io.quckoo.protocol.registry._
@@ -50,7 +50,8 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
     jobSpecMapHandler,
     registryHandler,
     scheduleHandler,
-    executionPlanMapHandler
+    executionPlanMapHandler,
+    taskHandler
   )
 
   def zoomIntoNotification: ModelRW[ConsoleScope, Option[Notification]] =
@@ -70,6 +71,9 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
   def zoomIntoJobSpecs: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]] =
     zoomIntoUserScope.zoomRW(_.jobSpecs) { (model, specs) => model.copy(jobSpecs = specs) }
+
+  def zoomIntoTasks: ModelRW[ConsoleScope, PotMap[TaskId, TaskItem]] =
+    zoomIntoUserScope.zoomRW(_.tasks) { (model, tasks) => model.copy(tasks = tasks) }
 
   val loginHandler = new ActionHandler(zoomIntoClient) {
 
@@ -121,7 +125,6 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   val registryHandler = new ActionHandler(zoomIntoNotification)
       with ConnectedHandler[Option[Notification]] {
 
-    WebSocket
     override def handle = {
       case RegisterJob(spec) =>
         withClient { client =>
@@ -214,6 +217,27 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
       case action: RefreshExecutionPlans =>
         withClient { implicit client =>
           val refreshEffect = action.effect(loadPlans(action.keys))(identity)
+          action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
+        }
+    }
+
+  }
+
+  val taskHandler = new ActionHandler(zoomIntoTasks)
+      with ConnectedHandler[PotMap[TaskId, TaskItem]] {
+
+    override protected def handle = {
+      case LoadTasks =>
+        withClient { implicit client =>
+          effectOnly(Effect(loadTasks().map(TasksLoaded)))
+        }
+
+      case TasksLoaded(tasks) if tasks.nonEmpty =>
+        updated(PotMap(TaskFetcher, tasks))
+
+      case action: RefreshTasks =>
+        withClient { implicit client =>
+          val refreshEffect = action.effect(loadTasks(action.keys))(identity)
           action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
         }
     }

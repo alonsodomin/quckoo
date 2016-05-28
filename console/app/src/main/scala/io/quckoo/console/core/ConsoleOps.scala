@@ -62,4 +62,15 @@ private[core] trait ConsoleOps {
       case None       => id -> Unavailable
     }
 
+  def loadTasks(ids: Set[TaskId] = Set.empty)(implicit client: QuckooClient): Future[Map[TaskId, Pot[TaskItem]]] = {
+    if (ids.isEmpty) {
+      client.tasks.flatMap(ids => Future.sequence(ids.map(loadTask))).map(_.toMap)
+    } else {
+      Future.sequence(ids.map(loadTask)).map(_.toMap)
+    }
+  }
+
+  def loadTask(id: TaskId)(implicit client: QuckooClient): Future[(TaskId, Pot[TaskItem])] =
+    Future.successful(id -> Ready(TaskItem()))
+
 }
