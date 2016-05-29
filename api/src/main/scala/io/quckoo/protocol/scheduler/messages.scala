@@ -16,9 +16,11 @@
 
 package io.quckoo.protocol.scheduler
 
+import io.quckoo.Task
 import io.quckoo.{Task, Trigger}
 import io.quckoo.Trigger.Immediate
 import io.quckoo.id._
+
 import monocle.macros.Lenses
 
 import scala.concurrent.duration.FiniteDuration
@@ -50,6 +52,7 @@ final case class GetExecutionPlan(planId: PlanId) extends SchedulerCommand
 final case class ExecutionPlanNotFound(planId: PlanId) extends SchedulerEvent
 final case class CancelPlan(planId: PlanId) extends SchedulerCommand
 
+final case class TaskDetails(artifactId: ArtifactId, jobClass: String, outcome: Task.Outcome)
 case object GetTasks extends SchedulerCommand
 
 final case class TaskQueueUpdated(pendingTasks: Int, inProgressTasks: Int) extends SchedulerEvent

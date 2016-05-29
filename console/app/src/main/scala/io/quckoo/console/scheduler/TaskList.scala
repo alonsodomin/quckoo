@@ -5,9 +5,10 @@ import diode.react.ModelProxy
 import diode.react.ReactPot._
 
 import io.quckoo.console.components.Notification
-import io.quckoo.console.core.{LoadTasks, TaskItem}
+import io.quckoo.console.core.LoadTasks
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.TaskId
+import io.quckoo.protocol.scheduler.TaskDetails
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -17,7 +18,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object TaskList {
 
-  private[this] final case class TaskRowProps(taskId: TaskId, task: Pot[TaskItem])
+  private[this] final case class TaskRowProps(taskId: TaskId, task: Pot[TaskDetails])
 
   private[this] val TaskRow = ReactComponentB[TaskRowProps]("TaskRow").
     stateless.
@@ -35,7 +36,7 @@ object TaskList {
       )
     } build
 
-  final case class Props(proxy: ModelProxy[PotMap[TaskId, TaskItem]])
+  final case class Props(proxy: ModelProxy[PotMap[TaskId, TaskDetails]])
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -66,7 +67,7 @@ object TaskList {
     componentDidMount($ => $.backend.mounted($.props)).
     build
 
-  def apply(proxy: ModelProxy[PotMap[TaskId, TaskItem]]) =
+  def apply(proxy: ModelProxy[PotMap[TaskId, TaskDetails]]) =
     component(Props(proxy))
 
 }

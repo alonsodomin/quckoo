@@ -23,6 +23,7 @@ import io.quckoo.console.ConsoleRoute
 import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
+import io.quckoo.protocol.scheduler.TaskDetails
 
 import scala.util.{Failure, Try}
 import scalaz.ValidationNel
@@ -69,19 +70,17 @@ final case class RefreshExecutionPlans(
 
 }
 
-// TODO this is dummy object
-final case class TaskItem()
 case object LoadTasks
 
-final case class TasksLoaded(tasks: Map[TaskId, Pot[TaskItem]])
+final case class TasksLoaded(tasks: Map[TaskId, Pot[TaskDetails]])
 
 final case class RefreshTasks(
     keys: Set[TaskId],
     state: PotState = PotState.PotEmpty,
-    result: Try[Map[TaskId, Pot[TaskItem]]] = Failure(new AsyncAction.PendingException)
-  ) extends AsyncAction[Map[TaskId, Pot[TaskItem]], RefreshTasks] {
+    result: Try[Map[TaskId, Pot[TaskDetails]]] = Failure(new AsyncAction.PendingException)
+  ) extends AsyncAction[Map[TaskId, Pot[TaskDetails]], RefreshTasks] {
 
-  override def next(newState: PotState, newValue: Try[Map[TaskId, Pot[TaskItem]]]): RefreshTasks =
+  override def next(newState: PotState, newValue: Try[Map[TaskId, Pot[TaskDetails]]]): RefreshTasks =
     copy(state = newState, result = newValue)
 
 }

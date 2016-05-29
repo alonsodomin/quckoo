@@ -32,7 +32,9 @@ trait Scheduler {
 
   def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]]
 
-  def tasks(implicit ec: ExecutionContext): Future[Seq[TaskId]]
+  def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]]
+
+  def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]]
 
   def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]]
 

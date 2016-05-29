@@ -76,10 +76,14 @@ class Quckoo(settings: QuckooClusterSettings)
     retry(internalRequest, 250 millis, 3)
   }
 
-  def tasks(implicit ec: ExecutionContext): Future[Seq[TaskId]] = {
+  def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]] = {
     implicit val timeout = Timeout(5 seconds)
 
-    (core ? GetTasks).mapTo[Seq[TaskId]]
+    (core ? GetTasks).mapTo[Map[TaskId, TaskDetails]]
+  }
+
+  def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] = {
+    Future.successful(None)
   }
 
   def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
