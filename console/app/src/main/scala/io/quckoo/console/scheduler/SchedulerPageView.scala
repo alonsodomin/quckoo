@@ -68,7 +68,7 @@ object SchedulerPageView {
         } else EmptyTag,
         TabPanel(
           "Execution Plans" -> props.proxy.wrap(_.userScope.executionPlans)(ExecutionPlanList(_)),
-          "Tasks"           -> props.proxy.wrap(_.userScope.tasks)(ExecutionList(_))
+          "Tasks"           -> props.proxy.wrap(_.userScope.tasks)(TaskList(_))
         )
       )
     }

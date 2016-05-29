@@ -35,9 +35,9 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object ExecutionPlanList {
 
-  case class RowProps(planId: PlanId, plan: Pot[ExecutionPlan])
+  private[this] case class RowProps(planId: PlanId, plan: Pot[ExecutionPlan])
 
-  val PlanRow = ReactComponentB[RowProps]("ExecutionPlanRow").
+  private[this] val PlanRow = ReactComponentB[RowProps]("ExecutionPlanRow").
     stateless.
     render_P { case RowProps(planId, plan) =>
       <.tr(
@@ -60,7 +60,7 @@ object ExecutionPlanList {
       )
     } build
 
-  case class Props(proxy: ModelProxy[PotMap[PlanId, ExecutionPlan]])
+  final case class Props(proxy: ModelProxy[PotMap[PlanId, ExecutionPlan]])
 
   class Backend($: BackendScope[Props, Unit]) {
 
