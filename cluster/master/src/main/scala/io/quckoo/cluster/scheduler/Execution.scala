@@ -59,7 +59,7 @@ object Execution {
   }
 
   sealed trait ExecutionEvent
-  final case class Awaken(task: Task, queue: ActorSelection) extends ExecutionEvent
+  final case class Awaken(task: Task, planId: PlanId, queue: ActorSelection) extends ExecutionEvent
   final case class Cancelled(reason: UncompleteReason) extends ExecutionEvent
   case object Triggered extends ExecutionEvent
   case object Started extends ExecutionEvent
@@ -106,7 +106,7 @@ class Execution(
   when(Scheduled) {
     case Event(WakeUp(task, queue), _) =>
       log.debug("Execution waking up. taskId={}", task.id)
-      stay applying Awaken(task, queue) forMax enqueueTimeout
+      stay applying Awaken(task, planId, queue) forMax enqueueTimeout
 
     case Event(Cancel(reason), data) =>
       log.debug("Cancelling execution upon request. Reason: {}", reason)
@@ -176,7 +176,7 @@ class Execution(
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 
   override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState = event match {
-    case Awaken(task, queue) =>
+    case Awaken(task, `planId`, queue) =>
       log.debug("Execution for task {} has awaken.", task.id)
       queue ! TaskQueue.Enqueue(task)
       previous.copy(task = Some(task), queue = Some(queue))

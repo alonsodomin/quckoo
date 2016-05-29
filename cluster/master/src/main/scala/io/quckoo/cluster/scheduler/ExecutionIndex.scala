@@ -28,6 +28,7 @@ class ExecutionIndex(journal: ExecutionIndex.Journal) extends ActorSubscriber wi
   implicit val materializer = ActorMaterializer(ActorMaterializerSettings(context.system), "executionIndex")
 
   private[this] var tasks = Map.empty[TaskId, TaskDetails]
+  private[this] var tasksByPlan = Map.empty[PlanId, Set[TaskId]].withDefaultValue(Set.empty[TaskId])
 
   override def preStart(): Unit = {
     log.info("Starting Execution index...")
@@ -47,8 +48,9 @@ class ExecutionIndex(journal: ExecutionIndex.Journal) extends ActorSubscriber wi
     case EventEnvelope(offset, persistenceId, sequenceNr, event) =>
       log.debug(s"Received event: $event")
       event match {
-        case Execution.Awaken(task, _) =>
+        case Execution.Awaken(task, planId, _) =>
           tasks += task.id -> TaskDetails(task.artifactId, task.jobClass, Task.NotStarted)
+          tasksByPlan += planId -> (tasksByPlan(planId) + task.id)
 
         case _ =>
       }
