@@ -25,7 +25,6 @@ import scala.concurrent.duration.FiniteDuration
 
 sealed trait SchedulerMessage
 sealed trait SchedulerCommand extends SchedulerMessage
-sealed trait SchedulerReadCommand extends SchedulerCommand
 sealed trait SchedulerEvent extends SchedulerMessage
 
 @Lenses
@@ -46,11 +45,11 @@ final case class JobFailedToSchedule(jobId: JobId, cause: Throwable) extends Sch
 final case class ExecutionPlanStarted(jobId: JobId, planId: PlanId) extends SchedulerEvent
 final case class ExecutionPlanFinished(jobId: JobId, planId: PlanId) extends SchedulerEvent
 
-case object GetExecutionPlans extends SchedulerReadCommand
-final case class GetExecutionPlan(planId: PlanId) extends SchedulerReadCommand
+case object GetExecutionPlans extends SchedulerCommand
+final case class GetExecutionPlan(planId: PlanId) extends SchedulerCommand
 final case class ExecutionPlanNotFound(planId: PlanId) extends SchedulerEvent
 final case class CancelPlan(planId: PlanId) extends SchedulerCommand
 
-case object GetTasks extends SchedulerReadCommand
+case object GetTasks extends SchedulerCommand
 
 final case class TaskQueueUpdated(pendingTasks: Int, inProgressTasks: Int) extends SchedulerEvent

@@ -40,6 +40,7 @@ class ExecutionIndex(journal: ExecutionIndex.Journal) extends ActorSubscriber wi
 
   def receive: Receive = {
     case GetTasks =>
+      log.debug("Retrieving tasks from the index...")
       sender() ! taskIds
 
     case EventEnvelope(offset, persistenceId, sequenceNr, event) =>

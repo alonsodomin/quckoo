@@ -63,6 +63,7 @@ object TaskList {
   private[this] val component = ReactComponentB[Props]("TaskList").
     stateless.
     renderBackend[Backend].
+    componentDidMount($ => $.backend.mounted($.props)).
     build
 
   def apply(proxy: ModelProxy[PotMap[TaskId, TaskItem]]) =
