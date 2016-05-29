@@ -10,6 +10,7 @@ import akka.stream.actor.ActorSubscriberMessage.OnNext
 import akka.stream.actor.{ActorSubscriber, OneByOneRequestStrategy, RequestStrategy}
 import akka.stream.scaladsl.Sink
 import io.quckoo.id._
+import io.quckoo.protocol.scheduler.GetTasks
 
 object ExecutionIndex {
 
@@ -25,6 +26,8 @@ class ExecutionIndex(journal: ExecutionIndex.Journal) extends ActorSubscriber wi
 
   implicit val materializer = ActorMaterializer(ActorMaterializerSettings(context.system), "executionIndex")
 
+  private[this] var taskIds = List.empty[TaskId]
+
   override def preStart(): Unit = {
     log.info("Starting Execution index...")
     journal.allPersistenceIds().
@@ -36,7 +39,16 @@ class ExecutionIndex(journal: ExecutionIndex.Journal) extends ActorSubscriber wi
   protected def requestStrategy: RequestStrategy = OneByOneRequestStrategy
 
   def receive: Receive = {
+    case GetTasks =>
+      sender() ! taskIds
+
     case EventEnvelope(offset, persistenceId, sequenceNr, event) =>
       log.debug(s"Received event: $event")
+      event match {
+        case Execution.Awaken(task, _) =>
+          taskIds = task.id :: taskIds
+
+        case _ =>
+      }
   }
 }

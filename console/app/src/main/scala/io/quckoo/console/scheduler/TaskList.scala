@@ -24,10 +24,10 @@ object TaskList {
     render_P { case TaskRowProps(taskId, task) =>
       <.tr(
         task.renderFailed { ex =>
-          Notification.danger(ExceptionThrown(ex))
+          <.td(^.colSpan := 1, Notification.danger(ExceptionThrown(ex)))
         },
         task.renderPending { _ =>
-          <.td(^.colSpan := 6, "Loading ...")
+          <.td(^.colSpan := 1, "Loading ...")
         },
         task.render { item => List(
           <.td(taskId.toString())
@@ -46,7 +46,9 @@ object TaskList {
       val model = props.proxy()
       <.table(^.`class` := "table table-striped",
         <.thead(
-          <.th("Task ID")
+          <.tr(
+            <.th("Task ID")
+          )
         ),
         <.tbody(
           model.seq.map { case (taskId, task) =>

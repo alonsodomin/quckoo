@@ -107,6 +107,9 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
       import context.dispatcher
       queryExecutionPlans pipeTo sender()
 
+    case GetTasks =>
+      executionIndex forward GetTasks
+
     case msg: WorkerMessage =>
       taskQueue forward msg
   }

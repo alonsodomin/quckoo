@@ -77,7 +77,9 @@ class Quckoo(settings: QuckooClusterSettings)
   }
 
   def tasks(implicit ec: ExecutionContext): Future[Seq[TaskId]] = {
-    Future.successful(Seq.empty)
+    implicit val timeout = Timeout(5 seconds)
+
+    (core ? GetTasks).mapTo[Seq[TaskId]]
   }
 
   def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
