@@ -31,7 +31,8 @@ object TaskList {
           <.td(^.colSpan := 1, "Loading ...")
         },
         task.render { item => List(
-          <.td(taskId.toString())
+          <.td(taskId.toString()),
+          <.td(item.artifactId.toString())
         )}
       )
     } build
@@ -48,7 +49,8 @@ object TaskList {
       <.table(^.`class` := "table table-striped",
         <.thead(
           <.tr(
-            <.th("Task ID")
+            <.th("Task ID"),
+            <.th("Artifact ID")
           )
         ),
         <.tbody(

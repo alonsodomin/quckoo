@@ -54,5 +54,7 @@ final case class CancelPlan(planId: PlanId) extends SchedulerCommand
 
 final case class TaskDetails(artifactId: ArtifactId, jobClass: String, outcome: Task.Outcome)
 case object GetTasks extends SchedulerCommand
+final case class GetTask(taskId: TaskId) extends SchedulerCommand
+final case class TaskNotFound(taskId: TaskId) extends SchedulerEvent
 
 final case class TaskQueueUpdated(pendingTasks: Int, inProgressTasks: Int) extends SchedulerEvent

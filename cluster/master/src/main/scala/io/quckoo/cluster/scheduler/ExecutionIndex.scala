@@ -11,7 +11,7 @@ import akka.stream.actor.{ActorSubscriber, OneByOneRequestStrategy, RequestStrat
 import akka.stream.scaladsl.Sink
 import io.quckoo.Task
 import io.quckoo.id._
-import io.quckoo.protocol.scheduler.{GetTasks, TaskDetails}
+import io.quckoo.protocol.scheduler.{GetTask, GetTasks, TaskDetails}
 
 object ExecutionIndex {
 
@@ -44,6 +44,9 @@ class ExecutionIndex(journal: ExecutionIndex.Journal) extends ActorSubscriber wi
     case GetTasks =>
       log.debug("Retrieving tasks from the index...")
       sender() ! tasks
+
+    case GetTask(taskId) =>
+      sender() ! tasks.get(taskId)
 
     case EventEnvelope(offset, persistenceId, sequenceNr, event) =>
       log.debug(s"Received event: $event")

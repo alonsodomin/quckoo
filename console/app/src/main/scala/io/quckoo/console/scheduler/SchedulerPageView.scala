@@ -67,7 +67,7 @@ object SchedulerPageView {
           props.proxy.connect(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
         } else EmptyTag,
         TabPanel(
-          "Execution Plans" -> props.proxy.wrap(_.userScope.executionPlans)(ExecutionPlanList(_)),
+          "Execution Plans" -> props.proxy.wrap(_.userScope)(ExecutionPlanList(_)),
           "Tasks"           -> props.proxy.wrap(_.userScope.tasks)(TaskList(_))
         )
       )

@@ -19,14 +19,12 @@ package io.quckoo.console.scheduler
 import diode.data.{Pot, PotMap}
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-
 import io.quckoo.ExecutionPlan
 import io.quckoo.console.components.Notification
-import io.quckoo.console.core.LoadExecutionPlans
+import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.PlanId
 import io.quckoo.time.MomentJSTimeSource.Implicits.default
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -35,11 +33,19 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object ExecutionPlanList {
 
-  private[this] case class RowProps(planId: PlanId, plan: Pot[ExecutionPlan])
+  private[this] type RowAction = PlanId => Callback
+
+  private[this] case class RowProps(
+      planId: PlanId,
+      plan: Pot[ExecutionPlan],
+      scope: UserScope,
+      selected: Boolean,
+      toggleSelected: RowAction
+  )
 
   private[this] val PlanRow = ReactComponentB[RowProps]("ExecutionPlanRow").
     stateless.
-    render_P { case RowProps(planId, plan) =>
+    render_P { case RowProps(planId, plan, scope, selected, toggleSelected) =>
       <.tr(
         plan.renderFailed { ex =>
           <.td(^.colSpan := 6, Notification.danger(ExceptionThrown(ex)))
@@ -47,38 +53,54 @@ object ExecutionPlanList {
         plan.renderPending { _ =>
           <.td(^.colSpan := 6, "Loading ...")
         },
-        plan.render { item => List(
-          <.td(item.jobId.toString()),
-          <.td(item.planId.toString()),
-          <.td(item.currentTaskId.map(_.toString())),
-          <.td(item.trigger.toString()),
-          <.td(item.lastScheduledTime.map(_.toString())),
-          <.td(item.lastExecutionTime.map(_.toString())),
-          <.td(item.lastOutcome.toString()),
-          <.td(item.nextExecutionTime(default).toString())
-        )}
+        plan.render { item =>
+          val jobSpec = scope.jobSpecs.get(item.jobId)
+          List(
+            <.td(jobSpec.render(_.displayName)),
+            <.td(item.currentTaskId.map(_.toString())),
+            <.td(item.trigger.toString()),
+            <.td(item.lastScheduledTime.map(_.toString())),
+            <.td(item.lastExecutionTime.map(_.toString())),
+            <.td(item.lastOutcome.toString()),
+            <.td(item.nextExecutionTime(default).toString())
+          )
+        }
       )
     } build
 
-  final case class Props(proxy: ModelProxy[PotMap[PlanId, ExecutionPlan]])
+  final case class Props(proxy: ModelProxy[UserScope])
+  final case class State(selected: Set[PlanId])
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, State]) {
 
     def mounted(props: Props): Callback = {
-      def perform: Callback =
-        props.proxy.dispatch(LoadExecutionPlans)
+      val model = props.proxy()
 
-      Callback.when(props.proxy().size == 0)(perform)
+      def loadJobs: Callback =
+        Callback.when(model.jobSpecs.size == 0)(props.proxy.dispatch(LoadJobSpecs))
+
+      def loadPlans: Callback =
+        Callback.when(model.executionPlans.size == 0)(props.proxy.dispatch(LoadExecutionPlans))
+
+      loadJobs >> loadPlans
     }
 
-    def render(p: Props) = {
-      val model = p.proxy()
+    def toggleSelected(props: Props)(planId: PlanId): Callback = ???
+
+    def toggleSelectAll(props: Props): Callback = ???
+
+    def render(props: Props, state: State) = {
+      val model = props.proxy()
       <.table(^.`class` := "table table-striped",
         <.thead(
           <.tr(
-            <.th("Job ID"),
-            <.th("Plan ID"),
-            <.th("Task ID"),
+            <.th(<.input.checkbox(
+              ^.id := "selectAllPlans",
+              ^.value := false,
+              ^.onChange --> toggleSelectAll(props)
+            )),
+            <.th("Job"),
+            <.th("Current task"),
             <.th("Trigger"),
             <.th("Last Scheduled"),
             <.th("Last Execution"),
@@ -87,8 +109,13 @@ object ExecutionPlanList {
           )
         ),
         <.tbody(
-          model.seq.map { case (planId, plan) =>
-            PlanRow.withKey(planId.toString)(RowProps(planId, plan))
+          model.executionPlans.seq.map { case (planId, plan) =>
+            PlanRow.withKey(planId.toString)(
+              RowProps(planId, plan, model,
+                state.selected.contains(planId),
+                toggleSelected(props)
+              )
+            )
           }
         )
       )
@@ -97,11 +124,11 @@ object ExecutionPlanList {
   }
 
   private[this] val component = ReactComponentB[Props]("ExecutionPlanList").
-    stateless.
+    initialState(State(Set.empty)).
     renderBackend[Backend].
     componentDidMount($ => $.backend.mounted($.props)).
     build
 
-  def apply(proxy: ModelProxy[PotMap[PlanId, ExecutionPlan]]) = component(Props(proxy))
+  def apply(proxy: ModelProxy[UserScope]) = component(Props(proxy))
 
 }
