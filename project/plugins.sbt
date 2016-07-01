@@ -5,7 +5,7 @@ resolvers += Resolver.url("scoverage-bintray", url("https://dl.bintray.com/sksam
 
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.8.0")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.10")
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.0.4")
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.2.0-M3")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.3.5")
 addSbtPlugin("org.scoverage" % "sbt-coveralls" % "1.1.0")
