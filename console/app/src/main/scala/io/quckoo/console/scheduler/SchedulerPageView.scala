@@ -17,10 +17,12 @@
 package io.quckoo.console.scheduler
 
 import diode.react.ModelProxy
+
 import io.quckoo.ExecutionPlan
-import io.quckoo.console.components.{Button, Icons}
+import io.quckoo.console.components.{Button, Icons, TabPanel}
 import io.quckoo.console.core.ConsoleScope
 import io.quckoo.protocol.scheduler.ScheduleJob
+
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
@@ -64,7 +66,10 @@ object SchedulerPageView {
         if (state.showForm) {
           props.proxy.connect(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
         } else EmptyTag,
-        props.proxy.wrap(_.userScope.executionPlans)(ExecutionPlanList(_))
+        TabPanel(
+          "Execution Plans" -> props.proxy.wrap(_.userScope)(ExecutionPlanList(_)),
+          "Tasks"           -> props.proxy.wrap(_.userScope.tasks)(TaskList(_))
+        )
       )
     }
 

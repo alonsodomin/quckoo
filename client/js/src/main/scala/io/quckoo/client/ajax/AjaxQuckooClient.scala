@@ -138,6 +138,24 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
     }
   }
 
+  override def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]] = {
+    withAuthRefresh { () =>
+      Ajax.get(TasksURI, headers = authHeaders).map { xhr =>
+        read[Map[TaskId, TaskDetails]](xhr.responseText)
+      }
+    }
+  }
+
+  override def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] = {
+    withAuthRefresh { () =>
+      Ajax.get(TasksURI + "/" + taskId, headers = authHeaders).map { xhr =>
+        Some(read[TaskDetails](xhr.responseText))
+      }
+    } recover {
+      case _ => None
+    }
+  }
+
   override def schedule(scheduleJob: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
     withAuthRefresh { () =>
       Ajax.post(ExecutionPlansURI, write(scheduleJob), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>

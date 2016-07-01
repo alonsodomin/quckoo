@@ -23,11 +23,11 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.pattern._
-import akka.persistence.query.scaladsl.{CurrentPersistenceIdsQuery, EventsByPersistenceIdQuery}
+import akka.persistence.query.scaladsl.{AllPersistenceIdsQuery, CurrentPersistenceIdsQuery, EventsByPersistenceIdQuery}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
 
-import io.quckoo.{JobSpec, ExecutionPlan}
+import io.quckoo.{ExecutionPlan, JobSpec}
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.topics
 import io.quckoo.id._
@@ -43,7 +43,7 @@ import scala.concurrent.duration._
  */
 object Scheduler {
 
-  type Journal = CurrentPersistenceIdsQuery with EventsByPersistenceIdQuery
+  type Journal = AllPersistenceIdsQuery with CurrentPersistenceIdsQuery with EventsByPersistenceIdQuery
 
   private[scheduler] case class CreateExecutionDriver(spec: JobSpec, config: ScheduleJob, requestor: ActorRef)
 
@@ -75,6 +75,9 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
   private[this] val executionPlanIndex = context.actorOf(
     ExecutionPlanIndex.props(shardRegion), "executionPlanIndex"
   )
+  private[this] val executionIndex = context.actorOf(
+    ExecutionIndex.props(journal), "executionIndex"
+  )
 
   override def preStart(): Unit = {
     journal.currentPersistenceIds().
@@ -103,6 +106,9 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
     case GetExecutionPlans =>
       import context.dispatcher
       queryExecutionPlans pipeTo sender()
+
+    case GetTasks =>
+      executionIndex forward GetTasks
 
     case msg: WorkerMessage =>
       taskQueue forward msg

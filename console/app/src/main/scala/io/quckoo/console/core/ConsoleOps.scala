@@ -21,6 +21,7 @@ import io.quckoo.{ExecutionPlan, JobSpec}
 import io.quckoo.client.QuckooClient
 import io.quckoo.id._
 import io.quckoo.net.QuckooState
+import io.quckoo.protocol.scheduler.TaskDetails
 
 import scala.concurrent.Future
 import scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -59,6 +60,20 @@ private[core] trait ConsoleOps {
   def loadPlan(id: PlanId)(implicit client: QuckooClient): Future[(PlanId, Pot[ExecutionPlan])] =
     client.executionPlan(id).map {
       case Some(plan) => id -> Ready(plan)
+      case None       => id -> Unavailable
+    }
+
+  def loadTasks(ids: Set[TaskId] = Set.empty)(implicit client: QuckooClient): Future[Map[TaskId, Pot[TaskDetails]]] = {
+    if (ids.isEmpty) {
+      client.tasks.map(_.map { case (k, v) => (k, Ready(v)) })
+    } else {
+      Future.sequence(ids.map(loadTask)).map(_.toMap)
+    }
+  }
+
+  def loadTask(id: TaskId)(implicit client: QuckooClient): Future[(TaskId, Pot[TaskDetails])] =
+    client.task(id).map {
+      case Some(task) => id -> Ready(task)
       case None       => id -> Unavailable
     }
 

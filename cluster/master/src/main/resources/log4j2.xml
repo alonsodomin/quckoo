@@ -5,18 +5,8 @@
       <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
     </Console>
   </Appenders>
+
   <Loggers>
-    <Logger name="HTTPRequest" level="debug" additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
-    <Logger name="HTTPResponse" level="debug" additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
-
-    <Logger name="io.quckoo" level="debug" additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
-
     <Root level="info">
       <AppenderRef ref="Console"/>
     </Root>

@@ -29,7 +29,7 @@ import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.registry.RegistryEventPublisher
 import io.quckoo.cluster.scheduler.TaskQueueEventPublisher
 import io.quckoo.fault.{Fault, ResolutionFault}
-import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -47,8 +47,10 @@ import scalaz.{Validation, ValidationNel}
   * Created by alonsodomin on 13/12/2015.
   */
 class Quckoo(settings: QuckooClusterSettings)
-            (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
+            (implicit system: ActorSystem, timeSource: TimeSource)
     extends HttpRouter with QuckooServer with Logging with Retrying {
+
+  implicit val materializer = ActorMaterializer()
 
   val core = system.actorOf(QuckooCluster.props(settings), "quckoo")
   val userAuth = system.actorSelection(core.path / "authenticator")
@@ -74,6 +76,18 @@ class Quckoo(settings: QuckooClusterSettings)
 
     implicit val sch = system.scheduler
     retry(internalRequest, 250 millis, 3)
+  }
+
+  def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]] = {
+    implicit val timeout = Timeout(5 seconds)
+
+    (core ? GetTasks).mapTo[Map[TaskId, TaskDetails]]
+  }
+
+  def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] = {
+    implicit val timeout = Timeout(5 seconds)
+
+    (core ? GetTask(taskId)).mapTo[Option[TaskDetails]]
   }
 
   def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {

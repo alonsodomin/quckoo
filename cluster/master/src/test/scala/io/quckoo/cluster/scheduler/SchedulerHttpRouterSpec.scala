@@ -8,15 +8,12 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
-
 import io.quckoo.api.{Scheduler => SchedulerApi}
-import io.quckoo.id.{JobId, PlanId}
+import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.serialization
+import io.quckoo.{ExecutionPlan, Task, Trigger, serialization}
 import io.quckoo.time.JDK8TimeSource
-import io.quckoo.{ExecutionPlan, Trigger}
-
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,13 +27,21 @@ object SchedulerHttpRouterSpec {
   final val FixedTimeSource = JDK8TimeSource.fixed(FixedInstant, ZoneId.of("UTC"))
 
   final val TestPlanIds = Set(UUID.randomUUID())
-
   final val TestPlanMap = Map(
     TestPlanIds.head -> ExecutionPlan(
       JobId(UUID.randomUUID()),
       TestPlanIds.head,
       Trigger.Immediate,
       FixedTimeSource.currentDateTime.toUTC
+    )
+  )
+
+  final val TestTaskIds: Seq[TaskId] = List(UUID.randomUUID())
+  final val TestTaskMap = Map(
+    TestTaskIds.head -> TaskDetails(
+      ArtifactId("com.example", "example", "latest"),
+      "com.example.Job",
+      Task.NotStarted
     )
   )
 
@@ -66,6 +71,12 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
   override def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]] =
     Future.successful(TestPlanMap)
+
+  override def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]] =
+    Future.successful(TestTaskMap)
+
+  override def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] =
+    Future.successful(TestTaskMap.get(taskId))
 
   override def queueMetrics: Source[TaskQueueUpdated, NotUsed] = ???
 
@@ -104,6 +115,26 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
       Post(endpoint(s"/plans"), Some(scheduleMsg)) ~> entryPoint ~> check {
         val response = responseAs[ExecutionPlanStarted]
         response.jobId should be (scheduleMsg.jobId)
+      }
+    }
+
+    "reply with a list of task ids" in {
+      Get(endpoint("/tasks")) ~> entryPoint ~> check {
+        responseAs[Map[TaskId, TaskDetails]] shouldBe TestTaskMap
+      }
+    }
+
+    "return a task when getting from a valid ID" in {
+      val taskId = TestTaskIds.head
+      Get(endpoint(s"/tasks/$taskId")) ~> entryPoint ~> check {
+        responseAs[TaskDetails] shouldBe TestTaskMap(taskId)
+      }
+    }
+
+    "return a 404 when asked for a task that does not exist" in {
+      val taskId = UUID.randomUUID()
+      Get(endpoint(s"/tasks/$taskId")) ~> entryPoint ~> check {
+        status === NotFound
       }
     }
 

@@ -101,10 +101,10 @@ class QuckooCluster(settings: QuckooClusterSettings)
       sender() ! clusterState
 
     case cmd: RegistryCommand =>
-      registry.tell(cmd, sender())
+      registry forward cmd
 
     case cmd: SchedulerCommand =>
-      scheduler.tell(cmd, sender())
+      scheduler forward cmd
 
     case evt: MemberEvent => evt match {
       case MemberUp(member) =>

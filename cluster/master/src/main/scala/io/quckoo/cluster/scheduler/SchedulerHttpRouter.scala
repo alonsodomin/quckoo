@@ -66,6 +66,23 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
           }
         }
       }
+    } ~ pathPrefix("tasks") {
+      pathEnd {
+        get {
+          extractExecutionContext { implicit ec =>
+            complete(tasks)
+          }
+        }
+      } ~ path(JavaUUID) { taskId =>
+        get {
+          extractExecutionContext { implicit ec =>
+            onSuccess(task(taskId)) {
+              case Some(task) => complete(task)
+              case _          => complete(NotFound)
+            }
+          }
+        }
+      }
     } ~ path("queue") {
       get {
         complete(asSSE(queueMetrics, "metrics"))
