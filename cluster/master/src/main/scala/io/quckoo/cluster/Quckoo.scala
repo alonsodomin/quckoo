@@ -47,8 +47,10 @@ import scalaz.{Validation, ValidationNel}
   * Created by alonsodomin on 13/12/2015.
   */
 class Quckoo(settings: QuckooClusterSettings)
-            (implicit system: ActorSystem, materializer: ActorMaterializer, timeSource: TimeSource)
+            (implicit system: ActorSystem, timeSource: TimeSource)
     extends HttpRouter with QuckooServer with Logging with Retrying {
+
+  implicit val materializer = ActorMaterializer()
 
   val core = system.actorOf(QuckooCluster.props(settings), "quckoo")
   val userAuth = system.actorSelection(core.path / "authenticator")

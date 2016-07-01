@@ -68,15 +68,13 @@ object Boot extends App {
     implicit val system = ActorSystem(Options.SystemName, config)
     sys.addShutdownHook { system.terminate() }
 
-    implicit val materializer = ActorMaterializer()
-
     implicit val timeSource = JDK8TimeSource.default
     val settings = QuckooClusterSettings(system)
-    val kairos = new Quckoo(settings)
+    val quckoo = new Quckoo(settings)
 
     implicit val timeout = Timeout(5 seconds)
     implicit val dispatcher = system.dispatcher
-    val startUp: Future[Unit] = kairos.start recover {
+    val startUp: Future[Unit] = quckoo.start recover {
       case ex: Exception =>
         ex.printStackTrace()
         system.terminate()

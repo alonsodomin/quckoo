@@ -1,5 +1,5 @@
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging.autoImport._
-import com.typesafe.sbt.packager.docker.Cmd
+import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport._
 import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
 
@@ -33,7 +33,11 @@ object Packaging {
   )
 
   lazy val masterDockerSettings = dockerSettings ++ Seq(
-    dockerExposedPorts := Seq(2551, 8095)
+    dockerExposedPorts := Seq(2551, 8095),
+    dockerCommands ++= Seq(
+      ExecCmd("RUN mkdir -p resolver/cache"),
+      ExecCmd("RUN mkdir -p resolver/local")
+    )
   )
 
   lazy val workerDockerSettings = dockerSettings ++ Seq(
