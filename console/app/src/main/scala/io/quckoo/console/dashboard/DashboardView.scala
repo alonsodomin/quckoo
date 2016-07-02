@@ -46,17 +46,21 @@ object DashboardView {
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(props: Props) = {
+      val clusterState = props.proxy.connect(_.clusterState)
+      val masterNodes  = props.proxy.connect(_.clusterState.masterNodes)
+      val workerNodes  = props.proxy.connect(_.clusterState.workerNodes)
+
       <.div(^.`class` := "container",
         <.div(^.`class` := "row",
-          <.div(Style.leftPanel, props.proxy.wrap(_.clusterState)(ClusterView(_))),
+          <.div(Style.leftPanel, clusterState(ClusterView(_))),
           <.div(Style.content,
             <.div(
               <.h3("Master nodes"),
-              props.proxy.wrap(_.clusterState.masterNodes)(NodeList(_))
+              masterNodes(NodeList(_))
             ),
             <.div(
               <.h3("Worker nodes"),
-              props.proxy.wrap(_.clusterState.workerNodes)(NodeList(_))
+              workerNodes(NodeList(_))
             )
           )
         )

@@ -59,6 +59,9 @@ object SchedulerPageView {
       $.modState(_.copy(selectedSchedule = schedule, showForm = true))
 
     def render(props: Props, state: State) = {
+      val userScopeConnector = props.proxy.connect(_.userScope)
+      val taskConnector = props.proxy.connect(_.userScope.tasks)
+
       <.div(Style.content,
         <.h2("Scheduler"),
         props.proxy().notification,
@@ -67,8 +70,8 @@ object SchedulerPageView {
           props.proxy.wrap(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
         } else EmptyTag,
         TabPanel(
-          "Execution Plans" -> props.proxy.wrap(_.userScope)(ExecutionPlanList(_)),
-          "Tasks"           -> props.proxy.wrap(_.userScope.tasks)(TaskList(_))
+          "Execution Plans" -> userScopeConnector(ExecutionPlanList(_)),
+          "Tasks"           -> taskConnector(TaskList(_))
         )
       )
     }

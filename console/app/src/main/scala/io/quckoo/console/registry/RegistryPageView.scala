@@ -62,15 +62,18 @@ object RegistryPageView {
       updateState() >> ($.props >>= dispatchAction)
     }
 
-    def render(props: Props, state: State) =
+    def render(props: Props, state: State) = {
+      val connector = props.proxy.connect(_.userScope.jobSpecs)
+
       <.div(Style.content,
         <.h2("Registry"),
         props.proxy().notification,
         Button(Button.Props(Some(editJob(None))), Icons.plusSquare, "New Job"),
         if (state.showForm) JobForm(state.selectedJob, jobEdited)
         else EmptyTag,
-        props.proxy.wrap(_.userScope.jobSpecs)(JobSpecList(_))
+        connector(JobSpecList(_))
       )
+    }
 
   }
 

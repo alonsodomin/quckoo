@@ -37,12 +37,17 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object SiteMap {
   import ConsoleRoute._
 
+  private[this] val scopeConnector = ConsoleCircuit.connect(identity(_))
+
   def dashboardPage(proxy: ModelProxy[ConsoleScope]) =
     proxy.wrap(identity(_))(DashboardView(_))
+
   def loginPage(proxy: ModelProxy[ConsoleScope])(referral: Option[ConsoleRoute]) =
     proxy.wrap(identity(_))(p => LoginPageView(p, referral))
+
   def registryPage(proxy: ModelProxy[ConsoleScope]) =
     proxy.wrap(identity(_))(RegistryPageView(_))
+
   def schedulerPage(proxy: ModelProxy[ConsoleScope]) =
     proxy.wrap(identity(_))(SchedulerPageView(_))
 
