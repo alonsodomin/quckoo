@@ -19,7 +19,7 @@ package io.quckoo.cluster
 import java.util.UUID
 
 import akka.stream.scaladsl.Source
-import de.heikoseeberger.akkasse.ServerSentEvent
+import de.heikoseeberger.akkasse.{EventStreamElement, ServerSentEvent}
 import upickle.default._
 
 import scala.concurrent.duration._
@@ -30,10 +30,10 @@ import scala.concurrent.duration._
 package object http {
 
   def asSSE[A: Writer](source: Source[A, _], eventType: String,
-                       keepAlive: FiniteDuration = 1 second): Source[ServerSentEvent, _] = {
+                       keepAlive: FiniteDuration = 1 second): Source[EventStreamElement, _] = {
     source.map { event =>
       ServerSentEvent(write[A](event), eventType)
-    } keepAlive(keepAlive, () => ServerSentEvent.heartbeat)
+    } keepAlive(keepAlive, () => ServerSentEvent.Heartbeat)
   }
 
   def generateAuthToken = UUID.randomUUID().toString

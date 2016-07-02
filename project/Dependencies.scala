@@ -30,9 +30,9 @@ object Dependencies {
     val diode = "1.0.0"
 
     val upickle = "0.3.9"
-    val scalatags = "0.4.6"
+    val scalatags = "0.5.5"
 
-    val reactJs = "15.0.2"
+    val reactJs = "15.1.0"
 
     // Other utils ---
 
@@ -59,7 +59,7 @@ object Dependencies {
       val http            = "com.typesafe.akka" %% "akka-http-experimental" % version.akka
       val httpTestkit     = "com.typesafe.akka" %% "akka-http-testkit"      % version.akka % Test
       val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % "1.5.2"
-      val sse             = "de.heikoseeberger" %% "akka-sse"               % "1.7.1"
+      val sse             = "de.heikoseeberger" %% "akka-sse"               % "1.8.1"
       val distributedData = "com.typesafe.akka" %% "akka-distributed-data-experimental" % version.akka
 
       object persistence {
@@ -136,7 +136,7 @@ object Dependencies {
 
   lazy val clientJS = Def.settings {
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.9.0"
+      "org.scala-js" %%% "scalajs-dom" % "0.9.1"
     )
   }
 
@@ -191,7 +191,7 @@ object Dependencies {
         commonJSName "React",
 
       // JQuery & Bootstrap
-      "org.webjars" % "jquery"    % "1.11.1"
+      "org.webjars" % "jquery"    % "2.1.3"
         /        "jquery.js"
         minified "jquery.min.js",
       "org.webjars" % "bootstrap" % "3.3.2"
