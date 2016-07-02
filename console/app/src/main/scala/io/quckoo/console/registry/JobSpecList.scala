@@ -17,14 +17,12 @@
 package io.quckoo.console.registry
 
 import diode.AnyAction._
-import diode.data.{Pot, PotMap}
+import diode.data.PotMap
 import diode.react.ModelProxy
-import diode.react.ReactPot._
 
 import io.quckoo.JobSpec
 import io.quckoo.console.components._
 import io.quckoo.console.core.LoadJobSpecs
-import io.quckoo.fault._
 import io.quckoo.id.JobId
 import io.quckoo.protocol.registry._
 
@@ -36,57 +34,11 @@ import japgolly.scalajs.react.vdom.prefix_<^._
  */
 object JobSpecList {
 
-  type RowAction = JobId => Callback
-
-  case class RowProps(jobId: JobId, spec: Pot[JobSpec],
-      selected: Boolean,
-      toggleSelected: RowAction,
-      enable: RowAction,
-      disable: RowAction
-  )
-
-  val JobRow = ReactComponentB[RowProps]("JobRow").
-    stateless.
-    render_P { case RowProps(jobId, spec, selected, toggle, enable, disable) =>
-      <.tr(selected ?= (^.`class` := "info"),
-        spec.renderFailed { ex =>
-          <.td(^.colSpan := 7, Notification.danger(ExceptionThrown(ex)))
-        },
-        spec.renderPending { _ =>
-          <.td(^.colSpan := 7, "Loading ...")
-        },
-        spec.render { item => List(
-          <.td(<.input.checkbox(
-            ^.id := s"selectJob_$jobId",
-            ^.value := selected,
-            ^.onChange --> toggle(jobId)
-          )),
-          <.td(item.displayName),
-          <.td(item.description),
-          <.td(item.artifactId.toString()),
-          <.td(item.jobClass),
-          <.td(
-            if (item.disabled) {
-              <.span(^.color.red, "DISABLED")
-            } else {
-              <.span(^.color.green, "ENABLED")
-            }
-          ),
-          <.td(
-            if (item.disabled) {
-              Button(Button.Props(Some(enable(jobId))), Icons.play, "Enable")
-            } else {
-              Button(Button.Props(Some(disable(jobId))), Icons.stop, "Disable")
-            }
-          ))
-        }
-      )
-    } build
+  final val Columns = List("Name", "Description", "Artifact ID", "Job Class", "Status")
 
   case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
-  case class State(selected: Set[JobId], allSelected: Boolean = false)
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
     def mounted(props: Props) = {
       def dispatchJobLoading: Callback =
@@ -95,21 +47,17 @@ object JobSpecList {
       Callback.when(props.proxy().size == 0)(dispatchJobLoading)
     }
 
-    def toggleSelectAll(props: Props): Callback =
-      $.modState { state =>
-        if (state.allSelected) state.copy(selected = Set.empty, allSelected = false)
-        else state.copy(selected = props.proxy().keys.toSet, allSelected = true)
-      }
-
-    def toggleSelected(props: Props)(jobId: JobId): Callback = {
-      $.modState { state =>
-        val newSet = {
-          if (state.selected.contains(jobId))
-            state.selected - jobId
-          else state.selected + jobId
+    def renderItem(jobId: JobId, jobSpec: JobSpec, column: String): ReactNode = column match {
+      case "Name" => jobSpec.displayName
+      case "Description" => jobSpec.description.getOrElse[String]("")
+      case "Artifact ID" => jobSpec.artifactId.toString
+      case "Job Class"   => jobSpec.jobClass
+      case "Status"      =>
+        if (jobSpec.disabled) {
+          <.span(^.color.red, "DISABLED")
+        } else {
+          <.span(^.color.green, "ENABLED")
         }
-        state.copy(selected = newSet, allSelected = newSet.size == props.proxy().size)
-      }
     }
 
     def enableJob(props: Props)(jobId: JobId): Callback =
@@ -118,43 +66,27 @@ object JobSpecList {
     def disableJob(props: Props)(jobId: JobId): Callback =
       props.proxy.dispatch(DisableJob(jobId))
 
-    def render(p: Props, state: State) = {
+    def rowActions(props: Props)(jobId: JobId, jobSpec: JobSpec) = {
+      Seq(if (jobSpec.disabled) {
+        Table.RowAction[JobId, JobSpec](Seq(Icons.play, "Enable"), enableJob(props))
+      } else {
+        Table.RowAction[JobId, JobSpec](Seq(Icons.stop, "Disable"), disableJob(props))
+      })
+    }
+
+    def render(p: Props) = {
       val model = p.proxy()
-      <.table(^.`class` := "table table-striped table-hover",
-        <.thead(
-          <.tr(
-            <.th(<.input.checkbox(
-              ^.id := "selectAllJobs",
-              ^.value := state.allSelected,
-              ^.onChange --> toggleSelectAll(p)
-            )),
-            <.th("Name"),
-            <.th("Description"),
-            <.th("ArtifactId"),
-            <.th("Job Class"),
-            <.th("Status"),
-            <.th("Actions")
-          )
-        ),
-        <.tbody(
-          model.seq.map { case (jobId, spec) =>
-            JobRow.withKey(jobId.toString())(
-              RowProps(jobId, spec,
-                state.selected.contains(jobId),
-                toggleSelected(p),
-                enableJob(p),
-                disableJob(p)
-              )
-            )
-          }
-        )
+
+      Table(Columns, model.seq, renderItem,
+        allowSelect = true,
+        actions = Some(rowActions(p)(_, _))
       )
     }
 
   }
 
   private[this] val component = ReactComponentB[Props]("JobSpecList").
-    initialState(State(Set.empty)).
+    stateless.
     renderBackend[Backend].
     componentDidMount($ => $.backend.mounted($.props)).
     build

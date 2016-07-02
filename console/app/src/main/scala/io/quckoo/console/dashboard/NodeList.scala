@@ -16,51 +16,37 @@
 
 package io.quckoo.console.dashboard
 
+import diode.data.Ready
 import diode.react.ModelProxy
+
 import io.quckoo.id.NodeId
-import io.quckoo.net.{NodeStatus, QuckooNode}
+import io.quckoo.net.QuckooNode
+import io.quckoo.console.components.Table
+
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
 
 /**
   * Created by alonsodomin on 04/04/2016.
   */
 object NodeList {
 
-  def NodeRow[N <: QuckooNode] = ReactComponentB[N]("NodeRow").
-    stateless.
-    render_P { node =>
-      val danger = node.status match {
-        case NodeStatus.Unreachable => true
-        case _                      => false
-      }
-      <.tr(danger ?= ^.color.red,
-        <.td(node.id.toString()),
-        <.td(node.location.host),
-        <.td(node.status.toString())
-      )
-    } build
+  final val Columns = List("ID", "Location", "Status")
 
   case class Props[N <: QuckooNode](proxy: ModelProxy[Map[NodeId, N]])
 
   class Backend[N <: QuckooNode]($: BackendScope[Props[N], Unit]) {
 
+    def renderItem(props: Props[N])(nodeId: NodeId, node: N, column: String): ReactNode = column match {
+      case "ID" => nodeId.toString
+      case "Location" => node.location.host
+      case "Status"   => node.status.toString
+    }
+
     def render(props: Props[N]) = {
       val model = props.proxy()
-      <.table(^.`class` := "table table-striped table-hover",
-        <.thead(
-          <.tr(
-            <.th("ID"),
-            <.th("Location"),
-            <.th("Status")
-          )
-        ),
-        <.tbody(
-          model.values.map { node =>
-            NodeRow.withKey(node.id.toString())(node)
-          }
-        )
-      )
+      val items = model.values.map(node => node.id -> Ready(node)).toSeq
+
+      Table(Columns, items, renderItem(props))
     }
 
   }
