@@ -30,13 +30,13 @@ object TriggerSelect {
     val Immediate, After, Every, At = Value
   }
 
-  val TriggerOption = ReactComponentB[TriggerType.Value]("TriggerOption").
+  private val TriggerOption = ReactComponentB[TriggerType.Value]("TriggerOption").
     stateless.
     render_P { triggerType =>
       <.option(^.value := triggerType.id, triggerType.toString())
     } build
 
-  def triggerOptions: Seq[ReactElement] =
+  private[this] def triggerOptions: Seq[ReactElement] =
     TriggerType.values.toSeq.map(t => TriggerOption.withKey(t.id)(t))
 
   case class Props(value: Option[Trigger], onUpdate: Option[Trigger] => Callback)
@@ -94,7 +94,7 @@ object TriggerSelect {
 
   }
 
-  val component = ReactComponentB[Props]("TriggerSelect").
+  private[this] val component = ReactComponentB[Props]("TriggerSelect").
     initialState_P(props => State(value = props.value)).
     renderBackend[Backend].
     build

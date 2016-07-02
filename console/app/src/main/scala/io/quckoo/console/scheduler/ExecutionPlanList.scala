@@ -56,6 +56,11 @@ object ExecutionPlanList {
         plan.render { item =>
           val jobSpec = scope.jobSpecs.get(item.jobId)
           List(
+            <.td(<.input.checkbox(
+              ^.id := s"selectPlan_$planId",
+              ^.value := selected,
+              ^.onChange --> toggleSelected(planId)
+            )),
             <.td(jobSpec.render(_.displayName)),
             <.td(item.currentTaskId.map(_.toString())),
             <.td(item.trigger.toString()),
