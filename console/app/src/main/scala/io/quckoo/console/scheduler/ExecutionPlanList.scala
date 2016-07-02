@@ -46,7 +46,7 @@ object ExecutionPlanList {
   private[this] val PlanRow = ReactComponentB[RowProps]("ExecutionPlanRow").
     stateless.
     render_P { case RowProps(planId, plan, scope, selected, toggleSelected) =>
-      <.tr(
+      <.tr(selected ?= (^.`class` := "info"),
         plan.renderFailed { ex =>
           <.td(^.colSpan := 6, Notification.danger(ExceptionThrown(ex)))
         },
@@ -74,7 +74,7 @@ object ExecutionPlanList {
     } build
 
   final case class Props(proxy: ModelProxy[UserScope])
-  final case class State(selected: Set[PlanId])
+  final case class State(selected: Set[PlanId], allSelected: Boolean = false)
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -90,9 +90,23 @@ object ExecutionPlanList {
       loadJobs >> loadPlans
     }
 
-    def toggleSelected(props: Props)(planId: PlanId): Callback = ???
+    def toggleSelected(props: Props)(planId: PlanId): Callback = {
+      $.modState { state =>
+        val newSet = {
+          if (state.selected.contains(planId))
+            state.selected - planId
+          else state.selected + planId
+        }
+        state.copy(selected = newSet, allSelected = newSet.size == props.proxy().executionPlans.size)
+      }
+    }
 
-    def toggleSelectAll(props: Props): Callback = ???
+    def toggleSelectAll(props: Props): Callback = {
+      $.modState { state =>
+        if (state.allSelected) state.copy(selected = Set.empty, allSelected = false)
+        else state.copy(selected = props.proxy().executionPlans.keySet, allSelected = true)
+      }
+    }
 
     def render(props: Props, state: State) = {
       val model = props.proxy()
