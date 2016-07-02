@@ -16,6 +16,7 @@
 
 package io.quckoo.console.dashboard
 
+import diode.AnyAction._
 import diode.react.ModelProxy
 
 import io.quckoo.net.{NodeStatus, QuckooState}

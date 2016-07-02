@@ -18,10 +18,11 @@ package io.quckoo.protocol.cluster
 
 import io.quckoo.id.NodeId
 import io.quckoo.net.Location
+import io.quckoo.protocol.{Command, Event}
 
-case object GetClusterStatus
+case object GetClusterStatus extends Command
 
-sealed trait MasterEvent
+sealed trait MasterEvent extends Event
 
 final case class MasterJoined(nodeId: NodeId, location: Location) extends MasterEvent
 final case class MasterReachable(nodeId: NodeId) extends MasterEvent

@@ -54,7 +54,7 @@ object RegistryPageView {
 
     def jobEdited(spec: Option[JobSpec]): Callback = {
       def dispatchAction(props: Props): Callback =
-        spec.map(RegisterJob).map(props.proxy.dispatch).getOrElse(Callback.empty)
+        spec.map(RegisterJob).map(props.proxy.dispatch[RegisterJob]).getOrElse(Callback.empty)
 
       def updateState(): Callback =
         $.modState(_.copy(showForm = false))

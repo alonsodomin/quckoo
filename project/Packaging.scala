@@ -26,18 +26,18 @@ object Packaging {
     dockerExposedVolumes := Seq(
       s"$linuxHomeLocation/conf",
       s"$linuxHomeLocation/resolver/cache",
-      s"$linuxHomeLocation/resolver/repository"
+      s"$linuxHomeLocation/resolver/local"
     ),
     defaultLinuxInstallLocation in Docker := linuxHomeLocation,
-    dockerCommands += Cmd("ENV", "QUCKOO_HOME", linuxHomeLocation)
-  )
-
-  lazy val masterDockerSettings = dockerSettings ++ Seq(
-    dockerExposedPorts := Seq(2551, 8095),
     dockerCommands ++= Seq(
+      Cmd("ENV", "QUCKOO_HOME", linuxHomeLocation),
       ExecCmd("RUN mkdir -p resolver/cache"),
       ExecCmd("RUN mkdir -p resolver/local")
     )
+  )
+
+  lazy val masterDockerSettings = dockerSettings ++ Seq(
+    dockerExposedPorts := Seq(2551, 8095)
   )
 
   lazy val workerDockerSettings = dockerSettings ++ Seq(

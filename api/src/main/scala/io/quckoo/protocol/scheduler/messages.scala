@@ -16,18 +16,17 @@
 
 package io.quckoo.protocol.scheduler
 
-import io.quckoo.Task
 import io.quckoo.{Task, Trigger}
 import io.quckoo.Trigger.Immediate
 import io.quckoo.id._
+import io.quckoo.protocol.{Command, Event}
 
 import monocle.macros.Lenses
 
 import scala.concurrent.duration.FiniteDuration
 
-sealed trait SchedulerMessage
-sealed trait SchedulerCommand extends SchedulerMessage
-sealed trait SchedulerEvent extends SchedulerMessage
+sealed trait SchedulerCommand extends Command
+sealed trait SchedulerEvent extends Event
 
 @Lenses
 final case class ScheduleJob(
@@ -41,8 +40,8 @@ final case class TaskScheduled(jobId: JobId, planId: PlanId, taskId: TaskId) ext
 final case class TaskTriggered(jobId: JobId, planId: PlanId, taskId: TaskId) extends SchedulerEvent
 final case class TaskCompleted(jobId: JobId, planId: PlanId, taskId: TaskId, outcome: Task.Outcome) extends SchedulerEvent
 
-final case class JobNotEnabled(jobId: JobId) extends SchedulerMessage
-final case class JobFailedToSchedule(jobId: JobId, cause: Throwable) extends SchedulerMessage
+final case class JobNotEnabled(jobId: JobId) extends SchedulerEvent
+final case class JobFailedToSchedule(jobId: JobId, cause: Throwable) extends SchedulerEvent
 
 final case class ExecutionPlanStarted(jobId: JobId, planId: PlanId) extends SchedulerEvent
 final case class ExecutionPlanFinished(jobId: JobId, planId: PlanId) extends SchedulerEvent

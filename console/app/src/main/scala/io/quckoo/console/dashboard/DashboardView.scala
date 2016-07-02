@@ -48,15 +48,15 @@ object DashboardView {
     def render(props: Props) = {
       <.div(^.`class` := "container",
         <.div(^.`class` := "row",
-          <.div(Style.leftPanel, props.proxy.connect(_.clusterState)(ClusterView(_))),
+          <.div(Style.leftPanel, props.proxy.wrap(_.clusterState)(ClusterView(_))),
           <.div(Style.content,
             <.div(
               <.h3("Master nodes"),
-              props.proxy.connect(_.clusterState.masterNodes)(NodeList(_))
+              props.proxy.wrap(_.clusterState.masterNodes)(NodeList(_))
             ),
             <.div(
               <.h3("Worker nodes"),
-              props.proxy.connect(_.clusterState.workerNodes)(NodeList(_))
+              props.proxy.wrap(_.clusterState.workerNodes)(NodeList(_))
             )
           )
         )

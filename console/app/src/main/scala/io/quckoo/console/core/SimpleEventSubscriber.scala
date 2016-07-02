@@ -16,6 +16,7 @@
 
 package io.quckoo.console.core
 
+import diode.ActionType
 import monix.execution.Ack
 import monix.execution.Ack.Continue
 import monix.reactive.Observer
@@ -26,7 +27,7 @@ import scala.concurrent.Future
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-class SimpleEventSubscriber[A <: AnyRef] extends Observer[A] {
+class SimpleEventSubscriber[A : ActionType] extends Observer[A] {
 
   override def onError(ex: Throwable): Unit = {
     console.log(s"${ex.getClass.getName}: ${ex.getMessage}")

@@ -40,11 +40,11 @@ object SiteMap {
   def dashboardPage(proxy: ModelProxy[ConsoleScope]) =
     proxy.wrap(identity(_))(DashboardView(_))
   def loginPage(proxy: ModelProxy[ConsoleScope])(referral: Option[ConsoleRoute]) =
-    proxy.connect(identity(_))(p => LoginPageView(p, referral))
+    proxy.wrap(identity(_))(p => LoginPageView(p, referral))
   def registryPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.connect(identity(_))(RegistryPageView(_))
+    proxy.wrap(identity(_))(RegistryPageView(_))
   def schedulerPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.connect(identity(_))(SchedulerPageView(_))
+    proxy.wrap(identity(_))(SchedulerPageView(_))
 
   private[this] def publicPages(proxy: ModelProxy[ConsoleScope]) = RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
     import dsl._
@@ -85,14 +85,11 @@ object SiteMap {
   )
 
   def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute], res: Resolution[ConsoleRoute]): ReactElement = {
-    def navigation = proxy.connect(_.currentUser){ user =>
+    def navigation = proxy.wrap(_.currentUser){ user =>
       Navigation(mainMenu.head, mainMenu, ctrl, res.page, user)
     }
 
-    <.div(
-      navigation,
-      res.render()
-    )
+    <.div(navigation, res.render())
   }
 
   val baseUrl = BaseUrl.fromWindowOrigin_/

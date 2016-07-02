@@ -9,7 +9,7 @@ object Dependencies {
     // Logging -------
 
     val slf4s = "1.7.12"
-    val log4j = "2.3"
+    val log4j = "2.6.1"
 
     // Testing --------
 
@@ -19,7 +19,7 @@ object Dependencies {
 
     // Akka ----------
 
-    val akka = "2.4.6"
+    val akka = "2.4.7"
     val kryo = "0.4.1"
 
     // ScalaJS -------
@@ -27,7 +27,7 @@ object Dependencies {
     val scalaJsReact = "0.11.1"
     val scalaCss = "0.4.1"
 
-    val diode = "0.5.2"
+    val diode = "1.0.0"
 
     val upickle = "0.3.9"
     val scalatags = "0.4.6"
@@ -37,9 +37,9 @@ object Dependencies {
     // Other utils ---
 
     val scopt = "3.3.0"
-    val monocle = "1.2.0"
-    val scalaz = "7.2.1"
-    val monix  = "2.0-RC3"
+    val monocle = "1.2.2"
+    val scalaz = "7.2.2"
+    val monix  = "2.0-RC8"
   }
 
   // Common library definitions
@@ -65,7 +65,7 @@ object Dependencies {
       object persistence {
         val core      = "com.typesafe.akka"   %% "akka-persistence"              % version.akka
         val query     = "com.typesafe.akka"   %% "akka-persistence-query-experimental" % version.akka
-        val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra"    % "0.14"
+        val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra"    % "0.17"
         val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % "1.2.13" % Test
       }
 
@@ -89,14 +89,6 @@ object Dependencies {
     val scalaTest = "org.scalatest" %% "scalatest"                   % version.scalaTest % Test
     val scalaMock = "org.scalamock" %% "scalamock-scalatest-support" % version.scalaMock % Test
     val mockito   = "org.mockito"    % "mockito-core"                % version.mockito   % Test
-
-    val scalaz = "org.scalaz" %% "scalaz-core" % version.scalaz
-
-    object Monocle {
-      val core    = "com.github.julien-truffaut"  %%  "monocle-core"    % version.monocle
-      val `macro` = "com.github.julien-truffaut"  %%  "monocle-macro"   % version.monocle
-    }
-
   }
 
   object compiler {
@@ -111,28 +103,24 @@ object Dependencies {
 
       "com.lihaoyi"   %%% "upickle"     % version.upickle,
       "org.scalaz"    %%% "scalaz-core" % version.scalaz,
-      "org.scalatest" %%% "scalatest"   % version.scalaTest % Test
+      "org.scalatest" %%% "scalatest"   % version.scalaTest % Test,
+
+      "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
+      "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle
     )
   }
   lazy val coreJS = Def.settings {
-    libraryDependencies ++= Seq(
-      "io.github.widok"                  %%% "scala-js-momentjs" % "0.1.4",
-      "com.github.japgolly.fork.monocle" %%% "monocle-core"      % s"${version.monocle}-2",
-      "com.github.japgolly.fork.monocle" %%% "monocle-macro"     % s"${version.monocle}-2"
-    )
+    libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % "0.1.4"
   }
-  lazy val coreJVM = Def.settings {
-    import libs._
-    libraryDependencies ++= Seq(Monocle.core, Monocle.`macro`)
-  }
+  //lazy val coreJVM = Def.settings { }
 
   // API module ===============================
 
   lazy val api = Def.settings(
     addCompilerPlugin(compiler.macroParadise),
     libraryDependencies ++= Seq(
-      //"org.monifu" %%% "monifu" % version.monifu
-      "io.monix" %%% "monix-reactive" % version.monix
+      "me.chrons" %%% "diode"          % version.diode,
+      "io.monix"  %%% "monix-reactive" % version.monix
     )
   )
 
@@ -170,7 +158,6 @@ object Dependencies {
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
       "biz.enef"         %%% "slogging"       % "0.3",
-      "me.chrons"        %%% "diode"          % version.diode,
       "me.chrons"        %%% "diode-react"    % version.diode,
       "be.doeraene"      %%% "scalajs-jquery" % "0.9.0",
       "org.singlespaced" %%% "scalajs-d3"     % "0.3.1",

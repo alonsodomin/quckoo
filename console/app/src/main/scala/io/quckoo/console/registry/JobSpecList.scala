@@ -16,6 +16,7 @@
 
 package io.quckoo.console.registry
 
+import diode.AnyAction._
 import diode.data.{Pot, PotMap}
 import diode.react.ModelProxy
 import diode.react.ReactPot._

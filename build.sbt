@@ -70,8 +70,7 @@ lazy val core = (crossProject in file("core")).
   settings(scoverageSettings: _*).
   settings(Dependencies.core: _*).
   jsSettings(commonJsSettings: _*).
-  jsSettings(Dependencies.coreJS: _*).
-  jvmSettings(Dependencies.coreJVM: _*)
+  jsSettings(Dependencies.coreJS: _*)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm

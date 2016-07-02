@@ -16,7 +16,9 @@
 
 package io.quckoo.console.core
 
+import diode.{Action, ActionType}
 import diode.data.{AsyncAction, Pot, PotState}
+
 import io.quckoo._
 import io.quckoo.client.QuckooClient
 import io.quckoo.console.ConsoleRoute
@@ -28,20 +30,25 @@ import io.quckoo.protocol.scheduler.TaskDetails
 import scala.util.{Failure, Try}
 import scalaz.ValidationNel
 
-final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None)
-final case class LoggedIn(client: QuckooClient, referral: Option[ConsoleRoute])
+trait Event
+object Event {
+  implicit object eventType extends ActionType[Event]
+}
 
-case object Logout
-case object LoggedOut
-case object LoginFailed
+final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None) extends Action
+final case class LoggedIn(client: QuckooClient, referral: Option[ConsoleRoute]) extends Event
 
-final case class NavigateTo(route: ConsoleRoute)
+case object Logout extends Action
+case object LoggedOut extends Event
+case object LoginFailed extends Event
 
-final case class ClusterStateLoaded(state: QuckooState)
-case object StartClusterSubscription
+final case class NavigateTo(route: ConsoleRoute) extends Action
 
-case object LoadJobSpecs
-final case class JobSpecsLoaded(value: Map[JobId, Pot[JobSpec]])
+final case class ClusterStateLoaded(state: QuckooState) extends Event
+case object StartClusterSubscription extends Action
+
+case object LoadJobSpecs extends Action
+final case class JobSpecsLoaded(value: Map[JobId, Pot[JobSpec]]) extends Event
 
 final case class RefreshJobSpecs(
     keys: Set[JobId],
@@ -54,10 +61,10 @@ final case class RefreshJobSpecs(
 
 }
 
-final case class RegisterJobResult(jobId: ValidationNel[Fault, JobId])
+final case class RegisterJobResult(jobId: ValidationNel[Fault, JobId]) extends Event
 
-case object LoadExecutionPlans
-final case class ExecutionPlansLoaded(plans: Map[PlanId, Pot[ExecutionPlan]])
+case object LoadExecutionPlans extends Action
+final case class ExecutionPlansLoaded(plans: Map[PlanId, Pot[ExecutionPlan]]) extends Event
 
 final case class RefreshExecutionPlans(
     keys: Set[PlanId],
@@ -70,9 +77,9 @@ final case class RefreshExecutionPlans(
 
 }
 
-case object LoadTasks
+case object LoadTasks extends Action
 
-final case class TasksLoaded(tasks: Map[TaskId, Pot[TaskDetails]])
+final case class TasksLoaded(tasks: Map[TaskId, Pot[TaskDetails]]) extends Event
 
 final case class RefreshTasks(
     keys: Set[TaskId],

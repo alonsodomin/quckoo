@@ -16,6 +16,7 @@
 
 package io.quckoo.console.scheduler
 
+import diode.AnyAction._
 import diode.data.{PotMap, Ready}
 import diode.react.ModelProxy
 

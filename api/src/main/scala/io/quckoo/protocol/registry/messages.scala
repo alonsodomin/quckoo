@@ -19,14 +19,15 @@ package io.quckoo.protocol.registry
 import io.quckoo.JobSpec
 import io.quckoo.fault._
 import io.quckoo.id.{ArtifactId, JobId}
+import io.quckoo.protocol.{Command, Event}
 
 import scalaz.NonEmptyList
 
-sealed trait RegistryCommand
+sealed trait RegistryCommand extends Command
 sealed trait RegistryReadCommand extends RegistryCommand
 sealed trait RegistryWriteCommand extends RegistryCommand
 
-sealed trait RegistryEvent {
+sealed trait RegistryEvent extends Event {
   def jobId: JobId
 }
 sealed trait RegistryResolutionEvent extends RegistryEvent

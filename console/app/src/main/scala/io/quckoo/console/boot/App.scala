@@ -52,6 +52,6 @@ object App extends JSApp {
 
     val container = dom.document.getElementById("viewport")
     //dom.document.head.appendChild(GlobalStyle.contents)
-    ConsoleCircuit.connect(identity(_))(p => SiteMap(p)).render(container)
+    ConsoleCircuit.wrap(identity(_))(p => SiteMap(p)).render(container)
   }
 }

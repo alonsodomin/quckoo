@@ -47,7 +47,7 @@ object SchedulerPageView {
 
     def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
-        scheduleJob.map(props.proxy.dispatch).getOrElse(Callback.empty)
+        scheduleJob.map(props.proxy.dispatch[ScheduleJob]).getOrElse(Callback.empty)
 
       def updateState(): Callback =
         $.modState(_.copy(showForm = false))
@@ -64,7 +64,7 @@ object SchedulerPageView {
         props.proxy().notification,
         Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan"),
         if (state.showForm) {
-          props.proxy.connect(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
+          props.proxy.wrap(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
         } else EmptyTag,
         TabPanel(
           "Execution Plans" -> props.proxy.wrap(_.userScope)(ExecutionPlanList(_)),
