@@ -29,6 +29,8 @@ import io.quckoo.protocol.registry._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
+import scalaz.NonEmptyList
+
 /**
  * Created by alonsodomin on 17/10/2015.
  */
@@ -68,9 +70,9 @@ object JobSpecList {
 
     def rowActions(props: Props)(jobId: JobId, jobSpec: JobSpec) = {
       Seq(if (jobSpec.disabled) {
-        Table.RowAction[JobId, JobSpec](Seq(Icons.play, "Enable"), enableJob(props))
+        Table.RowAction[JobId, JobSpec](NonEmptyList(Icons.play, "Enable"), enableJob(props))
       } else {
-        Table.RowAction[JobId, JobSpec](Seq(Icons.stop, "Disable"), disableJob(props))
+        Table.RowAction[JobId, JobSpec](NonEmptyList(Icons.stop, "Disable"), disableJob(props))
       })
     }
 

@@ -8,6 +8,8 @@ import io.quckoo.fault.ExceptionThrown
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
+import scalaz.NonEmptyList
+
 /**
   * Created by alonsodomin on 02/07/2016.
   */
@@ -29,7 +31,7 @@ object Table {
 
   type ItemSeq[Id, Item] = Traversable[(Id, Pot[Item])]
 
-  final case class RowAction[Id, Item](render: Seq[ReactNode], execute: RowCallback[Id])
+  final case class RowAction[Id, Item](children: NonEmptyList[ReactNode], execute: RowCallback[Id])
 
   private[this] final case class RowProps[Id, Item](
     rowId: Id,
@@ -74,7 +76,7 @@ object Table {
             factory(props.rowId, item) map { action =>
               Button(Button.Props(
                 Some(action.execute(props.rowId))),
-                action.render: _*
+                action.children.list.toList: _*
               )
             }
           } getOrElse Seq.empty[ReactElement]

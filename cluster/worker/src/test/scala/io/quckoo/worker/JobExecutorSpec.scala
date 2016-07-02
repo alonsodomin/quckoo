@@ -11,7 +11,6 @@ import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.{ArtifactId, TaskId}
 import io.quckoo.resolver.Artifact
 
-import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
 /**
@@ -26,7 +25,7 @@ object JobExecutorSpec {
 }
 
 class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatSpecLike with Matchers
-  with BeforeAndAfterAll with ImplicitSender with DefaultTimeout with MockFactory {
+  with BeforeAndAfterAll with ImplicitSender with DefaultTimeout {
 
   import JobExecutorSpec._
 

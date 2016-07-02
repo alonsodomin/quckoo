@@ -27,6 +27,7 @@ import scalaz._
   */
 trait Resolve {
 
-  def apply(artifactId: ArtifactId, download: Boolean)(implicit ec: ExecutionContext): Future[ValidationNel[ResolutionFault, Artifact]]
+  def apply(artifactId: ArtifactId, download: Boolean)
+           (implicit ec: ExecutionContext): Future[ValidationNel[ResolutionFault, Artifact]]
 
 }

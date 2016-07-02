@@ -3,7 +3,6 @@ package io.quckoo.resolver
 import java.net.URL
 
 import io.quckoo.id.ArtifactId
-import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.collection.mutable
@@ -12,7 +11,7 @@ import scala.util.Success
 /**
  * Created by aalonsodominguez on 26/07/15.
  */
-class ArtifactTest extends FlatSpec with Matchers with MockFactory with Inside {
+class ArtifactTest extends FlatSpec with Matchers with Inside {
 
   class StubArtifactClassLoader(urls: Array[URL]) extends ArtifactClassLoader(Array.empty) {
     private val classMap = mutable.Map.empty[String, Class[_]]

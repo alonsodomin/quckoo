@@ -14,7 +14,6 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
 import io.quckoo.{JobSpec, Task, Trigger}
 
-import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 
 import scala.concurrent.duration._
@@ -33,7 +32,7 @@ object ExecutionDriverSpec {
 class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec"))
     with ImplicitSender with ImplicitTimeSource
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers
-    with Inside with MockFactory {
+    with Inside {
 
   import ExecutionDriver._
   import ExecutionDriverSpec._

@@ -145,7 +145,7 @@ object Dependencies {
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
-      Akka.kryoSerialization, scalaTest, scalaMock
+      Akka.kryoSerialization, scalaTest
     )
   }
 
@@ -227,14 +227,14 @@ object Dependencies {
     libraryDependencies ++= Seq(Log4j.slf4jImpl,
       Akka.sharding, Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
-      Akka.persistence.query, Akka.persistence.memory, scopt, scalaTest, scalaMock,
+      Akka.persistence.query, Akka.persistence.memory, scopt, scalaTest,
       authenticatJwt
     )
   }
   lazy val clusterWorker = Def.settings {
     import libs._
     libraryDependencies ++= Seq(Log4j.slf4jImpl,
-      Akka.testKit, scopt, scalaTest, scalaMock
+      Akka.testKit, scopt, scalaTest
     )
   }
 
