@@ -25,6 +25,16 @@ object Table {
     render_P(node => <.td(node)).
     build
 
+  private[this] val CheckboxCell = ReactComponentB[(String, Boolean, Callback)]("CheckboxCell").
+    stateless.
+    render_P { case (id, selected, action) =>
+      <.td(<.input.checkbox(
+        ^.id := id,
+        ^.checked := selected,
+        ^.onChange --> action
+      ))
+    } build
+
   type RowCallback[Id] = Id => Callback
   type RowCellRender[Id, Item] = (Id, Item, String) => ReactNode
   type RowActionsFactory[Id, Item] = Option[(Id, Item) => Seq[RowAction[Id, Item]]]
@@ -63,11 +73,13 @@ object Table {
             }
 
             if (props.allowSelect) {
-              val checkboxCell: ReactElement = <.td(<.input.checkbox(
-                ^.id := s"selectItem_${props.rowId}",
-                ^.value := props.selected,
-                ^.onChange --> props.toggleSelected(props.rowId)
-              ))
+              val checkboxCell = CheckboxCell.
+                withKey(s"select-${props.rowId}")((
+                  s"select-item_${props.rowId}",
+                  props.selected,
+                  props.toggleSelected(props.rowId)
+                ))
+
               checkboxCell :: columns
             } else columns
           }
@@ -128,11 +140,10 @@ object Table {
 
         val selectableColumns = {
           if (props.allowSelect) {
-            val selectAllCheckbox: ReactElement = <.th(<.input.checkbox(
-              ^.id := "selectAllPlans",
-              ^.value := false,
-              ^.onChange --> toggleSelectAll(props)
-            ))
+            val selectAllCheckbox = CheckboxCell.
+              withKey("select-all")(
+                ("selectAll", state.allSelected, toggleSelectAll(props))
+              )
             selectAllCheckbox :: columns
           } else columns
         }

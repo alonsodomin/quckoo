@@ -70,7 +70,7 @@ object ExecutionPlanList {
 
     def render(props: Props) = {
       val model = props.proxy()
-      Table(Columns, model.executionPlans.seq, renderItem(model))
+      Table(Columns, model.executionPlans.seq, renderItem(model), allowSelect = true)
     }
 
   }
