@@ -70,6 +70,6 @@ object TaskList {
     build
 
   def apply(proxy: ModelProxy[PotMap[TaskId, TaskDetails]]) =
-    component(Props(proxy))
+    component.withKey("task-list")(Props(proxy))
 
 }

@@ -35,7 +35,7 @@ object ExecutionPlanList {
 
   private[this] type RowAction = PlanId => Callback
 
-  private[this] case class RowProps(
+  private[this] final case class RowProps(
       planId: PlanId,
       plan: Pot[ExecutionPlan],
       scope: UserScope,
@@ -148,6 +148,7 @@ object ExecutionPlanList {
     componentDidMount($ => $.backend.mounted($.props)).
     build
 
-  def apply(proxy: ModelProxy[UserScope]) = component(Props(proxy))
+  def apply(proxy: ModelProxy[UserScope]) =
+    component.withKey("execution-plan-list")(Props(proxy))
 
 }

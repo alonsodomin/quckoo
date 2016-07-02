@@ -8,6 +8,20 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object TabPanel {
 
+  private[this] final case class TabItemProps(
+    title: String,
+    selected: Boolean,
+    onClick: String => Callback
+  )
+
+  private[this] val TabItem = ReactComponentB[TabItemProps]("TabItem").
+    stateless.
+    render_P { case TabItemProps(title, selected, onClick) =>
+      <.li(^.role := "presentation", selected ?= (^.`class` := "active"),
+        <.a(^.onClick --> onClick(title), title)
+      )
+    } build
+
   final case class Props(items: Map[String, ReactNode], initial: String)
   final case class State(selected: Option[String] = None)
 
@@ -20,12 +34,11 @@ object TabPanel {
       val currentTab = state.selected.getOrElse(props.initial)
       <.div(
         <.ul(^.`class` := "nav nav-tabs",
-          props.items.keys.map(title => {
-            val selected = currentTab == title
-            <.li(^.role := "presentation", selected ?= (^.`class` := "active"),
-              <.a(^.onClick --> tabClicked(title), title)
+          props.items.keys.map { title =>
+            TabItem.withKey(s"tab-$title")(
+              TabItemProps(title, currentTab == title, tabClicked)
             )
-          })
+          }
         ),
         <.div(props.items(currentTab))
       )
