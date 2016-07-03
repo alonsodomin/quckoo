@@ -110,7 +110,7 @@ object Dependencies {
     )
   }
   lazy val coreJS = Def.settings {
-    libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % "0.1.4"
+    libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % "0.1.5"
   }
   //lazy val coreJVM = Def.settings { }
 

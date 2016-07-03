@@ -64,7 +64,7 @@ class MomentJSDateTime(private val date: MDate) extends DateTime {
   def toUTC: DateTime = new MomentJSDateTime(date.utc())
 
   def toEpochMillis: Long =
-    date.milliseconds()
+    date.millisecond()
 
   override def toString: String =
     date.toISOString()

@@ -31,11 +31,11 @@ class MomentJSDate(date: MDate) extends Date {
   def this(dt: js.Date) =
     this(Moment.utc(dt))
 
-  def year: Int = date.years().toInt
+  def year: Int = date.year()
 
-  def month: Int = date.months().toInt
+  def month: Int = date.month()
 
-  def dayOfMonth: Int = date.days().toInt
+  def dayOfMonth: Int = date.day()
 
   def format(pattern: String) =
     date.format(pattern)

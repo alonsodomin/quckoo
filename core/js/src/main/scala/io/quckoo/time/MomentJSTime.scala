@@ -31,13 +31,13 @@ class MomentJSTime(time: MDate) extends Time {
   def this(hours: Int = 0, minutes: Int = 0, seconds: Int = 0, ms: Int = 0) =
     this(Moment.utc(js.Date.UTC(year = 0, month = 0, hours = hours, minutes = minutes, seconds = seconds, ms = ms)))
 
-  def hour: Int = time.hours().toInt
+  def hour: Int = time.hour()
 
-  def minute: Int = time.minutes().toInt
+  def minute: Int = time.minute()
 
-  def seconds: Int = time.seconds().toInt
+  def seconds: Int = time.second()
 
-  def milliseconds: Int = time.milliseconds()
+  def milliseconds: Int = time.millisecond()
 
   override def toString =
     time.format(DefaultPattern)
