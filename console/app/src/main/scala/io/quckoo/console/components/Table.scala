@@ -86,13 +86,12 @@ object Table {
 
           val actions: Seq[ReactElement] = props.actions.map { factory =>
             factory(props.rowId, item) map { action =>
-              Button(Button.Props(
+              Button().withKey(s"action-${props.rowId}")(Button.Props(
                 Some(action.execute(props.rowId))),
                 action.children.list.toList: _*
               )
             }
           } getOrElse Seq.empty[ReactElement]
-
 
           if (actions.nonEmpty) {
             val actionsCell: ReactElement = <.td(actions)
