@@ -94,15 +94,6 @@ object ExecutionPlanForm {
         case _                    => Seq()
       } toMap
 
-    def onJobUpdated(value: Option[JobId]): Callback =
-      $.setStateL(jobIdLens)(value)
-
-    def onTriggerUpdate(value: Option[Trigger]): Callback =
-      $.setStateL(triggerLens)(value)
-
-    def onTimeoutUpdate(value: Option[FiniteDuration]): Callback =
-      $.setStateL(timeoutLens)(value)
-
     // Not supported yet
     def onParamUpdate(name: String, value: String): Callback =
       Callback.empty
@@ -129,9 +120,9 @@ object ExecutionPlanForm {
         ),
         if (!state.showPreview) {
           <.div(
-            JobSelect(jobSpecs(props), jobIdLens.get(state), onJobUpdated),
-            TriggerSelect(triggerLens.get(state), onTriggerUpdate),
-            ExecutionTimeoutInput(timeoutLens.get(state), onTimeoutUpdate),
+            JobSelect(jobSpecs(props), jobIdLens.get(state), $.setStateL(jobIdLens)(_)),
+            TriggerSelect(triggerLens.get(state), $.setStateL(triggerLens)(_)),
+            ExecutionTimeoutInput(timeoutLens.get(state), $.setStateL(timeoutLens)(_)),
             ExecutionParameterList(Map.empty, onParamUpdate)
           )
         } else {

@@ -100,7 +100,7 @@ object Trigger {
           Some(time.plusMillis(millisDelay))
       }
 
-    override def isRecurring: Boolean = true
+    override val isRecurring: Boolean = true
 
   }
 

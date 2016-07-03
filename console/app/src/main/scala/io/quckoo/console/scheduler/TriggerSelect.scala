@@ -30,7 +30,7 @@ object TriggerSelect {
     val Immediate, After, Every, At = Value
   }
 
-  private val TriggerOption = ReactComponentB[TriggerType.Value]("TriggerOption").
+  private[this] val TriggerOption = ReactComponentB[TriggerType.Value]("TriggerOption").
     stateless.
     render_P { triggerType =>
       <.option(^.value := triggerType.id, triggerType.toString())
@@ -40,7 +40,18 @@ object TriggerSelect {
     TriggerType.values.toSeq.map(t => TriggerOption.withKey(t.id)(t))
 
   case class Props(value: Option[Trigger], onUpdate: Option[Trigger] => Callback)
-  case class State(selected: Option[TriggerType.Value] = None, value: Option[Trigger])
+  case class State(selected: Option[TriggerType.Value], value: Option[Trigger]) {
+
+    def this(trigger: Option[Trigger]) = {
+      this(trigger.map {
+        case Trigger.Immediate => TriggerType.Immediate
+        case _: Trigger.After  => TriggerType.After
+        case _: Trigger.Every  => TriggerType.Every
+        case _: Trigger.At     => TriggerType.At
+      }, trigger)
+    }
+
+  }
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -76,7 +87,8 @@ object TriggerSelect {
         <.div(^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "trigger", "Trigger"),
           <.div(^.`class` := "col-sm-10",
-            <.select(^.`class` := "form-control", ^.id := "trigger",
+            <.select(^.`class` := "form-control",
+              ^.id := "trigger",
               state.selected.map(v => ^.value := v.id),
               ^.onChange ==> onUpdateSelection,
               triggerOptions
@@ -95,7 +107,7 @@ object TriggerSelect {
   }
 
   private[this] val component = ReactComponentB[Props]("TriggerSelect").
-    initialState_P(props => State(value = props.value)).
+    initialState_P(props => new State(props.value)).
     renderBackend[Backend].
     build
 
