@@ -80,15 +80,12 @@ object ExecutionPlanForm {
       $.modState(_.copy(cancelled = false))
 
     def formClosed(props: Props, state: State): Callback = {
-      if (state.cancelled) Callback.empty
-      else {
-        def command: Option[ScheduleJob] = for {
-            jobId <- state.plan.jobId
-            trigger <- state.plan.trigger
-          } yield ScheduleJob(jobId, trigger, state.timeout)
+      def command: Option[ScheduleJob] = for {
+        jobId <- state.plan.jobId
+        trigger <- state.plan.trigger
+      } yield ScheduleJob(jobId, trigger, state.timeout)
 
-        props.handler(command)
-      }
+      props.handler(command)
     }
 
     def jobSpecs(props: Props): Map[JobId, JobSpec] =

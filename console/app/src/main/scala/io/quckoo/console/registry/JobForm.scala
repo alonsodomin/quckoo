@@ -73,16 +73,13 @@ object JobForm {
       $.modState(_.copy(cancelled = false))
 
     def formClosed(props: Props, state: State) = {
-      if (state.cancelled) Callback.empty
-      else {
-        val jobSpec: Option[JobSpec] = for {
-          name  <- state.spec.displayName
-          art   <- state.spec.artifactId
-          clazz <- state.spec.jobClass
-        } yield JobSpec(name, state.spec.description, art, clazz)
+      val jobSpec: Option[JobSpec] = for {
+        name  <- state.spec.displayName
+        art   <- state.spec.artifactId
+        clazz <- state.spec.jobClass
+      } yield JobSpec(name, state.spec.description, art, clazz)
 
-        props.handler(jobSpec)
-      }
+      props.handler(jobSpec)
     }
 
     def render(props: Props, state: State) = {
