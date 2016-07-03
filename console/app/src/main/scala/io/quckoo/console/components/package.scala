@@ -19,10 +19,13 @@ package io.quckoo.console
 import java.util.concurrent.TimeUnit
 
 import io.quckoo.Trigger
+import io.quckoo.id.ArtifactId
 import io.quckoo.time.{DateTime, MomentJSDate, MomentJSTime}
+
 import japgolly.scalajs.react.ReactNode
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.vdom.prefix_<^._
+
 import org.scalajs.jquery.JQuery
 
 import scala.concurrent.duration.FiniteDuration
@@ -43,6 +46,7 @@ package object components {
   implicit val dateReuse = Reusability.byRef[MomentJSDate]
   implicit val timeReuse = Reusability.byRef[MomentJSTime]
   implicit val dateTimeReuse = Reusability.byRef[DateTime]
+  implicit val artifactIdReuse = Reusability.byRef[ArtifactId]
 
   implicit val immediateTriggerReuse = Reusability.byRef[Trigger.Immediate.type]
   implicit val afterTriggerReuse = Reusability.caseClass[Trigger.After]
