@@ -15,29 +15,9 @@ import scalaz.NonEmptyList
   */
 object Table {
 
-  private[this] val HeaderCell = ReactComponentB[String]("HeaderCell").
-    stateless.
-    render_P(title => <.th(title)).
-    build
-
-  private[this] val BodyCell = ReactComponentB[ReactNode]("BodyCell").
-    stateless.
-    render_P(node => <.td(node)).
-    build
-
-  private[this] val CheckboxCell = ReactComponentB[(String, Boolean, Callback)]("CheckboxCell").
-    stateless.
-    render_P { case (id, selected, action) =>
-      <.td(<.input.checkbox(
-        ^.id := id,
-        ^.checked := selected,
-        ^.onChange --> action
-      ))
-    } build
-
   type RowCallback[Id] = Id => Callback
   type RowCellRender[Id, Item] = (Id, Item, String) => ReactNode
-  type RowActionsFactory[Id, Item] = Option[(Id, Item) => Seq[RowAction[Id, Item]]]
+  type RowActionsFactory[Id, Item] = (Id, Item) => Seq[RowAction[Id, Item]]
 
   type ItemSeq[Id, Item] = Traversable[(Id, Pot[Item])]
 
@@ -51,8 +31,43 @@ object Table {
     allowSelect: Boolean,
     selected: Boolean,
     toggleSelected: RowCallback[Id],
-    actions: RowActionsFactory[Id, Item]
+    actions: Option[RowActionsFactory[Id, Item]]
   )
+
+  private[this] val HeaderCell = ReactComponentB[String]("HeaderCell").
+    stateless.
+    render_P(title => <.th(title)).
+    build
+
+  private[this] val BodyCell = ReactComponentB[ReactNode]("BodyCell").
+    stateless.
+    render_P(node => <.td(node)).
+    build
+
+  private[this] type CheckboxCellProps = (String, Boolean, Callback)
+  private[this] val CheckboxCell = ReactComponentB[CheckboxCellProps]("CheckboxCell").
+    stateless.
+    render_P { case (id, selected, action) =>
+      <.td(<.input.checkbox(
+        ^.id := id,
+        ^.checked := selected,
+        ^.onChange --> action
+      ))
+    } build
+
+  private[this] type ActionsCellProps[Id, Item] = (Id, Item, RowActionsFactory[Id, Item])
+  private[this] def actionsCell[Id, Item] = ReactComponentB[ActionsCellProps[Id, Item]]("ActionsCell").
+    stateless.
+    render_P { case (id, item, factory) =>
+      <.td(
+        factory(id, item).zipWithIndex.map { case (action, idx) =>
+          Button().withKey(s"action-$id-$idx")(Button.Props(
+            Some(action.execute(id))),
+            action.children.list.toList: _*
+          )
+        }
+      )
+    } build
 
   private[this] def row[Id, Item] = ReactComponentB[RowProps[Id, Item]]("Row").
     stateless.
@@ -75,7 +90,7 @@ object Table {
             if (props.allowSelect) {
               val checkboxCell = CheckboxCell.
                 withKey(s"select-${props.rowId}")((
-                  s"select-item_${props.rowId}",
+                  s"select-item-${props.rowId}",
                   props.selected,
                   props.toggleSelected(props.rowId)
                 ))
@@ -84,19 +99,13 @@ object Table {
             } else columns
           }
 
-          val actions: Seq[ReactElement] = props.actions.map { factory =>
-            factory(props.rowId, item) map { action =>
-              Button().withKey(s"action-${props.rowId}")(Button.Props(
-                Some(action.execute(props.rowId))),
-                action.children.list.toList: _*
-              )
-            }
-          } getOrElse Seq.empty[ReactElement]
-
-          if (actions.nonEmpty) {
-            val actionsCell: ReactElement = <.td(actions)
-            cells :+ actionsCell
-          } else cells
+          val actions: Option[ReactElement] = props.actions.map { actions =>
+            actionsCell[Id, Item].withKey(s"actions-${props.rowId}")(
+              (props.rowId, item, actions)
+            )
+          }
+          actions.map(actCell => cells :+ actCell).
+            getOrElse[List[ReactElement]](cells)
         }
       )
     } build
@@ -106,7 +115,7 @@ object Table {
     items: ItemSeq[Id, Item],
     render: RowCellRender[Id, Item],
     allowSelect: Boolean,
-    actions: RowActionsFactory[Id, Item]
+    actions: Option[RowActionsFactory[Id, Item]]
   )
   final case class State[Id](selected: Set[Id], allSelected: Boolean = false)
 
@@ -178,7 +187,7 @@ object Table {
                       items: ItemSeq[Id, Item],
                       render: RowCellRender[Id, Item],
                       allowSelect: Boolean = false,
-                      actions: RowActionsFactory[Id, Item] = None) =
+                      actions: Option[RowActionsFactory[Id, Item]] = None) =
     component.apply(Props(headers, items, render, allowSelect, actions))
 
 }
