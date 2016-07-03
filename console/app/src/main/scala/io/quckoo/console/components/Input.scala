@@ -35,13 +35,18 @@ object Input {
     def to: A => String
   }
   object Converter {
-    abstract class BaseConverter[A] extends Converter[A] {
+    abstract sealed class BaseConverter[A] extends Converter[A] {
       override def to: A => String = _.toString
     }
 
     implicit val string: Converter[String] = new Converter[String] {
       def to: String => String = identity
       def from: String => String = identity
+    }
+
+    implicit val password: Converter[Password] = new Converter[Password] {
+      def to: Password => String = _.value
+      def from: String => Password = Password(_)
     }
 
     implicit val int: Converter[Int] = new BaseConverter[Int] {
@@ -65,11 +70,12 @@ object Input {
   @implicitNotFound("Type $A is not supported as Input component")
   sealed abstract class Type[A](val html: String)
   object Type {
-    implicit val string = new Type[String]("text") {}
-    implicit val int = new Type[Int]("number") {}
-    implicit val long = new Type[Long]("number") {}
-    implicit val date = new Type[MomentJSDate]("date") {}
-    implicit val time = new Type[MomentJSTime]("time") {}
+    implicit val string   = new Type[String]("text") {}
+    implicit val password = new Type[Password]("password") {}
+    implicit val int      = new Type[Int]("number") {}
+    implicit val long     = new Type[Long]("number") {}
+    implicit val date     = new Type[MomentJSDate]("date") {}
+    implicit val time     = new Type[MomentJSTime]("time") {}
   }
 
   type OnUpdate[A] = Option[A] => Callback
