@@ -10,7 +10,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 /**
   * Created by alonsodomin on 03/07/2016.
   */
-object ArtifactIdInput {
+object ArtifactInput {
 
   case class Props(value: Option[ArtifactId], onUpdate: Option[ArtifactId] => Callback)
   case class State(groupId: Option[String], artifactId: Option[String], version: Option[String]) {
@@ -50,7 +50,6 @@ object ArtifactIdInput {
 
     def render(props: Props, state: State) = {
       <.div(^.`class` := "container-fluid",
-        <.label("Artifact"),
         <.div(^.`class` := "row",
           <.div(^.`class` := "col-sm-4",
             groupInput(state.groupId, ^.id := "artifactGroup", ^.placeholder := "Group")
@@ -59,7 +58,7 @@ object ArtifactIdInput {
             nameInput(state.artifactId, ^.id := "artifactName", ^.placeholder := "Name")
           ),
           <.div(^.`class` := "col-sm-4",
-            groupInput(state.version, ^.id := "artifactVerion", ^.placeholder := "Version")
+            versionInput(state.version, ^.id := "artifactVerion", ^.placeholder := "Version")
           )
         )
       )

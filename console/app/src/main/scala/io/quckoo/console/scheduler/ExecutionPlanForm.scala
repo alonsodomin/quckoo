@@ -46,7 +46,10 @@ object ExecutionPlanForm {
 
   type ScheduleHandler = Option[ScheduleJob] => Callback
 
-  @Lenses case class EditableExecutionPlan(jobId: Option[JobId] = None, trigger: Option[Trigger] = None) {
+  @Lenses final case class EditableExecutionPlan(
+    jobId: Option[JobId] = None,
+    trigger: Option[Trigger] = None
+  ) {
 
     def this(plan: Option[ExecutionPlan]) =
       this(plan.map(_.jobId), plan.map(_.trigger).orElse(Some(Trigger.Immediate)))

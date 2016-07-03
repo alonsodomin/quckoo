@@ -38,48 +38,51 @@ object JobForm {
 
   type RegisterHandler = Option[JobSpec] => Callback
 
-  case class Props(spec: Option[JobSpec], handler: RegisterHandler)
+  final case class Props(spec: Option[JobSpec], handler: RegisterHandler)
+
+  @Lenses final case class EditableJobSpec(
+    displayName: Option[String] = None,
+    description: Option[String] = None,
+    artifactId: Option[ArtifactId] = None,
+    jobClass: Option[String] = None
+  ) {
+
+    def this(jobSpec: Option[JobSpec]) =
+      this(jobSpec.map(_.displayName), jobSpec.flatMap(_.description), jobSpec.map(_.artifactId), jobSpec.map(_.jobClass))
+
+    def valid: Boolean =
+      displayName.nonEmpty && artifactId.nonEmpty && jobClass.nonEmpty
+
+  }
 
   @Lenses
-  case class State(spec: JobSpec, cancelled: Boolean = true)
+  case class State(spec: EditableJobSpec, cancelled: Boolean = true)
 
   class JobFormBackend($: BackendScope[Props, State]) {
 
-    val displayName     = State.spec ^|-> JobSpec.displayName
-    val description     = State.spec ^|-> JobSpec.description
-    val artifactGroup   = State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.group
-    val artifactName    = State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.artifact
-    val artifactVersion = State.spec ^|-> JobSpec.artifactId ^|-> ArtifactId.version
-    val jobClass        = State.spec ^|-> JobSpec.jobClass
+    val displayName = State.spec ^|-> EditableJobSpec.displayName
+    val description = State.spec ^|-> EditableJobSpec.description
+    val artifact    = State.spec ^|-> EditableJobSpec.artifactId
+    val jobClass    = State.spec ^|-> EditableJobSpec.jobClass
 
-    def updateDisplayName(evt: ReactEventI) =
-      $.setStateL(displayName)(evt.target.value)
-
-    def updateDescription(evt: ReactEventI) =
-      $.setStateL(description)(Some(evt.target.value))
-
-    def updateArtifactName(evt: ReactEventI) =
-      $.setStateL(artifactName)(evt.target.value)
-
-    def updateArtifactGroup(evt: ReactEventI) =
-      $.setStateL(artifactGroup)(evt.target.value)
-
-    def updateArtifactVersion(evt: ReactEventI) =
-      $.setStateL(artifactVersion)(evt.target.value)
-
-    def updateJobClass(evt: ReactEventI) =
-      $.setStateL(jobClass)(evt.target.value)
+    val displayNameInput = new Input[String]($.setStateL(displayName)(_))
+    val descriptionInput = new Input[String]($.setStateL(description)(_))
+    val jobClassInput    = new Input[String]($.setStateL(jobClass)(_))
 
     def submitForm(): Callback =
       $.modState(_.copy(cancelled = false))
 
     def formClosed(props: Props, state: State) = {
-      val value = {
-        if (state.cancelled) None
-        else Some(state.spec)
-      }
+      if (state.cancelled) Callback.empty
+      else {
+        val jobSpec: Option[JobSpec] = for {
+          name  <- state.spec.displayName
+          art   <- state.spec.artifactId
+          clazz <- state.spec.jobClass
+        } yield JobSpec(name, state.spec.description, art, clazz)
 
-      props.handler(value)
+        props.handler(jobSpec)
+      }
     }
 
     def render(props: Props, state: State) = {
@@ -92,64 +95,37 @@ object JobForm {
             ),
             footer = hide => <.span(
               Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
-              Button(Button.Props(Some(submitForm() >> hide), style = ContextStyle.primary), "Ok")
+              Button(Button.Props(
+                Some(submitForm() >> hide),
+                style = ContextStyle.primary,
+                disabled = !state.spec.valid
+              ), "Ok")
             ),
             closed = formClosed(props, state)
           ),
           <.div(lnf.formGroup,
             <.label(^.`for` := "displayName", "Display Name"),
-            <.input.text(lnf.formControl, ^.id := "displayName",
-              ^.placeholder := "Job's name",
-              ^.value := displayName.get(state),
-              ^.onChange ==> updateDisplayName,
-              ^.onBlur ==> updateDisplayName
+            displayNameInput(state.spec.displayName,
+              ^.id := "displayName",
+              ^.placeholder := "Job's name"
             )
           ),
           <.div(lnf.formGroup,
             <.label(^.`for` := "description", "Description"),
-            <.input.text(lnf.formControl, ^.id := "description",
-              ^.placeholder := "Job's description",
-              description.get(state).map(desc => ^.value := desc),
-              ^.onChange ==> updateDescription,
-              ^.onBlur ==> updateDescription
+            descriptionInput(state.spec.description,
+              ^.id := "description",
+              ^.placeholder := "Job's description"
             )
           ),
           <.div(lnf.formGroup,
             <.label("Artifact"),
-            <.div(^.`class` := "row",
-              <.div(^.`class` := "col-sm-4",
-                <.input.text(lnf.formControl, ^.id := "artifactGroup",
-                  ^.value := artifactGroup.get(state),
-                  ^.placeholder := "Group",
-                  ^.onChange ==> updateArtifactGroup,
-                  ^.onBlur ==> updateArtifactGroup
-                )
-              ),
-              <.div(^.`class` := "col-sm-4",
-                <.input.text(lnf.formControl, ^.id := "artifactName",
-                  ^.placeholder := "Name",
-                  ^.value := artifactName.get(state),
-                  ^.onChange ==> updateArtifactName,
-                  ^.onBlur ==> updateArtifactName
-                )
-              ),
-              <.div(^.`class` := "col-sm-4",
-                <.input.text(lnf.formControl, ^.id := "artifactVersion",
-                  ^.placeholder := "Version",
-                  ^.value := artifactVersion.get(state),
-                  ^.onChange ==> updateArtifactVersion,
-                  ^.onBlur ==> updateArtifactVersion
-                )
-              )
-            )
+            ArtifactInput(state.spec.artifactId, $.setStateL(artifact)(_))
           ),
           <.div(lnf.formGroup,
             <.label(^.`for` := "jobClass", "Job Class"),
-            <.input.text(lnf.formControl, ^.id := "jobClass",
-              ^.placeholder := "Fully classified job class name",
-              ^.value := jobClass.get(state),
-              ^.onChange ==> updateJobClass,
-              ^.onBlur ==> updateJobClass
+            jobClassInput(state.spec.jobClass,
+              ^.id := "jobClass",
+              ^.placeholder := "Fully classified job class name"
             )
           )
         )
@@ -158,10 +134,8 @@ object JobForm {
 
   }
 
-  private[this] def emptyJobSpec = JobSpec(displayName = "", artifactId = ArtifactId("", "", ""), jobClass = "")
-
   private[this] val component = ReactComponentB[Props]("JobForm").
-    initialState_P(p => State(p.spec.getOrElse(emptyJobSpec))).
+    initialState_P(p => State(new EditableJobSpec(p.spec))).
     renderBackend[JobFormBackend].
     build
 
