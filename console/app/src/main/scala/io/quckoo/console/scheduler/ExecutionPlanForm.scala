@@ -54,10 +54,17 @@ object ExecutionPlanForm {
     def this(plan: Option[ExecutionPlan]) =
       this(plan.map(_.jobId), plan.map(_.trigger).orElse(Some(Trigger.Immediate)))
 
+    def valid: Boolean =
+      jobId.nonEmpty && trigger.nonEmpty
+
   }
 
-  case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]], plan: Option[ExecutionPlan], handler: ScheduleHandler)
-  @Lenses case class State(
+  final case class Props(
+      proxy: ModelProxy[PotMap[JobId, JobSpec]],
+      plan: Option[ExecutionPlan],
+      handler: ScheduleHandler
+  )
+  @Lenses final case class State(
       plan: EditableExecutionPlan,
       timeout: Option[FiniteDuration] = None,
       showPreview: Boolean = false,
@@ -80,19 +87,22 @@ object ExecutionPlanForm {
       $.modState(_.copy(cancelled = false))
 
     def formClosed(props: Props, state: State): Callback = {
-      def command: Option[ScheduleJob] = for {
-        jobId <- state.plan.jobId
-        trigger <- state.plan.trigger
-      } yield ScheduleJob(jobId, trigger, state.timeout)
+      def command: Option[ScheduleJob] = if (!state.cancelled) {
+        for {
+          jobId <- state.plan.jobId
+          trigger <- state.plan.trigger
+        } yield ScheduleJob(jobId, trigger, state.timeout)
+      } else None
 
       props.handler(command)
     }
 
-    def jobSpecs(props: Props): Map[JobId, JobSpec] =
+    def jobSpecs(props: Props): Map[JobId, JobSpec] = {
       props.proxy().seq.flatMap {
         case (jobId, Ready(spec)) => Seq(jobId -> spec)
         case _                    => Seq()
       } toMap
+    }
 
     // Not supported yet
     def onParamUpdate(name: String, value: String): Callback =
@@ -112,7 +122,7 @@ object ExecutionPlanForm {
               if (state.showPreview) "Back" else "Preview"
             ),
             Button(Button.Props(Some(submitForm() >> hide),
-              disabled = jobIdLens.get(state).isEmpty || triggerLens.get(state).isEmpty,
+              disabled = !state.plan.valid,
               style = ContextStyle.primary), "Ok"
             )
           ),

@@ -55,8 +55,7 @@ object JobForm {
 
   }
 
-  @Lenses
-  case class State(spec: EditableJobSpec, cancelled: Boolean = true)
+  @Lenses final case class State(spec: EditableJobSpec, cancelled: Boolean = true)
 
   class JobFormBackend($: BackendScope[Props, State]) {
 
@@ -73,11 +72,13 @@ object JobForm {
       $.modState(_.copy(cancelled = false))
 
     def formClosed(props: Props, state: State) = {
-      val jobSpec: Option[JobSpec] = for {
-        name  <- state.spec.displayName
-        art   <- state.spec.artifactId
-        clazz <- state.spec.jobClass
-      } yield JobSpec(name, state.spec.description, art, clazz)
+      val jobSpec: Option[JobSpec] = if (!state.cancelled) {
+        for {
+          name  <- state.spec.displayName
+          art   <- state.spec.artifactId
+          clazz <- state.spec.jobClass
+        } yield JobSpec(name, state.spec.description, art, clazz)
+      } else None
 
       props.handler(jobSpec)
     }

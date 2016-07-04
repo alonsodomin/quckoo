@@ -57,7 +57,7 @@ object LoginPageView {
     def render(props: Props) =
       <.div(Style.formPlacement,
         props.proxy().notification,
-        Panel(Panel.Props("Sign in", ContextStyle.primary),
+        Panel(Panel.Props("Quckoo Console - Sign in", ContextStyle.primary),
           LoginForm(loginHandler(props))
         )
       )
