@@ -51,15 +51,10 @@ lazy val scoverageSettings = Seq(
 lazy val quckoo = (project in file(".")).
   settings(moduleName := "quckoo-root").
   settings(noPublishSettings).
-  enablePlugins(HeaderPlugin).
-  aggregate(coreRoot, apiJS, apiJVM, clientRoot, cluster, consoleRoot, examples)
+  enablePlugins(AutomateHeaderPlugin).
+  aggregate(coreJS, coreJVM, apiJS, apiJVM, clientJS, clientJVM, cluster, console, examples)
 
-// Common ==================================================
-
-lazy val coreRoot = (project in file("core")).
-  settings(moduleName := "quckoo-core-root").
-  settings(noPublishSettings).
-  aggregate(coreJS, coreJVM)
+// Core ==================================================
 
 lazy val core = (crossProject in file("core")).
   settings(
@@ -92,11 +87,6 @@ lazy val apiJVM = api.jvm
 
 // Client ==================================================
 
-lazy val clientRoot = (project in file("client")).
-  settings(moduleName := "quckoo-client").
-  settings(noPublishSettings).
-  aggregate(clientJS, clientJVM)
-
 lazy val client = (crossProject in file("client")).
   settings(
     name := "client",
@@ -116,8 +106,8 @@ lazy val clientJVM = client.jvm
 
 // Console ==================================================
 
-lazy val consoleRoot = (project in file("console")).
-  settings(moduleName := "quckoo-console-root").
+lazy val console = (project in file("console")).
+  settings(moduleName := "quckoo-console").
   settings(noPublishSettings).
   aggregate(consoleApp, consoleResources)
 
@@ -176,14 +166,20 @@ lazy val cluster = (project in file("cluster")).
   aggregate(clusterShared, clusterMaster, clusterWorker)
 
 lazy val clusterShared = (project in file("cluster/shared")).
-  settings(moduleName := "quckoo-cluster-shared").
+  settings(
+    name := "cluster-shared",
+    moduleName := "quckoo-cluster-shared"
+  ).
   settings(commonSettings).
   settings(Dependencies.clusterShared).
   dependsOn(apiJVM)
 
 lazy val clusterMaster = (project in file("cluster/master")).
   configs(MultiJvm).
-  settings(moduleName := "quckoo-cluster-master").
+  settings(
+    name := "cluster-master",
+    moduleName := "quckoo-cluster-master"
+  ).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterMaster).
@@ -197,7 +193,10 @@ lazy val clusterMaster = (project in file("cluster/master")).
   dependsOn(clusterShared, consoleResources)
 
 lazy val clusterWorker = (project in file("cluster/worker")).
-  settings(moduleName := "quckoo-cluster-worker").
+  settings(
+    name := "cluster-worker",
+    moduleName := "quckoo-cluster-worker"
+  ).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterWorker).
@@ -209,17 +208,24 @@ lazy val clusterWorker = (project in file("cluster/worker")).
 // Examples ==================================================
 
 lazy val examples = (project in file("examples")).
+  settings(moduleName := "quckoo-examples").
   aggregate(exampleJobs, exampleProducers).
   settings(noPublishSettings)
 
 lazy val exampleJobs = (project in file("examples/jobs")).
-  settings(moduleName := "quckoo-example-jobs").
+  settings(
+    name := "example-jobs",
+    moduleName := "quckoo-example-jobs"
+  ).
   settings(commonSettings: _*).
   settings(Dependencies.exampleJobs).
   dependsOn(coreJVM)
 
 lazy val exampleProducers = (project in file("examples/producers")).
-  settings(moduleName := "quckoo-example-producers").
+  settings(
+    name := "example-producers",
+    moduleName := "quckoo-example-producers"
+  ).
   settings(commonSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.exampleProducers).
@@ -230,5 +236,5 @@ lazy val exampleProducers = (project in file("examples/producers")).
 
 // Command aliases ==================================================
 
-addCommandAlias("testJS", ";commonJS/test;consoleJS/test")
-addCommandAlias("testJVM", ";commonJVM/test;client/test;consoleJVM/test;cluster/test;examples/test")
+//addCommandAlias("testJS", ";commonJS/test;consoleJS/test")
+//addCommandAlias("testJVM", ";commonJVM/test;client/test;consoleJVM/test;cluster/test;examples/test")
