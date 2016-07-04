@@ -23,13 +23,13 @@ import org.widok.moment.{Date => MDate, Moment}
   */
 object MomentJSTimeSource {
 
-  def default: TimeSource = new MomentJSTimeSource(() => Moment.utc())
+  def default: TimeSource = new MomentJSTimeSource(() => Moment())
 
-  def fixed(millis: Double): TimeSource = new MomentJSTimeSource(() => Moment.utc(millis))
+  def fixed(millis: Double): TimeSource = new MomentJSTimeSource(() => Moment(millis))
 
   object Implicits {
 
-    implicit val default = MomentJSTimeSource.default
+    implicit val default: TimeSource = MomentJSTimeSource.default
 
   }
 

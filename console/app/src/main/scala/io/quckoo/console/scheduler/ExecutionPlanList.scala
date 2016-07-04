@@ -60,12 +60,12 @@ object ExecutionPlanList {
 
       case "Current task" => plan.currentTaskId.map(_.toString()).getOrElse[String]("")
       case "Trigger" => plan.trigger.toString()
-      case "Last Scheduled" => plan.lastScheduledTime.map(_.toString()).getOrElse[String]("")
-      case "Last Execution" => plan.lastExecutionTime.map(_.toString()).getOrElse[String]("")
+      case "Last Scheduled" => plan.lastScheduledTime.map(_.toLocal.toString()).getOrElse[String]("")
+      case "Last Execution" => plan.lastExecutionTime.map(_.toLocal.toString()).getOrElse[String]("")
       case "Last Outcome"   => plan.lastOutcome.toString
       case "Next Execution" =>
         val nextExecution = plan.nextExecutionTime
-        nextExecution.map(_.toString).getOrElse[String]("")
+        nextExecution.map(_.toLocal.toString).getOrElse[String]("")
     }
 
     def render(props: Props) = {
