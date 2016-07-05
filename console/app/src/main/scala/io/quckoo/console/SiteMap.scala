@@ -18,7 +18,7 @@ package io.quckoo.console
 
 import diode.react.ModelProxy
 
-import io.quckoo.console.components.Icons
+import io.quckoo.console.components._
 import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, LoginProcessor}
 import io.quckoo.console.dashboard.DashboardView
 import io.quckoo.console.layout.Navigation

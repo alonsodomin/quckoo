@@ -206,9 +206,9 @@ object Dependencies {
   )
   lazy val consoleResources = Def.settings {
     libraryDependencies ++= Seq(
-      "org.webjars" % "bootstrap-sass" % "3.3.1",
-      "org.webjars" % "font-awesome"   % "4.5.0" /*,
-      "org.webjars" % "animate.css"    % "3.3.0"*/
+      "org.webjars"       % "bootstrap-sass"  % "3.3.1",
+      "org.webjars"       % "font-awesome"    % "4.5.0",
+      "org.webjars.bower" % "animatewithsass" % "3.2.2"
     )
   }
 

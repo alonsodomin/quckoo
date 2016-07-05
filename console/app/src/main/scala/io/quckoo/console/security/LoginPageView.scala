@@ -25,6 +25,9 @@ import io.quckoo.console.core.{ConsoleScope, Login}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
+import org.scalajs.jquery._
+
+import scala.scalajs.js
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
@@ -66,7 +69,9 @@ object LoginPageView {
   private[this] val component = ReactComponentB[Props]("LoginPage").
     stateless.
     renderBackend[LoginBackend].
-    build
+    componentDidMount($ => Callback {
+      jQuery().showNotification("Hello World")
+    }).build
 
   def apply(proxy: ModelProxy[ConsoleScope], referral: Option[ConsoleRoute] = None) =
     component(Props(proxy, referral))

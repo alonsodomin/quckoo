@@ -73,14 +73,12 @@ object FiniteDurationInput {
       $.modState(_.copy(unit = value), propagateUpdate)
     }
 
-    val lengthInput = new Input[Long](onLengthUpdate)
-
     def render(props: Props, state: State) = {
       val id = props.id
       <.div(^.`class` := "container-fluid",
         <.div(^.`class` := "row",
           <.div(^.`class` := "col-sm-4",
-            lengthInput(state.length, ^.id := s"${id}_length")
+            Input(state.length, onLengthUpdate _, ^.id := s"${id}_length")
           ),
           <.div(^.`class` := "col-sm-6",
             <.select(^.id := s"${id}_unit", ^.`class` := "form-control",

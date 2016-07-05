@@ -19,6 +19,7 @@ package io.quckoo.console.components
 import org.scalajs.jquery.JQuery
 
 import scala.scalajs.js
+import scala.scalajs.js._
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -28,11 +29,8 @@ import scala.scalajs.js.annotation.JSName
 trait BootstrapNotify extends JQuery {
 
   @JSName("notify")
-  @js.native
-  def showNotification(text: String): BootstrapNotify = js.native
+  def showNotification(text: String | js.Any, settings: js.Any = js.Dynamic.literal()): BootstrapNotify = js.native
 
-  @JSName("notify")
-  @js.native
-  def showNotification(options: js.Any): BootstrapNotify = js.native
+  def notifyDefaults(settings: js.Any): BootstrapNotify = js.native
 
 }

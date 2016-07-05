@@ -80,7 +80,7 @@ object Input {
 
   type OnUpdate[A] = Option[A] => Callback
 
-  case class Props[A](
+  final case class Props[A](
       value: Option[A],
       defaultValue: Option[A],
       onUpdate: OnUpdate[A],
@@ -118,8 +118,24 @@ object Input {
 
   }
 
+  implicit def propsReuse[A : Reusability]: Reusability[Props[A]] =
+    Reusability.by[Props[A], (Option[A], Option[A])](p => (p.value, p.defaultValue))
+
+  def component[A : Reusability] = ReactComponentB[Props[A]]("Input").
+    stateless.
+    renderBackend[Backend[A]].
+    configure(Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode]).
+    build
+
+  def apply[A : Reusability](value: Option[A], onUpdate: Input.OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+    component[A].apply(Props(value, None, onUpdate, attrs))
+
+  def apply[A : Reusability](value: Option[A], defaultValue: Option[A], onUpdate: Input.OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+    component[A].apply(Props(value, defaultValue, onUpdate, attrs))
+
 }
 
+@deprecated("Use the apply method in the companion object", "")
 class Input[A: Reusability](private[components] val onUpdate: Input.OnUpdate[A]) {
   import Input._
 
