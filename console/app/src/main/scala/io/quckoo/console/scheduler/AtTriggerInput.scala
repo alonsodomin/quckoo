@@ -56,21 +56,18 @@ object AtTriggerInput {
     def onTimeUpdate(value: Option[MomentJSTime]): Callback =
       $.modState(_.copy(time = value), propagateUpdate)
 
-    val DateInput = new Input[MomentJSDate](onDateUpdate)
-    val TimeInput = new Input[MomentJSTime](onTimeUpdate)
-
     def render(props: Props, state: State) = {
       <.div(
         <.div(^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Date"),
           <.div(^.`class` := "col-sm-10",
-            DateInput(state.date)
+            Input(state.date, onDateUpdate _)
           )
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Time"),
           <.div(^.`class` := "col-sm-10",
-            TimeInput(state.time)
+            Input(state.time, onTimeUpdate _)
           )
         )
       )

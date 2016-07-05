@@ -64,12 +64,17 @@ object JobForm {
     val artifact    = State.spec ^|-> EditableJobSpec.artifactId
     val jobClass    = State.spec ^|-> EditableJobSpec.jobClass
 
-    val displayNameInput = new Input[String]($.setStateL(displayName)(_))
-    val descriptionInput = new Input[String]($.setStateL(description)(_))
-    val jobClassInput    = new Input[String]($.setStateL(jobClass)(_))
-
     def submitForm(): Callback =
       $.modState(_.copy(cancelled = false))
+
+    def onDisplayNameUpdate(value: Option[String]) =
+      $.setStateL(displayName)(value)
+
+    def onDescriptionUpdate(value: Option[String]) =
+      $.setStateL(description)(value)
+
+    def onJobClassUpdate(value: Option[String]) =
+      $.setStateL(jobClass)(value)
 
     def formClosed(props: Props, state: State) = {
       val jobSpec: Option[JobSpec] = if (!state.cancelled) {
@@ -103,14 +108,16 @@ object JobForm {
           ),
           <.div(lnf.formGroup,
             <.label(^.`for` := "displayName", "Display Name"),
-            displayNameInput(state.spec.displayName,
+            Input(state.spec.displayName,
+              onDisplayNameUpdate _,
               ^.id := "displayName",
               ^.placeholder := "Job's name"
             )
           ),
           <.div(lnf.formGroup,
             <.label(^.`for` := "description", "Description"),
-            descriptionInput(state.spec.description,
+            Input(state.spec.description,
+              onDescriptionUpdate _,
               ^.id := "description",
               ^.placeholder := "Job's description"
             )
@@ -121,7 +128,8 @@ object JobForm {
           ),
           <.div(lnf.formGroup,
             <.label(^.`for` := "jobClass", "Job Class"),
-            jobClassInput(state.spec.jobClass,
+            Input(state.spec.jobClass,
+              onJobClassUpdate _,
               ^.id := "jobClass",
               ^.placeholder := "Fully classified job class name"
             )
