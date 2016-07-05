@@ -114,6 +114,8 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
         val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
         finishedMsg.planId shouldBe planId
         finishedMsg.jobId shouldBe TestJobId
+
+        expectMsg(finishedMsg)
       }
 
       currentPlanId = None
