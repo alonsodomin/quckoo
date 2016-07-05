@@ -155,7 +155,7 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
     }
 
     "instruct the execution to immediately stop when it's cancelled" in {
-      executionDriver ! CancelPlan(planId)
+      executionDriver ! CancelExecutionPlan(planId)
 
       val cancelMsg = executionProbe.expectMsgType[Execution.Cancel]
       cancelMsg.reason shouldBe Task.UserRequest

@@ -45,7 +45,12 @@ object Scheduler {
 
   type Journal = AllPersistenceIdsQuery with CurrentPersistenceIdsQuery with EventsByPersistenceIdQuery
 
-  private[scheduler] case class CreateExecutionDriver(spec: JobSpec, config: ScheduleJob, requestor: ActorRef)
+  private[scheduler] case class CreateExecutionDriver(
+    spec: JobSpec, cmd: ScheduleJob, replyTo: ActorRef
+  )
+  private[scheduler] case class StopExecutionDriver(
+    cmd: Any, replyTo: ActorRef
+  )
 
   def props(registry: ActorRef, journal: Journal, queueProps: Props)(implicit timeSource: TimeSource) =
     Props(classOf[Scheduler], registry, journal, queueProps, timeSource)
@@ -97,8 +102,10 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
       log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
       context.actorOf(props, s"execution-driver-factory-$planId")
 
-    case cancel: CancelPlan =>
-      shardRegion forward cancel
+    case cancel: CancelExecutionPlan =>
+      val props = Props(classOf[ExecutionDriverTerminator], cancel.planId,
+        StopExecutionDriver(cancel, sender()), shardRegion)
+      context.actorOf(props, s"execution-driver-terminator-${cancel.planId}")
 
     case get: GetExecutionPlan =>
       executionPlanIndex forward get
@@ -170,7 +177,7 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: ScheduleJob)
 private class ExecutionDriverFactory(
     jobId: JobId,
     planId: PlanId,
-    cmd: Scheduler.CreateExecutionDriver,
+    createCmd: Scheduler.CreateExecutionDriver,
     shardRegion: ActorRef)
   extends Actor with ActorLogging {
 
@@ -183,17 +190,52 @@ private class ExecutionDriverFactory(
 
   def initializing: Receive = {
     case DistributedPubSubMediator.SubscribeAck(_) =>
-      import cmd._
+      import createCmd._
 
       log.debug("Starting execution plan for job {}.", jobId)
       val executionProps = Execution.props(
-        planId, executionTimeout = cmd.config.timeout
+        planId, executionTimeout = cmd.timeout
       )
-      shardRegion ! ExecutionDriver.New(jobId, spec, planId, config.trigger, executionProps)
+      shardRegion ! ExecutionDriver.New(jobId, spec, planId, cmd.trigger, executionProps)
 
     case response @ ExecutionPlanStarted(`jobId`, _) =>
       log.info("Execution plan for job {} has been started.", jobId)
-      cmd.requestor ! response
+      createCmd.replyTo ! response
+      mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
+      context.become(shuttingDown)
+  }
+
+  def shuttingDown: Receive = {
+    case DistributedPubSubMediator.UnsubscribeAck(_) =>
+      context.stop(self)
+  }
+
+}
+
+private class ExecutionDriverTerminator(
+    planId: PlanId,
+    killCmd: Scheduler.StopExecutionDriver,
+    shardRegion: ActorRef
+  ) extends Actor with ActorLogging {
+
+  private[this] val mediator = DistributedPubSub(context.system).mediator
+
+  override def preStart(): Unit =
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, self)
+
+  def receive = initializing
+
+  def initializing: Receive = {
+    case DistributedPubSubMediator.SubscribeAck(_) =>
+      log.debug("Stopping execution plan. planId={}", planId)
+      shardRegion ! killCmd.cmd
+      context.become(waitingForTermination)
+  }
+
+  def waitingForTermination: Receive = {
+    case response @ ExecutionPlanFinished(_, `planId`) =>
+      log.debug("Execution plan has been stopped. planId={}", planId)
+      killCmd.replyTo ! response
       mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
       context.become(shuttingDown)
   }

@@ -58,6 +58,9 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     schedulerApi
   }
 
+  override def cancelPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Unit] =
+    Future.successful(())
+
   override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] =
     Future.successful(TestPlanMap.get(planId))
 
@@ -99,6 +102,12 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     "return an execution plan when getting from a valid ID" in {
       Get(endpoint(s"/plans/${TestPlanIds.head}")) ~> entryPoint ~> check {
         responseAs[ExecutionPlan].planId should be (TestPlanIds.head)
+      }
+    }
+
+    "cancel an execution plan on a DELETE http method" in {
+      Delete(endpoint(s"/plans/${UUID.randomUUID()}")) ~> entryPoint ~> check {
+        status === OK
       }
     }
 

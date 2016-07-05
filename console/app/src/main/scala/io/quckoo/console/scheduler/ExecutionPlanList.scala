@@ -23,9 +23,12 @@ import io.quckoo.ExecutionPlan
 import io.quckoo.console.components._
 import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
 import io.quckoo.id.PlanId
+import io.quckoo.protocol.scheduler.CancelExecutionPlan
 import io.quckoo.time.MomentJSTimeSource.Implicits.default
 
 import japgolly.scalajs.react._
+
+import scalaz.NonEmptyList
 
 /**
   * Created by alonsodomin on 30/01/2016.
@@ -66,9 +69,20 @@ object ExecutionPlanList {
       case "Next Execution" => DateTimeDisplay(plan.nextExecutionTime)
     }
 
+    def cancelPlan(props: Props)(planId: PlanId): Callback =
+      props.proxy.dispatch(CancelExecutionPlan(planId))
+
+    def rowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = Seq(
+      Table.RowAction[PlanId, ExecutionPlan](NonEmptyList(Icons.stop, "Cancel"), cancelPlan(props))
+    )
+
     def render(props: Props) = {
       val model = props.proxy()
-      Table(Columns, model.executionPlans.seq, renderItem(model), allowSelect = true)
+      Table(Columns, model.executionPlans.seq,
+        renderItem(model),
+        allowSelect = true,
+        actions = Some(rowActions(props)(_, _))
+      )
     }
 
   }

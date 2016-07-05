@@ -64,6 +64,10 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
               case _          => complete(NotFound)
             }
           }
+        } ~ delete {
+          extractExecutionContext { implicit ec =>
+            complete(cancelPlan(planId))
+          }
         }
       }
     } ~ pathPrefix("tasks") {

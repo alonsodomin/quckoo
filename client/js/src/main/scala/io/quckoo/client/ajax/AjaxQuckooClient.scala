@@ -111,14 +111,19 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String]) exte
   override def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
     withAuthRefresh { () =>
       Ajax.get(JobsURI, headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
-        println(xhr.responseText)
         read[Map[JobId, JobSpec]](xhr.responseText)
       }
     }
   }
 
-  def registryEvents: Observable[RegistryEvent] =
+  override def registryEvents: Observable[RegistryEvent] =
     EventSourceObservable[RegistryEvent](RegistryEventsURI, "RegistryEvent")
+
+  override def cancelPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Unit] = {
+    withAuthRefresh { () =>
+      Ajax.delete(ExecutionPlansURI + "/" + planId, headers = authHeaders).map(_ => ())
+    }
+  }
 
   override def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {
     withAuthRefresh { () =>

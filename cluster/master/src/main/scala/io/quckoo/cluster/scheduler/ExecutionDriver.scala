@@ -44,13 +44,13 @@ object ExecutionDriver {
   val idExtractor: ShardRegion.ExtractEntityId = {
     case n: New              => (n.planId.toString, n)
     case g: GetExecutionPlan => (g.planId.toString, g)
-    case c: CancelPlan       => (c.planId.toString, c)
+    case c: CancelExecutionPlan       => (c.planId.toString, c)
   }
 
   val shardResolver: ShardRegion.ExtractShardId = {
     case New(_, _, planId, _, _)  => (planId.hashCode() % NumberOfShards).toString
     case GetExecutionPlan(planId) => (planId.hashCode() % NumberOfShards).toString
-    case CancelPlan(planId)       => (planId.hashCode() % NumberOfShards).toString
+    case CancelExecutionPlan(planId)       => (planId.hashCode() % NumberOfShards).toString
   }
 
   // Only for internal usage from the Scheduler actor
@@ -284,7 +284,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     case GetExecutionPlan(_) =>
       sender() ! state.plan
 
-    case CancelPlan(_) =>
+    case CancelExecutionPlan(_) =>
       if (trigger.isDefined) {
         log.debug("Cancelling trigger for execution plan. planId={}", state.planId)
         trigger.foreach(_.cancel())

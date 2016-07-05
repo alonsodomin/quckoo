@@ -50,7 +50,7 @@ object JobSpecList {
     }
 
     def renderItem(jobId: JobId, jobSpec: JobSpec, column: String): ReactNode = column match {
-      case "Name" => jobSpec.displayName
+      case "Name"        => jobSpec.displayName
       case "Description" => jobSpec.description.getOrElse[String]("")
       case "Artifact ID" => jobSpec.artifactId.toString
       case "Job Class"   => jobSpec.jobClass

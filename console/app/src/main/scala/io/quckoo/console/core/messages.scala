@@ -16,7 +16,6 @@
 
 package io.quckoo.console.core
 
-import diode.{Action, ActionType}
 import diode.data.{AsyncAction, Pot, PotState}
 
 import io.quckoo._
@@ -25,29 +24,25 @@ import io.quckoo.console.ConsoleRoute
 import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
+import io.quckoo.protocol.{Command, Event}
 import io.quckoo.protocol.scheduler.TaskDetails
 
 import scala.util.{Failure, Try}
 import scalaz.ValidationNel
 
-trait Event
-object Event {
-  implicit object eventType extends ActionType[Event]
-}
-
-final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None) extends Action
+final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None) extends Command
 final case class LoggedIn(client: QuckooClient, referral: Option[ConsoleRoute]) extends Event
 
-case object Logout extends Action
+case object Logout extends Command
 case object LoggedOut extends Event
 case object LoginFailed extends Event
 
-final case class NavigateTo(route: ConsoleRoute) extends Action
+final case class NavigateTo(route: ConsoleRoute) extends Command
 
 final case class ClusterStateLoaded(state: QuckooState) extends Event
-case object StartClusterSubscription extends Action
+case object StartClusterSubscription extends Command
 
-case object LoadJobSpecs extends Action
+case object LoadJobSpecs extends Command
 final case class JobSpecsLoaded(value: Map[JobId, Pot[JobSpec]]) extends Event
 
 final case class RefreshJobSpecs(
@@ -63,7 +58,7 @@ final case class RefreshJobSpecs(
 
 final case class RegisterJobResult(jobId: ValidationNel[Fault, JobId]) extends Event
 
-case object LoadExecutionPlans extends Action
+case object LoadExecutionPlans extends Command
 final case class ExecutionPlansLoaded(plans: Map[PlanId, Pot[ExecutionPlan]]) extends Event
 
 final case class RefreshExecutionPlans(
@@ -77,7 +72,9 @@ final case class RefreshExecutionPlans(
 
 }
 
-case object LoadTasks extends Action
+final case class ExecutionPlanCancelled(planId: PlanId) extends Event
+
+case object LoadTasks extends Command
 
 final case class TasksLoaded(tasks: Map[TaskId, Pot[TaskDetails]]) extends Event
 

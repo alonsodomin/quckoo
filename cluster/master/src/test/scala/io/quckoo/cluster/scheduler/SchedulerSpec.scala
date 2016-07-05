@@ -105,7 +105,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
     "allow cancelling an execution plan" in {
       currentPlanId shouldBe defined
       currentPlanId foreach { planId =>
-        scheduler ! CancelPlan(planId)
+        scheduler ! CancelExecutionPlan(planId)
 
         val completedMsg = eventListener.expectMsgType[TaskCompleted]
         completedMsg.planId shouldBe planId

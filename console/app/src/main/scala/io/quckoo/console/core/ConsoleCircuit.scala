@@ -163,12 +163,20 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
           updated(None, Effect(client.schedule(msg).map(_.fold(identity, identity))))
         }
 
+      case CancelExecutionPlan(planId) =>
+        withClient { client =>
+          updated(None, Effect(client.cancelPlan(planId).map(_ => ExecutionPlanCancelled(planId))))
+        }
+
       case JobNotFound(jobId) =>
         updated(Some(Notification.danger(s"Job not found $jobId")))
 
       case ExecutionPlanStarted(jobId, planId) =>
         val effect = Effect.action(RefreshExecutionPlans(Set(planId)))
         updated(Some(Notification.success(s"Started execution plan for job. planId=$planId")), effect)
+
+      case ExecutionPlanCancelled(planId) =>
+        updated(Some(Notification.success(s"Execution plan $planId has been cancelled")))
     }
 
   }

@@ -28,6 +28,8 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait Scheduler {
 
+  def cancelPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Unit]
+
   def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]]
 
   def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]]
