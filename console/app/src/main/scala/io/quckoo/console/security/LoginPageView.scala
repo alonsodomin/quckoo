@@ -70,7 +70,7 @@ object LoginPageView {
     stateless.
     renderBackend[LoginBackend].
     componentDidMount($ => Callback {
-      jQuery().showNotification("Hello World")
+      jQuery().growl("Hello World")
     }).build
 
   def apply(proxy: ModelProxy[ConsoleScope], referral: Option[ConsoleRoute] = None) =

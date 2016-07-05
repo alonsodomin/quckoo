@@ -21,6 +21,7 @@ import org.scalajs.jquery.JQuery
 import scala.scalajs.js
 import scala.scalajs.js._
 import scala.scalajs.js.annotation.JSName
+import scala.language.implicitConversions
 
 /**
   * Created by alonsodomin on 28/03/2016.
@@ -29,8 +30,11 @@ import scala.scalajs.js.annotation.JSName
 trait BootstrapNotify extends JQuery {
 
   @JSName("notify")
-  def showNotification(text: String | js.Any, settings: js.Any = js.Dynamic.literal()): BootstrapNotify = js.native
+  def growl(text: String | js.Any, settings: js.Any = js.Dynamic.literal()): BootstrapNotify = js.native
 
   def notifyDefaults(settings: js.Any): BootstrapNotify = js.native
 
+}
+object BootstrapNotify {
+  implicit def jq2Notify(jq: JQuery): BootstrapNotify = jq.asInstanceOf[BootstrapNotify]
 }

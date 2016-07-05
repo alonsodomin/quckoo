@@ -36,8 +36,6 @@ import scalacss.ScalaCssReact._
   * Created by alonsodomin on 20/02/2016.
   */
 package object components {
-  import scala.language.implicitConversions
-
   val lookAndFeel = new LookAndFeel
 
   // React's reusability instances for common types
@@ -52,12 +50,5 @@ package object components {
   implicit val afterTriggerReuse = Reusability.caseClass[Trigger.After]
   implicit val everyTriggerReuse = Reusability.caseClass[Trigger.Every]
   implicit val atTriggerReuse = Reusability.caseClass[Trigger.At]
-
-  implicit def icon2VDom(icon: Icon): ReactNode = {
-    <.span(^.classSet1M("fa", icon.classSet), icon.state.padding ?= (^.paddingRight := 5.px))
-  }
-
-  implicit def jq2bootstrap(jq: JQuery): BootstrapJQuery = jq.asInstanceOf[BootstrapJQuery]
-  implicit def jq2Notify(jq: JQuery): BootstrapNotify = jq.asInstanceOf[BootstrapNotify]
 
 }
