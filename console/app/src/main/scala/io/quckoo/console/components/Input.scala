@@ -127,10 +127,10 @@ object Input {
     configure(Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode]).
     build
 
-  def apply[A : Reusability](value: Option[A], onUpdate: Input.OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+  def apply[A : Reusability](value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
     component[A].apply(Props(value, None, onUpdate, attrs))
 
-  def apply[A : Reusability](value: Option[A], defaultValue: Option[A], onUpdate: Input.OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+  def apply[A : Reusability](value: Option[A], defaultValue: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
     component[A].apply(Props(value, defaultValue, onUpdate, attrs))
 
 }
