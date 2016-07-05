@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import io.quckoo.Trigger
 import io.quckoo.id.ArtifactId
-import io.quckoo.time.{DateTime, MomentJSDate, MomentJSTime}
+import io.quckoo.time.{DateTime, Date, Time}
 
 import japgolly.scalajs.react.ReactNode
 import japgolly.scalajs.react.extra.Reusability
@@ -43,8 +43,8 @@ package object components {
   // React's reusability instances for common types
   implicit val timeUnitReuse = Reusability.byRef[TimeUnit]
   implicit val finiteDurationReuse = Reusability.byRef[FiniteDuration]
-  implicit val dateReuse = Reusability.byRef[MomentJSDate]
-  implicit val timeReuse = Reusability.byRef[MomentJSTime]
+  implicit val dateReuse = Reusability.byRef[Date]
+  implicit val timeReuse = Reusability.byRef[Time]
   implicit val dateTimeReuse = Reusability.byRef[DateTime]
   implicit val artifactIdReuse = Reusability.byRef[ArtifactId]
 

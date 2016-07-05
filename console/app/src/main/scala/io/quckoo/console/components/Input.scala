@@ -16,7 +16,7 @@
 
 package io.quckoo.console.components
 
-import io.quckoo.time.{MomentJSDate, MomentJSTime}
+import io.quckoo.time._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -57,12 +57,12 @@ object Input {
       override def from: String => Long = _.toLong
     }
 
-    implicit val date: Converter[MomentJSDate] = new BaseConverter[MomentJSDate] {
-      override def from: String => MomentJSDate = MomentJSDate.parse
+    implicit val date: Converter[Date] = new BaseConverter[Date] {
+      override def from: String => Date = MomentJSDate.parse
     }
 
-    implicit val time: Converter[MomentJSTime] = new BaseConverter[MomentJSTime] {
-      override def from: String => MomentJSTime = MomentJSTime.parse
+    implicit val time: Converter[Time] = new BaseConverter[Time] {
+      override def from: String => Time = MomentJSTime.parse
     }
 
   }
@@ -74,8 +74,8 @@ object Input {
     implicit val password = new Type[Password]("password") {}
     implicit val int      = new Type[Int]("number") {}
     implicit val long     = new Type[Long]("number") {}
-    implicit val date     = new Type[MomentJSDate]("date") {}
-    implicit val time     = new Type[MomentJSTime]("time") {}
+    implicit val date     = new Type[Date]("date") {}
+    implicit val time     = new Type[Time]("time") {}
   }
 
   type OnUpdate[A] = Option[A] => Callback
@@ -135,23 +135,3 @@ object Input {
 
 }
 
-@deprecated("Use the apply method in the companion object", "")
-class Input[A: Reusability](private[components] val onUpdate: Input.OnUpdate[A]) {
-  import Input._
-
-  implicit val propsReuse: Reusability[Props[A]] = Reusability.by[Props[A], (Option[A], Option[A])](p => (p.value, p.defaultValue))
-  val reuseConfig = Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode]
-
-  val component = ReactComponentB[Props[A]]("Input").
-    stateless.
-    renderBackend[Backend[A]].
-    configure(reuseConfig).
-    build
-
-  def apply(value: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
-    component(Props(value, None, onUpdate, attrs))
-
-  def apply(value: Option[A], defaultValue: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
-    component(Props(value, defaultValue, onUpdate, attrs))
-
-}

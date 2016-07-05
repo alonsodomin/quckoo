@@ -18,7 +18,7 @@ package io.quckoo.console.scheduler
 
 import io.quckoo.Trigger
 import io.quckoo.console.components._
-import io.quckoo.time.{MomentJSDate, MomentJSDateTime, MomentJSTime}
+import io.quckoo.time._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -30,7 +30,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object AtTriggerInput {
 
   case class Props(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback)
-  case class State(date: Option[MomentJSDate], time: Option[MomentJSTime])
+  case class State(date: Option[Date], time: Option[Time])
 
   implicit val propsReuse = Reusability.by[Props, Option[Trigger.At]](_.value)
   implicit val stateReuse = Reusability.caseClass[State]
@@ -50,10 +50,10 @@ object AtTriggerInput {
       }
     }
 
-    def onDateUpdate(value: Option[MomentJSDate]): Callback =
+    def onDateUpdate(value: Option[Date]): Callback =
       $.modState(_.copy(date = value), propagateUpdate)
 
-    def onTimeUpdate(value: Option[MomentJSTime]): Callback =
+    def onTimeUpdate(value: Option[Time]): Callback =
       $.modState(_.copy(time = value), propagateUpdate)
 
     def render(props: Props, state: State) = {
