@@ -64,7 +64,6 @@ object SchedulerPageView {
 
       <.div(Style.content,
         <.h2("Scheduler"),
-        props.proxy().notification,
         Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan"),
         if (state.showForm) {
           props.proxy.wrap(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))

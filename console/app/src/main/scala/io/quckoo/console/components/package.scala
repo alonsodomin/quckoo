@@ -20,17 +20,14 @@ import java.util.concurrent.TimeUnit
 
 import io.quckoo.Trigger
 import io.quckoo.id.ArtifactId
-import io.quckoo.time.{DateTime, Date, Time}
-
+import io.quckoo.time.{Date, DateTime, Time}
 import japgolly.scalajs.react.ReactNode
 import japgolly.scalajs.react.extra.Reusability
-import japgolly.scalajs.react.vdom.prefix_<^._
+import org.scalajs.jquery.{JQuery, JQueryStatic}
 
-import org.scalajs.jquery.JQuery
-
-import scala.concurrent.duration.FiniteDuration
 import scalacss.Defaults._
-import scalacss.ScalaCssReact._
+import scala.concurrent.duration.FiniteDuration
+import scala.language.implicitConversions
 
 /**
   * Created by alonsodomin on 20/02/2016.
@@ -50,5 +47,16 @@ package object components {
   implicit val afterTriggerReuse = Reusability.caseClass[Trigger.After]
   implicit val everyTriggerReuse = Reusability.caseClass[Trigger.Every]
   implicit val atTriggerReuse = Reusability.caseClass[Trigger.At]
+
+  implicit def toReactNode(notification: Notification): ReactNode =
+    notification.inline
+
+  // JQuery plugins
+
+  implicit def toBootstrapJQuery(jq: JQuery): BootstrapJQuery =
+    jq.asInstanceOf[BootstrapJQuery]
+
+  implicit def jq2Notify(jq: JQueryStatic): BootstrapNotify =
+    jq.asInstanceOf[BootstrapNotify]
 
 }

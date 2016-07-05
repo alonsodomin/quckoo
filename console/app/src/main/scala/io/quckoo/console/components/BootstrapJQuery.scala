@@ -30,7 +30,3 @@ trait BootstrapJQuery extends JQuery {
   def modal(options: js.Any): BootstrapJQuery = js.native
 }
 
-object BootstrapJQuery {
-  implicit def toBootstrapJQuery(jq: JQuery): BootstrapJQuery =
-    jq.asInstanceOf[BootstrapJQuery]
-}

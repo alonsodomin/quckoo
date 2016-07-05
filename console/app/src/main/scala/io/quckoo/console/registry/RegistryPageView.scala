@@ -67,7 +67,6 @@ object RegistryPageView {
 
       <.div(Style.content,
         <.h2("Registry"),
-        props.proxy().notification,
         Button(Button.Props(Some(editJob(None))), Icons.plusSquare, "New Job"),
         if (state.showForm) JobForm(state.selectedJob, jobEdited)
         else EmptyTag,

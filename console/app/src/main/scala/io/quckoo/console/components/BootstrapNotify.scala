@@ -16,25 +16,24 @@
 
 package io.quckoo.console.components
 
-import org.scalajs.jquery.JQuery
+import org.scalajs.jquery.JQueryStatic
 
 import scala.scalajs.js
-import scala.scalajs.js._
 import scala.scalajs.js.annotation.JSName
-import scala.language.implicitConversions
 
 /**
   * Created by alonsodomin on 28/03/2016.
   */
 @js.native
-trait BootstrapNotify extends JQuery {
+trait BootstrapNotify extends JQueryStatic {
 
   @JSName("notify")
-  def growl(text: String | js.Any, settings: js.Any = js.Dynamic.literal()): BootstrapNotify = js.native
+  def showNotification(content: String, options: js.Any = js.Dynamic.literal()): this.type = js.native
 
-  def notifyDefaults(settings: js.Any): BootstrapNotify = js.native
+  @JSName("notifyDefaults")
+  def notificationDefaults(options: js.Any): BootstrapNotify = js.native
 
-}
-object BootstrapNotify {
-  implicit def jq2Notify(jq: JQuery): BootstrapNotify = jq.asInstanceOf[BootstrapNotify]
+  @JSName("notifyClose")
+  def closeNotification(id: String = "all"): BootstrapNotify = js.native
+
 }

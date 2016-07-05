@@ -53,15 +53,18 @@ object LoginForm {
       event.preventDefaultCB >> perform
     }
 
+    val usernameInput = Input[String](onUsernameChange)
+    val passwordInput = Input[Password](onPasswordChange)
+
     def render(handler: LoginHandler, state: State) = {
       <.form(^.name := "loginForm", ^.onSubmit ==> submit(handler),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "username", ^.`class` := "control-label", "Username"),
-          Input(state.username, onUsernameChange _, ^.id := "username")
+          usernameInput(state.username, ^.id := "username")
         ),
         <.div(^.`class` := "form-group",
           <.label(^.`for` := "password", ^.`class` := "control-label", "Password"),
-          Input(state.password, onPasswordChange _, ^.id := "password")
+          passwordInput(state.password, ^.id := "password")
         ),
         Button(Button.Props(
           style = ContextStyle.primary,

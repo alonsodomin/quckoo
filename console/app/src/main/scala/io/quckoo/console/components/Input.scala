@@ -118,20 +118,26 @@ object Input {
 
   }
 
-  implicit def propsReuse[A : Reusability]: Reusability[Props[A]] =
+  def apply[A : Reusability](onUpdate: OnUpdate[A]) = new Input[A](onUpdate)
+
+}
+
+class Input[A : Reusability] private[components] (onUpdate: Input.OnUpdate[A]) {
+  import Input._
+
+  implicit val propsReuse: Reusability[Props[A]] =
     Reusability.by[Props[A], (Option[A], Option[A])](p => (p.value, p.defaultValue))
 
-  def component[A : Reusability] = ReactComponentB[Props[A]]("Input").
+  private[components] val component = ReactComponentB[Props[A]]("Input").
     stateless.
     renderBackend[Backend[A]].
     configure(Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode]).
     build
 
-  def apply[A : Reusability](value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
-    component[A].apply(Props(value, None, onUpdate, attrs))
+  def apply(value: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+    component(Props(value, None, onUpdate, attrs))
 
-  def apply[A : Reusability](value: Option[A], defaultValue: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
-    component[A].apply(Props(value, defaultValue, onUpdate, attrs))
+  def apply(value: Option[A], defaultValue: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+    component(Props(value, defaultValue, onUpdate, attrs))
 
 }
-

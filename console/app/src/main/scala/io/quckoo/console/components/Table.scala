@@ -95,7 +95,7 @@ object Table {
     render_P { props =>
       <.tr(props.selected ?= (^.`class` := "info"),
         props.item.renderFailed { ex =>
-          <.td(^.colSpan := props.columns.size, Notification.danger(ExceptionThrown(ex)))
+          <.td(^.colSpan := props.columns.size, Notification.danger(ex))
         },
         props.item.renderPending { _ =>
           <.td(^.colSpan := props.columns.size, "Loading ...")
