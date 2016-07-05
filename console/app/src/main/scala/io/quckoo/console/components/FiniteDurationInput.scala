@@ -73,7 +73,7 @@ object FiniteDurationInput {
       $.modState(_.copy(unit = value), propagateUpdate)
     }
 
-    val lengthInput = new Input[Long](onLengthUpdate)
+    val lengthInput = Input[Long](onLengthUpdate)
 
     def render(props: Props, state: State) = {
       val id = props.id

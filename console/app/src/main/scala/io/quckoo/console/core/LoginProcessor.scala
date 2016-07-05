@@ -17,8 +17,10 @@
 package io.quckoo.console.core
 
 import diode._
+
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
+
 import japgolly.scalajs.react.extra.router.RouterCtl
 
 import scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -28,6 +30,7 @@ import scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor[ConsoleScope] {
   import ConsoleRoute._
+  import ActionResult._
 
   val authFailedNotification = Notification.danger("Username or password incorrect")
 
@@ -36,22 +39,20 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor
                        currentModel: ConsoleScope): ActionResult[ConsoleScope] = {
     action match {
       case LoginFailed =>
-        ActionResult.ModelUpdate(currentModel.copy(notification = Some(authFailedNotification)))
+        EffectOnly(Growl(authFailedNotification))
 
       case LoggedIn(client, referral) =>
-        val navigate = Effect.action(NavigateTo(referral.getOrElse(DashboardRoute)))
-        ActionResult.ModelUpdateEffect(currentModel.copy(client = Some(client), notification = None), navigate)
+        EffectOnly(NavigateTo(referral.getOrElse(DashboardRoute)))
 
       case LoggedOut =>
         val action = Effect.action(NavigateTo(DashboardRoute))
-        ActionResult.ModelUpdateEffect(currentModel.copy(client = None, notification = None), action)
+        ModelUpdateEffect(currentModel.copy(client = None), action)
 
       case NavigateTo(route) =>
         routerCtl.set(route).runNow()
         ActionResult.NoChange
 
-      case _ =>
-        next(action)
+      case _ => next(action)
     }
   }
 

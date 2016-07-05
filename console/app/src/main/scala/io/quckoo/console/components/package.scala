@@ -20,31 +20,26 @@ import java.util.concurrent.TimeUnit
 
 import io.quckoo.Trigger
 import io.quckoo.id.ArtifactId
-import io.quckoo.time.{DateTime, MomentJSDate, MomentJSTime}
-
+import io.quckoo.time.{Date, DateTime, Time}
 import japgolly.scalajs.react.ReactNode
 import japgolly.scalajs.react.extra.Reusability
-import japgolly.scalajs.react.vdom.prefix_<^._
+import org.scalajs.jquery.{JQuery, JQueryStatic}
 
-import org.scalajs.jquery.JQuery
-
-import scala.concurrent.duration.FiniteDuration
 import scalacss.Defaults._
-import scalacss.ScalaCssReact._
+import scala.concurrent.duration.FiniteDuration
+import scala.language.implicitConversions
 
 /**
   * Created by alonsodomin on 20/02/2016.
   */
 package object components {
-  import scala.language.implicitConversions
-
   val lookAndFeel = new LookAndFeel
 
   // React's reusability instances for common types
   implicit val timeUnitReuse = Reusability.byRef[TimeUnit]
   implicit val finiteDurationReuse = Reusability.byRef[FiniteDuration]
-  implicit val dateReuse = Reusability.byRef[MomentJSDate]
-  implicit val timeReuse = Reusability.byRef[MomentJSTime]
+  implicit val dateReuse = Reusability.byRef[Date]
+  implicit val timeReuse = Reusability.byRef[Time]
   implicit val dateTimeReuse = Reusability.byRef[DateTime]
   implicit val artifactIdReuse = Reusability.byRef[ArtifactId]
 
@@ -53,12 +48,15 @@ package object components {
   implicit val everyTriggerReuse = Reusability.caseClass[Trigger.Every]
   implicit val atTriggerReuse = Reusability.caseClass[Trigger.At]
 
-  implicit def icon2VDom(icon: Icon): ReactNode = {
-    <.span(^.classSet1M("fa", icon.classSet), icon.state.padding ?= (^.paddingRight := 5.px))
-  }
+  implicit def toReactNode(notification: Notification): ReactNode =
+    notification.inline
 
-  implicit def jq2bootstrap(jq: JQuery): BootstrapJQuery = jq.asInstanceOf[BootstrapJQuery]
+  // JQuery plugins
 
-  implicit def jq2Notify(jq: JQuery): BootstrapNotify = jq.asInstanceOf[BootstrapNotify]
+  implicit def toBootstrapJQuery(jq: JQuery): BootstrapJQuery =
+    jq.asInstanceOf[BootstrapJQuery]
+
+  implicit def jq2Notify(jq: JQueryStatic): BootstrapNotify =
+    jq.asInstanceOf[BootstrapNotify]
 
 }

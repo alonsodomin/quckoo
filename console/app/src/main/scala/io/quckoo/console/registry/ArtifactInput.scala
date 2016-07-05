@@ -60,9 +60,9 @@ object ArtifactInput {
     def onVersionUpdate(version: Option[String]): Callback =
       $.modState(_.copy(version = version), propagateUpdate)
 
-    val groupInput   = new Input[String](onGroupUpdate)
-    val nameInput    = new Input[String](onNameUpdate)
-    val versionInput = new Input[String](onVersionUpdate)
+    val groupInput   = Input[String](onGroupUpdate)
+    val nameInput    = Input[String](onNameUpdate)
+    val versionInput = Input[String](onVersionUpdate)
 
     def render(props: Props, state: State) = {
       <.div(^.`class` := "container-fluid",

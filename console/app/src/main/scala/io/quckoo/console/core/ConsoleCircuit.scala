@@ -31,6 +31,7 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
 import io.quckoo.{ExecutionPlan, JobSpec}
 
+import scala.scalajs.concurrent.JSExecutionContext
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalaz.{-\/, \/-}
 
@@ -49,11 +50,9 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
     registryHandler,
     scheduleHandler,
     executionPlanMapHandler,
-    taskHandler
+    taskHandler,
+    notificationHandler
   )
-
-  def zoomIntoNotification: ModelRW[ConsoleScope, Option[Notification]] =
-    zoomRW(_.notification)((model, notif) => model.copy(notification = notif))
 
   def zoomIntoClient: ModelRW[ConsoleScope, Option[QuckooClient]] =
     zoomRW(_.client) { (model, c) => model.copy(client = c) }
@@ -72,6 +71,12 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
   def zoomIntoTasks: ModelRW[ConsoleScope, PotMap[TaskId, TaskDetails]] =
     zoomIntoUserScope.zoomRW(_.tasks) { (model, tasks) => model.copy(tasks = tasks) }
+
+  val notificationHandler: HandlerFunction = (model, action) => action match {
+    case Growl(notification) =>
+      notification.growl()
+      None
+  }
 
   val loginHandler = new ActionHandler(zoomIntoClient) {
 
@@ -120,63 +125,76 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
   }
 
-  val registryHandler = new ActionHandler(zoomIntoNotification)
-      with ConnectedHandler[Option[Notification]] {
+  val registryHandler = new ActionHandler(zoomIntoUserScope)
+      with ConnectedHandler[UserScope] {
 
     override def handle = {
       case RegisterJob(spec) =>
         withClient { client =>
-          updated(None, Effect(client.registerJob(spec).map(RegisterJobResult)))
+          effectOnly(Effect(client.registerJob(spec).map(RegisterJobResult)))
         }
 
       case RegisterJobResult(validated) =>
         validated.disjunction match {
           case \/-(id) =>
-            updated(
-              Some(Notification.success(s"Job registered with id $id")),
-              Effect.action(RefreshJobSpecs(Set(id)))
+            val notification = Notification.info(s"Job registered with id $id")
+            val effects = Effects.seq(
+              Growl(notification),
+              RefreshJobSpecs(Set(id))
             )
+            effectOnly(effects)
 
           case -\/(errors) =>
-            updated(Some(Notification.danger(errors)))
+            val effects = errors.map { err =>
+              Notification.danger(err)
+            }.map(n => Effect.action(Growl(n)))
+
+            effectOnly(Effects.seq(effects))
         }
 
       case EnableJob(jobId) =>
         withClient { client =>
-          updated(None, Effect(client.enableJob(jobId)))
+          effectOnly(Effect(client.enableJob(jobId)))
         }
 
       case DisableJob(jobId) =>
         withClient { client =>
-          updated(None, Effect(client.disableJob(jobId)))
+          effectOnly(Effect(client.disableJob(jobId)))
         }
     }
 
   }
 
-  val scheduleHandler = new ActionHandler(zoomIntoNotification)
-      with ConnectedHandler[Option[Notification]] {
+  val scheduleHandler = new ActionHandler(zoomIntoUserScope)
+      with ConnectedHandler[UserScope] {
 
     override def handle = {
       case msg: ScheduleJob =>
         withClient { client =>
-          updated(None, Effect(client.schedule(msg).map(_.fold(identity, identity))))
+          effectOnly(Effect(client.schedule(msg).map(_.fold(identity, identity))))
         }
 
       case CancelExecutionPlan(planId) =>
         withClient { client =>
-          updated(None, Effect(client.cancelPlan(planId).map(_ => ExecutionPlanCancelled(planId))))
+          effectOnly(Effect(client.cancelPlan(planId).map(_ => ExecutionPlanCancelled(planId))))
         }
 
       case JobNotFound(jobId) =>
-        updated(Some(Notification.danger(s"Job not found $jobId")))
+        effectOnly(Growl(
+          Notification.danger(s"Job not found $jobId")
+        ))
 
       case ExecutionPlanStarted(jobId, planId) =>
-        val effect = Effect.action(RefreshExecutionPlans(Set(planId)))
-        updated(Some(Notification.success(s"Started execution plan for job. planId=$planId")), effect)
+        val effect = Effects.set(
+          Growl(Notification.success(s"Started execution plan for job. planId=$planId")),
+          RefreshExecutionPlans(Set(planId))
+        )
+        effectOnly(effect)
 
       case ExecutionPlanCancelled(planId) =>
-        updated(Some(Notification.success(s"Execution plan $planId has been cancelled")))
+        effectOnly(Growl(
+          Notification.success(s"Execution plan $planId has been cancelled")
+        ))
     }
 
   }
@@ -194,16 +212,22 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         updated(PotMap(JobSpecFetcher, specs))
 
       case JobEnabled(jobId) =>
-        effectOnly(Effect.action(RefreshJobSpecs(Set(jobId))))
+        notifyAndRefresh(Notification.info(s"Job enabled: $jobId"), Set(jobId))
 
       case JobDisabled(jobId) =>
-        effectOnly(Effect.action(RefreshJobSpecs(Set(jobId))))
+        notifyAndRefresh(Notification.info(s"Job disabled: $jobId"), Set(jobId))
 
       case action: RefreshJobSpecs =>
         withClient { implicit client =>
           val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
           action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
         }
+    }
+
+    def notifyAndRefresh(notification: Notification, keys: Set[JobId]) = {
+      val showNotification = Effect.action(Growl(notification))
+      val refreshJobSpecs = Effect.action(RefreshJobSpecs(keys))
+      effectOnly(new EffectSet(showNotification, Set(refreshJobSpecs), JSExecutionContext.queue))
     }
 
   }

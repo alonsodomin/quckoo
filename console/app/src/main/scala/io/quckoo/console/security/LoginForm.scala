@@ -27,6 +27,7 @@ import monocle.macros.Lenses
  * Created by aalonsodominguez on 12/10/2015.
  */
 object LoginForm {
+  import MonocleReact._
 
   type LoginHandler = (String, String) => Callback
 
@@ -52,8 +53,8 @@ object LoginForm {
       event.preventDefaultCB >> perform
     }
 
-    val usernameInput = new Input[String](onUsernameChange)
-    val passwordInput = new Input[Password](onPasswordChange)
+    val usernameInput = Input[String](onUsernameChange)
+    val passwordInput = Input[Password](onPasswordChange)
 
     def render(handler: LoginHandler, state: State) = {
       <.form(^.name := "loginForm", ^.onSubmit ==> submit(handler),

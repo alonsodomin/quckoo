@@ -17,10 +17,10 @@
 package io.quckoo.console.core
 
 import diode.data.{AsyncAction, Pot, PotState}
-
 import io.quckoo._
 import io.quckoo.client.QuckooClient
 import io.quckoo.console.ConsoleRoute
+import io.quckoo.console.components.Notification
 import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
@@ -38,6 +38,7 @@ case object LoggedOut extends Event
 case object LoginFailed extends Event
 
 final case class NavigateTo(route: ConsoleRoute) extends Command
+final case class Growl(notification: Notification) extends Command
 
 final case class ClusterStateLoaded(state: QuckooState) extends Event
 case object StartClusterSubscription extends Command

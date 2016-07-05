@@ -64,12 +64,17 @@ object JobForm {
     val artifact    = State.spec ^|-> EditableJobSpec.artifactId
     val jobClass    = State.spec ^|-> EditableJobSpec.jobClass
 
-    val displayNameInput = new Input[String]($.setStateL(displayName)(_))
-    val descriptionInput = new Input[String]($.setStateL(description)(_))
-    val jobClassInput    = new Input[String]($.setStateL(jobClass)(_))
-
     def submitForm(): Callback =
       $.modState(_.copy(cancelled = false))
+
+    def onDisplayNameUpdate(value: Option[String]) =
+      $.setStateL(displayName)(value)
+
+    def onDescriptionUpdate(value: Option[String]) =
+      $.setStateL(description)(value)
+
+    def onJobClassUpdate(value: Option[String]) =
+      $.setStateL(jobClass)(value)
 
     def formClosed(props: Props, state: State) = {
       val jobSpec: Option[JobSpec] = if (!state.cancelled) {
@@ -82,6 +87,10 @@ object JobForm {
 
       props.handler(jobSpec)
     }
+
+    val displayNameInput = Input[String](onDisplayNameUpdate)
+    val descriptionInput = Input[String](onDescriptionUpdate)
+    val jobClassInput    = Input[String](onJobClassUpdate)
 
     def render(props: Props, state: State) = {
       <.form(^.name := "jobDetails",

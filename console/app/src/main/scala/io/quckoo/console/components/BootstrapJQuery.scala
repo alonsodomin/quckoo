@@ -19,6 +19,7 @@ package io.quckoo.console.components
 import org.scalajs.jquery.JQuery
 
 import scala.scalajs.js
+import scala.language.implicitConversions
 
 /**
   * Created by alonsodomin on 20/02/2016.
@@ -28,3 +29,4 @@ trait BootstrapJQuery extends JQuery {
   def modal(action: String): BootstrapJQuery = js.native
   def modal(options: js.Any): BootstrapJQuery = js.native
 }
+

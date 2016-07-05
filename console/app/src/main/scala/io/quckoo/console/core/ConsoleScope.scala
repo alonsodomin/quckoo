@@ -27,7 +27,6 @@ import io.quckoo.net.QuckooState
 
 final case class ConsoleScope private (
   client: Option[QuckooClient],
-  notification: Option[Notification],
   clusterState: QuckooState,
   userScope: UserScope
 ) {
@@ -41,7 +40,6 @@ object ConsoleScope {
   def initial =
     ConsoleScope(
       client       = AjaxQuckooClientFactory.autoConnect(),
-      notification = None,
       clusterState = QuckooState(),
       userScope    = UserScope.initial
     )

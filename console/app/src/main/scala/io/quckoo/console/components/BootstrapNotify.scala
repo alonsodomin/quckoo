@@ -16,7 +16,7 @@
 
 package io.quckoo.console.components
 
-import org.scalajs.jquery.JQuery
+import org.scalajs.jquery.JQueryStatic
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -25,14 +25,15 @@ import scala.scalajs.js.annotation.JSName
   * Created by alonsodomin on 28/03/2016.
   */
 @js.native
-trait BootstrapNotify extends JQuery {
+trait BootstrapNotify extends JQueryStatic {
 
   @JSName("notify")
-  @js.native
-  def showNotification(text: String): BootstrapNotify = js.native
+  def showNotification(content: String, options: js.Any = js.Dynamic.literal()): this.type = js.native
 
-  @JSName("notify")
-  @js.native
-  def showNotification(options: js.Any): BootstrapNotify = js.native
+  @JSName("notifyDefaults")
+  def notificationDefaults(options: js.Any): BootstrapNotify = js.native
+
+  @JSName("notifyClose")
+  def closeNotification(id: String = "all"): BootstrapNotify = js.native
 
 }

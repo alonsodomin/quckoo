@@ -21,12 +21,13 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
+
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-import de.heikoseeberger.akkasse.{EventStreamMarshalling, ServerSentEvent}
+import de.heikoseeberger.akkasse.EventStreamMarshalling
+
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.cluster.http._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization
 
 /**
