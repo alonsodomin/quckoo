@@ -27,13 +27,13 @@ import scala.concurrent.duration._
 /**
   * Created by alonsodomin on 04/07/2016.
   */
-object Clock {
+object ClockWidget {
 
   final case class State(dateTime: DateTime)
 
   class Backend($: BackendScope[TimeSource, State]) extends TimerSupport {
 
-    protected[Clock] def mounted(timeSource: TimeSource) =
+    protected[ClockWidget] def mounted(timeSource: TimeSource) =
       setInterval(tick(timeSource), 1 second)
 
     def tick(timeSource: TimeSource): Callback =

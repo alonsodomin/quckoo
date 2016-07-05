@@ -60,15 +60,20 @@ object Table {
     render_P(node => <.td(node)).
     build
 
-  private[this] type CheckboxCellProps = (String, Boolean, Callback)
+  private[this] case class CheckboxCellProps(
+    id: String, selected: Boolean, action: Callback, header: Boolean = false
+  )
   private[this] val CheckboxCell = ReactComponentB[CheckboxCellProps]("CheckboxCell").
     stateless.
-    render_P { case (id, selected, action) =>
-      <.td(<.input.checkbox(
+    render_P { case CheckboxCellProps(id, selected, action, header) =>
+      val cb = <.input.checkbox(
         ^.id := id,
         ^.checked := selected,
         ^.onChange --> action
-      ))
+      )
+
+      if (header) <.th(cb)
+      else <.td(cb)
     } build
 
   private[this] type ActionsCellProps[Id, Item] = (Id, Item, RowActionsFactory[Id, Item])
@@ -105,7 +110,7 @@ object Table {
 
             if (props.allowSelect) {
               val checkboxCell = CheckboxCell.
-                withKey(s"select-${props.rowId}")((
+                withKey(s"select-${props.rowId}")(CheckboxCellProps(
                   s"select-item-${props.rowId}",
                   props.selected,
                   props.toggleSelected(props.rowId)
@@ -166,7 +171,8 @@ object Table {
           if (props.allowSelect) {
             val selectAllCheckbox = CheckboxCell.
               withKey("select-all")(
-                ("selectAll", state.allSelected, toggleSelectAll(props))
+                CheckboxCellProps("selectAll", state.allSelected,
+                  toggleSelectAll(props), header = true)
               )
             selectAllCheckbox :: columns
           } else columns
