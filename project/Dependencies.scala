@@ -25,6 +25,7 @@ object Dependencies {
     // ScalaJS -------
 
     val scalaJsReact = "0.11.1"
+    val testState = "2.0.0"
     val scalaCss = "0.4.1"
 
     val diode = "1.0.0"
@@ -168,7 +169,13 @@ object Dependencies {
       "com.github.japgolly.scalajs-react" %%% "ext-monocle"  % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "test"         % version.scalaJsReact % Test,
       "com.github.japgolly.scalacss"      %%% "core"         % version.scalaCss,
-      "com.github.japgolly.scalacss"      %%% "ext-react"    % version.scalaCss
+      "com.github.japgolly.scalacss"      %%% "ext-react"    % version.scalaCss,
+
+      "com.github.japgolly.test-state" %%% "core"              % version.testState % Test,
+      "com.github.japgolly.test-state" %%% "dom-zipper"        % version.testState % Test,
+      "com.github.japgolly.test-state" %%% "dom-zipper-sizzle" % version.testState % Test,
+      "com.github.japgolly.test-state" %%% "ext-scalajs-react" % version.testState % Test,
+      "com.github.japgolly.test-state" %%% "ext-scalaz"        % version.testState % Test
     ),
     jsDependencies ++= Seq(
       // ReactJS
