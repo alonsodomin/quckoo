@@ -25,13 +25,12 @@ import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
-import io.quckoo.protocol.cluster.{GetClusterStatus, MasterEvent}
+import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
 import io.quckoo.{ExecutionPlan, JobSpec}
 
-import scala.scalajs.concurrent.JSExecutionContext
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalaz.{-\/, \/-}
 
@@ -105,7 +104,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         }
 
       case ClusterStateLoaded(state) =>
-        updated(state, Effect.action(StartClusterSubscription))
+        updated(state, StartClusterSubscription)
 
       case StartClusterSubscription =>
         withClient { implicit client =>
@@ -114,10 +113,30 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         }
 
       case evt: MasterEvent =>
-        updated(value.updated(evt))
+        val notification = evt match {
+          case MasterJoined(_, location) =>
+            Notification.success(s"Master node joined from: $location")
+
+          case MasterUnreachable(nodeId) =>
+            Notification.warning(s"Master node $nodeId has become unreachable")
+
+          case MasterReachable(nodeId) =>
+            Notification.info(s"Master node $nodeId has re-joined the cluster")
+
+          case MasterRemoved(nodeId) =>
+            Notification.danger(s"Master node $nodeId has left the cluster.")
+        }
+        updated(value.updated(evt), Growl(notification))
 
       case evt: WorkerEvent =>
-        updated(value.updated(evt))
+        val notification = evt match {
+          case WorkerJoined(_, location) =>
+            Notification.success(s"Worker node joined from: $location")
+
+          case WorkerRemoved(nodeId) =>
+            Notification.danger(s"Worker $nodeId has left the cluster")
+        }
+        updated(value.updated(evt), Growl(notification))
 
       case evt: TaskQueueUpdated =>
         updated(value.copy(metrics = value.metrics.updated(evt)))
@@ -212,22 +231,22 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         updated(PotMap(JobSpecFetcher, specs))
 
       case JobEnabled(jobId) =>
-        notifyAndRefresh(Notification.info(s"Job enabled: $jobId"), Set(jobId))
+        effectOnly(Effects.set(
+          Growl(Notification.info(s"Job enabled: $jobId")),
+          RefreshJobSpecs(Set(jobId))
+        ))
 
       case JobDisabled(jobId) =>
-        notifyAndRefresh(Notification.info(s"Job disabled: $jobId"), Set(jobId))
+        effectOnly(Effects.set(
+          Growl(Notification.info(s"Job disabled: $jobId")),
+          RefreshJobSpecs(Set(jobId))
+        ))
 
       case action: RefreshJobSpecs =>
         withClient { implicit client =>
           val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
           action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
         }
-    }
-
-    def notifyAndRefresh(notification: Notification, keys: Set[JobId]) = {
-      val showNotification = Effect.action(Growl(notification))
-      val refreshJobSpecs = Effect.action(RefreshJobSpecs(keys))
-      effectOnly(new EffectSet(showNotification, Set(refreshJobSpecs), JSExecutionContext.queue))
     }
 
   }
