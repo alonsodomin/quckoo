@@ -3,38 +3,35 @@
 set -e
 
 function install_devtools() {
-    sudo apt-get -y update &> /dev/null
+    echo "Installing OpenJDK 8..."
+    sudo yum install -y java-1.8.0-openjdk-devel &> /dev/null
 
     echo "Installing nodejs..."
-    sudo apt-get install -y nodejs npm &> /dev/null
-    sudo ln -s /usr/bin/nodejs /usr/bin/node
+    #sudo apt-get install -y nodejs npm &> /dev/null
+    sudo yum install -y gcc-c++ make &> /dev/null
+    sudo curl --silent --location https://rpm.nodesource.com/setup_4.x | bash - &> /dev/null
+    sudo yum install -y nodejs &> /dev/null
 
     echo "Installing PhantomJS..."
-    sudo npm install -g phantomjs &> /dev/null
+    sudo npm install -g phantomjs-prebuilt &> /dev/null
 
     echo "Installing SBT..."
-    wget -nv https://dl.bintray.com/sbt/debian/sbt-0.13.9.deb -O ~/sbt-0.13.9.deb
-    sudo dpkg -i ~/sbt-0.13.9.deb &> /dev/null
-    rm ~/sbt-0.13.9.deb
+    curl --silent https://bintray.com/sbt/rpm/rpm > bintray-sbt-rpm.repo
+    sudo mv bintray-sbt-rpm.repo /etc/yum.repos.d/
+    sudo yum install -y sbt &> /dev/null
 
-    #echo "Installing SASS..."
-    #sudo gem install compass
+    echo "Installing SASS..."
+    sudo yum install -y ruby-devel &> /dev/null
+    sudo gem install compass &> /dev/null
+
+    echo "DEV tools installed into host VM! Moving on..."
+    touch ~/.devtools_provisioned
 }
 
 ########## PROGRAM STARTS HERE ##############
 
-function main() {
-    install_devtools
-    touch ~/.devtools_provisioned
+echo "Updating VM..."
+sudo yum update -y &> /dev/null
 
-    # Prepare the local SBT repository folder
-    mkdir -p /home/vagrant/.ivy2/local
-    chown -R vagrant:vagrant /home/vagrant/.ivy2/local
-    chmod -R 777 /home/vagrant/.ivy2/local
-
-    # Forcing a re-start of the docker daemon
-    sudo service docker restart
-}
-
-# Only run main function on first build
-test -f ~/.devtools_provisioned || main
+# Dev tools take ages to install, only do so on first build
+test -f ~/.devtools_provisioned || install_devtools

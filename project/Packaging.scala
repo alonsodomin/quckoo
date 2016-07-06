@@ -30,9 +30,7 @@ object Packaging {
     ),
     defaultLinuxInstallLocation in Docker := linuxHomeLocation,
     dockerCommands ++= Seq(
-      Cmd("ENV", "QUCKOO_HOME", linuxHomeLocation),
-      ExecCmd("RUN mkdir -p resolver/cache"),
-      ExecCmd("RUN mkdir -p resolver/local")
+      Cmd("ENV", "QUCKOO_HOME", linuxHomeLocation)
     )
   )
 
