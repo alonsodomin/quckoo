@@ -32,7 +32,7 @@ import monix.reactive.Observable
 
 import org.scalajs.dom.ext.{Ajax, AjaxException}
 
-import slogging.LazyLogging
+import slogging.StrictLogging
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -42,7 +42,7 @@ import scalaz.ValidationNel
   * Created by alonsodomin on 26/03/2016.
   */
 private[ajax] class AjaxQuckooClient(private var authToken: Option[String])
-    extends QuckooClient with LazyLogging {
+    extends QuckooClient with StrictLogging {
 
   import upickle.default._
   import serialization.json.scalajs._

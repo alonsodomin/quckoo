@@ -31,7 +31,7 @@ import scalacss.ScalaCssReact._
 /**
  * Created by alonsodomin on 13/10/2015.
  */
-object LoginPageView {
+object LoginPage {
 
   object Style extends StyleSheet.Inline {
     import dsl._

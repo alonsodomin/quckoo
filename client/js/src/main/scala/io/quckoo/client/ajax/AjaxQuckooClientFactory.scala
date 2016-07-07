@@ -19,14 +19,17 @@ package io.quckoo.client.ajax
 import io.quckoo.auth.http._
 import io.quckoo.client.{QuckooClient, QuckooClientFactory}
 import io.quckoo.serialization.Base64._
+
 import org.scalajs.dom.ext.Ajax
+
+import slogging.StrictLogging
 
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Created by alonsodomin on 26/03/2016.
   */
-object AjaxQuckooClientFactory extends QuckooClientFactory {
+object AjaxQuckooClientFactory extends QuckooClientFactory with StrictLogging {
 
   def autoConnect(): Option[QuckooClient] = Cookie(AuthCookie).
     map(token => new AjaxQuckooClient(Some(token)))
@@ -35,6 +38,7 @@ object AjaxQuckooClientFactory extends QuckooClientFactory {
     val authentication = s"$username:$password".getBytes("UTF-8").toBase64
     val hdrs = Map(AuthorizationHeader -> s"Basic $authentication")
 
+    logger.info("Sending login request to the server. username={}", username)
     Ajax.post(LoginURI, headers = hdrs).
       map { xhr => new AjaxQuckooClient(Some(xhr.responseText)) }
   }

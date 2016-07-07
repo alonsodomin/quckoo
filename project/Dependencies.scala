@@ -36,7 +36,8 @@ object Dependencies {
 
     // Other utils ---
 
-    val scopt = "3.3.0"
+    val scopt = "3.5.0"
+    val slogging = "0.5.0"
     val monocle = "1.2.2"
     val scalaz = "7.2.2"
     val monix  = "2.0-RC8"
@@ -130,7 +131,7 @@ object Dependencies {
     libraryDependencies ++= Seq(
       compilerPlugin(Dependencies.compiler.macroParadise),
 
-      "biz.enef"      %%% "slogging"  % "0.5.0",
+      "biz.enef"      %%% "slogging"  % version.slogging,
       "org.scalatest" %%% "scalatest" % version.scalaTest % Test
     )
   }

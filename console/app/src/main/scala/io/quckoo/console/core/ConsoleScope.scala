@@ -20,6 +20,7 @@ import io.quckoo.client.QuckooClient
 import io.quckoo.client.ajax.AjaxQuckooClientFactory
 import io.quckoo.console.components.Notification
 import io.quckoo.net.QuckooState
+import io.quckoo.time.DateTime
 
 /**
   * Created by alonsodomin on 20/02/2016.
@@ -28,7 +29,8 @@ import io.quckoo.net.QuckooState
 final case class ConsoleScope private (
   client: Option[QuckooClient],
   clusterState: QuckooState,
-  userScope: UserScope
+  userScope: UserScope,
+  lastLogin: Option[DateTime]
 ) {
 
   def currentUser = client.flatMap(_.principal)
@@ -41,7 +43,8 @@ object ConsoleScope {
     ConsoleScope(
       client       = AjaxQuckooClientFactory.autoConnect(),
       clusterState = QuckooState(),
-      userScope    = UserScope.initial
+      userScope    = UserScope.initial,
+      lastLogin    = None
     )
 
 }

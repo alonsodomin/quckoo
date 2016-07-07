@@ -26,4 +26,6 @@ object ConsoleRoute {
   case object LoginRoute extends ConsoleRoute
   case object RegistryRoute extends ConsoleRoute
   case object SchedulerRoute extends ConsoleRoute
+
+  val all = Seq(RootRoute, LoginRoute, DashboardRoute, RegistryRoute, SchedulerRoute)
 }

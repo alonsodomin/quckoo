@@ -23,9 +23,9 @@ import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, LoginProcessor}
 import io.quckoo.console.dashboard.DashboardView
 import io.quckoo.console.layout.Navigation
 import io.quckoo.console.layout.Navigation.NavigationItem
-import io.quckoo.console.registry.RegistryPageView
-import io.quckoo.console.scheduler.SchedulerPageView
-import io.quckoo.console.security.LoginPageView
+import io.quckoo.console.registry.RegistryPage
+import io.quckoo.console.scheduler.SchedulerPage
+import io.quckoo.console.security.LoginPage
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
@@ -37,19 +37,17 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object SiteMap {
   import ConsoleRoute._
 
-  private[this] val scopeConnector = ConsoleCircuit.connect(identity(_))
-
   def dashboardPage(proxy: ModelProxy[ConsoleScope]) =
     proxy.wrap(identity(_))(DashboardView(_))
 
   def loginPage(proxy: ModelProxy[ConsoleScope])(referral: Option[ConsoleRoute]) =
-    proxy.wrap(identity(_))(p => LoginPageView(p, referral))
+    proxy.wrap(identity(_))(p => LoginPage(p, referral))
 
   def registryPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity(_))(RegistryPageView(_))
+    proxy.wrap(identity(_))(RegistryPage(_))
 
   def schedulerPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity(_))(SchedulerPageView(_))
+    proxy.wrap(identity(_))(SchedulerPage(_))
 
   private[this] def publicPages(proxy: ModelProxy[ConsoleScope]) = RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
     import dsl._
@@ -65,11 +63,17 @@ object SiteMap {
 
     implicit val redirectMethod = Redirect.Push
 
+    def isLoggedIn: CallbackB =
+      CallbackTo { proxy().currentUser.isDefined }
+
+    def redirectToLogin(referral: ConsoleRoute) =
+      Some(render(loginPage(proxy)(Some(referral))))
+
     (emptyRule
     | staticRoute("#home", DashboardRoute) ~> render(dashboardPage(proxy))
     | staticRoute("#registry", RegistryRoute) ~> render(registryPage(proxy))
     | staticRoute("#scheduler", SchedulerRoute) ~> render(schedulerPage(proxy))
-    ).addCondition(CallbackTo(proxy().currentUser.isDefined))(referral => Some(render(loginPage(proxy)(Some(referral)))))
+    ).addCondition(isLoggedIn)(redirectToLogin)
   }
 
   private[this] def config(proxy: ModelProxy[ConsoleScope]) = RouterConfigDsl[ConsoleRoute].buildConfig { dsl =>
@@ -80,7 +84,7 @@ object SiteMap {
     | privatePages(proxy)
     ).notFound(redirectToPage(RootRoute)(Redirect.Replace)).
       renderWith(layout(proxy)).
-      logToConsole
+      verify(ConsoleRoute.all.head, ConsoleRoute.all.tail: _*)
   }
 
   val mainMenu = List(

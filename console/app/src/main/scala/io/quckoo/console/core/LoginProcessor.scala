@@ -20,6 +20,8 @@ import diode._
 
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
+import io.quckoo.time.DateTime
+import io.quckoo.time.MomentJSTimeSource.Implicits.default
 
 import japgolly.scalajs.react.extra.router.RouterCtl
 
@@ -48,8 +50,12 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
 
       case LoggedIn(client, referral) =>
         val destination = referral.getOrElse(DashboardRoute)
+        val newModel = currentModel.copy(
+          client = Some(client),
+          lastLogin = Some(DateTime.now)
+        )
         logger.info("Successfully logged in! Redirecting to {}", destination)
-        EffectOnly(NavigateTo(destination))
+        ModelUpdateEffect(newModel, NavigateTo(destination))
 
       case LoggedOut =>
         logger.info("Successfully logged out.")
@@ -58,7 +64,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
 
       case NavigateTo(route) =>
         routerCtl.set(route).runNow()
-        ActionResult.NoChange
+        NoChange
 
       case _ => next(action)
     }
