@@ -22,14 +22,17 @@ import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.registry.RegistryEvent
 import io.quckoo.protocol.scheduler.TaskQueueUpdated
 import io.quckoo.protocol.worker.WorkerEvent
+
 import monix.reactive.Observable
+
+import slogging.LoggerHolder
 
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Created by alonsodomin on 26/03/2016.
   */
-trait QuckooClient extends Cluster with Registry with Scheduler {
+trait QuckooClient extends Cluster with Registry with Scheduler { this: LoggerHolder =>
 
   def registryEvents: Observable[RegistryEvent]
 

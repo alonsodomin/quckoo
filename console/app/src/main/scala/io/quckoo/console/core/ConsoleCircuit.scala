@@ -31,6 +31,8 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
 import io.quckoo.{ExecutionPlan, JobSpec}
 
+import slogging.LazyLogging
+
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalaz.{-\/, \/-}
 
@@ -38,7 +40,7 @@ import scalaz.{-\/, \/-}
   * Created by alonsodomin on 20/02/2016.
   */
 object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleScope]
-    with ConsoleOps with ConsoleSubscriptions {
+    with ConsoleOps with ConsoleSubscriptions with LazyLogging {
 
   protected def initialModel: ConsoleScope = ConsoleScope.initial
 

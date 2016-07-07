@@ -17,7 +17,8 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-Xlint",
     "-Ywarn-dead-code",
-    "-Xfatal-warnings"
+    "-Xfatal-warnings",
+    "-Xmacro-settings:slogging.disable"
   ),
   resolvers ++= Seq(
     Opts.resolver.mavenLocalFile,

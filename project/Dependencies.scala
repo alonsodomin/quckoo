@@ -130,6 +130,7 @@ object Dependencies {
     libraryDependencies ++= Seq(
       compilerPlugin(Dependencies.compiler.macroParadise),
 
+      "biz.enef"      %%% "slogging"  % "0.5.0",
       "org.scalatest" %%% "scalatest" % version.scalaTest % Test
     )
   }
@@ -157,7 +158,6 @@ object Dependencies {
 
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
-      "biz.enef"         %%% "slogging"       % "0.3",
       "me.chrons"        %%% "diode-react"    % version.diode,
       "be.doeraene"      %%% "scalajs-jquery" % "0.9.0",
       "org.singlespaced" %%% "scalajs-d3"     % "0.3.1",

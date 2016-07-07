@@ -23,10 +23,14 @@ import io.quckoo.console.layout._
 import io.quckoo.console.registry.RegistryPageView
 import io.quckoo.console.scheduler.SchedulerPageView
 import io.quckoo.console.security.LoginPageView
+
 import org.scalajs.dom
+
+import slogging.{ConsoleLoggerFactory, LogLevel, LoggerConfig}
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
+
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 import scalacss.mutable.GlobalRegistry
@@ -47,6 +51,9 @@ object App extends JSApp {
 
   @JSExport
   override def main(): Unit = {
+    LoggerConfig.factory = ConsoleLoggerFactory()
+    LoggerConfig.level = LogLevel.DEBUG
+
     GlobalStyles.addToDocument()
     inlineStyles()
 

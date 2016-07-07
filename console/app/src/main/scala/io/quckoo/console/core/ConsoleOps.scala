@@ -22,6 +22,7 @@ import io.quckoo.client.QuckooClient
 import io.quckoo.id._
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.scheduler.TaskDetails
+import slogging.LoggerHolder
 
 import scala.concurrent.Future
 import scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -29,7 +30,7 @@ import scalajs.concurrent.JSExecutionContext.Implicits.queue
 /**
   * Created by alonsodomin on 25/03/2016.
   */
-private[core] trait ConsoleOps {
+private[core] trait ConsoleOps { this: LoggerHolder =>
 
   def refreshClusterStatus(implicit client: QuckooClient): Future[ClusterStateLoaded] =
     client.clusterState.map(ClusterStateLoaded(_))

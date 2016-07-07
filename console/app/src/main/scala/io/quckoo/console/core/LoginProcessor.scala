@@ -23,12 +23,16 @@ import io.quckoo.console.components.Notification
 
 import japgolly.scalajs.react.extra.router.RouterCtl
 
+import slogging.LazyLogging
+
 import scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
   * Created by alonsodomin on 26/03/2016.
   */
-class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor[ConsoleScope] {
+class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
+    extends ActionProcessor[ConsoleScope] with LazyLogging {
+
   import ConsoleRoute._
   import ActionResult._
 
@@ -39,12 +43,16 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute]) extends ActionProcessor
                        currentModel: ConsoleScope): ActionResult[ConsoleScope] = {
     action match {
       case LoginFailed =>
+        logger.warn("Login failed!")
         EffectOnly(Growl(authFailedNotification))
 
       case LoggedIn(client, referral) =>
-        EffectOnly(NavigateTo(referral.getOrElse(DashboardRoute)))
+        val destination = referral.getOrElse(DashboardRoute)
+        logger.info("Successfully logged in! Redirecting to {}", destination)
+        EffectOnly(NavigateTo(destination))
 
       case LoggedOut =>
+        logger.info("Successfully logged out.")
         val action = Effect.action(NavigateTo(DashboardRoute))
         ModelUpdateEffect(currentModel.copy(client = None), action)
 
