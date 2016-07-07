@@ -88,8 +88,8 @@ trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerH
     } result()
 
   def router(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
-    logRequest("HTTPRequest" -> Logging.InfoLevel) {
-      logResult("HTTPResponse" -> Logging.InfoLevel) {
+    logRequest("HTTPRequest") {
+      logResult("HTTPResponse") {
         handleExceptions(exceptionHandler(system.log)) {
           handleRejections(rejectionHandler(system.log)) {
             pathPrefix("api") {

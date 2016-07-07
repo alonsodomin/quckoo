@@ -132,7 +132,7 @@ class Registry(settings: RegistrySettings)
 
 }
 
-private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef, requestor: ActorRef)
+private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef, replyTo: ActorRef)
     extends Actor with ActorLogging {
   import Resolver._
 
@@ -142,12 +142,12 @@ private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef,
     case ArtifactResolved(artifact) =>
       log.debug("Job artifact has been successfully resolved. artifactId={}",
         artifact.artifactId)
-      shardRegion.tell(JobState.CreateJob(jobId, jobSpec), requestor)
+      shardRegion.tell(JobState.CreateJob(jobId, jobSpec), replyTo)
       context stop self
 
     case ResolutionFailed(cause) =>
       log.error("Couldn't validate the job artifact id. " + cause)
-      requestor ! JobRejected(jobId, jobSpec.artifactId, cause)
+      replyTo ! JobRejected(jobId, jobSpec.artifactId, cause)
       context stop self
   }
 

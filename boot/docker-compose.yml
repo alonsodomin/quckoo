@@ -5,12 +5,12 @@ cassandra:
     - 9042:9042
     - 7000:7000
     - 9160:9160
-  volumes:
-    - /var/lib/cassandra:/var/lib/cassandra
+  #volumes:
+    #- /var/lib/cassandra:/var/lib/cassandra
 
-master:
+master_1:
   image: quckoo/cluster-master
-  container_name: master
+  container_name: master-01
   links:
     - cassandra:cassandra
   ports:
@@ -18,16 +18,42 @@ master:
     - 2551:2551
   #volumes:
     #- /vagrant/boot/etc/quckoo:/opt/quckoo/conf
-    #- /home/vagrant/.ivy2/local:/opt/quckoo/resolver/repository:rw
-  command: -b 192.168.50.25:2551 --cs 192.168.50.25:9042
+    #- /home/vagrant/.ivy2/local:/opt/quckoo/resolver/local:rw
+  command: -b 192.168.50.25:2551 --nodes 192.168.50.25:2551,192.168.50.25:2552 --cs 192.168.50.25:9042
 
-worker:
-  image: quckoo/cluster-worker
-  container_name: worker
+master_2:
+  image: quckoo/cluster-master
+  container_name: master-02
   links:
-    - master:master
+    - cassandra:cassandra
+  ports:
+    - 8096:8095
+    - 2552:2551
+  #volumes:
+    #- /vagrant/boot/etc/quckoo:/opt/quckoo/conf
+    #- /home/vagrant/.ivy2/local:/opt/quckoo/resolver/local:rw
+  command: -b 192.168.50.25:2552 --nodes 192.168.50.25:2551,192.168.50.25:2552 --cs 192.168.50.25:9042
+
+worker_1:
+  image: quckoo/cluster-worker
+  container_name: worker-01
+  links:
+    - master_1:master_1
+    - master_2:master_2
   ports:
     - 5001:5001
   #volumes:
-    #- /home/vagrant/.ivy2/local:/opt/quckoo/resolver/repository:rw
-  command: --master 192.168.50.25:2551 -b 192.168.50.25:5001
+    #- /home/vagrant/.ivy2/local:/opt/quckoo/resolver/local:rw
+  command: --master 192.168.50.25:2551,192.168.50.25:2552 -b 192.168.50.25:5001
+
+worker_2:
+  image: quckoo/cluster-worker
+  container_name: worker-02
+  links:
+    - master_1:master_1
+    - master_2:master_2
+  ports:
+    - 5002:5001
+  #volumes:
+    #- /home/vagrant/.ivy2/local:/opt/quckoo/resolver/local:rw
+  command: --master 192.168.50.25:2551,192.168.50.25:2552 -b 192.168.50.25:5002
