@@ -17,6 +17,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.box = "bento/centos-7.2"
 
+  if Vagrant.has_plugin?("vagrant-proxyconf")
+    require_plugin("vagrant-env")
+    config.env.enable
+
+    config.proxy.http     = ENV['HTTP_PROXY']
+    config.proxy.https    = ENV['HTTPS_PROXY']
+    config.proxy.ftp      = ENV['FTP_PROXY']
+    config.proxy.no_proxy = ENV['NO_PROXY']
+  end
+
   config.vm.provider "virtualbox" do |vb|
     # Customize the amount of memory on the VM:
     vb.memory = "4096"
