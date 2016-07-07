@@ -2,5 +2,6 @@
 
 echo "Building project..."
 cd /vagrant
-sbt clean docker:publishLocal
+
+sbt docker:publishLocal
 

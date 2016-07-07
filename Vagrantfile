@@ -28,6 +28,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.hostname = "quckoo-vagrant"
   config.vm.network "private_network", ip: "192.168.50.25"
+
   config.vm.synced_folder File.expand_path("~/.ivy2"), "/home/vagrant/.ivy2",
     id: "ivy-cache",
     mount_options: ["dmode=777,fmode=777"]

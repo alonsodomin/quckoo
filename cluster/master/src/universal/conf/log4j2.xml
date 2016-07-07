@@ -8,15 +8,6 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="io.quckoo" level="debug" />
-
-        <Logger name="HTTPRequest" level="debug" additivity="false">
-            <AppenderRef ref="Console"/>
-        </Logger>
-        <Logger name="HTTPResponse" level="debug" additivity="false">
-            <AppenderRef ref="Console"/>
-        </Logger>
-
         <Root level="info">
             <AppenderRef ref="Console"/>
         </Root>
