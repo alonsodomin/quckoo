@@ -30,7 +30,7 @@ object ExecutionPlanIndex {
 
   final val ExecutionPlanKey = ORSetKey[PlanId]("executionPlanIndex")
 
-  final case class Query(cmd: SchedulerCommand, sender: ActorRef)
+  final case class Query(cmd: SchedulerCommand, replyTo: ActorRef)
 
   sealed trait IndexOp
   case object AddToIndex extends IndexOp
@@ -63,11 +63,11 @@ class ExecutionPlanIndex(shardRegion: ActorRef) extends Actor with ActorLogging 
       updateIndex(AddToIndex, planId)
       context become updatingIndex(planId)
 
-    case event @ ExecutionPlanFinished(_, planId) =>
+    /*case event @ ExecutionPlanFinished(_, planId) =>
       log.debug("Removing execution plan {} from the index.", planId)
       mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
       updateIndex(RemoveFromIndex, planId)
-      context become updatingIndex(planId)
+      context become updatingIndex(planId)*/
 
     case cmd: GetExecutionPlan =>
       val externalReq = Query(cmd, sender())
@@ -118,23 +118,23 @@ private class ExecutionPlanSingleQuery(shardRegion: ActorRef) extends Actor with
   import ExecutionPlanIndex._
 
   def receive: Receive = {
-    case res @ Replicator.GetSuccess(`ExecutionPlanKey`, Some(Query(cmd @ GetExecutionPlan(planId), requestor))) =>
+    case res @ Replicator.GetSuccess(`ExecutionPlanKey`, Some(Query(cmd @ GetExecutionPlan(planId), replyTo))) =>
       val elems = res.get(ExecutionPlanKey).elements
       if (elems.contains(planId)) {
         log.debug("Found execution plan {} in the index, retrieving its state", planId)
-        shardRegion.tell(cmd, requestor)
+        shardRegion.tell(cmd, replyTo)
       } else {
         log.debug("Execution plan {} not found in the index", planId)
-        requestor ! ExecutionPlanNotFound(planId)
+        replyTo ! ExecutionPlanNotFound(planId)
       }
       context stop self
 
-    case Replicator.NotFound(`ExecutionPlanKey`, Some(Query(GetExecutionPlan(planId), requestor))) =>
-      requestor ! ExecutionPlanNotFound(planId)
+    case Replicator.NotFound(`ExecutionPlanKey`, Some(Query(GetExecutionPlan(planId), replyTo))) =>
+      replyTo ! ExecutionPlanNotFound(planId)
       context stop self
 
-    case Replicator.GetFailure(`ExecutionPlanKey`, Some(Query(_, requestor))) =>
-      requestor ! Status.Failure(new Exception("Could not retrieve elements from the index"))
+    case Replicator.GetFailure(`ExecutionPlanKey`, Some(Query(_, replyTo))) =>
+      replyTo ! Status.Failure(new Exception("Could not retrieve elements from the index"))
       context stop self
   }
 
@@ -146,7 +146,7 @@ private class ExecutionPlanMultiQuery(shardRegion: ActorRef) extends Actor with 
   private[this] var expectedResultCount = 0
 
   def receive = {
-    case res @ Replicator.GetSuccess(`ExecutionPlanKey`, Some(Query(GetExecutionPlans, requestor))) =>
+    case res @ Replicator.GetSuccess(`ExecutionPlanKey`, Some(Query(GetExecutionPlans, replyTo))) =>
       val elems = res.get(ExecutionPlanKey).elements
       if (elems.nonEmpty) {
         expectedResultCount = elems.size
@@ -154,32 +154,32 @@ private class ExecutionPlanMultiQuery(shardRegion: ActorRef) extends Actor with 
         elems.foreach { planId =>
           shardRegion ! GetExecutionPlan(planId)
         }
-        context become collateResults(requestor)
+        context become collateResults(replyTo)
       } else {
         log.debug("ExecutionPlan index is empty")
-        completeQuery(requestor)
+        completeQuery(replyTo)
       }
 
-    case Replicator.NotFound(`ExecutionPlanKey`, Some(Query(_, requestor))) =>
+    case Replicator.NotFound(`ExecutionPlanKey`, Some(Query(_, replyTo))) =>
       // complete query normally
-      completeQuery(requestor)
+      completeQuery(replyTo)
 
-    case Replicator.GetFailure(`ExecutionPlanKey`, Some(Query(_, requestor))) =>
-      requestor ! Status.Failure(new Exception("Could not retrieve elements from the index"))
+    case Replicator.GetFailure(`ExecutionPlanKey`, Some(Query(_, replyTo))) =>
+      replyTo ! Status.Failure(new Exception("Could not retrieve elements from the index"))
       context stop self
   }
 
-  private[this] def collateResults(requestor: ActorRef): Receive = {
+  private[this] def collateResults(replyTo: ActorRef): Receive = {
     case plan: ExecutionPlan if expectedResultCount > 0 =>
-      requestor ! plan
+      replyTo ! plan
       expectedResultCount -= 1
       if (expectedResultCount == 0) {
-        completeQuery(requestor)
+        completeQuery(replyTo)
       }
   }
 
-  private[this] def completeQuery(requestor: ActorRef): Unit = {
-    requestor ! Status.Success(())
+  private[this] def completeQuery(replyTo: ActorRef): Unit = {
+    replyTo ! Status.Success(())
     context stop self
   }
 
