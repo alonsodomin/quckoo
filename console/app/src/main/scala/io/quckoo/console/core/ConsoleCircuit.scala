@@ -135,6 +135,9 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
           case WorkerJoined(_, location) =>
             Notification.success(s"Worker node joined from: $location")
 
+          case WorkerLost(nodeId) =>
+            Notification.warning(s"Worker $nodeId lost communication with the cluster")
+
           case WorkerRemoved(nodeId) =>
             Notification.danger(s"Worker $nodeId has left the cluster")
         }

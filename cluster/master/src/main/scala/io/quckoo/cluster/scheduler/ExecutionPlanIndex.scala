@@ -28,7 +28,7 @@ import io.quckoo.protocol.scheduler._
 
 object ExecutionPlanIndex {
 
-  final val ExecutionPlanKey = ORSetKey[PlanId]("executionPlanIndex")
+  final val ExecutionPlanKey = GSetKey[PlanId]("executionPlanIndex")
 
   final case class Query(cmd: SchedulerCommand, replyTo: ActorRef)
 
@@ -60,14 +60,8 @@ class ExecutionPlanIndex(shardRegion: ActorRef) extends Actor with ActorLogging 
     case event @ ExecutionPlanStarted(_, planId) =>
       log.debug("Indexing execution plan {}", planId)
       mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
-      updateIndex(AddToIndex, planId)
+      replicator ! Replicator.Update(ExecutionPlanKey, GSet.empty[PlanId], WriteLocal)(_ + planId)
       context become updatingIndex(planId)
-
-    /*case event @ ExecutionPlanFinished(_, planId) =>
-      log.debug("Removing execution plan {} from the index.", planId)
-      mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
-      updateIndex(RemoveFromIndex, planId)
-      context become updatingIndex(planId)*/
 
     case cmd: GetExecutionPlan =>
       val externalReq = Query(cmd, sender())
@@ -82,16 +76,15 @@ class ExecutionPlanIndex(shardRegion: ActorRef) extends Actor with ActorLogging 
       replicator.tell(replicatorReq, handler)
   }
 
-  def updatingIndex(planId: PlanId, attempts: Int = 1): Receive = {
+  private[this] def updatingIndex(planId: PlanId, attempts: Int = 1): Receive = {
     case Replicator.UpdateSuccess(`ExecutionPlanKey` , _) =>
       unstashAll()
       context become ready
 
-    case Replicator.UpdateTimeout(`ExecutionPlanKey`, Some(op: IndexOp)) =>
+    case Replicator.UpdateTimeout(`ExecutionPlanKey`, _) =>
       if (attempts < 3) {
-        log.warning("Timed out while updating index for execution plan {}, in operation",
-          planId, op)
-        updateIndex(op, planId)
+        log.warning("Timed out while updating index for execution plan {}, in operation", planId)
+        replicator ! Replicator.Update(ExecutionPlanKey, GSet.empty[PlanId], WriteLocal)(_ + planId)
         context become updatingIndex(planId, attempts + 1)
       } else {
         log.error("Could not index execution plan {}", planId)
@@ -100,16 +93,6 @@ class ExecutionPlanIndex(shardRegion: ActorRef) extends Actor with ActorLogging 
       }
 
     case _ => stash()
-  }
-
-  private[this] def updateIndex(op: IndexOp, planId: PlanId): Unit = op match {
-    case AddToIndex =>
-      replicator ! Replicator.Update(ExecutionPlanKey, ORSet.empty[PlanId],
-        WriteLocal, Some(op))(_ + planId)
-
-    case RemoveFromIndex =>
-      replicator ! Replicator.Update(ExecutionPlanKey, ORSet.empty[PlanId],
-        WriteLocal, Some(op))(_ - planId)
   }
 
 }

@@ -16,7 +16,7 @@
 
 package io.quckoo.cluster.core
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
+import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
@@ -27,6 +27,7 @@ import io.quckoo.cluster.net._
 import io.quckoo.cluster.registry.Registry
 import io.quckoo.cluster.scheduler.{Scheduler, TaskQueue}
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
+import io.quckoo.id.NodeId
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.client._
 import io.quckoo.protocol.cluster._
@@ -59,18 +60,20 @@ class QuckooCluster(settings: QuckooClusterSettings)
 
   ClusterClientReceptionist(context.system).registerService(self)
 
-  private val cluster = Cluster(context.system)
-  private val mediator = DistributedPubSub(context.system).mediator
+  private[this] val cluster = Cluster(context.system)
+  private[this] val mediator = DistributedPubSub(context.system).mediator
 
-  val userAuth = context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
+  private[this] val userAuth = context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
-  private val registry = context.actorOf(Registry.props(settings), "registry")
+  private[this] val registry = context.actorOf(Registry.props(settings), "registry")
 
-  private val scheduler = context.watch(context.actorOf(
+  private[this] val scheduler = context.watch(context.actorOf(
     Scheduler.props(registry, readJournal, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
 
-  private var clients = Set.empty[ActorRef]
-  private var clusterState = QuckooState(masterNodes = masterNodes(cluster))
+  private[this] var clients = Set.empty[ActorRef]
+  private[this] var clusterState = QuckooState(masterNodes = masterNodes(cluster))
+
+  private[this] var workerRemoveTasks = Map.empty[NodeId, Cancellable]
 
   override implicit def actorSystem: ActorSystem = context.system
 
@@ -132,17 +135,32 @@ class QuckooCluster(settings: QuckooClusterSettings)
         mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
     }
 
-    case evt: WorkerJoined =>
+    case evt: WorkerEvent =>
       clusterState = clusterState.updated(evt)
+      evt match {
+        case WorkerJoined(workerId, _) if workerRemoveTasks.contains(workerId) =>
+          workerRemoveTasks(workerId).cancel()
+          workerRemoveTasks -= workerId
 
-    case evt: WorkerRemoved =>
-      clusterState = clusterState.updated(evt)
+        case WorkerLost(workerId) if !workerRemoveTasks.contains(workerId) =>
+          import context.dispatcher
+          val removeTask = context.system.scheduler.scheduleOnce(
+            5 seconds, mediator,
+            DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
+          )
+          workerRemoveTasks += (workerId -> removeTask)
+
+        case WorkerRemoved(workerId) =>
+          workerRemoveTasks -= workerId
+
+        case _ => // do nothing
+      }
 
     case evt: TaskQueueUpdated =>
       clusterState = clusterState.copy(metrics = clusterState.metrics.updated(evt))
 
     case Shutdown =>
-      // Perform graceful shutdown of the cluster
+      // TODO Perform graceful shutdown of the cluster
   }
 
 }

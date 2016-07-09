@@ -200,7 +200,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
           case _ =>
         }
-        mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
+        mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerLost(workerId))
       }
   }
 

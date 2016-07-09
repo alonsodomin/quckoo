@@ -30,7 +30,7 @@ import io.quckoo.protocol.registry._
   */
 object RegistryIndex {
 
-  final val IndexKey = ORSetKey[JobId]("registryIndex")
+  final val IndexKey = GSetKey[JobId]("registryIndex")
 
   final case class Query(request: RegistryReadCommand, sender: ActorRef)
   final case class IndexJob(jobId: JobId)
@@ -95,7 +95,7 @@ class RegistryIndex(shardRegion: ActorRef) extends Actor with ActorLogging with 
   }
 
   private[this] def addJobIdToIndex(jobId: JobId): Unit =
-    replicator ! Replicator.Update(IndexKey, ORSet.empty[JobId], WriteLocal)(_ + jobId)
+    replicator ! Replicator.Update(IndexKey, GSet.empty[JobId], WriteLocal)(_ + jobId)
 
 }
 

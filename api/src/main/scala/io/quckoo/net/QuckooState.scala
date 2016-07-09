@@ -19,6 +19,7 @@ package io.quckoo.net
 import io.quckoo.id.NodeId
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker._
+
 import monocle.macros.Lenses
 
 /**
@@ -49,6 +50,12 @@ import monocle.macros.Lenses
   def updated(event: WorkerEvent): QuckooState = event match {
     case WorkerJoined(workerId, location) =>
       copy(workerNodes = workerNodes + (workerId -> WorkerNode(workerId, location, NodeStatus.Active)))
+
+    case WorkerLost(workerId) =>
+      val currentState = workerNodes.get(workerId)
+      currentState.map { node =>
+        copy(workerNodes = workerNodes + (workerId -> node.copy(status = NodeStatus.Unreachable)))
+      } getOrElse this
 
     case WorkerRemoved(workerId) =>
       copy(workerNodes = workerNodes - workerId)
