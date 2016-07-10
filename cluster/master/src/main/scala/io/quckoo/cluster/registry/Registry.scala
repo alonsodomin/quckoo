@@ -74,10 +74,8 @@ class Registry(settings: RegistrySettings)
     // Restart the indexes for the registry partitions
     readJournal.currentPersistenceIds().
       filter(_.startsWith(JobState.PersistenceIdPrefix)).
-      runForeach { partitionId =>
-        val jobId = new JobId(partitionId.substring(JobState.PersistenceIdPrefix.length + 1))
-        index ! RegistryIndex.IndexJob(jobId)
-      }
+      flatMapConcat(persistenceId => readJournal.eventsByPersistenceId(persistenceId, 0, Long.MaxValue)).
+      runForeach { envelope => index ! envelope.event }
   }
 
   def receive: Receive = {

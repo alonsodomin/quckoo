@@ -162,7 +162,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         validated.disjunction match {
           case \/-(id) =>
             val notification = Notification.info(s"Job registered with id $id")
-            val effects = Effects.seq(
+            val effects = Effects.set(
               Growl(notification),
               RefreshJobSpecs(Set(id))
             )
@@ -215,10 +215,19 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         )
         effectOnly(effect)
 
+      case ExecutionPlanFinished(jobId, planId) =>
+        val effect = Effects.set(
+          Growl(Notification.info(s"Execution plan $planId has finished")),
+          RefreshExecutionPlans(Set(planId))
+        )
+        effectOnly(effect)
+
       case ExecutionPlanCancelled(planId) =>
-        effectOnly(Growl(
-          Notification.success(s"Execution plan $planId has been cancelled")
-        ))
+        val effects = Effects.set(
+          Growl(Notification.danger(s"Execution plan $planId has been cancelled")),
+          RefreshExecutionPlans(Set(planId))
+        )
+        effectOnly(effects)
     }
 
   }

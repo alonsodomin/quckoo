@@ -33,8 +33,8 @@ object TabPanel {
 
     def render(props: Props, state: State) = {
       val currentTab = state.selected.getOrElse(props.initial)
-      TabBar(
-        TabBar.Props(props.items.keys.toSeq, props.initial, tabClicked),
+      NavBar(
+        NavBar.Props(props.items.keys.toSeq, props.initial, tabClicked),
         props.items(currentTab)
       )
     }

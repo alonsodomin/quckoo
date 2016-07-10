@@ -9,23 +9,23 @@ import scalacss.ScalaCssReact._
 /**
   * Created by alonsodomin on 09/07/2016.
   */
-object TabBar {
+object NavBar {
 
-  private[this] final case class TabItemProps(
+  private[this] final case class NavItemProps(
     title: String,
     selected: Boolean,
     onClick: String => Callback
   )
 
-  private[this] val TabItem = ReactComponentB[TabItemProps]("TabItem").
+  private[this] val NavItem = ReactComponentB[NavItemProps]("NavItem").
     stateless.
-    render_P { case TabItemProps(title, selected, onClick) =>
+    render_P { case NavItemProps(title, selected, onClick) =>
       <.li(^.role := "presentation", selected ?= (^.`class` := "active"),
         <.a(^.onClick --> onClick(title), title)
       )
     } build
 
-  private[this] val TabBody = ReactComponentB[PropsChildren]("TabBody").
+  private[this] val NavBody = ReactComponentB[PropsChildren]("NavBody").
     stateless.
     render_P { children =>
       <.div(children)
@@ -35,7 +35,8 @@ object TabBar {
     items: Seq[String],
     initial: String,
     onClick: String => Callback,
-    style: NavStyle.Value = NavStyle.tabs
+    style: NavStyle.Value = NavStyle.tabs,
+    addStyles: Seq[StyleA] = Seq()
   )
   final case class State(selected: Option[String] = None)
 
@@ -47,20 +48,20 @@ object TabBar {
     def render(props: Props, state: State) = {
       val currentTab = state.selected.getOrElse(props.initial)
       <.div(
-        <.ul(lookAndFeel.nav(props.style),
+        <.ul(lookAndFeel.nav(props.style), props.addStyles,
           props.items.map { title =>
-            TabItem.withKey(s"tab-item-$title")(
-              TabItemProps(title, currentTab == title, tabClicked(props))
+            NavItem.withKey(s"nav-item-$title")(
+              NavItemProps(title, currentTab == title, tabClicked(props))
             )
           }
         ),
-        TabBody.withKey("tab-panel-body")($.propsChildren.runNow())
+        NavBody.withKey("nav-panel-body")($.propsChildren.runNow())
       )
     }
 
   }
 
-  private[this] val component = ReactComponentB[Props]("TabBar").
+  private[this] val component = ReactComponentB[Props]("NavBar").
     initialState(State()).
     renderBackend[Backend].
     build
