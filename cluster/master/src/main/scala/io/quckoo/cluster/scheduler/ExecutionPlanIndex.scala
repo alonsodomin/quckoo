@@ -57,11 +57,16 @@ class ExecutionPlanIndex(shardRegion: ActorRef) extends Actor with ActorLogging 
   def receive = ready
 
   def ready: Receive = {
-    case event @ ExecutionPlanStarted(_, planId) =>
-      log.debug("Indexing execution plan {}", planId)
+    case event: SchedulerEvent =>
       mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
-      replicator ! Replicator.Update(ExecutionPlanKey, GSet.empty[PlanId], WriteLocal)(_ + planId)
-      context become updatingIndex(planId)
+      event match {
+        case ExecutionPlanStarted(_, planId) =>
+          log.debug("Indexing execution plan {}", planId)
+          replicator ! Replicator.Update(ExecutionPlanKey, GSet.empty[PlanId], WriteLocal)(_ + planId)
+          context become updatingIndex(planId)
+
+        case _ => // ignore other types of events
+      }
 
     case cmd: GetExecutionPlan =>
       val externalReq = Query(cmd, sender())
@@ -133,7 +138,7 @@ private class ExecutionPlanMultiQuery(shardRegion: ActorRef) extends Actor with 
       val elems = res.get(ExecutionPlanKey).elements
       if (elems.nonEmpty) {
         expectedResultCount = elems.size
-        log.debug("Found {} active execution plans", elems.size)
+        log.debug("Found {} execution plans", elems.size)
         elems.foreach { planId =>
           shardRegion ! GetExecutionPlan(planId)
         }
