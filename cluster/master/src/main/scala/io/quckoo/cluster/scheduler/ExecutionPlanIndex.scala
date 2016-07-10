@@ -36,10 +36,6 @@ object ExecutionPlanIndex {
 
   final case class Query(cmd: SchedulerCommand, replyTo: ActorRef)
 
-  sealed trait IndexOp
-  case object AddToIndex extends IndexOp
-  case object RemoveFromIndex extends IndexOp
-
   def props(shardRegion: ActorRef, timeout: FiniteDuration = DefaultTimeout): Props =
     Props(classOf[ExecutionPlanIndex], shardRegion, timeout)
 
