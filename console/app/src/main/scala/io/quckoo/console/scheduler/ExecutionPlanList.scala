@@ -40,9 +40,17 @@ object ExecutionPlanList {
     "Last Outcome", "Next Execution"
   )
 
-  final case class Props(proxy: ModelProxy[UserScope])
+  final val AllFilter: Table.Filter[PlanId, ExecutionPlan] =
+    (id, plan) => true
+  final val ActiveFilter: Table.Filter[PlanId, ExecutionPlan] =
+    (id, plan) => plan.nextExecutionTime.isDefined
+  final val InactiveFilter: Table.Filter[PlanId, ExecutionPlan] =
+    (id, plan) => !ActiveFilter(id, plan)
 
-  class Backend($: BackendScope[Props, Unit]) {
+  final case class Props(proxy: ModelProxy[UserScope])
+  final case class State(filter: Table.Filter[PlanId, ExecutionPlan])
+
+  class Backend($: BackendScope[Props, State]) {
 
     def mounted(props: Props): Callback = {
       val model = props.proxy()
@@ -76,19 +84,30 @@ object ExecutionPlanList {
       Table.RowAction[PlanId, ExecutionPlan](NonEmptyList(Icons.stop, "Cancel"), cancelPlan(props))
     )
 
-    def render(props: Props) = {
+    def filterClicked(filterType: String): Callback = filterType match {
+      case "All"      => $.modState(_.copy(filter = AllFilter))
+      case "Active"   => $.modState(_.copy(filter = ActiveFilter))
+      case "Inactive" => $.modState(_.copy(filter = InactiveFilter))
+    }
+
+    def render(props: Props, state: State) = {
       val model = props.proxy()
-      Table(Columns, model.executionPlans.seq,
-        renderItem(model),
-        allowSelect = true,
-        actions = Some(rowActions(props)(_, _))
+      NavBar(
+        NavBar.Props(List("All", "Active", "Inactive"), "All", filterClicked, style = NavStyle.pills),
+        Table(Columns, model.executionPlans.seq,
+          renderItem(model),
+          key = Some("executionPlans"),
+          allowSelect = true,
+          actions = Some(rowActions(props)(_, _)),
+          filter = Some(state.filter)
+        )
       )
     }
 
   }
 
   private[this] val component = ReactComponentB[Props]("ExecutionPlanList").
-    stateless.
+    initialState(State(filter = AllFilter)).
     renderBackend[Backend].
     componentDidMount($ => $.backend.mounted($.props)).
     build

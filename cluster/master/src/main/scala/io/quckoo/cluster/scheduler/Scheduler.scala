@@ -98,13 +98,13 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
 
     case cmd @ CreateExecutionDriver(_, config, _) =>
       val planId = UUID.randomUUID()
-      val props = factoryProps(config.jobId, planId, cmd, shardRegion)
+      val props = factoryProps(config.jobId, planId, cmd)
       log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
       context.actorOf(props, s"execution-driver-factory-$planId")
 
     case cancel: CancelExecutionPlan =>
-      val props = Props(classOf[ExecutionDriverTerminator], cancel.planId,
-        StopExecutionDriver(cancel, sender()), shardRegion)
+      log.debug("Starting execution driver termination process. planId={}", cancel.planId)
+      val props = terminatorProps(cancel)
       context.actorOf(props, s"execution-driver-terminator-${cancel.planId}")
 
     case get: GetExecutionPlan =>
@@ -133,9 +133,11 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
   private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
     Props(classOf[JobFetcher], jobId, requestor, config)
 
-  private[this] def factoryProps(jobId: JobId, planId: PlanId, createCmd: CreateExecutionDriver,
-      shardRegion: ActorRef): Props =
+  private[this] def factoryProps(jobId: JobId, planId: PlanId, createCmd: CreateExecutionDriver): Props =
     Props(classOf[ExecutionDriverFactory], jobId, planId, createCmd, shardRegion)
+
+  private[this] def terminatorProps(cancelCmd: CancelExecutionPlan): Props =
+    Props(classOf[ExecutionDriverTerminator], cancelCmd.planId, StopExecutionDriver(cancelCmd, sender()), shardRegion)
 
 }
 

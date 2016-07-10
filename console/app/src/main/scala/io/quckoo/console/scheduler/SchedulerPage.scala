@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.registry
+package io.quckoo.console.scheduler
 
 import diode.react.ModelProxy
 
-import io.quckoo._
-import io.quckoo.console.components._
+import io.quckoo.ExecutionPlan
+import io.quckoo.console.components.{Button, Icons, TabPanel}
 import io.quckoo.console.core.ConsoleScope
-import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler.ScheduleJob
 
-import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
@@ -32,29 +32,22 @@ import scalacss.ScalaCssReact._
 /**
  * Created by alonsodomin on 17/10/2015.
  */
-object RegistryPageView {
+object SchedulerPage {
 
   object Style extends StyleSheet.Inline {
     import dsl._
 
     val content = style(addClassName("container"))
-
   }
 
   case class Props(proxy: ModelProxy[ConsoleScope])
-  case class State(
-      selectedJob: Option[JobSpec] = None,
-      showForm: Boolean = false
-  )
+  case class State(selectedSchedule: Option[ExecutionPlan] = None, showForm: Boolean = false)
 
-  class RegistryBackend($: BackendScope[Props, State]) {
+  class ExecutionsBackend($: BackendScope[Props, State]) {
 
-    def editJob(spec: Option[JobSpec]) =
-      $.modState(_.copy(selectedJob = spec, showForm = true))
-
-    def jobEdited(spec: Option[JobSpec]): Callback = {
+    def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
-        spec.map(RegisterJob).map(props.proxy.dispatch[RegisterJob]).getOrElse(Callback.empty)
+        scheduleJob.map(props.proxy.dispatch[ScheduleJob]).getOrElse(Callback.empty)
 
       def updateState(): Callback =
         $.modState(_.copy(showForm = false))
@@ -62,23 +55,31 @@ object RegistryPageView {
       updateState() >> ($.props >>= dispatchAction)
     }
 
+    def scheduleForm(schedule: Option[ExecutionPlan]) =
+      $.modState(_.copy(selectedSchedule = schedule, showForm = true))
+
     def render(props: Props, state: State) = {
-      val connector = props.proxy.connect(_.userScope.jobSpecs)
+      val userScopeConnector = props.proxy.connect(_.userScope)
+      val taskConnector = props.proxy.connect(_.userScope.tasks)
 
       <.div(Style.content,
-        <.h2("Registry"),
-        Button(Button.Props(Some(editJob(None))), Icons.plusSquare, "New Job"),
-        if (state.showForm) JobForm(state.selectedJob, jobEdited)
-        else EmptyTag,
-        connector(JobSpecList(_))
+        <.h2("Scheduler"),
+        Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan"),
+        if (state.showForm) {
+          props.proxy.wrap(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
+        } else EmptyTag,
+        TabPanel(
+          "Execution Plans" -> userScopeConnector(ExecutionPlanList(_)),
+          "Tasks"           -> taskConnector(TaskList(_))
+        )
       )
     }
 
   }
 
-  private[this] val component = ReactComponentB[Props]("RegistryPage").
+  private[this] val component = ReactComponentB[Props]("ExecutionsPage").
     initialState(State()).
-    renderBackend[RegistryBackend].
+    renderBackend[ExecutionsBackend].
     build
 
   def apply(proxy: ModelProxy[ConsoleScope]) = component(Props(proxy))

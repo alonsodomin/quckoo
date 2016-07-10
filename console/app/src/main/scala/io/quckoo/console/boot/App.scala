@@ -20,13 +20,17 @@ import io.quckoo.console.SiteMap
 import io.quckoo.console.core.ConsoleCircuit
 import io.quckoo.console.dashboard.{ClusterView, DashboardView}
 import io.quckoo.console.layout._
-import io.quckoo.console.registry.RegistryPageView
-import io.quckoo.console.scheduler.SchedulerPageView
-import io.quckoo.console.security.LoginPageView
+import io.quckoo.console.registry.RegistryPage
+import io.quckoo.console.scheduler.SchedulerPage
+import io.quckoo.console.security.LoginPage
+
 import org.scalajs.dom
+
+import slogging._
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
+
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 import scalacss.mutable.GlobalRegistry
@@ -36,17 +40,20 @@ object App extends JSApp {
 
   def inlineStyles() = {
     GlobalRegistry.register(
-      LoginPageView.Style,
+      LoginPage.Style,
       DashboardView.Style,
       ClusterView.Style,
-      RegistryPageView.Style,
-      SchedulerPageView.Style
+      RegistryPage.Style,
+      SchedulerPage.Style
     )
     GlobalRegistry.onRegistration(_.addToDocument)
   }
 
   @JSExport
   override def main(): Unit = {
+    LoggerConfig.factory = ConsoleLoggerFactory()
+    LoggerConfig.level = LogLevel.DEBUG
+
     GlobalStyles.addToDocument()
     inlineStyles()
 

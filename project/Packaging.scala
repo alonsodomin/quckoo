@@ -1,5 +1,5 @@
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging.autoImport._
-import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
+import com.typesafe.sbt.packager.docker.Cmd
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport._
 import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
 
@@ -30,9 +30,7 @@ object Packaging {
     ),
     defaultLinuxInstallLocation in Docker := linuxHomeLocation,
     dockerCommands ++= Seq(
-      Cmd("ENV", "QUCKOO_HOME", linuxHomeLocation),
-      ExecCmd("RUN mkdir -p resolver/cache"),
-      ExecCmd("RUN mkdir -p resolver/local")
+      Cmd("ENV", "QUCKOO_HOME", linuxHomeLocation)
     )
   )
 

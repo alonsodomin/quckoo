@@ -16,10 +16,8 @@
 
 package io.quckoo.console.components
 
-import diode.data.Pot
+import diode.data.{Pot, Ready}
 import diode.react.ReactPot._
-
-import io.quckoo.fault.ExceptionThrown
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -36,6 +34,8 @@ object Table {
   type RowActionsFactory[Id, Item] = (Id, Item) => Seq[RowAction[Id, Item]]
 
   type ItemSeq[Id, Item] = Traversable[(Id, Pot[Item])]
+
+  type Filter[Id, Item] = (Id, Item) => Boolean
 
   final case class RowAction[Id, Item](children: NonEmptyList[ReactNode], execute: RowCallback[Id])
 
@@ -135,8 +135,9 @@ object Table {
     headers: List[String],
     items: ItemSeq[Id, Item],
     render: RowCellRender[Id, Item],
-    allowSelect: Boolean,
-    actions: Option[RowActionsFactory[Id, Item]]
+    allowSelect: Boolean = false,
+    actions: Option[RowActionsFactory[Id, Item]] = None,
+    filter: Option[Filter[Id, Item]] = None
   )
   final case class State[Id](selected: Set[Id], allSelected: Boolean = false)
 
@@ -183,9 +184,16 @@ object Table {
         } else selectableColumns
       }
 
+      val items = props.filter map { f =>
+        props.items.filter {
+          case (id, Ready(item)) => f(id, item)
+          case _                 => true
+        }
+      } getOrElse props.items
+
       <.table(^.`class` := "table table-striped",
         <.thead(<.tr(headers)),
-        <.tbody(props.items.map { case (id, item) =>
+        <.tbody(items.map { case (id, item) =>
           row[Id, Item].withKey(s"row-$id")(
             RowProps(id, props.headers, item, props.render,
               props.allowSelect,
@@ -200,7 +208,7 @@ object Table {
 
   }
 
-  private[this] def component[Id, Item] = ReactComponentB[Props[Id, Item]]("Table").
+  private[components] def component[Id, Item] = ReactComponentB[Props[Id, Item]]("Table").
     initialState(State(Set.empty[Id])).
     renderBackend[Backend[Id, Item]].
     build
@@ -209,7 +217,12 @@ object Table {
                       items: ItemSeq[Id, Item],
                       render: RowCellRender[Id, Item],
                       allowSelect: Boolean = false,
-                      actions: Option[RowActionsFactory[Id, Item]] = None) =
-    component.apply(Props(headers, items, render, allowSelect, actions))
+                      actions: Option[RowActionsFactory[Id, Item]] = None,
+                      filter: Option[Filter[Id, Item]] = None,
+                      key: Option[String] = None) = {
+    val baseComp = component[Id, Item]
+    val instance = key.map(k => baseComp.withKey(k)).getOrElse(baseComp)
+    instance.apply(Props(headers, items, render, allowSelect, actions, filter))
+  }
 
 }

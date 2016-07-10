@@ -69,3 +69,10 @@ abstract class DateTime extends Ordered[DateTime] with Serializable {
   def toEpochMillis: Long
 
 }
+
+object DateTime {
+
+  def now(implicit timeSource: TimeSource): DateTime =
+    timeSource.currentDateTime
+
+}

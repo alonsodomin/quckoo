@@ -31,6 +31,8 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
 import io.quckoo.{ExecutionPlan, JobSpec}
 
+import slogging.LazyLogging
+
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalaz.{-\/, \/-}
 
@@ -38,7 +40,7 @@ import scalaz.{-\/, \/-}
   * Created by alonsodomin on 20/02/2016.
   */
 object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleScope]
-    with ConsoleOps with ConsoleSubscriptions {
+    with ConsoleOps with ConsoleSubscriptions with LazyLogging {
 
   protected def initialModel: ConsoleScope = ConsoleScope.initial
 
@@ -133,6 +135,9 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
           case WorkerJoined(_, location) =>
             Notification.success(s"Worker node joined from: $location")
 
+          case WorkerLost(nodeId) =>
+            Notification.warning(s"Worker $nodeId lost communication with the cluster")
+
           case WorkerRemoved(nodeId) =>
             Notification.danger(s"Worker $nodeId has left the cluster")
         }
@@ -157,7 +162,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         validated.disjunction match {
           case \/-(id) =>
             val notification = Notification.info(s"Job registered with id $id")
-            val effects = Effects.seq(
+            val effects = Effects.set(
               Growl(notification),
               RefreshJobSpecs(Set(id))
             )
@@ -210,10 +215,19 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         )
         effectOnly(effect)
 
+      case ExecutionPlanFinished(jobId, planId) =>
+        val effect = Effects.set(
+          Growl(Notification.info(s"Execution plan $planId has finished")),
+          RefreshExecutionPlans(Set(planId))
+        )
+        effectOnly(effect)
+
       case ExecutionPlanCancelled(planId) =>
-        effectOnly(Growl(
-          Notification.success(s"Execution plan $planId has been cancelled")
-        ))
+        val effects = Effects.set(
+          Growl(Notification.danger(s"Execution plan $planId has been cancelled")),
+          RefreshExecutionPlans(Set(planId))
+        )
+        effectOnly(effects)
     }
 
   }

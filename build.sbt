@@ -1,11 +1,12 @@
 import sbt.Keys._
 import sbt._
 
+organization in ThisBuild := "io.quckoo"
+version in ThisBuild := "0.1.0-SNAPSHOT"
+
 scalaVersion in ThisBuild := "2.11.8"
 
 lazy val commonSettings = Seq(
-  organization := "io.quckoo",
-  version := "0.1.0-SNAPSHOT",
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   scalacOptions ++= Seq(
     "-encoding", "UTF-8",
@@ -124,7 +125,7 @@ lazy val consoleApp = (project in file("console/app")).
   dependsOn(coreJS, apiJS, clientJS)
 
 lazy val consoleResources = (project in file("console/resources")).
-  dependsOn(consoleApp).
+  aggregate(consoleApp).
   enablePlugins(SbtSass).
   settings(commonSettings: _*).
   settings(Dependencies.consoleResources).
@@ -134,8 +135,9 @@ lazy val consoleResources = (project in file("console/resources")).
     exportJars := true,
     unmanagedResourceDirectories in Compile += (crossTarget in consoleApp).value,
     includeFilter in (Compile, unmanagedResources) := ("*.js" || "*.css" || "*.js.map"),
+    excludeFilter in (Compile, unmanagedResources) := "index.js",
     mappings in (Compile, packageBin) ~= { (ms: Seq[(File, String)]) =>
-      ms.filter(!_._1.getName.endsWith("scss")).map { case (file, path) =>
+      ms.filter { case (file, _) => !file.getName.endsWith("scss") }.map { case (file, path) =>
         val prefix = {
           if (file.getName.indexOf(".css") >= 0) "css/"
           else if (file.getName.indexOf(".js") >= 0) "js/"
@@ -146,7 +148,7 @@ lazy val consoleResources = (project in file("console/resources")).
     },
     mappings in (Compile, packageBin) <++= (WebKeys.webJarsDirectory in Assets).map { path =>
       val fontPaths = Seq(
-        path / "lib" / "font-awesome" / "fonts",
+        path / "lib" / "font-awesome"   / "fonts",
         path / "lib" / "bootstrap-sass" / "fonts" / "bootstrap"
       )
 

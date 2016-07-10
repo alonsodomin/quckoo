@@ -31,12 +31,10 @@ import io.quckoo.cluster.scheduler.SchedulerHttpRouter
 
 import upickle.default._
 
-trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives with EventStreamMarshalling {
-  this: QuckooServer =>
+trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerHttpRouter
+  with AuthDirectives with EventStreamMarshalling { this: QuckooServer =>
 
   import StatusCodes._
-
-  final val ResourcesDir = "quckoo"
 
   private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     pathPrefix("auth") {
@@ -74,12 +72,6 @@ trait HttpRouter extends RegistryHttpRouter with SchedulerHttpRouter with AuthDi
         schedulerApi
       }
     }
-
-  private[this] def staticResources: Route = get {
-    pathSingleSlash {
-      getFromResource(s"$ResourcesDir/index.html")
-    } ~ getFromResourceDirectory(ResourcesDir)
-  }
 
   private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {
     case exception =>

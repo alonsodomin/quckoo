@@ -92,8 +92,10 @@ class JobState extends PersistentActor with ActorLogging with Stash {
   def initialising: Receive = {
     case CreateJob(jobId, jobSpec) =>
       persist(JobAccepted(jobId, jobSpec)) { event =>
-        context.system.eventStream.publish(IndexJob(jobId))
-        mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
+        log.info("Job {} has been successfully registered.", jobId)
+        //context.system.eventStream.publish(IndexJob(jobId))
+        context.system.eventStream.publish(event)
+        //mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
         sender() ! event
         context.become(enabled(jobId, jobSpec))
         unstashAll()

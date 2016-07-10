@@ -7,7 +7,7 @@ import akka.persistence.inmemory.query.journal.scaladsl.InMemoryReadJournal
 import akka.persistence.query.PersistenceQuery
 import akka.testkit._
 
-import io.quckoo.{JobSpec, ExecutionPlan}
+import io.quckoo.{ExecutionPlan, JobSpec, Task}
 import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
@@ -60,8 +60,8 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
     val scheduler = TestActorRef(Scheduler.props(
       registryProbe.ref, readJournal,
       TestActors.forwardActorProps(taskQueueProbe.ref)
-    ), "scheduler")
-    var currentPlanId: Option[PlanId] = None
+    ).withDispatcher("akka.actor.default-dispatcher"), "scheduler")
+    var testPlanId: Option[PlanId] = None
 
     "create an execution driver for an enabled job" in {
       scheduler ! ScheduleJob(TestJobId)
@@ -75,13 +75,13 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
       val startedMsg = expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId shouldBe TestJobId
 
-      currentPlanId = Some(startedMsg.planId)
+      testPlanId = Some(startedMsg.planId)
     }
 
     "return the execution plan details when requested" in {
-      currentPlanId shouldBe defined
+      testPlanId shouldBe defined
 
-      currentPlanId.foreach { planId =>
+      testPlanId.foreach { planId =>
         scheduler ! GetExecutionPlan(planId)
 
         val executionPlan = expectMsgType[ExecutionPlan]
@@ -92,8 +92,8 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
     }
 
     "return a map containing the current live execution plan" in {
-      currentPlanId shouldBe defined
-      currentPlanId.foreach { planId =>
+      testPlanId shouldBe defined
+      testPlanId.foreach { planId =>
         scheduler ! GetExecutionPlans
 
         val executionPlans = expectMsgType[Map[PlanId, ExecutionPlan]]
@@ -103,8 +103,8 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
     }
 
     "allow cancelling an execution plan" in {
-      currentPlanId shouldBe defined
-      currentPlanId foreach { planId =>
+      testPlanId shouldBe defined
+      testPlanId foreach { planId =>
         scheduler ! CancelExecutionPlan(planId)
 
         val completedMsg = eventListener.expectMsgType[TaskCompleted]
@@ -117,15 +117,20 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
 
         expectMsg(finishedMsg)
       }
-
-      currentPlanId = None
     }
 
-    "return an empty map of execution plans when there is none active" in {
+    "return an map of finished execution plans when there is none active" in {
       scheduler ! GetExecutionPlans
 
-      val plans = expectMsgType[Map[PlanId, ExecutionPlan]]
-      plans shouldBe empty
+      testPlanId shouldBe defined
+      testPlanId foreach { planId =>
+        val plans = expectMsgType[Map[PlanId, ExecutionPlan]]
+
+        plans should contain key planId
+        plans(planId) should matchPattern {
+          case ExecutionPlan(`TestJobId`, `planId`, _, _, _, Task.NeverRun(Task.UserRequest), _, _, _, _) =>
+        }
+      }
     }
 
     "return execution plan not found when asked for a non-existent plan" in {

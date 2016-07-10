@@ -19,7 +19,7 @@ object Dependencies {
 
     // Akka ----------
 
-    val akka = "2.4.7"
+    val akka = "2.4.8"
     val kryo = "0.4.1"
 
     // ScalaJS -------
@@ -37,7 +37,8 @@ object Dependencies {
 
     // Other utils ---
 
-    val scopt = "3.3.0"
+    val scopt = "3.5.0"
+    val slogging = "0.5.0"
     val monocle = "1.2.2"
     val scalaz = "7.2.2"
     val monix  = "2.0-RC8"
@@ -131,6 +132,7 @@ object Dependencies {
     libraryDependencies ++= Seq(
       compilerPlugin(Dependencies.compiler.macroParadise),
 
+      "biz.enef"      %%% "slogging"  % version.slogging,
       "org.scalatest" %%% "scalatest" % version.scalaTest % Test
     )
   }
@@ -158,7 +160,6 @@ object Dependencies {
 
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
-      "biz.enef"         %%% "slogging"       % "0.3",
       "me.chrons"        %%% "diode-react"    % version.diode,
       "be.doeraene"      %%% "scalajs-jquery" % "0.9.0",
       "org.singlespaced" %%% "scalajs-d3"     % "0.3.1",

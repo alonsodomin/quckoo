@@ -16,39 +16,46 @@
 
 package io.quckoo.cluster.registry
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, Stash, Status}
+import akka.actor._
 import akka.cluster.Cluster
-import akka.cluster.ddata.Replicator.{ReadLocal, WriteLocal}
 import akka.cluster.ddata._
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
 import io.quckoo.JobSpec
 import io.quckoo.id.JobId
+import io.quckoo.cluster.topics
 import io.quckoo.protocol.registry._
+
+import scala.concurrent.duration._
 
 /**
   * Created by alonsodomin on 13/04/2016.
   */
 object RegistryIndex {
 
-  final val IndexKey = ORSetKey[JobId]("registryIndex")
+  final val DefaultTimeout = 5 seconds
+
+  final val IndexKey = GSetKey[JobId]("registryIndex")
 
   final case class Query(request: RegistryReadCommand, sender: ActorRef)
   final case class IndexJob(jobId: JobId)
 
-  def props(shardRegion: ActorRef): Props =
-    Props(classOf[RegistryIndex], shardRegion)
+  def props(shardRegion: ActorRef, timeout: FiniteDuration = DefaultTimeout): Props =
+    Props(classOf[RegistryIndex], shardRegion, timeout)
 
 }
 
-class RegistryIndex(shardRegion: ActorRef) extends Actor with ActorLogging with Stash {
+class RegistryIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends Actor with ActorLogging with Stash {
   import RegistryIndex._
+  import Replicator._
 
   implicit val cluster = Cluster(context.system)
   private[this] val replicator = DistributedData(context.system).replicator
+  private[this] val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart(): Unit = {
     log.info("Starting registry index...")
-    context.system.eventStream.subscribe(self, classOf[IndexJob])
+    context.system.eventStream.subscribe(self, classOf[JobAccepted])
   }
 
   override def postStop(): Unit =
@@ -57,30 +64,31 @@ class RegistryIndex(shardRegion: ActorRef) extends Actor with ActorLogging with 
   override def receive = ready
 
   def ready: Receive = {
-    case IndexJob(jobId) =>
+    case event @ JobAccepted(jobId, _) =>
       log.debug("Indexing job {}", jobId)
       addJobIdToIndex(jobId)
+      mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
       context become updatingIndex(jobId)
 
     case GetJobs =>
       val externalReq = Query(GetJobs, sender())
-      val replicatorReq = Replicator.Get(IndexKey, ReadLocal, Some(externalReq))
+      val replicatorReq = Get(IndexKey, ReadMajority(timeout), Some(externalReq))
       val queryHandler = context.actorOf(Props(classOf[RegistryMultiQuery], shardRegion))
       replicator.tell(replicatorReq, queryHandler)
 
     case msg: GetJob =>
       val externalReq = Query(msg, sender())
-      val replicatorReq = Replicator.Get(IndexKey, ReadLocal, Some(externalReq))
+      val replicatorReq = Get(IndexKey, ReadMajority(timeout), Some(externalReq))
       val queryHandler = context.actorOf(Props(classOf[RegistrySingleQuery], shardRegion))
       replicator.tell(replicatorReq, queryHandler)
   }
 
   def updatingIndex(jobId: JobId, attempts: Int = 1): Receive = {
-    case Replicator.UpdateSuccess(`IndexKey`, _) =>
+    case UpdateSuccess(`IndexKey`, _) =>
       unstashAll()
       context become ready
 
-    case Replicator.UpdateTimeout(`IndexKey`, _) =>
+    case UpdateTimeout(`IndexKey`, _) =>
       if (attempts < 3) {
         log.warning("Timed out when indexing job {}. Retrying...", jobId)
         addJobIdToIndex(jobId)
@@ -95,15 +103,16 @@ class RegistryIndex(shardRegion: ActorRef) extends Actor with ActorLogging with 
   }
 
   private[this] def addJobIdToIndex(jobId: JobId): Unit =
-    replicator ! Replicator.Update(IndexKey, ORSet.empty[JobId], WriteLocal)(_ + jobId)
+    replicator ! Update(IndexKey, GSet.empty[JobId], WriteMajority(timeout))(_ + jobId)
 
 }
 
 private class RegistrySingleQuery(shardRegion: ActorRef) extends Actor with ActorLogging {
   import RegistryIndex._
+  import Replicator._
 
   def receive = {
-    case r @ Replicator.GetSuccess(`IndexKey`, Some(Query(cmd: GetJob, requestor))) =>
+    case r @ GetSuccess(`IndexKey`, Some(Query(cmd: GetJob, requestor))) =>
       val elems = r.get(IndexKey).elements
       if (elems.contains(cmd.jobId)) {
         log.debug("Found job {} in the registry index, retrieving its state...", cmd.jobId)
@@ -114,11 +123,11 @@ private class RegistrySingleQuery(shardRegion: ActorRef) extends Actor with Acto
       }
       context stop self
 
-    case Replicator.NotFound(`IndexKey`, Some(Query(GetJob(jobId), requestor))) =>
+    case NotFound(`IndexKey`, Some(Query(GetJob(jobId), requestor))) =>
       requestor ! JobNotFound(jobId)
       context stop self
 
-    case Replicator.GetFailure(`IndexKey`, Some(Query(_, requestor))) =>
+    case GetFailure(`IndexKey`, Some(Query(_, requestor))) =>
       requestor ! Status.Failure(new Exception("Could not retrieve elements from the index"))
       context stop self
   }
@@ -127,11 +136,12 @@ private class RegistrySingleQuery(shardRegion: ActorRef) extends Actor with Acto
 
 private class RegistryMultiQuery(shardRegion: ActorRef) extends Actor with ActorLogging {
   import RegistryIndex._
+  import Replicator._
 
   private[this] var expectedResultCount = 0
 
   def receive = {
-    case res @ Replicator.GetSuccess(`IndexKey`, Some(req @ Query(GetJobs, requestor))) =>
+    case res @ GetSuccess(`IndexKey`, Some(req @ Query(GetJobs, requestor))) =>
       val elems = res.get(IndexKey).elements
       if (elems.nonEmpty) {
         expectedResultCount = elems.size
@@ -145,10 +155,10 @@ private class RegistryMultiQuery(shardRegion: ActorRef) extends Actor with Actor
         completeQuery(requestor)
       }
 
-    case Replicator.NotFound(`IndexKey`, Some(Query(_, requestor))) =>
+    case NotFound(`IndexKey`, Some(Query(_, requestor))) =>
       completeQuery(requestor)
 
-    case Replicator.GetFailure(`IndexKey`, Some(Query(_, requestor: ActorRef))) =>
+    case GetFailure(`IndexKey`, Some(Query(_, requestor: ActorRef))) =>
       requestor ! Status.Failure(new Exception("Could not retrieve elements from the index"))
       context stop self
   }
