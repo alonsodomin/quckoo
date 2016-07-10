@@ -3,6 +3,9 @@ package io.quckoo.console.components
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
+import scalacss.Defaults._
+import scalacss.ScalaCssReact._
+
 /**
   * Created by alonsodomin on 09/07/2016.
   */
@@ -28,7 +31,12 @@ object TabBar {
       <.div(children)
     } build
 
-  final case class Props(items: Seq[String], initial: String, onClick: String => Callback)
+  final case class Props(
+    items: Seq[String],
+    initial: String,
+    onClick: String => Callback,
+    style: NavStyle.Value = NavStyle.tabs
+  )
   final case class State(selected: Option[String] = None)
 
   class Backend($: BackendScope[Props, State]) {
@@ -39,7 +47,7 @@ object TabBar {
     def render(props: Props, state: State) = {
       val currentTab = state.selected.getOrElse(props.initial)
       <.div(
-        <.ul(^.`class` := "nav nav-tabs",
+        <.ul(lookAndFeel.nav(props.style),
           props.items.map { title =>
             TabItem.withKey(s"tab-item-$title")(
               TabItemProps(title, currentTab == title, tabClicked(props))

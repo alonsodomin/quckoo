@@ -6,12 +6,14 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.inmemory.query.journal.scaladsl.InMemoryReadJournal
 import akka.persistence.query.PersistenceQuery
 import akka.testkit._
+
 import io.quckoo.{ExecutionPlan, JobSpec, Task}
 import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
+
 import org.scalatest._
 
 /**

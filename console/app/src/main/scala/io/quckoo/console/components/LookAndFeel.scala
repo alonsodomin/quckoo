@@ -26,7 +26,7 @@ class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
   import ContextStyle._
   import dsl._
 
-  val global = Domain.ofValues(default, primary, success, info, warning, danger)
+  val global  = Domain.ofValues(default, primary, success, info, warning, danger)
   val context = Domain.ofValues(success, info, warning, danger)
 
   def from[A](domain: Domain[A], base: String) = styleF(domain) { opt =>
@@ -45,6 +45,17 @@ class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
 
   val labelOpt = from(global, "label")
   val label    = labelOpt(default)
+
+  object nav {
+    val domain = Domain.ofValues(NavStyle.tabs, NavStyle.pills, NavStyle.stacked)
+
+    private val opt     = from(domain, "nav")
+    val tabs    = opt(NavStyle.tabs)
+    val pills   = opt(NavStyle.pills)
+    val stacked = opt(NavStyle.stacked)
+
+    def apply(navStyle: NavStyle.Value) = opt(navStyle)
+  }
 
   val alert    = from(context, "alert")
   val close    = wrap("close")

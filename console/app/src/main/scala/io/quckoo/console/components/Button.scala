@@ -26,6 +26,7 @@ import scalacss.ScalaCssReact._
   * Created by alonsodomin on 20/02/2016.
   */
 object Button {
+
   case class Props(
       onClick: Option[Callback] = None,
       disabled: Boolean = false,

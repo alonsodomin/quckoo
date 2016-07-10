@@ -93,7 +93,7 @@ object ExecutionPlanList {
     def render(props: Props, state: State) = {
       val model = props.proxy()
       TabBar(
-        TabBar.Props(List("All", "Active", "Inactive"), "All", filterClicked),
+        TabBar.Props(List("All", "Active", "Inactive"), "All", filterClicked, style = NavStyle.pills),
         Table(Columns, model.executionPlans.seq,
           renderItem(model),
           key = Some("executionPlans"),
