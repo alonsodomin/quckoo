@@ -37,10 +37,12 @@ class JobStateSpec extends TestKit(TestActorSystem("JobStateSpec")) with Implici
   val eventListener = TestProbe()
 
   before {
+    system.eventStream.subscribe(eventListener.ref, classOf[JobAccepted])
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, eventListener.ref)
   }
 
   after {
+    system.eventStream.unsubscribe(eventListener.ref)
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, eventListener.ref)
   }
 
