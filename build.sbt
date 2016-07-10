@@ -1,11 +1,12 @@
 import sbt.Keys._
 import sbt._
 
+organization in ThisBuild := "io.quckoo"
+version in ThisBuild := "0.1.0-SNAPSHOT"
+
 scalaVersion in ThisBuild := "2.11.8"
 
 lazy val commonSettings = Seq(
-  organization := "io.quckoo",
-  version := "0.1.0-SNAPSHOT",
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   scalacOptions ++= Seq(
     "-encoding", "UTF-8",
