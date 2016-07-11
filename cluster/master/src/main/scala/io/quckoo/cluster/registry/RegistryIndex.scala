@@ -72,13 +72,13 @@ class RegistryIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends Acto
 
     case GetJobs =>
       val externalReq = Query(GetJobs, sender())
-      val replicatorReq = Get(IndexKey, ReadMajority(timeout), Some(externalReq))
+      val replicatorReq = Get(IndexKey, readConsistency, Some(externalReq))
       val queryHandler = context.actorOf(Props(classOf[RegistryMultiQuery], shardRegion))
       replicator.tell(replicatorReq, queryHandler)
 
     case msg: GetJob =>
       val externalReq = Query(msg, sender())
-      val replicatorReq = Get(IndexKey, ReadMajority(timeout), Some(externalReq))
+      val replicatorReq = Get(IndexKey, readConsistency, Some(externalReq))
       val queryHandler = context.actorOf(Props(classOf[RegistrySingleQuery], shardRegion))
       replicator.tell(replicatorReq, queryHandler)
   }
@@ -102,8 +102,28 @@ class RegistryIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends Acto
     case _ => stash()
   }
 
-  private[this] def addJobIdToIndex(jobId: JobId): Unit =
-    replicator ! Update(IndexKey, GSet.empty[JobId], WriteMajority(timeout))(_ + jobId)
+  private[this] def addJobIdToIndex(jobId: JobId): Unit = {
+    replicator ! Update(IndexKey, GSet.empty[JobId], writeConsistency)(_ + jobId)
+  }
+
+  private[this] def registryMembers =
+    cluster.state.members.filter(_.roles.contains("registry"))
+
+  private[this] def readConsistency = {
+    if (registryMembers.size > 1) {
+      ReadMajority(timeout)
+    } else {
+      ReadLocal
+    }
+  }
+
+  private[this] def writeConsistency = {
+    if (registryMembers.size > 1) {
+      WriteMajority(timeout)
+    } else {
+      WriteLocal
+    }
+  }
 
 }
 
@@ -112,23 +132,23 @@ private class RegistrySingleQuery(shardRegion: ActorRef) extends Actor with Acto
   import Replicator._
 
   def receive = {
-    case r @ GetSuccess(`IndexKey`, Some(Query(cmd: GetJob, requestor))) =>
+    case r @ GetSuccess(`IndexKey`, Some(Query(cmd: GetJob, replyTo))) =>
       val elems = r.get(IndexKey).elements
       if (elems.contains(cmd.jobId)) {
         log.debug("Found job {} in the registry index, retrieving its state...", cmd.jobId)
-        shardRegion.tell(cmd, requestor)
+        shardRegion.tell(cmd, replyTo)
       } else {
         log.info("Job {} was not found in the registry.", cmd.jobId)
-        requestor ! JobNotFound(cmd.jobId)
+        replyTo ! JobNotFound(cmd.jobId)
       }
       context stop self
 
-    case NotFound(`IndexKey`, Some(Query(GetJob(jobId), requestor))) =>
-      requestor ! JobNotFound(jobId)
+    case NotFound(`IndexKey`, Some(Query(GetJob(jobId), replyTo))) =>
+      replyTo ! JobNotFound(jobId)
       context stop self
 
-    case GetFailure(`IndexKey`, Some(Query(_, requestor))) =>
-      requestor ! Status.Failure(new Exception("Could not retrieve elements from the index"))
+    case GetFailure(`IndexKey`, Some(Query(_, replyTo))) =>
+      replyTo ! Status.Failure(new Exception("Could not retrieve elements from the index"))
       context stop self
   }
 
