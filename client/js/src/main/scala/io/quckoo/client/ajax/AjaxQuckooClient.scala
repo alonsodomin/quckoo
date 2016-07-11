@@ -131,7 +131,7 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String])
     }
   }
 
-  override def registryEvents: Observable[RegistryEvent] =
+  override lazy val registryEvents: Observable[RegistryEvent] =
     EventSourceObservable[RegistryEvent](RegistryEventsURI, "RegistryEvent")
 
   override def cancelPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Unit] = {
