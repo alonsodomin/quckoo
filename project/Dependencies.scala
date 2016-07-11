@@ -31,6 +31,7 @@ object Dependencies {
     val diode = "1.0.0"
 
     val upickle = "0.3.9"
+    val utest = "0.4.3"
     val scalatags = "0.5.5"
 
     val reactJs = "15.1.0"
@@ -160,6 +161,7 @@ object Dependencies {
 
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
+      "com.lihaoyi"      %%% "utest"          % version.utest % Test,
       "me.chrons"        %%% "diode-react"    % version.diode,
       "be.doeraene"      %%% "scalajs-jquery" % "0.9.0",
       "org.singlespaced" %%% "scalajs-d3"     % "0.3.1",
@@ -199,7 +201,7 @@ object Dependencies {
         commonJSName "React",
 
       // JQuery & Bootstrap
-      "org.webjars" % "jquery"    % "2.1.3"
+      "org.webjars" % "jquery"    % "1.11.1"
         /        "jquery.js"
         minified "jquery.min.js",
       "org.webjars" % "bootstrap" % "3.3.2"
@@ -210,7 +212,8 @@ object Dependencies {
         /         "bootstrap-notify.js"
         minified  "bootstrap-notify.min.js"
         dependsOn ("jquery.js", "bootstrap.js")
-    )
+    ),
+    testFrameworks += new TestFramework("utest.runner.Framework")
   )
   lazy val consoleResources = Def.settings {
     libraryDependencies ++= Seq(

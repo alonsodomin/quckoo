@@ -27,7 +27,6 @@ import monocle.macros.Lenses
  * Created by aalonsodominguez on 12/10/2015.
  */
 object LoginForm {
-  import MonocleReact._
 
   type LoginHandler = (String, String) => Callback
 
