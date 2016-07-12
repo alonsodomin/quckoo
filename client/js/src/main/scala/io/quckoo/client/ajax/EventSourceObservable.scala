@@ -18,16 +18,20 @@ package io.quckoo.client.ajax
 
 import monix.execution.Cancelable
 import monix.execution.cancelables.RefCountCancelable
-import monix.reactive.observers.{Subscriber, SyncSubscriber}
+import monix.reactive.observers.Subscriber
 import monix.reactive.{Observable, OverflowStrategy}
+
 import org.scalajs.dom.raw.{Event, EventSource, MessageEvent}
+
+import slogging.LazyLogging
+
 import upickle.default._
 
 /**
   * Created by alonsodomin on 02/04/2016.
   */
 private[ajax] class EventSourceObservable[A: Reader] private (url: String, eventType: String)
-    extends (Subscriber.Sync[A] => Cancelable) {
+    extends (Subscriber.Sync[A] => Cancelable) with LazyLogging {
 
   val source = new EventSource(url)
 
@@ -35,6 +39,7 @@ private[ajax] class EventSourceObservable[A: Reader] private (url: String, event
     val cancelable = RefCountCancelable(source.close())
 
     source.onerror = (event: Event) => {
+      logger.debug(s"Received 'error' event: $event")
       if (source.readyState == EventSource.CLOSED) {
         subscriber.onComplete()
       } else {

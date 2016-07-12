@@ -16,15 +16,13 @@
 
 package io.quckoo.cluster.registry
 
-import scala.concurrent._
-
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{Sink, Source}
 
 import io.quckoo.JobSpec
 import io.quckoo.id.JobId
@@ -33,6 +31,8 @@ import io.quckoo.cluster.core.QuckooJournal
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
+
+import scala.concurrent._
 
 /**
  * Created by aalonsodominguez on 24/08/15.
@@ -54,6 +54,7 @@ object Registry {
 
 class Registry(settings: RegistrySettings)
     extends Actor with ActorLogging with QuckooJournal {
+  import Registry.EventTag
 
   ClusterClientReceptionist(context.system).registerService(self)
 
@@ -64,24 +65,17 @@ class Registry(settings: RegistrySettings)
   private[this] val cluster = Cluster(context.system)
   private[this] val resolver = context.actorOf(settings.resolverProps, "resolver")
   private[this] val shardRegion = startShardRegion
-  private[this] val index = context.actorOf(RegistryIndex.props(shardRegion), s"index")
+  private[this] val index = readJournal.eventsByTag(EventTag, 0).
+    runWith(Sink.actorSubscriber(RegistryIndex.props(shardRegion)))
 
   private[this] var handlerRefCount = 0L
 
   def actorSystem = context.system
 
-  override def preStart(): Unit = {
-    // Restart the indexes for the registry partitions
-    readJournal.currentPersistenceIds().
-      filter(_.startsWith(JobState.PersistenceIdPrefix)).
-      flatMapConcat(persistenceId => readJournal.eventsByPersistenceId(persistenceId, 0, Long.MaxValue)).
-      runForeach { envelope => index ! envelope.event }
-  }
-
   def receive: Receive = {
     case RegisterJob(spec) =>
       handlerRefCount += 1
-      val handler = context.actorOf(handlerProps(spec, shardRegion, sender()), s"handler-$handlerRefCount")
+      val handler = context.actorOf(handlerProps(spec, sender()), s"handler-$handlerRefCount")
       resolver.tell(Resolver.Validate(spec.artifactId), handler)
 
     case GetJobs =>
@@ -125,8 +119,8 @@ class Registry(settings: RegistrySettings)
     )
   }
 
-  private def handlerProps(jobSpec: JobSpec, shardRegion: ActorRef, requestor: ActorRef): Props =
-    Props(classOf[RegistryResolutionHandler], jobSpec, shardRegion, requestor)
+  private def handlerProps(jobSpec: JobSpec, replyTo: ActorRef): Props =
+    Props(classOf[RegistryResolutionHandler], jobSpec, shardRegion, replyTo)
 
 }
 

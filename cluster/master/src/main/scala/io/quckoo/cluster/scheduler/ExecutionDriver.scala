@@ -134,6 +134,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   import ExecutionDriver._
   import ShardRegion.Passivate
   import SupervisorStrategy._
+  import DistributedPubSubMediator._
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
   private[this] val triggerDispatcher = context.system.dispatchers.lookup("quckoo.trigger-dispatcher")
@@ -147,7 +148,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   override def persistenceId = s"$ShardName-" + self.path.name
 
   override def preStart(): Unit =
-    mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
+    mediator ! Subscribe(topics.Registry, self)
 
   override def receiveRecover: Receive = {
     case create: Created =>
@@ -174,7 +175,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   private def activatePlan(state: DriverState): Unit = {
     log.info("Activating execution plan. planId={}", state.planId)
     persist(ExecutionPlanStarted(state.jobId, state.planId)) { event =>
-      context.system.eventStream.publish(event)
+      mediator ! Publish(topics.Scheduler, event)
       scheduleOrFinish(state) match {
         case FinishPlan =>
           self ! FinishPlan
@@ -193,7 +194,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
    * the distributed pub/sub and an initial New command
    */
   private def initial(subscribed: Boolean = false, state: Option[DriverState] = None): Receive = {
-    case DistributedPubSubMediator.SubscribeAck(_) =>
+    case SubscribeAck(Subscribe(topic, _, `self`)) if topic == topics.Registry =>
       if (state.isDefined) {
         activatePlan(state.get)
       } else {
@@ -258,9 +259,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       persist(TaskScheduled(state.jobId, state.planId, taskId)) { event =>
         unstashAll()
 
-        // TODO replace mediator by event stream when the state has been moved out
-        mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
-        //context.system.eventStream.publish(event)
+        mediator ! Publish(topics.Scheduler, event)
         context.become(runningExecution(state.updated(event), execution, Some(trigger)))
       }
 
@@ -297,9 +296,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       state.plan.currentTaskId.foreach { taskId =>
         persist(TaskCompleted(state.jobId, state.planId, taskId, outcome)) { event =>
           log.debug("Task finished. taskId={}, outcome={}", taskId, outcome)
-          // TODO replace mediator by event stream when the state has been moved out
-          mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
-          //context.system.eventStream.publish(event)
+          mediator ! Publish(topics.Scheduler, event)
 
           val newState = state.updated(event)
           context.unwatch(execution)
@@ -322,12 +319,12 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     case FinishPlan =>
       log.info("Finishing execution plan. planId={}", state.planId)
       persist(ExecutionPlanFinished(state.jobId, state.planId)) { event =>
-        context.system.eventStream.publish(event)
-        mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
+        mediator ! Publish(topics.Scheduler, event)
+        mediator ! Unsubscribe(topics.Registry, self)
         context.become(shuttingDown(state.updated(event)))
       }
 
-    case DistributedPubSubMediator.UnsubscribeAck(_) if state.plan.currentTaskId.isEmpty =>
+    case UnsubscribeAck(Unsubscribe(topic, _, `self`)) if topic == topics.Registry =>
       context.parent ! Passivate(stopMessage = PoisonPill)
 
     case GetExecutionPlan(_) =>

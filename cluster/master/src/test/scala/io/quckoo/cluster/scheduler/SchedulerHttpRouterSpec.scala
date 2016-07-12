@@ -8,12 +8,14 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
+
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.{ExecutionPlan, Task, Trigger, serialization}
 import io.quckoo.time.JDK8TimeSource
+
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -81,7 +83,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
   override def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] =
     Future.successful(TestTaskMap.get(taskId))
 
-  override def queueMetrics: Source[TaskQueueUpdated, NotUsed] = ???
+  override def schedulerEvents: Source[SchedulerEvent, NotUsed] = ???
 
   private[this] def endpoint(target: String) = s"/api/scheduler$target"
 

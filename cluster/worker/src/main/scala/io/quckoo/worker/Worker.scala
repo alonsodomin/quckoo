@@ -135,7 +135,7 @@ class Worker(clusterClient: ActorRef,
     case _: DeathPactException => Stop
     case cause: Exception =>
       currentTaskId.foreach {
-        taskId => sendToQueue(TaskFailed(workerId, taskId, NonEmptyList(ExceptionThrown(cause))))
+        taskId => sendToQueue(TaskFailed(workerId, taskId, NonEmptyList(ExceptionThrown.from(cause))))
       }
       context.become(idle)
       Restart

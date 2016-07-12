@@ -324,7 +324,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
     }
 
     "reply with the fault that caused the failure" in {
-      val fault = ExceptionThrown(new RuntimeException("TEST EXCEPTION"))
+      val fault = ExceptionThrown.from(new RuntimeException("TEST EXCEPTION"))
 
       taskQueue.send(execution, Finish(Some(fault)))
       val resultMsg = within(1 second) {

@@ -22,10 +22,9 @@ import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.stream.ActorMaterializer
-
 import io.quckoo.cluster.net._
 import io.quckoo.cluster.registry.Registry
-import io.quckoo.cluster.scheduler.{Scheduler, TaskQueue}
+import io.quckoo.cluster.scheduler.{ExecutionPlanIndex, Scheduler, TaskQueue}
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
 import io.quckoo.id.NodeId
 import io.quckoo.net.QuckooState
@@ -67,8 +66,9 @@ class QuckooCluster(settings: QuckooClusterSettings)
 
   private[this] val registry = context.actorOf(Registry.props(settings), "registry")
 
-  private[this] val scheduler = context.watch(context.actorOf(
-    Scheduler.props(registry, readJournal, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
+  private[this] val scheduler = context.watch(context.actorOf(Scheduler.props(
+    settings, readJournal, registry
+  ), "scheduler"))
 
   private[this] var clients = Set.empty[ActorRef]
   private[this] var clusterState = QuckooState(masterNodes = masterNodes(cluster))

@@ -79,8 +79,8 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String])
   override lazy val workerEvents: Observable[WorkerEvent] =
     EventSourceObservable[WorkerEvent](WorkerEventsURI, "worker")
 
-  override lazy val queueMetrics: Observable[TaskQueueUpdated] =
-    EventSourceObservable[TaskQueueUpdated](QueueMetricsURI, "metrics")
+  override lazy val schedulerEvents: Observable[SchedulerEvent] =
+    EventSourceObservable[SchedulerEvent](SchedulerEventsURI, "scheduler")
 
   override def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] = {
     withAuthRefresh { () =>

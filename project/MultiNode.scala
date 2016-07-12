@@ -9,8 +9,8 @@ object MultiNode {
   lazy val settings: Seq[Def.Setting[_]] = SbtMultiJvm.multiJvmSettings ++ Seq(
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-multi-node-testkit" % Dependencies.version.akka
-    ),
-    compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
+    )
+    /*compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
     parallelExecution in Test := false,
     executeTests in Test <<= (executeTests in Test, executeTests in MultiJvm) map {
       case (testResults, multiNodeResults) =>
@@ -23,7 +23,7 @@ object MultiNode {
           testResults.events ++ multiNodeResults.events,
           testResults.summaries ++ multiNodeResults.summaries
         )
-    }
+    }*/
   ) ++ HeaderPlugin.settingsFor(MultiJvm)
 
 }

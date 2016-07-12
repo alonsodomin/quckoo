@@ -16,16 +16,14 @@
 
 package io.quckoo.cluster.scheduler
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, Props, Stash}
 import akka.cluster.Cluster
 import akka.cluster.ddata.{DistributedData, PNCounterMap, Replicator}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import io.quckoo.cluster.core.PubSubSubscribedEventPublisher
+
 import io.quckoo.cluster.topics
 import io.quckoo.protocol.cluster.MasterRemoved
 import io.quckoo.protocol.scheduler.TaskQueueUpdated
-
-import scala.collection.immutable.Queue
 
 /**
   * Created by alonsodomin on 12/04/2016.
@@ -40,7 +38,7 @@ object TaskQueueMonitor {
 
 }
 
-class TaskQueueMonitor extends Actor with ActorLogging {
+class TaskQueueMonitor extends Actor with ActorLogging with Stash {
   import TaskQueueMonitor._
 
   implicit val cluster = Cluster(context.system)
@@ -48,7 +46,6 @@ class TaskQueueMonitor extends Actor with ActorLogging {
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   private[this] var currentMetrics = QueueMetrics()
-  private[this] var stash: Queue[Any] = Queue.empty
 
   override def preStart(): Unit = {
     replicator ! Replicator.Subscribe(TaskQueue.PendingKey, self)
@@ -61,13 +58,10 @@ class TaskQueueMonitor extends Actor with ActorLogging {
   private def initialising: Receive = {
     case DistributedPubSubMediator.SubscribeAck(_) =>
       log.info("Task monitor initialised in node: {}", cluster.selfUniqueAddress.address.hostPort)
-      stash.foreach(self ! _)
-      stash = Queue.empty
+      unstashAll()
       context.become(ready)
 
-    case msg: Any =>
-      // Stash any message during initialization
-      stash = stash.enqueue(msg)
+    case _ => stash()
   }
 
   private def ready: Receive = {
@@ -102,11 +96,9 @@ class TaskQueueMonitor extends Actor with ActorLogging {
     val totalPending = currentMetrics.pendingPerNode.values.sum
     val totalInProgress = currentMetrics.inProgressPerNode.values.sum
     mediator ! DistributedPubSubMediator.Publish(
-      topics.Master,
+      topics.Scheduler,
       TaskQueueUpdated(totalPending, totalInProgress)
     )
   }
 
 }
-
-final class TaskQueueEventPublisher extends PubSubSubscribedEventPublisher[TaskQueueUpdated](topics.Master)
