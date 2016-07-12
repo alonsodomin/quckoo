@@ -39,7 +39,7 @@ object Dependencies {
     val scopt = "3.5.0"
     val slogging = "0.5.0"
     val monocle = "1.2.2"
-    val scalaz = "7.2.2"
+    val scalaz = "7.2.4"
     val monix  = "2.0-RC8"
   }
 

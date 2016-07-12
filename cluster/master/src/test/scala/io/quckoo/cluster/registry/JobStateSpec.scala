@@ -50,7 +50,7 @@ class JobStateSpec extends TestKit(TestActorSystem("JobStateSpec")) with Implici
     TestKit.shutdownActorSystem(system)
 
   "A job state actor" should {
-    val jobState = TestActorRef(JobState.props)
+    val jobState = TestActorRef(JobState.props.withDispatcher("akka.actor.default-dispatcher"))
 
     "return job accepted when receiving a create command" in {
       jobState ! JobState.CreateJob(BarJobId, BarJobSpec)
