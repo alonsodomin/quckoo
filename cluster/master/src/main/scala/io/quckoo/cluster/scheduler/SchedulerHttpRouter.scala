@@ -88,9 +88,9 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
           }
         }
       }
-    } ~ path("queue") {
+    } ~ path("events") {
       get {
-        complete(asSSE(queueMetrics, "metrics"))
+        complete(asSSE(schedulerEvents, "scheduler"))
       }
     }
 

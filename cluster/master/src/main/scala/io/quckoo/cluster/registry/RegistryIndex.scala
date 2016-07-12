@@ -20,6 +20,8 @@ import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ddata._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import akka.persistence.query.EventEnvelope
+import akka.stream.actor._
 
 import io.quckoo.JobSpec
 import io.quckoo.id.JobId
@@ -45,26 +47,23 @@ object RegistryIndex {
 
 }
 
-class RegistryIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends Actor with ActorLogging with Stash {
+class RegistryIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends ActorSubscriber with ActorLogging with Stash {
   import RegistryIndex._
   import Replicator._
+  import ActorSubscriberMessage._
 
   implicit val cluster = Cluster(context.system)
   private[this] val replicator = DistributedData(context.system).replicator
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
-  override def preStart(): Unit = {
-    log.info("Starting registry index...")
-    context.system.eventStream.subscribe(self, classOf[JobAccepted])
-  }
+  log.info("Starting registry index...")
 
-  override def postStop(): Unit =
-    context.system.eventStream.unsubscribe(self)
+  override protected def requestStrategy: RequestStrategy = OneByOneRequestStrategy
 
   override def receive = ready
 
   def ready: Receive = {
-    case event @ JobAccepted(jobId, _) =>
+    case OnNext(EventEnvelope(_, _, _, event @ JobAccepted(jobId, _))) =>
       log.debug("Indexing job {}", jobId)
       addJobIdToIndex(jobId)
       mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)

@@ -17,18 +17,18 @@
 package io.quckoo.cluster
 
 import akka.NotUsed
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.ws.Message
 import akka.pattern._
-import akka.stream.{ActorMaterializer, OverflowStrategy}
-import akka.stream.scaladsl.{Flow, Source}
+import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Source
 import akka.util.Timeout
-import io.quckoo.cluster.core.{WorkerEventPublisher, _}
+
+import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.registry.RegistryEventPublisher
-import io.quckoo.cluster.scheduler.TaskQueueEventPublisher
-import io.quckoo.fault.{Fault, ResolutionFault}
+import io.quckoo.cluster.scheduler.SchedulerEventPublisher
+import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
@@ -37,23 +37,23 @@ import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.time.TimeSource
 import io.quckoo.{ExecutionPlan, JobSpec}
+
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
-import scalaz.{Validation, ValidationNel}
+import scalaz.ValidationNel
 
 /**
   * Created by alonsodomin on 13/12/2015.
   */
-class Quckoo(settings: QuckooClusterSettings)
-            (implicit system: ActorSystem, timeSource: TimeSource)
+final class Quckoo(settings: QuckooClusterSettings)
+                  (implicit system: ActorSystem, timeSource: TimeSource)
     extends HttpRouter with QuckooServer with Logging with Retrying {
 
   implicit val materializer = ActorMaterializer()
 
-  val core = system.actorOf(QuckooCluster.props(settings), "quckoo")
-  val userAuth = system.actorSelection(core.path / "authenticator")
+  private[this] val core = system.actorOf(QuckooCluster.props(settings), "quckoo")
 
   def start(implicit ec: ExecutionContext, timeout: Timeout): Future[Unit] = {
     Http().bindAndHandle(router, settings.httpInterface, settings.httpPort).
@@ -104,8 +104,8 @@ class Quckoo(settings: QuckooClusterSettings)
     }
   }
 
-  def queueMetrics: Source[TaskQueueUpdated, NotUsed] =
-    Source.actorPublisher[TaskQueueUpdated](Props(classOf[TaskQueueEventPublisher])).
+  def schedulerEvents: Source[SchedulerEvent, NotUsed] =
+    Source.actorPublisher[SchedulerEvent](SchedulerEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
 
   def masterEvents: Source[MasterEvent, NotUsed] =

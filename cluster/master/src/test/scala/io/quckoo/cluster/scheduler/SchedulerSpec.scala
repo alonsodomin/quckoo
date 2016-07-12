@@ -3,18 +3,18 @@ package io.quckoo.cluster.scheduler
 import java.util.UUID
 
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import akka.persistence.inmemory.query.journal.scaladsl.InMemoryReadJournal
+import akka.persistence.inmemory.query.scaladsl.InMemoryReadJournal
 import akka.persistence.query.PersistenceQuery
 import akka.testkit._
-
-import io.quckoo.{ExecutionPlan, JobSpec, Task}
+import io.quckoo.{ExecutionPlan, JobSpec, Task, Trigger}
 import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
-
 import org.scalatest._
+
+import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 18/08/15.
@@ -27,7 +27,8 @@ object SchedulerSpec {
 
 }
 
-class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with ImplicitSender with ImplicitTimeSource
+class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
+    with ImplicitSender with ImplicitTimeSource
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 
   import SchedulerSpec._
@@ -60,20 +61,21 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec")) with Impli
     val scheduler = TestActorRef(Scheduler.props(
       registryProbe.ref, readJournal,
       TestActors.forwardActorProps(taskQueueProbe.ref)
-    ).withDispatcher("akka.actor.default-dispatcher"), "scheduler")
+    ), "scheduler")
     var testPlanId: Option[PlanId] = None
 
     "create an execution driver for an enabled job" in {
-      scheduler ! ScheduleJob(TestJobId)
+      scheduler ! ScheduleJob(TestJobId, trigger = Trigger.After(10 seconds))
 
       registryProbe.expectMsgType[GetJob].jobId shouldBe TestJobId
       registryProbe.reply(TestJobId -> TestJobSpec)
 
       eventListener.expectMsgType[ExecutionPlanStarted].jobId shouldBe TestJobId
-      eventListener.expectMsgType[TaskScheduled].jobId shouldBe TestJobId
 
       val startedMsg = expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId shouldBe TestJobId
+
+      eventListener.expectMsgType[TaskScheduled].jobId shouldBe TestJobId
 
       testPlanId = Some(startedMsg.planId)
     }

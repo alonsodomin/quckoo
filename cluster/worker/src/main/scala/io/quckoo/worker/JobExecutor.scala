@@ -47,7 +47,7 @@ class JobExecutor extends Actor with ActorLogging {
 
       val response = result match {
         case Success(value) => Completed(value)
-        case Failure(ex)    => Failed(ExceptionThrown(ex))
+        case Failure(ex)    => Failed(ExceptionThrown.from(ex))
       }
 
       sender() ! response

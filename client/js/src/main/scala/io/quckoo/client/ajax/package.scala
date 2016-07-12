@@ -43,7 +43,7 @@ package object ajax {
   private[ajax] val SchedulerBaseURI = BaseURI + "/scheduler"
   private[ajax] val ExecutionPlansURI = SchedulerBaseURI + "/plans"
   private[ajax] val TasksURI = SchedulerBaseURI + "/tasks"
-  private[ajax] val QueueMetricsURI = SchedulerBaseURI + "/queue"
+  private[ajax] val SchedulerEventsURI = SchedulerBaseURI + "/events"
 
   private[ajax] val JsonRequestHeaders = Map(
     "Content-Type" -> "application/json"

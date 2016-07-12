@@ -84,6 +84,8 @@ class JobState extends PersistentActor with ActorLogging with Stash {
       }
 
     case RecoveryCompleted =>
+      log.debug("Job recovery has finished")
+      unstashAll()
       stateDuringRecovery = None
   }
 

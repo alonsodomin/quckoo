@@ -165,7 +165,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       val taskId = task.id
       val cause = new Exception("TEST EXCEPTION")
 
-      val expectedError = ExceptionThrown(cause)
+      val expectedError = ExceptionThrown.from(cause)
       executorProbe.send(worker, JobExecutor.Failed(expectedError))
 
       val queueMsg = clusterClientProbe.expectMsgType[SendToAll]

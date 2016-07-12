@@ -29,7 +29,7 @@ object Dependencies {
 
     val diode = "1.0.0"
 
-    val upickle = "0.3.9"
+    val upickle = "0.4.1"
     val scalatags = "0.5.5"
 
     val reactJs = "15.1.0"
@@ -67,7 +67,7 @@ object Dependencies {
         val core      = "com.typesafe.akka"   %% "akka-persistence"              % version.akka
         val query     = "com.typesafe.akka"   %% "akka-persistence-query-experimental" % version.akka
         val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra"    % "0.17"
-        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % "1.2.13" % Test
+        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % "1.3.2" % Test
       }
 
       val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka

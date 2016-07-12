@@ -23,9 +23,9 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.pattern._
-import akka.persistence.query.scaladsl.{AllPersistenceIdsQuery, CurrentPersistenceIdsQuery, EventsByPersistenceIdQuery}
+import akka.persistence.query.scaladsl.EventsByTagQuery
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{Sink, Source}
 
 import io.quckoo.{ExecutionPlan, JobSpec}
 import io.quckoo.cluster.protocol._
@@ -43,7 +43,7 @@ import scala.concurrent.duration._
  */
 object Scheduler {
 
-  type Journal = AllPersistenceIdsQuery with CurrentPersistenceIdsQuery with EventsByPersistenceIdQuery
+  type Journal = EventsByTagQuery
 
   private[scheduler] case class CreateExecutionDriver(
     spec: JobSpec, cmd: ScheduleJob, replyTo: ActorRef
@@ -61,6 +61,7 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
     extends Actor with ActorLogging {
 
   import Scheduler._
+  import SchedulerTagEventAdapter.tags
 
   ClusterClientReceptionist(context.system).registerService(self)
 
@@ -77,19 +78,10 @@ class Scheduler(registry: ActorRef, journal: Scheduler.Journal, queueProps: Prop
     extractEntityId = ExecutionDriver.idExtractor,
     extractShardId  = ExecutionDriver.shardResolver
   )
-  private[this] val executionPlanIndex = context.actorOf(
-    ExecutionPlanIndex.props(shardRegion), "executionPlanIndex"
-  )
-  private[this] val executionIndex = context.actorOf(
-    ExecutionIndex.props(journal), "executionIndex"
-  )
-
-  override def preStart(): Unit = {
-    journal.currentPersistenceIds().
-      filter(_.startsWith(ExecutionDriver.ShardName)).
-      flatMapConcat(persistenceId => journal.eventsByPersistenceId(persistenceId, 0, Long.MaxValue)).
-      runForeach { envelope => executionPlanIndex ! envelope.event }
-  }
+  private[this] val executionPlanIndex =  journal.eventsByTag(tags.ExecutionPlan, 0).
+    runWith(Sink.actorSubscriber(ExecutionPlanIndex.props(shardRegion)))
+  private[this] val executionIndex = journal.eventsByTag(tags.Task, 0).
+    runWith(Sink.actorSubscriber(ExecutionIndex.props))
 
   override def receive: Receive = {
     case cmd: ScheduleJob =>

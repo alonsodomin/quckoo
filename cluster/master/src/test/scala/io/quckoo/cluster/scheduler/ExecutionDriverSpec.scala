@@ -47,12 +47,10 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
 
   before {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, eventListener.ref)
-    system.eventStream.subscribe(eventListener.ref, classOf[SchedulerEvent])
   }
 
   after {
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, eventListener.ref)
-    system.eventStream.unsubscribe(eventListener.ref)
   }
 
   def executionDriverProps: Props = ExecutionDriver.props.

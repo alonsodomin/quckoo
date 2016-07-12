@@ -44,7 +44,7 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
 
     jobExecutor ! JobExecutor.Execute(task, failingPackage)
 
-    expectMsgType[JobExecutor.Failed].error should be(ExceptionThrown(expectedException))
+    expectMsgType[JobExecutor.Failed].error should be(ExceptionThrown.from(expectedException))
   }
 
 }

@@ -19,11 +19,12 @@ package io.quckoo.cluster.scheduler
 import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ddata._
-import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import akka.persistence.query.EventEnvelope
+import akka.stream.actor.ActorSubscriberMessage
+import akka.stream.actor.{ActorSubscriber, OneByOneRequestStrategy, RequestStrategy}
 
 import io.quckoo.ExecutionPlan
 import io.quckoo.id.PlanId
-import io.quckoo.cluster.topics
 import io.quckoo.protocol.scheduler._
 
 import scala.concurrent.duration._
@@ -41,42 +42,37 @@ object ExecutionPlanIndex {
 
 }
 
-class ExecutionPlanIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends Actor with ActorLogging with Stash {
+class ExecutionPlanIndex(shardRegion: ActorRef, timeout: FiniteDuration)
+    extends ActorSubscriber with ActorLogging with Stash {
   import ExecutionPlanIndex._
   import Replicator._
+  import ActorSubscriberMessage._
 
   implicit val cluster = Cluster(context.system)
   private[this] val replicator = DistributedData(context.system).replicator
-  private[this] val mediator = DistributedPubSub(context.system).mediator
 
-  override def preStart(): Unit = {
-    log.debug("Starting execution plan index...")
-    context.system.eventStream.subscribe(self, classOf[SchedulerEvent])
-  }
+  log.info("Starting execution plan index...")
+
+  override protected def requestStrategy: RequestStrategy = OneByOneRequestStrategy
 
   def receive = ready
 
   def ready: Receive = {
-    case event: SchedulerEvent =>
-      mediator ! DistributedPubSubMediator.Publish(topics.Scheduler, event)
-      event match {
-        case ExecutionPlanStarted(_, planId) =>
-          log.debug("Indexing execution plan {}", planId)
-          replicator ! Update(ExecutionPlanKey, GSet.empty[PlanId], WriteMajority(timeout))(_ + planId)
-          context become updatingIndex(planId)
-
-        case _ => // ignore other types of events
-      }
+    case OnNext(EventEnvelope(_, _, _, ExecutionPlanStarted(_, planId))) =>
+      log.debug("Indexing execution plan {}", planId)
+      replicator ! Update(ExecutionPlanKey, GSet.empty[PlanId], writeConsistency)(_ + planId)
+      context become updatingIndex(planId)
 
     case cmd: GetExecutionPlan =>
+      log.debug("Will try to find execution plan {}", cmd.planId)
       val externalReq = Query(cmd, sender())
-      val replicatorReq = Get(`ExecutionPlanKey`, ReadMajority(timeout), Some(externalReq))
+      val replicatorReq = Get(`ExecutionPlanKey`, readConsistency, Some(externalReq))
       val handler = context.actorOf(Props(classOf[ExecutionPlanSingleQuery], shardRegion))
       replicator.tell(replicatorReq, handler)
 
     case GetExecutionPlans =>
       val externalReq = Query(GetExecutionPlans, sender())
-      val replicatorReq = Get(`ExecutionPlanKey`, ReadMajority(timeout), Some(externalReq))
+      val replicatorReq = Get(`ExecutionPlanKey`, readConsistency, Some(externalReq))
       val handler = context.actorOf(Props(classOf[ExecutionPlanMultiQuery], shardRegion))
       replicator.tell(replicatorReq, handler)
   }
@@ -89,7 +85,7 @@ class ExecutionPlanIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends
     case UpdateTimeout(`ExecutionPlanKey`, _) =>
       if (attempts < 3) {
         log.warning("Timed out while updating index for execution plan {}, in operation", planId)
-        replicator ! Update(ExecutionPlanKey, GSet.empty[PlanId], WriteMajority(timeout))(_ + planId)
+        replicator ! Update(ExecutionPlanKey, GSet.empty[PlanId], writeConsistency)(_ + planId)
         context become updatingIndex(planId, attempts + 1)
       } else {
         log.error("Could not index execution plan {}", planId)
@@ -100,6 +96,25 @@ class ExecutionPlanIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends
     case _ => stash()
   }
 
+  private[this] def schedulerMembers =
+    cluster.state.members.filter(_.roles.contains("scheduler"))
+
+  private[this] def readConsistency = {
+    if (schedulerMembers.size > 1) {
+      ReadMajority(timeout)
+    } else {
+      ReadLocal
+    }
+  }
+
+  private[this] def writeConsistency = {
+    if (schedulerMembers.size > 1) {
+      WriteMajority(timeout)
+    } else {
+      WriteLocal
+    }
+  }
+
 }
 
 private class ExecutionPlanSingleQuery(shardRegion: ActorRef) extends Actor with ActorLogging {
@@ -108,6 +123,7 @@ private class ExecutionPlanSingleQuery(shardRegion: ActorRef) extends Actor with
 
   def receive: Receive = {
     case res @ GetSuccess(`ExecutionPlanKey`, Some(Query(cmd @ GetExecutionPlan(planId), replyTo))) =>
+      log.debug("Execution plan index read successfully...")
       val elems = res.get(ExecutionPlanKey).elements
       if (elems.contains(planId)) {
         log.debug("Found execution plan {} in the index, retrieving its state", planId)
