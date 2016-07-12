@@ -6,12 +6,14 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.inmemory.query.scaladsl.InMemoryReadJournal
 import akka.persistence.query.PersistenceQuery
 import akka.testkit._
+
 import io.quckoo.{ExecutionPlan, JobSpec, Task, Trigger}
 import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
+
 import org.scalatest._
 
 import scala.concurrent.duration._
@@ -27,7 +29,7 @@ object SchedulerSpec {
 
 }
 
-@Ignore
+//@Ignore
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
     with ImplicitSender with ImplicitTimeSource
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
@@ -85,11 +87,9 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
       testPlanId shouldBe defined
 
       testPlanId.foreach { planId =>
-        val executionPlan = within(5 seconds, 10 seconds) {
-          scheduler ! GetExecutionPlan(planId)
+        scheduler ! GetExecutionPlan(planId)
 
-          expectMsgType[ExecutionPlan]
-        }
+        val executionPlan = expectMsgType[ExecutionPlan]
 
         executionPlan.jobId shouldBe TestJobId
         executionPlan.planId shouldBe planId

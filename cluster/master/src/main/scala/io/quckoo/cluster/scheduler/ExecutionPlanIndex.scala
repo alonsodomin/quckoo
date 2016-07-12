@@ -20,8 +20,7 @@ import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ddata._
 import akka.persistence.query.EventEnvelope
-import akka.stream.actor.ActorSubscriberMessage
-import akka.stream.actor.{ActorSubscriber, OneByOneRequestStrategy, RequestStrategy}
+import akka.stream.actor._
 
 import io.quckoo.ExecutionPlan
 import io.quckoo.id.PlanId
@@ -53,12 +52,12 @@ class ExecutionPlanIndex(shardRegion: ActorRef, timeout: FiniteDuration)
 
   log.info("Starting execution plan index...")
 
-  override protected def requestStrategy: RequestStrategy = OneByOneRequestStrategy
+  override protected def requestStrategy: RequestStrategy = WatermarkRequestStrategy(500, 10)
 
   def receive = ready
 
   def ready: Receive = {
-    case OnNext(EventEnvelope(_, _, _, ExecutionPlanStarted(_, planId))) =>
+    case OnNext(EventEnvelope(_, _, _, ExecutionDriver.Created(_, _, planId, _, _, _))) =>
       log.debug("Indexing execution plan {}", planId)
       replicator ! Update(ExecutionPlanKey, GSet.empty[PlanId], writeConsistency)(_ + planId)
       context become updatingIndex(planId)
