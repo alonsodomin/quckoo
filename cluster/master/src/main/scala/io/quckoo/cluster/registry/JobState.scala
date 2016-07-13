@@ -50,7 +50,7 @@ object JobState {
     case EnableJob(jobId)     => (jobId.hashCode % NumberOfShards).toString
   }
 
-  final case class CreateJob(jobId: JobId, spec: JobSpec)
+  private[registry] final case class CreateJob(jobId: JobId, spec: JobSpec)
 
   def props: Props = Props(classOf[JobState])
 
@@ -139,7 +139,10 @@ class JobState extends PersistentActor with ActorLogging with Stash {
     validCommands orElse returnJob(jobId, spec)
   }
 
-  private def returnJob(jobId: JobId, spec: JobSpec): Receive = {
+  private[this] def returnJob(jobId: JobId, spec: JobSpec): Receive = {
+    case CreateJob(`jobId`, _) =>
+      sender() ! JobAccepted(jobId, spec)
+
     case GetJob(`jobId`) =>
       sender() ! (jobId -> spec)
   }

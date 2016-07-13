@@ -21,8 +21,9 @@ import akka.cluster.Cluster
 import akka.cluster.ddata._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.query.EventEnvelope
+import akka.persistence.query.scaladsl.{CurrentEventsByTagQuery, EventsByTagQuery}
 import akka.stream.actor._
-
+import akka.stream.scaladsl.Sink
 import io.quckoo.JobSpec
 import io.quckoo.id.JobId
 import io.quckoo.cluster.topics
@@ -38,16 +39,25 @@ object RegistryIndex {
   final val DefaultTimeout = 5 seconds
 
   final val IndexKey = GSetKey[JobId]("registryIndex")
+  final val LastOffset = LWWRegisterKey[Long]("lastRegistryOffset")
 
   final case class Query(request: RegistryReadCommand, sender: ActorRef)
-  final case class IndexJob(jobId: JobId)
+  final case class IndexJob(event: RegistryEvent, replyTo: Option[ActorRef] = None)
+
+  case object Ack
+  case object WarmUpStarted
+  case object WarmedUp
+
+  final case class IndexTimeoutException(attempts: Int)
+    extends Exception(s"Index operation timed out after $attempts attempts.")
 
   def props(shardRegion: ActorRef, timeout: FiniteDuration = DefaultTimeout): Props =
     Props(classOf[RegistryIndex], shardRegion, timeout)
 
 }
 
-class RegistryIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends ActorSubscriber with ActorLogging with Stash {
+class RegistryIndex(shardRegion: ActorRef, journal: CurrentEventsByTagQuery, timeout: FiniteDuration)
+    extends ActorSubscriber with ActorLogging with Stash {
   import RegistryIndex._
   import Replicator._
   import ActorSubscriberMessage._
@@ -57,17 +67,39 @@ class RegistryIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends Acto
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   log.info("Starting registry index...")
+  private[this] var jobIds = Set.empty[JobId]
+  private[this] var lastOffset = 0L
 
-  override protected def requestStrategy: RequestStrategy = OneByOneRequestStrategy
+  override protected val requestStrategy: RequestStrategy = OneByOneRequestStrategy
+
+  override protected def preStart(): Unit = readFromJournal()
 
   override def receive = ready
 
-  def ready: Receive = {
-    case OnNext(EventEnvelope(_, _, _, event @ JobAccepted(jobId, _))) =>
+  def warmingUp: Receive = {
+    case EventEnvelope(offset, _, _, JobAccepted(jobId, _)) =>
       log.debug("Indexing job {}", jobId)
-      addJobIdToIndex(jobId)
-      mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
-      context become updatingIndex(jobId)
+      jobIds += jobId
+      lastOffset = offset
+      sender() ! Ack
+
+    case WarmedUp =>
+      log.info("Registry index warming up finished.")
+      unstashAll()
+      context become ready
+
+    case _: RegistryReadCommand => stash()
+  }
+
+  def ready: Receive = {
+    case WarmUpStarted =>
+      log.info("Index warm up starting...")
+      sender() ! Ack
+      context become warmingUp
+
+    case IndexJob(event @ JobAccepted(jobId, _), replyTo) =>
+      jobIds += jobId
+      replyTo.foreach(_ ! event)
 
     case GetJobs =>
       val externalReq = Query(GetJobs, sender())
@@ -82,27 +114,59 @@ class RegistryIndex(shardRegion: ActorRef, timeout: FiniteDuration) extends Acto
       replicator.tell(replicatorReq, queryHandler)
   }
 
-  def updatingIndex(jobId: JobId, attempts: Int = 1): Receive = {
-    case UpdateSuccess(`IndexKey`, _) =>
-      unstashAll()
-      context become ready
+  private[this] def readingOffset: Receive = {
+    case res @ GetSuccess(`LastOffset`, _) =>
+      lastOffset = res.get(LastOffset).value
+      readFromJournal(lastOffset)
 
-    case UpdateTimeout(`IndexKey`, _) =>
-      if (attempts < 3) {
-        log.warning("Timed out when indexing job {}. Retrying...", jobId)
-        addJobIdToIndex(jobId)
-        context become updatingIndex(jobId, attempts + 1)
+    case GetFailure(`LastOffset`, _) =>
+      log.error("Could not read the last offset from the cache")
+      context unbecome
+
+    case NotFound(`LastOffset`, _) =>
+      readFromJournal()
+  }
+
+  private[this] def updatingIndex(attempt: Int = 1): Receive = {
+    case UpdateSuccess(`IndexKey`, Some(IndexJob(_, replyTo))) =>
+      replyTo.foreach(_ ! Ack)
+      unstashAll()
+      context unbecome
+
+    case UpdateTimeout(`IndexKey`, Some(req @ IndexJob(event, replyTo))) =>
+      if (attempt < 3) {
+        log.warning("Timed out when performing index update for event {}. Retrying...", event)
+        handleIndexRequest(req)
+        /*replicator ! Update(IndexKey, GSet.empty[JobId], writeConsistency,
+          Some(req.copy(attempt = attempt + 1)))(_ + jobId)*/
+        context become updatingIndex(attempt + 1)
       } else {
-        log.error("Could not add job {} to the index.", jobId)
+        log.error("Could not perform index update for event: {}", event)
+        replyTo.foreach(_ ! Status.Failure(new IndexTimeoutException(attempt)))
         unstashAll()
-        context become ready
+        context unbecome
       }
+
+    case ModifyFailure(`IndexKey`, errorMessage, cause, Some(IndexJob(_, replyTo))) =>
+      log.error(cause, errorMessage)
+      replyTo.foreach(_ ! Status.Failure(cause))
+      unstashAll()
+      context unbecome
 
     case _ => stash()
   }
 
-  private[this] def addJobIdToIndex(jobId: JobId): Unit = {
-    replicator ! Update(IndexKey, GSet.empty[JobId], writeConsistency)(_ + jobId)
+  private[this] def readFromJournal(offset: Long = 0): Unit = {
+    journal.currentEventsByTag(Registry.EventTag, offset).
+      runWith(Sink.actorRefWithAck(self, WarmUpStarted, Ack, WarmedUp))
+  }
+
+  private[this] def handleIndexRequest(req: IndexJob): Unit = req.event match {
+    case JobAccepted(jobId, _) =>
+      log.debug("Indexing job {}", jobId)
+      replicator ! Update(IndexKey, GSet.empty[JobId], writeConsistency, Some(req))(_ + jobId)
+
+    case _ =>
   }
 
   private[this] def registryMembers =
