@@ -18,15 +18,16 @@ package io.quckoo.resolver.ivy
 
 import java.net.URL
 
-import io.quckoo._
-import io.quckoo.fault.{DownloadFailed, Fault, ResolutionFault, UnresolvedDependency}
+import io.quckoo.fault._
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver._
+
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor.{Configuration, DefaultDependencyDescriptor, DefaultModuleDescriptor, ModuleDescriptor}
 import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
 import org.apache.ivy.core.report.{ArtifactDownloadReport, ResolveReport}
 import org.apache.ivy.core.resolve.ResolveOptions
+
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -57,23 +58,32 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
   import Scalaz._
 
   def apply(artifactId: ArtifactId, download: Boolean)
-           (implicit ec: ExecutionContext): Future[ValidationNel[ResolutionFault, Artifact]] = Future {
+           (implicit ec: ExecutionContext): Future[Validation[Fault, Artifact]] = Future {
 
-    def unresolvedDependencies(report: ResolveReport): ValidationNel[ResolutionFault, ResolveReport] = {
-      val validations: List[Validation[ResolutionFault, ResolveReport]] = report.getUnresolvedDependencies.map(_.getId).map { moduleId =>
+    def unresolvedDependencies(report: ResolveReport): ValidationNel[DependencyFault, ResolveReport] = {
+      val validations: List[Validation[DependencyFault, ResolveReport]] = report.getUnresolvedDependencies.map(_.getId).map { moduleId =>
         val unresolvedId = ArtifactId(moduleId.getOrganisation, moduleId.getName, moduleId.getRevision)
         UnresolvedDependency(unresolvedId).failure[ResolveReport]
       } toList
 
-      validations.foldLeft(report.successNel[ResolutionFault])((acc, v) => (acc |@| v.toValidationNel) { (_, r) => r })
+      validations.foldLeft(report.successNel[DependencyFault])((acc, v) => (acc |@| v.toValidationNel) { (_, r) => r })
     }
 
-    def downloadFailed(report: ResolveReport): ValidationNel[ResolutionFault, ResolveReport] = {
-      val validations: List[Validation[ResolutionFault, ResolveReport]] = report.getFailedArtifactsReports.map { artifactReport =>
-        DownloadFailed(artifactReport.getName).failure[ResolveReport]
+    def downloadFailed(report: ResolveReport): ValidationNel[DependencyFault, ResolveReport] = {
+      val validations: List[Validation[DependencyFault, ResolveReport]] = report.getFailedArtifactsReports.map { artifactReport =>
+        val moduleRevisionId = artifactReport.getArtifact.getModuleRevisionId
+        val artifactId = ArtifactId(moduleRevisionId.getOrganisation, moduleRevisionId.getName, moduleRevisionId.getRevision)
+        val reason = {
+          if (artifactReport.getDownloadDetails == ArtifactDownloadReport.MISSING_ARTIFACT) {
+            DownloadFailed.NotFound
+          } else {
+            DownloadFailed.Other(artifactReport.getDownloadDetails)
+          }
+        }
+        DownloadFailed(artifactId, reason).failure[ResolveReport]
       } toList
 
-      validations.foldLeft(report.successNel[ResolutionFault])((acc, v) => (acc |@| v.toValidationNel) { (_, r) => r })
+      validations.foldLeft(report.successNel[DependencyFault])((acc, v) => (acc |@| v.toValidationNel) { (_, r) => r })
     }
 
     def artifactLocations(artifactReports: Seq[ArtifactDownloadReport]): Seq[URL] = {
@@ -99,12 +109,12 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
 
     (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)) { (_, r) =>
       Artifact(artifactId, artifactLocations(r.getAllArtifactsReports))
-    }
+    } leftMap MissingDependencies
   }
 
   private[this] def newCallerInstance(artifactId: ArtifactId): ModuleDescriptor = {
     val moduleRevisionId: IvyModuleId = IvyModuleId.newInstance(
-      artifactId.group, artifactId.artifact, artifactId.version
+      artifactId.organization, artifactId.name, artifactId.version
     )
 
     val descriptor = new DefaultModuleDescriptor(IvyModuleId.newInstance(

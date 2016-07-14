@@ -16,18 +16,20 @@
 
 package io.quckoo.cluster.registry
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Stash}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
+import akka.persistence.query.EventEnvelope
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.{Sink, Source}
-
 import io.quckoo.JobSpec
 import io.quckoo.id.JobId
 import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.cluster.core.QuckooJournal
+import io.quckoo.cluster.registry.Registry.WarmUp
+import io.quckoo.cluster.registry.RegistryIndex.UpdateIndex
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
@@ -41,6 +43,13 @@ object Registry {
 
   final val EventTag = "registry"
 
+  object WarmUp {
+    case object Start
+    case object Ack
+    case object Completed
+    final case class Failed(exception: Throwable)
+  }
+
   def props(settings: QuckooClusterSettings) = {
     val resolve = IvyResolve(settings.ivyConfiguration)
     val props   = Resolver.props(resolve).withDispatcher("quckoo.resolver.dispatcher")
@@ -53,7 +62,7 @@ object Registry {
 }
 
 class Registry(settings: RegistrySettings)
-    extends Actor with ActorLogging with QuckooJournal {
+    extends Actor with ActorLogging with QuckooJournal with Stash {
   import Registry.EventTag
 
   ClusterClientReceptionist(context.system).registerService(self)
@@ -68,11 +77,15 @@ class Registry(settings: RegistrySettings)
   private[this] val index = readJournal.eventsByTag(EventTag, 0).
     runWith(Sink.actorSubscriber(RegistryIndex.props(shardRegion)))
 
+  private[this] var jobIds = Set.empty[JobId]
+
   private[this] var handlerRefCount = 0L
 
   def actorSystem = context.system
 
-  def receive: Receive = {
+  def receive = ready
+
+  private def ready: Receive = {
     case RegisterJob(spec) =>
       handlerRefCount += 1
       val handler = context.actorOf(handlerProps(spec, sender()), s"handler-$handlerRefCount")
@@ -83,11 +96,29 @@ class Registry(settings: RegistrySettings)
       val origSender = sender()
       queryJobs pipeTo origSender
 
-    case msg: GetJob =>
-      index forward msg
+    case get @ GetJob(jobId) =>
+      if (jobIds.contains(jobId)) {
+        shardRegion forward get
+      } else {
+        sender() ! JobNotFound(jobId)
+      }
 
     case msg: RegistryWriteCommand =>
       shardRegion forward msg
+  }
+
+  private def warmingUp: Receive = {
+    case EventEnvelope(offset, _, _, event @ JobAccepted(jobId, _)) =>
+      log.debug("Indexing job {}", jobId)
+      jobIds += jobId
+      sender() ! WarmUp.Ack
+
+    case WarmUp.Completed =>
+      log.info("Registry index warming up finished.")
+      unstashAll()
+      context become ready
+
+    case _: RegistryReadCommand => stash()
   }
 
   private def queryJobs: Future[Map[JobId, JobSpec]] = {
@@ -103,19 +134,19 @@ class Registry(settings: RegistrySettings)
   private def startShardRegion: ActorRef = if (cluster.selfRoles.contains("registry")) {
     log.info("Starting registry shards...")
     ClusterSharding(context.system).start(
-      typeName        = JobState.ShardName,
-      entityProps     = JobState.props,
+      typeName        = PersistentJob.ShardName,
+      entityProps     = PersistentJob.props,
       settings        = ClusterShardingSettings(context.system).withRole("registry"),
-      extractEntityId = JobState.idExtractor,
-      extractShardId  = JobState.shardResolver
+      extractEntityId = PersistentJob.idExtractor,
+      extractShardId  = PersistentJob.shardResolver
     )
   } else {
     log.info("Starting registry proxy...")
     ClusterSharding(context.system).startProxy(
-      typeName        = JobState.ShardName,
+      typeName        = PersistentJob.ShardName,
       role            = None,
-      extractEntityId = JobState.idExtractor,
-      extractShardId  = JobState.shardResolver
+      extractEntityId = PersistentJob.idExtractor,
+      extractShardId  = PersistentJob.shardResolver
     )
   }
 
@@ -124,23 +155,30 @@ class Registry(settings: RegistrySettings)
 
 }
 
-private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef, replyTo: ActorRef)
+private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef, indexer: ActorRef, replyTo: ActorRef)
     extends Actor with ActorLogging {
   import Resolver._
 
   private val jobId = JobId(jobSpec)
 
-  def receive = {
+  def receive = resolvingArtifact
+
+  def resolvingArtifact: Receive = {
     case ArtifactResolved(artifact) =>
       log.debug("Job artifact has been successfully resolved. artifactId={}",
         artifact.artifactId)
-      shardRegion.tell(JobState.CreateJob(jobId, jobSpec), replyTo)
+      shardRegion.tell(PersistentJob.CreateJob(jobId, jobSpec), replyTo)
       context stop self
 
-    case ResolutionFailed(cause) =>
+    case ResolutionFailed(_, cause) =>
       log.error("Couldn't validate the job artifact id. " + cause)
-      replyTo ! JobRejected(jobId, jobSpec.artifactId, cause)
+      replyTo ! JobRejected(jobId, cause)
       context stop self
+  }
+
+  def registeringJob: Receive = {
+    case evt @ JobAccepted(`jobId`, _) =>
+      indexer ! evt
   }
 
 }

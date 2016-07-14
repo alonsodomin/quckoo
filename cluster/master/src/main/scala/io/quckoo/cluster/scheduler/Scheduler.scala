@@ -230,15 +230,17 @@ private class ExecutionDriverTerminator(
     shardRegion: ActorRef
   ) extends Actor with ActorLogging {
 
+  import DistributedPubSubMediator._
+
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart(): Unit =
-    mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, self)
+    mediator ! Subscribe(topics.Scheduler, self)
 
   def receive = initializing
 
   def initializing: Receive = {
-    case DistributedPubSubMediator.SubscribeAck(_) =>
+    case SubscribeAck(_) =>
       log.debug("Stopping execution plan. planId={}", planId)
       shardRegion ! killCmd.cmd
       context.become(waitingForTermination)
@@ -248,12 +250,12 @@ private class ExecutionDriverTerminator(
     case response @ ExecutionPlanFinished(_, `planId`) =>
       log.debug("Execution plan has been stopped. planId={}", planId)
       killCmd.replyTo ! response
-      mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
+      mediator ! Unsubscribe(topics.Scheduler, self)
       context.become(shuttingDown)
   }
 
   def shuttingDown: Receive = {
-    case DistributedPubSubMediator.UnsubscribeAck(_) =>
+    case UnsubscribeAck(_) =>
       context.stop(self)
   }
 

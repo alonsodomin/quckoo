@@ -14,7 +14,7 @@ import org.scalatest._
 /**
  * Created by domingueza on 21/08/15.
  */
-object JobStateSpec {
+object PersistentJobSpec {
 
   final val BarArtifactId = ArtifactId("com.example", "bar", "test")
   final val BarJobSpec    = JobSpec("bar", Some("bar desc"), BarArtifactId, "com.example.bar.Job")
@@ -22,11 +22,11 @@ object JobStateSpec {
 
 }
 
-class JobStateSpec extends TestKit(TestActorSystem("JobStateSpec")) with ImplicitSender
+class PersistentJobSpec extends TestKit(TestActorSystem("JobStateSpec")) with ImplicitSender
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll
     with Matchers {
 
-  import JobStateSpec._
+  import PersistentJobSpec._
 
   val mediator = DistributedPubSub(system).mediator
   ignoreMsg {
@@ -50,10 +50,10 @@ class JobStateSpec extends TestKit(TestActorSystem("JobStateSpec")) with Implici
     TestKit.shutdownActorSystem(system)
 
   "A job state actor" should {
-    val jobState = TestActorRef(JobState.props.withDispatcher("akka.actor.default-dispatcher"))
+    val job = TestActorRef(PersistentJob.props.withDispatcher("akka.actor.default-dispatcher"))
 
     "return job accepted when receiving a create command" in {
-      jobState ! JobState.CreateJob(BarJobId, BarJobSpec)
+      job ! PersistentJob.CreateJob(BarJobId, BarJobSpec)
 
       val stateResponse = expectMsgType[JobAccepted]
       stateResponse.job should be (BarJobSpec)
@@ -62,46 +62,46 @@ class JobStateSpec extends TestKit(TestActorSystem("JobStateSpec")) with Implici
     }
 
     "return the registered job spec with its status when asked for it" in {
-      jobState ! GetJob(BarJobId)
+      job ! GetJob(BarJobId)
       expectMsg(BarJobId -> BarJobSpec)
     }
 
     "disable a job that has been previously registered and populate the event to the event stream" in {
-      jobState ! DisableJob(BarJobId)
+      job ! DisableJob(BarJobId)
 
       eventListener.expectMsgType[JobDisabled].jobId should be (BarJobId)
       expectMsgType[JobDisabled].jobId should be (BarJobId)
     }
 
     "do nothing when trying to disable it again" in {
-      jobState ! DisableJob(BarJobId)
+      job ! DisableJob(BarJobId)
 
       eventListener.expectNoMsg()
       expectMsgType[JobDisabled].jobId should be (BarJobId)
     }
 
     "return the registered job spec with disabled status" in {
-      jobState ! GetJob(BarJobId)
+      job ! GetJob(BarJobId)
 
       expectMsg(BarJobId -> BarJobSpec.copy(disabled = true))
     }
 
     "enable a job that has been previously disabled and publish the event" in {
-      jobState ! EnableJob(BarJobId)
+      job ! EnableJob(BarJobId)
 
       eventListener.expectMsgType[JobEnabled].jobId should be (BarJobId)
       expectMsgType[JobEnabled].jobId should be (BarJobId)
     }
 
     "do nothing when trying to enable it again" in {
-      jobState ! EnableJob(BarJobId)
+      job ! EnableJob(BarJobId)
 
       eventListener.expectNoMsg()
       expectMsgType[JobEnabled].jobId should be (BarJobId)
     }
 
     "double check that the job is finally enabled" in {
-      jobState ! GetJob(BarJobId)
+      job ! GetJob(BarJobId)
 
       expectMsg(BarJobId -> BarJobSpec)
     }

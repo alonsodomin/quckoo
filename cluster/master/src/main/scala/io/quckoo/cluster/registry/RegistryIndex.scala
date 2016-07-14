@@ -38,11 +38,10 @@ object RegistryIndex {
 
   final val DefaultTimeout = 5 seconds
 
-  final val IndexKey = GSetKey[JobId]("registryIndex")
-  final val LastOffset = LWWRegisterKey[Long]("lastRegistryOffset")
+  final val JobIdsKey = GSetKey[JobId]("jobIds")
 
-  final case class Query(request: RegistryReadCommand, sender: ActorRef)
-  final case class IndexJob(event: RegistryEvent, replyTo: Option[ActorRef] = None)
+  final case class Query(request: RegistryReadCommand, replyTo: ActorRef)
+  final case class UpdateIndex(event: RegistryEvent, replyTo: Option[ActorRef] = None)
 
   case object Ack
   case object WarmUpStarted
@@ -60,15 +59,12 @@ class RegistryIndex(shardRegion: ActorRef, journal: CurrentEventsByTagQuery, tim
     extends ActorSubscriber with ActorLogging with Stash {
   import RegistryIndex._
   import Replicator._
-  import ActorSubscriberMessage._
 
   implicit val cluster = Cluster(context.system)
   private[this] val replicator = DistributedData(context.system).replicator
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   log.info("Starting registry index...")
-  private[this] var jobIds = Set.empty[JobId]
-  private[this] var lastOffset = 0L
 
   override protected val requestStrategy: RequestStrategy = OneByOneRequestStrategy
 
@@ -77,11 +73,15 @@ class RegistryIndex(shardRegion: ActorRef, journal: CurrentEventsByTagQuery, tim
   override def receive = ready
 
   def warmingUp: Receive = {
-    case EventEnvelope(offset, _, _, JobAccepted(jobId, _)) =>
+    case EventEnvelope(offset, _, _, event @ JobAccepted(jobId, _)) =>
       log.debug("Indexing job {}", jobId)
-      jobIds += jobId
-      lastOffset = offset
-      sender() ! Ack
+      val req = UpdateIndex(event, Some(sender()))
+      if (replicatorUpdate.isDefinedAt(req)) {
+        replicator ! replicatorUpdate(req)
+        context become updatingIndex()
+      } else {
+        sender() ! Ack
+      }
 
     case WarmedUp =>
       log.info("Registry index warming up finished.")
@@ -97,57 +97,43 @@ class RegistryIndex(shardRegion: ActorRef, journal: CurrentEventsByTagQuery, tim
       sender() ! Ack
       context become warmingUp
 
-    case IndexJob(event @ JobAccepted(jobId, _), replyTo) =>
-      jobIds += jobId
-      replyTo.foreach(_ ! event)
+    case event: RegistryEvent =>
+      val req = UpdateIndex(event)
 
     case GetJobs =>
       val externalReq = Query(GetJobs, sender())
-      val replicatorReq = Get(IndexKey, readConsistency, Some(externalReq))
+      val replicatorReq = Get(JobIdsKey, readConsistency, Some(externalReq))
       val queryHandler = context.actorOf(Props(classOf[RegistryMultiQuery], shardRegion))
       replicator.tell(replicatorReq, queryHandler)
 
     case msg: GetJob =>
       val externalReq = Query(msg, sender())
-      val replicatorReq = Get(IndexKey, readConsistency, Some(externalReq))
+      val replicatorReq = Get(JobIdsKey, readConsistency, Some(externalReq))
       val queryHandler = context.actorOf(Props(classOf[RegistrySingleQuery], shardRegion))
       replicator.tell(replicatorReq, queryHandler)
   }
 
-  private[this] def readingOffset: Receive = {
-    case res @ GetSuccess(`LastOffset`, _) =>
-      lastOffset = res.get(LastOffset).value
-      readFromJournal(lastOffset)
-
-    case GetFailure(`LastOffset`, _) =>
-      log.error("Could not read the last offset from the cache")
-      context unbecome
-
-    case NotFound(`LastOffset`, _) =>
-      readFromJournal()
-  }
-
   private[this] def updatingIndex(attempt: Int = 1): Receive = {
-    case UpdateSuccess(`IndexKey`, Some(IndexJob(_, replyTo))) =>
+    case UpdateSuccess(JobIdsKey, Some(UpdateIndex(_, replyTo))) =>
       replyTo.foreach(_ ! Ack)
       unstashAll()
       context unbecome
 
-    case UpdateTimeout(`IndexKey`, Some(req @ IndexJob(event, replyTo))) =>
+    case UpdateTimeout(JobIdsKey, Some(req @ UpdateIndex(event, replyTo))) =>
       if (attempt < 3) {
         log.warning("Timed out when performing index update for event {}. Retrying...", event)
-        handleIndexRequest(req)
-        /*replicator ! Update(IndexKey, GSet.empty[JobId], writeConsistency,
-          Some(req.copy(attempt = attempt + 1)))(_ + jobId)*/
-        context become updatingIndex(attempt + 1)
+        if (replicatorUpdate.isDefinedAt(req)) {
+          replicator ! replicatorUpdate(req)
+          context become updatingIndex(attempt + 1)
+        }
       } else {
         log.error("Could not perform index update for event: {}", event)
-        replyTo.foreach(_ ! Status.Failure(new IndexTimeoutException(attempt)))
+        replyTo.foreach(_ ! Status.Failure(IndexTimeoutException(attempt)))
         unstashAll()
         context unbecome
       }
 
-    case ModifyFailure(`IndexKey`, errorMessage, cause, Some(IndexJob(_, replyTo))) =>
+    case ModifyFailure(JobIdsKey, errorMessage, cause, Some(UpdateIndex(_, replyTo))) =>
       log.error(cause, errorMessage)
       replyTo.foreach(_ ! Status.Failure(cause))
       unstashAll()
@@ -161,12 +147,9 @@ class RegistryIndex(shardRegion: ActorRef, journal: CurrentEventsByTagQuery, tim
       runWith(Sink.actorRefWithAck(self, WarmUpStarted, Ack, WarmedUp))
   }
 
-  private[this] def handleIndexRequest(req: IndexJob): Unit = req.event match {
-    case JobAccepted(jobId, _) =>
-      log.debug("Indexing job {}", jobId)
-      replicator ! Update(IndexKey, GSet.empty[JobId], writeConsistency, Some(req))(_ + jobId)
-
-    case _ =>
+  private[this] def replicatorUpdate: PartialFunction[UpdateIndex, Update[GSet[JobId]]] = {
+    case req @ UpdateIndex(JobAccepted(jobId, _), _) =>
+      Update(JobIdsKey, GSet.empty[JobId], writeConsistency, Some(req))(_ + jobId)
   }
 
   private[this] def registryMembers =
@@ -195,8 +178,8 @@ private class RegistrySingleQuery(shardRegion: ActorRef) extends Actor with Acto
   import Replicator._
 
   def receive = {
-    case r @ GetSuccess(`IndexKey`, Some(Query(cmd: GetJob, replyTo))) =>
-      val elems = r.get(IndexKey).elements
+    case r @ GetSuccess(JobIdsKey, Some(Query(cmd: GetJob, replyTo))) =>
+      val elems = r.get(JobIdsKey).elements
       if (elems.contains(cmd.jobId)) {
         log.debug("Found job {} in the registry index, retrieving its state...", cmd.jobId)
         shardRegion.tell(cmd, replyTo)
@@ -206,11 +189,11 @@ private class RegistrySingleQuery(shardRegion: ActorRef) extends Actor with Acto
       }
       context stop self
 
-    case NotFound(`IndexKey`, Some(Query(GetJob(jobId), replyTo))) =>
+    case NotFound(JobIdsKey, Some(Query(GetJob(jobId), replyTo))) =>
       replyTo ! JobNotFound(jobId)
       context stop self
 
-    case GetFailure(`IndexKey`, Some(Query(_, replyTo))) =>
+    case GetFailure(JobIdsKey, Some(Query(_, replyTo))) =>
       replyTo ! Status.Failure(new Exception("Could not retrieve elements from the index"))
       context stop self
   }
@@ -224,25 +207,25 @@ private class RegistryMultiQuery(shardRegion: ActorRef) extends Actor with Actor
   private[this] var expectedResultCount = 0
 
   def receive = {
-    case res @ GetSuccess(`IndexKey`, Some(req @ Query(GetJobs, requestor))) =>
-      val elems = res.get(IndexKey).elements
+    case res @ GetSuccess(JobIdsKey, Some(req @ Query(GetJobs, replyTo))) =>
+      val elems = res.get(JobIdsKey).elements
       if (elems.nonEmpty) {
         expectedResultCount = elems.size
         log.debug("Found {} jobs currently in the index", expectedResultCount)
         elems.foreach { jobId =>
           shardRegion ! GetJob(jobId)
         }
-        context become collateResults(requestor)
+        context become collateResults(replyTo)
       } else {
         log.debug("Job index is empty.")
-        completeQuery(requestor)
+        completeQuery(replyTo)
       }
 
-    case NotFound(`IndexKey`, Some(Query(_, requestor))) =>
-      completeQuery(requestor)
+    case NotFound(JobIdsKey, Some(Query(_, replyTo))) =>
+      completeQuery(replyTo)
 
-    case GetFailure(`IndexKey`, Some(Query(_, requestor: ActorRef))) =>
-      requestor ! Status.Failure(new Exception("Could not retrieve elements from the index"))
+    case GetFailure(JobIdsKey, Some(Query(_, replyTo: ActorRef))) =>
+      replyTo ! Status.Failure(new Exception("Could not retrieve elements from the index"))
       context stop self
   }
 

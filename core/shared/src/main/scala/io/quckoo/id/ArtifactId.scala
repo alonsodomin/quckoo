@@ -18,6 +18,7 @@ package io.quckoo.id
 
 import io.quckoo.fault._
 import io.quckoo.validation._
+
 import monocle.macros.Lenses
 
 import scalaz._
@@ -28,20 +29,20 @@ import scalaz._
 object ArtifactId {
   import Scalaz._
 
-  val GroupSeparator : Char = ':'
-  val VersionSeparator : Char = '#'
+  final val GroupSeparator : Char = ':'
+  final val VersionSeparator : Char = '#'
 
   def validate(artifactId: ArtifactId): ValidationNel[ValidationFault, ArtifactId] =
-    validate(artifactId.group, artifactId.artifact, artifactId.version)
+    validate(artifactId.organization, artifactId.name, artifactId.version)
 
-  def validate(groupId: String, artifactId: String, version: String): ValidationNel[ValidationFault, ArtifactId] = {
+  def validate(organization: String, name: String, version: String): ValidationNel[ValidationFault, ArtifactId] = {
     import Validations._
 
     def validGroup: Validation[ValidationFault, String] =
-      notNullOrEmpty(groupId)("groupId")
+      notNullOrEmpty(organization)("organization")
 
     def validArtifactId: Validation[ValidationFault, String] =
-      notNullOrEmpty(artifactId)("artifactId")
+      notNullOrEmpty(name)("name")
 
     def validVersion: Validation[ValidationFault, String] =
       notNullOrEmpty(version)("version")
@@ -52,17 +53,17 @@ object ArtifactId {
   implicit val instance = new Equal[ArtifactId] with Show[ArtifactId] {
 
     override def equal(left: ArtifactId, right: ArtifactId): Boolean =
-      left.group == right.group &&
-        left.artifact == right.artifact &&
+      left.organization == right.organization &&
+        left.name == right.name &&
         left.version == right.version
 
   }
 
 }
 
-@Lenses case class ArtifactId(group: String, artifact: String, version: String) {
+@Lenses final case class ArtifactId(organization: String, name: String, version: String) {
   import ArtifactId._
 
-  override def toString: String = s"$group$GroupSeparator$artifact$VersionSeparator$version"
+  override def toString: String = s"$organization$GroupSeparator$name$VersionSeparator$version"
 
 }

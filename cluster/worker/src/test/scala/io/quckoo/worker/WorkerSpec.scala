@@ -8,7 +8,7 @@ import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
 import io.quckoo.Task
 import io.quckoo.cluster.protocol._
-import io.quckoo.fault.{ExceptionThrown, ResolutionFault, UnresolvedDependency}
+import io.quckoo.fault.{ExceptionThrown, RegisterJobFault, UnresolvedDependency}
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver.{Artifact, Resolver}
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -138,7 +138,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
 
     "reply with a failure message when can not resolve the artifact of a task" in {
       val taskId = task.id
-      val expectedError: ResolutionFault = UnresolvedDependency(ArtifactId("com.example", "bar", "latest"))
+      val expectedError: RegisterJobFault = UnresolvedDependency(ArtifactId("com.example", "bar", "latest"))
 
       worker ! task
 

@@ -3,7 +3,7 @@ package io.quckoo.resolver.ivy
 import java.io.File
 import java.net.URL
 
-import io.quckoo.fault.{DownloadFailed, Fault, ResolutionFault, UnresolvedDependency}
+import io.quckoo.fault.{DownloadFailed, Fault, RegisterJobFault, UnresolvedDependency}
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver.Artifact
 
@@ -72,8 +72,8 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
 
     And("the expected result as accumulation of errors")
     import Scalaz._
-    val validatedDep: ValidationNel[ResolutionFault, Artifact] = expectedUnresolvedDependency.failure[Artifact].toValidationNel
-    val validatedDown: ValidationNel[ResolutionFault, Artifact] = expectedDownloadFailed.failure[Artifact].toValidationNel
+    val validatedDep: ValidationNel[RegisterJobFault, Artifact] = expectedUnresolvedDependency.failure[Artifact].toValidationNel
+    val validatedDown: ValidationNel[RegisterJobFault, Artifact] = expectedDownloadFailed.failure[Artifact].toValidationNel
     val expectedResult = (validatedDep |@| validatedDown) { case (_, a) => a }
 
     When("Attempting to resolve the artifact")

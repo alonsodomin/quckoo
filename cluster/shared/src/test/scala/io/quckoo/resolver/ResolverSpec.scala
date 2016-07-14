@@ -3,7 +3,7 @@ package io.quckoo.resolver
 import akka.actor.ActorSystem
 import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit}
 
-import io.quckoo.fault.{ResolutionFault, UnresolvedDependency}
+import io.quckoo.fault.{RegisterJobFault, UnresolvedDependency}
 import io.quckoo.id.ArtifactId
 
 import org.scalamock.scalatest.MockFactory
@@ -42,7 +42,7 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with WordSpecLik
 
     "return a failed resolution if there are unresolved dependencies" in {
       val unresolvedDependency = UnresolvedDependency(BarArtifactId)
-      val expectedValidation: Validation[ResolutionFault, Artifact] =
+      val expectedValidation: Validation[RegisterJobFault, Artifact] =
         unresolvedDependency.failure[Artifact]
 
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
@@ -57,7 +57,7 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with WordSpecLik
     "return a resolved artifact if resolution succeeds" in {
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
         expects(FooArtifactId, false, *).
-        returning(Future.successful(FooArtifact.successNel[ResolutionFault]))
+        returning(Future.successful(FooArtifact.successNel[RegisterJobFault]))
 
       resolver ! Resolver.Validate(FooArtifactId)
 
@@ -70,7 +70,7 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with WordSpecLik
 
     "return a failed resolution if there are unresolved dependencies" in {
       val unresolvedDependency = UnresolvedDependency(BarArtifactId)
-      val expectedValidation: Validation[ResolutionFault, Artifact] =
+      val expectedValidation: Validation[RegisterJobFault, Artifact] =
         unresolvedDependency.failure[Artifact]
 
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
@@ -85,7 +85,7 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with WordSpecLik
     "return a resolved artifact if resolution succeeds" in {
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
         expects(FooArtifactId, true, *).
-        returning(Future.successful(FooArtifact.successNel[ResolutionFault]))
+        returning(Future.successful(FooArtifact.successNel[RegisterJobFault]))
 
       resolver ! Resolver.Download(FooArtifactId)
 

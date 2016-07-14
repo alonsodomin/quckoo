@@ -29,7 +29,7 @@ import io.quckoo.protocol.registry._
 /**
   * Created by alonsodomin on 15/04/2016.
   */
-object JobState {
+object PersistentJob {
 
   final val ShardName      = "JobState"
   final val NumberOfShards = 100
@@ -52,12 +52,12 @@ object JobState {
 
   private[registry] final case class CreateJob(jobId: JobId, spec: JobSpec)
 
-  def props: Props = Props(classOf[JobState])
+  def props: Props = Props(classOf[PersistentJob])
 
 }
 
-class JobState extends PersistentActor with ActorLogging with Stash {
-  import JobState._
+class PersistentJob extends PersistentActor with ActorLogging with Stash {
+  import PersistentJob._
   import RegistryIndex._
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
@@ -96,15 +96,13 @@ class JobState extends PersistentActor with ActorLogging with Stash {
       persist(JobAccepted(jobId, jobSpec)) { event =>
         log.info("Job {} has been successfully registered.", jobId)
         //context.system.eventStream.publish(IndexJob(jobId))
-        context.system.eventStream.publish(event)
-        //mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
-        sender() ! event
+        //context.system.eventStream.publish(event)
+        mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
         context.become(enabled(jobId, jobSpec))
         unstashAll()
       }
 
-    case _: GetJob =>
-      stash()
+    case _: GetJob => stash()
   }
 
   def enabled(jobId: JobId, spec: JobSpec): Receive = {
