@@ -22,6 +22,7 @@ import akka.cluster.ddata._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.query.EventEnvelope
 import akka.persistence.query.scaladsl.{CurrentEventsByTagQuery, EventsByTagQuery}
+import akka.stream.Materializer
 import akka.stream.actor._
 import akka.stream.scaladsl.Sink
 import io.quckoo.JobSpec
@@ -68,7 +69,7 @@ class RegistryIndex(shardRegion: ActorRef, journal: CurrentEventsByTagQuery, tim
 
   override protected val requestStrategy: RequestStrategy = OneByOneRequestStrategy
 
-  override protected def preStart(): Unit = readFromJournal()
+  //override protected def preStart(): Unit = readFromJournal()
 
   override def receive = ready
 
@@ -142,7 +143,7 @@ class RegistryIndex(shardRegion: ActorRef, journal: CurrentEventsByTagQuery, tim
     case _ => stash()
   }
 
-  private[this] def readFromJournal(offset: Long = 0): Unit = {
+  private[this] def readFromJournal(offset: Long = 0)(implicit materializer: Materializer): Unit = {
     journal.currentEventsByTag(Registry.EventTag, offset).
       runWith(Sink.actorRefWithAck(self, WarmUpStarted, Ack, WarmedUp))
   }
