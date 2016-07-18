@@ -19,6 +19,7 @@ package io.quckoo.cluster.registry
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Stash}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
 import akka.persistence.query.EventEnvelope
@@ -28,8 +29,9 @@ import io.quckoo.JobSpec
 import io.quckoo.id.JobId
 import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.cluster.core.QuckooJournal
-import io.quckoo.cluster.registry.Registry.WarmUp
+import io.quckoo.cluster.registry.Registry.{QueryComplete, WarmUp}
 import io.quckoo.cluster.registry.RegistryIndex.UpdateIndex
+import io.quckoo.cluster.topics
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
@@ -49,6 +51,8 @@ object Registry {
     case object Completed
     final case class Failed(exception: Throwable)
   }
+
+  case object QueryComplete
 
   def props(settings: QuckooClusterSettings) = {
     val resolve = IvyResolve(settings.ivyConfiguration)
@@ -72,29 +76,48 @@ class Registry(settings: RegistrySettings)
   )
 
   private[this] val cluster = Cluster(context.system)
+  private[this] val mediator = DistributedPubSub(context.system).mediator
   private[this] val resolver = context.actorOf(settings.resolverProps, "resolver")
   private[this] val shardRegion = startShardRegion
-  private[this] val index = readJournal.eventsByTag(EventTag, 0).
-    runWith(Sink.actorSubscriber(RegistryIndex.props(shardRegion)))
+  /*private[this] val index = readJournal.eventsByTag(EventTag, 0).
+    runWith(Sink.actorSubscriber(RegistryIndex.props(shardRegion)))*/
 
   private[this] var jobIds = Set.empty[JobId]
 
   private[this] var handlerRefCount = 0L
 
+  override def preStart(): Unit = {
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
+  }
+
+  override def postStop(): Unit = {
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
+  }
+
   def actorSystem = context.system
 
-  def receive = ready
+  def receive = initializing
+
+  private def initializing: Receive = {
+    case DistributedPubSubMediator.SubscribeAck(_) =>
+      loadJobIds()
+      context become ready
+  }
 
   private def ready: Receive = {
+    case WarmUp.Start =>
+      log.info("Registry warm up started...")
+      sender() ! WarmUp.Ack
+      context become warmingUp
+
     case RegisterJob(spec) =>
       handlerRefCount += 1
       val handler = context.actorOf(handlerProps(spec, sender()), s"handler-$handlerRefCount")
       resolver.tell(Resolver.Validate(spec.artifactId), handler)
 
     case GetJobs =>
-      import context.dispatcher
       val origSender = sender()
-      queryJobs pipeTo origSender
+      Source(jobIds).runWith(Sink.actorRef(origSender, QueryComplete))
 
     case get @ GetJob(jobId) =>
       if (jobIds.contains(jobId)) {
@@ -105,6 +128,9 @@ class Registry(settings: RegistrySettings)
 
     case msg: RegistryWriteCommand =>
       shardRegion forward msg
+
+    case JobAccepted(jobId, _) =>
+      jobIds += jobId
   }
 
   private def warmingUp: Receive = {
@@ -118,10 +144,10 @@ class Registry(settings: RegistrySettings)
       unstashAll()
       context become ready
 
-    case _: RegistryReadCommand => stash()
+    case _: RegistryCommand => stash()
   }
 
-  private def queryJobs: Future[Map[JobId, JobSpec]] = {
+  /*private def queryJobs: Future[Map[JobId, JobSpec]] = {
     Source.actorRef[(JobId, JobSpec)](10, OverflowStrategy.fail).
       mapMaterializedValue { idsStream =>
         index.tell(GetJobs, idsStream)
@@ -129,7 +155,7 @@ class Registry(settings: RegistrySettings)
         case (map, (jobId, jobSpec)) =>
           map + (jobId -> jobSpec)
       }
-  }
+  }*/
 
   private def startShardRegion: ActorRef = if (cluster.selfRoles.contains("registry")) {
     log.info("Starting registry shards...")
@@ -150,6 +176,11 @@ class Registry(settings: RegistrySettings)
     )
   }
 
+  private def loadJobIds(): Unit = {
+    readJournal.eventsByTag(EventTag, 0).
+      runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
+  }
+
   private def handlerProps(jobSpec: JobSpec, replyTo: ActorRef): Props =
     Props(classOf[RegistryResolutionHandler], jobSpec, shardRegion, replyTo)
 
@@ -168,7 +199,7 @@ private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef,
       log.debug("Job artifact has been successfully resolved. artifactId={}",
         artifact.artifactId)
       shardRegion.tell(PersistentJob.CreateJob(jobId, jobSpec), replyTo)
-      context stop self
+      context become registeringJob
 
     case ResolutionFailed(_, cause) =>
       log.error("Couldn't validate the job artifact id. " + cause)
@@ -178,7 +209,8 @@ private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef,
 
   def registeringJob: Receive = {
     case evt @ JobAccepted(`jobId`, _) =>
-      indexer ! evt
+      replyTo ! evt
+      context stop self
   }
 
 }
