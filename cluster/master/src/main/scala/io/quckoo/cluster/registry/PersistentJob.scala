@@ -58,7 +58,6 @@ object PersistentJob {
 
 class PersistentJob extends PersistentActor with ActorLogging with Stash {
   import PersistentJob._
-  import RegistryIndex._
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
   private[this] var stateDuringRecovery: Option[JobSpec] = None
@@ -142,7 +141,7 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
       sender() ! JobAccepted(jobId, spec)
 
     case GetJob(`jobId`) =>
-      sender() ! (jobId -> spec)
+      sender() ! spec
   }
 
 }

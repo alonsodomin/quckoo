@@ -55,15 +55,13 @@ class PersistentJobSpec extends TestKit(TestActorSystem("JobStateSpec")) with Im
     "return job accepted when receiving a create command" in {
       job ! PersistentJob.CreateJob(BarJobId, BarJobSpec)
 
-      val stateResponse = expectMsgType[JobAccepted]
-      stateResponse.job should be (BarJobSpec)
-
-      eventListener.expectMsgType[JobAccepted].job should be (BarJobSpec)
+      val response = eventListener.expectMsgType[JobAccepted]
+      response.job should be (BarJobSpec)
     }
 
     "return the registered job spec with its status when asked for it" in {
       job ! GetJob(BarJobId)
-      expectMsg(BarJobId -> BarJobSpec)
+      expectMsg(BarJobSpec)
     }
 
     "disable a job that has been previously registered and populate the event to the event stream" in {
@@ -83,7 +81,7 @@ class PersistentJobSpec extends TestKit(TestActorSystem("JobStateSpec")) with Im
     "return the registered job spec with disabled status" in {
       job ! GetJob(BarJobId)
 
-      expectMsg(BarJobId -> BarJobSpec.copy(disabled = true))
+      expectMsg(BarJobSpec.copy(disabled = true))
     }
 
     "enable a job that has been previously disabled and publish the event" in {
@@ -103,7 +101,7 @@ class PersistentJobSpec extends TestKit(TestActorSystem("JobStateSpec")) with Im
     "double check that the job is finally enabled" in {
       job ! GetJob(BarJobId)
 
-      expectMsg(BarJobId -> BarJobSpec)
+      expectMsg(BarJobSpec)
     }
 
   }

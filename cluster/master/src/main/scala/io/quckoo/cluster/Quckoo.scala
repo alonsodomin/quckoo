@@ -20,10 +20,9 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.pattern._
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Source
+import akka.stream.{ActorMaterializer, OverflowStrategy}
+import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
-
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.registry.RegistryEventPublisher
@@ -37,7 +36,6 @@ import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.time.TimeSource
 import io.quckoo.{ExecutionPlan, JobSpec}
-
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -129,8 +127,8 @@ final class Quckoo(settings: QuckooClusterSettings)
   def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] = {
     implicit val timeout = Timeout(5 seconds)
     (core ? GetJob(jobId)).map {
-      case JobNotFound(_)      => None
-      case (_, spec: JobSpec)  => Some(spec)
+      case JobNotFound(_) => None
+      case spec: JobSpec  => Some(spec)
     }
   }
 
@@ -153,8 +151,12 @@ final class Quckoo(settings: QuckooClusterSettings)
   }
 
   def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
-    implicit val timeout = Timeout(15 seconds)
-    (core ? GetJobs).mapTo[Map[JobId, JobSpec]]
+    Source.actorRef[(JobId, JobSpec)](100, OverflowStrategy.fail).
+      mapMaterializedValue { upstream =>
+        core.tell(GetJobs, upstream)
+      }.runFold(Map.empty[JobId, JobSpec]) { (map, pair) =>
+        map + pair
+      }
   }
 
   def registryEvents: Source[RegistryEvent, NotUsed] =

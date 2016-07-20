@@ -21,14 +21,14 @@ import java.util.UUID
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.cluster.client.ClusterClient.SendToAll
+
 import io.quckoo.Task
 import io.quckoo.cluster.protocol._
-import io.quckoo.fault.{ExceptionThrown, Fault}
+import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.TaskId
 import io.quckoo.resolver.Resolver
 
 import scala.concurrent.duration._
-import scalaz.NonEmptyList
 
 /**
  * Created by aalonsodominguez on 05/07/15.

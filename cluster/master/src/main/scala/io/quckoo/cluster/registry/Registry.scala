@@ -16,27 +16,29 @@
 
 package io.quckoo.cluster.registry
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, Stash}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, ReceiveTimeout, Stash, Status}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
 import akka.persistence.query.EventEnvelope
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
+import akka.util.Timeout
+
 import io.quckoo.JobSpec
 import io.quckoo.id.JobId
 import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.cluster.core.QuckooJournal
-import io.quckoo.cluster.registry.Registry.{QueryComplete, WarmUp}
-import io.quckoo.cluster.registry.RegistryIndex.UpdateIndex
 import io.quckoo.cluster.topics
+import io.quckoo.fault.ExceptionThrown
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
 
 import scala.concurrent._
+import scala.concurrent.duration._
 
 /**
  * Created by aalonsodominguez on 24/08/15.
@@ -67,7 +69,7 @@ object Registry {
 
 class Registry(settings: RegistrySettings)
     extends Actor with ActorLogging with QuckooJournal with Stash {
-  import Registry.EventTag
+  import Registry._
 
   ClusterClientReceptionist(context.system).registerService(self)
 
@@ -79,8 +81,6 @@ class Registry(settings: RegistrySettings)
   private[this] val mediator = DistributedPubSub(context.system).mediator
   private[this] val resolver = context.actorOf(settings.resolverProps, "resolver")
   private[this] val shardRegion = startShardRegion
-  /*private[this] val index = readJournal.eventsByTag(EventTag, 0).
-    runWith(Sink.actorSubscriber(RegistryIndex.props(shardRegion)))*/
 
   private[this] var jobIds = Set.empty[JobId]
 
@@ -117,7 +117,17 @@ class Registry(settings: RegistrySettings)
 
     case GetJobs =>
       val origSender = sender()
-      Source(jobIds).runWith(Sink.actorRef(origSender, QueryComplete))
+
+      def fetchJobAsync(jobId: JobId): Future[(JobId, JobSpec)] = {
+        import context.dispatcher
+
+        implicit val timeout = Timeout(2 seconds)
+        (shardRegion ? GetJob(jobId)).mapTo[JobSpec].map(jobId -> _)
+      }
+
+      Source(jobIds).
+        mapAsync(2)(fetchJobAsync).
+        runWith(Sink.actorRef(origSender, Status.Success(GetJobs)))
 
     case get @ GetJob(jobId) =>
       if (jobIds.contains(jobId)) {
@@ -147,16 +157,6 @@ class Registry(settings: RegistrySettings)
     case _: RegistryCommand => stash()
   }
 
-  /*private def queryJobs: Future[Map[JobId, JobSpec]] = {
-    Source.actorRef[(JobId, JobSpec)](10, OverflowStrategy.fail).
-      mapMaterializedValue { idsStream =>
-        index.tell(GetJobs, idsStream)
-      }.runFold(Map.empty[JobId, JobSpec]) {
-        case (map, (jobId, jobSpec)) =>
-          map + (jobId -> jobSpec)
-      }
-  }*/
-
   private def startShardRegion: ActorRef = if (cluster.selfRoles.contains("registry")) {
     log.info("Starting registry shards...")
     ClusterSharding(context.system).start(
@@ -177,7 +177,7 @@ class Registry(settings: RegistrySettings)
   }
 
   private def loadJobIds(): Unit = {
-    readJournal.eventsByTag(EventTag, 0).
+    readJournal.currentEventsByTag(EventTag, 0).
       runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
   }
 
@@ -186,31 +186,60 @@ class Registry(settings: RegistrySettings)
 
 }
 
-private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef, indexer: ActorRef, replyTo: ActorRef)
-    extends Actor with ActorLogging {
+private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef, replyTo: ActorRef)
+    extends Actor with ActorLogging with Stash {
   import Resolver._
 
+  private[this] val mediator = DistributedPubSub(context.system).mediator
   private val jobId = JobId(jobSpec)
 
-  def receive = resolvingArtifact
+  override def preStart(): Unit = {
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
+  }
+
+  def receive = initializing
+
+  def initializing: Receive = {
+    case DistributedPubSubMediator.SubscribeAck(_) =>
+      unstashAll()
+      context become resolvingArtifact
+
+    case _ => stash()
+  }
 
   def resolvingArtifact: Receive = {
     case ArtifactResolved(artifact) =>
       log.debug("Job artifact has been successfully resolved. artifactId={}",
         artifact.artifactId)
-      shardRegion.tell(PersistentJob.CreateJob(jobId, jobSpec), replyTo)
+      shardRegion ! PersistentJob.CreateJob(jobId, jobSpec)
+      context.setReceiveTimeout(10 seconds)
       context become registeringJob
 
     case ResolutionFailed(_, cause) =>
       log.error("Couldn't validate the job artifact id. " + cause)
       replyTo ! JobRejected(jobId, cause)
-      context stop self
+      finish()
   }
 
   def registeringJob: Receive = {
     case evt @ JobAccepted(`jobId`, _) =>
       replyTo ! evt
+      finish()
+
+    case ReceiveTimeout =>
+      log.error("Timed out whilst storing the job details. jobId={}", jobId)
+      replyTo ! JobRejected(jobId, ExceptionThrown.from(new TimeoutException))
+      finish()
+  }
+
+  def stopping: Receive = {
+    case DistributedPubSubMediator.UnsubscribeAck(_) =>
       context stop self
+  }
+
+  private[this] def finish(): Unit = {
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
+    context become stopping
   }
 
 }
