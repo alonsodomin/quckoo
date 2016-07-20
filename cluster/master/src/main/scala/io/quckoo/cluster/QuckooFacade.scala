@@ -17,12 +17,13 @@
 package io.quckoo.cluster
 
 import akka.NotUsed
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.pattern._
-import akka.stream.{ActorMaterializer, OverflowStrategy}
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
+import akka.stream.scaladsl.Source
 import akka.util.Timeout
+
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.registry.RegistryEventPublisher
@@ -36,27 +37,45 @@ import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.time.TimeSource
 import io.quckoo.{ExecutionPlan, JobSpec}
+
 import org.slf4s.Logging
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
 import scalaz.ValidationNel
 
 /**
   * Created by alonsodomin on 13/12/2015.
   */
-final class Quckoo(settings: QuckooClusterSettings)
-                  (implicit system: ActorSystem, timeSource: TimeSource)
+object QuckooFacade extends Logging {
+
+  def start(settings: QuckooClusterSettings)(implicit system: ActorSystem, timeSource: TimeSource): Future[Unit] = {
+    def startFacade(implicit ec: ExecutionContext): Future[QuckooFacade] = {
+      log.info("Starting Quckoo...")
+
+      val promise = Promise[Unit]()
+      val guardian = system.actorOf(QuckooGuardian.props(settings, promise), "quckoo")
+      promise.future.map(_ => new QuckooFacade(guardian))
+    }
+
+    def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
+      implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system), "http")
+
+      Http().bindAndHandle(facade.router, settings.httpInterface, settings.httpPort).
+        map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
+    }
+
+    import system.dispatcher
+    startFacade.flatMap(startHttpListener)
+  }
+
+}
+
+final class QuckooFacade(core: ActorRef)
+                        (implicit system: ActorSystem, timeSource: TimeSource)
     extends HttpRouter with QuckooServer with Logging with Retrying {
 
   implicit val materializer = ActorMaterializer()
-
-  private[this] val core = system.actorOf(QuckooCluster.props(settings), "quckoo")
-
-  def start(implicit ec: ExecutionContext, timeout: Timeout): Future[Unit] = {
-    Http().bindAndHandle(router, settings.httpInterface, settings.httpPort).
-      map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
-  }
 
   def cancelPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Unit] = {
     implicit val timeout = Timeout(3 seconds)
@@ -64,8 +83,10 @@ final class Quckoo(settings: QuckooClusterSettings)
   }
 
   def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]] = {
-    implicit val timeout = Timeout(3 seconds)
-    (core ? GetExecutionPlans).mapTo[Map[PlanId, ExecutionPlan]]
+    val executionPlans = Source.actorRef[(PlanId, ExecutionPlan)](100, OverflowStrategy.fail).
+      mapMaterializedValue(upstream => core.tell(GetExecutionPlans, upstream))
+
+    executionPlans.runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
   }
 
   def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {

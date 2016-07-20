@@ -17,11 +17,14 @@
 package io.quckoo.cluster.boot
 
 import akka.actor._
-import akka.stream.ActorMaterializer
-import akka.util.Timeout
+
 import com.typesafe.config.{Config, ConfigFactory}
-import io.quckoo.cluster.{Quckoo, QuckooClusterSettings}
+
+import io.quckoo.cluster.{QuckooClusterSettings, QuckooFacade}
 import io.quckoo.time.JDK8TimeSource
+
+import org.slf4s.Logging
+
 import scopt.OptionParser
 
 import scala.concurrent.duration._
@@ -30,7 +33,7 @@ import scala.concurrent.{Await, Future}
 /**
  * Created by domingueza on 09/07/15.
  */
-object Boot extends App {
+object Boot extends App with Logging {
 
   val parser = new OptionParser[Options]("quckoo-master") {
     head("quckoo-master", "0.1.0")
@@ -66,21 +69,22 @@ object Boot extends App {
 
   def start(config: Config): Unit = {
     implicit val system = ActorSystem(Options.SystemName, config)
-    sys.addShutdownHook { system.terminate() }
+    sys.addShutdownHook {
+      log.info("Received kill signal, terminating...")
+      system.terminate()
+    }
 
     implicit val timeSource = JDK8TimeSource.default
     val settings = QuckooClusterSettings(system)
-    val quckoo = new Quckoo(settings)
 
-    implicit val timeout = Timeout(5 seconds)
-    implicit val dispatcher = system.dispatcher
-    val startUp: Future[Unit] = quckoo.start recover {
+    import system.dispatcher
+    val startUp: Future[Unit] = QuckooFacade.start(settings) recover {
       case ex: Exception =>
         ex.printStackTrace()
         system.terminate()
     }
 
-    Await.ready(startUp, 10 seconds)
+    Await.ready(startUp, 30 seconds)
   }
 
   parser.parse(args, Options()).foreach { opts =>

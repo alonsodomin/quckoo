@@ -47,14 +47,15 @@ object Registry {
 
   final val EventTag = "registry"
 
-  object WarmUp {
+  private[registry] object WarmUp {
     case object Start
     case object Ack
     case object Completed
     final case class Failed(exception: Throwable)
   }
 
-  case object QueryComplete
+  sealed trait Signal
+  case object Ready extends Signal
 
   def props(settings: QuckooClusterSettings) = {
     val resolve = IvyResolve(settings.ivyConfiguration)
@@ -100,8 +101,10 @@ class Registry(settings: RegistrySettings)
 
   private def initializing: Receive = {
     case DistributedPubSubMediator.SubscribeAck(_) =>
-      loadJobIds()
+      warmUp()
       context become ready
+
+    case _ => stash()
   }
 
   private def ready: Receive = {
@@ -139,22 +142,30 @@ class Registry(settings: RegistrySettings)
     case msg: RegistryWriteCommand =>
       shardRegion forward msg
 
-    case JobAccepted(jobId, _) =>
-      jobIds += jobId
+    case event: RegistryEvent =>
+      handleEvent(event)
   }
 
   private def warmingUp: Receive = {
-    case EventEnvelope(offset, _, _, event @ JobAccepted(jobId, _)) =>
-      log.debug("Indexing job {}", jobId)
-      jobIds += jobId
+    case EventEnvelope(_, _, _, event: RegistryEvent) =>
+      handleEvent(event)
       sender() ! WarmUp.Ack
 
     case WarmUp.Completed =>
-      log.info("Registry index warming up finished.")
+      log.info("Registry warming up finished.")
+      context.system.eventStream.publish(Ready)
       unstashAll()
       context become ready
 
     case _: RegistryCommand => stash()
+  }
+
+  private def handleEvent(event: RegistryEvent): Unit = event match {
+    case JobAccepted(jobId, _) =>
+      log.debug("Indexing job {}", jobId)
+      jobIds += jobId
+
+    case _ =>
   }
 
   private def startShardRegion: ActorRef = if (cluster.selfRoles.contains("registry")) {
@@ -176,7 +187,7 @@ class Registry(settings: RegistrySettings)
     )
   }
 
-  private def loadJobIds(): Unit = {
+  private def warmUp(): Unit = {
     readJournal.currentEventsByTag(EventTag, 0).
       runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
   }

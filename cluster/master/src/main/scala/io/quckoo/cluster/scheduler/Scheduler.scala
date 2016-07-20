@@ -23,9 +23,12 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.pattern._
-import akka.persistence.query.scaladsl.EventsByTagQuery
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
+import akka.persistence.query.EventEnvelope
+import akka.persistence.query.scaladsl.CurrentEventsByTagQuery
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
+import akka.util.Timeout
+
 import io.quckoo.{ExecutionPlan, JobSpec}
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
@@ -42,8 +45,18 @@ import scala.concurrent.duration._
  */
 object Scheduler {
 
-  type Journal = EventsByTagQuery
+  type Journal = CurrentEventsByTagQuery
   type PlanIndexPropsProvider = ActorRef => Props
+
+  private[scheduler] object WarmUp {
+    case object Start
+    case object Ack
+    case object Completed
+    final case class Failed(exception: Throwable)
+  }
+
+  sealed trait Signal
+  case object Ready extends Signal
 
   private[scheduler] case class CreateExecutionDriver(
     spec: JobSpec, cmd: ScheduleJob, replyTo: ActorRef
@@ -71,7 +84,7 @@ object Scheduler {
 
 class Scheduler(journal: Scheduler.Journal, registry: ActorRef, shardRegion: ActorRef, queueProps: Props,
                 indexProps: Props)(implicit timeSource: TimeSource)
-    extends Actor with ActorLogging {
+    extends Actor with ActorLogging with Stash {
 
   import Scheduler._
   import SchedulerTagEventAdapter.tags
@@ -91,17 +104,20 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, shardRegion: Act
     extractEntityId = ExecutionDriver.idExtractor,
     extractShardId  = ExecutionDriver.shardResolver
   )*/
-  private[this] val executionPlanIndex =  {
-    val executionPlanEvents = journal.eventsByTag(tags.ExecutionPlan, 0)
-    val taskEvents = journal.eventsByTag(tags.Task, 0)
 
-    executionPlanEvents.merge(taskEvents).
-      runWith(Sink.actorSubscriber(indexProps))
-  }
-  /*private[this] val executionIndex = journal.eventsByTag(tags.Task, 0).
-    runWith(Sink.actorSubscriber(ExecutionIndex.props))*/
+  private[this] var planIds = Set.empty[PlanId]
+  private[this] var taskIds = Set.empty[TaskId]
 
-  override def receive: Receive = {
+  override def preStart(): Unit = warmUp()
+
+  override def receive: Receive = ready
+
+  private def ready: Receive = {
+    case WarmUp.Start =>
+      log.info("Scheduler warm up started...")
+      sender() ! WarmUp.Ack
+      context become warmingUp
+
     case cmd: ScheduleJob =>
       val handler = context.actorOf(jobFetcherProps(cmd.jobId, sender(), cmd))
       registry.tell(GetJob(cmd.jobId), handler)
@@ -117,28 +133,78 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, shardRegion: Act
       val props = terminatorProps(cancel)
       context.actorOf(props, s"execution-driver-terminator-${cancel.planId}")
 
-    case get: GetExecutionPlan =>
-      executionPlanIndex forward get
+    case get @ GetExecutionPlan(planId) =>
+      if (planIds.contains(planId)) {
+        shardRegion forward get
+      } else {
+        sender() ! ExecutionPlanNotFound(planId)
+      }
 
     case GetExecutionPlans =>
-      import context.dispatcher
-      queryExecutionPlans pipeTo sender()
+      val origSender = sender()
 
-    case GetTasks =>
-      executionPlanIndex forward GetTasks
+      def fetchPlanAsync(planId: PlanId): Future[(PlanId, ExecutionPlan)] = {
+        import context.dispatcher
+        implicit val timeout = Timeout(2 seconds)
+        (shardRegion ? GetExecutionPlan(planId)).mapTo[ExecutionPlan].map(planId -> _)
+      }
+
+      Source(planIds).
+        mapAsync(2)(fetchPlanAsync).
+        runWith(Sink.actorRef(origSender, Status.Success(GetExecutionPlans)))
+
+    /*case GetTasks =>
+      executionPlanIndex forward GetTasks*/
 
     case msg: WorkerMessage =>
       taskQueue forward msg
+
+    case event: SchedulerEvent =>
+      handleEvent(event)
   }
 
-  def queryExecutionPlans: Future[Map[PlanId, ExecutionPlan]] = {
+  private def warmingUp: Receive = {
+    case EventEnvelope(_, _, _, event) =>
+      handleEvent(event)
+      sender() ! WarmUp.Ack
+
+    case WarmUp.Completed =>
+      log.info("Scheduler warm up finished.")
+      context.system.eventStream.publish(Ready)
+      unstashAll()
+      context become ready
+
+    case _: SchedulerCommand => stash()
+  }
+
+  private def handleEvent(event: Any): Unit = event match {
+    case ExecutionDriver.Created(_, _, planId, _, _, _) =>
+      log.debug("Indexing execution plan {}", planId)
+      planIds += planId
+
+    case TaskScheduled(_, _, taskId) =>
+      log.debug("Indexing task {}", taskId)
+      taskIds += taskId
+
+    case _ =>
+  }
+
+  private def warmUp(): Unit = {
+    val executionPlanEvents = journal.currentEventsByTag(tags.ExecutionPlan, 0)
+    val taskEvents = journal.currentEventsByTag(tags.Task, 0)
+
+    executionPlanEvents.merge(taskEvents).
+      runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
+  }
+
+  /*def queryExecutionPlans: Future[Map[PlanId, ExecutionPlan]] = {
     Source.actorRef[ExecutionPlan](100, OverflowStrategy.fail).
       mapMaterializedValue { upstream =>
         executionPlanIndex.tell(GetExecutionPlans, upstream)
       }.runFold(Map.empty[PlanId, ExecutionPlan]) {
         (map, plan) => map + (plan.planId -> plan)
       }
-  }
+  }*/
 
   private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
     Props(classOf[JobFetcher], jobId, requestor, config)

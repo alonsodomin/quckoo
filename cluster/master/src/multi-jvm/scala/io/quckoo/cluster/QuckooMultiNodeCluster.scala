@@ -4,7 +4,7 @@ import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
 import com.typesafe.config.ConfigFactory
-import io.quckoo.cluster.core.QuckooCluster
+import io.quckoo.cluster.core.QuckooGuardian$
 import io.quckoo.id.ArtifactId
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.client._
@@ -48,7 +48,7 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
       awaitClusterUp(registry, scheduler)
 
       runOn(registry) {
-        system.actorOf(QuckooCluster.props(settings), "chronos")
+        system.actorOf(QuckooGuardian.props(settings), "chronos")
         enterBarrier("deployed")
 
         val schedulerGuardian = system.actorSelection(node(scheduler) / "user" / "chronos")
@@ -60,7 +60,7 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
       }
 
       runOn(scheduler) {
-        system.actorOf(QuckooCluster.props(settings), "chronos")
+        system.actorOf(QuckooGuardian.props(settings), "chronos")
         enterBarrier("deployed")
 
         val registryGuardian = system.actorSelection(node(registry) / "user" / "chronos")
