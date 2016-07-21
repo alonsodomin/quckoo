@@ -17,10 +17,10 @@
 package io.quckoo.cluster
 
 import akka.NotUsed
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.pattern._
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 
@@ -40,25 +40,42 @@ import io.quckoo.{ExecutionPlan, JobSpec}
 
 import org.slf4s.Logging
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
 import scalaz.ValidationNel
 
 /**
   * Created by alonsodomin on 13/12/2015.
   */
-final class Quckoo(settings: QuckooClusterSettings)
-                  (implicit system: ActorSystem, timeSource: TimeSource)
+object QuckooFacade extends Logging {
+
+  def start(settings: QuckooClusterSettings)(implicit system: ActorSystem, timeSource: TimeSource): Future[Unit] = {
+    def startFacade(implicit ec: ExecutionContext): Future[QuckooFacade] = {
+      log.info("Starting Quckoo...")
+
+      val promise = Promise[Unit]()
+      val guardian = system.actorOf(QuckooGuardian.props(settings, promise), "quckoo")
+      promise.future.map(_ => new QuckooFacade(guardian))
+    }
+
+    def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
+      implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system), "http")
+
+      Http().bindAndHandle(facade.router, settings.httpInterface, settings.httpPort).
+        map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
+    }
+
+    import system.dispatcher
+    startFacade.flatMap(startHttpListener)
+  }
+
+}
+
+final class QuckooFacade(core: ActorRef)
+                        (implicit system: ActorSystem, timeSource: TimeSource)
     extends HttpRouter with QuckooServer with Logging with Retrying {
 
   implicit val materializer = ActorMaterializer()
-
-  private[this] val core = system.actorOf(QuckooCluster.props(settings), "quckoo")
-
-  def start(implicit ec: ExecutionContext, timeout: Timeout): Future[Unit] = {
-    Http().bindAndHandle(router, settings.httpInterface, settings.httpPort).
-      map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
-  }
 
   def cancelPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Unit] = {
     implicit val timeout = Timeout(3 seconds)
@@ -66,8 +83,10 @@ final class Quckoo(settings: QuckooClusterSettings)
   }
 
   def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]] = {
-    implicit val timeout = Timeout(3 seconds)
-    (core ? GetExecutionPlans).mapTo[Map[PlanId, ExecutionPlan]]
+    val executionPlans = Source.actorRef[(PlanId, ExecutionPlan)](100, OverflowStrategy.fail).
+      mapMaterializedValue(upstream => core.tell(GetExecutionPlans, upstream))
+
+    executionPlans.runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
   }
 
   def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {
@@ -84,9 +103,9 @@ final class Quckoo(settings: QuckooClusterSettings)
   }
 
   def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]] = {
-    implicit val timeout = Timeout(5 seconds)
-
-    (core ? GetTasks).mapTo[Map[TaskId, TaskDetails]]
+    val tasks = Source.actorRef[(TaskId, TaskDetails)](100, OverflowStrategy.fail).
+      mapMaterializedValue(upstream => core.tell(GetTasks, upstream))
+    tasks.runFold(Map.empty[TaskId, TaskDetails])((map, pair) => map + pair)
   }
 
   def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] = {
@@ -129,8 +148,8 @@ final class Quckoo(settings: QuckooClusterSettings)
   def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] = {
     implicit val timeout = Timeout(5 seconds)
     (core ? GetJob(jobId)).map {
-      case JobNotFound(_)      => None
-      case (_, spec: JobSpec)  => Some(spec)
+      case JobNotFound(_) => None
+      case spec: JobSpec  => Some(spec)
     }
   }
 
@@ -146,15 +165,19 @@ final class Quckoo(settings: QuckooClusterSettings)
 
       implicit val timeout = Timeout(30 seconds)
       (core ? RegisterJob(jobSpec)) map {
-        case JobAccepted(jobId, _)  => jobId.successNel[Fault]
-        case JobRejected(_, _, errors) => errors.map(_.asInstanceOf[Fault]).failure[JobId]
+        case JobAccepted(jobId, _) => jobId.successNel[Fault]
+        case JobRejected(_, error) => error.failureNel[JobId]
       }
     }
   }
 
   def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
-    implicit val timeout = Timeout(15 seconds)
-    (core ? GetJobs).mapTo[Map[JobId, JobSpec]]
+    Source.actorRef[(JobId, JobSpec)](100, OverflowStrategy.fail).
+      mapMaterializedValue { upstream =>
+        core.tell(GetJobs, upstream)
+      }.runFold(Map.empty[JobId, JobSpec]) { (map, pair) =>
+        map + pair
+      }
   }
 
   def registryEvents: Source[RegistryEvent, NotUsed] =

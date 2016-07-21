@@ -122,7 +122,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
       failingExec.expectMsg(Execution.Start)
 
       val cause: Fault = ExceptionThrown.from(new Exception("TEST EXCEPTION"))
-      taskQueue.tell(TaskFailed(failingWorkerId, task.id, NonEmptyList(cause)), failingWorker.ref)
+      taskQueue.tell(TaskFailed(failingWorkerId, task.id, cause), failingWorker.ref)
 
       failingExec.expectMsgType[Execution.Finish].fault should be(Some(cause))
     }

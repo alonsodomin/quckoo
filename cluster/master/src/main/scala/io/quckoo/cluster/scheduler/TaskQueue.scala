@@ -155,7 +155,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     case TaskFailed(workerId, taskId, cause) if inProgressTasks.contains(taskId) =>
       log.error("Worker failed executing given task. workerId={}, taskId={}", workerId, taskId)
       changeWorkerToIdle(workerId, taskId)
-      inProgressTasks(taskId) ! Execution.Finish(Some(cause.head))
+      inProgressTasks(taskId) ! Execution.Finish(Some(cause))
       inProgressTasks -= taskId
       replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
         _.decrement(cluster.selfUniqueAddress.toNodeId.toString)

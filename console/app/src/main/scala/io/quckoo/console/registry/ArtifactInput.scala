@@ -32,7 +32,7 @@ object ArtifactInput {
   case class State(groupId: Option[String], artifactId: Option[String], version: Option[String]) {
 
     def this(value: Option[ArtifactId]) =
-      this(value.map(_.group), value.map(_.artifact), value.map(_.version))
+      this(value.map(_.organization), value.map(_.name), value.map(_.version))
 
   }
 

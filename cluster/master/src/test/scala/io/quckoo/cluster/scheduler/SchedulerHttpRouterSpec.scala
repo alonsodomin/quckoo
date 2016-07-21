@@ -28,10 +28,11 @@ object SchedulerHttpRouterSpec {
   final val FixedInstant = Instant.ofEpochMilli(8939283923L)
   final val FixedTimeSource = JDK8TimeSource.fixed(FixedInstant, ZoneId.of("UTC"))
 
+  final val TestJobId = JobId(UUID.randomUUID())
   final val TestPlanIds = Set(UUID.randomUUID())
   final val TestPlanMap = Map(
     TestPlanIds.head -> ExecutionPlan(
-      JobId(UUID.randomUUID()),
+      TestJobId,
       TestPlanIds.head,
       Trigger.Immediate,
       FixedTimeSource.currentDateTime.toUTC
@@ -41,9 +42,7 @@ object SchedulerHttpRouterSpec {
   final val TestTaskIds: Seq[TaskId] = List(UUID.randomUUID())
   final val TestTaskMap = Map(
     TestTaskIds.head -> TaskDetails(
-      ArtifactId("com.example", "example", "latest"),
-      "com.example.Job",
-      Task.NotStarted
+      TestJobId, TestPlanIds.head, TestTaskIds.head, Task.NotStarted
     )
   )
 

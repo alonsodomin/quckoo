@@ -66,13 +66,13 @@ final class Artifact private[resolver] (val artifactId: ArtifactId, classLoader:
 
   override def equals(other: Any): Boolean = other match {
     case that: Artifact => artifactId == that.artifactId
-    case _ => false
+    case _              => false
   }
 
   override def hashCode(): Int = artifactId.hashCode()
 
   private def logCreation(): Unit = {
-    val classpathStr = classpath.mkString("::")
+    val classpathStr = classpath.mkString(":")
     log.debug(s"Job package created for artifact $artifactId and classpath: $classpathStr")
   }
 

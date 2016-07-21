@@ -2,10 +2,11 @@ package io.quckoo.cluster.scheduler
 
 import java.util.UUID
 
-import akka.actor.Status
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.persistence.inmemory.query.scaladsl.InMemoryReadJournal
 import akka.persistence.query.PersistenceQuery
+import akka.stream.{ActorMaterializer, OverflowStrategy}
+import akka.stream.scaladsl.Source
 import akka.testkit._
 
 import io.quckoo.{ExecutionPlan, JobSpec, Task, Trigger}
@@ -13,9 +14,10 @@ import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.test.{ForwardActorSubscriber, ImplicitTimeSource, TestActorSystem}
+import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
 
 import org.scalatest._
+import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.duration._
 
@@ -34,16 +36,16 @@ object SchedulerSpec {
 
 //@Ignore
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
-    with ImplicitSender with ImplicitTimeSource
+    with ImplicitSender with ImplicitTimeSource with ScalaFutures
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 
   import SchedulerSpec._
   import DistributedPubSubMediator._
 
+  implicit val materializer = ActorMaterializer()
+
   val registryProbe = TestProbe("registryProbe")
   val taskQueueProbe = TestProbe("taskQueueProbe")
-  val shardProbe = TestProbe("shardRegionProbe")
-  val indexProbe = TestProbe("indexProbe")
 
   val eventListener = TestProbe()
   val mediator = DistributedPubSub(system).mediator
@@ -71,9 +73,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
     val scheduler = TestActorRef(new Scheduler(
       readJournal,
       registryProbe.ref,
-      shardProbe.ref,
-      TestActors.forwardActorProps(taskQueueProbe.ref),
-      ForwardActorSubscriber.props(indexProbe.ref)
+      TestActors.forwardActorProps(taskQueueProbe.ref)
     ), "scheduler")
 
     var testPlanId: Option[PlanId] = None
@@ -82,20 +82,16 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
       scheduler ! ScheduleJob(TestJobId, trigger = TestTrigger)
 
       registryProbe.expectMsgType[GetJob].jobId shouldBe TestJobId
-      registryProbe.reply(TestJobId -> TestJobSpec)
-
-      val newDriverMsg = shardProbe.expectMsgType[ExecutionDriver.New]
-      newDriverMsg.jobId shouldBe TestJobId
-      newDriverMsg.spec shouldBe TestJobSpec
-      newDriverMsg.trigger shouldBe TestTrigger
-
-      shardProbe.send(mediator, Publish(topics.Scheduler, ExecutionPlanStarted(TestJobId, newDriverMsg.planId)))
+      registryProbe.reply(TestJobSpec)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId shouldBe TestJobId
-      startedMsg.planId shouldBe newDriverMsg.planId
 
       expectMsg(startedMsg)
+
+      val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
+      scheduledMsg.jobId shouldBe TestJobId
+      scheduledMsg.planId shouldBe startedMsg.planId
 
       testPlanId = Some(startedMsg.planId)
     }
@@ -105,9 +101,6 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
 
       testPlanId.foreach { planId =>
         scheduler ! GetExecutionPlan(planId)
-
-        indexProbe.expectMsg(GetExecutionPlan(planId))
-        indexProbe.reply(ExecutionPlan(TestJobId, planId, TestTrigger, currentDateTime))
 
         val executionPlan = expectMsgType[ExecutionPlan]
 
@@ -119,16 +112,14 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
 
     "return a map containing the current live execution plan" in {
       testPlanId shouldBe defined
-      testPlanId.foreach { planId =>
-        scheduler ! GetExecutionPlans
 
-        indexProbe.expectMsg(GetExecutionPlans)
-        indexProbe.reply(ExecutionPlan(TestJobId, planId, TestTrigger, currentDateTime))
-        indexProbe.reply(Status.Success(()))
+      val executionPlans = Source.actorRef[(PlanId, ExecutionPlan)](5, OverflowStrategy.fail).
+        mapMaterializedValue(upstream => scheduler.tell(GetExecutionPlans, upstream)).
+        runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
 
-        val executionPlans = expectMsgType[Map[PlanId, ExecutionPlan]]
-        executionPlans should not be empty
-        executionPlans should contain key planId
+      whenReady(executionPlans) { plans =>
+        plans should not be empty
+        plans should contain key testPlanId.get
       }
     }
 
@@ -137,12 +128,10 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
       testPlanId foreach { planId =>
         scheduler ! CancelExecutionPlan(planId)
 
-        shardProbe.expectMsg(CancelExecutionPlan(planId))
-        shardProbe.send(mediator, Publish(topics.Scheduler, ExecutionPlanFinished(TestJobId, planId)))
-
-        /*val completedMsg = eventListener.expectMsgType[TaskCompleted]
+        val completedMsg = eventListener.expectMsgType[TaskCompleted]
+        completedMsg.jobId shouldBe TestJobId
         completedMsg.planId shouldBe planId
-        completedMsg.jobId shouldBe TestJobId*/
+        completedMsg.outcome shouldBe Task.NeverRun(Task.UserRequest)
 
         val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
         finishedMsg.planId shouldBe planId
@@ -153,17 +142,14 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
     }
 
     "return an map of finished execution plans when there is none active" in {
-      scheduler ! GetExecutionPlans
-
       testPlanId shouldBe defined
-      testPlanId foreach { planId =>
-        indexProbe.expectMsg(GetExecutionPlans)
-        indexProbe.reply(ExecutionPlan(TestJobId, planId, TestTrigger, currentDateTime,
-          lastOutcome = Task.NeverRun(Task.UserRequest)
-        ))
-        indexProbe.reply(Status.Success(()))
 
-        val plans = expectMsgType[Map[PlanId, ExecutionPlan]]
+      val executionPlans = Source.actorRef[(PlanId, ExecutionPlan)](5, OverflowStrategy.fail).
+        mapMaterializedValue(upstream => scheduler.tell(GetExecutionPlans, upstream)).
+        runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
+
+      whenReady(executionPlans) { plans =>
+        val planId = testPlanId.get
 
         plans should contain key planId
         plans(planId) should matchPattern {
@@ -177,9 +163,6 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
 
       scheduler ! GetExecutionPlan(randomPlanId)
 
-      indexProbe.expectMsg(GetExecutionPlan(randomPlanId))
-      indexProbe.reply(ExecutionPlanNotFound(randomPlanId))
-
       expectMsg(ExecutionPlanNotFound(randomPlanId))
     }
 
@@ -187,13 +170,13 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
       scheduler ! ScheduleJob(TestJobId)
 
       registryProbe.expectMsgType[GetJob].jobId shouldBe TestJobId
-      registryProbe.reply(TestJobId -> TestJobSpec.copy(disabled = true))
+      registryProbe.reply(TestJobSpec.copy(disabled = true))
 
       eventListener.expectNoMsg()
       expectMsgType[JobNotEnabled].jobId shouldBe TestJobId
     }
 
-    "should reply not found if the job is not present" in {
+    "should reply job not found if the job is not present" in {
       scheduler ! ScheduleJob(TestJobId)
 
       registryProbe.expectMsgType[GetJob].jobId shouldBe TestJobId
