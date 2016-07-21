@@ -29,7 +29,7 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
-import io.quckoo.{ExecutionPlan, JobSpec}
+import io.quckoo.{ExecutionPlan, JobSpec, Task}
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
 import io.quckoo.id._
@@ -83,8 +83,10 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
   ClusterClientReceptionist(context.system).registerService(self)
 
   final implicit val materializer = ActorMaterializer(
-    ActorMaterializerSettings(context.system), "registry"
+    ActorMaterializerSettings(context.system), "scheduler"
   )
+
+  private[this] val mediator = DistributedPubSub(context.system).mediator
 
   private[this] val monitor = context.actorOf(TaskQueueMonitor.props, "monitor")
   private[this] val taskQueue = context.actorOf(queueProps, "queue")
@@ -97,11 +99,25 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
   )
 
   private[this] var planIds = Set.empty[PlanId]
-  private[this] var taskIds = Set.empty[TaskId]
+  private[this] var tasks = Map.empty[TaskId, TaskDetails]
 
-  override def preStart(): Unit = warmUp()
+  override def preStart(): Unit = {
+    mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, self)
+  }
 
-  override def receive: Receive = ready
+  override def postStop(): Unit = {
+    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
+  }
+
+  override def receive: Receive = initializing
+
+  private def initializing: Receive = {
+    case DistributedPubSubMediator.SubscribeAck(_) =>
+      warmUp()
+      context become ready
+
+    case _ => stash()
+  }
 
   private def ready: Receive = {
     case WarmUp.Start =>
@@ -144,8 +160,8 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
         mapAsync(2)(fetchPlanAsync).
         runWith(Sink.actorRef(origSender, Status.Success(GetExecutionPlans)))
 
-    /*case GetTasks =>
-      executionPlanIndex forward GetTasks*/
+    case GetTasks =>
+      Source(tasks).runWith(Sink.actorRef(sender(), Status.Success(GetTasks)))
 
     case msg: WorkerMessage =>
       taskQueue forward msg
@@ -173,9 +189,10 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
       log.debug("Indexing execution plan {}", planId)
       planIds += planId
 
-    case TaskScheduled(_, _, taskId) =>
-      log.debug("Indexing task {}", taskId)
-      taskIds += taskId
+    case Execution.Awaken(task, planId, _) =>
+      log.debug("Indexing task {}", task.id)
+      val taskDetails = TaskDetails(task.artifactId, task.jobClass, Task.NotStarted)
+      tasks += task.id -> taskDetails
 
     case _ =>
   }
@@ -184,7 +201,7 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
     val executionPlanEvents = journal.currentEventsByTag(tags.ExecutionPlan, 0)
     val taskEvents = journal.currentEventsByTag(tags.Task, 0)
 
-    executionPlanEvents.merge(taskEvents).
+    executionPlanEvents.concat(taskEvents).
       runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
   }
 
@@ -260,7 +277,6 @@ private class ExecutionDriverFactory(
 
     case response @ ExecutionPlanStarted(`jobId`, _) =>
       log.info("Execution plan for job {} has been started.", jobId)
-      context.parent ! response
       createCmd.replyTo ! response
       mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
       context.become(shuttingDown)

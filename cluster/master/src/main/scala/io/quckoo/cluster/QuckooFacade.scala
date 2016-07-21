@@ -103,9 +103,9 @@ final class QuckooFacade(core: ActorRef)
   }
 
   def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]] = {
-    implicit val timeout = Timeout(5 seconds)
-
-    (core ? GetTasks).mapTo[Map[TaskId, TaskDetails]]
+    val tasks = Source.actorRef[(TaskId, TaskDetails)](100, OverflowStrategy.fail).
+      mapMaterializedValue(upstream => core.tell(GetTasks, upstream))
+    tasks.runFold(Map.empty[TaskId, TaskDetails])((map, pair) => map + pair)
   }
 
   def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] = {
