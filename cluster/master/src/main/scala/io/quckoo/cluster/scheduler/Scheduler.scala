@@ -67,23 +67,14 @@ object Scheduler {
 
   def props(settings: QuckooClusterSettings, journal: Journal, registry: ActorRef)
            (implicit actorSystem: ActorSystem, timeSource: TimeSource): Props = {
-    val shardRegion = ClusterSharding(actorSystem).start(
-      ExecutionDriver.ShardName,
-      entityProps     = ExecutionDriver.props,
-      settings        = ClusterShardingSettings(actorSystem).withRememberEntities(true),
-      extractEntityId = ExecutionDriver.idExtractor,
-      extractShardId  = ExecutionDriver.shardResolver
-    )
-
     val queueProps = TaskQueue.props(settings.queueMaxWorkTimeout)
-    val indexProps = ExecutionPlanIndex.props(shardRegion)
-    Props(classOf[Scheduler], journal, registry, shardRegion, queueProps, indexProps, timeSource)
+    Props(classOf[Scheduler], journal, registry, queueProps, timeSource)
   }
 
 }
 
-class Scheduler(journal: Scheduler.Journal, registry: ActorRef, shardRegion: ActorRef, queueProps: Props,
-                indexProps: Props)(implicit timeSource: TimeSource)
+class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Props)
+               (implicit timeSource: TimeSource)
     extends Actor with ActorLogging with Stash {
 
   import Scheduler._
@@ -97,13 +88,13 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, shardRegion: Act
 
   private[this] val monitor = context.actorOf(TaskQueueMonitor.props, "monitor")
   private[this] val taskQueue = context.actorOf(queueProps, "queue")
-  /*private[this] val shardRegion = ClusterSharding(context.system).start(
+  private[this] val shardRegion = ClusterSharding(context.system).start(
     ExecutionDriver.ShardName,
     entityProps     = ExecutionDriver.props,
     settings        = ClusterShardingSettings(context.system).withRememberEntities(true),
     extractEntityId = ExecutionDriver.idExtractor,
     extractShardId  = ExecutionDriver.shardResolver
-  )*/
+  )
 
   private[this] var planIds = Set.empty[PlanId]
   private[this] var taskIds = Set.empty[TaskId]
@@ -178,7 +169,7 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, shardRegion: Act
   }
 
   private def handleEvent(event: Any): Unit = event match {
-    case ExecutionDriver.Created(_, _, planId, _, _, _) =>
+    case ExecutionPlanStarted(_, planId) =>
       log.debug("Indexing execution plan {}", planId)
       planIds += planId
 
@@ -196,15 +187,6 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, shardRegion: Act
     executionPlanEvents.merge(taskEvents).
       runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
   }
-
-  /*def queryExecutionPlans: Future[Map[PlanId, ExecutionPlan]] = {
-    Source.actorRef[ExecutionPlan](100, OverflowStrategy.fail).
-      mapMaterializedValue { upstream =>
-        executionPlanIndex.tell(GetExecutionPlans, upstream)
-      }.runFold(Map.empty[PlanId, ExecutionPlan]) {
-        (map, plan) => map + (plan.planId -> plan)
-      }
-  }*/
 
   private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
     Props(classOf[JobFetcher], jobId, requestor, config)
@@ -225,7 +207,7 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: ScheduleJob)
   context.setReceiveTimeout(3 seconds)
 
   def receive: Receive = {
-    case (`jobId`, spec: JobSpec) =>
+    case spec: JobSpec =>
       if (!spec.disabled) {
         // create execution plan
         context.parent ! CreateExecutionDriver(spec, config, requestor)
@@ -278,6 +260,7 @@ private class ExecutionDriverFactory(
 
     case response @ ExecutionPlanStarted(`jobId`, _) =>
       log.info("Execution plan for job {} has been started.", jobId)
+      context.parent ! response
       createCmd.replyTo ! response
       mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
       context.become(shuttingDown)
