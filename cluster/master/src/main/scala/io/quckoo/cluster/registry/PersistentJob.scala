@@ -31,10 +31,10 @@ import io.quckoo.protocol.registry._
   */
 object PersistentJob {
 
-  final val ShardName      = "JobState"
+  final val ShardName      = "PersistentJob"
   final val NumberOfShards = 100
 
-  final val PersistenceIdPrefix = "JobState"
+  final val PersistenceIdPrefix = "PersistentJob"
 
   val idExtractor: ShardRegion.ExtractEntityId = {
     case c: CreateJob   => (c.jobId.toString, c)

@@ -189,10 +189,10 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
       log.debug("Indexing execution plan {}", planId)
       planIds += planId
 
-    case Execution.Awaken(task, planId, _) =>
-      log.debug("Indexing task {}", task.id)
-      val taskDetails = TaskDetails(task.artifactId, task.jobClass, Task.NotStarted)
-      tasks += task.id -> taskDetails
+    case TaskScheduled(jobId, planId, taskId) =>
+      log.debug("Indexing task {}", taskId)
+      val taskDetails = TaskDetails(jobId, planId, taskId, Task.NotStarted)
+      tasks += taskId -> taskDetails
 
     case _ =>
   }
