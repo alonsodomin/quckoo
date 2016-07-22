@@ -80,9 +80,13 @@ object ExecutionPlanList {
     def cancelPlan(props: Props)(planId: PlanId): Callback =
       props.proxy.dispatch(CancelExecutionPlan(planId))
 
-    def rowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = Seq(
-      Table.RowAction[PlanId, ExecutionPlan](NonEmptyList(Icons.stop, "Cancel"), cancelPlan(props))
-    )
+    def rowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
+      if (plan.nextExecutionTime.isDefined) {
+        Seq(
+          Table.RowAction[PlanId, ExecutionPlan](NonEmptyList(Icons.stop, "Cancel"), cancelPlan(props))
+        )
+      } else Seq.empty
+    }
 
     def filterClicked(filterType: String): Callback = filterType match {
       case "All"      => $.modState(_.copy(filter = AllFilter))
