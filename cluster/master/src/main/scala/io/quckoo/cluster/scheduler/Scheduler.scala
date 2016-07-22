@@ -160,6 +160,13 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
         mapAsync(2)(fetchPlanAsync).
         runWith(Sink.actorRef(origSender, Status.Success(GetExecutionPlans)))
 
+    case get @ GetTask(taskId) =>
+      if (tasks.contains(taskId)) {
+        sender() ! tasks(taskId)
+      } else {
+        sender() ! TaskNotFound(taskId)
+      }
+
     case GetTasks =>
       Source(tasks).runWith(Sink.actorRef(sender(), Status.Success(GetTasks)))
 

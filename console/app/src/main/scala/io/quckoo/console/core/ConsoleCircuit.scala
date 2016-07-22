@@ -228,6 +228,27 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
           RefreshExecutionPlans(Set(planId))
         )
         effectOnly(effects)
+
+      case TaskScheduled(_, _, taskId) =>
+        val effects = Effects.set(
+          Growl(Notification.info(s"Task $taskId has been scheduled.")),
+          RefreshTasks(Set(taskId))
+        )
+        effectOnly(effects)
+
+      case TaskTriggered(_, _, taskId) =>
+        val effects = Effects.set(
+          Growl(Notification.info(s"Task $taskId has been triggered.")),
+          RefreshTasks(Set(taskId))
+        )
+        effectOnly(effects)
+
+      case TaskCompleted(_, _, taskId, _) =>
+        val effects = Effects.set(
+          Growl(Notification.info(s"Task $taskId has completed.")),
+          RefreshTasks(Set(taskId))
+        )
+        effectOnly(effects)
     }
 
   }
