@@ -252,7 +252,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
       // Create a new task
       val taskId = UUID.randomUUID()
-      val task = Task(taskId, state.jobSpec.artifactId, Map.empty, state.jobSpec.jobClass)
+      val task = Task(taskId, state.jobSpec.artifactId, state.jobSpec.jobClass)
 
       // Create a trigger to fire the task
       val (execution, trigger) = schedule(task)

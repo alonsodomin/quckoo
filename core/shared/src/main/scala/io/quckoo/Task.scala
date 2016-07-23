@@ -26,7 +26,7 @@ import io.quckoo.id._
 final case class Task(
     id: TaskId,
     artifactId: ArtifactId,
-    params: Map[String, AnyVal] = Map.empty,
+    //params: Map[String, AnyVal] = Map.empty,
     jobClass: String
 )
 

@@ -36,8 +36,8 @@ class JobExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatS
   }
 
   "A job executor actor" must "fail if instantiation of the job failed" in {
-    val params = Map("a" -> 7)
-    val task = Task(TestTaskId, TestArtifactId, params, TestJobClass)
+    //val params = Map("a" -> 7)
+    val task = Task(TestTaskId, TestArtifactId, TestJobClass)
 
     val expectedException = new ClassNotFoundException(TestJobClass)
     val failingPackage = Artifact(TestArtifactId, Seq(new URL("http://www.example.com")))

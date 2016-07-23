@@ -6,11 +6,13 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorSystem
 import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
+
 import io.quckoo.Task
 import io.quckoo.cluster.protocol._
 import io.quckoo.fault.{ExceptionThrown, MissingDependencies, UnresolvedDependency}
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver.{Artifact, Resolver}
+
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
@@ -51,7 +53,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
     val executorProbe = TestProbe()
     val executorProps = TestActors.forwardActorProps(executorProbe.ref)
 
-    val task = Task(UUID.randomUUID(), FooArtifactId, Map.empty, FooJobClass)
+    val task = Task(UUID.randomUUID(), FooArtifactId, FooJobClass)
 
     val ackTimeout = 1 second
     val worker = TestActorRef(Worker.props(clusterClientProbe.ref, resolverProps, executorProps, 1 day, ackTimeout))
@@ -77,7 +79,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
     }
 
     "reject subsequent tasks if we are busy" in {
-      val anotherTask = Task(UUID.randomUUID(), FooArtifactId, Map.empty, FooJobClass)
+      val anotherTask = Task(UUID.randomUUID(), FooArtifactId, FooJobClass)
       worker ! anotherTask
 
       executorProbe.expectNoMsg(500 millis)
