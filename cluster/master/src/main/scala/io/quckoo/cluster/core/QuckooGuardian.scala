@@ -53,7 +53,7 @@ object QuckooGuardian {
 }
 
 class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(implicit timeSource: TimeSource)
-    extends Actor with ActorLogging with QuckooJournal {
+    extends Actor with ActorLogging with QuckooJournal with Stash {
 
   import QuckooGuardian._
 
@@ -101,6 +101,7 @@ class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(impli
     case Registry.Ready =>
       if (schedulerReady) {
         boot.success(())
+        unstashAll()
         context become started
       } else {
         context become starting(registryReady = true)
@@ -109,10 +110,13 @@ class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(impli
     case Scheduler.Ready =>
       if (registryReady) {
         boot.success(())
+        unstashAll()
         context become started
       } else {
         context become starting(schedulerReady = true)
       }
+
+    case _ => stash()
   }
 
   def started: Receive = {

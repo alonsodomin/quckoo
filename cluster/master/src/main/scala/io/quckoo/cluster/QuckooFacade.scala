@@ -42,22 +42,16 @@ import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
-import scalaz.ValidationNel
+
+import scalaz._
 
 /**
   * Created by alonsodomin on 13/12/2015.
   */
 object QuckooFacade extends Logging {
+  import Scalaz._
 
   def start(settings: QuckooClusterSettings)(implicit system: ActorSystem, timeSource: TimeSource): Future[Unit] = {
-    def startFacade(implicit ec: ExecutionContext): Future[QuckooFacade] = {
-      log.info("Starting Quckoo...")
-
-      val promise = Promise[Unit]()
-      val guardian = system.actorOf(QuckooGuardian.props(settings, promise), "quckoo")
-      promise.future.map(_ => new QuckooFacade(guardian))
-    }
-
     def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
       implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system), "http")
 
@@ -65,8 +59,13 @@ object QuckooFacade extends Logging {
         map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
     }
 
+    log.info("Starting Quckoo...")
+
+    val promise = Promise[Unit]()
+    val guardian = system.actorOf(QuckooGuardian.props(settings, promise), "quckoo")
+
     import system.dispatcher
-    startFacade.flatMap(startHttpListener)
+    (promise.future |@| startHttpListener(new QuckooFacade(guardian)))((_, _) => ())
   }
 
 }
