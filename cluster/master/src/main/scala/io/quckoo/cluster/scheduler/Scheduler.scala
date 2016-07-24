@@ -223,7 +223,7 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
 
 }
 
-private class JobFetcher(jobId: JobId, requestor: ActorRef, config: ScheduleJob)
+private class JobFetcher(jobId: JobId, replyTo: ActorRef, config: ScheduleJob)
     extends Actor with ActorLogging {
 
   import Scheduler._
@@ -234,21 +234,21 @@ private class JobFetcher(jobId: JobId, requestor: ActorRef, config: ScheduleJob)
     case spec: JobSpec =>
       if (!spec.disabled) {
         // create execution plan
-        context.parent ! CreateExecutionDriver(spec, config, requestor)
+        context.parent ! CreateExecutionDriver(spec, config, replyTo)
       } else {
         log.info("Found job {} in the registry but is not enabled.", jobId)
-        requestor ! JobNotEnabled(jobId)
+        replyTo ! JobNotEnabled(jobId)
       }
       context stop self
 
     case JobNotFound(`jobId`) =>
       log.info("No enabled job with id {} could be retrieved.", jobId)
-      requestor ! JobNotFound(jobId)
+      replyTo ! JobNotFound(jobId)
       context stop self
 
     case ReceiveTimeout =>
       log.error("Timed out while fetching job {} from the registry.", jobId)
-      requestor ! JobNotFound(jobId)
+      replyTo ! JobNotFound(jobId)
       context stop self
   }
 

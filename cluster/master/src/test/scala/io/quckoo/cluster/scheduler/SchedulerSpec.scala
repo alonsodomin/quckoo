@@ -34,7 +34,6 @@ object SchedulerSpec {
 
 }
 
-//@Ignore
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
     with ImplicitSender with ImplicitTimeSource with ScalaFutures
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
@@ -56,6 +55,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
 
   before {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, eventListener.ref)
+    system.eventStream.subscribe(eventListener.ref, classOf[Scheduler.Signal])
   }
 
   after {
@@ -79,6 +79,8 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
     var testPlanId: Option[PlanId] = None
 
     "create an execution driver for an enabled job" in {
+      eventListener.expectMsg(Scheduler.Ready)
+
       scheduler ! ScheduleJob(TestJobId, trigger = TestTrigger)
 
       registryProbe.expectMsgType[GetJob].jobId shouldBe TestJobId
@@ -172,8 +174,8 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
       registryProbe.expectMsgType[GetJob].jobId shouldBe TestJobId
       registryProbe.reply(TestJobSpec.copy(disabled = true))
 
-      eventListener.expectNoMsg()
       expectMsgType[JobNotEnabled].jobId shouldBe TestJobId
+      eventListener.expectNoMsg()
     }
 
     "should reply job not found if the job is not present" in {
@@ -182,8 +184,8 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
       registryProbe.expectMsgType[GetJob].jobId shouldBe TestJobId
       registryProbe.reply(JobNotFound(TestJobId))
 
-      eventListener.expectNoMsg()
       expectMsgType[JobNotFound].jobId shouldBe TestJobId
+      eventListener.expectNoMsg()
     }
   }
 

@@ -304,8 +304,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         trigger.foreach(_.cancel())
       }
       lifecycle ! Execution.Cancel(Task.UserRequest)
-      context.unwatch(lifecycle)
-      context.become(runningExecution(state, lifecycle))
+      context.become(runningExecution(state, context.unwatch(lifecycle)))
 
     case Execution.Result(outcome) =>
       state.plan.currentTaskId.foreach { taskId =>
@@ -331,7 +330,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
    * State prior to fully stopping the actor.
    */
   private def shuttingDown(state: DriverState): Receive = {
-    case FinishPlan =>
+    case FinishPlan if !state.plan.finished =>
       log.info("Finishing execution plan. planId={}", state.planId)
       persist(ExecutionPlanFinished(state.jobId, state.planId)) { event =>
         mediator ! Publish(topics.Scheduler, event)
