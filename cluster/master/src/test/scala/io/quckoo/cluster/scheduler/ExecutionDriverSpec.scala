@@ -82,7 +82,7 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       scheduledMsg.planId should be (planId)
 
       within(50 millis) {
-        executionProbe.expectMsgType[Execution.WakeUp]
+        executionProbe.expectMsgType[Execution.Enqueue]
       }
     }
 
@@ -100,7 +100,7 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       scheduledMsg.planId shouldBe planId
 
       within(100 millis) {
-        executionProbe.expectMsgType[Execution.WakeUp]
+        executionProbe.expectMsgType[Execution.Enqueue]
       }
     }
 
@@ -148,7 +148,7 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       scheduledMsg.planId should be (planId)
 
       within(50 millis) {
-        executionProbe.expectMsgType[Execution.WakeUp]
+        executionProbe.expectMsgType[Execution.Enqueue]
       }
     }
 
@@ -196,7 +196,7 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (planId)
 
-      executionProbe.expectMsgType[Execution.WakeUp]
+      executionProbe.expectMsgType[Execution.Enqueue]
     }
 
     "terminate once the execution finishes" in {

@@ -40,7 +40,7 @@ object Execution {
   final val PersistenceIdPrefix = "Execution-"
 
   sealed trait Command
-  final case class WakeUp(task: Task, queue: ActorSelection) extends Command
+  final case class Enqueue(task: Task, queue: ActorSelection) extends Command
   case object Start extends Command
   final case class Finish(fault: Option[Fault]) extends Command
   final case class Cancel(reason: UncompleteReason) extends Command
@@ -59,9 +59,9 @@ object Execution {
   }
 
   sealed trait ExecutionEvent
-  final case class Awaken(task: Task, planId: PlanId, queue: ActorSelection) extends ExecutionEvent
+  final case class Enqueuing(task: Task, planId: PlanId, queue: ActorSelection) extends ExecutionEvent
   final case class Cancelled(reason: UncompleteReason) extends ExecutionEvent
-  case object Triggered extends ExecutionEvent
+  final case class Triggered(task: Task) extends ExecutionEvent
   case object Started extends ExecutionEvent
   final case class Completed(fault: Option[Fault]) extends ExecutionEvent
   case object TimedOut extends ExecutionEvent
@@ -104,9 +104,9 @@ class Execution(
   startWith(Scheduled, ExecutionState(planId))
 
   when(Scheduled) {
-    case Event(WakeUp(task, queue), _) =>
+    case Event(Enqueue(task, queue), _) =>
       log.debug("Execution waking up. taskId={}", task.id)
-      stay applying Awaken(task, planId, queue) forMax enqueueTimeout
+      stay applying Enqueuing(task, planId, queue) forMax enqueueTimeout
 
     case Event(Cancel(reason), data) =>
       log.debug("Cancelling execution upon request. Reason: {}", reason)
@@ -117,9 +117,7 @@ class Execution(
 
     case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
       log.debug("Queue has accepted task {}.", taskId)
-      goto(Waiting) applying Triggered andThen { _ =>
-        context.parent ! Triggered
-      }
+      goto(Waiting) applying Triggered(task)
 
     case Event(StateTimeout, ExecutionState(_, Some(task), Some(queue), _))  =>
       enqueueAttempts += 1
@@ -143,6 +141,10 @@ class Execution(
 
     case Event(Get, data) =>
       stay replying data
+
+    case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
+      // May happen after recovery
+      stay
   }
 
   when(InProgress) {
@@ -176,10 +178,15 @@ class Execution(
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 
   override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState = event match {
-    case Awaken(task, `planId`, queue) =>
-      log.debug("Execution for task {} has awaken.", task.id)
+    case Enqueuing(task, `planId`, queue) =>
+      log.debug("Execution lifecycle for task {} is allocating a slot at the local queue.", task.id)
       queue ! TaskQueue.Enqueue(task)
       previous.copy(task = Some(task), queue = Some(queue))
+
+    case event @ Triggered(task) =>
+      log.debug("Execution for task {} has been triggered.", task.id)
+      context.parent ! event
+      previous
 
     case Completed(result) => result match {
       case Some(fault) => previous <<= Failure(fault)

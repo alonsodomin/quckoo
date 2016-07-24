@@ -97,7 +97,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
       state.queue should be (None)
       state.outcome should be (NotStarted)
 
-      execution ! WakeUp(task, taskQueueSelection)
+      execution ! Enqueue(task, taskQueueSelection)
 
       taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
 
@@ -148,15 +148,16 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
       state.queue should be (None)
       state.outcome should be (NotStarted)
 
-      execution ! WakeUp(task, taskQueueSelection)
+      execution ! Enqueue(task, taskQueueSelection)
       within(enqueueTimeout) {
-        taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+        taskQueue.expectMsgType[TaskQueue.Enqueue].task shouldBe task
         taskQueue.reply(EnqueueAck(task.id))
 
-        awaitAssert(execution.underlyingActor.stateName should be (Waiting))
+        awaitAssert(execution.underlyingActor.stateName shouldBe Waiting)
       }
 
-      expectMsg(Triggered)
+      val triggeredMsg = expectMsgType[Triggered]
+      triggeredMsg.task shouldBe task
     }
 
     "terminate when requested to be cancelled" in {
@@ -195,7 +196,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
       state.queue should be (None)
       state.outcome should be (NotStarted)
 
-      execution ! WakeUp(task, taskQueueSelection)
+      execution ! Enqueue(task, taskQueueSelection)
       within(enqueueTimeout) {
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
         taskQueue.reply(EnqueueAck(task.id))
@@ -203,7 +204,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
         awaitAssert(execution.underlyingActor.stateName should be (Waiting))
       }
 
-      expectMsg(Triggered)
+      val triggeredMsg = expectMsgType[Triggered]
+      triggeredMsg.task shouldBe task
     }
 
     "move to InProgress after receiving the Start signal" in {
@@ -248,7 +250,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
       state.queue should be (None)
       state.outcome should be (NotStarted)
 
-      execution ! WakeUp(task, taskQueueSelection)
+      execution ! Enqueue(task, taskQueueSelection)
       within(enqueueTimeout) {
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
         taskQueue.reply(EnqueueAck(task.id))
@@ -256,7 +258,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
         awaitAssert(execution.underlyingActor.stateName should be (Waiting))
       }
 
-      expectMsg(Triggered)
+      val triggeredMsg = expectMsgType[Triggered]
+      triggeredMsg.task shouldBe task
     }
 
     "move to InProgress after receiving the Start signal" in {
@@ -307,7 +310,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
       state.queue should be (None)
       state.outcome should be (NotStarted)
 
-      execution ! WakeUp(task, taskQueueSelection)
+      execution ! Enqueue(task, taskQueueSelection)
       within(enqueueTimeout) {
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
         taskQueue.reply(EnqueueAck(task.id))
@@ -315,7 +318,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
         awaitAssert(execution.underlyingActor.stateName should be (Waiting))
       }
 
-      expectMsg(Triggered)
+      val triggeredMsg = expectMsgType[Triggered]
+      triggeredMsg.task shouldBe task
     }
 
     "move to InProgress after receiving the Start signal" in {
@@ -361,7 +365,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
       state.queue should be (None)
       state.outcome should be (NotStarted)
 
-      execution ! WakeUp(task, taskQueueSelection)
+      execution ! Enqueue(task, taskQueueSelection)
       within(enqueueTimeout) {
         taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
         taskQueue.reply(EnqueueAck(task.id))
@@ -369,7 +373,8 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
         awaitAssert(execution.underlyingActor.stateName should be (Waiting))
       }
 
-      expectMsg(Triggered)
+      val triggeredMsg = expectMsgType[Triggered]
+      triggeredMsg.task shouldBe task
     }
 
     "move to InProgress after receiving the Start signal" in {

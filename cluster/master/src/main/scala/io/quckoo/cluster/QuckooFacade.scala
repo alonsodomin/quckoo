@@ -111,7 +111,10 @@ final class QuckooFacade(core: ActorRef)
   def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] = {
     implicit val timeout = Timeout(5 seconds)
 
-    (core ? GetTask(taskId)).mapTo[Option[TaskDetails]]
+    (core ? GetTask(taskId)) map {
+      case task: TaskDetails      => Some(task)
+      case TaskNotFound(`taskId`) => None
+    }
   }
 
   def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
