@@ -106,14 +106,14 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     case RequestTask(workerId) if pendingTasks.nonEmpty =>
       workers.get(workerId) match {
         case Some(workerState @ WorkerState(_, WorkerState.Idle)) =>
-          def dispatchTask(task: Task, executionActor: ActorRef): Unit = {
+          def dispatchTask(task: Task, lifecycle: ActorRef): Unit = {
             val timeout = Deadline.now + maxWorkTimeout
             workers += (workerId -> workerState.copy(status = Busy(task.id, timeout)))
-            inProgressTasks += (task.id -> executionActor)
+            inProgressTasks += (task.id -> lifecycle)
 
             log.info("Delivering execution to worker. taskId={}, workerId={}", task.id, workerId)
             workerState.ref ! task
-            executionActor ! Execution.Start
+            lifecycle ! ExecutionLifecycle.Start
 
             replicator ! Replicator.Update(PendingKey, PNCounterMap(), Replicator.WriteLocal) {
               _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
@@ -142,7 +142,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       } else {
         log.info("Execution finished by worker. workerId={}, taskId={}", workerId, taskId)
         changeWorkerToIdle(workerId, taskId)
-        inProgressTasks(taskId) ! Execution.Finish(None)
+        inProgressTasks(taskId) ! ExecutionLifecycle.Finish(None)
         inProgressTasks -= taskId
 
         sender ! TaskDoneAck(taskId)
@@ -155,7 +155,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     case TaskFailed(workerId, taskId, cause) if inProgressTasks.contains(taskId) =>
       log.error("Worker failed executing given task. workerId={}, taskId={}", workerId, taskId)
       changeWorkerToIdle(workerId, taskId)
-      inProgressTasks(taskId) ! Execution.Finish(Some(cause))
+      inProgressTasks(taskId) ! ExecutionLifecycle.Finish(Some(cause))
       inProgressTasks -= taskId
       replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
         _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
@@ -192,7 +192,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         workerState.status match {
           case WorkerState.Busy(taskId, _) =>
             // TODO define a better message to interrupt the execution
-            inProgressTasks(taskId) ! Execution.TimeOut
+            inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
             inProgressTasks -= taskId
             replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
               _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
@@ -228,7 +228,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
   private def timeoutWorker(workerId: NodeId, taskId: TaskId): Unit = if (inProgressTasks.contains(taskId)) {
     workers -= workerId
-    inProgressTasks(taskId) ! Execution.TimeOut
+    inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
     inProgressTasks -= taskId
     mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
     replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {

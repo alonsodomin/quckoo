@@ -277,7 +277,7 @@ private class ExecutionDriverFactory(
       import createCmd._
 
       log.debug("Starting execution plan for job {}.", jobId)
-      val executionProps = Execution.props(
+      val executionProps = ExecutionLifecycle.props(
         planId, executionTimeout = cmd.timeout
       )
       shardRegion ! ExecutionDriver.New(jobId, spec, planId, cmd.trigger, executionProps)

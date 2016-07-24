@@ -36,7 +36,7 @@ class SchedulerTagEventAdapter extends WriteEventAdapter with Logging {
     case evt: TaskCompleted            => Tagged(evt, Set(tags.ExecutionPlan, tags.Task))
     case evt: ExecutionPlanStarted     => Tagged(evt, Set(tags.ExecutionPlan))
     case evt: ExecutionPlanFinished    => Tagged(evt, Set(tags.ExecutionPlan))
-    case evt: Execution.ExecutionEvent => Tagged(evt, Set(tags.Task))
+    case evt: ExecutionLifecycle.ExecutionEvent => Tagged(evt, Set(tags.Task))
 
     case _ => event
   }

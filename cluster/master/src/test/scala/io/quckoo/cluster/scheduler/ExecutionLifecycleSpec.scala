@@ -18,19 +18,19 @@ import scala.concurrent.duration._
 /**
  * Created by domingueza on 18/08/15.
  */
-object ExecutionSpec {
+object ExecutionLifecycleSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "example", "test")
   final val TestJobClass = "com.example.Job"
 
 }
 
-class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
+class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycleSpec"))
     with ImplicitSender with DefaultTimeout with WordSpecLike
     with BeforeAndAfterAll with Matchers {
 
-  import Execution._
-  import ExecutionSpec._
+  import ExecutionLifecycle._
+  import ExecutionLifecycleSpec._
   import Task._
 
   override def afterAll(): Unit =
@@ -41,14 +41,14 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
                              enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
                              maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
                              executionTimeout: Option[FiniteDuration] = None): Props =
-    Execution.props(planId, enqueueTimeout, maxEnqueueAttempts, executionTimeout).
+    ExecutionLifecycle.props(planId, enqueueTimeout, maxEnqueueAttempts, executionTimeout).
       withDispatcher("akka.actor.default-dispatcher")
 
   "An execution cancelled before enqueuing" should {
     val planId = UUID.randomUUID()
 
     val enqueueTimeout = 2 seconds
-    val execution = TestActorRef[Execution](executionProps(
+    val execution = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "non-enqueued-exec")
     watch(execution)
@@ -81,7 +81,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 2 seconds
-    val execution = TestActorRef[Execution](executionProps(
+    val execution = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "enqueued-timedout-exec")
     watch(execution)
@@ -131,7 +131,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
-    val execution = TestActorRef[Execution](executionProps(
+    val execution = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "cancelled-before-starting-exec")
     watch(execution)
@@ -179,7 +179,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
-    val execution = TestActorRef[Execution](executionProps(
+    val execution = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "cancelled-while-in-progress-exec")
     watch(execution)
@@ -233,7 +233,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
 
     val enqueueTimeout = 5 seconds
     val executionTimeout = 1 second
-    val execution = TestActorRef[Execution](executionProps(
+    val execution = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2, Some(executionTimeout)
     ), self, "timed-out-while-in-progress-exec")
     watch(execution)
@@ -293,7 +293,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
-    val execution = TestActorRef[Execution](executionProps(
+    val execution = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "fails-while-in-progress-exec")
     watch(execution)
@@ -348,7 +348,7 @@ class ExecutionSpec extends TestKit(TestActorSystem("ExecutionSpec"))
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
-    val execution = TestActorRef[Execution](executionProps(
+    val execution = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "successful-exec")
     watch(execution)

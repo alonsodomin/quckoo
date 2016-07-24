@@ -61,9 +61,9 @@ object ExecutionDriver {
 
   // Private messages, used for managing the internal lifecycle
   private[scheduler] final case class Created(
-      jobId: JobId, spec: JobSpec, planId: PlanId,
-      trigger: Trigger, executionProps: Props,
-      time: DateTime
+    jobId: JobId, spec: JobSpec, planId: PlanId,
+    trigger: Trigger, lifecycleProps: Props,
+    time: DateTime
   )
   private final case class ScheduleTask(task: Task, time: DateTime)
   private case object FinishPlan
@@ -73,15 +73,15 @@ object ExecutionDriver {
     private[scheduler] def apply(created: Created)(implicit timeSource: TimeSource): DriverState = DriverState(
       ExecutionPlan(created.jobId, created.planId, created.trigger, created.time),
       created.spec,
-      created.executionProps,
+      created.lifecycleProps,
       Vector.empty
     )
   }
   final case class DriverState(
-      plan: ExecutionPlan,
-      jobSpec: JobSpec,
-      executionProps: Props,
-      completedTasks: Vector[TaskId]
+    plan: ExecutionPlan,
+    jobSpec: JobSpec,
+    lifecycleProps: Props,
+    completedTasks: Vector[TaskId]
   )(implicit timeSource: TimeSource) {
 
     val jobId = plan.jobId
@@ -178,7 +178,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         log.debug("Execution driver recovery finished. state={}")
 
         if (st.fired) {
-          val lifecycle = context.watch(context.actorOf(st.executionProps, st.plan.currentTaskId.get.toString))
+          val lifecycle = context.watch(context.actorOf(st.lifecycleProps, st.plan.currentTaskId.get.toString))
           context.become(runningExecution(st, lifecycle))
         } else {
           scheduleOrFinish(st) match {
@@ -265,11 +265,11 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
         implicit val dispatcher = triggerDispatcher
         log.debug("Task {} in plan {} will be triggered after {}", task.id, planId, delay)
-        context.system.scheduler.scheduleOnce(delay, lifecycle, Execution.Enqueue(task, taskQueue))
+        context.system.scheduler.scheduleOnce(delay, lifecycle, ExecutionLifecycle.Enqueue(task, taskQueue))
       }
 
       // Instantiate a new execution lifecycle
-      val lifecycle = context.watch(context.actorOf(state.executionProps, task.id.toString))
+      val lifecycle = context.watch(context.actorOf(state.lifecycleProps, task.id.toString))
 
       // Create a trigger to fire the task
       val trigger = createTrigger(task, state.planId, lifecycle, time)
@@ -289,7 +289,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
    */
   private def runningExecution(state: DriverState, lifecycle: ActorRef,
                                trigger: Option[Cancellable] = None): Receive = {
-    case Execution.Triggered(task) =>
+    case ExecutionLifecycle.Triggered(task) =>
       log.debug("Trigger for task {} has successfully fired.", task.id)
       persist(TaskTriggered(state.jobId, state.planId, task.id)) { event =>
         context.become(runningExecution(state.updated(event), lifecycle, None))
@@ -303,10 +303,10 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         log.debug("Cancelling trigger for execution plan. planId={}", state.planId)
         trigger.foreach(_.cancel())
       }
-      lifecycle ! Execution.Cancel(Task.UserRequest)
+      lifecycle ! ExecutionLifecycle.Cancel(Task.UserRequest)
       context.become(runningExecution(state, context.unwatch(lifecycle)))
 
-    case Execution.Result(outcome) =>
+    case ExecutionLifecycle.Result(outcome) =>
       state.plan.currentTaskId.foreach { taskId =>
         persist(TaskCompleted(state.jobId, state.planId, taskId, outcome)) { event =>
           log.debug("Task finished. taskId={}, outcome={}", taskId, outcome)

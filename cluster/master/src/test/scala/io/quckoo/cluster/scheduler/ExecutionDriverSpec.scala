@@ -82,13 +82,13 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       scheduledMsg.planId should be (planId)
 
       within(50 millis) {
-        executionProbe.expectMsgType[Execution.Enqueue]
+        executionProbe.expectMsgType[ExecutionLifecycle.Enqueue]
       }
     }
 
     "re-schedule an execution once it finishes" in {
       val successOutcome = Task.Success
-      executionProbe.reply(Execution.Result(successOutcome))
+      executionProbe.reply(ExecutionLifecycle.Result(successOutcome))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId shouldBe TestJobId
@@ -100,14 +100,14 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       scheduledMsg.planId shouldBe planId
 
       within(100 millis) {
-        executionProbe.expectMsgType[Execution.Enqueue]
+        executionProbe.expectMsgType[ExecutionLifecycle.Enqueue]
       }
     }
 
     "not re-schedule an execution after the job is disabled" in {
       mediator ! DistributedPubSubMediator.Publish(topics.Registry, JobDisabled(TestJobId))
       // Complete the execution so the driver can come back to ready state
-      executionProbe.reply(Execution.Result(Task.Success))
+      executionProbe.reply(ExecutionLifecycle.Result(Task.Success))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId shouldBe TestJobId
@@ -148,17 +148,17 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       scheduledMsg.planId should be (planId)
 
       within(50 millis) {
-        executionProbe.expectMsgType[Execution.Enqueue]
+        executionProbe.expectMsgType[ExecutionLifecycle.Enqueue]
       }
     }
 
     "instruct the execution to immediately stop when it's cancelled" in {
       executionDriver ! CancelExecutionPlan(planId)
 
-      val cancelMsg = executionProbe.expectMsgType[Execution.Cancel]
+      val cancelMsg = executionProbe.expectMsgType[ExecutionLifecycle.Cancel]
       cancelMsg.reason shouldBe Task.UserRequest
 
-      executionProbe.reply(Execution.Result(Task.Interrupted(Task.UserRequest)))
+      executionProbe.reply(ExecutionLifecycle.Result(Task.Interrupted(Task.UserRequest)))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId shouldBe TestJobId
@@ -196,12 +196,12 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (planId)
 
-      executionProbe.expectMsgType[Execution.Enqueue]
+      executionProbe.expectMsgType[ExecutionLifecycle.Enqueue]
     }
 
     "terminate once the execution finishes" in {
       val successOutcome = Task.Success
-      executionProbe.send(executionPlan, Execution.Result(successOutcome))
+      executionProbe.send(executionPlan, ExecutionLifecycle.Result(successOutcome))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId should be (TestJobId)

@@ -31,7 +31,7 @@ import scala.reflect.ClassTag
 /**
  * Created by aalonsodominguez on 17/08/15.
  */
-object Execution {
+object ExecutionLifecycle {
   import Task._
 
   final val DefaultEnqueueTimeout = 10 seconds
@@ -84,19 +84,19 @@ object Execution {
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
             maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
             executionTimeout: Option[FiniteDuration] = None) =
-    Props(classOf[Execution], planId, enqueueTimeout, maxEnqueueAttempts, executionTimeout)
+    Props(classOf[ExecutionLifecycle], planId, enqueueTimeout, maxEnqueueAttempts, executionTimeout)
 
 }
 
-class Execution(
+class ExecutionLifecycle(
     planId: PlanId,
     enqueueTimeout: FiniteDuration,
     maxEnqueueAttempts: Int,
     executionTimeout: Option[FiniteDuration]
-  ) extends PersistentFSM[Execution.Phase, Execution.ExecutionState, Execution.ExecutionEvent]
-    with LoggingPersistentFSM[Execution.Phase, Execution.ExecutionState, Execution.ExecutionEvent] {
+  ) extends PersistentFSM[ExecutionLifecycle.Phase, ExecutionLifecycle.ExecutionState, ExecutionLifecycle.ExecutionEvent]
+    with LoggingPersistentFSM[ExecutionLifecycle.Phase, ExecutionLifecycle.ExecutionState, ExecutionLifecycle.ExecutionEvent] {
 
-  import Execution._
+  import ExecutionLifecycle._
   import Task._
 
   private[this] var enqueueAttempts = 0
