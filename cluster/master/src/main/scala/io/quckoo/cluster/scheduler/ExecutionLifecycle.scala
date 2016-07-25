@@ -20,7 +20,7 @@ import akka.actor.{ActorSelection, Props}
 import akka.persistence.fsm.PersistentFSM.Normal
 import akka.persistence.fsm.{LoggingPersistentFSM, PersistentFSM}
 
-import io.quckoo.Task
+import io.quckoo.{Task, Execution}
 import io.quckoo.cluster.scheduler.TaskQueue.EnqueueAck
 import io.quckoo.fault.Fault
 import io.quckoo.id.PlanId
@@ -32,7 +32,7 @@ import scala.reflect.ClassTag
  * Created by aalonsodominguez on 17/08/15.
  */
 object ExecutionLifecycle {
-  import Task._
+  import Execution._
 
   final val DefaultEnqueueTimeout = 10 seconds
   final val DefaultMaxEnqueueAttempts = 3
@@ -40,27 +40,30 @@ object ExecutionLifecycle {
   final val PersistenceIdPrefix = "Execution-"
 
   sealed trait Command
-  final case class Enqueue(task: Task, queue: ActorSelection) extends Command
+  final case class Awake(task: Task, queue: ActorSelection) extends Command
   case object Start extends Command
   final case class Finish(fault: Option[Fault]) extends Command
-  final case class Cancel(reason: UncompleteReason) extends Command
+  final case class Cancel(reason: UncompletedReason) extends Command
   case object TimeOut extends Command
   case object Get extends Command
 
   sealed trait Phase extends PersistentFSM.FSMState
-  case object Scheduled extends Phase {
-    override def identifier = "Scheduled"
+  case object Sleeping extends Phase {
+    override val identifier = "Sleeping"
+  }
+  case object Enqueuing extends Phase {
+    override val identifier = "Enqueuing"
   }
   case object Waiting extends Phase {
-    override def identifier = "Waiting"
+    override val identifier = "Waiting"
   }
-  case object InProgress extends Phase {
-    override def identifier = "InProgress"
+  case object Running extends Phase {
+    override val identifier = "Running"
   }
 
   sealed trait ExecutionEvent
-  final case class Enqueuing(task: Task, planId: PlanId, queue: ActorSelection) extends ExecutionEvent
-  final case class Cancelled(reason: UncompleteReason) extends ExecutionEvent
+  final case class Awaken(task: Task, planId: PlanId, queue: ActorSelection) extends ExecutionEvent
+  final case class Cancelled(reason: UncompletedReason) extends ExecutionEvent
   final case class Triggered(task: Task) extends ExecutionEvent
   case object Started extends ExecutionEvent
   final case class Completed(fault: Option[Fault]) extends ExecutionEvent
@@ -72,11 +75,11 @@ object ExecutionLifecycle {
       planId: PlanId,
       task: Option[Task] = None,
       queue: Option[ActorSelection] = None,
-      outcome: Outcome = NotStarted
+      outcome: Option[Outcome] = None
   ) {
 
     private[scheduler] def <<= (out: Outcome): ExecutionState =
-      this.copy(outcome = out)
+      this.copy(outcome = Some(out))
 
   }
 
@@ -97,34 +100,41 @@ class ExecutionLifecycle(
     with LoggingPersistentFSM[ExecutionLifecycle.Phase, ExecutionLifecycle.ExecutionState, ExecutionLifecycle.ExecutionEvent] {
 
   import ExecutionLifecycle._
-  import Task._
+  import Execution._
 
   private[this] var enqueueAttempts = 0
 
-  startWith(Scheduled, ExecutionState(planId))
+  startWith(Sleeping, ExecutionState(planId))
 
-  when(Scheduled) {
-    case Event(Enqueue(task, queue), _) =>
+  when(Sleeping) {
+    case Event(Awake(task, queue), _) =>
       log.debug("Execution waking up. taskId={}", task.id)
-      stay applying Enqueuing(task, planId, queue) forMax enqueueTimeout
+      goto(Enqueuing) applying Awaken(task, planId, queue) forMax enqueueTimeout
 
     case Event(Cancel(reason), data) =>
       log.debug("Cancelling execution upon request. Reason: {}", reason)
       stop applying Cancelled(reason)
 
-    case Event(Get, data) =>
-      stay replying data
+    case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
+      stay replying Execution(planId, task, Scheduled, outcome)
+  }
 
+  when(Enqueuing) {
     case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
       log.debug("Queue has accepted task {}.", taskId)
       goto(Waiting) applying Triggered(task)
 
+    case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
+      stay replying Execution(planId, task, Scheduled, outcome) forMax enqueueTimeout
+
     case Event(StateTimeout, ExecutionState(_, Some(task), Some(queue), _))  =>
       enqueueAttempts += 1
       if (enqueueAttempts < maxEnqueueAttempts) {
+        log.debug("Task {} failed to be enqueued. Retrying...", task.id)
         queue ! TaskQueue.Enqueue(task)
         stay forMax enqueueTimeout
       } else {
+        log.debug("Task {} failed to be enqueued after {} attempts.", task.id, enqueueAttempts)
         stop applying Cancelled(FailedToEnqueue)
       }
   }
@@ -132,24 +142,24 @@ class ExecutionLifecycle(
   when(Waiting) {
     case Event(Start, ExecutionState(_, Some(task), _, _)) =>
       log.info("Execution of task {} starting", task.id)
-      val st = goto(InProgress) applying Started
+      val st = goto(Running) applying Started
       executionTimeout.map(duration => st forMax duration).getOrElse(st)
 
     case Event(Cancel(reason), data) =>
       log.debug("Cancelling execution of task {} upon request. Reason: {}", data.task.get.id, reason)
       stop applying Cancelled(reason)
 
-    case Event(Get, data) =>
-      stay replying data
+    case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
+      stay replying Execution(planId, task, Enqueued, outcome)
 
     case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
       // May happen after recovery
       stay
   }
 
-  when(InProgress) {
-    case Event(Get, data) =>
-      stay replying data
+  when(Running) {
+    case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
+      stay replying Execution(planId, task, InProgress, outcome)
 
     case Event(Cancel(reason), _) =>
       log.debug("Cancelling execution upon request. Reason: {}", reason)
@@ -169,8 +179,8 @@ class ExecutionLifecycle(
   }
 
   onTermination {
-    case StopEvent(Normal, _, data) =>
-      context.parent ! Result(data.outcome)
+    case StopEvent(Normal, _, ExecutionState(_, _, _, Some(outcome))) =>
+      context.parent ! Result(outcome)
   }
 
   override val persistenceId: String = PersistenceIdPrefix + self.path.name
@@ -178,7 +188,7 @@ class ExecutionLifecycle(
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 
   override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState = event match {
-    case Enqueuing(task, `planId`, queue) =>
+    case Awaken(task, `planId`, queue) =>
       log.debug("Execution lifecycle for task {} is allocating a slot at the local queue.", task.id)
       queue ! TaskQueue.Enqueue(task)
       previous.copy(task = Some(task), queue = Some(queue))
@@ -194,8 +204,8 @@ class ExecutionLifecycle(
     }
 
     case Cancelled(reason) => stateName match {
-      case InProgress => previous <<= Interrupted(reason)
-      case _          => previous <<= NeverRun(reason)
+      case Running => previous <<= Interrupted(reason)
+      case _       => previous <<= NeverRun(reason)
     }
 
     case TimedOut => previous <<= NeverEnding

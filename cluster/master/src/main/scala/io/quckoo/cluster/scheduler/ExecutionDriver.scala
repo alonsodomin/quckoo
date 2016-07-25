@@ -29,7 +29,7 @@ import io.quckoo.id._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.time.{DateTime, TimeSource}
-import io.quckoo.{ExecutionPlan, JobSpec, Task, Trigger}
+import io.quckoo._
 
 import scala.concurrent.duration._
 
@@ -42,15 +42,15 @@ object ExecutionDriver {
   final val NumberOfShards = 100
 
   val idExtractor: ShardRegion.ExtractEntityId = {
-    case n: New              => (n.planId.toString, n)
-    case g: GetExecutionPlan => (g.planId.toString, g)
-    case c: CancelExecutionPlan       => (c.planId.toString, c)
+    case n: New                 => (n.planId.toString, n)
+    case g: GetExecutionPlan    => (g.planId.toString, g)
+    case c: CancelExecutionPlan => (c.planId.toString, c)
   }
 
   val shardResolver: ShardRegion.ExtractShardId = {
-    case New(_, _, planId, _, _)  => (planId.hashCode() % NumberOfShards).toString
-    case GetExecutionPlan(planId) => (planId.hashCode() % NumberOfShards).toString
-    case CancelExecutionPlan(planId)       => (planId.hashCode() % NumberOfShards).toString
+    case New(_, _, planId, _, _)     => (planId.hashCode() % NumberOfShards).toString
+    case GetExecutionPlan(planId)    => (planId.hashCode() % NumberOfShards).toString
+    case CancelExecutionPlan(planId) => (planId.hashCode() % NumberOfShards).toString
   }
 
   // Only for internal usage from the Scheduler actor
@@ -120,7 +120,7 @@ object ExecutionDriver {
             copy(plan = plan.copy(
               currentTaskId = None,
               lastExecutionTime = Some(timeSource.currentDateTime),
-              lastOutcome = outcome),
+              lastOutcome = Some(outcome)),
               completedTasks = completedTasks :+ taskId
             )
 
@@ -265,7 +265,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
         implicit val dispatcher = triggerDispatcher
         log.debug("Task {} in plan {} will be triggered after {}", task.id, planId, delay)
-        context.system.scheduler.scheduleOnce(delay, lifecycle, ExecutionLifecycle.Enqueue(task, taskQueue))
+        context.system.scheduler.scheduleOnce(delay, lifecycle, ExecutionLifecycle.Awake(task, taskQueue))
       }
 
       // Instantiate a new execution lifecycle
@@ -303,7 +303,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         log.debug("Cancelling trigger for execution plan. planId={}", state.planId)
         trigger.foreach(_.cancel())
       }
-      lifecycle ! ExecutionLifecycle.Cancel(Task.UserRequest)
+      lifecycle ! ExecutionLifecycle.Cancel(Execution.UserRequest)
       context.become(runningExecution(state, context.unwatch(lifecycle)))
 
     case ExecutionLifecycle.Result(outcome) =>
@@ -365,14 +365,14 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     state.plan.nextExecutionTime.map(when => ScheduleTask(task, when)).getOrElse(FinishPlan)
   }
 
-  private def proceedNext(state: DriverState, lastTaskId: TaskId, outcome: Task.Outcome): Unit = {
+  private def proceedNext(state: DriverState, lastTaskId: TaskId, outcome: Execution.Outcome): Unit = {
     def nextCommand = {
       if (state.plan.trigger.isRecurring) {
         outcome match {
-          case Task.Success =>
+          case Execution.Success =>
             scheduleOrFinish(state)
 
-          case Task.Failure(cause) =>
+          case Execution.Failure(cause) =>
             if (shouldRetry(cause)) {
               // TODO improve retry process
               scheduleOrFinish(state)

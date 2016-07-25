@@ -10,10 +10,10 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
 
 import io.quckoo.api.{Scheduler => SchedulerApi}
-import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
+import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.{ExecutionPlan, Task, Trigger, serialization}
+import io.quckoo.{ExecutionPlan, Trigger, serialization}
 import io.quckoo.time.JDK8TimeSource
 
 import org.scalatest.{Matchers, WordSpec}
@@ -42,7 +42,7 @@ object SchedulerHttpRouterSpec {
   final val TestTaskIds: Seq[TaskId] = List(UUID.randomUUID())
   final val TestTaskMap = Map(
     TestTaskIds.head -> TaskDetails(
-      TestJobId, TestPlanIds.head, TestTaskIds.head, Task.NotStarted
+      TestJobId, TestPlanIds.head, TestTaskIds.head, None
     )
   )
 

@@ -29,7 +29,7 @@ import monocle.macros.Lenses
     trigger: Trigger,
     createdTime: DateTime,
     currentTaskId: Option[TaskId] = None,
-    lastOutcome: Task.Outcome = Task.NotStarted,
+    lastOutcome: Option[Execution.Outcome] = None,
     lastTriggeredTime: Option[DateTime] = None,
     lastScheduledTime: Option[DateTime] = None,
     lastExecutionTime: Option[DateTime] = None,

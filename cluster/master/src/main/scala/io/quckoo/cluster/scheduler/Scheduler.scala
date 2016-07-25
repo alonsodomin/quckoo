@@ -198,7 +198,7 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
 
     case TaskScheduled(jobId, planId, taskId) =>
       log.debug("Indexing task {}", taskId)
-      val taskDetails = TaskDetails(jobId, planId, taskId, Task.NotStarted)
+      val taskDetails = TaskDetails(jobId, planId, taskId, None)
       tasks += taskId -> taskDetails
 
     case _ =>

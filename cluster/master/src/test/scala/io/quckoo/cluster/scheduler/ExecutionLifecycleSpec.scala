@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.Props
 import akka.testkit._
 
-import io.quckoo.Task
+import io.quckoo.{Execution, Task}
 import io.quckoo.cluster.scheduler.TaskQueue.EnqueueAck
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id._
@@ -31,7 +31,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
 
   import ExecutionLifecycle._
   import ExecutionLifecycleSpec._
-  import Task._
+  import Execution._
 
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
@@ -48,28 +48,20 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
     val planId = UUID.randomUUID()
 
     val enqueueTimeout = 2 seconds
-    val execution = TestActorRef[ExecutionLifecycle](executionProps(
+    val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "non-enqueued-exec")
-    watch(execution)
+    watch(lifecycle)
 
     "terminate when receiving the Cancel signal" in {
-      execution.underlyingActor.stateName should be (Scheduled)
+      lifecycle.underlyingActor.stateName shouldBe Sleeping
 
-      execution ! Get
-
-      val state = expectMsgType[ExecutionState]
-      state.planId should be (planId)
-      state.task should be (None)
-      state.queue should be (None)
-      state.outcome should be (NotStarted)
-
-      execution ! Cancel(UserRequest)
+      lifecycle ! Cancel(UserRequest)
 
       val resultMsg = expectMsgType[Result]
-      resultMsg.outcome should be (NeverRun(UserRequest))
+      resultMsg.outcome shouldBe NeverRun(UserRequest)
 
-      expectTerminated(execution)
+      expectTerminated(lifecycle)
     }
   }
 
@@ -80,37 +72,35 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
     val taskQueue = TestProbe("queue-1")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
-    val enqueueTimeout = 2 seconds
-    val execution = TestActorRef[ExecutionLifecycle](executionProps(
+    val enqueueTimeout = 1 second
+    val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "enqueued-timedout-exec")
-    watch(execution)
+    watch(lifecycle)
 
     "request to enqueue after receiving WakeUp signal" in {
-      execution.underlyingActor.stateName should be (Scheduled)
+      lifecycle.underlyingActor.stateName shouldBe Sleeping
 
-      execution ! Get
+      lifecycle ! Awake(task, taskQueueSelection)
+      taskQueue.expectMsgType[TaskQueue.Enqueue].task shouldBe task
 
-      val state = expectMsgType[ExecutionState]
-      state.planId should be (planId)
-      state.task should be (None)
-      state.queue should be (None)
-      state.outcome should be (NotStarted)
+      lifecycle ! Get
 
-      execution ! Enqueue(task, taskQueueSelection)
+      val execution = expectMsgType[Execution]
+      execution.planId shouldBe planId
+      execution.task shouldBe task
+      execution.outcome shouldBe None
 
-      taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
-
-      execution.underlyingActor.stateName should be (Scheduled)
+      lifecycle.underlyingActor.stateName shouldBe Enqueuing
     }
 
     "retry to enqueue after timeout and then give up" in {
-      val maxToWait = enqueueTimeout + (2 seconds)
+      val maxToWait = enqueueTimeout * 2
 
       val enqueueMsg = within(enqueueTimeout, maxToWait) {
         taskQueue.expectMsgType[TaskQueue.Enqueue]
       }
-      enqueueMsg.task should be (task)
+      enqueueMsg.task shouldBe task
 
       val resultMsg = within(enqueueTimeout, maxToWait) {
         expectMsgType[Result]
@@ -119,7 +109,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
         case NeverRun(_) =>
       }
 
-      expectTerminated(execution)
+      expectTerminated(lifecycle)
     }
   }
 
@@ -131,43 +121,45 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
-    val execution = TestActorRef[ExecutionLifecycle](executionProps(
+    val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "cancelled-before-starting-exec")
-    watch(execution)
+    watch(lifecycle)
 
     "move to Waiting state after receiving an enqueue ack" in {
-      execution.underlyingActor.stateName should be (Scheduled)
+      lifecycle.underlyingActor.stateName shouldBe Sleeping
 
-      val state = within(100 millis) {
-        execution ! Get
-        expectMsgType[ExecutionState]
-      }
-      state.planId should be (planId)
-      state.task should be (None)
-      state.queue should be (None)
-      state.outcome should be (NotStarted)
-
-      execution ! Enqueue(task, taskQueueSelection)
+      lifecycle ! Awake(task, taskQueueSelection)
       within(enqueueTimeout) {
         taskQueue.expectMsgType[TaskQueue.Enqueue].task shouldBe task
+
+        awaitAssert(lifecycle.underlyingActor.stateName shouldBe Enqueuing)
+
         taskQueue.reply(EnqueueAck(task.id))
 
-        awaitAssert(execution.underlyingActor.stateName shouldBe Waiting)
+        awaitAssert(lifecycle.underlyingActor.stateName shouldBe Waiting)
       }
 
       val triggeredMsg = expectMsgType[Triggered]
       triggeredMsg.task shouldBe task
+
+      val execution = within(100 millis) {
+        lifecycle ! Get
+        expectMsgType[Execution]
+      }
+      execution.planId shouldBe planId
+      execution.task shouldBe task
+      execution.outcome shouldBe None
     }
 
     "terminate when requested to be cancelled" in {
-      execution ! Cancel(UserRequest)
+      lifecycle ! Cancel(UserRequest)
 
       within(2 seconds) {
         val resultMsg = expectMsgType[Result]
         resultMsg.outcome should be (NeverRun(UserRequest))
       }
-      expectTerminated(execution)
+      expectTerminated(lifecycle)
     }
   }
 
@@ -179,29 +171,29 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
-    val execution = TestActorRef[ExecutionLifecycle](executionProps(
+    val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "cancelled-while-in-progress-exec")
-    watch(execution)
+    watch(lifecycle)
 
     "move to Waiting state after receiving an enqueue ack" in {
-      execution.underlyingActor.stateName should be (Scheduled)
+      lifecycle.underlyingActor.stateName shouldBe Sleeping
 
-      val state = within(100 millis) {
-        execution ! Get
-        expectMsgType[ExecutionState]
+      lifecycle ! Awake(task, taskQueueSelection)
+
+      val execution = within(100 millis) {
+        lifecycle ! Get
+        expectMsgType[Execution]
       }
-      state.planId should be (planId)
-      state.task should be (None)
-      state.queue should be (None)
-      state.outcome should be (NotStarted)
+      execution.planId shouldBe planId
+      execution.task shouldBe task
+      execution.outcome shouldBe None
 
-      execution ! Enqueue(task, taskQueueSelection)
       within(enqueueTimeout) {
-        taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+        taskQueue.expectMsgType[TaskQueue.Enqueue].task shouldBe task
         taskQueue.reply(EnqueueAck(task.id))
 
-        awaitAssert(execution.underlyingActor.stateName should be (Waiting))
+        awaitAssert(lifecycle.underlyingActor.stateName shouldBe Waiting)
       }
 
       val triggeredMsg = expectMsgType[Triggered]
@@ -209,18 +201,18 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
     }
 
     "move to InProgress after receiving the Start signal" in {
-      taskQueue.send(execution, Start)
-      awaitAssert(execution.underlyingActor.stateName should be (InProgress))
+      taskQueue.send(lifecycle, Start)
+      awaitAssert(lifecycle.underlyingActor.stateName shouldBe Running)
     }
 
     "send Interrupted as result when requested to Cancel" in {
-      execution ! Cancel(UserRequest)
+      lifecycle ! Cancel(UserRequest)
 
       within(2 seconds) {
         val resultMsg = expectMsgType[Result]
         resultMsg.outcome should be (Interrupted(UserRequest))
       }
-      expectTerminated(execution)
+      expectTerminated(lifecycle)
     }
   }
 
@@ -233,29 +225,29 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
 
     val enqueueTimeout = 5 seconds
     val executionTimeout = 1 second
-    val execution = TestActorRef[ExecutionLifecycle](executionProps(
+    val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2, Some(executionTimeout)
     ), self, "timed-out-while-in-progress-exec")
-    watch(execution)
+    watch(lifecycle)
 
     "move to Waiting state after receiving an enqueue ack" in {
-      execution.underlyingActor.stateName should be (Scheduled)
+      lifecycle.underlyingActor.stateName shouldBe Sleeping
 
-      val state = within(100 millis) {
-        execution ! Get
-        expectMsgType[ExecutionState]
+      lifecycle ! Awake(task, taskQueueSelection)
+
+      val execution = within(100 millis) {
+        lifecycle ! Get
+        expectMsgType[Execution]
       }
-      state.planId should be (planId)
-      state.task should be (None)
-      state.queue should be (None)
-      state.outcome should be (NotStarted)
+      execution.planId shouldBe planId
+      execution.task shouldBe task
+      execution.outcome shouldBe None
 
-      execution ! Enqueue(task, taskQueueSelection)
       within(enqueueTimeout) {
-        taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+        taskQueue.expectMsgType[TaskQueue.Enqueue].task shouldBe task
         taskQueue.reply(EnqueueAck(task.id))
 
-        awaitAssert(execution.underlyingActor.stateName should be (Waiting))
+        awaitAssert(lifecycle.underlyingActor.stateName shouldBe Waiting)
       }
 
       val triggeredMsg = expectMsgType[Triggered]
@@ -263,8 +255,8 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
     }
 
     "move to InProgress after receiving the Start signal" in {
-      taskQueue.send(execution, Start)
-      awaitAssert(execution.underlyingActor.stateName should be (InProgress))
+      taskQueue.send(lifecycle, Start)
+      awaitAssert(lifecycle.underlyingActor.stateName shouldBe Running)
     }
 
     "request to the queue to time out the task" in {
@@ -280,8 +272,8 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
       val resultMsg = within(1 second) {
         expectMsgType[Result]
       }
-      resultMsg.outcome should be (NeverEnding)
-      expectTerminated(execution)
+      resultMsg.outcome shouldBe NeverEnding
+      expectTerminated(lifecycle)
     }
   }
 
@@ -293,29 +285,29 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
-    val execution = TestActorRef[ExecutionLifecycle](executionProps(
+    val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "fails-while-in-progress-exec")
-    watch(execution)
+    watch(lifecycle)
 
     "move to Waiting state after receiving an enqueue ack" in {
-      execution.underlyingActor.stateName should be (Scheduled)
+      lifecycle.underlyingActor.stateName shouldBe Sleeping
 
-      val state = within(100 millis) {
-        execution ! Get
-        expectMsgType[ExecutionState]
+      lifecycle ! Awake(task, taskQueueSelection)
+
+      val execution = within(100 millis) {
+        lifecycle ! Get
+        expectMsgType[Execution]
       }
-      state.planId should be (planId)
-      state.task should be (None)
-      state.queue should be (None)
-      state.outcome should be (NotStarted)
+      execution.planId shouldBe planId
+      execution.task shouldBe task
+      execution.outcome shouldBe None
 
-      execution ! Enqueue(task, taskQueueSelection)
       within(enqueueTimeout) {
-        taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+        taskQueue.expectMsgType[TaskQueue.Enqueue].task shouldBe task
         taskQueue.reply(EnqueueAck(task.id))
 
-        awaitAssert(execution.underlyingActor.stateName should be (Waiting))
+        awaitAssert(lifecycle.underlyingActor.stateName shouldBe Waiting)
       }
 
       val triggeredMsg = expectMsgType[Triggered]
@@ -323,20 +315,20 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
     }
 
     "move to InProgress after receiving the Start signal" in {
-      taskQueue.send(execution, Start)
-      awaitAssert(execution.underlyingActor.stateName should be (InProgress))
+      taskQueue.send(lifecycle, Start)
+      awaitAssert(lifecycle.underlyingActor.stateName shouldBe Running)
     }
 
     "reply with the fault that caused the failure" in {
       val fault = ExceptionThrown.from(new RuntimeException("TEST EXCEPTION"))
 
-      taskQueue.send(execution, Finish(Some(fault)))
+      taskQueue.send(lifecycle, Finish(Some(fault)))
       val resultMsg = within(1 second) {
         expectMsgType[Result]
       }
 
-      resultMsg.outcome should be (Task.Failure(fault))
-      expectTerminated(execution)
+      resultMsg.outcome shouldBe Execution.Failure(fault)
+      expectTerminated(lifecycle)
     }
   }
 
@@ -348,29 +340,29 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
-    val execution = TestActorRef[ExecutionLifecycle](executionProps(
+    val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
       planId, enqueueTimeout, maxEnqueueAttempts = 2
     ), self, "successful-exec")
-    watch(execution)
+    watch(lifecycle)
 
     "move to Waiting state after receiving an enqueue ack" in {
-      execution.underlyingActor.stateName should be (Scheduled)
+      lifecycle.underlyingActor.stateName shouldBe Sleeping
 
-      val state = within(100 millis) {
-        execution ! Get
-        expectMsgType[ExecutionState]
+      lifecycle ! Awake(task, taskQueueSelection)
+
+      val execution = within(100 millis) {
+        lifecycle ! Get
+        expectMsgType[Execution]
       }
-      state.planId should be (planId)
-      state.task should be (None)
-      state.queue should be (None)
-      state.outcome should be (NotStarted)
+      execution.planId shouldBe planId
+      execution.task shouldBe task
+      execution.outcome shouldBe None
 
-      execution ! Enqueue(task, taskQueueSelection)
       within(enqueueTimeout) {
-        taskQueue.expectMsgType[TaskQueue.Enqueue].task should be (task)
+        taskQueue.expectMsgType[TaskQueue.Enqueue].task shouldBe task
         taskQueue.reply(EnqueueAck(task.id))
 
-        awaitAssert(execution.underlyingActor.stateName should be (Waiting))
+        awaitAssert(lifecycle.underlyingActor.stateName shouldBe Waiting)
       }
 
       val triggeredMsg = expectMsgType[Triggered]
@@ -378,18 +370,18 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
     }
 
     "move to InProgress after receiving the Start signal" in {
-      taskQueue.send(execution, Start)
-      awaitAssert(execution.underlyingActor.stateName should be (InProgress))
+      taskQueue.send(lifecycle, Start)
+      awaitAssert(lifecycle.underlyingActor.stateName shouldBe Running)
     }
 
     "reply Success when it completes" in {
-      taskQueue.send(execution, Finish(None))
+      taskQueue.send(lifecycle, Finish(None))
       val resultMsg = within(1 second) {
         expectMsgType[Result]
       }
 
-      resultMsg.outcome should be (Task.Success)
-      expectTerminated(execution)
+      resultMsg.outcome shouldBe Execution.Success
+      expectTerminated(lifecycle)
     }
   }
 
