@@ -21,6 +21,7 @@ import diode.react.ModelProxy
 import io.quckoo.ExecutionPlan
 import io.quckoo.console.components.{Button, Icons, TabPanel}
 import io.quckoo.console.core.ConsoleScope
+import io.quckoo.console.layout.GlobalStyles
 import io.quckoo.protocol.scheduler.ScheduleJob
 
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -64,7 +65,9 @@ object SchedulerPage {
 
       <.div(Style.content,
         <.h2("Scheduler"),
-        Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan"),
+        <.div(GlobalStyles.pageToolbar,
+          Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan")
+        ),
         if (state.showForm) {
           props.proxy.wrap(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
         } else EmptyTag,
