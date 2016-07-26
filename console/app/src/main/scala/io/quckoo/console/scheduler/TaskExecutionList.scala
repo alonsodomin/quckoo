@@ -31,7 +31,7 @@ import japgolly.scalajs.react._
   */
 object TaskExecutionList {
 
-  final val Columns = List("Task ID", "Outcome")
+  final val Columns = List("Task ID", "Artifact", "Job Class", "Status", "Outcome")
 
   final case class Props(proxy: ModelProxy[PotMap[TaskId, TaskExecution]])
 
@@ -40,9 +40,12 @@ object TaskExecutionList {
     def mounted(props: Props): Callback =
       Callback.when(props.proxy().size == 0)(props.proxy.dispatch(LoadExecutions))
 
-    def renderItem(taskId: TaskId, task: TaskExecution, column: String): ReactNode = column match {
-      case "Task ID" => taskId.toString
-      case "Outcome" => task.outcome.toString
+    def renderItem(taskId: TaskId, execution: TaskExecution, column: String): ReactNode = column match {
+      case "Task ID"   => taskId.toString
+      case "Artifact"  => execution.task.artifactId.toString
+      case "Job Class" => execution.task.jobClass
+      case "Status"    => execution.status.toString
+      case "Outcome"   => execution.outcome.map(_.toString).getOrElse[String]("")
     }
 
     def render(props: Props) = {

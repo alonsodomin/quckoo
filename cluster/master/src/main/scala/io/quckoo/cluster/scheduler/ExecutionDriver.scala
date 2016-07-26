@@ -182,7 +182,8 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         log.debug("Execution driver recovery finished. state={}")
 
         if (st.fired) {
-          val lifecycle = context.watch(context.actorOf(st.lifecycleProps, st.plan.currentTask.get.toString))
+          val taskId = st.plan.currentTask.get.id
+          val lifecycle = context.watch(context.actorOf(st.lifecycleProps, taskId.toString))
           context.become(runningExecution(st, lifecycle))
         } else {
           scheduleOrFinish(st) match {
@@ -296,6 +297,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
     case ExecutionLifecycle.Triggered(task) =>
       log.debug("Trigger for task {} has successfully fired.", task.id)
       persist(TaskTriggered(state.jobId, state.planId, task.id)) { event =>
+        mediator ! Publish(topics.Scheduler, event)
         context.become(runningExecution(state.updated(event), lifecycle, None))
       }
 
