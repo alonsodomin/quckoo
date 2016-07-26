@@ -3,4 +3,4 @@
 echo "Publishing into sandboxed Artifactory..."
 cd /vagrant
 
-sbt core/publish exampleJobs/publish
+sbt coreJVM/publish exampleJobs/publish
