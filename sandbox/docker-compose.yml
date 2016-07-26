@@ -8,6 +8,12 @@ cassandra:
   volumes:
     - /var/lib/cassandra:/var/lib/cassandra
 
+artifactory:
+  image: mattgruter/artifactory
+  container_name: artifactory
+  ports:
+    - 8080:8080
+
 master_1:
   image: quckoo/cluster-master
   container_name: master-01
