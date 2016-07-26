@@ -69,11 +69,11 @@ object ExecutionPlanList {
         val jobSpec = model.jobSpecs.get(plan.jobId)
         jobSpec.render(_.displayName)
 
-      case "Current task"   => plan.currentTask.map(_.toString()).getOrElse[String]("")
+      case "Current task"   => plan.currentTask.map(_.id).map(_.toString()).getOrElse[String]("")
       case "Trigger"        => plan.trigger.toString()
       case "Last Scheduled" => DateTimeDisplay(plan.lastScheduledTime)
       case "Last Execution" => DateTimeDisplay(plan.lastExecutionTime)
-      case "Last Outcome"   => plan.lastOutcome.toString
+      case "Last Outcome"   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
       case "Next Execution" => DateTimeDisplay(plan.nextExecutionTime)
     }
 

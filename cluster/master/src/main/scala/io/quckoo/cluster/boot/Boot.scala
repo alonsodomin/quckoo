@@ -17,18 +17,15 @@
 package io.quckoo.cluster.boot
 
 import akka.actor._
-
 import com.typesafe.config.{Config, ConfigFactory}
-
 import io.quckoo.cluster.{QuckooClusterSettings, QuckooFacade}
 import io.quckoo.time.JDK8TimeSource
-
 import org.slf4s.Logging
-
 import scopt.OptionParser
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success}
 
 /**
  * Created by domingueza on 09/07/15.
@@ -78,13 +75,14 @@ object Boot extends App with Logging {
     val settings = QuckooClusterSettings(system)
 
     import system.dispatcher
-    val startUp: Future[Unit] = QuckooFacade.start(settings) recover {
-      case ex: Exception =>
+    QuckooFacade.start(settings) onComplete {
+      case Success(_) =>
+        log.info("Quckoo server initialized!")
+
+      case Failure(ex) =>
         ex.printStackTrace()
         system.terminate()
     }
-
-    Await.ready(startUp, 30 seconds)
   }
 
   parser.parse(args, Options()).foreach { opts =>

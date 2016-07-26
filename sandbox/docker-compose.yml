@@ -23,7 +23,7 @@ master_1:
     - 8095:8095
     - 2551:2551
   volumes:
-    - etc/quckoo:/opt/quckoo/conf
+    - /vagrant/sandbox/etc/quckoo:/opt/quckoo/conf
     #- /home/vagrant/.ivy2/local:/opt/quckoo/resolver/local
   command: -b 192.168.50.25:2551 --nodes 192.168.50.25:2551,192.168.50.25:2552 --cs 192.168.50.25:9042
 
@@ -36,7 +36,7 @@ master_2:
     - 8096:8095
     - 2552:2551
   volumes:
-    - etc/quckoo:/opt/quckoo/conf
+    - /vagrant/sandbox/etc/quckoo:/opt/quckoo/conf
     #- /home/vagrant/.ivy2/local:/opt/quckoo/resolver/local
   command: -b 192.168.50.25:2552 --nodes 192.168.50.25:2551,192.168.50.25:2552 --cs 192.168.50.25:9042
 
@@ -49,7 +49,7 @@ worker_1:
   ports:
     - 5001:5001
   volumes:
-    - etc/quckoo:/opt/quckoo/conf
+    - /vagrant/sandbox/etc/quckoo:/opt/quckoo/conf
     #- /home/vagrant/.ivy2/local:/opt/quckoo/resolver/local
   command: --master 192.168.50.25:2551,192.168.50.25:2552 -b 192.168.50.25:5001
 
@@ -62,6 +62,6 @@ worker_2:
   ports:
     - 5002:5001
   volumes:
-    - etc/quckoo:/opt/quckoo/conf
+    - /vagrant/sandbox/etc/quckoo:/opt/quckoo/conf
     #- /home/vagrant/.ivy2/local:/opt/quckoo/resolver/local
   command: --master 192.168.50.25:2551,192.168.50.25:2552 -b 192.168.50.25:5002

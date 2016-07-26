@@ -2,6 +2,14 @@
 
 set -e
 
+function config_sbt() {
+    echo "Configuring sandboxed SBT..."
+    if [ ! -d ~/.sbt/0.13 ]; then
+        mkdir -p ~/.sbt/0.13
+    fi
+    ln -s /vagrant/sandbox/etc/sbt/0.13/artifactory.sbt ~/.sbt/0.13/artifactory.sbt
+}
+
 function install_devtools() {
     echo "Installing OpenJDK 8..."
     sudo yum install -y java-1.8.0-openjdk-devel &> /dev/null
@@ -35,3 +43,7 @@ sudo yum update -y &> /dev/null
 
 # Dev tools take ages to install, only do so on first build
 test -f ~/.devtools_provisioned || install_devtools
+
+# Link SBT configuration if it does not exists
+test -d ~/.sbt/0.13/artifactory.sbt || config_sbt
+
