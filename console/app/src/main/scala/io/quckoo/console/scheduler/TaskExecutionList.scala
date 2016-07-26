@@ -19,28 +19,28 @@ package io.quckoo.console.scheduler
 import diode.data.PotMap
 import diode.react.ModelProxy
 
+import io.quckoo.TaskExecution
 import io.quckoo.console.components._
-import io.quckoo.console.core.LoadTasks
+import io.quckoo.console.core.LoadExecutions
 import io.quckoo.id.TaskId
-import io.quckoo.protocol.scheduler.TaskDetails
 
 import japgolly.scalajs.react._
 
 /**
   * Created by alonsodomin on 15/05/2016.
   */
-object TaskList {
+object TaskExecutionList {
 
   final val Columns = List("Task ID", "Outcome")
 
-  final case class Props(proxy: ModelProxy[PotMap[TaskId, TaskDetails]])
+  final case class Props(proxy: ModelProxy[PotMap[TaskId, TaskExecution]])
 
   class Backend($: BackendScope[Props, Unit]) {
 
     def mounted(props: Props): Callback =
-      Callback.when(props.proxy().size == 0)(props.proxy.dispatch(LoadTasks))
+      Callback.when(props.proxy().size == 0)(props.proxy.dispatch(LoadExecutions))
 
-    def renderItem(taskId: TaskId, task: TaskDetails, column: String): ReactNode = column match {
+    def renderItem(taskId: TaskId, task: TaskExecution, column: String): ReactNode = column match {
       case "Task ID" => taskId.toString
       case "Outcome" => task.outcome.toString
     }
@@ -52,13 +52,13 @@ object TaskList {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("TaskList").
+  private[this] val component = ReactComponentB[Props]("TaskExecutionList").
     stateless.
     renderBackend[Backend].
     componentDidMount($ => $.backend.mounted($.props)).
     build
 
-  def apply(proxy: ModelProxy[PotMap[TaskId, TaskDetails]]) =
-    component.withKey("task-list")(Props(proxy))
+  def apply(proxy: ModelProxy[PotMap[TaskId, TaskExecution]]) =
+    component.withKey("task-execution-list")(Props(proxy))
 
 }

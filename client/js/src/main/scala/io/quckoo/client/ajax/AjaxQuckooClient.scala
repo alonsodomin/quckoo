@@ -166,20 +166,20 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String])
     }
   }
 
-  override def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]] = {
+  override def executions(implicit ec: ExecutionContext): Future[Map[TaskId, TaskExecution]] = {
     withAuthRefresh { () =>
       logger.debug("Retrieving all tasks from the server...")
-      Ajax.get(TasksURI, headers = authHeaders).map { xhr =>
-        read[Map[TaskId, TaskDetails]](xhr.responseText)
+      Ajax.get(TaskExecutionsURI, headers = authHeaders).map { xhr =>
+        read[Map[TaskId, TaskExecution]](xhr.responseText)
       }
     }
   }
 
-  override def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] = {
+  override def execution(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskExecution]] = {
     withAuthRefresh { () =>
       logger.debug("Retrieving task details. taskId={}", taskId)
-      Ajax.get(TasksURI + "/" + taskId, headers = authHeaders).map { xhr =>
-        Some(read[TaskDetails](xhr.responseText))
+      Ajax.get(TaskExecutionsURI + "/" + taskId, headers = authHeaders).map { xhr =>
+        Some(read[TaskExecution](xhr.responseText))
       }
     } recover {
       case NonFatal(ajaxEx: AjaxException) if ajaxEx.xhr.status == 404 =>

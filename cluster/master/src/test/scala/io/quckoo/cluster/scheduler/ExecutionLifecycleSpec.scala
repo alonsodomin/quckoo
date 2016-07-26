@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.Props
 import akka.testkit._
 
-import io.quckoo.{Execution, Task}
+import io.quckoo.{TaskExecution, Task}
 import io.quckoo.cluster.scheduler.TaskQueue.EnqueueAck
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id._
@@ -31,7 +31,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
 
   import ExecutionLifecycle._
   import ExecutionLifecycleSpec._
-  import Execution._
+  import TaskExecution._
 
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
@@ -86,7 +86,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
 
       lifecycle ! Get
 
-      val execution = expectMsgType[Execution]
+      val execution = expectMsgType[TaskExecution]
       execution.planId shouldBe planId
       execution.task shouldBe task
       execution.outcome shouldBe None
@@ -145,7 +145,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
 
       val execution = within(100 millis) {
         lifecycle ! Get
-        expectMsgType[Execution]
+        expectMsgType[TaskExecution]
       }
       execution.planId shouldBe planId
       execution.task shouldBe task
@@ -183,7 +183,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
 
       val execution = within(100 millis) {
         lifecycle ! Get
-        expectMsgType[Execution]
+        expectMsgType[TaskExecution]
       }
       execution.planId shouldBe planId
       execution.task shouldBe task
@@ -237,7 +237,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
 
       val execution = within(100 millis) {
         lifecycle ! Get
-        expectMsgType[Execution]
+        expectMsgType[TaskExecution]
       }
       execution.planId shouldBe planId
       execution.task shouldBe task
@@ -297,7 +297,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
 
       val execution = within(100 millis) {
         lifecycle ! Get
-        expectMsgType[Execution]
+        expectMsgType[TaskExecution]
       }
       execution.planId shouldBe planId
       execution.task shouldBe task
@@ -327,7 +327,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
         expectMsgType[Result]
       }
 
-      resultMsg.outcome shouldBe Execution.Failure(fault)
+      resultMsg.outcome shouldBe TaskExecution.Failure(fault)
       expectTerminated(lifecycle)
     }
   }
@@ -352,7 +352,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
 
       val execution = within(100 millis) {
         lifecycle ! Get
-        expectMsgType[Execution]
+        expectMsgType[TaskExecution]
       }
       execution.planId shouldBe planId
       execution.task shouldBe task
@@ -380,7 +380,7 @@ class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycle
         expectMsgType[Result]
       }
 
-      resultMsg.outcome shouldBe Execution.Success
+      resultMsg.outcome shouldBe TaskExecution.Success
       expectTerminated(lifecycle)
     }
   }

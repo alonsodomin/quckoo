@@ -90,7 +90,7 @@ object ExecutionDriver {
     def fired: Boolean = {
       import plan._
 
-      if (lastScheduledTime.isEmpty || currentTaskId.isEmpty) false
+      if (lastScheduledTime.isEmpty || currentTask.isEmpty) false
       else {
         val triggerTimeAfterSchedule = for {
           scheduleTime  <- lastScheduledTime
@@ -105,28 +105,32 @@ object ExecutionDriver {
       if (plan.finished) this
       else {
         event match {
-          case TaskScheduled(`jobId`, `planId`, taskId) if plan.currentTaskId.isEmpty =>
-            copy(plan = plan.copy(
-              currentTaskId = Some(taskId),
-              lastScheduledTime = Some(timeSource.currentDateTime)
-            ))
+          case TaskScheduled(`jobId`, `planId`, task)
+            if plan.currentTask.isEmpty =>
+              copy(plan = plan.copy(
+                currentTask = Some(task),
+                lastScheduledTime = Some(timeSource.currentDateTime)
+              ))
 
-          case TaskTriggered(`jobId`, `planId`, taskId) if plan.currentTaskId.contains(taskId) =>
-            copy(plan = plan.copy(
-              lastTriggeredTime = Some(timeSource.currentDateTime)
-            ))
+          case TaskTriggered(`jobId`, `planId`, taskId)
+            if plan.currentTask.map(_.id).contains(taskId) =>
+              copy(plan = plan.copy(
+                lastTriggeredTime = Some(timeSource.currentDateTime)
+              ))
 
-          case TaskCompleted(`jobId`, `planId`, taskId, outcome) if plan.currentTaskId.contains(taskId) =>
-            copy(plan = plan.copy(
-              currentTaskId = None,
-              lastExecutionTime = Some(timeSource.currentDateTime),
-              lastOutcome = Some(outcome)),
-              completedTasks = completedTasks :+ taskId
-            )
+          case TaskCompleted(`jobId`, `planId`, taskId, outcome)
+            if plan.currentTask.map(_.id).contains(taskId) =>
+              copy(plan = plan.copy(
+                  currentTask = None,
+                  lastExecutionTime = Some(timeSource.currentDateTime),
+                  lastOutcome = Some(outcome)
+                ),
+                completedTasks = completedTasks :+ taskId
+              )
 
           case ExecutionPlanFinished(`jobId`, `planId`) =>
             copy(plan = plan.copy(
-              currentTaskId = None,
+              currentTask = None,
               finishedTime = Some(timeSource.currentDateTime)
             ))
 
@@ -178,7 +182,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         log.debug("Execution driver recovery finished. state={}")
 
         if (st.fired) {
-          val lifecycle = context.watch(context.actorOf(st.lifecycleProps, st.plan.currentTaskId.get.toString))
+          val lifecycle = context.watch(context.actorOf(st.lifecycleProps, st.plan.currentTask.get.toString))
           context.become(runningExecution(st, lifecycle))
         } else {
           scheduleOrFinish(st) match {
@@ -273,7 +277,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
       // Create a trigger to fire the task
       val trigger = createTrigger(task, state.planId, lifecycle, time)
-      persist(TaskScheduled(state.jobId, state.planId, task.id)) { event =>
+      persist(TaskScheduled(state.jobId, state.planId, task)) { event =>
         unstashAll()
 
         mediator ! Publish(topics.Scheduler, event)
@@ -303,20 +307,20 @@ class ExecutionDriver(implicit timeSource: TimeSource)
         log.debug("Cancelling trigger for execution plan. planId={}", state.planId)
         trigger.foreach(_.cancel())
       }
-      lifecycle ! ExecutionLifecycle.Cancel(Execution.UserRequest)
+      lifecycle ! ExecutionLifecycle.Cancel(TaskExecution.UserRequest)
       context.become(runningExecution(state, context.unwatch(lifecycle)))
 
     case ExecutionLifecycle.Result(outcome) =>
-      state.plan.currentTaskId.foreach { taskId =>
-        persist(TaskCompleted(state.jobId, state.planId, taskId, outcome)) { event =>
-          log.debug("Task finished. taskId={}, outcome={}", taskId, outcome)
+      state.plan.currentTask.foreach { task =>
+        persist(TaskCompleted(state.jobId, state.planId, task.id, outcome)) { event =>
+          log.debug("Task finished. taskId={}, outcome={}", task.id, outcome)
           mediator ! Publish(topics.Scheduler, event)
 
           val newState = state.updated(event)
           context.unwatch(lifecycle)
 
           unstashAll()
-          proceedNext(newState, taskId, outcome)
+          proceedNext(newState, task.id, outcome)
         }
       }
 
@@ -358,21 +362,23 @@ class ExecutionDriver(implicit timeSource: TimeSource)
   }
 
   private def scheduleOrFinish(state: DriverState) = {
-    val task = {
-      val taskId = state.plan.currentTaskId.getOrElse(UUID.randomUUID())
-      Task(taskId, state.jobSpec.artifactId, state.jobSpec.jobClass)
-    }
+    def createTask = Task(
+      UUID.randomUUID(),
+      state.jobSpec.artifactId,
+      state.jobSpec.jobClass
+    )
+    val task = state.plan.currentTask.getOrElse(createTask)
     state.plan.nextExecutionTime.map(when => ScheduleTask(task, when)).getOrElse(FinishPlan)
   }
 
-  private def proceedNext(state: DriverState, lastTaskId: TaskId, outcome: Execution.Outcome): Unit = {
+  private def proceedNext(state: DriverState, lastTaskId: TaskId, outcome: TaskExecution.Outcome): Unit = {
     def nextCommand = {
       if (state.plan.trigger.isRecurring) {
         outcome match {
-          case Execution.Success =>
+          case TaskExecution.Success =>
             scheduleOrFinish(state)
 
-          case Execution.Failure(cause) =>
+          case TaskExecution.Failure(cause) =>
             if (shouldRetry(cause)) {
               // TODO improve retry process
               scheduleOrFinish(state)

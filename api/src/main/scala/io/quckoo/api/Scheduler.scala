@@ -16,7 +16,7 @@
 
 package io.quckoo.api
 
-import io.quckoo.ExecutionPlan
+import io.quckoo.{ExecutionPlan, TaskExecution}
 import io.quckoo.id.{PlanId, TaskId}
 import io.quckoo.protocol.registry.JobNotFound
 import io.quckoo.protocol.scheduler._
@@ -34,9 +34,9 @@ trait Scheduler {
 
   def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]]
 
-  def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]]
+  def executions(implicit ec: ExecutionContext): Future[Map[TaskId, TaskExecution]]
 
-  def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]]
+  def execution(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskExecution]]
 
   def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]]
 

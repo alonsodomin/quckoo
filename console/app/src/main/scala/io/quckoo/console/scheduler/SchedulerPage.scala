@@ -61,7 +61,7 @@ object SchedulerPage {
 
     def render(props: Props, state: State) = {
       val userScopeConnector = props.proxy.connect(_.userScope)
-      val taskConnector = props.proxy.connect(_.userScope.tasks)
+      val executionConnector = props.proxy.connect(_.userScope.executions)
 
       <.div(Style.content,
         <.h2("Scheduler"),
@@ -73,7 +73,7 @@ object SchedulerPage {
         } else EmptyTag,
         TabPanel(
           "Execution Plans" -> userScopeConnector(ExecutionPlanList(_)),
-          "Tasks"           -> taskConnector(TaskList(_))
+          "Executions"      -> executionConnector(TaskExecutionList(_))
         )
       )
     }

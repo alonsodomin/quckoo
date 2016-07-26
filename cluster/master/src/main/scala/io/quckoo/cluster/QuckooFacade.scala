@@ -23,7 +23,6 @@ import akka.pattern._
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
-
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.registry.RegistryEventPublisher
@@ -36,13 +35,11 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.time.TimeSource
-import io.quckoo.{ExecutionPlan, JobSpec}
-
+import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
-
 import scalaz._
 
 /**
@@ -101,18 +98,18 @@ final class QuckooFacade(core: ActorRef)
     retry(internalRequest, 250 millis, 3)
   }
 
-  def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]] = {
-    val tasks = Source.actorRef[(TaskId, TaskDetails)](100, OverflowStrategy.fail).
-      mapMaterializedValue(upstream => core.tell(GetTasks, upstream))
-    tasks.runFold(Map.empty[TaskId, TaskDetails])((map, pair) => map + pair)
+  def executions(implicit ec: ExecutionContext): Future[Map[TaskId, TaskExecution]] = {
+    val tasks = Source.actorRef[(TaskId, TaskExecution)](100, OverflowStrategy.fail).
+      mapMaterializedValue(upstream => core.tell(GetTaskExecutions, upstream))
+    tasks.runFold(Map.empty[TaskId, TaskExecution])((map, pair) => map + pair)
   }
 
-  def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] = {
+  def execution(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskExecution]] = {
     implicit val timeout = Timeout(5 seconds)
 
-    (core ? GetTask(taskId)) map {
-      case task: TaskDetails      => Some(task)
-      case TaskNotFound(`taskId`) => None
+    (core ? GetTaskExecution(taskId)) map {
+      case task: TaskExecution             => Some(task)
+      case TaskExecutionNotFound(`taskId`) => None
     }
   }
 

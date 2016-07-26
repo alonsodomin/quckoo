@@ -20,7 +20,7 @@ import akka.actor.{ActorSelection, Props}
 import akka.persistence.fsm.PersistentFSM.Normal
 import akka.persistence.fsm.{LoggingPersistentFSM, PersistentFSM}
 
-import io.quckoo.{Task, Execution}
+import io.quckoo.{Task, TaskExecution}
 import io.quckoo.cluster.scheduler.TaskQueue.EnqueueAck
 import io.quckoo.fault.Fault
 import io.quckoo.id.PlanId
@@ -32,7 +32,7 @@ import scala.reflect.ClassTag
  * Created by aalonsodominguez on 17/08/15.
  */
 object ExecutionLifecycle {
-  import Execution._
+  import TaskExecution._
 
   final val DefaultEnqueueTimeout = 10 seconds
   final val DefaultMaxEnqueueAttempts = 3
@@ -100,7 +100,7 @@ class ExecutionLifecycle(
     with LoggingPersistentFSM[ExecutionLifecycle.Phase, ExecutionLifecycle.ExecutionState, ExecutionLifecycle.ExecutionEvent] {
 
   import ExecutionLifecycle._
-  import Execution._
+  import TaskExecution._
 
   private[this] var enqueueAttempts = 0
 
@@ -116,7 +116,7 @@ class ExecutionLifecycle(
       stop applying Cancelled(reason)
 
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
-      stay replying Execution(planId, task, Scheduled, outcome)
+      stay replying TaskExecution(planId, task, Scheduled, outcome)
   }
 
   when(Enqueuing) {
@@ -125,7 +125,7 @@ class ExecutionLifecycle(
       goto(Waiting) applying Triggered(task)
 
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
-      stay replying Execution(planId, task, Scheduled, outcome) forMax enqueueTimeout
+      stay replying TaskExecution(planId, task, Scheduled, outcome) forMax enqueueTimeout
 
     case Event(StateTimeout, ExecutionState(_, Some(task), Some(queue), _))  =>
       enqueueAttempts += 1
@@ -150,7 +150,7 @@ class ExecutionLifecycle(
       stop applying Cancelled(reason)
 
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
-      stay replying Execution(planId, task, Enqueued, outcome)
+      stay replying TaskExecution(planId, task, Enqueued, outcome)
 
     case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
       // May happen after recovery
@@ -159,7 +159,7 @@ class ExecutionLifecycle(
 
   when(Running) {
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
-      stay replying Execution(planId, task, InProgress, outcome)
+      stay replying TaskExecution(planId, task, InProgress, outcome)
 
     case Event(Cancel(reason), _) =>
       log.debug("Cancelling execution upon request. Reason: {}", reason)

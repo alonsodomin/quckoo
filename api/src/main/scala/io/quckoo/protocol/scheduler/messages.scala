@@ -16,12 +16,11 @@
 
 package io.quckoo.protocol.scheduler
 
-import io.quckoo.{Execution, Trigger}
+import io.quckoo.{TaskExecution, Task, Trigger}
 import io.quckoo.Trigger.Immediate
 import io.quckoo.fault.Fault
 import io.quckoo.id._
 import io.quckoo.protocol.{Command, Event}
-
 import monocle.macros.Lenses
 
 import scala.concurrent.duration.FiniteDuration
@@ -37,9 +36,9 @@ final case class ScheduleJob(
     timeout: Option[FiniteDuration] = None
 ) extends SchedulerCommand
 
-final case class TaskScheduled(jobId: JobId, planId: PlanId, taskId: TaskId) extends SchedulerEvent
+final case class TaskScheduled(jobId: JobId, planId: PlanId, task: Task) extends SchedulerEvent
 final case class TaskTriggered(jobId: JobId, planId: PlanId, taskId: TaskId) extends SchedulerEvent
-final case class TaskCompleted(jobId: JobId, planId: PlanId, taskId: TaskId, outcome: Execution.Outcome) extends SchedulerEvent
+final case class TaskCompleted(jobId: JobId, planId: PlanId, taskId: TaskId, outcome: TaskExecution.Outcome) extends SchedulerEvent
 
 final case class JobNotEnabled(jobId: JobId) extends SchedulerEvent
 final case class JobFailedToSchedule(jobId: JobId, cause: Fault) extends SchedulerEvent
@@ -52,9 +51,8 @@ final case class GetExecutionPlan(planId: PlanId) extends SchedulerCommand
 final case class ExecutionPlanNotFound(planId: PlanId) extends SchedulerEvent
 final case class CancelExecutionPlan(planId: PlanId) extends SchedulerCommand
 
-final case class TaskDetails(jobId: JobId, planId: PlanId, taskId: TaskId, outcome: Option[Execution.Outcome])
-case object GetTasks extends SchedulerCommand
-final case class GetTask(taskId: TaskId) extends SchedulerCommand
-final case class TaskNotFound(taskId: TaskId) extends SchedulerEvent
+case object GetTaskExecutions extends SchedulerCommand
+final case class GetTaskExecution(taskId: TaskId) extends SchedulerCommand
+final case class TaskExecutionNotFound(taskId: TaskId) extends SchedulerEvent
 
 final case class TaskQueueUpdated(pendingTasks: Int, inProgressTasks: Int) extends SchedulerEvent

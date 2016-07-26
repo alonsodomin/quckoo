@@ -22,12 +22,12 @@ import io.quckoo.id.TaskId
 /**
   * Created by alonsodomin on 28/05/2016.
   */
-object TaskFetcher extends Fetch[TaskId] {
+object ExecutionFetcher extends Fetch[TaskId] {
 
   override def fetch(key: TaskId): Unit =
-    ConsoleCircuit.dispatch(RefreshTasks(Set(key)))
+    ConsoleCircuit.dispatch(RefreshExecutions(Set(key)))
 
   override def fetch(keys: Traversable[TaskId]): Unit =
-    ConsoleCircuit.dispatch(RefreshTasks(keys.toSet))
+    ConsoleCircuit.dispatch(RefreshExecutions(keys.toSet))
 
 }

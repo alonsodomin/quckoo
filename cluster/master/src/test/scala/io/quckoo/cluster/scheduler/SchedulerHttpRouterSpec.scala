@@ -10,10 +10,10 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
 
 import io.quckoo.api.{Scheduler => SchedulerApi}
-import io.quckoo.id.{JobId, PlanId, TaskId}
+import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.{ExecutionPlan, Trigger, serialization}
+import io.quckoo._
 import io.quckoo.time.JDK8TimeSource
 
 import org.scalatest.{Matchers, WordSpec}
@@ -40,9 +40,10 @@ object SchedulerHttpRouterSpec {
   )
 
   final val TestTaskIds: Seq[TaskId] = List(UUID.randomUUID())
+  final val TestTask = Task(TestTaskIds.head, ArtifactId("com.example", "example", "latest"), "")
   final val TestTaskMap = Map(
-    TestTaskIds.head -> TaskDetails(
-      TestJobId, TestPlanIds.head, TestTaskIds.head, None
+    TestTaskIds.head -> TaskExecution(
+      TestPlanIds.head, TestTask, TaskExecution.Scheduled, None
     )
   )
 
@@ -76,10 +77,10 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
   override def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]] =
     Future.successful(TestPlanMap)
 
-  override def tasks(implicit ec: ExecutionContext): Future[Map[TaskId, TaskDetails]] =
+  override def executions(implicit ec: ExecutionContext): Future[Map[TaskId, TaskExecution]] =
     Future.successful(TestTaskMap)
 
-  override def task(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskDetails]] =
+  override def execution(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskExecution]] =
     Future.successful(TestTaskMap.get(taskId))
 
   override def schedulerEvents: Source[SchedulerEvent, NotUsed] = ???
@@ -129,21 +130,21 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     }
 
     "reply with a list of task ids" in {
-      Get(endpoint("/tasks")) ~> entryPoint ~> check {
-        responseAs[Map[TaskId, TaskDetails]] shouldBe TestTaskMap
+      Get(endpoint("/executions")) ~> entryPoint ~> check {
+        responseAs[Map[TaskId, TaskExecution]] shouldBe TestTaskMap
       }
     }
 
     "return a task when getting from a valid ID" in {
       val taskId = TestTaskIds.head
-      Get(endpoint(s"/tasks/$taskId")) ~> entryPoint ~> check {
-        responseAs[TaskDetails] shouldBe TestTaskMap(taskId)
+      Get(endpoint(s"/executions/$taskId")) ~> entryPoint ~> check {
+        responseAs[TaskExecution] shouldBe TestTaskMap(taskId)
       }
     }
 
     "return a 404 when asked for a task that does not exist" in {
       val taskId = UUID.randomUUID()
-      Get(endpoint(s"/tasks/$taskId")) ~> entryPoint ~> check {
+      Get(endpoint(s"/executions/$taskId")) ~> entryPoint ~> check {
         status === NotFound
       }
     }

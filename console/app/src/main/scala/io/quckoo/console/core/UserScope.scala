@@ -18,14 +18,13 @@ package io.quckoo.console.core
 
 import diode.data._
 
-import io.quckoo.{ExecutionPlan, JobSpec}
+import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.id.{JobId, PlanId, TaskId}
-import io.quckoo.protocol.scheduler.TaskDetails
 
 final case class UserScope(
-  jobSpecs: PotMap[JobId, JobSpec],
-  executionPlans: PotMap[PlanId, ExecutionPlan],
-  tasks: PotMap[TaskId, TaskDetails]
+    jobSpecs: PotMap[JobId, JobSpec],
+    executionPlans: PotMap[PlanId, ExecutionPlan],
+    executions: PotMap[TaskId, TaskExecution]
 )
 
 object UserScope {
@@ -33,7 +32,7 @@ object UserScope {
   def initial = UserScope(
     jobSpecs       = PotMap(JobSpecFetcher),
     executionPlans = PotMap(ExecutionPlanFetcher),
-    tasks          = PotMap(TaskFetcher)
+    executions     = PotMap(ExecutionFetcher)
   )
 
 }

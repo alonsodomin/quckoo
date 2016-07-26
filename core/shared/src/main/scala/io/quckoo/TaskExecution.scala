@@ -6,13 +6,13 @@ import io.quckoo.id.PlanId
 /**
   * Created by alonsodomin on 24/07/2016.
   */
-final case class Execution(
+final case class TaskExecution(
   planId: PlanId,
   task: Task,
-  status: Execution.Status,
-  outcome: Option[Execution.Outcome] = None
+  status: TaskExecution.Status,
+  outcome: Option[TaskExecution.Outcome] = None
 )
-object Execution {
+object TaskExecution {
   sealed trait Status
   case object Scheduled extends Status
   case object Enqueued extends Status

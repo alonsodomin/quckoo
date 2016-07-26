@@ -9,7 +9,7 @@ import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.testkit._
 
-import io.quckoo.{ExecutionPlan, Execution, JobSpec, Task, Trigger}
+import io.quckoo.{ExecutionPlan, TaskExecution, JobSpec, Task, Trigger}
 import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
@@ -133,7 +133,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
         val completedMsg = eventListener.expectMsgType[TaskCompleted]
         completedMsg.jobId shouldBe TestJobId
         completedMsg.planId shouldBe planId
-        completedMsg.outcome shouldBe Execution.NeverRun(Execution.UserRequest)
+        completedMsg.outcome shouldBe TaskExecution.NeverRun(TaskExecution.UserRequest)
 
         val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
         finishedMsg.planId shouldBe planId
@@ -155,7 +155,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
 
         plans should contain key planId
         plans(planId) should matchPattern {
-          case ExecutionPlan(`TestJobId`, `planId`, _, _, _, Some(Execution.NeverRun(Execution.UserRequest)), _, _, _, _) =>
+          case ExecutionPlan(`TestJobId`, `planId`, _, _, _, Some(TaskExecution.NeverRun(TaskExecution.UserRequest)), _, _, _, _) =>
         }
       }
     }

@@ -16,12 +16,12 @@
 
 package io.quckoo.console.core
 
-import diode.data.{Failed, Pot, Ready, Unavailable}
-import io.quckoo.{ExecutionPlan, JobSpec}
+import diode.data.{Pot, Ready, Unavailable}
+
+import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.client.QuckooClient
 import io.quckoo.id._
-import io.quckoo.net.QuckooState
-import io.quckoo.protocol.scheduler.TaskDetails
+
 import slogging.LoggerHolder
 
 import scala.concurrent.Future
@@ -33,7 +33,7 @@ import scalajs.concurrent.JSExecutionContext.Implicits.queue
 private[core] trait ConsoleOps { this: LoggerHolder =>
 
   def refreshClusterStatus(implicit client: QuckooClient): Future[ClusterStateLoaded] =
-    client.clusterState.map(ClusterStateLoaded(_))
+    client.clusterState.map(ClusterStateLoaded)
 
   def loadJobSpec(jobId: JobId)(implicit client: QuckooClient): Future[(JobId, Pot[JobSpec])] =
     client.fetchJob(jobId).map {
@@ -64,16 +64,16 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       case None       => id -> Unavailable
     }
 
-  def loadTasks(ids: Set[TaskId] = Set.empty)(implicit client: QuckooClient): Future[Map[TaskId, Pot[TaskDetails]]] = {
+  def loadTasks(ids: Set[TaskId] = Set.empty)(implicit client: QuckooClient): Future[Map[TaskId, Pot[TaskExecution]]] = {
     if (ids.isEmpty) {
-      client.tasks.map(_.map { case (k, v) => (k, Ready(v)) })
+      client.executions.map(_.map { case (k, v) => (k, Ready(v)) })
     } else {
       Future.sequence(ids.map(loadTask)).map(_.toMap)
     }
   }
 
-  def loadTask(id: TaskId)(implicit client: QuckooClient): Future[(TaskId, Pot[TaskDetails])] =
-    client.task(id).map {
+  def loadTask(id: TaskId)(implicit client: QuckooClient): Future[(TaskId, Pot[TaskExecution])] =
+    client.execution(id).map {
       case Some(task) => id -> Ready(task)
       case None       => id -> Unavailable
     }

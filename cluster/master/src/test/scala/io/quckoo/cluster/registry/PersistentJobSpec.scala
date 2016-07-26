@@ -22,7 +22,7 @@ object PersistentJobSpec {
 
 }
 
-class PersistentJobSpec extends TestKit(TestActorSystem("JobStateSpec")) with ImplicitSender
+class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) with ImplicitSender
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll
     with Matchers {
 

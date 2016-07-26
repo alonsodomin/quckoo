@@ -29,7 +29,7 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
-import io.quckoo.{ExecutionPlan, JobSpec, Task}
+import io.quckoo.{TaskExecution, ExecutionPlan, JobSpec, Task}
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
 import io.quckoo.id._
@@ -99,7 +99,7 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
   )
 
   private[this] var planIds = Set.empty[PlanId]
-  private[this] var tasks = Map.empty[TaskId, TaskDetails]
+  private[this] var executions = Map.empty[TaskId, TaskExecution]
 
   override def preStart(): Unit = {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, self)
@@ -160,15 +160,15 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
         mapAsync(2)(fetchPlanAsync).
         runWith(Sink.actorRef(origSender, Status.Success(GetExecutionPlans)))
 
-    case get @ GetTask(taskId) =>
-      if (tasks.contains(taskId)) {
-        sender() ! tasks(taskId)
+    case get @ GetTaskExecution(taskId) =>
+      if (executions.contains(taskId)) {
+        sender() ! executions(taskId)
       } else {
-        sender() ! TaskNotFound(taskId)
+        sender() ! TaskExecutionNotFound(taskId)
       }
 
-    case GetTasks =>
-      Source(tasks).runWith(Sink.actorRef(sender(), Status.Success(GetTasks)))
+    case GetTaskExecutions =>
+      Source(executions).runWith(Sink.actorRef(sender(), Status.Success(GetTaskExecutions)))
 
     case msg: WorkerMessage =>
       taskQueue forward msg
@@ -196,19 +196,27 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
       log.debug("Indexing execution plan {}", planId)
       planIds += planId
 
-    case TaskScheduled(jobId, planId, taskId) =>
-      log.debug("Indexing task {}", taskId)
-      val taskDetails = TaskDetails(jobId, planId, taskId, None)
-      tasks += taskId -> taskDetails
+    case TaskScheduled(jobId, planId, task) =>
+      val execution = TaskExecution(planId, task, TaskExecution.Scheduled)
+      executions += (task.id -> execution)
+
+    case TaskTriggered(_, _, taskId) =>
+      executions += (taskId -> executions(taskId).copy(status = TaskExecution.InProgress))
+
+    case TaskCompleted(_, _, taskId, outcome) =>
+      executions += (taskId -> executions(taskId).copy(
+        status = TaskExecution.InProgress,
+        outcome = Some(outcome)
+      ))
 
     case _ =>
   }
 
   private def warmUp(): Unit = {
     val executionPlanEvents = journal.currentEventsByTag(tags.ExecutionPlan, 0)
-    val taskEvents = journal.currentEventsByTag(tags.Task, 0)
+    val executionEvents = journal.currentEventsByTag(tags.Task, 0)
 
-    executionPlanEvents.concat(taskEvents).
+    executionPlanEvents.concat(executionEvents).
       runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
   }
 

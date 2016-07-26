@@ -29,7 +29,7 @@ import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
-import io.quckoo.{ExecutionPlan, JobSpec}
+import io.quckoo.{ExecutionPlan, TaskExecution, JobSpec}
 
 import slogging.LazyLogging
 
@@ -70,8 +70,8 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   def zoomIntoJobSpecs: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]] =
     zoomIntoUserScope.zoomRW(_.jobSpecs) { (model, specs) => model.copy(jobSpecs = specs) }
 
-  def zoomIntoTasks: ModelRW[ConsoleScope, PotMap[TaskId, TaskDetails]] =
-    zoomIntoUserScope.zoomRW(_.tasks) { (model, tasks) => model.copy(tasks = tasks) }
+  def zoomIntoExecutions: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]] =
+    zoomIntoUserScope.zoomRW(_.executions) { (model, tasks) => model.copy(executions = tasks) }
 
   val notificationHandler: HandlerFunction = (model, action) => action match {
     case Growl(notification) =>
@@ -229,24 +229,24 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         )
         effectOnly(effects)
 
-      case TaskScheduled(_, _, taskId) =>
+      case TaskScheduled(_, _, task) =>
         val effects = Effects.set(
-          Growl(Notification.info(s"Task $taskId has been scheduled.")),
-          RefreshTasks(Set(taskId))
+          Growl(Notification.info(s"Task ${task.id} has been scheduled.")),
+          RefreshExecutions(Set(task.id))
         )
         effectOnly(effects)
 
       case TaskTriggered(_, _, taskId) =>
         val effects = Effects.set(
           Growl(Notification.info(s"Task $taskId has been triggered.")),
-          RefreshTasks(Set(taskId))
+          RefreshExecutions(Set(taskId))
         )
         effectOnly(effects)
 
       case TaskCompleted(_, _, taskId, _) =>
         val effects = Effects.set(
           Growl(Notification.info(s"Task $taskId has completed.")),
-          RefreshTasks(Set(taskId))
+          RefreshExecutions(Set(taskId))
         )
         effectOnly(effects)
     }
@@ -307,19 +307,19 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
   }
 
-  val taskHandler = new ActionHandler(zoomIntoTasks)
-      with ConnectedHandler[PotMap[TaskId, TaskDetails]] {
+  val taskHandler = new ActionHandler(zoomIntoExecutions)
+      with ConnectedHandler[PotMap[TaskId, TaskExecution]] {
 
     override protected def handle = {
-      case LoadTasks =>
+      case LoadExecutions =>
         withClient { implicit client =>
-          effectOnly(Effect(loadTasks().map(TasksLoaded)))
+          effectOnly(Effect(loadTasks().map(ExecutionsLoaded)))
         }
 
-      case TasksLoaded(tasks) if tasks.nonEmpty =>
-        updated(PotMap(TaskFetcher, tasks))
+      case ExecutionsLoaded(tasks) if tasks.nonEmpty =>
+        updated(PotMap(ExecutionFetcher, tasks))
 
-      case action: RefreshTasks =>
+      case action: RefreshExecutions =>
         withClient { implicit client =>
           val refreshEffect = action.effect(loadTasks(action.keys))(identity)
           action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
