@@ -42,7 +42,7 @@ package object ivy extends Logging {
 
     val mainResolverChain = buildResolverChain(
       name = "main",
-      config.repositories ++ IvyConfiguration.DefaultRepositories
+      IvyConfiguration.DefaultRepositories ++ config.repositories
     )
     ivySettings.addResolver(mainResolverChain)
     ivySettings.setDefaultResolver(mainResolverChain.getName)

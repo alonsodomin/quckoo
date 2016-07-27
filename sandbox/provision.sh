@@ -3,11 +3,14 @@
 set -e
 
 function config_sbt() {
-    echo "Configuring sandboxed SBT..."
-    if [ ! -d ~/.sbt/0.13 ]; then
-        mkdir -p ~/.sbt/0.13
+    if [ ! -f /vagrant/sandbox/etc/sbt/0.13/artifactory.sbt ]; then
+        echo "Configuring sandboxed SBT..."
+        if [ ! -d /home/vagrant/.sbt/0.13 ]; then
+            mkdir -p /home/vagrant/.sbt/0.13
+        fi
+        ln -s /vagrant/sandbox/etc/sbt/0.13/artifactory.sbt /home/vagrant/.sbt/0.13/artifactory.sbt
+        chown vagrant /home/vagrant/.sbt/0.13/artifactory.sbt
     fi
-    ln -s /vagrant/sandbox/etc/sbt/0.13/artifactory.sbt ~/.sbt/0.13/artifactory.sbt
 }
 
 function install_devtools() {
@@ -45,5 +48,5 @@ sudo yum update -y &> /dev/null
 test -f ~/.devtools_provisioned || install_devtools
 
 # Link SBT configuration if it does not exists
-test -d ~/.sbt/0.13/artifactory.sbt || config_sbt
+config_sbt
 
