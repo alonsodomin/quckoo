@@ -33,7 +33,8 @@ class IvyConfiguration private (
    val resolutionDir: File,
    val repositoryDir: File,
    val ivyHome: Option[File],
-   val repositories: Seq[Repository] = Seq.empty)
+   val repositories: Seq[Repository] = Seq.empty
+)
 
 object IvyConfiguration {
   final val BaseDir = "resolver.work-dir"
