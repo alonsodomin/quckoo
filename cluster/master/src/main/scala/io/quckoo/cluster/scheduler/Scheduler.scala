@@ -205,7 +205,7 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
 
     case TaskCompleted(_, _, taskId, outcome) =>
       executions += (taskId -> executions(taskId).copy(
-        status = TaskExecution.InProgress,
+        status = TaskExecution.Complete,
         outcome = Some(outcome)
       ))
 
