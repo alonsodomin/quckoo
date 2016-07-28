@@ -15,7 +15,11 @@ object LoginTest extends TestSuite {
   import LoginTestDsl._
 
   val invariants: dsl.Invariants = {
-    val invars = dsl.emptyInvariant
+    var invars = dsl.emptyInvariant
+
+    invars &= dsl.focus("Input values match state values").
+      obsAndState(obs => (obs.usernameInput.value, obs.passwordInput.value), st => (st.username, st.password)).
+      assert.equal
 
     invars
   }
@@ -32,6 +36,7 @@ object LoginTest extends TestSuite {
       def observe() = new LoginObserver(comp.htmlDomZipper)
 
       val test = plan.
+        addInvariants(invariants).
         withInitialState(State("", "")).
         test(Observer watch observe())
 

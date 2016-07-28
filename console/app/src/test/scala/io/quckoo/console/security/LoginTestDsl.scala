@@ -17,10 +17,12 @@ object LoginTestDsl {
   val dsl = Dsl[Unit, LoginObserver, State]
 
   def setUsername(username: String): dsl.Actions =
-    dsl.action(s"Set username as $username")(ChangeEventData(username) simulate _.obs.usernameInput)
+    dsl.action(s"Set username as $username")(ChangeEventData(username) simulate _.obs.usernameInput).
+      updateState(State.username.set(username))
 
   def setPassword(password: String): dsl.Actions =
-    dsl.action(s"Set password as $password")(ChangeEventData(password) simulate _.obs.passwordInput)
+    dsl.action(s"Set password as $password")(ChangeEventData(password) simulate _.obs.passwordInput).
+      updateState(State.password.set(password))
 
   def submitForm(): dsl.Actions =
     dsl.action("Submit login form")(Simulate click _.obs.submitButton)
