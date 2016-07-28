@@ -10,7 +10,7 @@ import utest.framework.{Test, Tree}
 /**
   * Created by alonsodomin on 11/07/2016.
   */
-class LoginTest extends TestSuite {
+object LoginTest extends TestSuite {
   import LoginTestState._
   import LoginTestDsl._
 
