@@ -3,13 +3,13 @@ package io.quckoo.resolver.ivy
 import java.io.File
 import java.net.URL
 
-import io.quckoo.fault.{DownloadFailed, Fault, ResolutionFault, UnresolvedDependency}
+import io.quckoo.fault._
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver.Artifact
 
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor.{ModuleDescriptor, Artifact => IvyArtifact}
-import org.apache.ivy.core.module.id.ModuleRevisionId
+import org.apache.ivy.core.module.id.{ModuleId, ModuleRevisionId}
 import org.apache.ivy.core.report.{ArtifactDownloadReport, ResolveReport}
 import org.apache.ivy.core.resolve.{IvyNode, ResolveOptions}
 
@@ -61,31 +61,34 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
     when(mockUnresolvedNode.getId).thenReturn(TestModuleRevisionId)
 
     And("an artifact that fails to download")
-    val failedDownloadName = "org.example#test"
+    val failedDownloadArtifactId = ArtifactId("org.example", "test", "latest")
     val failedDownloadArtifact = mock[IvyArtifact]
+    val failedDownloadModuleId = new ModuleRevisionId(
+      new ModuleId(failedDownloadArtifactId.organization, failedDownloadArtifactId.name), failedDownloadArtifactId.version
+    )
     val failedDownloadReport = new ArtifactDownloadReport(failedDownloadArtifact)
-    val expectedDownloadFailed = DownloadFailed(failedDownloadName)
+    val expectedDownloadFailed = DownloadFailed(failedDownloadArtifactId, DownloadFailed.Other(""))
 
     when(mockReport.getFailedArtifactsReports).
       thenReturn(Array[ArtifactDownloadReport](failedDownloadReport))
-    when(failedDownloadArtifact.getName).thenReturn(failedDownloadName)
+    when(failedDownloadArtifact.getModuleRevisionId).thenReturn(failedDownloadModuleId)
 
     And("the expected result as accumulation of errors")
     import Scalaz._
-    val validatedDep: ValidationNel[ResolutionFault, Artifact] = expectedUnresolvedDependency.failure[Artifact].toValidationNel
-    val validatedDown: ValidationNel[ResolutionFault, Artifact] = expectedDownloadFailed.failure[Artifact].toValidationNel
-    val expectedResult = (validatedDep |@| validatedDown) { case (_, a) => a }
+    val expectedResult = MissingDependencies(NonEmptyList(
+      expectedUnresolvedDependency, expectedDownloadFailed
+    )).failure[Artifact]
 
     When("Attempting to resolve the artifact")
     whenReady(ivyResolve(TestArtifactId, download = false), Timeout(5 seconds)) { result =>
       Then("Result should be the expected errors")
-      result should be (expectedResult)
+      result shouldBe expectedResult
 
       verify(mockIvy).resolve(any(classOf[ModuleDescriptor]), any(classOf[ResolveOptions]))
       verify(mockReport).getUnresolvedDependencies
       verify(mockReport).getFailedArtifactsReports
       verify(mockUnresolvedNode).getId
-      verify(failedDownloadArtifact).getName
+      verify(failedDownloadArtifact).getModuleRevisionId
     }
 
   }

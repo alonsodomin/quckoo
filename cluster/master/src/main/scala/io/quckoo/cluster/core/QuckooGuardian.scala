@@ -21,11 +21,10 @@ import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import akka.stream.ActorMaterializer
 
 import io.quckoo.cluster.net._
 import io.quckoo.cluster.registry.Registry
-import io.quckoo.cluster.scheduler.{Scheduler, TaskQueue}
+import io.quckoo.cluster.scheduler.Scheduler
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
 import io.quckoo.id.NodeId
 import io.quckoo.net.QuckooState
@@ -36,27 +35,27 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
 import io.quckoo.time.TimeSource
 
+import scala.concurrent.Promise
 import scala.concurrent.duration._
 
 /**
  * Created by domingueza on 24/08/15.
  */
-object QuckooCluster {
+object QuckooGuardian {
 
   final val DefaultSessionTimeout: FiniteDuration = 30 minutes
 
-  def props(settings: QuckooClusterSettings)(implicit materializer: ActorMaterializer, timeSource: TimeSource) =
-    Props(classOf[QuckooCluster], settings, materializer, timeSource)
+  def props(settings: QuckooClusterSettings, boot: Promise[Unit])(implicit timeSource: TimeSource) =
+    Props(classOf[QuckooGuardian], settings, boot, timeSource)
 
   case object Shutdown
 
 }
 
-class QuckooCluster(settings: QuckooClusterSettings)
-                   (implicit materializer: ActorMaterializer, timeSource: TimeSource)
-    extends Actor with ActorLogging with QuckooJournal {
+class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(implicit timeSource: TimeSource)
+    extends Actor with ActorLogging with QuckooJournal with Stash {
 
-  import QuckooCluster._
+  import QuckooGuardian._
 
   ClusterClientReceptionist(context.system).registerService(self)
 
@@ -67,8 +66,9 @@ class QuckooCluster(settings: QuckooClusterSettings)
 
   private[this] val registry = context.actorOf(Registry.props(settings), "registry")
 
-  private[this] val scheduler = context.watch(context.actorOf(
-    Scheduler.props(registry, readJournal, TaskQueue.props(settings.queueMaxWorkTimeout)), "scheduler"))
+  private[this] val scheduler = context.watch(context.actorOf(Scheduler.props(
+    settings, readJournal, registry
+  ), "scheduler"))
 
   private[this] var clients = Set.empty[ActorRef]
   private[this] var clusterState = QuckooState(masterNodes = masterNodes(cluster))
@@ -79,17 +79,47 @@ class QuckooCluster(settings: QuckooClusterSettings)
 
   override def preStart(): Unit = {
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[ReachabilityEvent])
+
+    context.system.eventStream.subscribe(self, classOf[Registry.Signal])
+    context.system.eventStream.subscribe(self, classOf[Scheduler.Signal])
+
     mediator ! DistributedPubSubMediator.Subscribe(topics.Master, self)
     mediator ! DistributedPubSubMediator.Subscribe(topics.Worker, self)
   }
 
   override def postStop(): Unit = {
     cluster.unsubscribe(self)
+    context.system.eventStream.unsubscribe(self)
+
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Master, self)
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Worker, self)
   }
 
-  def receive: Receive = {
+  def receive = starting()
+
+  def starting(registryReady: Boolean = false, schedulerReady: Boolean = false): Receive = {
+    case Registry.Ready =>
+      if (schedulerReady) {
+        boot.success(())
+        unstashAll()
+        context become started
+      } else {
+        context become starting(registryReady = true)
+      }
+
+    case Scheduler.Ready =>
+      if (registryReady) {
+        boot.success(())
+        unstashAll()
+        context become started
+      } else {
+        context become starting(schedulerReady = true)
+      }
+
+    case _ => stash()
+  }
+
+  def started: Receive = {
     case Connect =>
       clients += sender()
       log.info("Quckoo client connected to cluster node. address={}", sender().path.address)

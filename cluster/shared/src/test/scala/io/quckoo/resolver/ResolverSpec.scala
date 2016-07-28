@@ -3,7 +3,7 @@ package io.quckoo.resolver
 import akka.actor.ActorSystem
 import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit}
 
-import io.quckoo.fault.{ResolutionFault, UnresolvedDependency}
+import io.quckoo.fault.{Fault, MissingDependencies, UnresolvedDependency}
 import io.quckoo.id.ArtifactId
 
 import org.scalamock.scalatest.MockFactory
@@ -42,22 +42,23 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with WordSpecLik
 
     "return a failed resolution if there are unresolved dependencies" in {
       val unresolvedDependency = UnresolvedDependency(BarArtifactId)
-      val expectedValidation: Validation[ResolutionFault, Artifact] =
-        unresolvedDependency.failure[Artifact]
+      val expectedFault = MissingDependencies(NonEmptyList(unresolvedDependency))
+      val expectedValidation: Validation[Fault, Artifact] =
+        expectedFault.failure[Artifact]
 
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
         expects(FooArtifactId, false, *).
-        returning(Future.successful(expectedValidation.toValidationNel))
+        returning(Future.successful(expectedValidation))
 
       resolver ! Resolver.Validate(FooArtifactId)
 
-      expectMsg(Resolver.ResolutionFailed(NonEmptyList(unresolvedDependency)))
+      expectMsg(Resolver.ResolutionFailed(FooArtifactId, expectedFault))
     }
 
     "return a resolved artifact if resolution succeeds" in {
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
         expects(FooArtifactId, false, *).
-        returning(Future.successful(FooArtifact.successNel[ResolutionFault]))
+        returning(Future.successful(FooArtifact.success[Fault]))
 
       resolver ! Resolver.Validate(FooArtifactId)
 
@@ -70,22 +71,23 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with WordSpecLik
 
     "return a failed resolution if there are unresolved dependencies" in {
       val unresolvedDependency = UnresolvedDependency(BarArtifactId)
-      val expectedValidation: Validation[ResolutionFault, Artifact] =
-        unresolvedDependency.failure[Artifact]
+      val expectedFault = MissingDependencies(NonEmptyList(unresolvedDependency))
+      val expectedValidation: Validation[Fault, Artifact] =
+        expectedFault.failure[Artifact]
 
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
         expects(FooArtifactId, true, *).
-        returning(Future.successful(expectedValidation.toValidationNel))
+        returning(Future.successful(expectedValidation))
 
       resolver ! Resolver.Download(FooArtifactId)
 
-      expectMsg(Resolver.ResolutionFailed(NonEmptyList(unresolvedDependency)))
+      expectMsg(Resolver.ResolutionFailed(FooArtifactId, expectedFault))
     }
 
     "return a resolved artifact if resolution succeeds" in {
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
         expects(FooArtifactId, true, *).
-        returning(Future.successful(FooArtifact.successNel[ResolutionFault]))
+        returning(Future.successful(FooArtifact.success[Fault]))
 
       resolver ! Resolver.Download(FooArtifactId)
 

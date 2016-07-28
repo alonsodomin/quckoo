@@ -16,7 +16,6 @@
 
 package io.quckoo
 
-import io.quckoo.fault._
 import io.quckoo.id._
 
 /**
@@ -26,22 +25,6 @@ import io.quckoo.id._
 final case class Task(
     id: TaskId,
     artifactId: ArtifactId,
-    params: Map[String, AnyVal] = Map.empty,
+    //params: Map[String, AnyVal] = Map.empty,
     jobClass: String
 )
-
-object Task {
-
-  sealed trait UncompleteReason
-  case object UserRequest extends UncompleteReason
-  case object FailedToEnqueue extends UncompleteReason
-
-  sealed trait Outcome extends Serializable
-  case object NotStarted extends Outcome
-  case object Success extends Outcome
-  case class Failure(cause: Fault) extends Outcome
-  case class Interrupted(reason: UncompleteReason) extends Outcome
-  case class NeverRun(reason: UncompleteReason) extends Outcome
-  case object NeverEnding extends Outcome
-
-}

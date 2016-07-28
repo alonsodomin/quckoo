@@ -16,10 +16,11 @@
 
 package io.quckoo.resolver
 
-import io.quckoo.fault.ResolutionFault
+import io.quckoo.fault.Fault
 import io.quckoo.id.ArtifactId
 
 import scala.concurrent.{ExecutionContext, Future}
+
 import scalaz._
 
 /**
@@ -28,6 +29,6 @@ import scalaz._
 trait Resolve {
 
   def apply(artifactId: ArtifactId, download: Boolean)
-           (implicit ec: ExecutionContext): Future[ValidationNel[ResolutionFault, Artifact]]
+           (implicit ec: ExecutionContext): Future[Validation[Fault, Artifact]]
 
 }

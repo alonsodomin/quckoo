@@ -46,9 +46,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Setting up docker provisioner in a separate line to allow for the proxy configuration
   config.vm.provision :docker
 
-  config.vm.provision :shell, path: "boot/provision.sh"
+  config.vm.provision :shell, path: "sandbox/provision.sh"
 
-  config.vm.provision :shell, inline: "/vagrant/boot/build.sh", privileged: false
-  config.vm.provision :docker_compose, yml: "/vagrant/boot/docker-compose.yml"
+  config.vm.provision :shell, inline: "/vagrant/sandbox/build.sh", privileged: false
+  config.vm.provision :docker_compose, yml: "/vagrant/sandbox/docker-compose.yml"
+  config.vm.provision :shell, inline: "/vagrant/sandbox/publish.sh", privileged: false
 
 end

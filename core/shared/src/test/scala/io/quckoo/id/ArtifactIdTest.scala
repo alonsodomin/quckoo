@@ -13,8 +13,8 @@ class ArtifactIdTest extends FlatSpec with Matchers {
 
   "Validation for ArtifactId parameters" should "not accept nulls" in {
     val expectedErrors = NonEmptyList(
-        Required("groupId"),
-        Required("artifactId"),
+        Required("organization"),
+        Required("name"),
         Required("version")
     ).failure[ArtifactId]
     ArtifactId.validate(null, null, null) should be (expectedErrors)
@@ -22,8 +22,8 @@ class ArtifactIdTest extends FlatSpec with Matchers {
 
   it should "not accept empty strings" in {
     val expectedErrors = NonEmptyList(
-      Required("groupId"),
-      Required("artifactId"),
+      Required("organization"),
+      Required("name"),
       Required("version")
     ).failure[ArtifactId]
     ArtifactId.validate("", "", "") should be (expectedErrors)
@@ -31,15 +31,10 @@ class ArtifactIdTest extends FlatSpec with Matchers {
 
   it should "not accept any combination of nulls or empty strings" in {
     val expectedErrors = NonEmptyList(
-      Required("groupId"),
+      Required("organization"),
       Required("version")
     ).failure[ArtifactId]
     ArtifactId.validate(null, "foo", "") should be (expectedErrors)
-  }
-
-  it should "do something" in {
-    val artifact = ArtifactId("", "", "")
-    //println(ArtifactId.validation(artifact))
   }
 
   it should "accept any other values" in {

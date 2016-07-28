@@ -13,6 +13,8 @@ import io.quckoo.resolver.Artifact
 import io.quckoo.resolver.Resolver
 import io.quckoo.JobSpec
 
+import scala.concurrent.duration._
+
 /**
  * Created by domingueza on 28/08/15.
  */
@@ -57,7 +59,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
         val invalidJobId = JobId(UUID.randomUUID())
         registryRef ! GetJob(invalidJobId)
 
-        val notFoundMsg = expectMsgType[JobNotFound]
+        val notFoundMsg = expectMsgType[JobNotFound](7 seconds)
         notFoundMsg.jobId shouldBe invalidJobId
 
         enterBarrier("fetch-invalid-job")
@@ -77,7 +79,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
       }
 
       runOn(registry) {
-        val resolverProbe = TestProbe()
+        val resolverProbe = TestProbe("resolver1")
         val settings = RegistrySettings(TestActors.forwardActorProps(resolverProbe.ref))
 
         system.actorOf(Registry.props(settings), "registry")

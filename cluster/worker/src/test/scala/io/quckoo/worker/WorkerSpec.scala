@@ -6,11 +6,13 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorSystem
 import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
+
 import io.quckoo.Task
 import io.quckoo.cluster.protocol._
-import io.quckoo.fault.{ExceptionThrown, ResolutionFault, UnresolvedDependency}
+import io.quckoo.fault.{ExceptionThrown, MissingDependencies, UnresolvedDependency}
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver.{Artifact, Resolver}
+
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
@@ -51,7 +53,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
     val executorProbe = TestProbe()
     val executorProps = TestActors.forwardActorProps(executorProbe.ref)
 
-    val task = Task(UUID.randomUUID(), FooArtifactId, Map.empty, FooJobClass)
+    val task = Task(UUID.randomUUID(), FooArtifactId, FooJobClass)
 
     val ackTimeout = 1 second
     val worker = TestActorRef(Worker.props(clusterClientProbe.ref, resolverProps, executorProps, 1 day, ackTimeout))
@@ -77,7 +79,7 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
     }
 
     "reject subsequent tasks if we are busy" in {
-      val anotherTask = Task(UUID.randomUUID(), FooArtifactId, Map.empty, FooJobClass)
+      val anotherTask = Task(UUID.randomUUID(), FooArtifactId, FooJobClass)
       worker ! anotherTask
 
       executorProbe.expectNoMsg(500 millis)
@@ -138,16 +140,17 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
 
     "reply with a failure message when can not resolve the artifact of a task" in {
       val taskId = task.id
-      val expectedError: ResolutionFault = UnresolvedDependency(ArtifactId("com.example", "bar", "latest"))
+      val dependencyError = UnresolvedDependency(ArtifactId("com.example", "bar", "latest"))
+      val expectedFault = MissingDependencies(NonEmptyList(dependencyError))
 
       worker ! task
 
       resolverProbe.expectMsgType[Resolver.Download].artifactId should be (task.artifactId)
-      resolverProbe.reply(Resolver.ResolutionFailed(NonEmptyList(expectedError)))
+      resolverProbe.reply(Resolver.ResolutionFailed(task.artifactId, expectedFault))
 
       val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
       queueMsg.path should be (TestSchedulerPath)
-      queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, NonEmptyList(`expectedError`, _)) => }
+      queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, `expectedFault`) => }
     }
 
     "send another task to the executor after downloading the artifact" in {
@@ -165,12 +168,12 @@ class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
       val taskId = task.id
       val cause = new Exception("TEST EXCEPTION")
 
-      val expectedError = ExceptionThrown(cause)
+      val expectedError = ExceptionThrown.from(cause)
       executorProbe.send(worker, JobExecutor.Failed(expectedError))
 
       val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
       queueMsg.path should be (TestSchedulerPath)
-      queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, NonEmptyList(`expectedError`, _)) => }
+      queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, `expectedError`) => }
     }
 
   }

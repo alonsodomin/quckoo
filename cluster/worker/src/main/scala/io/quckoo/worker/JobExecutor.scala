@@ -41,13 +41,13 @@ class JobExecutor extends Actor with ActorLogging {
   def receive = {
     case Execute(task, artifact) =>
       val result = for {
-        job    <- artifact.newJob(task.jobClass, task.params)
+        job    <- artifact.newJob(task.jobClass, Map.empty)
         invoke <- Try(job.call())
       } yield invoke
 
       val response = result match {
         case Success(value) => Completed(value)
-        case Failure(ex)    => Failed(ExceptionThrown(ex))
+        case Failure(ex)    => Failed(ExceptionThrown.from(ex))
       }
 
       sender() ! response

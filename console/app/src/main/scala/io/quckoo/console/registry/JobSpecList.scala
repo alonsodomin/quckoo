@@ -38,9 +38,14 @@ object JobSpecList {
 
   final val Columns = List("Name", "Description", "Artifact ID", "Job Class", "Status")
 
-  case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
+  final val AllFilter: Table.Filter[JobId, JobSpec] = (id, job) => true
+  final val DisabledFilter: Table.Filter[JobId, JobSpec] = (id, job) => job.disabled
+  final val EnabledFilter: Table.Filter[JobId, JobSpec] = !DisabledFilter(_, _)
 
-  class Backend($: BackendScope[Props, Unit]) {
+  final case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
+  final case class State(filter: Table.Filter[JobId, JobSpec])
+
+  class Backend($: BackendScope[Props, State]) {
 
     def mounted(props: Props) = {
       def dispatchJobLoading: Callback =
@@ -76,19 +81,29 @@ object JobSpecList {
       })
     }
 
-    def render(p: Props) = {
+    def filterClicked(filterType: String): Callback = filterType match {
+      case "All"      => $.modState(_.copy(filter = AllFilter))
+      case "Enabled"  => $.modState(_.copy(filter = EnabledFilter))
+      case "Disabled" => $.modState(_.copy(filter = DisabledFilter))
+    }
+
+    def render(p: Props, state: State) = {
       val model = p.proxy()
 
-      Table(Columns, model.seq, renderItem,
-        allowSelect = true,
-        actions = Some(rowActions(p)(_, _))
+      NavBar(
+        NavBar.Props(List("All", "Enabled", "Disabled"), "All", filterClicked, style = NavStyle.pills),
+        Table(Columns, model.seq, renderItem,
+          allowSelect = true,
+          actions = Some(rowActions(p)(_, _)),
+          filter = Some(state.filter)
+        )
       )
     }
 
   }
 
   private[this] val component = ReactComponentB[Props]("JobSpecList").
-    stateless.
+    initialState(State(AllFilter)).
     renderBackend[Backend].
     componentDidMount($ => $.backend.mounted($.props)).
     build

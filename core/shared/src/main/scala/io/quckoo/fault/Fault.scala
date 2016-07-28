@@ -16,7 +16,9 @@
 
 package io.quckoo.fault
 
-import io.quckoo.id.ArtifactId
+import io.quckoo.id.{ArtifactId, JobId}
+
+import scalaz.NonEmptyList
 
 /**
   * Created by alonsodomin on 28/12/2015.
@@ -25,21 +27,30 @@ sealed trait Fault extends Serializable
 
 // == Generic errors ================
 
-case class ExceptionThrown(className: String, message: String) extends Fault {
+final case class ExceptionThrown(className: String, message: String) extends Fault {
 
   override def toString: String = s"$className: $message"
 
 }
 object ExceptionThrown {
-  def apply(t: Throwable): ExceptionThrown = ExceptionThrown(t.getClass.getName, t.getMessage)
+  def from(t: Throwable): ExceptionThrown = ExceptionThrown(t.getClass.getName, t.getMessage)
 }
 
 // == Artifact resolution errors ============
 
-sealed trait ResolutionFault extends Fault
+case class MissingDependencies(dependencies: NonEmptyList[DependencyFault]) extends Fault
 
-case class UnresolvedDependency(artifactId: ArtifactId) extends ResolutionFault
-case class DownloadFailed(artifactName: String) extends ResolutionFault
+sealed trait DependencyFault extends Fault {
+  val artifactId: ArtifactId
+}
+case class UnresolvedDependency(artifactId: ArtifactId) extends DependencyFault
+
+object DownloadFailed {
+  sealed trait Reason
+  case object NotFound extends Reason
+  final case class Other(message: String) extends Reason
+}
+case class DownloadFailed(artifactId: ArtifactId, reason: DownloadFailed.Reason) extends DependencyFault
 
 // == Validation errors ====================
 

@@ -33,8 +33,8 @@ class JobSpecTest extends FlatSpec with Matchers {
 
   it should "not accept an invalid artifactId" in {
     val expectedErrors = NonEmptyList(
-      Required("groupId"),
-      Required("artifactId"),
+      Required("organization"),
+      Required("name"),
       Required("version")
     ).failure[JobSpec]
     JobSpec.validate("foo", None, ArtifactId(null, null, null), "bar") should be (expectedErrors)

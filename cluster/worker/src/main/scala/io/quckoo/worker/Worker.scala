@@ -21,14 +21,14 @@ import java.util.UUID
 import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.cluster.client.ClusterClient.SendToAll
+
 import io.quckoo.Task
 import io.quckoo.cluster.protocol._
-import io.quckoo.fault.{ExceptionThrown, Fault}
+import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.TaskId
 import io.quckoo.resolver.Resolver
 
 import scala.concurrent.duration._
-import scalaz.NonEmptyList
 
 /**
  * Created by aalonsodominguez on 05/07/15.
@@ -94,8 +94,8 @@ class Worker(clusterClient: ActorRef,
     case Resolver.ArtifactResolved(artifact) =>
       jobExecutor ! JobExecutor.Execute(task, artifact)
 
-    case Resolver.ResolutionFailed(cause) =>
-      sendToQueue(TaskFailed(workerId, task.id, cause.map(_.asInstanceOf[Fault])))
+    case Resolver.ResolutionFailed(_, cause) =>
+      sendToQueue(TaskFailed(workerId, task.id, cause))
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 
@@ -106,7 +106,7 @@ class Worker(clusterClient: ActorRef,
       context.become(waitForTaskDoneAck(result))
 
     case JobExecutor.Failed(reason) =>
-      sendToQueue(TaskFailed(workerId, task.id, NonEmptyList(reason)))
+      sendToQueue(TaskFailed(workerId, task.id, reason))
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 
@@ -135,7 +135,7 @@ class Worker(clusterClient: ActorRef,
     case _: DeathPactException => Stop
     case cause: Exception =>
       currentTaskId.foreach {
-        taskId => sendToQueue(TaskFailed(workerId, taskId, NonEmptyList(ExceptionThrown(cause))))
+        taskId => sendToQueue(TaskFailed(workerId, taskId, ExceptionThrown.from(cause)))
       }
       context.become(idle)
       Restart

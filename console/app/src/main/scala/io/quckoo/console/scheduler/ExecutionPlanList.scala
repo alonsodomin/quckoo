@@ -69,20 +69,24 @@ object ExecutionPlanList {
         val jobSpec = model.jobSpecs.get(plan.jobId)
         jobSpec.render(_.displayName)
 
-      case "Current task"   => plan.currentTaskId.map(_.toString()).getOrElse[String]("")
+      case "Current task"   => plan.currentTask.map(_.id).map(_.toString()).getOrElse[String]("")
       case "Trigger"        => plan.trigger.toString()
       case "Last Scheduled" => DateTimeDisplay(plan.lastScheduledTime)
       case "Last Execution" => DateTimeDisplay(plan.lastExecutionTime)
-      case "Last Outcome"   => plan.lastOutcome.toString
+      case "Last Outcome"   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
       case "Next Execution" => DateTimeDisplay(plan.nextExecutionTime)
     }
 
     def cancelPlan(props: Props)(planId: PlanId): Callback =
       props.proxy.dispatch(CancelExecutionPlan(planId))
 
-    def rowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = Seq(
-      Table.RowAction[PlanId, ExecutionPlan](NonEmptyList(Icons.stop, "Cancel"), cancelPlan(props))
-    )
+    def rowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
+      if (plan.nextExecutionTime.isDefined) {
+        Seq(
+          Table.RowAction[PlanId, ExecutionPlan](NonEmptyList(Icons.stop, "Cancel"), cancelPlan(props))
+        )
+      } else Seq.empty
+    }
 
     def filterClicked(filterType: String): Callback = filterType match {
       case "All"      => $.modState(_.copy(filter = AllFilter))

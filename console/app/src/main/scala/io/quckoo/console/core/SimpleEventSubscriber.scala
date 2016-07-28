@@ -17,20 +17,22 @@
 package io.quckoo.console.core
 
 import diode.ActionType
+
 import monix.execution.Ack
 import monix.execution.Ack.Continue
 import monix.reactive.Observer
-import org.scalajs.dom.console
+
+import slogging.LazyLogging
 
 import scala.concurrent.Future
 
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-class SimpleEventSubscriber[A : ActionType] extends Observer[A] {
+final class SimpleEventSubscriber[A : ActionType] extends Observer[A] with LazyLogging {
 
   override def onError(ex: Throwable): Unit = {
-    console.log(s"${ex.getClass.getName}: ${ex.getMessage}")
+    logger.error("Event stream threw an exception.", ex)
   }
 
   override def onComplete(): Unit = ()

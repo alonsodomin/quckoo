@@ -25,9 +25,9 @@ cd quckoo
 sbt package
 ```
 
-### Bootstrapping DEV environment
+### Sandbox environment
 
-The repository ships with a `Vagrantfile` in its root folder for ease the setup of a DEV environment. This Vagrant configuration
+The repository ships with a `Vagrantfile` in its root folder for ease the setup of a Sandboxed environment. This Vagrant configuration
 will create a virtual machine in the host computer and deploy into it the required components of the architecture as
 Docker containers. To start this environment issue following command in a terminal window from inside your working copy:
 
@@ -35,9 +35,11 @@ Docker containers. To start this environment issue following command in a termin
 vagrant up
 ```
 
-Once it has finished loading, you should be able to access the Kairos UI in following URL:
+Once it has finished loading, you should be able to access the Quckoo UI in following URL:
 
 http://192.168.50.25:8095
+
+_Use `admin` and `password` as credentials when prompted._
 
 #### Build error when building the vagrant box
 

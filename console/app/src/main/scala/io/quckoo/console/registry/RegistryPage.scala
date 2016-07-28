@@ -21,6 +21,7 @@ import diode.react.ModelProxy
 import io.quckoo._
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleScope
+import io.quckoo.console.layout.GlobalStyles
 import io.quckoo.protocol.registry._
 
 import japgolly.scalajs.react._
@@ -67,7 +68,9 @@ object RegistryPage {
 
       <.div(Style.content,
         <.h2("Registry"),
-        Button(Button.Props(Some(editJob(None))), Icons.plusSquare, "New Job"),
+        <.div(GlobalStyles.pageToolbar,
+          Button(Button.Props(Some(editJob(None))), Icons.plusSquare, "New Job")
+        ),
         if (state.showForm) JobForm(state.selectedJob, jobEdited)
         else EmptyTag,
         connector(JobSpecList(_))

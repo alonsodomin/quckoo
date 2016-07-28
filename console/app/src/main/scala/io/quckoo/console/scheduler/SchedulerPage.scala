@@ -21,6 +21,7 @@ import diode.react.ModelProxy
 import io.quckoo.ExecutionPlan
 import io.quckoo.console.components.{Button, Icons, TabPanel}
 import io.quckoo.console.core.ConsoleScope
+import io.quckoo.console.layout.GlobalStyles
 import io.quckoo.protocol.scheduler.ScheduleJob
 
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -60,17 +61,19 @@ object SchedulerPage {
 
     def render(props: Props, state: State) = {
       val userScopeConnector = props.proxy.connect(_.userScope)
-      val taskConnector = props.proxy.connect(_.userScope.tasks)
+      val executionConnector = props.proxy.connect(_.userScope.executions)
 
       <.div(Style.content,
         <.h2("Scheduler"),
-        Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan"),
+        <.div(GlobalStyles.pageToolbar,
+          Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan")
+        ),
         if (state.showForm) {
           props.proxy.wrap(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
         } else EmptyTag,
         TabPanel(
           "Execution Plans" -> userScopeConnector(ExecutionPlanList(_)),
-          "Tasks"           -> taskConnector(TaskList(_))
+          "Executions"      -> executionConnector(TaskExecutionList(_))
         )
       )
     }

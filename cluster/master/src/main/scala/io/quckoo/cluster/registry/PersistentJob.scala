@@ -29,12 +29,12 @@ import io.quckoo.protocol.registry._
 /**
   * Created by alonsodomin on 15/04/2016.
   */
-object JobState {
+object PersistentJob {
 
-  final val ShardName      = "JobState"
+  final val ShardName      = "PersistentJob"
   final val NumberOfShards = 100
 
-  final val PersistenceIdPrefix = "JobState"
+  final val PersistenceIdPrefix = "PersistentJob"
 
   val idExtractor: ShardRegion.ExtractEntityId = {
     case c: CreateJob   => (c.jobId.toString, c)
@@ -50,15 +50,14 @@ object JobState {
     case EnableJob(jobId)     => (jobId.hashCode % NumberOfShards).toString
   }
 
-  final case class CreateJob(jobId: JobId, spec: JobSpec)
+  private[registry] final case class CreateJob(jobId: JobId, spec: JobSpec)
 
-  def props: Props = Props(classOf[JobState])
+  def props: Props = Props(classOf[PersistentJob])
 
 }
 
-class JobState extends PersistentActor with ActorLogging with Stash {
-  import JobState._
-  import RegistryIndex._
+class PersistentJob extends PersistentActor with ActorLogging with Stash {
+  import PersistentJob._
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
   private[this] var stateDuringRecovery: Option[JobSpec] = None
@@ -84,6 +83,8 @@ class JobState extends PersistentActor with ActorLogging with Stash {
       }
 
     case RecoveryCompleted =>
+      log.debug("Job recovery has finished")
+      unstashAll()
       stateDuringRecovery = None
   }
 
@@ -94,15 +95,13 @@ class JobState extends PersistentActor with ActorLogging with Stash {
       persist(JobAccepted(jobId, jobSpec)) { event =>
         log.info("Job {} has been successfully registered.", jobId)
         //context.system.eventStream.publish(IndexJob(jobId))
-        context.system.eventStream.publish(event)
-        //mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
-        sender() ! event
+        //context.system.eventStream.publish(event)
+        mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
         context.become(enabled(jobId, jobSpec))
         unstashAll()
       }
 
-    case _: GetJob =>
-      stash()
+    case _: GetJob => stash()
   }
 
   def enabled(jobId: JobId, spec: JobSpec): Receive = {
@@ -137,9 +136,12 @@ class JobState extends PersistentActor with ActorLogging with Stash {
     validCommands orElse returnJob(jobId, spec)
   }
 
-  private def returnJob(jobId: JobId, spec: JobSpec): Receive = {
+  private[this] def returnJob(jobId: JobId, spec: JobSpec): Receive = {
+    case CreateJob(`jobId`, _) =>
+      sender() ! JobAccepted(jobId, spec)
+
     case GetJob(`jobId`) =>
-      sender() ! (jobId -> spec)
+      sender() ! spec
   }
 
 }

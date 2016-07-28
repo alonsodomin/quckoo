@@ -24,7 +24,13 @@ import scalacss.Defaults._
   * Created by alonsodomin on 20/02/2016.
   */
 object GlobalStyles extends StyleSheet.Inline {
+  import dsl._
 
   val bootstrap = lookAndFeel
+
+  val pageToolbar = style(
+    marginTop(15 px),
+    marginBottom(10 px)
+  )
 
 }
