@@ -12,7 +12,10 @@ object LoginTestDsl {
   import ReactTestUtils._
 
   @Lenses
-  final case class State(username: String, password: String)
+  final case class State(
+    username: String,
+    password: String,
+    submitted: Boolean = false)
 
   val dsl = Dsl[Unit, LoginObserver, State]
 
@@ -25,6 +28,7 @@ object LoginTestDsl {
       updateState(State.password.set(password))
 
   def submitForm(): dsl.Actions =
-    dsl.action("Submit login form")(Simulate click _.obs.submitButton)
+    dsl.action("Submit login form")(Simulate click _.obs.submitButton).
+      updateState(State.submitted.set(true))
 
 }

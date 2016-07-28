@@ -15,6 +15,6 @@ class LoginObserver($: HtmlDomZipper) {
 
   val emptyUsername = usernameInput.value.isEmpty
   val emptyPassword = passwordInput.value.isEmpty
-  val canSubmit = submitButton.disabled.getOrElse(false)
+  val canSubmit = !submitButton.disabled.getOrElse(false)
 
 }
