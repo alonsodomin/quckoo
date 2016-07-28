@@ -29,7 +29,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object ArtifactInput {
 
   case class Props(value: Option[ArtifactId], onUpdate: Option[ArtifactId] => Callback)
-  case class State(groupId: Option[String], artifactId: Option[String], version: Option[String]) {
+  case class State(organization: Option[String], name: Option[String], version: Option[String]) {
 
     def this(value: Option[ArtifactId]) =
       this(value.map(_.organization), value.map(_.name), value.map(_.version))
@@ -43,38 +43,50 @@ object ArtifactInput {
 
     def propagateUpdate: Callback = {
       val artifactId = for {
-        group   <- $.state.map(_.groupId).asCBO[String]
-        name    <- $.state.map(_.artifactId).asCBO[String]
-        version <- $.state.map(_.version).asCBO[String]
-      } yield ArtifactId(group, name, version)
+        organization <- $.state.map(_.organization).asCBO[String]
+        name         <- $.state.map(_.name).asCBO[String]
+        version      <- $.state.map(_.version).asCBO[String]
+      } yield ArtifactId(organization, name, version)
 
       artifactId.get.flatMap(value => $.props.flatMap(_.onUpdate(value)))
     }
 
-    def onGroupUpdate(group: Option[String]): Callback =
-      $.modState(_.copy(groupId = group), propagateUpdate)
+    def onGroupUpdate(organization: Option[String]): Callback =
+      $.modState(_.copy(organization = organization), propagateUpdate)
 
     def onNameUpdate(name: Option[String]): Callback =
-      $.modState(_.copy(artifactId = name), propagateUpdate)
+      $.modState(_.copy(name = name), propagateUpdate)
 
     def onVersionUpdate(version: Option[String]): Callback =
       $.modState(_.copy(version = version), propagateUpdate)
 
-    val groupInput   = Input[String](onGroupUpdate)
-    val nameInput    = Input[String](onNameUpdate)
-    val versionInput = Input[String](onVersionUpdate)
+    val organizationInput = Input[String](onGroupUpdate)
+    val nameInput         = Input[String](onNameUpdate)
+    val versionInput      = Input[String](onVersionUpdate)
 
     def render(props: Props, state: State) = {
       <.div(^.`class` := "container-fluid",
         <.div(^.`class` := "row",
           <.div(^.`class` := "col-sm-4",
-            groupInput(state.groupId, ^.id := "artifactGroup", ^.placeholder := "Group")
+            organizationInput(
+              state.organization,
+              ^.id := "artifactOrganization",
+              ^.placeholder := "Organization"
+            )
           ),
           <.div(^.`class` := "col-sm-4",
-            nameInput(state.artifactId, ^.id := "artifactName", ^.placeholder := "Name")
+            nameInput(
+              state.name,
+              ^.id := "artifactName",
+              ^.placeholder := "Name"
+            )
           ),
           <.div(^.`class` := "col-sm-4",
-            versionInput(state.version, ^.id := "artifactVerion", ^.placeholder := "Version")
+            versionInput(
+              state.version,
+              ^.id := "artifactVerion",
+              ^.placeholder := "Version"
+            )
           )
         )
       )

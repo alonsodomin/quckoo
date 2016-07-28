@@ -24,15 +24,19 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact = "0.11.1"
+    val scalaJsReact    = "0.11.1"
+    val scalaJsDom      = "0.9.1"
+    val scalaJsJQuery   = "0.9.0"
+    val scalaJSMomentJS = "0.1.5"
+
+    val testState = "2.0.0"
     val scalaCss = "0.4.1"
 
     val diode = "1.0.0"
 
     val upickle = "0.4.1"
+    val utest = "0.4.3"
     val scalatags = "0.5.5"
-
-    val reactJs = "15.1.0"
 
     // Other utils ---
 
@@ -41,6 +45,13 @@ object Dependencies {
     val monocle = "1.2.2"
     val scalaz = "7.2.4"
     val monix  = "2.0-RC8"
+
+    // JavaScript Libraries
+
+    val jquery = "1.11.1"
+    val bootstrap = "3.3.2"
+    val bootstrapNotifiy = "3.1.3"
+    val reactJs = "15.1.0"
   }
 
   // Common library definitions
@@ -111,7 +122,7 @@ object Dependencies {
     )
   }
   lazy val coreJS = Def.settings {
-    libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % "0.1.5"
+    libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % version.scalaJSMomentJS
   }
   //lazy val coreJVM = Def.settings { }
 
@@ -138,7 +149,7 @@ object Dependencies {
 
   lazy val clientJS = Def.settings {
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "0.9.1"
+      "org.scala-js" %%% "scalajs-dom" % version.scalaJsDom
     )
   }
 
@@ -159,8 +170,9 @@ object Dependencies {
 
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
+      "com.lihaoyi"      %%% "utest"          % version.utest % Test,
       "me.chrons"        %%% "diode-react"    % version.diode,
-      "be.doeraene"      %%% "scalajs-jquery" % "0.9.0",
+      "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
       "org.singlespaced" %%% "scalajs-d3"     % "0.3.1",
 
       "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,
@@ -169,7 +181,13 @@ object Dependencies {
       "com.github.japgolly.scalajs-react" %%% "ext-monocle"  % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "test"         % version.scalaJsReact % Test,
       "com.github.japgolly.scalacss"      %%% "core"         % version.scalaCss,
-      "com.github.japgolly.scalacss"      %%% "ext-react"    % version.scalaCss
+      "com.github.japgolly.scalacss"      %%% "ext-react"    % version.scalaCss,
+
+      "com.github.japgolly.test-state" %%% "core"              % version.testState % Test,
+      "com.github.japgolly.test-state" %%% "dom-zipper"        % version.testState % Test,
+      "com.github.japgolly.test-state" %%% "dom-zipper-sizzle" % version.testState % Test,
+      "com.github.japgolly.test-state" %%% "ext-scalajs-react" % version.testState % Test,
+      "com.github.japgolly.test-state" %%% "ext-scalaz"        % version.testState % Test
     ),
     jsDependencies ++= Seq(
       // ReactJS
@@ -192,18 +210,19 @@ object Dependencies {
         commonJSName "React",
 
       // JQuery & Bootstrap
-      "org.webjars" % "jquery"    % "2.1.3"
-        /        "jquery.js"
+      "org.webjars" % "jquery"    % version.jquery
+        /        s"${version.jquery}/jquery.js"
         minified "jquery.min.js",
-      "org.webjars" % "bootstrap" % "3.3.2"
+      "org.webjars" % "bootstrap" % version.bootstrap
         /         "bootstrap.js"
         minified  "bootstrap.min.js"
-        dependsOn "jquery.js",
-      "org.webjars" % "bootstrap-notify" % "3.1.3"
+        dependsOn s"${version.jquery}/jquery.js",
+      "org.webjars" % "bootstrap-notify" % version.bootstrapNotifiy
         /         "bootstrap-notify.js"
         minified  "bootstrap-notify.min.js"
-        dependsOn ("jquery.js", "bootstrap.js")
-    )
+        dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js")
+    ),
+    testFrameworks += new TestFramework("utest.runner.Framework")
   )
   lazy val consoleResources = Def.settings {
     libraryDependencies ++= Seq(

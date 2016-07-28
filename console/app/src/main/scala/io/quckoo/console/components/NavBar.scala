@@ -20,7 +20,7 @@ object NavBar {
   private[this] val NavItem = ReactComponentB[NavItemProps]("NavItem").
     stateless.
     render_P { case NavItemProps(title, selected, onClick) =>
-      <.li(^.role := "presentation", selected ?= (^.`class` := "active"),
+      <.li(^.id := title, ^.role := "presentation", selected ?= (^.`class` := "active"),
         <.a(^.onClick --> onClick(title), title)
       )
     } build
