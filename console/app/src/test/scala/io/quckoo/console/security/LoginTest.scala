@@ -3,6 +3,8 @@ package io.quckoo.console.security
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.test.ReactTestUtils
 
+import io.quckoo.console.ConsoleTestState
+
 import monix.reactive.subjects.PublishSubject
 
 import utest.TestSuite
@@ -11,7 +13,7 @@ import utest.TestSuite
   * Created by alonsodomin on 11/07/2016.
   */
 object LoginTest extends TestSuite {
-  import LoginTestState._
+  import ConsoleTestState._
   import LoginTestDsl._
 
   val invariants: dsl.Invariants = {
@@ -50,7 +52,6 @@ object LoginTest extends TestSuite {
   }
 
   override def tests = TestSuite {
-
 
     val plan = Plan.action(
       setUsername("admin")

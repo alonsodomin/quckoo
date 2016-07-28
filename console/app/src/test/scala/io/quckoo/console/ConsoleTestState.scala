@@ -1,4 +1,4 @@
-package io.quckoo.console.security
+package io.quckoo.console
 
 import teststate.domzipper.sizzle
 import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
@@ -6,7 +6,7 @@ import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
 /**
   * Created by alonsodomin on 10/07/2016.
   */
-object LoginTestState extends Exports
+object ConsoleTestState extends Exports
   with ExtScalaJsReact
   with ExtScalaz
   with sizzle.Exports

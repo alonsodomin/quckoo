@@ -1,5 +1,7 @@
 package io.quckoo.console.security
 
+import io.quckoo.console.ConsoleTestState
+
 import monocle.macros.Lenses
 
 import japgolly.scalajs.react.test._
@@ -8,7 +10,7 @@ import japgolly.scalajs.react.test._
   * Created by alonsodomin on 10/07/2016.
   */
 object LoginTestDsl {
-  import LoginTestState._
+  import ConsoleTestState._
   import ReactTestUtils._
 
   @Lenses

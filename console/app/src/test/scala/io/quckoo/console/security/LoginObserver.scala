@@ -1,6 +1,6 @@
 package io.quckoo.console.security
 
-import LoginTestState._
+import io.quckoo.console.ConsoleTestState._
 
 import org.scalajs.dom.html
 
