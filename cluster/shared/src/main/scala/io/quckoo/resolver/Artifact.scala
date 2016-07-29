@@ -45,8 +45,10 @@ final class Artifact private[resolver] (val artifactId: ArtifactId, classLoader:
 
   def classpath: Seq[URL] = classLoader.getURLs
 
-  def jobClass(className: String): Try[JobClass] =
+  def jobClass(className: String): Try[JobClass] = {
+    log.debug(s"Loading job class: $className")
     loadClass(className) map { _.asInstanceOf[JobClass] }
+  }
 
   def newJob(className: String, params: Map[String, Any]): Try[Callable[_]] =
     jobClass(className).flatMap { jobClass =>
