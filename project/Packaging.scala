@@ -20,25 +20,30 @@ object Packaging {
     )
   )
 
-  lazy val dockerSettings = Seq(
+  lazy val baseDockerSettings = Seq(
     dockerRepository := Some("quckoo"),
     dockerUpdateLatest := true,
     dockerExposedVolumes := Seq(
-      s"$linuxHomeLocation/conf",
+      s"$linuxHomeLocation/conf"
+    ),
+    defaultLinuxInstallLocation in Docker := linuxHomeLocation
+  )
+
+  lazy val serverDockerSettings = baseDockerSettings ++ Seq(
+    dockerExposedVolumes ++= Seq(
       s"$linuxHomeLocation/resolver/cache",
       s"$linuxHomeLocation/resolver/local"
     ),
-    defaultLinuxInstallLocation in Docker := linuxHomeLocation,
     dockerCommands ++= Seq(
       Cmd("ENV", "QUCKOO_HOME", linuxHomeLocation)
     )
   )
 
-  lazy val masterDockerSettings = dockerSettings ++ Seq(
+  lazy val masterDockerSettings = serverDockerSettings ++ Seq(
     dockerExposedPorts := Seq(2551, 8095)
   )
 
-  lazy val workerDockerSettings = dockerSettings ++ Seq(
+  lazy val workerDockerSettings = serverDockerSettings ++ Seq(
     dockerExposedPorts := Seq(5001)
   )
 

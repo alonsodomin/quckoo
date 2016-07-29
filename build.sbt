@@ -233,7 +233,7 @@ lazy val exampleProducers = (project in file("examples/producers")).
   settings(Dependencies.exampleProducers).
   enablePlugins(JavaAppPackaging, DockerPlugin).
   settings(Packaging.universalSettings: _*).
-  settings(Packaging.dockerSettings: _*).
+  settings(Packaging.baseDockerSettings: _*).
   dependsOn(clientJVM, exampleJobs)
 
 // Command aliases ==================================================
