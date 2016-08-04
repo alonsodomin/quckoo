@@ -7,11 +7,13 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
+
 import io.quckoo.fault.Fault
 import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.{JobSpec, serialization}
+
 import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.{ExecutionContext, Future}
