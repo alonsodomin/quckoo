@@ -39,9 +39,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.hostname = "quckoo-vagrant"
   config.vm.network "private_network", ip: "192.168.50.25"
 
-  config.vm.synced_folder File.expand_path("~/.ivy2"), "/home/vagrant/.ivy2",
-    id: "ivy-cache",
-    mount_options: ["dmode=777,fmode=777"]
+  local_ivy_cache = File.expand_path("~/.ivy2")
+  if File.exist?(local_ivy_cache)
+    config.vm.synced_folder local_ivy_cache, "/home/vagrant/.ivy2",
+                            id: "ivy-cache",
+                            mount_options: ["dmode=777,fmode=777"]
+  end
 
   # Setting up docker provisioner in a separate line to allow for the proxy configuration
   config.vm.provision :docker
