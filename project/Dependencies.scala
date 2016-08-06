@@ -9,7 +9,7 @@ object Dependencies {
     // Logging -------
 
     val slf4s = "1.7.12"
-    val log4j = "2.6.1"
+    val log4j = "2.6.2"
 
     // Testing --------
 
@@ -30,21 +30,21 @@ object Dependencies {
     val scalaJSMomentJS = "0.1.5"
 
     val testState = "2.0.0"
-    val scalaCss = "0.4.1"
+    val scalaCss  = "0.4.1"
 
     val diode = "1.0.0"
 
-    val upickle = "0.4.1"
-    val utest = "0.4.3"
+    val upickle   = "0.4.1"
+    val utest     = "0.4.3"
     val scalatags = "0.5.5"
 
     // Other utils ---
 
-    val scopt = "3.5.0"
+    val scopt    = "3.5.0"
     val slogging = "0.5.0"
-    val monocle = "1.2.2"
-    val scalaz = "7.2.4"
-    val monix  = "2.0-RC9"
+    val monocle  = "1.2.2"
+    val scalaz   = "7.2.4"
+    val monix    = "2.0-RC9"
 
     // JavaScript Libraries
 
@@ -170,10 +170,9 @@ object Dependencies {
 
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
-      "com.lihaoyi"      %%% "utest"          % version.utest % Test,
+      "com.lihaoyi"      %%% "utest"          % version.utest     % Test,
       "me.chrons"        %%% "diode-react"    % version.diode,
       "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
-      "org.singlespaced" %%% "scalajs-d3"     % "0.3.1",
 
       "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "extra"        % version.scalaJsReact,
