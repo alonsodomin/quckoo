@@ -51,7 +51,7 @@ object Dependencies {
     val jquery = "1.11.1"
     val bootstrap = "3.3.2"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs = "15.1.0"
+    val reactJs = "15.2.1"
   }
 
   // Common library definitions
