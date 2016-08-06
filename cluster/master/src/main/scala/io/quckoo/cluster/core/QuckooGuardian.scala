@@ -16,18 +16,16 @@
 
 package io.quckoo.cluster.core
 
-import akka.actor.SupervisorStrategy.{Restart, Stop}
 import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+
 import io.quckoo.cluster.net._
-import io.quckoo.cluster.protocol.TaskFailed
 import io.quckoo.cluster.registry.Registry
 import io.quckoo.cluster.scheduler.Scheduler
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
-import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.NodeId
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.client._
@@ -99,28 +97,47 @@ class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(impli
   def receive = starting()
 
   def starting(registryReady: Boolean = false, schedulerReady: Boolean = false): Receive = {
-    case Registry.Ready =>
-      if (schedulerReady) {
-        boot.success(())
-        unstashAll()
-        context become started
-      } else {
-        context become starting(registryReady = true)
-      }
+    def waitForReady: Receive = {
+      case Registry.Ready =>
+        if (schedulerReady) {
+          boot.success(())
+          unstashAll()
+          context become started
+        } else {
+          context become starting(registryReady = true)
+        }
 
-    case Scheduler.Ready =>
-      if (registryReady) {
-        boot.success(())
-        unstashAll()
-        context become started
-      } else {
-        context become starting(schedulerReady = true)
-      }
+      case Scheduler.Ready =>
+        if (registryReady) {
+          boot.success(())
+          unstashAll()
+          context become started
+        } else {
+          context become starting(schedulerReady = true)
+        }
 
-    case _ => stash()
+      case _ => stash()
+    }
+
+    defaultActivity orElse waitForReady
   }
 
   def started: Receive = {
+    def handleUserCommands: Receive = {
+      case cmd: RegistryCommand =>
+        registry forward cmd
+
+      case cmd: SchedulerCommand =>
+        scheduler forward cmd
+
+      case Shutdown =>
+      // TODO Perform graceful shutdown of the cluster
+    }
+
+    defaultActivity orElse handleUserCommands
+  }
+
+  private[this] def defaultActivity: Receive = {
     case Connect =>
       clients += sender()
       log.info("Quckoo client connected to cluster node. address={}", sender().path.address)
@@ -133,12 +150,6 @@ class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(impli
 
     case GetClusterStatus =>
       sender() ! clusterState
-
-    case cmd: RegistryCommand =>
-      registry forward cmd
-
-    case cmd: SchedulerCommand =>
-      scheduler forward cmd
 
     case evt: MemberEvent => evt match {
       case MemberUp(member) =>
@@ -189,9 +200,6 @@ class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(impli
 
     case evt: TaskQueueUpdated =>
       clusterState = clusterState.copy(metrics = clusterState.metrics.updated(evt))
-
-    case Shutdown =>
-      // TODO Perform graceful shutdown of the cluster
   }
 
 }
