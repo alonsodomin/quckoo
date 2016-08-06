@@ -16,16 +16,18 @@
 
 package io.quckoo.cluster.core
 
+import akka.actor.SupervisorStrategy.{Restart, Stop}
 import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-
 import io.quckoo.cluster.net._
+import io.quckoo.cluster.protocol.TaskFailed
 import io.quckoo.cluster.registry.Registry
 import io.quckoo.cluster.scheduler.Scheduler
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
+import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.NodeId
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.client._
@@ -64,8 +66,7 @@ class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(impli
 
   private[this] val userAuth = context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
-  private[this] val registry = context.actorOf(Registry.props(settings), "registry")
-
+  private[this] val registry = context.watch(context.actorOf(Registry.props(settings), "registry"))
   private[this] val scheduler = context.watch(context.actorOf(Scheduler.props(
     settings, readJournal, registry
   ), "scheduler"))

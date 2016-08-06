@@ -70,7 +70,7 @@ object Dependencies {
       val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
       val http            = "com.typesafe.akka" %% "akka-http-experimental" % version.akka
       val httpTestkit     = "com.typesafe.akka" %% "akka-http-testkit"      % version.akka % Test
-      val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % "1.5.2"
+      val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % "1.8.0"
       val sse             = "de.heikoseeberger" %% "akka-sse"               % "1.8.1"
       val distributedData = "com.typesafe.akka" %% "akka-distributed-data-experimental" % version.akka
 
