@@ -19,12 +19,12 @@ before_install:
   - gem install compass
 
 script:
-  #- sbt ++$TRAVIS_SCALA_VERSION clean coverage test && sbt coverageAggregate
-  - sbt ++$TRAVIS_SCALA_VERSION clean test
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
+  #- sbt ++$TRAVIS_SCALA_VERSION clean test
 
 after_success:
-  - codecov
-#  - sbt coveralls
+  - sbt coverageReport && sbt coverageAggregate
+  - bash <(curl -s https://codecov.io/bash)
 
 branches:
   only:

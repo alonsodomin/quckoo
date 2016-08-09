@@ -37,6 +37,7 @@ lazy val noPublishSettings = Seq(
 
 lazy val commonJsSettings = Seq(
   coverageEnabled := false,
+  coverageExcludedFiles := ".*",
   persistLauncher in Compile := true,
   persistLauncher in Test := false,
   scalaJSStage in Test := FastOptStage,

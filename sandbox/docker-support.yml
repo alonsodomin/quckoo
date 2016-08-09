@@ -9,8 +9,8 @@ cassandra:
     - /var/lib/cassandra:/var/lib/cassandra
 
 artifactory:
-  image: mattgruter/artifactory
+  image: docker.bintray.io/jfrog/artifactory-oss
   container_name: artifactory
   ports:
-    - 8080:8080
+    - 8081:8081
 
