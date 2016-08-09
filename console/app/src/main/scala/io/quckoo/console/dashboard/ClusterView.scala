@@ -18,10 +18,9 @@ package io.quckoo.console.dashboard
 
 import diode.AnyAction._
 import diode.react.ModelProxy
-
-import io.quckoo.net.{NodeStatus, QuckooState}
+import io.quckoo.id.NodeId
+import io.quckoo.net.{NodeStatus, QuckooNode, QuckooState}
 import io.quckoo.protocol.cluster.GetClusterStatus
-
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
@@ -71,14 +70,20 @@ object ClusterView {
     }
 
     def render(props: Props) = {
-      def activeNodes: Int =
-        props.proxy().masterNodes.count(_._2.status == NodeStatus.Active)
+      def countStatus(nodes: Iterable[(NodeId, QuckooNode)], status: NodeStatus): Int =
+        nodes.map(_._2.status).count(_ == status)
 
-      def unreachableNodes: Int =
-        props.proxy().masterNodes.count(_._2.status == NodeStatus.Unreachable)
+      def activeMasters: Int =
+        countStatus(props.proxy().masterNodes, NodeStatus.Active)
+
+      def unreachableMasters: Int =
+        countStatus(props.proxy().masterNodes, NodeStatus.Unreachable)
 
       def activeWorkers: Int =
-        props.proxy().workerNodes.size
+        countStatus(props.proxy().workerNodes, NodeStatus.Active)
+
+      def unreachableWorkers: Int =
+        countStatus(props.proxy().workerNodes, NodeStatus.Unreachable)
 
       <.div(Style.container,
         <.div(^.`class` := "row",
@@ -86,11 +91,11 @@ object ClusterView {
             <.div(Style.sectionTitle, "Nodes"),
             <.div(^.`class` := "row",
               <.div(^.`class` := "col-sm-8", "Active"),
-              <.div(^.`class` := "col-sm-4 text-right", activeNodes)
+              <.div(^.`class` := "col-sm-4 text-right", activeMasters)
             ),
             <.div(^.`class` := "row",
               <.div(^.`class` := "col-sm-8", "Unreachable"),
-              <.div(^.`class` := "col-sm-4 text-right", unreachableNodes)
+              <.div(^.`class` := "col-sm-4 text-right", unreachableMasters)
             )
           )
         ),
@@ -98,8 +103,12 @@ object ClusterView {
           <.div(^.`class` := "col-sm-12",
             <.div(Style.sectionTitle, "Workers"),
             <.div(^.`class` := "row",
-              <.div(^.`class` := "col-sm-8", "Available"),
+              <.div(^.`class` := "col-sm-8", "Active"),
               <.div(^.`class` := "col-sm-4 text-right", activeWorkers)
+            ),
+            <.div(^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "Unreachable"),
+              <.div(^.`class` := "col-sm-4 text-right", unreachableWorkers)
             )
           )
         ),
