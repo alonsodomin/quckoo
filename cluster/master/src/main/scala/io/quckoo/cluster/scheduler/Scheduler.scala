@@ -188,7 +188,17 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
       unstashAll()
       context become ready
 
-    case _: SchedulerCommand => stash()
+    case WarmUp.Failed(ex) =>
+      log.error(ex, "Error during Scheduler warm up...")
+      import context.dispatcher
+      context.system.scheduler.scheduleOnce(2 seconds, () => warmUp())
+      unstashAll()
+      context become ready
+
+    case msg: WorkerMessage =>
+      taskQueue forward msg
+
+    case _ => stash()
   }
 
   private def handleEvent(event: Any): Unit = event match {

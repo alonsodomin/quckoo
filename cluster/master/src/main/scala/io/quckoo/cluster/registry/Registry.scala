@@ -157,6 +157,13 @@ class Registry(settings: RegistrySettings)
       unstashAll()
       context become ready
 
+    case WarmUp.Failed(ex) =>
+      log.error(ex, "Error during Registry warm up...")
+      import context.dispatcher
+      context.system.scheduler.scheduleOnce(2 seconds, () => warmUp())
+      unstashAll()
+      context become ready
+
     case _: RegistryCommand => stash()
   }
 
