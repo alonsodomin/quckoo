@@ -72,8 +72,6 @@ class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(impli
   private[this] var clients = Set.empty[ActorRef]
   private[this] var clusterState = QuckooState(masterNodes = masterNodes(cluster))
 
-  private[this] var workerRemoveTasks = Map.empty[NodeId, Cancellable]
-
   override implicit def actorSystem: ActorSystem = context.system
 
   override def preStart(): Unit = {
@@ -179,24 +177,6 @@ class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(impli
 
     case evt: WorkerEvent =>
       clusterState = clusterState.updated(evt)
-      evt match {
-        case WorkerJoined(workerId, _) if workerRemoveTasks.contains(workerId) =>
-          workerRemoveTasks(workerId).cancel()
-          workerRemoveTasks -= workerId
-
-        case WorkerLost(workerId) if !workerRemoveTasks.contains(workerId) =>
-          import context.dispatcher
-          val removeTask = context.system.scheduler.scheduleOnce(
-            5 seconds, mediator,
-            DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
-          )
-          workerRemoveTasks += (workerId -> removeTask)
-
-        case WorkerRemoved(workerId) =>
-          workerRemoveTasks -= workerId
-
-        case _ => // do nothing
-      }
 
     case evt: TaskQueueUpdated =>
       clusterState = clusterState.copy(metrics = clusterState.metrics.updated(evt))

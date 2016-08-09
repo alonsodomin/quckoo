@@ -3,7 +3,7 @@
 set -e
 
 function config_sbt() {
-    if [ ! -f /vagrant/sandbox/etc/sbt/0.13/artifactory.sbt ]; then
+    if [ ! -f /home/vagrant/.sbt/0.13/artifactory.sbt ]; then
         echo "Configuring sandboxed SBT..."
         if [ ! -d /home/vagrant/.sbt/0.13 ]; then
             mkdir -p /home/vagrant/.sbt/0.13

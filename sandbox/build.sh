@@ -3,5 +3,5 @@
 echo "Building project..."
 cd /vagrant
 
-sbt docker:publishLocal
+sbt docker:publishLocal coreJVM/publish exampleJobs/publish
 

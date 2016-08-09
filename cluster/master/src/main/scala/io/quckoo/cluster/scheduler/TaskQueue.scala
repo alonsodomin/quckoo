@@ -56,6 +56,7 @@ object TaskQueue {
 
     case object Idle extends WorkerStatus
     case class Busy(taskId: TaskId, deadline: Deadline) extends WorkerStatus
+    case class Unreachable(previous: WorkerStatus) extends WorkerStatus
   }
 
   private case class WorkerState(ref: ActorRef, status: WorkerState.WorkerStatus)
@@ -69,15 +70,15 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
   import WorkerState._
 
   implicit val cluster = Cluster(context.system)
-  private val mediator = DistributedPubSub(context.system).mediator
-  private val replicator = DistributedData(context.system).replicator
+  private[this] val mediator = DistributedPubSub(context.system).mediator
+  private[this] val replicator = DistributedData(context.system).replicator
 
-  private var workers = Map.empty[NodeId, WorkerState]
-  private var pendingTasks = Queue.empty[AcceptedTask]
-  private var inProgressTasks = Map.empty[TaskId, ActorRef]
+  private[this] var workers = Map.empty[NodeId, WorkerState]
+  private[this] var pendingTasks = Queue.empty[AcceptedTask]
+  private[this] var inProgressTasks = Map.empty[TaskId, ActorRef]
+  private[this] var workerRemoveTasks = Map.empty[NodeId, Cancellable]
 
-  import context.dispatcher
-  private val cleanupTask = context.system.scheduler.schedule(maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupTick)
+  private[this] val cleanupTask = createCleanUpTask()
 
   override def postStop(): Unit = cleanupTask.cancel()
 
@@ -88,7 +89,19 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     case RegisterWorker(workerId) =>
       if (workers.contains(workerId)) {
         context.unwatch(workers(workerId).ref)
-        workers += (workerId -> workers(workerId).copy(ref = sender()))
+
+        if (workerRemoveTasks.contains(workerId)) {
+          workerRemoveTasks(workerId).cancel()
+          workerRemoveTasks -= workerId
+        }
+
+        val currentState = workers(workerId)
+        val newStatus = currentState.status match {
+          case Unreachable(previous) => previous
+          case any => any
+        }
+
+        workers += (workerId -> currentState.copy(ref = sender(), status = newStatus))
         context.watch(sender())
       } else {
         val workerRef = sender()
@@ -102,6 +115,29 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
           sender ! TaskReady
         }
       }
+
+    case RemoveWorker(workerId) if workers.contains(workerId) =>
+      def killTask(taskId: TaskId): Unit = {
+        log.info("Killing task {}", taskId)
+        // TODO define a better message to interrupt the execution
+        inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
+        inProgressTasks -= taskId
+        replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
+          _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
+        }
+      }
+
+      workers(workerId).status match {
+        case WorkerState.Busy(taskId, _) =>
+          killTask(taskId)
+
+        case WorkerState.Unreachable(Busy(taskId, _)) =>
+          killTask(taskId)
+
+        case _ =>
+      }
+      workers -= workerId
+      mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
 
     case RequestTask(workerId) if pendingTasks.nonEmpty =>
       workers.get(workerId) match {
@@ -183,25 +219,19 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       }
 
     case Terminated(workerRef) =>
+      def scheduleRemoval(workerId: NodeId, state: WorkerState): Unit = {
+        val newStatus = Unreachable(state.status)
+        workers += (workerId -> state.copy(status = newStatus))
+        val removeTask = createRemoveWorkerTask(workerId)
+        workerRemoveTasks += (workerId -> removeTask)
+        mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerLost(workerId))
+      }
+
       workers.find {
         case (_, WorkerState(`workerRef`, _)) => true
         case _ => false
-      } foreach { case (workerId, workerState) =>
-        log.info("Worker terminated! workerId={}", workerId)
-        workers -= workerId
-        workerState.status match {
-          case WorkerState.Busy(taskId, _) =>
-            // TODO define a better message to interrupt the execution
-            inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
-            inProgressTasks -= taskId
-            replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
-              _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
-            }
+      } foreach { case (workerId, state) => scheduleRemoval(workerId, state) }
 
-          case _ =>
-        }
-        mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerLost(workerId))
-      }
   }
 
   override def unhandled(message: Any): Unit = message match {
@@ -216,6 +246,20 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       case (_, WorkerState(ref, WorkerState.Idle)) => ref ! TaskReady
       case _ => // busy
     }
+  }
+
+  private def createCleanUpTask(): Cancellable = {
+    import context.dispatcher
+    context.system.scheduler.schedule(
+      maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupTick
+    )
+  }
+
+  private def createRemoveWorkerTask(nodeId: NodeId): Cancellable = {
+    import context.dispatcher
+    context.system.scheduler.scheduleOnce(
+      5 seconds, self, RemoveWorker(nodeId)
+    )
   }
 
   private def changeWorkerToIdle(workerId: NodeId, taskId: TaskId): Unit =

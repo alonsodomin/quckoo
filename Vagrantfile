@@ -51,8 +51,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provision :shell, path: "sandbox/provision.sh"
 
+  config.vm.provision :docker_compose, yml: "/vagrant/sandbox/docker-support.yml"
   config.vm.provision :shell, inline: "/vagrant/sandbox/build.sh", privileged: false
-  config.vm.provision :docker_compose, yml: "/vagrant/sandbox/docker-compose.yml"
-  config.vm.provision :shell, inline: "/vagrant/sandbox/publish.sh", privileged: false
+  config.vm.provision :docker_compose, yml: "/vagrant/sandbox/docker-quckoo.yml"
+  #config.vm.provision :shell, inline: "/vagrant/sandbox/publish.sh", privileged: false
 
 end

@@ -22,6 +22,7 @@ import io.quckoo.id._
 // Messages from workers
 sealed trait WorkerMessage
 final case class RegisterWorker(workerId: NodeId) extends WorkerMessage
+final case class RemoveWorker(workerId: NodeId) extends WorkerMessage
 final case class RequestTask(workerId: NodeId) extends WorkerMessage
 final case class TaskDone(workerId: NodeId, taskId: TaskId, result: Any) extends WorkerMessage
 final case class TaskFailed(workerId: NodeId, taskId: TaskId, cause: Fault) extends WorkerMessage
