@@ -101,6 +101,9 @@ object ExecutionDriver {
       }
     }
 
+    def finished: Boolean =
+      plan.finishedTime.isDefined
+
     def updated(event: SchedulerEvent): DriverState = {
       if (plan.finished) this
       else {

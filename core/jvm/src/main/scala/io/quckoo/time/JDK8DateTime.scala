@@ -63,6 +63,8 @@ class JDK8DateTime(private[JDK8DateTime] val zonedDateTime: ZonedDateTime) exten
     new JDK8DateTime(zonedDateTime = zdt)
   }
 
+  def toEpochSecond: Long = zonedDateTime.toEpochSecond
+
   def toEpochMillis: Long =
     zonedDateTime.toInstant.toEpochMilli
 

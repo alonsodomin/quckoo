@@ -46,8 +46,11 @@ abstract class DateTime extends Ordered[DateTime] with Serializable {
 
   def plusHours(hours: Int): DateTime
 
-  final def compare(that: DateTime): Int =
-    (this.toEpochMillis - that.toEpochMillis).toInt
+  final def compare(that: DateTime): Int = {
+    if (this.toEpochSecond > that.toEpochSecond) 1
+    else if (this.toEpochSecond < that.toEpochSecond) -1
+    else 0
+  }
 
   final def isBefore(dateTime: DateTime): Boolean =
     compareTo(dateTime) < 0
@@ -65,6 +68,8 @@ abstract class DateTime extends Ordered[DateTime] with Serializable {
   def toLocal: DateTime
 
   def toUTC: DateTime
+
+  def toEpochSecond: Long
 
   def toEpochMillis: Long
 

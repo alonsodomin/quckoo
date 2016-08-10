@@ -37,6 +37,8 @@ class DummyDateTime(val value: Long) extends DateTime {
 
   override def toUTC: DateTime = this
 
+  override def toEpochSecond: Long = value / 1000
+
   override def toEpochMillis: Long = value
 
   override def toString = value.toString
