@@ -18,6 +18,9 @@ package io.quckoo
 
 import io.quckoo.id._
 
+import scalaz._
+import Scalaz._
+
 /**
  * Created by aalonsodominguez on 05/07/15.
  */
@@ -28,3 +31,11 @@ final case class Task(
     //params: Map[String, AnyVal] = Map.empty,
     jobClass: String
 )
+
+object Task {
+
+  implicit val showTask = Show.shows[Task] { task =>
+    s"${task.jobClass} @ ${task.artifactId.shows}"
+  }
+
+}

@@ -19,7 +19,7 @@ package io.quckoo.cluster.scheduler
 import akka.NotUsed
 import akka.stream.scaladsl.Source
 
-import io.quckoo.protocol.scheduler.{SchedulerEvent, TaskQueueUpdated}
+import io.quckoo.protocol.scheduler.SchedulerEvent
 
 /**
   * Created by alonsodomin on 01/04/2016.

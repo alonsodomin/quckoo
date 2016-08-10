@@ -28,7 +28,8 @@ import io.quckoo.time.MomentJSTimeSource.Implicits.default
 
 import japgolly.scalajs.react._
 
-import scalaz.NonEmptyList
+import scalaz._
+import Scalaz._
 
 /**
   * Created by alonsodomin on 30/01/2016.
@@ -69,7 +70,7 @@ object ExecutionPlanList {
         val jobSpec = model.jobSpecs.get(plan.jobId)
         jobSpec.render(_.displayName)
 
-      case "Current task"   => plan.currentTask.map(_.id).map(_.toString()).getOrElse[String]("")
+      case "Current task"   => plan.currentTask.map(_.show).getOrElse(Cord.empty).toString()
       case "Trigger"        => plan.trigger.toString()
       case "Last Scheduled" => DateTimeDisplay(plan.lastScheduledTime)
       case "Last Execution" => DateTimeDisplay(plan.lastExecutionTime)
