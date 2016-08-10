@@ -1,5 +1,3 @@
-sudo: false
-
 language: scala
 
 jdk:
@@ -15,12 +13,10 @@ cache:
     - $HOME/.ivy2
 
 before_install:
-  - pip install --user codecov
   - gem install compass
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
-  #- sbt ++$TRAVIS_SCALA_VERSION clean test
 
 after_success:
   - sbt coverageReport && sbt coverageAggregate
