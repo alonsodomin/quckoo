@@ -109,9 +109,7 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
     log.debug(s"Resolving $moduleDescriptor")
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
-
     (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)) { (_, r) =>
-
       Artifact(artifactId, artifactLocations(r.getAllArtifactsReports))
     } leftMap MissingDependencies
   }
