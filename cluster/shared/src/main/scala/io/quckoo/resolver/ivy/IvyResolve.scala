@@ -88,8 +88,10 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
 
     def artifactLocations(artifactReports: Seq[ArtifactDownloadReport]): Seq[URL] = {
       for (report <- artifactReports) yield {
-        Option(report.getUnpackedLocalFile).
-          orElse(Option(report.getLocalFile)) match {
+        val localFile = Option(report.getUnpackedLocalFile).
+          orElse(Option(report.getLocalFile))
+
+        localFile match {
           case Some(file) => Right(file)
           case None       => Left(report.getArtifact.getUrl)
         }
@@ -102,12 +104,14 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
       setValidate(true).
       setDownload(download).
       setOutputReport(false).
-      setConfs(Array(RuntimeConfName))
+      setConfs(Array(DefaultConfName))
 
     log.debug(s"Resolving $moduleDescriptor")
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
+
     (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)) { (_, r) =>
+
       Artifact(artifactId, artifactLocations(r.getAllArtifactsReports))
     } leftMap MissingDependencies
   }
@@ -118,12 +122,12 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
     )
 
     val descriptor = new DefaultModuleDescriptor(IvyModuleId.newInstance(
-      moduleRevisionId.getOrganisation, moduleRevisionId.getName + "-job", "working"), "execution", null, true
+      moduleRevisionId.getOrganisation, moduleRevisionId.getName + "-job", "working"), "integration", null, true
     )
     Configurations.foreach(c => descriptor.addConfiguration(new Configuration(c)))
     descriptor.setLastModified(System.currentTimeMillis)
 
-    val dependencyDescriptor = new DefaultDependencyDescriptor(descriptor, moduleRevisionId, true, true, true)
+    val dependencyDescriptor = new DefaultDependencyDescriptor(descriptor, moduleRevisionId, false, false, true)
     Configurations.foreach(c => dependencyDescriptor.addDependencyConfiguration(c, c))
     descriptor.addDependency(dependencyDescriptor)
 
