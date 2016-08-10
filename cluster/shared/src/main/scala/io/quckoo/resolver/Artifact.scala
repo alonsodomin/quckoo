@@ -25,6 +25,9 @@ import org.slf4s.Logging
 
 import scala.util.Try
 
+import scalaz._
+import Scalaz._
+
 /**
  * Created by aalonsodominguez on 17/07/15.
  */
@@ -75,7 +78,7 @@ final class Artifact private[resolver] (val artifactId: ArtifactId, classLoader:
 
   private def logCreation(): Unit = {
     val classpathStr = classpath.mkString(":")
-    log.debug(s"Job package created for artifact $artifactId and classpath: $classpathStr")
+    log.debug(s"Job package created for artifact ${artifactId.shows} and classpath: $classpathStr")
   }
 
 }

@@ -29,7 +29,8 @@ import io.quckoo.protocol.registry._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import scalaz.NonEmptyList
+import scalaz._
+import Scalaz._
 
 /**
  * Created by alonsodomin on 17/10/2015.
@@ -57,7 +58,7 @@ object JobSpecList {
     def renderItem(jobId: JobId, jobSpec: JobSpec, column: String): ReactNode = column match {
       case "Name"        => jobSpec.displayName
       case "Description" => jobSpec.description.getOrElse[String]("")
-      case "Artifact ID" => jobSpec.artifactId.toString
+      case "Artifact ID" => jobSpec.artifactId.shows
       case "Job Class"   => jobSpec.jobClass
       case "Status"      =>
         if (jobSpec.disabled) {

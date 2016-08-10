@@ -26,6 +26,9 @@ import io.quckoo.id.TaskId
 
 import japgolly.scalajs.react._
 
+import scalaz._
+import Scalaz._
+
 /**
   * Created by alonsodomin on 15/05/2016.
   */
@@ -42,7 +45,7 @@ object TaskExecutionList {
 
     def renderItem(taskId: TaskId, execution: TaskExecution, column: String): ReactNode = column match {
       case "Task ID"   => taskId.toString
-      case "Artifact"  => execution.task.artifactId.toString
+      case "Artifact"  => execution.task.artifactId.shows
       case "Job Class" => execution.task.jobClass
       case "Status"    => execution.status.toString
       case "Outcome"   => execution.outcome.map(_.toString).getOrElse[String]("")

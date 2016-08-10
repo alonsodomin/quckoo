@@ -57,13 +57,10 @@ object ArtifactId {
         left.name == right.name &&
         left.version == right.version
 
+    override def shows(aid: ArtifactId): String =
+      s"${aid.organization}$GroupSeparator${aid.name}$VersionSeparator${aid.version}"
   }
 
 }
 
-@Lenses final case class ArtifactId(organization: String, name: String, version: String) {
-  import ArtifactId._
-
-  override def toString: String = s"$organization$GroupSeparator$name$VersionSeparator$version"
-
-}
+@Lenses final case class ArtifactId(organization: String, name: String, version: String)
