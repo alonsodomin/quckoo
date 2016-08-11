@@ -4,7 +4,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 
 import org.scalatest.{FlatSpec, Matchers}
-
 import org.threeten.bp.{LocalDate, LocalTime}
 
 

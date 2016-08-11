@@ -107,21 +107,25 @@ lazy val clientJVM = client.jvm
 // Console ==================================================
 
 lazy val console = (project in file("console")).
-  settings(moduleName := "quckoo-console").
+  settings(
+    name := "console",
+    moduleName := "quckoo-console"
+  ).
   settings(noPublishSettings).
   aggregate(consoleApp, consoleResources)
 
 lazy val consoleApp = (project in file("console/app")).
   enablePlugins(ScalaJSPlugin).
   settings(
-    name := "console",
+    name := "console-app",
     moduleName := "quckoo-console-app",
-    requiresDOM := true
+    requiresDOM := true,
+    test := ()
   ).
   settings(commonSettings: _*).
   settings(commonJsSettings: _*).
   settings(Dependencies.consoleApp: _*).
-  dependsOn(coreJS, apiJS, clientJS)
+  dependsOn(clientJS)
 
 lazy val consoleResources = (project in file("console/resources")).
   aggregate(consoleApp).
