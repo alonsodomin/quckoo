@@ -57,7 +57,7 @@ lazy val quckoo = (project in file(".")).
 
 // Core ==================================================
 
-lazy val core = (crossProject in file("core")).
+lazy val core = (crossProject.crossType(CrossType.Pure) in file("core")).
   settings(
     name := "core",
     moduleName := "quckoo-core"

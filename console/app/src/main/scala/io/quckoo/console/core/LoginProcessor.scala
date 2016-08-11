@@ -20,10 +20,10 @@ import diode._
 
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
-import io.quckoo.time.DateTime
-import io.quckoo.time.MomentJSTimeSource.Implicits.default
 
 import japgolly.scalajs.react.extra.router.RouterCtl
+
+import org.threeten.bp.{Clock, LocalDateTime}
 
 import slogging.LazyLogging
 
@@ -37,6 +37,8 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
 
   import ConsoleRoute._
   import ActionResult._
+
+  val clock = Clock.systemDefaultZone
 
   val authFailedNotification = Notification.danger("Username or password incorrect")
 
@@ -52,7 +54,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
         val destination = referral.getOrElse(DashboardRoute)
         val newModel = currentModel.copy(
           client = Some(client),
-          lastLogin = Some(DateTime.now)
+          lastLogin = Some(LocalDateTime.now(clock))
         )
         logger.info("Successfully logged in! Redirecting to {}", destination)
         ModelUpdateEffect(newModel, NavigateTo(destination))
