@@ -14,7 +14,7 @@ import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
+import io.quckoo.test.{ImplicitClock, TestActorSystem}
 
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
@@ -35,7 +35,7 @@ object SchedulerSpec {
 }
 
 class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
-    with ImplicitSender with ImplicitTimeSource with ScalaFutures
+    with ImplicitSender with ImplicitClock with ScalaFutures
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
 
   import SchedulerSpec._

@@ -42,7 +42,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
 
   import RegistryHttpRouterSpec._
   import StatusCodes._
-  import serialization.json.jvm._
+  import serialization.json._
 
   val entryPoint = pathPrefix("api" / "registry") {
     registryApi

@@ -1,6 +1,5 @@
 package io.quckoo.cluster.scheduler
 
-import java.time.{Instant, ZoneId}
 import java.util.UUID
 
 import akka.NotUsed
@@ -14,9 +13,9 @@ import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo._
-import io.quckoo.time.JDK8TimeSource
 
 import org.scalatest.{Matchers, WordSpec}
+import org.threeten.bp.{Clock, Instant, ZoneId, ZonedDateTime}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -26,7 +25,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object SchedulerHttpRouterSpec {
 
   final val FixedInstant = Instant.ofEpochMilli(8939283923L)
-  final val FixedTimeSource = JDK8TimeSource.fixed(FixedInstant, ZoneId.of("UTC"))
+  final val FixedClock = Clock.fixed(FixedInstant, ZoneId.of("UTC"))
 
   final val TestJobId = JobId(UUID.randomUUID())
   final val TestPlanIds = Set(UUID.randomUUID())
@@ -35,7 +34,7 @@ object SchedulerHttpRouterSpec {
       TestJobId,
       TestPlanIds.head,
       Trigger.Immediate,
-      FixedTimeSource.currentDateTime.toUTC
+      ZonedDateTime.now(FixedClock)
     )
   )
 
@@ -54,7 +53,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
   import SchedulerHttpRouterSpec._
   import StatusCodes._
-  import serialization.json.jvm._
+  import serialization.json._
 
   val entryPoint = pathPrefix("api" / "scheduler") {
     schedulerApi

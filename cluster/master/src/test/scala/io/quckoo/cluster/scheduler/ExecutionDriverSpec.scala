@@ -11,7 +11,7 @@ import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.test.{ImplicitTimeSource, TestActorSystem}
+import io.quckoo.test.{ImplicitClock, TestActorSystem}
 import io.quckoo.{TaskExecution, JobSpec, Trigger}
 
 import org.scalatest._
@@ -30,7 +30,7 @@ object ExecutionDriverSpec {
 }
 
 class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec"))
-    with ImplicitSender with ImplicitTimeSource
+    with ImplicitSender with ImplicitClock
     with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers
     with Inside {
 

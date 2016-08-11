@@ -8,7 +8,7 @@ import io.quckoo.cluster.core.QuckooGuardian
 import io.quckoo.id.ArtifactId
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.client._
-import io.quckoo.test.ImplicitTimeSource
+import io.quckoo.test.ImplicitClock
 
 import scala.concurrent.Promise
 
@@ -37,7 +37,7 @@ object QuckooMultiNodeCluster {
 }
 
 abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) with ImplicitSender
-  with MultiNodeClusterSpec with ImplicitTimeSource {
+  with MultiNodeClusterSpec with ImplicitClock {
 
   import QuckooNodesConfig._
 
