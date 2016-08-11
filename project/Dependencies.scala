@@ -32,6 +32,7 @@ object Dependencies {
 
     val testState = "2.0.0"
     val scalaCss  = "0.4.1"
+    val scalaTime = "2.0.0-M3"
 
     val diode = "1.0.0"
 
@@ -115,10 +116,11 @@ object Dependencies {
     libraryDependencies ++= Seq(
       compilerPlugin(Dependencies.compiler.macroParadise),
 
-      "com.lihaoyi"    %%% "upickle"     % version.upickle,
-      "org.scalaz"     %%% "scalaz-core" % version.scalaz,
-      "org.scalatest"  %%% "scalatest"   % version.scalaTest  % Test,
-      "org.scalacheck" %%% "scalacheck"  % version.scalaCheck % Test,
+      "com.lihaoyi"    %%% "upickle"         % version.upickle,
+      "org.scalaz"     %%% "scalaz-core"     % version.scalaz,
+      "io.github.soc"  %%% "scala-java-time" % version.scalaTime,
+      "org.scalatest"  %%% "scalatest"       % version.scalaTest  % Test,
+      "org.scalacheck" %%% "scalacheck"      % version.scalaCheck % Test,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle
