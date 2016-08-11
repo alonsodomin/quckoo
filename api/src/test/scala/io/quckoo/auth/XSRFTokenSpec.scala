@@ -13,8 +13,8 @@ class XSRFTokenSpec extends Properties("XSRFToken") {
   import Arbitrary.arbitrary
 
   val tokens = for {
-    userId <- arbitrary[String] if userId.length > 0
-    value  <- arbitrary[String] if value.length > 0
+    userId <- Gen.alphaStr if userId.length > 0
+    value  <- Gen.alphaStr if value.length > 0
   } yield XSRFToken(userId, value)
   implicit lazy val arbitraryToken = Arbitrary(tokens)
 
