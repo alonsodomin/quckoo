@@ -130,8 +130,9 @@ object Dependencies {
   lazy val api = Def.settings(
     addCompilerPlugin(compiler.macroParadise),
     libraryDependencies ++= Seq(
-      "me.chrons" %%% "diode"          % version.diode,
-      "io.monix"  %%% "monix-reactive" % version.monix
+      "me.chrons"      %%% "diode"          % version.diode,
+      "io.monix"       %%% "monix-reactive" % version.monix,
+      "org.scalacheck" %%% "scalacheck"     % version.scalaCheck % Test
     )
   )
 
@@ -149,8 +150,7 @@ object Dependencies {
   lazy val clientJS = Def.settings(
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % version.scalaJsDom
-    ),
-    jsDependencies += RuntimeDOM
+    )
   )
 
   lazy val clientJVM = Def.settings {

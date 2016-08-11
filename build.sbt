@@ -121,6 +121,14 @@ lazy val consoleApp = (project in file("console/app")).
     moduleName := "quckoo-console-app",
     requiresDOM := true,
     test := ()
+    /*test := {
+      import org.scalajs.core.tools.io.MemVirtualJSFile
+      import org.scalajs.core.tools.logging.ScalaConsoleLogger
+      val env = (loadedJSEnv in Compile).value
+      val code = new MemVirtualJSFile("code.js")
+      code.content = """console.log("hello world")"""
+      env.jsRunner(code).run(new ScalaConsoleLogger(), (scalaJSConsole in Compile).value)
+    }*/
   ).
   settings(commonSettings: _*).
   settings(commonJsSettings: _*).
@@ -159,7 +167,8 @@ lazy val consoleResources = (project in file("console/resources")).
         p.listFiles().map { src => (src, "quckoo/fonts/" + src.getName) }
       }
     },
-    packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleApp)
+    packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleApp),
+    test := ()
   )
 
 // Cluster ==================================================
