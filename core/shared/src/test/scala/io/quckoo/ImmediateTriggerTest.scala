@@ -1,16 +1,18 @@
 package io.quckoo
 
-import io.quckoo.Trigger.{LastExecutionTime, ScheduledTime, Immediate}
-import io.quckoo.time.{DummyTimeSource, DummyDateTime}
+import io.quckoo.Trigger.{Immediate, LastExecutionTime, ScheduledTime}
+
 import org.scalatest.{Matchers, WordSpec}
+
+import org.threeten.bp.{Clock, Instant, ZoneId, ZonedDateTime}
 
 /**
   * Created by alonsodomin on 14/03/2016.
   */
 class ImmediateTriggerTest extends WordSpec with Matchers {
 
-  val now = new DummyDateTime(0)
-  implicit val timeSource = new DummyTimeSource(now)
+  val instant = Instant.EPOCH
+  implicit val clock = Clock.fixed(instant, ZoneId.of("UTC"))
 
   "An Immediate trigger" should {
     val trigger = Immediate
@@ -20,19 +22,19 @@ class ImmediateTriggerTest extends WordSpec with Matchers {
     }
 
     "return now as execution time when has not been executed before" in {
-      val refTime = ScheduledTime(timeSource.currentDateTime)
+      val refTime = ScheduledTime(ZonedDateTime.now(clock))
 
       val returnedTime = trigger.nextExecutionTime(refTime)
 
-      returnedTime should be (Some(timeSource.currentDateTime))
+      returnedTime shouldBe Some(ZonedDateTime.now(clock))
     }
 
     "return none as execution time if it has already been executed" in {
-      val refTime = LastExecutionTime(timeSource.currentDateTime)
+      val refTime = LastExecutionTime(ZonedDateTime.now(clock))
 
       val returnedTime = trigger.nextExecutionTime(refTime)
 
-      returnedTime should be (None)
+      returnedTime shouldBe None
     }
 
   }

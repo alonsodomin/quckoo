@@ -1,8 +1,10 @@
 package io.quckoo
 
-import io.quckoo.Trigger.{LastExecutionTime, ScheduledTime, Every}
-import io.quckoo.time.{DummyTimeSource, DummyDateTime}
+import io.quckoo.Trigger.{Every, LastExecutionTime, ScheduledTime}
+
 import org.scalatest.{Matchers, WordSpec}
+
+import org.threeten.bp.{Clock, Instant, ZoneId, ZonedDateTime}
 
 import scala.concurrent.duration._
 
@@ -11,8 +13,8 @@ import scala.concurrent.duration._
   */
 class EveryTriggerTest extends WordSpec with Matchers {
 
-  val now = new DummyDateTime(0)
-  implicit val timeSource = new DummyTimeSource(now)
+  val instant = Instant.EPOCH
+  implicit val clock = Clock.fixed(instant, ZoneId.of("UTC"))
 
   "with delay" should {
     val frequency = 10 seconds
@@ -24,8 +26,8 @@ class EveryTriggerTest extends WordSpec with Matchers {
     }
 
     "return a time with expected delay when has not been executed before" in {
-      val expectedTime = timeSource.currentDateTime.plusMillis(delay.toMillis)
-      val refTime      = ScheduledTime(timeSource.currentDateTime)
+      val expectedTime = ZonedDateTime.now(clock).plusNanos(delay.toNanos)
+      val refTime      = ScheduledTime(ZonedDateTime.now(clock))
 
       val returnedTime = trigger.nextExecutionTime(refTime)
 
@@ -33,8 +35,8 @@ class EveryTriggerTest extends WordSpec with Matchers {
     }
 
     "return a time with frequency delay when it has already been executed before" in {
-      val expectedTime = timeSource.currentDateTime.plusMillis(frequency.toMillis)
-      val refTime      = LastExecutionTime(timeSource.currentDateTime)
+      val expectedTime = ZonedDateTime.now(clock).plusNanos(frequency.toNanos)
+      val refTime      = LastExecutionTime(ZonedDateTime.now(clock))
 
       val returnedTime = trigger.nextExecutionTime(refTime)
 

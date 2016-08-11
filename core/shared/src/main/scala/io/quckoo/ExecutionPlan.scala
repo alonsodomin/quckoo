@@ -17,8 +17,10 @@
 package io.quckoo
 
 import io.quckoo.id._
-import io.quckoo.time.{DateTime, TimeSource}
+
 import monocle.macros.Lenses
+
+import org.threeten.bp.{Clock, ZonedDateTime}
 
 /**
   * Created by alonsodomin on 14/03/2016.
@@ -27,18 +29,18 @@ import monocle.macros.Lenses
     jobId: JobId,
     planId: PlanId,
     trigger: Trigger,
-    createdTime: DateTime,
+    createdTime: ZonedDateTime,
     currentTask: Option[Task] = None,
     lastOutcome: Option[TaskExecution.Outcome] = None,
-    lastTriggeredTime: Option[DateTime] = None,
-    lastScheduledTime: Option[DateTime] = None,
-    lastExecutionTime: Option[DateTime] = None,
-    finishedTime: Option[DateTime] = None
+    lastTriggeredTime: Option[ZonedDateTime] = None,
+    lastScheduledTime: Option[ZonedDateTime] = None,
+    lastExecutionTime: Option[ZonedDateTime] = None,
+    finishedTime: Option[ZonedDateTime] = None
 ) {
 
   def finished: Boolean = finishedTime.isDefined
 
-  def nextExecutionTime(implicit timeSource: TimeSource): Option[DateTime] = {
+  def nextExecutionTime(implicit clock: Clock): Option[ZonedDateTime] = {
     import Trigger.{LastExecutionTime, ScheduledTime}
 
     val referenceTime = lastExecutionTime match {

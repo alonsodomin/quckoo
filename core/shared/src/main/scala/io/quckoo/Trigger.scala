@@ -16,7 +16,7 @@
 
 package io.quckoo
 
-import io.quckoo.time.{DateTime, TimeSource}
+import org.threeten.bp.{Clock, ZonedDateTime, Duration => JavaDuration}
 
 import scala.concurrent.duration._
 
@@ -27,7 +27,7 @@ sealed trait Trigger {
   import Trigger.ReferenceTime
 
   def nextExecutionTime(referenceTime: ReferenceTime)
-                       (implicit timeSource: TimeSource): Option[DateTime]
+                       (implicit clock: Clock): Option[ZonedDateTime]
 
   def isRecurring: Boolean = false
 
@@ -36,16 +36,16 @@ sealed trait Trigger {
 object Trigger {
 
   sealed trait ReferenceTime {
-    val when: DateTime
+    val when: ZonedDateTime
   }
-  case class ScheduledTime(when: DateTime) extends ReferenceTime
-  case class LastExecutionTime(when: DateTime) extends ReferenceTime
+  case class ScheduledTime(when: ZonedDateTime) extends ReferenceTime
+  case class LastExecutionTime(when: ZonedDateTime) extends ReferenceTime
 
   case object Immediate extends Trigger {
 
     override def nextExecutionTime(referenceTime: ReferenceTime)
-                                  (implicit timeSource: TimeSource): Option[DateTime] = referenceTime match {
-      case ScheduledTime(_)     => Some(timeSource.currentDateTime)
+                                  (implicit clock: Clock): Option[ZonedDateTime] = referenceTime match {
+      case ScheduledTime(_)     => Some(ZonedDateTime.now(clock))
       case LastExecutionTime(_) => None
     }
 
@@ -54,28 +54,28 @@ object Trigger {
   final case class After(delay: FiniteDuration) extends Trigger {
 
     override def nextExecutionTime(referenceTime: ReferenceTime)
-                                  (implicit timeSource: TimeSource): Option[DateTime] =
+                                  (implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
         case ScheduledTime(time) =>
-          val millis = delay.toMillis
-          Some(time.plusMillis(millis))
+          val nanos = delay.toNanos
+          Some(time.plusNanos(nanos))
 
         case LastExecutionTime(_) => None
       }
 
   }
 
-  final case class At(when: DateTime, graceTime: Option[FiniteDuration] = None) extends Trigger {
+  final case class At(when: ZonedDateTime, graceTime: Option[FiniteDuration] = None) extends Trigger {
 
     override def nextExecutionTime(referenceTime: ReferenceTime)
-                                  (implicit timeSource: TimeSource): Option[DateTime] =
+                                  (implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
         case ScheduledTime(_) =>
           if (graceTime.isDefined) {
             graceTime.flatMap { margin =>
-              val now = timeSource.currentDateTime
-              val diff = Math.abs((now - when).toMillis)
-              if (diff <= margin.toMillis) Some(now)
+              val now = ZonedDateTime.now(clock)
+              val diff = JavaDuration.between(now, when)
+              if (diff.abs.toMillis <= margin.toMillis) Some(now)
               else if (now < when) Some(when)
               else None
             }
@@ -89,15 +89,15 @@ object Trigger {
   final case class Every(frequency: FiniteDuration, startingIn: Option[FiniteDuration] = None) extends Trigger {
 
     override def nextExecutionTime(referenceTime: ReferenceTime)
-                                  (implicit timeSource: TimeSource): Option[DateTime] =
+                                  (implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
         case ScheduledTime(time) =>
-          val millisDelay = (startingIn getOrElse 0.seconds).toMillis
-          Some(time.plusMillis(millisDelay))
+          val delay = (startingIn getOrElse 0.seconds).toNanos
+          Some(time.plusNanos(delay))
 
         case LastExecutionTime(time) =>
-          val millisDelay = frequency.toMillis
-          Some(time.plusMillis(millisDelay))
+          val delay = frequency.toNanos
+          Some(time.plusNanos(delay))
       }
 
     override val isRecurring: Boolean = true
