@@ -23,7 +23,7 @@ import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components._
 import io.quckoo.console.core.Logout
 import io.quckoo.console.security.UserWidget
-import io.quckoo.time.MomentJSTimeSource
+import io.quckoo.time.implicits.systemClock
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -100,7 +100,7 @@ object Navigation {
               props.menu.map(item => renderNavMenu(item, props))
             ),
             <.ul(^.`class` := "nav navbar-nav navbar-right",
-              <.li(^.`class` := "navbar-text", ClockWidget(MomentJSTimeSource.default)),
+              <.li(^.`class` := "navbar-text", ClockWidget(systemClock)),
               <.li(^.`class` := "navbar-text", UserWidget(user)),
               <.li(<.a(^.href := "#", ^.onClick ==> onLogoutClicked, Icons.signOut, "Logout"))
             )

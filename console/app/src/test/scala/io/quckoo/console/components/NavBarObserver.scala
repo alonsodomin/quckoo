@@ -1,6 +1,6 @@
 package io.quckoo.console.components
 
-import io.quckoo.console.ConsoleTestState._
+import NavBarTestState._
 
 import org.scalajs.dom.html
 

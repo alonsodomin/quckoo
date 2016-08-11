@@ -28,10 +28,10 @@ object Dependencies {
     val scalaJsReact    = "0.11.1"
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.0"
-    val scalaJSMomentJS = "0.1.5"
 
     val testState = "2.0.0"
     val scalaCss  = "0.4.1"
+    val scalaTime = "2.0.0-M3"
 
     val diode = "1.0.0"
 
@@ -115,27 +115,24 @@ object Dependencies {
     libraryDependencies ++= Seq(
       compilerPlugin(Dependencies.compiler.macroParadise),
 
-      "com.lihaoyi"    %%% "upickle"     % version.upickle,
-      "org.scalaz"     %%% "scalaz-core" % version.scalaz,
-      "org.scalatest"  %%% "scalatest"   % version.scalaTest  % Test,
-      "org.scalacheck" %%% "scalacheck"  % version.scalaCheck % Test,
+      "com.lihaoyi"    %%% "upickle"         % version.upickle,
+      "org.scalaz"     %%% "scalaz-core"     % version.scalaz,
+      "io.github.soc"  %%% "scala-java-time" % version.scalaTime,
+      "org.scalatest"  %%% "scalatest"       % version.scalaTest  % Test,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle
     )
   }
-  lazy val coreJS = Def.settings {
-    libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % version.scalaJSMomentJS
-  }
-  //lazy val coreJVM = Def.settings { }
 
   // API module ===============================
 
   lazy val api = Def.settings(
     addCompilerPlugin(compiler.macroParadise),
     libraryDependencies ++= Seq(
-      "me.chrons" %%% "diode"          % version.diode,
-      "io.monix"  %%% "monix-reactive" % version.monix
+      "me.chrons"      %%% "diode"          % version.diode,
+      "io.monix"       %%% "monix-reactive" % version.monix,
+      "org.scalacheck" %%% "scalacheck"     % version.scalaCheck % Test
     )
   )
 
@@ -150,11 +147,11 @@ object Dependencies {
     )
   }
 
-  lazy val clientJS = Def.settings {
+  lazy val clientJS = Def.settings(
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % version.scalaJsDom
     )
-  }
+  )
 
   lazy val clientJVM = Def.settings {
     import libs._

@@ -37,7 +37,6 @@ lazy val noPublishSettings = Seq(
 lazy val commonJsSettings = Seq(
   coverageEnabled := false,
   coverageExcludedFiles := ".*",
-  persistLauncher in Compile := true,
   persistLauncher in Test := false,
   scalaJSStage in Test := FastOptStage,
   scalaJSUseRhino in Global := false,
@@ -50,14 +49,17 @@ lazy val scoverageSettings = Seq(
 )
 
 lazy val quckoo = (project in file(".")).
-  settings(moduleName := "quckoo-root").
+  settings(
+    name := "quckoo",
+    moduleName := "quckoo-root"
+  ).
   settings(noPublishSettings).
   enablePlugins(AutomateHeaderPlugin).
   aggregate(coreJS, coreJVM, apiJS, apiJVM, clientJS, clientJVM, cluster, console, examples)
 
 // Core ==================================================
 
-lazy val core = (crossProject in file("core")).
+lazy val core = (crossProject.crossType(CrossType.Pure) in file("core")).
   settings(
     name := "core",
     moduleName := "quckoo-core"
@@ -65,8 +67,7 @@ lazy val core = (crossProject in file("core")).
   settings(commonSettings: _*).
   settings(scoverageSettings: _*).
   settings(Dependencies.core: _*).
-  jsSettings(commonJsSettings: _*).
-  jsSettings(Dependencies.coreJS: _*)
+  jsSettings(commonJsSettings: _*)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
@@ -108,21 +109,25 @@ lazy val clientJVM = client.jvm
 // Console ==================================================
 
 lazy val console = (project in file("console")).
-  settings(moduleName := "quckoo-console").
+  settings(
+    name := "console",
+    moduleName := "quckoo-console"
+  ).
   settings(noPublishSettings).
   aggregate(consoleApp, consoleResources)
 
 lazy val consoleApp = (project in file("console/app")).
   enablePlugins(ScalaJSPlugin).
   settings(
-    name := "console",
+    name := "console-app",
     moduleName := "quckoo-console-app",
-    requiresDOM := true
+    requiresDOM := true,
+    persistLauncher in Compile := true
   ).
   settings(commonSettings: _*).
   settings(commonJsSettings: _*).
   settings(Dependencies.consoleApp: _*).
-  dependsOn(coreJS, apiJS, clientJS)
+  dependsOn(clientJS)
 
 lazy val consoleResources = (project in file("console/resources")).
   aggregate(consoleApp).
@@ -156,7 +161,8 @@ lazy val consoleResources = (project in file("console/resources")).
         p.listFiles().map { src => (src, "quckoo/fonts/" + src.getName) }
       }
     },
-    packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleApp)
+    packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleApp),
+    test := ()
   )
 
 // Cluster ==================================================

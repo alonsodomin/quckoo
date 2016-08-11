@@ -35,10 +35,11 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
-import io.quckoo.time.TimeSource
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 
 import org.slf4s.Logging
+
+import org.threeten.bp.Clock
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
@@ -50,7 +51,7 @@ import scalaz._
 object QuckooFacade extends Logging {
   import Scalaz._
 
-  def start(settings: QuckooClusterSettings)(implicit system: ActorSystem, timeSource: TimeSource): Future[Unit] = {
+  def start(settings: QuckooClusterSettings)(implicit system: ActorSystem, clock: Clock): Future[Unit] = {
     def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
       implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system), "http")
 
@@ -70,7 +71,7 @@ object QuckooFacade extends Logging {
 }
 
 final class QuckooFacade(core: ActorRef)
-                        (implicit system: ActorSystem, timeSource: TimeSource)
+                        (implicit system: ActorSystem, clock: Clock)
     extends HttpRouter with QuckooServer with Logging with Retrying {
 
   implicit val materializer = ActorMaterializer()

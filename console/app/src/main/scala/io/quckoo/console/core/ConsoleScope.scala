@@ -18,9 +18,9 @@ package io.quckoo.console.core
 
 import io.quckoo.client.QuckooClient
 import io.quckoo.client.ajax.AjaxQuckooClientFactory
-import io.quckoo.console.components.Notification
 import io.quckoo.net.QuckooState
-import io.quckoo.time.DateTime
+
+import org.threeten.bp._
 
 /**
   * Created by alonsodomin on 20/02/2016.
@@ -30,7 +30,7 @@ final case class ConsoleScope private (
   client: Option[QuckooClient],
   clusterState: QuckooState,
   userScope: UserScope,
-  lastLogin: Option[DateTime]
+  lastLogin: Option[LocalDateTime]
 ) {
 
   def currentUser = client.flatMap(_.principal)

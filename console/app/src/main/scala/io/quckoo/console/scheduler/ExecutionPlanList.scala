@@ -24,7 +24,7 @@ import io.quckoo.console.components._
 import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
 import io.quckoo.id.PlanId
 import io.quckoo.protocol.scheduler.CancelExecutionPlan
-import io.quckoo.time.MomentJSTimeSource.Implicits.default
+import io.quckoo.time.implicits.systemClock
 
 import japgolly.scalajs.react._
 

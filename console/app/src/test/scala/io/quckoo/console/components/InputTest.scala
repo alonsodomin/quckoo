@@ -1,11 +1,10 @@
 package io.quckoo.console.components
 
-import io.quckoo.time.{Date, Time}
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 
 import org.scalatest.{FlatSpec, Matchers}
+import org.threeten.bp.{LocalDate, LocalTime}
 
 
 /**
@@ -44,14 +43,14 @@ class InputTest extends FlatSpec with Matchers {
       component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
     }
 
-    ComponentTester(Input[Date](onUpdate).component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
+    ComponentTester(Input[LocalDate](onUpdate).component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.date.html}" value="" class="form-control">"""
       component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
     }
 
-    ComponentTester(Input[Time](onUpdate).component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
+    ComponentTester(Input[LocalTime](onUpdate).component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.time.html}" value="" class="form-control">"""

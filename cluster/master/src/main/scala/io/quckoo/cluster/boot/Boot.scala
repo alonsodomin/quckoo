@@ -17,14 +17,16 @@
 package io.quckoo.cluster.boot
 
 import akka.actor._
+
 import com.typesafe.config.{Config, ConfigFactory}
+
 import io.quckoo.cluster.{QuckooClusterSettings, QuckooFacade}
-import io.quckoo.time.JDK8TimeSource
+import io.quckoo.time.implicits.systemClock
+
 import org.slf4s.Logging
+
 import scopt.OptionParser
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -71,7 +73,6 @@ object Boot extends App with Logging {
       system.terminate()
     }
 
-    implicit val timeSource = JDK8TimeSource.default
     val settings = QuckooClusterSettings(system)
 
     import system.dispatcher
