@@ -33,9 +33,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vb.cpus = 2
   end
 
-  # fix "stdin: is not a tty" error
-  config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
-
   config.vm.hostname = "quckoo-vagrant"
   config.vm.network "private_network", ip: "192.168.50.25"
 
@@ -49,11 +46,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Setting up docker provisioner in a separate line to allow for the proxy configuration
   config.vm.provision :docker
 
+  # Installs minimal software tools and prepares the VM for running the application
   config.vm.provision :shell, path: "sandbox/provision.sh"
 
+  # Sets up the third-party services needed to run the application
   config.vm.provision :docker_compose, yml: "/vagrant/sandbox/docker-support.yml"
+
+  # Builds the latest version of the application code
   config.vm.provision :shell, inline: "/vagrant/sandbox/build.sh", privileged: false
+
+  # Starts the application cluster
   config.vm.provision :docker_compose, yml: "/vagrant/sandbox/docker-quckoo.yml"
-  #config.vm.provision :shell, inline: "/vagrant/sandbox/publish.sh", privileged: false
 
 end

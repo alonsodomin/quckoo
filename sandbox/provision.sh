@@ -9,7 +9,7 @@ function config_sbt() {
             mkdir -p /home/vagrant/.sbt/0.13
         fi
         ln -s /vagrant/sandbox/etc/sbt/0.13/artifactory.sbt /home/vagrant/.sbt/0.13/artifactory.sbt
-        chown vagrant /home/vagrant/.sbt/0.13/artifactory.sbt
+        chown -R vagrant:vagrant /home/vagrant/.sbt
     fi
 }
 
