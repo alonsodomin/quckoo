@@ -20,10 +20,13 @@ import java.util.concurrent.TimeUnit
 
 import io.quckoo.Trigger
 import io.quckoo.id.ArtifactId
-import io.quckoo.time.{Date, DateTime, Time}
+
 import japgolly.scalajs.react.ReactNode
 import japgolly.scalajs.react.extra.Reusability
+
 import org.scalajs.jquery.{JQuery, JQueryStatic}
+
+import org.threeten.bp.{LocalDate, LocalDateTime, LocalTime, ZonedDateTime}
 
 import scalacss.Defaults._
 import scala.concurrent.duration.FiniteDuration
@@ -38,9 +41,10 @@ package object components {
   // React's reusability instances for common types
   implicit val timeUnitReuse = Reusability.byRef[TimeUnit]
   implicit val finiteDurationReuse = Reusability.byRef[FiniteDuration]
-  implicit val dateReuse = Reusability.byRef[Date]
-  implicit val timeReuse = Reusability.byRef[Time]
-  implicit val dateTimeReuse = Reusability.byRef[DateTime]
+  implicit val localDateReuse = Reusability.byRef[LocalDate]
+  implicit val localTimeReuse = Reusability.byRef[LocalTime]
+  implicit val localDateTimeReuse = Reusability.byRef[LocalDateTime]
+  implicit val zonedDateTimeReuse = Reusability.byRef[ZonedDateTime]
   implicit val artifactIdReuse = Reusability.byRef[ArtifactId]
 
   implicit val immediateTriggerReuse = Reusability.byRef[Trigger.Immediate.type]

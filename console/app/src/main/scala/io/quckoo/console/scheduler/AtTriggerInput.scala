@@ -18,11 +18,12 @@ package io.quckoo.console.scheduler
 
 import io.quckoo.Trigger
 import io.quckoo.console.components._
-import io.quckoo.time._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
+
+import org.threeten.bp.{LocalDate, LocalDateTime, LocalTime, ZoneId}
 
 /**
   * Created by alonsodomin on 08/04/2016.
@@ -30,7 +31,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object AtTriggerInput {
 
   case class Props(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback)
-  case class State(date: Option[Date], time: Option[Time])
+  case class State(date: Option[LocalDate], time: Option[LocalTime])
 
   implicit val propsReuse = Reusability.by[Props, Option[Trigger.At]](_.value)
   implicit val stateReuse = Reusability.caseClass[State]
@@ -41,8 +42,8 @@ object AtTriggerInput {
       val value = $.state.map(st => st.date.flatMap(date => st.time.map(time => (date, time))))
       value.flatMap {
         case Some((date, time)) =>
-          val dateTime = new MomentJSDateTime(date, time)
-          val trigger = Trigger.At(dateTime)
+          val dateTime = LocalDateTime.of(date, time)
+          val trigger = Trigger.At(dateTime.atZone(ZoneId.systemDefault))
           $.props.flatMap(_.onUpdate(Some(trigger)))
 
         case _ =>
@@ -50,14 +51,14 @@ object AtTriggerInput {
       }
     }
 
-    def onDateUpdate(value: Option[Date]): Callback =
+    def onDateUpdate(value: Option[LocalDate]): Callback =
       $.modState(_.copy(date = value), propagateUpdate)
 
-    def onTimeUpdate(value: Option[Time]): Callback =
+    def onTimeUpdate(value: Option[LocalTime]): Callback =
       $.modState(_.copy(time = value), propagateUpdate)
 
-    val dateInput = Input[Date](onDateUpdate)
-    val timeInput = Input[Time](onTimeUpdate)
+    val dateInput = Input[LocalDate](onDateUpdate)
+    val timeInput = Input[LocalTime](onTimeUpdate)
 
     def render(props: Props, state: State) = {
       <.div(

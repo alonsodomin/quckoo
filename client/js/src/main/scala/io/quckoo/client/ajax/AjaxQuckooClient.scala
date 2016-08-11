@@ -45,7 +45,7 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String])
     extends QuckooClient with StrictLogging {
 
   import upickle.default._
-  import serialization.json.scalajs._
+  import serialization.json._
 
   private[this] def authHeaders: Map[String, String] =
     authToken.fold(Map.empty[String, String])(token => Map(AuthorizationHeader -> s"Bearer $token"))

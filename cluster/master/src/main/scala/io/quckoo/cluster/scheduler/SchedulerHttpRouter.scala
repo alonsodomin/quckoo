@@ -38,7 +38,7 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
 
   import StatusCodes._
   import upickle.default._
-  import serialization.json.jvm._
+  import serialization.json._
 
   def schedulerApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     pathPrefix("plans") {

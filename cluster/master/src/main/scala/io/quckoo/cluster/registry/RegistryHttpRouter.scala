@@ -39,7 +39,7 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
 
   import StatusCodes._
   import upickle.default._
-  import serialization.json.jvm._
+  import serialization.json._
 
   def registryApi(implicit system: ActorSystem, materializer: Materializer): Route =
     pathPrefix("jobs") {

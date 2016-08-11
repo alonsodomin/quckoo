@@ -28,8 +28,9 @@ import io.quckoo.fault.{ExceptionThrown, Fault}
 import io.quckoo.id._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.time.{DateTime, TimeSource}
 import io.quckoo._
+
+import org.threeten.bp.{Clock, ZonedDateTime, Duration => JavaDuration}
 
 import scala.concurrent.duration._
 
@@ -63,14 +64,14 @@ object ExecutionDriver {
   private[scheduler] final case class Created(
     jobId: JobId, spec: JobSpec, planId: PlanId,
     trigger: Trigger, lifecycleProps: Props,
-    time: DateTime
+    time: ZonedDateTime
   )
-  private final case class ScheduleTask(task: Task, time: DateTime)
+  private final case class ScheduleTask(task: Task, time: ZonedDateTime)
   private case object FinishPlan
 
   // Public execution driver state
   object DriverState {
-    private[scheduler] def apply(created: Created)(implicit timeSource: TimeSource): DriverState = DriverState(
+    private[scheduler] def apply(created: Created)(implicit clock: Clock): DriverState = DriverState(
       ExecutionPlan(created.jobId, created.planId, created.trigger, created.time),
       created.spec,
       created.lifecycleProps,
@@ -82,7 +83,7 @@ object ExecutionDriver {
     jobSpec: JobSpec,
     lifecycleProps: Props,
     completedTasks: Vector[TaskId]
-  )(implicit timeSource: TimeSource) {
+  )(implicit clock: Clock) {
 
     val jobId = plan.jobId
     val planId = plan.planId
@@ -112,20 +113,20 @@ object ExecutionDriver {
             if plan.currentTask.isEmpty =>
               copy(plan = plan.copy(
                 currentTask = Some(task),
-                lastScheduledTime = Some(timeSource.currentDateTime)
+                lastScheduledTime = Some(ZonedDateTime.now(clock))
               ))
 
           case TaskTriggered(`jobId`, `planId`, taskId)
             if plan.currentTask.map(_.id).contains(taskId) =>
               copy(plan = plan.copy(
-                lastTriggeredTime = Some(timeSource.currentDateTime)
+                lastTriggeredTime = Some(ZonedDateTime.now(clock))
               ))
 
           case TaskCompleted(`jobId`, `planId`, taskId, outcome)
             if plan.currentTask.map(_.id).contains(taskId) =>
               copy(plan = plan.copy(
                   currentTask = None,
-                  lastExecutionTime = Some(timeSource.currentDateTime),
+                  lastExecutionTime = Some(ZonedDateTime.now(clock)),
                   lastOutcome = Some(outcome)
                 ),
                 completedTasks = completedTasks :+ taskId
@@ -134,7 +135,7 @@ object ExecutionDriver {
           case ExecutionPlanFinished(`jobId`, `planId`) =>
             copy(plan = plan.copy(
               currentTask = None,
-              finishedTime = Some(timeSource.currentDateTime)
+              finishedTime = Some(ZonedDateTime.now(clock))
             ))
 
           case _ => this
@@ -144,12 +145,12 @@ object ExecutionDriver {
 
   }
 
-  def props(implicit timeSource: TimeSource) =
-    Props(classOf[ExecutionDriver], timeSource)
+  def props(implicit clock: Clock) =
+    Props(classOf[ExecutionDriver], clock)
 
 }
 
-class ExecutionDriver(implicit timeSource: TimeSource)
+class ExecutionDriver(implicit clock: Clock)
     extends PersistentActor with ActorLogging {
 
   import ExecutionDriver._
@@ -238,7 +239,7 @@ class ExecutionDriver(implicit timeSource: TimeSource)
 
     case cmd: New =>
       val created = Created(cmd.jobId, cmd.spec, cmd.planId, cmd.trigger,
-          cmd.executionProps, timeSource.currentDateTime)
+          cmd.executionProps, ZonedDateTime.now(clock))
       persist(created) { evt =>
         val st = DriverState(evt)
         log.debug("Creating new execution plan. planId={}", st.planId)
@@ -264,11 +265,11 @@ class ExecutionDriver(implicit timeSource: TimeSource)
       sender() ! state.plan
 
     case ScheduleTask(task, time) =>
-      def createTrigger(task: Task, planId: PlanId, lifecycle: ActorRef, when: DateTime): Cancellable = {
+      def createTrigger(task: Task, planId: PlanId, lifecycle: ActorRef, when: ZonedDateTime): Cancellable = {
         val delay = {
-          val now = timeSource.currentDateTime
+          val now = ZonedDateTime.now(clock)
           if (when.isBefore(now) || when.isEqual(now)) 0 millis
-          else (when - now).toMillis millis
+          else JavaDuration.between(now, when).toMillis millis
         }
 
         implicit val dispatcher = triggerDispatcher

@@ -17,23 +17,27 @@
 package io.quckoo.console.scheduler
 
 import io.quckoo.Trigger
-import io.quckoo.time.DateTime
-import io.quckoo.time.MomentJSTimeSource.Implicits.default
+import io.quckoo.time.implicits.systemClock
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+
+import org.threeten.bp.format.{DateTimeFormatter, FormatStyle}
+import org.threeten.bp.{LocalDateTime, ZonedDateTime}
 
 /**
   * Created by alonsodomin on 09/04/2016.
   */
 object ExecutionPlanPreview {
 
+  private[this] final val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+
   case class Props(trigger: Trigger)
   case class State(maxRows: Int)
 
   class Backend($: BackendScope[Props, State]) {
 
-    def generateTimeline(props: Props, state: State): Seq[DateTime] = {
+    def generateTimeline(props: Props, state: State): Seq[LocalDateTime] = {
       import Trigger._
 
       def genNext(prev: ReferenceTime): (ReferenceTime, Boolean) = {
@@ -42,9 +46,9 @@ object ExecutionPlanPreview {
           getOrElse((prev, false))
       }
 
-      val first = genNext(ScheduledTime(default.currentDateTime))
+      val first = genNext(ScheduledTime(ZonedDateTime.now(systemClock)))
       val stream = Stream.iterate(first) { case (prev, _) => genNext(prev) }
-      stream.takeWhile { case (_, continue) => continue } map(_._1.when.toLocal) take state.maxRows
+      stream.takeWhile { case (_, continue) => continue } map(_._1.when.toLocalDateTime) take state.maxRows
     }
 
     def onRowsSelectionUpdate(evt: ReactEventI): Callback =
@@ -75,7 +79,7 @@ object ExecutionPlanPreview {
           ),
           <.tbody(
             generateTimeline(props, state).map { time =>
-              <.tr(<.td(time.format("dddd, MMMM Do YYYY, h:mm:ss a")))
+              <.tr(<.td(formatter.format(time)))
             }
           )
         )

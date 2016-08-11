@@ -29,13 +29,14 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
-import io.quckoo.{TaskExecution, ExecutionPlan, JobSpec, Task}
+import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
 import io.quckoo.id._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.time.TimeSource
+
+import org.threeten.bp.Clock
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -66,15 +67,15 @@ object Scheduler {
   )
 
   def props(settings: QuckooClusterSettings, journal: Journal, registry: ActorRef)
-           (implicit actorSystem: ActorSystem, timeSource: TimeSource): Props = {
+           (implicit actorSystem: ActorSystem, clock: Clock): Props = {
     val queueProps = TaskQueue.props(settings.queueMaxWorkTimeout)
-    Props(classOf[Scheduler], journal, registry, queueProps, timeSource)
+    Props(classOf[Scheduler], journal, registry, queueProps, clock)
   }
 
 }
 
 class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Props)
-               (implicit timeSource: TimeSource)
+               (implicit clock: Clock)
     extends Actor with ActorLogging with Stash {
 
   import Scheduler._

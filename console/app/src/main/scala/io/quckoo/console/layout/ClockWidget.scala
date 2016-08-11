@@ -16,11 +16,12 @@
 
 package io.quckoo.console.layout
 
-import io.quckoo.time.{DateTime, TimeSource}
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.TimerSupport
 import japgolly.scalajs.react.vdom.prefix_<^._
+
+import org.threeten.bp.format.{DateTimeFormatter, FormatStyle}
+import org.threeten.bp.{Clock, ZonedDateTime}
 
 import scala.concurrent.duration._
 
@@ -29,29 +30,31 @@ import scala.concurrent.duration._
   */
 object ClockWidget {
 
-  final case class State(dateTime: DateTime)
+  private[this] final val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
 
-  class Backend($: BackendScope[TimeSource, State]) extends TimerSupport {
+  final case class State(dateTime: ZonedDateTime)
 
-    protected[ClockWidget] def mounted(timeSource: TimeSource) =
-      setInterval(tick(timeSource), 1 second)
+  class Backend($: BackendScope[Clock, State]) extends TimerSupport {
 
-    def tick(timeSource: TimeSource): Callback =
-      $.modState(_.copy(dateTime = timeSource.currentDateTime))
+    protected[ClockWidget] def mounted(clock: Clock) =
+      setInterval(tick(clock), 1 second)
 
-    def render(timeSource: TimeSource, state: State) = {
-      <.span(state.dateTime.format("dddd, MMMM Do YYYY, h:mm:ss a"))
+    def tick(clock: Clock): Callback =
+      $.modState(_.copy(dateTime = ZonedDateTime.now(clock)))
+
+    def render(clock: Clock, state: State) = {
+      <.span(formatter.format(state.dateTime))
     }
 
   }
 
-  private[this] val component = ReactComponentB[TimeSource]("Clock").
-    initialState_P(ts => State(ts.currentDateTime)).
+  private[this] val component = ReactComponentB[Clock]("Clock").
+    initialState_P(clock => State(ZonedDateTime.now(clock))).
     renderBackend[Backend].
     componentDidMount($ => $.backend.mounted($.props)).
     configure(TimerSupport.install).
     build
 
-  def apply(implicit timeSource: TimeSource) = component.withKey("clock")(timeSource)
+  def apply(implicit clock: Clock) = component.withKey("clock")(clock)
 
 }

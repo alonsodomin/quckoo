@@ -16,11 +16,11 @@
 
 package io.quckoo.console.components
 
-import io.quckoo.time._
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
+
+import org.threeten.bp.{LocalDate, LocalTime}
 
 import scala.annotation.implicitNotFound
 
@@ -57,12 +57,12 @@ object Input {
       override def from: String => Long = _.toLong
     }
 
-    implicit val date: Converter[Date] = new BaseConverter[Date] {
-      override def from: String => Date = MomentJSDate.parse
+    implicit val date: Converter[LocalDate] = new BaseConverter[LocalDate] {
+      override def from: String => LocalDate = LocalDate.parse
     }
 
-    implicit val time: Converter[Time] = new BaseConverter[Time] {
-      override def from: String => Time = MomentJSTime.parse
+    implicit val time: Converter[LocalTime] = new BaseConverter[LocalTime] {
+      override def from: String => LocalTime = LocalTime.parse
     }
 
   }
@@ -74,8 +74,8 @@ object Input {
     implicit val password = new Type[Password]("password") {}
     implicit val int      = new Type[Int]("number") {}
     implicit val long     = new Type[Long]("number") {}
-    implicit val date     = new Type[Date]("date") {}
-    implicit val time     = new Type[Time]("time") {}
+    implicit val date     = new Type[LocalDate]("date") {}
+    implicit val time     = new Type[LocalTime]("time") {}
   }
 
   type OnUpdate[A] = Option[A] => Callback

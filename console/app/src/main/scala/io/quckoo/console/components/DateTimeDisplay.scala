@@ -16,31 +16,33 @@
 
 package io.quckoo.console.components
 
-import io.quckoo.time.DateTime
-
 import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.vdom.prefix_<^._
+
+import org.threeten.bp.ZonedDateTime
+import org.threeten.bp.format.{DateTimeFormatter, FormatStyle}
+import org.threeten.bp.temporal.Temporal
 
 /**
   * Created by alonsodomin on 04/07/2016.
   */
 object DateTimeDisplay {
 
-  val DefaultPattern = "dddd, MMMM Do YYYY, h:mm:ss a"
+  private[this] final val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
 
-  final case class Props(dateTime: Option[DateTime], pattern: String, useLocal: Boolean)
+  final case class Props(dateTime: Option[ZonedDateTime], useLocal: Boolean)
 
   private[this] val component = ReactComponentB[Props]("DateTimeDisplay").
     stateless.
     render_P { props =>
-      val dt = {
-        if (props.useLocal) props.dateTime.map(_.toLocal)
+      val dt: Option[Temporal] = {
+        if (props.useLocal) props.dateTime.map(_.toLocalDateTime)
         else props.dateTime
       }
-      <.span(dt.map(_.format(props.pattern)))
+      <.span(dt.map(formatter.format))
     } build
 
-  def apply(dateTime: Option[DateTime], pattern: String = DefaultPattern, useLocal: Boolean = true) =
-    component(Props(dateTime, pattern, useLocal))
+  def apply(dateTime: Option[ZonedDateTime], useLocal: Boolean = true) =
+    component(Props(dateTime, useLocal))
 
 }

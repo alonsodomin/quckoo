@@ -19,10 +19,13 @@ package io.quckoo.worker.boot
 import akka.actor.{ActorSystem, AddressFromURIString, RootActorPath}
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import akka.japi.Util._
+
 import com.typesafe.config.{Config, ConfigFactory}
+
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.{IvyConfiguration, IvyResolve}
 import io.quckoo.worker.{JobExecutor, Worker}
+
 import scopt.OptionParser
 
 /**

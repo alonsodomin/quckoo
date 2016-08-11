@@ -26,14 +26,14 @@ import io.quckoo.cluster.net._
 import io.quckoo.cluster.registry.Registry
 import io.quckoo.cluster.scheduler.Scheduler
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
-import io.quckoo.id.NodeId
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.client._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
-import io.quckoo.time.TimeSource
+
+import org.threeten.bp.Clock
 
 import scala.concurrent.Promise
 import scala.concurrent.duration._
@@ -45,14 +45,14 @@ object QuckooGuardian {
 
   final val DefaultSessionTimeout: FiniteDuration = 30 minutes
 
-  def props(settings: QuckooClusterSettings, boot: Promise[Unit])(implicit timeSource: TimeSource) =
-    Props(classOf[QuckooGuardian], settings, boot, timeSource)
+  def props(settings: QuckooClusterSettings, boot: Promise[Unit])(implicit clock: Clock) =
+    Props(classOf[QuckooGuardian], settings, boot, clock)
 
   case object Shutdown
 
 }
 
-class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(implicit timeSource: TimeSource)
+class QuckooGuardian(settings: QuckooClusterSettings, boot: Promise[Unit])(implicit clock: Clock)
     extends Actor with ActorLogging with QuckooJournal with Stash {
 
   import QuckooGuardian._
