@@ -28,7 +28,6 @@ object Dependencies {
     val scalaJsReact    = "0.11.1"
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.0"
-    val scalaJSMomentJS = "0.1.5"
 
     val testState = "2.0.0"
     val scalaCss  = "0.4.1"
@@ -126,10 +125,6 @@ object Dependencies {
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle
     )
   }
-  lazy val coreJS = Def.settings {
-    libraryDependencies += "io.github.widok" %%% "scala-js-momentjs" % version.scalaJSMomentJS
-  }
-  //lazy val coreJVM = Def.settings { }
 
   // API module ===============================
 
