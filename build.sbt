@@ -37,7 +37,6 @@ lazy val noPublishSettings = Seq(
 lazy val commonJsSettings = Seq(
   coverageEnabled := false,
   coverageExcludedFiles := ".*",
-  persistLauncher in Compile := true,
   persistLauncher in Test := false,
   scalaJSStage in Test := FastOptStage,
   scalaJSUseRhino in Global := false,
@@ -50,7 +49,10 @@ lazy val scoverageSettings = Seq(
 )
 
 lazy val quckoo = (project in file(".")).
-  settings(moduleName := "quckoo-root").
+  settings(
+    name := "quckoo",
+    moduleName := "quckoo-root"
+  ).
   settings(noPublishSettings).
   enablePlugins(AutomateHeaderPlugin).
   aggregate(coreJS, coreJVM, apiJS, apiJVM, clientJS, clientJVM, cluster, console, examples)
@@ -120,15 +122,7 @@ lazy val consoleApp = (project in file("console/app")).
     name := "console-app",
     moduleName := "quckoo-console-app",
     requiresDOM := true,
-    test := ()
-    /*test := {
-      import org.scalajs.core.tools.io.MemVirtualJSFile
-      import org.scalajs.core.tools.logging.ScalaConsoleLogger
-      val env = (loadedJSEnv in Compile).value
-      val code = new MemVirtualJSFile("code.js")
-      code.content = """console.log("hello world")"""
-      env.jsRunner(code).run(new ScalaConsoleLogger(), (scalaJSConsole in Compile).value)
-    }*/
+    persistLauncher in Compile := true
   ).
   settings(commonSettings: _*).
   settings(commonJsSettings: _*).

@@ -3,15 +3,13 @@ package io.quckoo.console.components
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.test.ReactTestUtils
 
-import io.quckoo.console.ConsoleTestState
-
 import utest.TestSuite
 
 /**
   * Created by alonsodomin on 29/07/2016.
   */
 object NavBarTest extends TestSuite {
-  import ConsoleTestState._
+  import NavBarTestState._
   import NavBarTestDsl._
 
   val invariants: dsl.Invariants = {

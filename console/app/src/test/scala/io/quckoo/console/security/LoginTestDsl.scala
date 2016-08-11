@@ -1,7 +1,5 @@
 package io.quckoo.console.security
 
-import io.quckoo.console.ConsoleTestState
-
 import monocle.macros.Lenses
 
 import japgolly.scalajs.react.test._
@@ -9,28 +7,29 @@ import japgolly.scalajs.react.test._
 /**
   * Created by alonsodomin on 10/07/2016.
   */
-object LoginTestDsl {
-  import ConsoleTestState._
+object LoginTestDsl /*{
+  import LoginFormTestState._
   import ReactTestUtils._
 
   @Lenses
-  final case class State(
+  final case class LoginState(
     username: String,
     password: String,
     submitted: Boolean = false)
 
-  val dsl = Dsl[Unit, LoginObserver, State]
+  val dsl = Dsl[Unit, LoginObserver, LoginState]
 
   def setUsername(username: String): dsl.Actions =
     dsl.action(s"Set username as $username")(ChangeEventData(username) simulate _.obs.usernameInput).
-      updateState(State.username.set(username))
+      updateState(LoginState.username.set(username))
 
   def setPassword(password: String): dsl.Actions =
     dsl.action(s"Set password as $password")(ChangeEventData(password) simulate _.obs.passwordInput).
-      updateState(State.password.set(password))
+      updateState(LoginState.password.set(password))
 
   def submitForm(): dsl.Actions =
     dsl.action("Submit login form")(Simulate click _.obs.submitButton).
-      updateState(State.submitted.set(true))
+      updateState(LoginState.submitted.set(true))
 
 }
+*/
