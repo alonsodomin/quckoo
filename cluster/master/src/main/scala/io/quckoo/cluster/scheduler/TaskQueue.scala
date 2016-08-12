@@ -69,6 +69,8 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
   import TaskQueue._
   import WorkerState._
 
+  val replicationTimeout = 5 seconds
+
   implicit val cluster = Cluster(context.system)
   private[this] val mediator = DistributedPubSub(context.system).mediator
   private[this] val replicator = DistributedData(context.system).replicator
@@ -151,10 +153,10 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
             workerState.ref ! task
             lifecycle ! ExecutionLifecycle.Start
 
-            replicator ! Replicator.Update(PendingKey, PNCounterMap(), Replicator.WriteLocal) {
+            replicator ! Replicator.Update(PendingKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
               _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
             }
-            replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
+            replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
               _.increment(cluster.selfUniqueAddress.toNodeId.toString)
             }
           }
@@ -182,7 +184,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         inProgressTasks -= taskId
 
         sender ! TaskDoneAck(taskId)
-        replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
+        replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
         }
         notifyWorkers()
@@ -193,7 +195,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       changeWorkerToIdle(workerId, taskId)
       inProgressTasks(taskId) ! ExecutionLifecycle.Finish(Some(cause))
       inProgressTasks -= taskId
-      replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
+      replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
         _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
       }
       notifyWorkers()
@@ -202,7 +204,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       // Enqueue messages will always come from inside the cluster so accept them all
       log.debug("Enqueueing task {} before sending to workers.", task.id)
       pendingTasks = pendingTasks.enqueue((task, sender()))
-      replicator ! Replicator.Update(PendingKey, PNCounterMap(), Replicator.WriteLocal) {
+      replicator ! Replicator.Update(PendingKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
         _.increment(cluster.selfUniqueAddress.toNodeId.toString)
       }
       sender ! EnqueueAck(task.id)
@@ -275,7 +277,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
     inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
     inProgressTasks -= taskId
     mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
-    replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
+    replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
       _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
     }
     notifyWorkers()

@@ -25,6 +25,8 @@ import io.quckoo.cluster.topics
 import io.quckoo.protocol.cluster.MasterRemoved
 import io.quckoo.protocol.scheduler.TaskQueueUpdated
 
+import scala.concurrent.duration._
+
 /**
   * Created by alonsodomin on 12/04/2016.
   */
@@ -40,6 +42,8 @@ object TaskQueueMonitor {
 
 class TaskQueueMonitor extends Actor with ActorLogging with Stash {
   import TaskQueueMonitor._
+
+  val timeout = 5 seconds
 
   implicit val cluster = Cluster(context.system)
   private[this] val replicator = DistributedData(context.system).replicator
@@ -81,13 +85,13 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
 
     case MasterRemoved(nodeId) =>
       // Drop the key holding the counter for the lost node.
-      replicator ! Replicator.Update(TaskQueue.PendingKey, PNCounterMap(), Replicator.WriteLocal) {
+      replicator ! Replicator.Update(TaskQueue.PendingKey, PNCounterMap(), Replicator.WriteMajority(timeout)) {
         _ - nodeId.toString
       }
       // TODO This might not be the right thing to do with that tasks that are in-progress
       // ideally, the worker that has got it should be able to notify any of the partitions
       // that conform the cluster-wide queue
-      replicator ! Replicator.Update(TaskQueue.InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
+      replicator ! Replicator.Update(TaskQueue.InProgressKey, PNCounterMap(), Replicator.WriteMajority(timeout)) {
         _ - nodeId.toString
       }
   }
