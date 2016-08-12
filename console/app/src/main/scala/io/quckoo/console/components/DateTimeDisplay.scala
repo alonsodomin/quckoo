@@ -35,11 +35,11 @@ object DateTimeDisplay {
   private[this] val component = ReactComponentB[Props]("DateTimeDisplay").
     stateless.
     render_P { props =>
-      val dt: Option[Temporal] = {
+      /*val dt: Option[Temporal] = {
         if (props.useLocal) props.dateTime.map(_.toLocalDateTime)
         else props.dateTime
-      }
-      <.span(dt.map(formatter.format))
+      }*/
+      <.span(props.dateTime.map(formatter.format))
     } build
 
   def apply(dateTime: Option[ZonedDateTime], useLocal: Boolean = true) =

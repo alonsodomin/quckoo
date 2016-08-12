@@ -20,10 +20,11 @@ import diode._
 
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
+import io.quckoo.console.time._
 
 import japgolly.scalajs.react.extra.router.RouterCtl
 
-import org.threeten.bp.{Clock, LocalDateTime}
+import org.threeten.bp.{Clock, LocalDateTime, ZoneId}
 
 import slogging.LazyLogging
 
@@ -38,7 +39,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
   import ConsoleRoute._
   import ActionResult._
 
-  val clock = Clock.systemDefaultZone
+  val clock = Clock.systemUTC
 
   val authFailedNotification = Notification.danger("Username or password incorrect")
 
