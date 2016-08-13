@@ -23,7 +23,7 @@ import io.quckoo.console.components.Notification
 
 import japgolly.scalajs.react.extra.router.RouterCtl
 
-import org.threeten.bp.{Clock, LocalDateTime, ZoneId}
+import org.threeten.bp.{Clock, LocalDateTime}
 
 import slogging.LazyLogging
 

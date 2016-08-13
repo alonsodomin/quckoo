@@ -1,5 +1,8 @@
+import com.typesafe.sbt.pgp.PgpKeys
 import sbt.Keys._
 import sbt._
+
+import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 organization in ThisBuild := "io.quckoo"
 
@@ -28,12 +31,6 @@ lazy val commonSettings = Seq(
   parallelExecution in Test := false
 ) ++ Licensing.settings
 
-lazy val noPublishSettings = Seq(
-  publish := (),
-  publishLocal := (),
-  publishArtifact := false
-)
-
 lazy val commonJsSettings = Seq(
   coverageEnabled := false,
   coverageExcludedFiles := ".*",
@@ -48,12 +45,83 @@ lazy val scoverageSettings = Seq(
   coverageExcludedPackages := "io\\.quckoo\\.console\\.client\\..*"
 )
 
+lazy val noPublishSettings = Seq(
+  publish := (),
+  publishLocal := (),
+  publishArtifact := false
+)
+
+lazy val publishSettings = Seq(
+  homepage := Some(url("https://www.quckoo.io")),
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
+  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+  publishTo := Some(
+    if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
+    else Opts.resolver.sonatypeStaging
+  ),
+  // don't include scoverage as a dependency in the pom
+  // see issue #980
+  // this code was copied from https://github.com/mongodb/mongo-spark
+  pomPostProcess := { (node: xml.Node) =>
+    new RuleTransformer(
+      new RewriteRule {
+        override def transform(node: xml.Node): Seq[xml.Node] = node match {
+          case e: xml.Elem
+            if e.label == "dependency" && e.child.exists(child => child.label == "groupId" && child.text == "org.scoverage") => Nil
+          case _ => Seq(node)
+        }
+      }).transform(node).head
+  },
+  pomExtra :=
+    <licenses>
+      <license>
+        <name>Apache License, Version 2.0</name>
+        <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        <distribution>repo</distribution>
+      </license>
+    </licenses>
+    <scm>
+      <url>git@github.com:alonsodomin/quckoo.git</url>
+      <connection>scm:git:git@github.com:alonsodomin/quckoo.git</connection>
+    </scm>
+    <developers>
+      <developer>
+        <id>alonsodomin</id>
+        <name>Antonio Alonso Dominguez</name>
+        <url>https://github.com/alonsodomin</url>
+      </developer>
+    </developers>
+)
+
+lazy val releaseSettings = {
+  import ReleaseTransformations._
+
+  Seq(
+    releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      setReleaseVersion,
+      commitReleaseVersion,
+      tagRelease,
+      publishArtifacts,
+      setNextVersion,
+      commitNextVersion,
+      ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+      pushChanges
+    )
+  )
+}
+
 lazy val quckoo = (project in file(".")).
   settings(
     name := "quckoo",
     moduleName := "quckoo-root"
   ).
   settings(noPublishSettings).
+  settings(releaseSettings).
   enablePlugins(AutomateHeaderPlugin).
   aggregate(coreJS, coreJVM, apiJS, apiJVM, clientJS, clientJVM, cluster, console, examples)
 
@@ -66,6 +134,7 @@ lazy val core = (crossProject.crossType(CrossType.Pure) in file("core")).
   ).
   settings(commonSettings: _*).
   settings(scoverageSettings: _*).
+  settings(publishSettings: _*).
   settings(Dependencies.core: _*).
   jsSettings(commonJsSettings: _*)
 
@@ -80,6 +149,8 @@ lazy val api = (crossProject.crossType(CrossType.Pure) in file("api")).
     moduleName := "quckoo-api"
   ).
   settings(commonSettings: _*).
+  settings(scoverageSettings: _*).
+  settings(publishSettings: _*).
   settings(Dependencies.api: _*).
   jsSettings(commonJsSettings: _*).
   dependsOn(core)
@@ -97,6 +168,7 @@ lazy val client = (crossProject in file("client")).
   ).
   settings(commonSettings: _*).
   settings(scoverageSettings: _*).
+  settings(publishSettings: _*).
   settings(Dependencies.client: _*).
   jsSettings(commonJsSettings: _*).
   jsSettings(Dependencies.clientJS: _*).
@@ -126,6 +198,7 @@ lazy val consoleApp = (project in file("console/app")).
   ).
   settings(commonSettings: _*).
   settings(commonJsSettings: _*).
+  settings(publishSettings: _*).
   settings(Dependencies.consoleApp: _*).
   dependsOn(clientJS)
 
@@ -133,6 +206,7 @@ lazy val consoleResources = (project in file("console/resources")).
   aggregate(consoleApp).
   enablePlugins(SbtSass).
   settings(commonSettings: _*).
+  settings(noPublishSettings: _*).
   settings(Dependencies.consoleResources).
   settings(
     name := "console-resources",
@@ -179,6 +253,7 @@ lazy val clusterShared = (project in file("cluster/shared")).
     moduleName := "quckoo-cluster-shared"
   ).
   settings(commonSettings).
+  settings(publishSettings: _*).
   settings(Dependencies.clusterShared).
   dependsOn(apiJVM)
 
@@ -189,6 +264,7 @@ lazy val clusterMaster = (project in file("cluster/master")).
     moduleName := "quckoo-cluster-master"
   ).
   settings(commonSettings: _*).
+  settings(publishSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterMaster).
   settings(MultiNode.settings).
@@ -206,6 +282,7 @@ lazy val clusterWorker = (project in file("cluster/worker")).
     moduleName := "quckoo-cluster-worker"
   ).
   settings(commonSettings: _*).
+  settings(publishSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterWorker).
   enablePlugins(JavaServerAppPackaging, DockerPlugin).
@@ -226,6 +303,7 @@ lazy val exampleJobs = (project in file("examples/jobs")).
     moduleName := "quckoo-example-jobs"
   ).
   settings(commonSettings: _*).
+  settings(publishSettings: _*).
   settings(Dependencies.exampleJobs).
   dependsOn(coreJVM)
 
@@ -235,6 +313,7 @@ lazy val exampleProducers = (project in file("examples/producers")).
     moduleName := "quckoo-example-producers"
   ).
   settings(commonSettings: _*).
+  settings(publishSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.exampleProducers).
   enablePlugins(JavaAppPackaging, DockerPlugin).
