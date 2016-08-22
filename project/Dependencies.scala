@@ -20,7 +20,7 @@ object Dependencies {
 
     // Akka ----------
 
-    val akka = "2.4.8"
+    val akka = "2.4.9"
     val kryo = "0.4.1"
 
     // ScalaJS -------
@@ -71,8 +71,8 @@ object Dependencies {
       val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
       val http            = "com.typesafe.akka" %% "akka-http-experimental" % version.akka
       val httpTestkit     = "com.typesafe.akka" %% "akka-http-testkit"      % version.akka % Test
-      val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % "1.8.0"
-      val sse             = "de.heikoseeberger" %% "akka-sse"               % "1.8.1"
+      val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % "1.9.0"
+      val sse             = "de.heikoseeberger" %% "akka-sse"               % "1.10.0"
       val distributedData = "com.typesafe.akka" %% "akka-distributed-data-experimental" % version.akka
 
       object persistence {
