@@ -19,6 +19,7 @@ package io.quckoo.client.tcp
 import akka.actor._
 import akka.cluster.client.ClusterClient.Send
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
+
 import io.quckoo.protocol.client._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -73,7 +74,7 @@ class QuckooTcpClient(clientSettings: ClusterClientSettings, maxConnectionAttemp
       clusterClient ! Send(BasePath, Disconnect, localAffinity = true)
 
     case Disconnected =>
-      log.info("Disconnected from Kaitos cluster.")
+      log.info("Disconnected from Quckoo cluster.")
       context.system.eventStream.publish(Disconnected)
       context.become(standby)
 

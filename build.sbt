@@ -97,6 +97,14 @@ lazy val publishSettings = Seq(
 lazy val releaseSettings = {
   import ReleaseTransformations._
 
+  val sonatypeReleaseAll = ReleaseStep(action = Command.process("sonatypeReleaseAll", _))
+  val dockerRelease = ReleaseStep(action = st => {
+    val extracted = Project.extract(st)
+    val projectRef: ProjectRef = extracted.get(thisProjectRef)
+    extracted.runAggregated(publish in Docker in projectRef, st)
+    st
+  })
+
   Seq(
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
@@ -107,9 +115,10 @@ lazy val releaseSettings = {
       commitReleaseVersion,
       tagRelease,
       publishArtifacts,
+      sonatypeReleaseAll,
+      dockerRelease,
       setNextVersion,
       commitNextVersion,
-      ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
       pushChanges
     )
   )
