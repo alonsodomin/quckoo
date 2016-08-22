@@ -74,13 +74,6 @@ lazy val publishSettings = Seq(
       }).transform(node).head
   },
   pomExtra :=
-    <licenses>
-      <license>
-        <name>Apache License, Version 2.0</name>
-        <url>https://www.apache.org/licenses/LICENSE-2.0</url>
-        <distribution>repo</distribution>
-      </license>
-    </licenses>
     <scm>
       <url>git@github.com:alonsodomin/quckoo.git</url>
       <connection>scm:git:git@github.com:alonsodomin/quckoo.git</connection>
@@ -281,8 +274,7 @@ lazy val clusterMaster = (project in file("cluster/master")).
     //reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
   ).
   enablePlugins(JavaServerAppPackaging, DockerPlugin).
-  settings(Packaging.universalServerSettings: _*).
-  settings(Packaging.masterDockerSettings: _*).
+  settings(Packaging.masterSettings: _*).
   dependsOn(clusterShared, consoleResources)
 
 lazy val clusterWorker = (project in file("cluster/worker")).
@@ -295,8 +287,7 @@ lazy val clusterWorker = (project in file("cluster/worker")).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterWorker).
   enablePlugins(JavaServerAppPackaging, DockerPlugin).
-  settings(Packaging.universalServerSettings: _*).
-  settings(Packaging.workerDockerSettings: _*).
+  settings(Packaging.workerSettings: _*).
   dependsOn(clusterShared)
 
 // Examples ==================================================
@@ -326,8 +317,7 @@ lazy val exampleProducers = (project in file("examples/producers")).
   settings(Revolver.settings: _*).
   settings(Dependencies.exampleProducers).
   enablePlugins(JavaAppPackaging, DockerPlugin).
-  settings(Packaging.universalSettings: _*).
-  settings(Packaging.baseDockerSettings: _*).
+  settings(Packaging.exampleProducersSettings: _*).
   dependsOn(clientJVM, exampleJobs)
 
 // Command aliases ==================================================
