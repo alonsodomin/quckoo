@@ -110,7 +110,7 @@ private class ConnectHandler(clusterClient: ActorRef, requestor: ActorRef, timeo
       }
 
     case Connected =>
-      log.info("Connected to Kairos cluster at: {}", sender().path.address)
+      log.info("Connected to Quckoo cluster at: {}", sender().path.address)
       context.parent.tell(Connected, requestor)
       context.stop(self)
   }
