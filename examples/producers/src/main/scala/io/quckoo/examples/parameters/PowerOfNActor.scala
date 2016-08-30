@@ -44,7 +44,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
 
   val jobSpec = JobSpec(
     displayName = "Power Of N",
-    artifactId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT"),
+    artifactId = ArtifactId("io.quckoo", "quckoo-example-jobs_2.11", "0.1.0-SNAPSHOT"),
     jobClass = classOf[PowerOfNJob].getName
   )
 
