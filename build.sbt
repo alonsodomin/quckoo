@@ -260,6 +260,7 @@ lazy val clusterShared = (project in file("cluster/shared")).
   dependsOn(apiJVM)
 
 lazy val clusterMaster = (project in file("cluster/master")).
+  enablePlugins(JavaServerAppPackaging, DockerPlugin).
   configs(MultiJvm).
   settings(
     name := "cluster-master",
@@ -273,11 +274,11 @@ lazy val clusterMaster = (project in file("cluster/master")).
   settings(
     //reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
   ).
-  enablePlugins(JavaServerAppPackaging, DockerPlugin).
   settings(Packaging.masterSettings: _*).
   dependsOn(clusterShared, consoleResources)
 
 lazy val clusterWorker = (project in file("cluster/worker")).
+  enablePlugins(JavaServerAppPackaging, DockerPlugin).
   settings(
     name := "cluster-worker",
     moduleName := "quckoo-cluster-worker"
@@ -286,7 +287,6 @@ lazy val clusterWorker = (project in file("cluster/worker")).
   settings(publishSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterWorker).
-  enablePlugins(JavaServerAppPackaging, DockerPlugin).
   settings(Packaging.workerSettings: _*).
   dependsOn(clusterShared)
 
@@ -308,6 +308,7 @@ lazy val exampleJobs = (project in file("examples/jobs")).
   dependsOn(coreJVM)
 
 lazy val exampleProducers = (project in file("examples/producers")).
+  enablePlugins(JavaAppPackaging, DockerPlugin).
   settings(
     name := "example-producers",
     moduleName := "quckoo-example-producers"
@@ -316,7 +317,6 @@ lazy val exampleProducers = (project in file("examples/producers")).
   settings(publishSettings: _*).
   settings(Revolver.settings: _*).
   settings(Dependencies.exampleProducers).
-  enablePlugins(JavaAppPackaging, DockerPlugin).
   settings(Packaging.exampleProducersSettings: _*).
   dependsOn(clientJVM, exampleJobs)
 

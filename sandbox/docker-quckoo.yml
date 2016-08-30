@@ -1,5 +1,5 @@
 master_1:
-  image: quckoo/cluster-master
+  image: quckoo/master
   container_name: master-01
   ports:
     - 8095:8095
@@ -10,7 +10,7 @@ master_1:
   command: -b 192.168.50.25:2551 --nodes 192.168.50.25:2551,192.168.50.25:2552 --cs 192.168.50.25:9042
 
 master_2:
-  image: quckoo/cluster-master
+  image: quckoo/master
   container_name: master-02
   ports:
     - 8096:8095
@@ -21,7 +21,7 @@ master_2:
   command: -b 192.168.50.25:2552 --nodes 192.168.50.25:2551,192.168.50.25:2552 --cs 192.168.50.25:9042
 
 worker_1:
-  image: quckoo/cluster-worker
+  image: quckoo/worker
   container_name: worker-01
   links:
     - master_1:master_1
@@ -34,7 +34,7 @@ worker_1:
   command: --master 192.168.50.25:2551,192.168.50.25:2552 -b 192.168.50.25:5001
 
 worker_2:
-  image: quckoo/cluster-worker
+  image: quckoo/worker
   container_name: worker-02
   links:
     - master_1:master_1

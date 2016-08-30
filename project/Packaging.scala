@@ -3,6 +3,10 @@ import com.typesafe.sbt.packager.archetypes.JavaAppPackaging.autoImport._
 import com.typesafe.sbt.packager.docker.Cmd
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport._
 import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
+import com.typesafe.sbt.packager.universal.UniversalPlugin.autoImport._
+
+import sbt._
+import Keys._
 
 object Packaging {
 
@@ -42,12 +46,14 @@ object Packaging {
   )
 
   lazy val masterSettings = universalServerSettings ++ serverDockerSettings ++ Seq(
-    packageName in Docker := "master",
+    packageName := "master",
+    packageName in Universal <<= version { v => s"quckoo-master-$v" },
     dockerExposedPorts := Seq(2551, 8095)
   )
 
   lazy val workerSettings = universalServerSettings ++ serverDockerSettings ++ Seq(
-    packageName in Docker := "worker",
+    packageName := "worker",
+    packageName in Universal <<= version { v => s"quckoo-worker-$v" },
     dockerExposedPorts := Seq(5001)
   )
 
