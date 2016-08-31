@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/alonsodomin/quckoo.svg?branch=master)](https://travis-ci.org/alonsodomin/quckoo)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.quckoo/quckoo-core_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.quckoo/quckoo-core_2.11)
 
 Quckoo is a fault-tolerant distributed task scheduler platform that runs on the JVM. The aim of the project is
 the implementation of a reliable system able to run large amount of scheduled tasks without single points of failure.
