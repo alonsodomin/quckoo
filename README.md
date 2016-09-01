@@ -30,7 +30,7 @@ Optionally, if you will want to be able to run Quckoo in your local machine
 using the Docker containers you will need one of the following (or both):
 
  * [Docker](http://www.docker.com) 1.10+ for running the docker containers "natively" in your local machine
- * [Vagrant](http://www.vagrantup.com) 1.8.x+ plus a Virtual Machine provider (i.e.: [VirtualBox](http://www.virtualbox.com) 5.x+) for bootstrapping the sandbox.
+ * [Vagrant](http://www.vagrantup.com) 1.8.x+ plus a Virtual Machine provider (i.e.: [VirtualBox](http://www.virtualbox.org) 5.x+) for bootstrapping the sandbox.
 
 To build the project input following commands in a terminal:
 
