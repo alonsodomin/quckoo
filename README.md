@@ -18,6 +18,20 @@ implementation owes a lot to the previous post).
 
 ## Building
 
+First of all, ensure you have the following tools in your local machine:
+
+ * [Java JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 1.8+ for running and compiling the source code
+ * [SBT](http://www.scala-sbt.org) 0.13.5+ for building the whole project
+ * [NodeJS](https://nodejs.org/en/) 4.5.x+ for running and optimizing the ScalaJS code
+ * [PhantomJS](http://phantomjs.org) 2.x+ for running the ScalaJS test suites
+ * [SASS](http://sass-lang.com) 3.4.0+ for compiling UI's stylesheets.
+
+Optionally, if you will want to be able to run Quckoo in your local machine
+using the Docker containers you will need one of the following (or both):
+
+ * [Docker](http://www.docker.com) 1.10+ for running the docker containers "natively" in your local machine
+ * [Vagrant](http://www.vagrantup.com) 1.8.x+ plus a Virtual Machine provider (i.e.: [VirtualBox](http://www.virtualbox.com) 5.x+) for bootstrapping the sandbox.
+
 To build the project input following commands in a terminal:
 
 ```
