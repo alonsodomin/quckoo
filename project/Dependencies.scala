@@ -45,7 +45,7 @@ object Dependencies {
     val slogging = "0.5.0"
     val monocle  = "1.2.2"
     val scalaz   = "7.2.4"
-    val monix    = "2.0-RC9"
+    val monix    = "2.0.0"
 
     // JavaScript Libraries
 
