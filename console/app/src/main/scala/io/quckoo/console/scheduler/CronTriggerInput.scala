@@ -21,7 +21,7 @@ object CronTriggerInput {
       <.div(^.color.red,
         error.message, <.br,
         input, <.br,
-        (0 until error.position.column-1).map(_ => "\u00a0").mkString + "^"
+        (0 until error.position.column-1).map(_ => NBSP).mkString + "^"
       )
     } build
 

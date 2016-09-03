@@ -38,6 +38,9 @@ import scala.language.implicitConversions
 package object components {
   val lookAndFeel = new LookAndFeel
 
+  // Unicode character for non-breaking-space in HTML
+  final val NBSP = "\u00a0"
+
   // React's reusability instances for common types
   implicit val timeUnitReuse = Reusability.byRef[TimeUnit]
   implicit val finiteDurationReuse = Reusability.byRef[FiniteDuration]
