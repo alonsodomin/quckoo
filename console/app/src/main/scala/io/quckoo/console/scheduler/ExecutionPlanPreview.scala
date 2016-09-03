@@ -23,7 +23,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import org.threeten.bp.format.{DateTimeFormatter, FormatStyle}
-import org.threeten.bp.{LocalDateTime, ZonedDateTime}
+import org.threeten.bp.ZonedDateTime
 
 /**
   * Created by alonsodomin on 09/04/2016.
@@ -37,7 +37,7 @@ object ExecutionPlanPreview {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def generateTimeline(props: Props, state: State): Seq[LocalDateTime] = {
+    def generateTimeline(props: Props, state: State): Seq[ZonedDateTime] = {
       import Trigger._
 
       def genNext(prev: ReferenceTime): (ReferenceTime, Boolean) = {
@@ -48,7 +48,7 @@ object ExecutionPlanPreview {
 
       val first = genNext(ScheduledTime(ZonedDateTime.now(systemClock)))
       val stream = Stream.iterate(first) { case (prev, _) => genNext(prev) }
-      stream.takeWhile { case (_, continue) => continue } map(_._1.when.toLocalDateTime) take state.maxRows
+      stream.takeWhile { case (_, continue) => continue } map(_._1.when) take state.maxRows
     }
 
     def onRowsSelectionUpdate(evt: ReactEventI): Callback =

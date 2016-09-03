@@ -27,7 +27,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object TriggerSelect {
 
   object TriggerType extends Enumeration {
-    val Immediate, After, Every, At = Value
+    val Immediate, After, Every, At, Cron = Value
   }
 
   private[this] val TriggerOption = ReactComponentB[TriggerType.Value]("TriggerOption").
@@ -48,6 +48,7 @@ object TriggerSelect {
         case _: Trigger.After  => TriggerType.After
         case _: Trigger.Every  => TriggerType.Every
         case _: Trigger.At     => TriggerType.At
+        case _: Trigger.Cron   => TriggerType.Cron
       }, trigger)
     }
 
@@ -83,6 +84,9 @@ object TriggerSelect {
       $.modState(_.copy(value = value), propagateChange)
 
     def render(props: Props, state: State) = {
+      def triggerInput[T <: Trigger](constructor: (Option[T], Option[T] => Callback) => ReactNode): ReactNode =
+        constructor(state.value.map(_.asInstanceOf[T]), onUpdateValue)
+
       <.div(
         <.div(^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "trigger", "Trigger"),
@@ -96,9 +100,10 @@ object TriggerSelect {
           )
         ),
         state.selected.flatMap {
-          case TriggerType.After => Some(AfterTriggerInput(state.value.map(_.asInstanceOf[Trigger.After]), onUpdateValue))
-          case TriggerType.Every => Some(EveryTriggerInput(state.value.map(_.asInstanceOf[Trigger.Every]), onUpdateValue))
-          case TriggerType.At    => Some(AtTriggerInput(state.value.map(_.asInstanceOf[Trigger.At]), onUpdateValue))
+          case TriggerType.After => Some(triggerInput(AfterTriggerInput.apply))
+          case TriggerType.Every => Some(triggerInput(EveryTriggerInput.apply))
+          case TriggerType.At    => Some(triggerInput(AtTriggerInput.apply))
+          case TriggerType.Cron  => Some(triggerInput(CronTriggerInput.apply))
           case _                 => None
         }
       )

@@ -16,6 +16,9 @@
 
 package io.quckoo
 
+import cron4s.expr.CronExpr
+import cron4s.japi.threetenbp._
+
 import org.threeten.bp.{Clock, ZonedDateTime, Duration => JavaDuration}
 
 import scala.concurrent.duration._
@@ -99,6 +102,16 @@ object Trigger {
           val delay = frequency.toNanos
           Some(time.plusNanos(delay))
       }
+
+    override val isRecurring: Boolean = true
+
+  }
+
+  final case class Cron(expr: CronExpr) extends Trigger {
+
+    override def nextExecutionTime(referenceTime: ReferenceTime)
+                                  (implicit clock: Clock): Option[ZonedDateTime] =
+      expr.next(referenceTime.when)
 
     override val isRecurring: Boolean = true
 

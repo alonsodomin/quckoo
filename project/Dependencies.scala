@@ -29,7 +29,7 @@ object Dependencies {
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.0"
 
-    val testState = "2.0.0"
+    val testState = "2.1.0"
     val scalaCss  = "0.4.1"
     val scalaTime = "2.0.0-M3"
 
@@ -46,6 +46,7 @@ object Dependencies {
     val monocle  = "1.2.2"
     val scalaz   = "7.2.4"
     val monix    = "2.0.0"
+    val cron4s   = "0.2.0"
 
     // JavaScript Libraries
 
@@ -121,7 +122,9 @@ object Dependencies {
       "org.scalatest"  %%% "scalatest"       % version.scalaTest  % Test,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
-      "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle
+      "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
+
+      "com.github.alonsodomin.cron4s" %%% "cron4s-core" % version.cron4s
     )
   }
 
