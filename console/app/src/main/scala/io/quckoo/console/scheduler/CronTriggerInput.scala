@@ -35,7 +35,7 @@ object CronTriggerInput {
       import Scalaz._
 
       def updateError(err: Option[ParseError]): Callback =
-        $.props.flatMap(_.onUpdate(None)) >> $.modState(_.copy(parseError = err))
+        $.modState(_.copy(parseError = err)) >> $.props.flatMap(_.onUpdate(None))
 
       def invokeCallback(trigger: Option[Trigger.Cron]): Callback =
         updateError(None) >> $.props.flatMap(_.onUpdate(trigger))
