@@ -15,6 +15,16 @@ import scala.concurrent.duration._
   */
 object CronTriggerInput {
 
+  private[this] val errorMessage = ReactComponentB[(String, ParseError)]("CronTriggerInput.ErrorMessage").
+    stateless.
+    render_P { case (input, error) =>
+      <.div(^.color.red,
+        error.message, <.br,
+        input, <.br,
+        (0 until error.position.column-1).map(_ => "\u00a0").mkString + "^"
+      )
+    } build
+
   case class Props(value: Option[Trigger.Cron], onUpdate: Option[Trigger.Cron] => Callback)
   case class State(inputExpr: Option[String], parseError: Option[ParseError] = None)
 
@@ -26,14 +36,14 @@ object CronTriggerInput {
       import scalaz._
       import Scalaz._
 
-      def setParseError(err: Option[ParseError]): Callback =
+      def updateError(err: Option[ParseError]): Callback =
         $.modState(_.copy(parseError = err))
 
       def invokeCallback(trigger: Option[Trigger.Cron]): Callback =
-        setParseError(None) >> $.props.flatMap(_.onUpdate(trigger))
+        updateError(None) >> $.props.flatMap(_.onUpdate(trigger))
 
       EitherT(value.map(Cron(_).disjunction)).map(Trigger.Cron).cozip.
-        fold(setParseError, invokeCallback)
+        fold(updateError, invokeCallback)
     }
 
     def onUpdate(value: Option[String]) = {
@@ -48,7 +58,9 @@ object CronTriggerInput {
         <.div(^.`class` := "col-sm-10",
           expressionInput(state.inputExpr, ^.id := "cronTrigger")
         ),
-        <.div(^.`class` := "col-sm-10", state.parseError.map(_.toString()))
+        <.div(^.`class` := "col-sm-offset-2",
+          state.inputExpr.zip(state.parseError).map(p => errorMessage(p))
+        )
       )
     }
 
