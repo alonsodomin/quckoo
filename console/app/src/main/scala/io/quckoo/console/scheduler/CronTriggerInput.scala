@@ -6,11 +6,7 @@ import io.quckoo.Trigger
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
-
-import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 02/09/2016.
@@ -25,6 +21,9 @@ object CronTriggerInput {
   class Backend($: BackendScope[Props, State]) {
 
     def onUpdate(value: Option[String]) = {
+      import scalaz._
+      import Scalaz._
+
       def setParseError(err: Option[ParseError]): Callback =
         $.modState(_.copy(parseError = err))
 
