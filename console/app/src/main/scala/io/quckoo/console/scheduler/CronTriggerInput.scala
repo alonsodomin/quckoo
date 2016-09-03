@@ -8,19 +8,21 @@ import io.quckoo.console.components._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
+import scala.concurrent.duration._
+
 /**
   * Created by alonsodomin on 02/09/2016.
   */
 object CronTriggerInput {
 
   case class Props(value: Option[Trigger.Cron], onUpdate: Option[Trigger.Cron] => Callback)
-  case class State(parseError: Option[ParseError] = None)
+  case class State(inputExpr: Option[String], parseError: Option[ParseError] = None)
 
   //implicit val propsReuse = Reusability.caseClass[Trigger.Cron]
 
   class Backend($: BackendScope[Props, State]) {
 
-    def onUpdate(value: Option[String]) = {
+    private[this] def doValidate(value: Option[String]) = {
       import scalaz._
       import Scalaz._
 
@@ -34,13 +36,17 @@ object CronTriggerInput {
         fold(setParseError, invokeCallback)
     }
 
+    def onUpdate(value: Option[String]) = {
+      doValidate(value).delay(500 millis) >> $.modState(_.copy(inputExpr = value))
+    }
+
     val expressionInput = Input[String](onUpdate)
 
     def render(props: Props, state: State) = {
       <.div(^.`class` := "form-group",
         <.label(^.`class` := "col-sm-2 control-label", "Expression"),
         <.div(^.`class` := "col-sm-10",
-          expressionInput(props.value.map(_.expr.toString()), ^.id := "cronTrigger")
+          expressionInput(state.inputExpr, ^.id := "cronTrigger")
         ),
         <.div(^.`class` := "col-sm-10", state.parseError.map(_.toString()))
       )
@@ -49,7 +55,7 @@ object CronTriggerInput {
   }
 
   val component = ReactComponentB[Props]("CronTriggerInput").
-    initialState(State()).
+    initialState_P(props => State(props.value.map(_.expr.toString()))).
     renderBackend[Backend].
     build
 
