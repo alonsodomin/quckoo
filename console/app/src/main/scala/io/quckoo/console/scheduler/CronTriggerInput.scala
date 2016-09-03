@@ -8,8 +8,6 @@ import io.quckoo.console.components._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import scala.concurrent.duration._
-
 /**
   * Created by alonsodomin on 02/09/2016.
   */
@@ -18,10 +16,10 @@ object CronTriggerInput {
   private[this] val errorMessage = ReactComponentB[(String, ParseError)]("CronTriggerInput.ErrorMessage").
     stateless.
     render_P { case (input, error) =>
-      <.div(^.color.red,
+      <.div(^.id := "cronParseError", ^.color.red,
         error.message, <.br,
         input, <.br,
-        (0 until error.position.column-1).map(_ => NBSP).mkString + "^"
+        Iterator.fill(error.position.column-2)(NBSP).mkString + "^"
       )
     } build
 
@@ -37,7 +35,7 @@ object CronTriggerInput {
       import Scalaz._
 
       def updateError(err: Option[ParseError]): Callback =
-        $.modState(_.copy(parseError = err))
+        $.props.flatMap(_.onUpdate(None)) >> $.modState(_.copy(parseError = err))
 
       def invokeCallback(trigger: Option[Trigger.Cron]): Callback =
         updateError(None) >> $.props.flatMap(_.onUpdate(trigger))
@@ -46,9 +44,8 @@ object CronTriggerInput {
         fold(updateError, invokeCallback)
     }
 
-    def onUpdate(value: Option[String]) = {
-      doValidate(value).delay(500 millis) >> $.modState(_.copy(inputExpr = value))
-    }
+    def onUpdate(value: Option[String]) =
+      $.modState(_.copy(inputExpr = value)) >> doValidate(value)
 
     val expressionInput = Input[String](onUpdate)
 
@@ -59,7 +56,8 @@ object CronTriggerInput {
           expressionInput(state.inputExpr, ^.id := "cronTrigger")
         ),
         <.div(^.`class` := "col-sm-offset-2",
-          state.inputExpr.zip(state.parseError).map(p => errorMessage(p))
+          state.inputExpr.zip(state.parseError).
+            map(p => errorMessage.withKey("cronError")(p))
         )
       )
     }

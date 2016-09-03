@@ -29,7 +29,7 @@ object Dependencies {
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.0"
 
-    val testState = "2.0.0"
+    val testState = "2.1.0"
     val scalaCss  = "0.4.1"
     val scalaTime = "2.0.0-M3"
 
