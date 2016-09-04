@@ -125,7 +125,10 @@ lazy val quckoo = (project in file(".")).
   settings(noPublishSettings).
   settings(releaseSettings).
   enablePlugins(AutomateHeaderPlugin).
-  aggregate(coreJS, coreJVM, apiJS, apiJVM, clientJS, clientJVM, cluster, console, examples)
+  aggregate(
+    coreJS, coreJVM, apiJS, apiJVM, clientJS, clientJVM,
+    cluster, console, examples, testSupportJS, testSupportJVM
+  )
 
 // Core ==================================================
 
@@ -257,7 +260,7 @@ lazy val clusterShared = (project in file("cluster/shared")).
   settings(commonSettings).
   settings(publishSettings: _*).
   settings(Dependencies.clusterShared).
-  dependsOn(apiJVM)
+  dependsOn(apiJVM, testSupportJVM % Test)
 
 lazy val clusterMaster = (project in file("cluster/master")).
   enablePlugins(JavaServerAppPackaging, DockerPlugin).
@@ -275,7 +278,7 @@ lazy val clusterMaster = (project in file("cluster/master")).
     //reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
   ).
   settings(Packaging.masterSettings: _*).
-  dependsOn(clusterShared, consoleResources)
+  dependsOn(clusterShared, consoleResources, testSupportJVM % Test)
 
 lazy val clusterWorker = (project in file("cluster/worker")).
   enablePlugins(JavaServerAppPackaging, DockerPlugin).
@@ -288,7 +291,21 @@ lazy val clusterWorker = (project in file("cluster/worker")).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterWorker).
   settings(Packaging.workerSettings: _*).
-  dependsOn(clusterShared)
+  dependsOn(clusterShared, testSupportJVM % Test)
+
+// Test Support Utils ========================================
+
+lazy val testSupport = (crossProject in file("test-support")).
+  settings(
+    name := "test-support",
+    moduleName := "quckoo-test-support"
+  ).
+  settings(commonSettings: _*).
+  settings(noPublishSettings: _*).
+  jvmSettings(Dependencies.testSupportJVM: _*)
+
+lazy val testSupportJS = testSupport.js
+lazy val testSupportJVM = testSupport.jvm
 
 // Examples ==================================================
 

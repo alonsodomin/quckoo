@@ -1,6 +1,6 @@
-package io.quckoo.support.scalamock.proxy
+package io.quckoo.test.support.scalamock.proxy
 
-import io.quckoo.support.scalamock.AbstractMockFactory
+import io.quckoo.test.support.scalamock.AbstractMockFactory
 import org.scalamock.proxy.ProxyMockFactory
 import org.scalatest.TestSuite
 

@@ -1,9 +1,9 @@
-package io.quckoo.support.scalamock
+package io.quckoo.test.support.scalamock
 
 import org.scalamock.MockFactoryBase
 import org.scalamock.clazz.Mock
-import org.scalatest.{SuiteMixin, TestSuite}
 import org.scalatest.exceptions.{StackDepthException, TestFailedException}
+import org.scalatest.{SuiteMixin, TestSuite}
 
 /**
   * Created by alonsodomin on 04/09/2016.

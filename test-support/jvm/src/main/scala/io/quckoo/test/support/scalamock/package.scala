@@ -1,4 +1,4 @@
-package io.quckoo.support
+package io.quckoo.test.support
 
 import org.scalatest.exceptions.StackDepthException
 

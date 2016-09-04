@@ -5,7 +5,7 @@ import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit}
 
 import io.quckoo.fault.{Fault, MissingDependencies, UnresolvedDependency}
 import io.quckoo.id.ArtifactId
-import io.quckoo.support.scalamock.MockFactory
+import io.quckoo.test.support.scalamock.MockFactory
 
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 

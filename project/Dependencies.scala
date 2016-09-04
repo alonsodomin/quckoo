@@ -100,10 +100,9 @@ object Dependencies {
 
     val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.1"
 
-    val scalaCheck = "org.scalacheck" %% "scalacheck"     % version.scalaCheck % Test
-    val scalaTest  = "org.scalatest"  %% "scalatest"      % version.scalaTest  % Test
-    val scalaMock  = "org.scalamock"  %% "scalamock-core" % version.scalaMock  % Test
-    val mockito    = "org.mockito"     % "mockito-core"   % version.mockito    % Test
+    val scalaTest  = "org.scalatest"  %% "scalatest"      % version.scalaTest
+    val scalaMock  = "org.scalamock"  %% "scalamock-core" % version.scalaMock
+    val mockito    = "org.mockito"     % "mockito-core"   % version.mockito
   }
 
   object compiler {
@@ -161,7 +160,7 @@ object Dependencies {
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
-      Akka.kryoSerialization, scalaTest
+      Akka.kryoSerialization
     )
   }
 
@@ -241,7 +240,7 @@ object Dependencies {
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
-      Akka.kryoSerialization, ivy, scalaXml, mockito, scalaTest, scalaMock
+      Akka.kryoSerialization, ivy, scalaXml
     )
   }
   lazy val clusterMaster = Def.settings {
@@ -249,14 +248,23 @@ object Dependencies {
     libraryDependencies ++= Seq(Log4j.slf4jImpl,
       Akka.sharding, Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
-      Akka.persistence.query, Akka.persistence.memory, scopt, scalaTest,
+      Akka.persistence.query, Akka.persistence.memory, scopt,
       authenticatJwt
     )
   }
   lazy val clusterWorker = Def.settings {
     import libs._
     libraryDependencies ++= Seq(Log4j.slf4jImpl,
-      Akka.testKit, scopt, scalaTest
+      Akka.testKit, scopt
+    )
+  }
+
+  // Support modules ================================
+
+  lazy val testSupportJVM = Def.settings {
+    import libs._
+    libraryDependencies ++= Seq(
+      mockito, scalaTest, scalaMock
     )
   }
 

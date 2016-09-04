@@ -1,4 +1,4 @@
-package io.quckoo.support.scalamock
+package io.quckoo.test.support.scalamock
 
 import org.scalamock.clazz.Mock
 import org.scalatest.TestSuite
