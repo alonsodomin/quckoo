@@ -133,6 +133,7 @@ object Dependencies {
     libraryDependencies ++= Seq(
       "me.chrons"      %%% "diode"          % version.diode,
       "io.monix"       %%% "monix-reactive" % version.monix,
+      "org.scalatest"  %%% "scalatest"      % version.scalaTest  % Test,
       "org.scalacheck" %%% "scalacheck"     % version.scalaCheck % Test
     )
   )

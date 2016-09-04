@@ -1,16 +1,13 @@
 package io.quckoo.auth
 
 import org.scalacheck._
-
-import scalaz._
-import Scalaz._
+import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 /**
   * Created by domingueza on 11/08/2016.
   */
-class XSRFTokenSpec extends Properties("XSRFToken") {
-  import Prop._
-  import Arbitrary.arbitrary
+class XSRFTokenSpec extends FunSuite with GeneratorDrivenPropertyChecks with Matchers {
 
   val tokens = for {
     userId <- Gen.alphaStr if userId.length > 0
@@ -18,12 +15,16 @@ class XSRFTokenSpec extends Properties("XSRFToken") {
   } yield XSRFToken(userId, value)
   implicit lazy val arbitraryToken = Arbitrary(tokens)
 
-  property("serialization") = forAll { (token: XSRFToken) =>
-    XSRFToken(token.toString) === token
+  test("serialization") {
+    forAll { (token: XSRFToken) =>
+      XSRFToken(token.toString) shouldBe token
+    }
   }
 
-  property("expire") = forAll { (token: XSRFToken) =>
-    token.expire().expired
+  test("expiration") {
+    forAll { (token: XSRFToken) =>
+      token.expire().expired shouldBe true
+    }
   }
 
 }
