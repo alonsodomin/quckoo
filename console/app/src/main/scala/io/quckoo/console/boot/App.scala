@@ -33,7 +33,7 @@ import scala.scalajs.js.annotation.JSExport
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import scalacss.mutable.GlobalRegistry
+import scalacss.internal.mutable.GlobalRegistry
 
 @JSExport
 object App extends JSApp {

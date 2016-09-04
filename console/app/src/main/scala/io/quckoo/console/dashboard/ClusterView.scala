@@ -26,7 +26,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import scalacss.mutable.StyleSheet
+import scalacss.StyleSheet
 
 /**
   * Created by alonsodomin on 13/12/2015.

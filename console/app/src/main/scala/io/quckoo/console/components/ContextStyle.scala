@@ -16,9 +16,16 @@
 
 package io.quckoo.console.components
 
+import japgolly.univeq.UnivEq
+
+import scalacss.internal.StyleLookup
+
 /**
   * Created by alonsodomin on 20/02/2016.
   */
 object ContextStyle extends Enumeration {
   val default, primary, success, info, warning, danger = Value
+
+  implicit val equiv = UnivEq.force[Value]
+  implicit val lookup = StyleLookup.scalaMap[ContextStyle.Value]
 }

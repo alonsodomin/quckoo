@@ -17,7 +17,8 @@
 package io.quckoo.console.components
 
 import scalacss.Defaults._
-import scalacss.mutable.Register
+import scalacss.StyleSheet.Register
+import scalacss.internal.StyleLookup
 
 /**
   * Created by alonsodomin on 20/02/2016.
@@ -29,7 +30,7 @@ class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
   val global  = Domain.ofValues(default, primary, success, info, warning, danger)
   val context = Domain.ofValues(success, info, warning, danger)
 
-  def from[A](domain: Domain[A], base: String) = styleF(domain) { opt =>
+  def from[A](domain: Domain[A], base: String)(implicit lookup: StyleLookup[A]) = styleF(domain) { opt =>
     styleS(addClassNames(base, s"$base-$opt"))
   }
 

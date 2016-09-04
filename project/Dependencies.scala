@@ -30,14 +30,13 @@ object Dependencies {
     val scalaJsJQuery   = "0.9.0"
 
     val testState = "2.1.0"
-    val scalaCss  = "0.4.1"
+    val scalaCss  = "0.5.0"
     val scalaTime = "2.0.0-M3"
 
     val diode = "1.0.0"
 
     val upickle   = "0.4.1"
-    val utest     = "0.4.3"
-    val scalatags = "0.5.5"
+    val scalatags = "0.6.0"
 
     // Other utils ---
 

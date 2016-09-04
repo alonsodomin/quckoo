@@ -46,7 +46,7 @@ object Input {
 
     implicit val password: Converter[Password] = new Converter[Password] {
       def to: Password => String = _.value
-      def from: String => Password = Password(_)
+      def from: String => Password = new Password(_)
     }
 
     implicit val int: Converter[Int] = new BaseConverter[Int] {

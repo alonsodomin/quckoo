@@ -16,9 +16,16 @@
 
 package io.quckoo.console.components
 
+import japgolly.univeq.UnivEq
+
+import scalacss.internal.StyleLookup
+
 /**
   * Created by alonsodomin on 10/07/2016.
   */
 object NavStyle extends Enumeration {
   val tabs, pills, stacked = Value
+
+  implicit val univEq = UnivEq.force[Value]
+  implicit val lookup = StyleLookup.scalaMap[Value]
 }
