@@ -3,12 +3,12 @@ package io.quckoo.console.components
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.test.ReactTestUtils
 
-import utest.TestSuite
+import org.scalatest.FunSuite
 
 /**
   * Created by alonsodomin on 29/07/2016.
   */
-object NavBarTest extends TestSuite {
+class NavBarTest extends FunSuite {
   import NavBarTestState._
   import NavBarTestDsl._
 
@@ -31,7 +31,7 @@ object NavBarTest extends TestSuite {
     }
   }
 
-  override def tests = TestSuite {
+  test("should switch between the different tabs") {
     val plan = Plan.action(
       selectItem("Last") +> currentItem.assert.equal(Some("Last")) >>
       selectItem("First") +> currentItem.assert.equal(Some("First"))

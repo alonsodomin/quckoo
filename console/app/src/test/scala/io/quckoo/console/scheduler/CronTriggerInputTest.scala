@@ -4,15 +4,12 @@ import io.quckoo.Trigger
 
 import japgolly.scalajs.react.test.ReactTestUtils
 
-import utest.TestSuite
-
-import scalaz._
-import Scalaz._
+import org.scalatest.FunSuite
 
 /**
   * Created by alonsodomin on 03/09/2016.
   */
-object CronTriggerInputTest extends TestSuite {
+class CronTriggerInputTest extends FunSuite {
   import CronTriggerInputState._
   import CronTriggerInputTestDsl._
 
@@ -46,10 +43,10 @@ object CronTriggerInputTest extends TestSuite {
     }
   }
 
-  override def tests = TestSuite {
+  test("input should perform validation of the cron expression") {
     val plan = Plan.action(
       blankForm +>
-      setExpression("* * * * * *") >>
+      setExpression("* * * * * *") +> emptyExpression.assert(false) +> hasError.assert.equal(false) >>
       setExpression("* *") +> emptyExpression.assert(false) +> hasError.assert.equal(true)
     )
 

@@ -3,8 +3,6 @@ package io.quckoo.console.security
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.test.ReactTestUtils
 
-import utest.TestSuite
-
 /**
   * Created by alonsodomin on 11/07/2016.
   */
