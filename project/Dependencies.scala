@@ -13,7 +13,7 @@ object Dependencies {
 
     // Testing --------
 
-    val scalaTest  = "3.0.0-M15"
+    val scalaTest  = "3.0.0"
     val scalaCheck = "1.13.2"
     val scalaMock  = "3.2.2"
     val mockito    = "1.10.19"
@@ -100,10 +100,10 @@ object Dependencies {
 
     val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.1"
 
-    val scalaCheck = "org.scalacheck" %% "scalacheck"                  % version.scalaCheck % Test
-    val scalaTest  = "org.scalatest"  %% "scalatest"                   % version.scalaTest  % Test
-    val scalaMock  = "org.scalamock"  %% "scalamock-scalatest-support" % version.scalaMock  % Test
-    val mockito    = "org.mockito"     % "mockito-core"                % version.mockito    % Test
+    val scalaCheck = "org.scalacheck" %% "scalacheck"     % version.scalaCheck % Test
+    val scalaTest  = "org.scalatest"  %% "scalatest"      % version.scalaTest  % Test
+    val scalaMock  = "org.scalamock"  %% "scalamock-core" % version.scalaMock  % Test
+    val mockito    = "org.mockito"     % "mockito-core"   % version.mockito    % Test
   }
 
   object compiler {
