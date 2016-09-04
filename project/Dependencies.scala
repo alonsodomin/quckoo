@@ -172,7 +172,6 @@ object Dependencies {
 
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
-      "com.lihaoyi"      %%% "utest"          % version.utest     % Test,
       "me.chrons"        %%% "diode-react"    % version.diode,
       "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
 
@@ -222,8 +221,7 @@ object Dependencies {
         /         "bootstrap-notify.js"
         minified  "bootstrap-notify.min.js"
         dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js")
-    ),
-    testFrameworks += new TestFramework("utest.runner.Framework")
+    )
   )
   lazy val consoleResources = Def.settings {
     libraryDependencies ++= Seq(

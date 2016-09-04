@@ -3,12 +3,12 @@ package io.quckoo.console.security
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.test.ReactTestUtils
 
-import utest.TestSuite
+import org.scalatest.FunSuite
 
 /**
   * Created by alonsodomin on 11/07/2016.
   */
-object LoginTest /*extends TestSuite {
+class LoginTest extends FunSuite {
   import LoginFormTestState._
   import LoginTestDsl._
 
@@ -26,8 +26,6 @@ object LoginTest /*extends TestSuite {
     invars
   }
 
-  //val handlerSubject = PublishSubject[(String, String)]()
-
   def runPlan(plan: dsl.Plan): Report[String] = {
 
     ReactTestUtils.withRenderedIntoDocument(LoginForm((_, _) => Callback.empty)) { comp =>
@@ -42,8 +40,7 @@ object LoginTest /*extends TestSuite {
     }
   }
 
-  override def tests = TestSuite {
-
+  test("should be able to submit user credentials") {
     val plan = Plan.action(
       setUsername("admin")
         >> setPassword("password")
@@ -54,4 +51,3 @@ object LoginTest /*extends TestSuite {
   }
 
 }
-*/

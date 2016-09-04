@@ -7,7 +7,7 @@ import japgolly.scalajs.react.test._
 /**
   * Created by alonsodomin on 10/07/2016.
   */
-object LoginTestDsl /*{
+object LoginTestDsl {
   import LoginFormTestState._
   import ReactTestUtils._
 
@@ -32,4 +32,3 @@ object LoginTestDsl /*{
       updateState(LoginState.submitted.set(true))
 
 }
-*/

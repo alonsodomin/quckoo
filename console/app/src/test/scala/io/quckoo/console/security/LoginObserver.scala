@@ -7,7 +7,7 @@ import org.scalajs.dom.html
 /**
   * Created by alonsodomin on 10/07/2016.
   */
-class LoginObserver/*($: HtmlDomZipper) {
+class LoginObserver($: HtmlDomZipper) {
 
   val usernameInput = $("#username").domAs[html.Input]
   val passwordInput = $("#password").domAs[html.Input]
@@ -17,4 +17,4 @@ class LoginObserver/*($: HtmlDomZipper) {
   val emptyPassword = passwordInput.value.isEmpty
   val canSubmit = !submitButton.disabled.getOrElse(false)
 
-}*/
+}
