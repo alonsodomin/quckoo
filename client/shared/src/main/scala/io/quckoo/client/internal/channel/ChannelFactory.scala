@@ -11,7 +11,7 @@ trait ChannelFactory[P <: Protocol, R] {
   type Ch[_] <: Channel[_]
   type Out
 
-  def channel: Ch[Out]
+  def channel[T <: Transport[P]](transport: T): Ch[Out]
 
 }
 

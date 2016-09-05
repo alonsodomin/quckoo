@@ -5,6 +5,6 @@ package io.quckoo.client.internal.channel
   */
 trait Transport[P <: Protocol] {
 
-  def channelFor[R](implicit cf: ChannelFactory[P, R]): cf.Ch[cf.Out] = cf.channel
+  def channelFor[R](implicit cf: ChannelFactory[P, R]): cf.Ch[cf.Out] = cf.channel(this)
 
 }
