@@ -22,7 +22,7 @@ object ChannelFactory {
     type Ch[X] = SimpleChannel[In, X]
     type Out = Out0
 
-    override def channel = new SimpleChannel[In, Out0] {
+    override def channel[T <: Transport[P]](transport: T) = new SimpleChannel[In, Out0] {
 
       override def send(reqCtx: Request[In]) = f(reqCtx)
     }

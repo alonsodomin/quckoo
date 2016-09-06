@@ -21,6 +21,8 @@ package io.quckoo.auth
   */
 package object http {
 
+  final val AuthorizationHeader = "Authorization"
+
   final val XSRFTokenCookie = "XSRF_TOKEN"
   final val XSRFTokenHeader = "X-" + XSRFTokenCookie
 

@@ -1,12 +1,13 @@
-package io.quckoo.client.ajax
+package io.quckoo.client.http
 
 import io.quckoo.auth.{Credentials, Passport}
-import io.quckoo.client.internal.channel.{ChannelFactory, Protocol}
+import io.quckoo.auth.http._
+import io.quckoo.client.internal.Request
+import io.quckoo.client.internal.channel.{ChannelFactory, Protocol, Transport}
 import io.quckoo.serialization.Base64._
-
 import org.scalajs.dom.ext.Ajax
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Created by alonsodomin on 06/09/2016.
