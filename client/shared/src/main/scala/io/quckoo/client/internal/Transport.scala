@@ -1,4 +1,6 @@
-package io.quckoo.client.internal.channel
+package io.quckoo.client.internal
+
+import io.quckoo.client.internal.channel.ChannelFactory
 
 /**
   * Created by alonsodomin on 05/09/2016.

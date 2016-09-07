@@ -2,8 +2,8 @@ package io.quckoo.client.http
 
 import io.quckoo.auth.{Credentials, Passport}
 import io.quckoo.auth.http._
-import io.quckoo.client.internal.Request
-import io.quckoo.client.internal.channel.{ChannelFactory, Protocol, Transport}
+import io.quckoo.client.internal.{Protocol, Request}
+import io.quckoo.client.internal.channel.ChannelFactory
 import io.quckoo.serialization.Base64._
 import org.scalajs.dom.ext.Ajax
 

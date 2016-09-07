@@ -1,6 +1,6 @@
 package io.quckoo.client.internal.channel
 
-import io.quckoo.client.internal.Request
+import io.quckoo.client.internal.{Protocol, Request, Transport}
 
 import scala.concurrent.Future
 

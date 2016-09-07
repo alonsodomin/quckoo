@@ -1,4 +1,4 @@
-package io.quckoo.client.internal.channel
+package io.quckoo.client.internal
 
 /**
   * Created by alonsodomin on 05/09/2016.

@@ -1,6 +1,6 @@
 package io.quckoo.client.http.channel
 
-import io.quckoo.client.internal.channel.{Protocol, Transport}
+import io.quckoo.client.internal.{Protocol, Transport}
 
 /**
   * Created by alonsodomin on 05/09/2016.

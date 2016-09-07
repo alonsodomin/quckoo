@@ -2,8 +2,7 @@ package io.quckoo.client.tcp.channel
 
 import akka.actor.ActorSystem
 import akka.cluster.client.ClusterClientSettings
-
-import io.quckoo.client.internal.channel.{Protocol, Transport}
+import io.quckoo.client.internal.{Protocol, Transport}
 import io.quckoo.client.tcp.QuckooTcpClient
 
 /**
