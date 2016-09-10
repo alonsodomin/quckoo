@@ -30,7 +30,7 @@ import akka.util.Timeout
 import io.quckoo.JobSpec
 import io.quckoo.id.JobId
 import io.quckoo.cluster.QuckooClusterSettings
-import io.quckoo.cluster.core.QuckooJournal
+import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.topics
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.protocol.registry._
@@ -57,19 +57,19 @@ object Registry {
   sealed trait Signal
   case object Ready extends Signal
 
-  def props(settings: QuckooClusterSettings) = {
+  def props(settings: QuckooClusterSettings, journal: QuckooJournal) = {
     val resolve = IvyResolve(settings.ivyConfiguration)
     val props   = Resolver.props(resolve).withDispatcher("quckoo.resolver.dispatcher")
-    Props(classOf[Registry], RegistrySettings(props))
+    Props(classOf[Registry], RegistrySettings(props), journal)
   }
 
-  def props(settings: RegistrySettings) =
-    Props(classOf[Registry], settings)
+  def props(settings: RegistrySettings, journal: QuckooJournal) =
+    Props(classOf[Registry], settings, journal)
 
 }
 
-class Registry(settings: RegistrySettings)
-    extends Actor with ActorLogging with QuckooJournal with Stash {
+class Registry(settings: RegistrySettings, journal: QuckooJournal)
+    extends Actor with ActorLogging with Stash {
   import Registry._
 
   ClusterClientReceptionist(context.system).registerService(self)
@@ -94,8 +94,6 @@ class Registry(settings: RegistrySettings)
   override def postStop(): Unit = {
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
   }
-
-  def actorSystem = context.system
 
   def receive = initializing
 
@@ -195,7 +193,7 @@ class Registry(settings: RegistrySettings)
   }
 
   private def warmUp(): Unit = {
-    readJournal.currentEventsByTag(EventTag, 0).
+    journal.read.currentEventsByTag(EventTag, 0).
       runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
   }
 

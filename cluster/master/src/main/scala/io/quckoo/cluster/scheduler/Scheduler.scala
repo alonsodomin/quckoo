@@ -24,11 +24,11 @@ import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.pattern._
 import akka.persistence.query.EventEnvelope
-import akka.persistence.query.scaladsl.CurrentEventsByTagQuery
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
+import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
@@ -46,7 +46,6 @@ import scala.concurrent.duration._
  */
 object Scheduler {
 
-  type Journal = CurrentEventsByTagQuery
   type PlanIndexPropsProvider = ActorRef => Props
 
   private[scheduler] object WarmUp {
@@ -66,15 +65,15 @@ object Scheduler {
     cmd: Any, replyTo: ActorRef
   )
 
-  def props(settings: QuckooClusterSettings, journal: Journal, registry: ActorRef)
-           (implicit actorSystem: ActorSystem, clock: Clock): Props = {
+  def props(settings: QuckooClusterSettings, journal: QuckooJournal, registry: ActorRef)
+           (implicit clock: Clock): Props = {
     val queueProps = TaskQueue.props(settings.queueMaxWorkTimeout)
     Props(classOf[Scheduler], journal, registry, queueProps, clock)
   }
 
 }
 
-class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Props)
+class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)
                (implicit clock: Clock)
     extends Actor with ActorLogging with Stash {
 
@@ -224,8 +223,8 @@ class Scheduler(journal: Scheduler.Journal, registry: ActorRef, queueProps: Prop
   }
 
   private def warmUp(): Unit = {
-    val executionPlanEvents = journal.currentEventsByTag(tags.ExecutionPlan, 0)
-    val executionEvents = journal.currentEventsByTag(tags.Task, 0)
+    val executionPlanEvents = journal.read.currentEventsByTag(tags.ExecutionPlan, 0)
+    val executionEvents = journal.read.currentEventsByTag(tags.Task, 0)
 
     executionPlanEvents.concat(executionEvents).
       runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))

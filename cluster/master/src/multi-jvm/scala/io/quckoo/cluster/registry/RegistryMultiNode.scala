@@ -5,13 +5,13 @@ import java.util.UUID
 import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.{ImplicitSender, TestActors, TestProbe}
-
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Artifact
 import io.quckoo.resolver.Resolver
 import io.quckoo.JobSpec
+import io.quckoo.cluster.journal.QuckooTestJournal
 
 import scala.concurrent.duration._
 
@@ -30,10 +30,10 @@ class RegistryMultiNodeSpecMultiJvmProxy extends RegistryMultiNode
 
 object RegistryMultiNode {
 
-  final val TestArtifactId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
+  final val TestArtifactId = ArtifactId("io.quckoo", "example-jobs_2.11", "0.1.0")
   final val TestJobSpec = JobSpec(
     "Examples", artifactId = TestArtifactId,
-    jobClass = "io.kairos.examples.paramteters.PowerOfNJob"
+    jobClass = "io.quckoo.examples.paramteters.PowerOfNJob"
   )
 
 }
@@ -43,6 +43,12 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
 
   import RegistryMultiNode._
   import RegistryNodesConfig._
+
+  val journal = new QuckooTestJournal
+
+  override def atStartup(): Unit = {
+    system.eventStream.subscribe(self, classOf[Registry.Signal])
+  }
 
   "A Registry cluster" should {
 
@@ -72,7 +78,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
         acceptedMsg.job shouldBe TestJobSpec
 
         registryRef ! GetJob(acceptedMsg.jobId)
-        expectMsg(acceptedMsg.jobId -> TestJobSpec)
+        expectMsg(TestJobSpec)
 
         enterBarrier("job-fetched")
 
@@ -82,7 +88,8 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
         val resolverProbe = TestProbe("resolver1")
         val settings = RegistrySettings(TestActors.forwardActorProps(resolverProbe.ref))
 
-        system.actorOf(Registry.props(settings), "registry")
+        system.actorOf(Registry.props(settings, journal), "registry")
+        expectMsg(Registry.Ready)
         enterBarrier("registry-ready")
 
         enterBarrier("fetch-invalid-job")
