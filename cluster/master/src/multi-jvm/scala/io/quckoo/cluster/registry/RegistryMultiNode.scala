@@ -30,10 +30,10 @@ class RegistryMultiNodeSpecMultiJvmProxy extends RegistryMultiNode
 
 object RegistryMultiNode {
 
-  final val TestArtifactId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
+  final val TestArtifactId = ArtifactId("io.quckoo", "example-jobs_2.11", "0.1.0")
   final val TestJobSpec = JobSpec(
     "Examples", artifactId = TestArtifactId,
-    jobClass = "io.kairos.examples.paramteters.PowerOfNJob"
+    jobClass = "io.quckoo.examples.paramteters.PowerOfNJob"
   )
 
 }
