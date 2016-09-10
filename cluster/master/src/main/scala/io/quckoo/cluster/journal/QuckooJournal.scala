@@ -14,27 +14,23 @@
  * limitations under the License.
  */
 
-package io.quckoo.cluster.core
+package io.quckoo.cluster.journal
 
 import akka.actor.ActorSystem
-import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 import akka.persistence.query.PersistenceQuery
 
 /**
   * Created by alonsodomin on 23/12/2015.
   */
 trait QuckooJournal {
-  import QuckooJournal._
+  type ReadRepr <: ReadJournalRepr
 
   implicit def actorSystem: ActorSystem
 
-  val readJournal = PersistenceQuery(actorSystem).
-    readJournalFor[CassandraReadJournal](CassandraReadJournalId)
+  protected val journalId: String
+
+  lazy val read = PersistenceQuery(actorSystem).
+    readJournalFor[ReadRepr](journalId)
 
 }
 
-object QuckooJournal {
-
-  final val CassandraReadJournalId = "cassandra-query-journal"
-
-}
