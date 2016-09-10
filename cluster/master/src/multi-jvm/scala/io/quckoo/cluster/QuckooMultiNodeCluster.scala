@@ -55,7 +55,7 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
   implicit val materializer = ActorMaterializer()
   val journal = new QuckooTestJournal
 
-  "A Chronos cluster" must {
+  "A Quckoo cluster" must {
     val settings = QuckooClusterSettings(system)
 
     "send connect commands from one node to the other one" in {
