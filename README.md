@@ -1,6 +1,7 @@
 # Quckoo
 
 [![Build Status](https://travis-ci.org/alonsodomin/quckoo.svg?branch=master)](https://travis-ci.org/alonsodomin/quckoo)
+[![codecov](https://codecov.io/gh/alonsodomin/quckoo/branch/master/graph/badge.svg)](https://codecov.io/gh/alonsodomin/quckoo)
 [![License](http://img.shields.io/:license-Apache%202-red.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.quckoo/quckoo-core_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.quckoo/quckoo-core_2.11)
 
