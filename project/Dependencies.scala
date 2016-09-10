@@ -20,8 +20,18 @@ object Dependencies {
 
     // Akka ----------
 
-    val akka = "2.4.10"
-    val kryo = "0.4.1"
+    object akka {
+      val main = "2.4.10"
+      val kryo = "0.4.1"
+
+      // http extensions
+      val json = "1.9.0"
+      val sse  = "1.10.0"
+
+      // persistence plugins
+      val cassandra = "0.18"
+      val inmemory  = "1.3.8"
+    }
 
     // ScalaJS -------
 
@@ -64,28 +74,28 @@ object Dependencies {
     val ivy = "org.apache.ivy" % "ivy" % "2.4.0"
 
     object Akka {
-      val actor           = "com.typesafe.akka" %% "akka-actor"             % version.akka
-      val slf4j           = "com.typesafe.akka" %% "akka-slf4j"             % version.akka
-      val clusterTools    = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka
-      val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka
-      val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka
-      val http            = "com.typesafe.akka" %% "akka-http-experimental" % version.akka
-      val httpTestkit     = "com.typesafe.akka" %% "akka-http-testkit"      % version.akka % Test
-      val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % "1.9.0"
-      val sse             = "de.heikoseeberger" %% "akka-sse"               % "1.10.0"
-      val distributedData = "com.typesafe.akka" %% "akka-distributed-data-experimental" % version.akka
+      val actor           = "com.typesafe.akka" %% "akka-actor"             % version.akka.main
+      val slf4j           = "com.typesafe.akka" %% "akka-slf4j"             % version.akka.main
+      val clusterTools    = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka.main
+      val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka.main
+      val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka.main
+      val http            = "com.typesafe.akka" %% "akka-http-experimental" % version.akka.main
+      val distributedData = "com.typesafe.akka" %% "akka-distributed-data-experimental" % version.akka.main
+      val httpTestkit     = "com.typesafe.akka" %% "akka-http-testkit"      % version.akka.main % Test
+      val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % version.akka.json
+      val sse             = "de.heikoseeberger" %% "akka-sse"               % version.akka.sse
 
       object persistence {
-        val core      = "com.typesafe.akka"   %% "akka-persistence"              % version.akka
-        val query     = "com.typesafe.akka"   %% "akka-persistence-query-experimental" % version.akka
-        val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra"    % "0.18"
-        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % "1.3.2" % Test
+        val core      = "com.typesafe.akka"   %% "akka-persistence"              % version.akka.main
+        val query     = "com.typesafe.akka"   %% "akka-persistence-query-experimental" % version.akka.main
+        val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra"    % version.akka.cassandra
+        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % version.akka.inmemory % Test
       }
 
-      val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka
-      val testKit          = "com.typesafe.akka" %% "akka-testkit"            % version.akka % Test
+      val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka.main
+      val testKit          = "com.typesafe.akka" %% "akka-testkit"            % version.akka.main % Test
 
-      val kryoSerialization = "com.github.romix.akka" %% "akka-kryo-serialization" % version.kryo
+      val kryoSerialization = "com.github.romix.akka" %% "akka-kryo-serialization" % version.akka.kryo
     }
 
     object Log4j {

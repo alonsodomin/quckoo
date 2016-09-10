@@ -8,7 +8,7 @@ object MultiNode {
 
   lazy val settings: Seq[Def.Setting[_]] = SbtMultiJvm.multiJvmSettings ++ Seq(
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-multi-node-testkit" % Dependencies.version.akka
+      "com.typesafe.akka" %% "akka-multi-node-testkit" % Dependencies.version.akka.main
     )
     /*compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
     parallelExecution in Test := false,
