@@ -1,5 +1,6 @@
 package io.quckoo.cluster
 
+import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.stream.ActorMaterializer
 import akka.testkit.ImplicitSender
@@ -13,7 +14,7 @@ import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.client._
 import io.quckoo.test.ImplicitClock
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Promise}
 
 /**
@@ -25,10 +26,14 @@ object QuckooNodesConfig extends MultiNodeConfig {
 
   commonConfig(debugConfig(on = false))
 
-  nodeConfig(scheduler)(ConfigFactory.parseString("akka.cluster.roles=[scheduler]").
-    withFallback(MultiNodeClusterSpec.clusterConfig))
-  nodeConfig(registry)(ConfigFactory.parseString("akka.cluster.roles=[registry]").
-    withFallback(MultiNodeClusterSpec.clusterConfig))
+  nodeConfig(scheduler)(
+    ConfigFactory.parseString("akka.cluster.roles=[scheduler]"),
+    MultiNodeClusterSpec.clusterConfig
+  )
+  nodeConfig(registry)(
+    ConfigFactory.parseString("akka.cluster.roles=[registry]"),
+    MultiNodeClusterSpec.clusterConfig
+  )
 }
 
 class QuckooMultiNodeClusterSpecMultiJvmNode1 extends QuckooMultiNodeCluster
@@ -56,6 +61,8 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
     "send connect commands from one node to the other one" in {
       awaitClusterUp(registry, scheduler)
 
+      Persistence(system)
+
       runOn(registry) {
         val bootPromise = Promise[Unit]
         system.actorOf(QuckooGuardian.props(settings, journal, bootPromise), GuardianName)
@@ -69,6 +76,11 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
         expectMsg(Connected)
 
         enterBarrier("connected")
+
+        schedulerGuardian ! Disconnect
+        expectMsg(Disconnected)
+
+        enterBarrier("disconnected")
       }
 
       runOn(scheduler) {
@@ -78,12 +90,17 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
 
         enterBarrier("deployed")
 
-        val registryGuardian = system.actorSelection(node(registry) / "user" / "chronos")
+        val registryGuardian = system.actorSelection(node(registry) / "user" / GuardianName)
         registryGuardian ! Connect
 
         expectMsg(Connected)
 
         enterBarrier("connected")
+
+        registryGuardian ! Disconnect
+        expectMsg(Disconnected)
+
+        enterBarrier("disconnected")
       }
 
       enterBarrier("finished")

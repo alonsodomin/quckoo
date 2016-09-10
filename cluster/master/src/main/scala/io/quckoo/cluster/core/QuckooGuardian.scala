@@ -95,18 +95,14 @@ class QuckooGuardian(settings: QuckooClusterSettings, journal: QuckooJournal, bo
     def waitForReady: Receive = {
       case Registry.Ready =>
         if (schedulerReady) {
-          boot.success(())
-          unstashAll()
-          context become started
+          becomeStarted()
         } else {
           context become starting(registryReady = true)
         }
 
       case Scheduler.Ready =>
         if (registryReady) {
-          boot.success(())
-          unstashAll()
-          context become started
+          becomeStarted()
         } else {
           context become starting(schedulerReady = true)
         }
@@ -135,12 +131,12 @@ class QuckooGuardian(settings: QuckooClusterSettings, journal: QuckooJournal, bo
   private[this] def defaultActivity: Receive = {
     case Connect =>
       clients += sender()
-      log.info("Quckoo client connected to cluster node. address={}", sender().path.address)
+      log.info("Quckoo client connected to cluster node. clientAddress={}", sender().path.address)
       sender() ! Connected
 
     case Disconnect =>
       clients -= sender()
-      log.info("Quckoo client disconnected from cluster node. address={}", sender().path.address)
+      log.info("Quckoo client disconnected from cluster node. clientAddress={}", sender().path.address)
       sender() ! Disconnected
 
     case GetClusterStatus =>
@@ -177,6 +173,13 @@ class QuckooGuardian(settings: QuckooClusterSettings, journal: QuckooJournal, bo
 
     case evt: TaskQueueUpdated =>
       clusterState = clusterState.copy(metrics = clusterState.metrics.updated(evt))
+  }
+
+  private[this] def becomeStarted(): Unit = {
+    log.debug("Cluster successfully started.")
+    boot.success(())
+    unstashAll()
+    context become started
   }
 
 }
