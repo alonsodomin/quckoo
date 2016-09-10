@@ -16,6 +16,11 @@ object Passport {
 final class Passport(protected val token: String) {
   import Passport._
 
+  private[this] val claims: Map[String, String] = {
+    val jwtClaims = token.split('.')(1).toByteArray
+    read[Map[String, String]](new String(jwtClaims, "UTF-8"))
+  }
+
   override def equals(other: Any): Boolean = other match {
     case that: Passport => this.token == that.token
     case _              => false
@@ -23,14 +28,7 @@ final class Passport(protected val token: String) {
 
   override def hashCode: Int = token.hashCode
 
-  lazy val principal: Option[Principal] = {
-    val claims = decodeClaims()
+  lazy val principal: Option[Principal] =
     claims.get(SubjectClaim).map(User)
-  }
-
-  private[this] def decodeClaims() = {
-    val jwtClaims = token.split('.')(1).toByteArray
-    read[Map[String, String]](new String(jwtClaims, "UTF-8"))
-  }
 
 }

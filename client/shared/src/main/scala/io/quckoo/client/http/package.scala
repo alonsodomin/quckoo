@@ -1,5 +1,7 @@
 package io.quckoo.client
 
+import scalaz.\/
+
 /**
   * Created by alonsodomin on 04/09/2016.
   */
