@@ -3,13 +3,12 @@ package io.quckoo.cluster.scheduler
 import java.util.UUID
 
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import akka.persistence.inmemory.query.scaladsl.InMemoryReadJournal
-import akka.persistence.query.PersistenceQuery
 import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.testkit._
 
-import io.quckoo.{ExecutionPlan, TaskExecution, JobSpec, Task, Trigger}
+import io.quckoo.cluster.journal.QuckooTestJournal
+import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution, Trigger}
 import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
@@ -62,8 +61,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, eventListener.ref)
   }
 
-  val readJournal = PersistenceQuery(system).
-    readJournalFor[InMemoryReadJournal](InMemoryReadJournal.Identifier)
+  val readJournal = new QuckooTestJournal
 
   override protected def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)

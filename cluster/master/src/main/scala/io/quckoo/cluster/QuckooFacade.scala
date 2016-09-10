@@ -23,9 +23,9 @@ import akka.pattern._
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
-
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
+import io.quckoo.cluster.journal.QuckooProductionJournal
 import io.quckoo.cluster.registry.RegistryEventPublisher
 import io.quckoo.cluster.scheduler.SchedulerEventPublisher
 import io.quckoo.fault.Fault
@@ -36,9 +36,7 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
-
 import org.slf4s.Logging
-
 import org.threeten.bp.Clock
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -62,7 +60,8 @@ object QuckooFacade extends Logging {
     log.info("Starting Quckoo server...")
 
     val promise = Promise[Unit]()
-    val guardian = system.actorOf(QuckooGuardian.props(settings, promise), "quckoo")
+    val journal = new QuckooProductionJournal
+    val guardian = system.actorOf(QuckooGuardian.props(settings, journal, promise), "quckoo")
 
     import system.dispatcher
     (promise.future |@| startHttpListener(new QuckooFacade(guardian)))((_, _) => ())
