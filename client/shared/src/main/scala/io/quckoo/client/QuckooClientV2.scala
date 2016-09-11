@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created by alonsodomin on 10/09/2016.
   */
 abstract class QuckooClientV2[P <: Protocol](driver: Driver[P]) {
-  import driver.encodings._
+  import driver.api._
 
   def authenticate(username: String, password: String)(implicit
     ec: ExecutionContext, timeout: Duration

@@ -14,13 +14,13 @@ import Scalaz._
 /**
   * Created by alonsodomin on 10/09/2016.
   */
-class HttpDriver(protected val transport: HttpTransport, baseUrl: String = "")
+final class HttpDriver(protected val transport: HttpTransport, baseUrl: String = "")
   extends Driver[Protocol.Http] {
   type TransportRepr = HttpTransport
 
-  val encodings = new Encodings {
-    implicit val credentialsEnc: Encoding[Credentials, Passport] = new Encoding[Credentials, Passport] {
-      override val encode: Encoder[Credentials, HttpRequest] = { cmd =>
+  val api = new Marshallers {
+    implicit val authMarshaller: Marshalling[Credentials, Passport] = new Marshalling[Credentials, Passport] {
+      override val to: Marshall[Credentials, HttpRequest] = { cmd =>
         import Base64._
 
         Try(s"${cmd.payload.username}:${cmd.payload.password}".getBytes("UTF-8").toBase64).map { creds =>
@@ -29,7 +29,7 @@ class HttpDriver(protected val transport: HttpTransport, baseUrl: String = "")
         }
       }
 
-      override val decode: Decoder[HttpResponse, Passport] = {
+      override val from: Unmarshall[HttpResponse, Passport] = {
         case HttpSuccess(payload) =>
           Try(new Passport(new String(payload.array(), "UTF-8")))
 
@@ -41,10 +41,10 @@ class HttpDriver(protected val transport: HttpTransport, baseUrl: String = "")
 
   override def invoke[In, Out](implicit
     ec: ExecutionContext,
-    encoding: Encoding[In, Out]
+    marshalling: Marshalling[In, Out]
   ): Kleisli[Future, Command[In], Out] = {
-    val encodeRequest  = Kleisli(encoding.encode).transform(try2Future)
-    val decodeResponse = Kleisli(encoding.decode).transform(try2Future)
+    val encodeRequest  = Kleisli(marshalling.to).transform(try2Future)
+    val decodeResponse = Kleisli(marshalling.from).transform(try2Future)
 
     encodeRequest >=> transport.send >=> decodeResponse
   }

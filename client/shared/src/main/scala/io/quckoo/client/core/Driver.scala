@@ -11,21 +11,21 @@ import scalaz.Kleisli
 trait Driver[P <: Protocol] {
   type TransportRepr <: Transport[P]
 
-  trait Encoding[In, Out] {
-    val encode: Encoder[In, TransportRepr#Request]
-    val decode: Decoder[TransportRepr#Response, Out]
+  trait Marshalling[In, Out] {
+    val to: Marshall[In, TransportRepr#Request]
+    val from: Unmarshall[TransportRepr#Response, Out]
   }
 
-  trait Encodings {
-    implicit val credentialsEnc: Encoding[Credentials, Passport]
+  trait Marshallers {
+    implicit val authMarshaller: Marshalling[Credentials, Passport]
   }
 
   protected val transport: TransportRepr
-  val encodings: Encodings
+  val api: Marshallers
 
   def invoke[In, Out](implicit
     ec: ExecutionContext,
-    encoding: Encoding[In, Out]
+    marshalling: Marshalling[In, Out]
   ): Kleisli[Future, Command[In], Out]
 
 }
