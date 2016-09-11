@@ -6,4 +6,5 @@ package io.quckoo.client.core
 sealed trait Protocol
 object Protocol {
   sealed trait Http extends Protocol
+  sealed trait Tcp extends Protocol
 }

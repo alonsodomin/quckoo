@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpMethods, HttpMethod => AkkaHttpMethod, HttpRequest => AkkaHttpRequest}
+import akka.http.scaladsl.model.{HttpMethods, HttpMethod => AkkaHttpMethod, HttpRequest => AkkaHttpRequest, HttpResponse => AkkaHttpResponse}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 
@@ -14,7 +14,7 @@ import scalaz.Kleisli
 /**
   * Created by alonsodomin on 11/09/2016.
   */
-class AkkaTransport(host: String, port: Int = 80)(implicit val actorSystem: ActorSystem) extends HttpTransport {
+private[http] class AkkaTransport(host: String, port: Int = 80)(implicit val actorSystem: ActorSystem) extends HttpTransport {
   implicit val materializer = ActorMaterializer(ActorMaterializerSettings(actorSystem), "quckoo-http")
 
   override def send(implicit ec: ExecutionContext): Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
