@@ -12,7 +12,7 @@ import scalaz._
 /**
   * Created by alonsodomin on 09/09/2016.
   */
-object AjaxHttpTransport extends HttpTransport {
+object AjaxTransport extends HttpTransport {
 
   final val ResponseType = "arraybuffer"
 

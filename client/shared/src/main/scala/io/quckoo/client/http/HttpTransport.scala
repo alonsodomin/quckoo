@@ -8,5 +8,4 @@ import io.quckoo.client.core.{Protocol, Transport}
 abstract class HttpTransport extends Transport[Protocol.Http] {
   type Request = HttpRequest
   type Response = HttpResponse
-
 }
