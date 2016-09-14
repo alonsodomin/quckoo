@@ -1,5 +1,7 @@
 package io.quckoo.client
 
+import io.quckoo.auth.Passport
+
 import scalaz.\/
 
 /**
@@ -25,8 +27,13 @@ package object http {
   private[http] val TaskExecutionsURI = SchedulerBaseURI + "/executions"
   private[http] val SchedulerEventsURI = SchedulerBaseURI + "/events"
 
+  final val AuthorizationHeader = "Authorization"
   private[http] val JsonRequestHeaders = Map(
     "Content-Type" -> "application/json"
   )
+
+  implicit class HttpPassport(val passport: Passport) extends AnyVal {
+    def asHttpHeader: (String, String) = AuthorizationHeader -> s"Bearer ${passport.token}"
+  }
 
 }

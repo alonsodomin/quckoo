@@ -13,7 +13,7 @@ object Passport {
 
 }
 
-final class Passport(protected val token: String) {
+final class Passport(val token: String) {
   import Passport._
 
   private[this] val claims: Map[String, String] = {
