@@ -36,7 +36,7 @@ private[http] object AjaxTransport extends HttpTransport {
         HttpError(xhr.status, xhr.statusText)
       } else {
         val bytes = TypedArrayBuffer.wrap(xhr.response.asInstanceOf[ArrayBuffer])
-        HttpSuccess(new HttpEntity(bytes))
+        HttpSuccess(HttpEntity(bytes))
       }
     }
   }

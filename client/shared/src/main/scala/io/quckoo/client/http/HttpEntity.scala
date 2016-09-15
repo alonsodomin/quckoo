@@ -8,7 +8,7 @@ import upickle.default._
 /**
   * Created by alonsodomin on 15/09/2016.
   */
-final class HttpEntity(val buffer: ByteBuffer) extends AnyVal {
+final class HttpEntity private (val buffer: ByteBuffer) extends AnyVal {
 
   def as[A: Reader]: A = read[A](asString())
 
@@ -22,4 +22,7 @@ object HttpEntity {
     val bytes = write(a).getBytes(charset)
     new HttpEntity(ByteBuffer.wrap(bytes))
   }
+
+  def apply(buffer: ByteBuffer): HttpEntity =
+    new HttpEntity(buffer)
 }

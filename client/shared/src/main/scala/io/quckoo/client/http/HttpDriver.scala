@@ -1,6 +1,5 @@
 package io.quckoo.client.http
 
-import upickle.default._
 import io.quckoo.auth.{Credentials, Passport}
 import io.quckoo.serialization.Base64
 import io.quckoo.serialization.json._
@@ -9,9 +8,13 @@ import io.quckoo.fault.Fault
 import io.quckoo.id.JobId
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry.{JobEnabled, RegisterJob}
+
+import upickle.default.{Reader => JsonReader, Writer => JsonWriter}
+
 import slogging.LazyLogging
 
 import scala.util.{Try, Failure => Fail}
+
 import scalaz._
 import Scalaz._
 
@@ -21,6 +24,19 @@ import Scalaz._
 final class HttpDriver(protected val transport: HttpTransport)
   extends Driver[Protocol.Http] with LazyLogging {
   type TransportRepr = HttpTransport
+
+  private[this] abstract class HttpMarshalling[Cmd[_] <: Command[_], In: JsonWriter, Rslt: JsonReader]
+    extends Marshalling[Cmd, In, Rslt] {
+
+    override val from: Unmarshall[HttpResponse, Rslt] = {
+      case HttpSuccess(payload) =>
+        Try(payload.as[Rslt])
+
+      case err: HttpError =>
+        Fail(HttpErrorException(err))
+    }
+
+  }
 
   val ops = new Ops {
     implicit val authenticateOp: Marshalling[AnonCmd, Credentials, Passport] =
@@ -45,7 +61,7 @@ final class HttpDriver(protected val transport: HttpTransport)
     }
 
     override implicit val clusterStateOp: Marshalling[AuthCmd, Unit, QuckooState] =
-      new Marshalling[AuthCmd, Unit, QuckooState] {
+      new HttpMarshalling[AuthCmd, Unit, QuckooState] {
 
         override val to: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
           logger.debug("Retrieving current cluster state...")
@@ -53,43 +69,23 @@ final class HttpDriver(protected val transport: HttpTransport)
           Try(HttpRequest(HttpMethod.Get, ClusterStateURI, cmd.timeout, headers = hrds, None))
         }
 
-        override val from: Unmarshall[HttpResponse, QuckooState] = {
-          case HttpSuccess(payload) =>
-            Try(payload.as[QuckooState])
-
-          case err: HttpError =>
-            Fail(HttpErrorException(err))
-        }
     }
 
     override implicit val enableJobOp: Marshalling[AuthCmd, JobId, JobEnabled] =
-      new Marshalling[AuthCmd, JobId, JobEnabled] {
+      new HttpMarshalling[AuthCmd, JobId, JobEnabled] {
+
         override val to: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
           val hrds = Map(cmd.passport.asHttpHeader)
           Try(HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/enable", cmd.timeout, hrds, None))
         }
 
-        override val from: Unmarshall[HttpResponse, JobEnabled] = {
-          case HttpSuccess(payload) =>
-            Try(payload.as[JobEnabled])
-
-          case err: HttpError =>
-            Fail(HttpErrorException(err))
-        }
       }
 
     override implicit val registerJobOp: Marshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] =
-      new Marshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] {
+      new HttpMarshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] {
         override val to: Marshall[AuthCmd, RegisterJob, HttpRequest] = { cmd =>
           val hdrs = JsonRequestHeaders + cmd.passport.asHttpHeader
           Try(HttpRequest(HttpMethod.Put, JobsURI, cmd.timeout, hdrs, Some(HttpEntity(cmd.payload))))
-        }
-        override val from: Unmarshall[HttpResponse, ValidationNel[Fault, JobId]] = {
-          case HttpSuccess(payload) =>
-            Try(payload.as[ValidationNel[Fault, JobId]])
-
-          case err: HttpError =>
-            Fail(HttpErrorException(err))
         }
       }
   }
