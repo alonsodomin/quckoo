@@ -25,7 +25,7 @@ final class HttpDriver(protected val transport: HttpTransport)
   extends Driver[Protocol.Http] with LazyLogging {
   type TransportRepr = HttpTransport
 
-  private[this] abstract class HttpMarshalling[Cmd[_] <: Command[_], In: JsonWriter, Rslt: JsonReader]
+  private[this] abstract class JsonMarshalling[Cmd[_] <: Command[_], In: JsonWriter, Rslt: JsonReader]
     extends Marshalling[Cmd, In, Rslt] {
 
     override val from: Unmarshall[HttpResponse, Rslt] = {
@@ -61,7 +61,7 @@ final class HttpDriver(protected val transport: HttpTransport)
     }
 
     override implicit val clusterStateOp: Marshalling[AuthCmd, Unit, QuckooState] =
-      new HttpMarshalling[AuthCmd, Unit, QuckooState] {
+      new JsonMarshalling[AuthCmd, Unit, QuckooState] {
 
         override val to: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
           logger.debug("Retrieving current cluster state...")
@@ -72,7 +72,7 @@ final class HttpDriver(protected val transport: HttpTransport)
     }
 
     override implicit val enableJobOp: Marshalling[AuthCmd, JobId, JobEnabled] =
-      new HttpMarshalling[AuthCmd, JobId, JobEnabled] {
+      new JsonMarshalling[AuthCmd, JobId, JobEnabled] {
 
         override val to: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
           val hrds = Map(cmd.passport.asHttpHeader)
@@ -82,7 +82,7 @@ final class HttpDriver(protected val transport: HttpTransport)
       }
 
     override implicit val registerJobOp: Marshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] =
-      new HttpMarshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] {
+      new JsonMarshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] {
 
         override val to: Marshall[AuthCmd, RegisterJob, HttpRequest] = { cmd =>
           DataBuffer(cmd.payload) map { entity =>
