@@ -2,6 +2,7 @@ package io.quckoo.client.http
 
 import java.nio.ByteBuffer
 
+import io.quckoo.client.core.DataBuffer
 import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -25,7 +26,7 @@ private[http] object AjaxTransport extends HttpTransport {
     val ajaxCall = Ajax(
       method = req.method.entryName,
       url = req.url,
-      data = req.entity.map(_.buffer).orNull[ByteBuffer],
+      data = req.entity.map(DataBuffer.toByteBuffer).orNull[ByteBuffer],
       timeout, req.headers,
       withCredentials = false,
       responseType = ResponseType
@@ -36,7 +37,7 @@ private[http] object AjaxTransport extends HttpTransport {
         HttpError(xhr.status, xhr.statusText)
       } else {
         val bytes = TypedArrayBuffer.wrap(xhr.response.asInstanceOf[ArrayBuffer])
-        HttpSuccess(HttpEntity(bytes))
+        HttpSuccess(DataBuffer(bytes))
       }
     }
   }

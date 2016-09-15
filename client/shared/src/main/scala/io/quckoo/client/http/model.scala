@@ -3,6 +3,8 @@ package io.quckoo.client.http
 import enumeratum.EnumEntry._
 import enumeratum._
 
+import io.quckoo.client.core.DataBuffer
+
 import scala.concurrent.duration.Duration
 
 /**
@@ -24,11 +26,11 @@ final case class HttpRequest(
   url: String,
   timeout: Duration,
   headers: Map[String, String],
-  entity: Option[HttpEntity]
+  entity: Option[DataBuffer]
 )
 
 sealed trait HttpResponse
 final case class HttpError(statusCode: Int, statusLine: String) extends HttpResponse
-final case class HttpSuccess(entity: HttpEntity) extends HttpResponse
+final case class HttpSuccess(entity: DataBuffer) extends HttpResponse
 
 final case class HttpErrorException(error: HttpError) extends Exception(error.statusLine)

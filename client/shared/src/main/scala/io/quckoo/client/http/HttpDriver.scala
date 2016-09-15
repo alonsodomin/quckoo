@@ -85,7 +85,7 @@ final class HttpDriver(protected val transport: HttpTransport)
       new HttpMarshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] {
 
         override val to: Marshall[AuthCmd, RegisterJob, HttpRequest] = { cmd =>
-          HttpEntity(cmd.payload) map { entity =>
+          DataBuffer(cmd.payload) map { entity =>
             val hdrs = JsonRequestHeaders + cmd.passport.asHttpHeader
             HttpRequest(HttpMethod.Put, JobsURI, cmd.timeout, hdrs, Some(entity))
           }
