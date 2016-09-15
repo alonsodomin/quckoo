@@ -2,7 +2,7 @@ package io.quckoo.client.http
 
 import java.nio.ByteBuffer
 
-import io.quckoo.client.core.DataBuffer
+import io.quckoo.serialization.DataBuffer
 import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.{ExecutionContext, Future}

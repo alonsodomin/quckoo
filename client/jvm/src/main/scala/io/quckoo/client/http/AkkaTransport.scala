@@ -5,8 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpMethod => AkkaHttpMethod, HttpRequest => AkkaHttpRequest, HttpResponse => AkkaHttpResponse}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
-
-import io.quckoo.client.core.DataBuffer
+import io.quckoo.serialization.DataBuffer
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalaz.Kleisli

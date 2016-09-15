@@ -16,7 +16,32 @@
 
 package io.quckoo.serialization
 
+import io.quckoo.util.TryE
+
+import upickle.default.{Reader => UReader, Writer => UWriter, _}
+
+import scalaz.ReaderT
+
 /**
   * Created by alonsodomin on 11/08/2016.
   */
-package object json extends ScalazJson with JavaTime with Cron4s with CustomModel
+package object json extends ScalazJson with JavaTime with Cron4s with CustomModel {
+  type JsonReaderT[A] = ReaderT[TryE, String, A]
+  type JsonWriterT[A] = ReaderT[TryE, A, String]
+
+  object JsonReaderT {
+    def apply[A: UReader]: JsonReaderT[A] = {
+      def doRead(str: String): TryE[A] =
+        TryE[A](read[A](str))
+      ReaderT[TryE, String, A](doRead)
+    }
+  }
+
+  object JsonWriterT {
+    def apply[A: UWriter]: JsonWriterT[A] = {
+      def doWrite(a: A): TryE[String] =
+        TryE[String](write[A](a))
+      ReaderT[TryE, A, String](doWrite)
+    }
+  }
+}
