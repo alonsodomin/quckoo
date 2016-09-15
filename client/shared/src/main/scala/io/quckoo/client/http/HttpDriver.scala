@@ -30,7 +30,7 @@ final class HttpDriver(protected val transport: HttpTransport)
 
     override val from: Unmarshall[HttpResponse, Rslt] = {
       case HttpSuccess(payload) =>
-        Try(payload.as[Rslt])
+        payload.as[Rslt]
 
       case err: HttpError =>
         Fail(HttpErrorException(err))
@@ -53,7 +53,7 @@ final class HttpDriver(protected val transport: HttpTransport)
 
         override val from: Unmarshall[HttpResponse, Passport] = {
           case HttpSuccess(payload) =>
-            Try(new Passport(payload.asString()))
+            payload.asString().map(new Passport(_))
 
           case err: HttpError =>
             Fail(HttpErrorException(err))
@@ -83,10 +83,14 @@ final class HttpDriver(protected val transport: HttpTransport)
 
     override implicit val registerJobOp: Marshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] =
       new HttpMarshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] {
+
         override val to: Marshall[AuthCmd, RegisterJob, HttpRequest] = { cmd =>
-          val hdrs = JsonRequestHeaders + cmd.passport.asHttpHeader
-          Try(HttpRequest(HttpMethod.Put, JobsURI, cmd.timeout, hdrs, Some(HttpEntity(cmd.payload))))
+          HttpEntity(cmd.payload) map { entity =>
+            val hdrs = JsonRequestHeaders + cmd.passport.asHttpHeader
+            HttpRequest(HttpMethod.Put, JobsURI, cmd.timeout, hdrs, Some(entity))
+          }
         }
+
       }
   }
 
