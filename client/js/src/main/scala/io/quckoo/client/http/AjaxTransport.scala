@@ -6,7 +6,6 @@ import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
-
 import scalaz._
 
 /**
@@ -26,7 +25,7 @@ private[http] object AjaxTransport extends HttpTransport {
     val ajaxCall = Ajax(
       method = req.method.entryName,
       url = req.url,
-      data = req.payload.orNull[ByteBuffer],
+      data = req.entity.map(_.buffer).orNull[ByteBuffer],
       timeout, req.headers,
       withCredentials = false,
       responseType = ResponseType
@@ -36,9 +35,8 @@ private[http] object AjaxTransport extends HttpTransport {
       if (xhr.status >= 400) {
         HttpError(xhr.status, xhr.statusText)
       } else {
-        HttpSuccess(
-          TypedArrayBuffer.wrap(xhr.response.asInstanceOf[ArrayBuffer])
-        )
+        val bytes = TypedArrayBuffer.wrap(xhr.response.asInstanceOf[ArrayBuffer])
+        HttpSuccess(new HttpEntity(bytes))
       }
     }
   }

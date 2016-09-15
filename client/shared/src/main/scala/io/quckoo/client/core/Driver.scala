@@ -1,12 +1,12 @@
 package io.quckoo.client.core
 
 import io.quckoo.auth.{Credentials, Passport}
+import io.quckoo.fault.Fault
 import io.quckoo.id.JobId
 import io.quckoo.net.QuckooState
-import io.quckoo.protocol.registry.JobEnabled
+import io.quckoo.protocol.registry.{JobEnabled, RegisterJob}
 
 import scala.concurrent.{ExecutionContext, Future}
-
 import scalaz._
 import Scalaz._
 
@@ -26,6 +26,7 @@ trait Driver[P <: Protocol] {
   trait Ops {
     implicit val authenticateOp: Marshalling[AnonCmd, Credentials, Passport]
     implicit val clusterStateOp: Marshalling[AuthCmd, Unit, QuckooState]
+    implicit val registerJobOp: Marshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]]
     implicit val enableJobOp: Marshalling[AuthCmd, JobId, JobEnabled]
   }
 

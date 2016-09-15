@@ -5,14 +5,13 @@ import io.quckoo.auth.{Credentials, Passport}
 import io.quckoo.serialization.Base64
 import io.quckoo.serialization.json._
 import io.quckoo.client.core._
+import io.quckoo.fault.Fault
 import io.quckoo.id.JobId
 import io.quckoo.net.QuckooState
-import io.quckoo.protocol.registry.JobEnabled
+import io.quckoo.protocol.registry.{JobEnabled, RegisterJob}
 import slogging.LazyLogging
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Try, Failure => Fail}
-
 import scalaz._
 import Scalaz._
 
@@ -38,7 +37,7 @@ final class HttpDriver(protected val transport: HttpTransport)
 
         override val from: Unmarshall[HttpResponse, Passport] = {
           case HttpSuccess(payload) =>
-            Try(new Passport(new String(payload.array(), "UTF-8")))
+            Try(new Passport(payload.asString()))
 
           case err: HttpError =>
             Fail(HttpErrorException(err))
@@ -56,7 +55,7 @@ final class HttpDriver(protected val transport: HttpTransport)
 
         override val from: Unmarshall[HttpResponse, QuckooState] = {
           case HttpSuccess(payload) =>
-            Try(read[QuckooState](new String(payload.array(), "UTF-8")))
+            Try(payload.as[QuckooState])
 
           case err: HttpError =>
             Fail(HttpErrorException(err))
@@ -72,7 +71,22 @@ final class HttpDriver(protected val transport: HttpTransport)
 
         override val from: Unmarshall[HttpResponse, JobEnabled] = {
           case HttpSuccess(payload) =>
-            Try(read[JobEnabled](new String(payload.array(), "UTF-8")))
+            Try(payload.as[JobEnabled])
+
+          case err: HttpError =>
+            Fail(HttpErrorException(err))
+        }
+      }
+
+    override implicit val registerJobOp: Marshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] =
+      new Marshalling[AuthCmd, RegisterJob, ValidationNel[Fault, JobId]] {
+        override val to: Marshall[AuthCmd, RegisterJob, HttpRequest] = { cmd =>
+          val hdrs = JsonRequestHeaders + cmd.passport.asHttpHeader
+          Try(HttpRequest(HttpMethod.Put, JobsURI, cmd.timeout, hdrs, Some(HttpEntity(cmd.payload))))
+        }
+        override val from: Unmarshall[HttpResponse, ValidationNel[Fault, JobId]] = {
+          case HttpSuccess(payload) =>
+            Try(payload.as[ValidationNel[Fault, JobId]])
 
           case err: HttpError =>
             Fail(HttpErrorException(err))

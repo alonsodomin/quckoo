@@ -1,7 +1,5 @@
 package io.quckoo.client.http
 
-import java.nio.ByteBuffer
-
 import enumeratum.EnumEntry._
 import enumeratum._
 
@@ -26,11 +24,11 @@ final case class HttpRequest(
   url: String,
   timeout: Duration,
   headers: Map[String, String],
-  payload: Option[ByteBuffer]
+  entity: Option[HttpEntity]
 )
 
 sealed trait HttpResponse
 final case class HttpError(statusCode: Int, statusLine: String) extends HttpResponse
-final case class HttpSuccess(payload: ByteBuffer) extends HttpResponse
+final case class HttpSuccess(entity: HttpEntity) extends HttpResponse
 
 final case class HttpErrorException(error: HttpError) extends Exception(error.statusLine)
