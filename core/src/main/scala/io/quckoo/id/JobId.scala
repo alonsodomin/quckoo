@@ -16,7 +16,10 @@
 
 package io.quckoo.id
 
+import java.nio.charset.StandardCharsets
 import java.util.UUID
+
+import upickle.default.{Reader => JsonReader, Writer => JsonWriter, _}
 
 import io.quckoo.JobSpec
 
@@ -27,16 +30,24 @@ object JobId {
 
   def apply(jobSpec: JobSpec): JobId = {
     val plainId = s"${jobSpec.artifactId.toString}!${jobSpec.jobClass}"
-    val id = UUID.nameUUIDFromBytes(plainId.getBytes("UTF-8"))
-    new JobId(id.toString)
+    JobId(UUID.nameUUIDFromBytes(plainId.getBytes(StandardCharsets.UTF_8)))
   }
 
-  @inline def apply(id: UUID): JobId = new JobId(id.toString)
+  @inline def apply(id: UUID) = new JobId(id)
+
+  // Upickle encoders
+
+  implicit val jobIdW: JsonWriter[JobId] = JsonWriter[JobId] {
+    jobId => writeJs[UUID](jobId.id)
+  }
+  implicit val jobIdR: JsonReader[JobId] = JsonReader[JobId] {
+    implicitly[JsonReader[UUID]].read andThen JobId.apply
+  }
 
 }
 
-final case class JobId(private val id: String) {
+final class JobId(private val id: UUID) extends AnyVal {
 
-  override def toString = id
+  override def toString = id.toString
 
 }

@@ -98,8 +98,8 @@ trait ScalazJson {
 
   implicit def validationW[E: JsonWriter, A: JsonWriter]: JsonWriter[Validation[E, A]] = {
     JsonWriter[Validation[E, A]] {
-      case Failure(e) => Js.Arr(Js.Num(30), writeJs(e))
-      case Success(a) => Js.Arr(Js.Num(31), writeJs(a))
+      case Failure(e) => Js.Arr(Js.Num(30), writeJs[E](e))
+      case Success(a) => Js.Arr(Js.Num(31), writeJs[A](a))
     }
   }
 

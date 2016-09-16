@@ -25,7 +25,7 @@ import scalaz.ReaderT
 /**
   * Created by alonsodomin on 11/08/2016.
   */
-package object json extends ScalazJson with JavaTime with Cron4s with CustomModel {
+package object json extends ScalazJson with JavaTime with Cron4s {
   type JsonReaderT[A] = ReaderT[TryE, String, A]
   type JsonWriterT[A] = ReaderT[TryE, A, String]
 
