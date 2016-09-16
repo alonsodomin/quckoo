@@ -18,12 +18,19 @@ import scalaz._
 final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal {
   import Base64._
 
+  def isEmpty: Boolean = buffer.remaining() == 0
+
   def +(that: DataBuffer): DataBuffer = {
     val newBuffer = ByteBuffer.allocateDirect(
       buffer.remaining() + that.buffer.remaining()
     )
     newBuffer.put(buffer)
     newBuffer.put(that.buffer)
+
+    buffer.rewind()
+    that.buffer.rewind()
+    newBuffer.rewind()
+
     new DataBuffer(newBuffer)
   }
 
@@ -41,6 +48,7 @@ final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal
 }
 
 object DataBuffer {
+  import Base64._
 
   final val Empty = new DataBuffer(ByteBuffer.allocateDirect(0))
 
@@ -54,7 +62,10 @@ object DataBuffer {
     apply(ByteBuffer.wrap(bytes))
 
   def fromString(str: String, charset: Charset = StandardCharsets.UTF_8): DataBuffer =
-    new DataBuffer(ByteBuffer.wrap(str.getBytes(charset)))
+    apply(str.getBytes(charset))
+
+  def fromBase64(str: String): DataBuffer =
+    apply(str.toByteArray)
 
   implicit val dataBufferInstance = new Monoid[DataBuffer] {
     override def append(f1: DataBuffer, f2: => DataBuffer): DataBuffer = f1 + f2
