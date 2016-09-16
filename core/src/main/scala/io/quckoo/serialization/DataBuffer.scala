@@ -42,6 +42,8 @@ final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal
 
 object DataBuffer {
 
+  final val Empty = new DataBuffer(ByteBuffer.allocateDirect(0))
+
   def apply[A: UWriter](a: A, charset: Charset = StandardCharsets.UTF_8): TryE[DataBuffer] =
     JsonWriterT[A].map(str => fromString(str, charset)).run(a)
 
@@ -54,8 +56,9 @@ object DataBuffer {
   def fromString(str: String, charset: Charset = StandardCharsets.UTF_8): DataBuffer =
     new DataBuffer(ByteBuffer.wrap(str.getBytes(charset)))
 
-  implicit val dataBufferInstance = new Semigroup[DataBuffer] {
+  implicit val dataBufferInstance = new Monoid[DataBuffer] {
     override def append(f1: DataBuffer, f2: => DataBuffer): DataBuffer = f1 + f2
+    override def zero: DataBuffer = Empty
   }
 
   implicit def toByteBuffer(dataBuffer: DataBuffer): ByteBuffer =

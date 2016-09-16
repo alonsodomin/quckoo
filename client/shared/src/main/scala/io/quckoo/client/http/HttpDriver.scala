@@ -1,6 +1,7 @@
 package io.quckoo.client.http
 
 import upickle.default.{Reader => UReader, Writer => UWriter}
+
 import io.quckoo.JobSpec
 import io.quckoo.auth.{Credentials, InvalidCredentialsException, Passport}
 import io.quckoo.serialization.DataBuffer
@@ -10,6 +11,7 @@ import io.quckoo.fault.Fault
 import io.quckoo.id.JobId
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled, RegisterJob}
+
 import slogging.LazyLogging
 
 import scalaz._
@@ -56,6 +58,18 @@ final class HttpDriver(protected val transport: HttpTransport)
 
           case err: HttpError if err.statusCode != 401 =>
             HttpErrorException(err).left[Passport]
+        }
+      }
+
+    override implicit val signOutOp: Op[AuthCmd, Unit, Unit] =
+      new Op[AuthCmd, Unit, Unit] {
+        override val marshall: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
+          HttpRequest(HttpMethod.Post, LogoutURI, cmd.timeout, Map(cmd.passport.asHttpHeader), None).right[Throwable]
+        }
+
+        override val unmarshall: Unmarshall[HttpResponse, Unit] = {
+          case HttpSuccess(_) => ().right[Throwable]
+          case err: HttpError => HttpErrorException(err).left[Unit]
         }
       }
   }

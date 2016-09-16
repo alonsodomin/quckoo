@@ -25,6 +25,9 @@ abstract class QuckooClientV2[P <: Protocol](driver: Driver[P]) {
     driver.invoke[AnonCmd, Credentials, Passport].run(cmd)
   }
 
+  def signOut(implicit ec: ExecutionContext, timeout: Duration, passport: Passport): Future[Unit] =
+    driver.invoke[AuthCmd, Unit, Unit].run(AuthCmd((), timeout, passport))
+
   def clusterState(implicit ec: ExecutionContext, timeout: Duration, passport: Passport): Future[QuckooState] = {
     val cmd = AuthCmd((), timeout, passport)
     driver.invoke[AuthCmd, Unit, QuckooState].run(cmd)

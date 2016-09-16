@@ -29,6 +29,7 @@ trait Driver[P <: Protocol] {
 
   trait SecurityOps {
     implicit val authenticateOp: Op[AnonCmd, Credentials, Passport]
+    implicit val signOutOp: Op[AuthCmd, Unit, Unit]
   }
 
   trait RegistryOps {

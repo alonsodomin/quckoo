@@ -6,7 +6,7 @@ import io.quckoo.client.core.Protocol
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.util._
 
-import org.scalatest.{AsyncFlatSpec, Matchers}
+import org.scalatest.{AsyncFlatSpec, FutureOutcome, Matchers}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,9 +17,13 @@ import Scalaz._
 /**
   * Created by alonsodomin on 15/09/2016.
   */
-class HttpDriverSpec extends AsyncFlatSpec with Matchers {
+object HttpDriverSpec {
+  implicit final val TestPassport = new Passport(Map.empty, Map.empty, DataBuffer.fromString("foo"))
+  implicit final val TestDuration = Duration.Inf
+}
 
-  implicit val duration = Duration.Inf
+class HttpDriverSpec extends AsyncFlatSpec with Matchers {
+  import HttpDriverSpec._
 
   class TestHttpTransport(f: HttpRequest => TryE[HttpResponse]) extends HttpTransport {
     def send(implicit ec: ExecutionContext): Kleisli[Future, HttpRequest, HttpResponse] =
@@ -45,6 +49,27 @@ class HttpDriverSpec extends AsyncFlatSpec with Matchers {
     val client = new TestClient(transport)
 
     recoverToSucceededIf[InvalidCredentialsException.type](client.authenticate("foo", "bar"))
+  }
+
+  it should "result in an HTTP error if result code is not 401" in {
+    val transport = new TestHttpTransport({ _ => HttpError(500, "TEST AUTH ERROR").right[Throwable] })
+    val client = new TestClient(transport)
+
+    recoverToSucceededIf[HttpErrorException](client.authenticate("foo", "bar"))
+  }
+
+  "sing out" should "not return anything if it succeeds" in {
+    val transport = new TestHttpTransport(_ => HttpSuccess(DataBuffer.Empty).right[Throwable])
+    val client = new TestClient(transport)
+
+    client.signOut.map(_ => succeed)
+  }
+
+  it should "result in an HTTP error if result code is not 200" in {
+    val transport = new TestHttpTransport({ _ => HttpError(500, "TEST AUTH ERROR").right[Throwable] })
+    val client = new TestClient(transport)
+
+    recoverToSucceededIf[HttpErrorException](client.signOut)
   }
 
 }
