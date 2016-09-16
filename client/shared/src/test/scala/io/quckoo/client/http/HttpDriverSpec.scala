@@ -90,6 +90,7 @@ class HttpDriverSpec extends AsyncFlatSpec with Matchers with EitherValues {
     }
   }
 
+  assert()
   it should "return the missed dependencies when fails to resolve" in {
     val expectedFault = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
     val transport = new TestHttpTransport(_ => DataBuffer(expectedFault.failureNel[JobId]).map(HttpSuccess))
