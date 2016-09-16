@@ -4,17 +4,16 @@ import io.quckoo.JobSpec
 import io.quckoo.auth.{InvalidCredentialsException, Passport}
 import io.quckoo.client.QuckooClientV2
 import io.quckoo.client.core.Protocol
-import io.quckoo.fault.Fault
+import io.quckoo.fault.{DownloadFailed, Fault, MissingDependencies}
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 import io.quckoo.util._
 
-import org.scalatest.{AsyncFlatSpec, EitherValues, FutureOutcome, Matchers}
+import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
-
 import scalaz._
 import Scalaz._
 
@@ -25,8 +24,9 @@ object HttpDriverSpec {
   implicit final val TestPassport = new Passport(Map.empty, Map.empty, DataBuffer.fromString("foo"))
   implicit final val TestDuration = Duration.Inf
 
+  final val TestArtifactId = ArtifactId("com.example", "bar", "latest")
   final val TestJobSpec = JobSpec("foo",
-    artifactId = ArtifactId("com.example", "bar", "latest"),
+    artifactId = TestArtifactId,
     jobClass = "com.example.Job"
   )
 }
@@ -87,6 +87,16 @@ class HttpDriverSpec extends AsyncFlatSpec with Matchers with EitherValues {
 
     client.registerJob(TestJobSpec).map { validatedJobId =>
       validatedJobId.toEither.right.value shouldBe JobId(TestJobSpec)
+    }
+  }
+
+  it should "return the missed dependencies when fails to resolve" in {
+    val expectedFault = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
+    val transport = new TestHttpTransport(_ => DataBuffer(expectedFault.failureNel[JobId]).map(HttpSuccess))
+    val client = new TestClient(transport)
+
+    client.registerJob(TestJobSpec).map { validatedJobId =>
+      validatedJobId.toEither.left.value shouldBe NonEmptyList(expectedFault)
     }
   }
 
