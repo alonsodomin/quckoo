@@ -1,5 +1,7 @@
 package io.quckoo.client.http
 
+import upickle.default.{Reader => UReader}
+
 import io.quckoo.auth.Passport
 import io.quckoo.serialization.DataBuffer
 
@@ -46,6 +48,26 @@ trait HttpRequestMatchers extends Matchers {
         req.headers.get(AuthorizationHeader).contains(s"Bearer ${passport.token}"),
         s"no '$AuthorizationHeader' header with passport '${passport.token}' was found in the request",
         s"'$AuthorizationHeader' header has the expected value"
+      )
+    }
+  }
+
+  val hasEmptyBody: Matcher[HttpRequest] = new Matcher[HttpRequest] {
+    override def apply(req: HttpRequest): MatchResult = {
+      MatchResult(
+        req.entity.isEmpty,
+        s"has no empty body",
+        s"has empty body"
+      )
+    }
+  }
+
+  def hasBody[A: UReader](body: A): Matcher[HttpRequest] = new Matcher[HttpRequest] {
+    override def apply(req: HttpRequest): MatchResult = {
+      MatchResult(
+        req.entity.as[A].toOption.contains(body),
+        s"current body '${req.entity.asString()}' is not equals to '$body'",
+        s"contains '$body' in the request"
       )
     }
   }

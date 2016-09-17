@@ -7,6 +7,7 @@ import io.quckoo.auth.{InvalidCredentialsException, Passport}
 import io.quckoo.client.core.StubClient
 import io.quckoo.fault.{DownloadFailed, Fault}
 import io.quckoo.id.{ArtifactId, JobId}
+import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
@@ -58,6 +59,8 @@ object HttpProtocolSpec {
     val login = s"$BaseURI/auth/login"
     val logout = s"$BaseURI/auth/logout"
 
+    val cluster = s"$BaseURI/cluster"
+
     val jobs = s"$RegistryURI/jobs"
     val fetchJob = s"$jobs/(.+)"
     val enableJob = s"$fetchJob/enable"
@@ -76,6 +79,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   def isLogin(username: String, password: String) =
     hasMethod(HttpMethod.Post) and
       hasUrl(uris.login) and
+      hasEmptyBody and
       hasAuthHeader(username, password) and
       not(matcher = hasPassport(TestPassport))
 
@@ -84,7 +88,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
     inProtocol(HttpProtocol) ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpSuccess(DataBuffer.fromString(expectedPassport.token))
-    } withClient { client =>
+    } usingClient { client =>
       client.authenticate("foo", "bar").map { passport =>
         passport shouldBe expectedPassport
       }
@@ -94,7 +98,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   it should "result in invalid credentials if result code is 401" in {
     inProtocol(HttpProtocol) ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpError(401, "TEST AUTH ERROR")
-    } withClient { client =>
+    } usingClient { client =>
       recoverToSucceededIf[InvalidCredentialsException.type](client.authenticate("foo", "bar"))
     }
   }
@@ -102,19 +106,22 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   it should "result in an HTTP error if result code is not 401" in {
     inProtocol(HttpProtocol) ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpError(500, "TEST AUTH ERROR")
-    } withClient { client =>
+    } usingClient { client =>
       recoverToSucceededIf[HttpErrorException](client.authenticate("foo", "bar"))
     }
   }
 
   // -- Logout requests
 
-  val isLogout = hasMethod(HttpMethod.Post) and hasUrl(uris.logout) and hasPassport(TestPassport)
+  val isLogout = hasMethod(HttpMethod.Post) and
+    hasUrl(uris.logout) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
 
   "sing out" should "not return anything if it succeeds" in {
     inProtocol(HttpProtocol) ensuringRequest isLogout replyWith { _ =>
       HttpSuccess(DataBuffer.Empty)
-    } withClient { client =>
+    } usingClient { client =>
       client.signOut.map(_ => succeed)
     }
   }
@@ -122,19 +129,40 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   it should "result in an HTTP error if result code is not 200" in {
     inProtocol(HttpProtocol) ensuringRequest isLogout replyWith {
       _ => HttpError(500, "TEST AUTH ERROR")
-    } withClient { client =>
+    } usingClient { client =>
       recoverToSucceededIf[HttpErrorException](client.signOut)
+    }
+  }
+
+  // -- Get Cluster State
+
+  val isGetClusterState = hasMethod(HttpMethod.Get) and
+    hasUrl(uris.cluster) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
+
+  "clusterState" should "return the cluster state details" in {
+    val expectedState = QuckooState()
+    inProtocol(HttpProtocol) ensuringRequest isGetClusterState replyWith { req =>
+      HttpSuccess(DataBuffer(expectedState))
+    } usingClient { client =>
+      client.clusterState.map { returnedState =>
+        returnedState shouldBe expectedState
+      }
     }
   }
 
   // -- Register Job
 
-  val isRegisterJob = hasMethod(HttpMethod.Put) and hasUrl(uris.jobs) and hasPassport(TestPassport)
+  val isRegisterJob = hasMethod(HttpMethod.Put) and
+    hasUrl(uris.jobs) and
+    hasPassport(TestPassport) and
+    hasBody(RegisterJob(TestJobSpec))
 
   "registerJob" should "return a validated JobId when it succeeds" in {
     inProtocol(HttpProtocol) ensuringRequest isRegisterJob replyWith { _ =>
       HttpSuccess(DataBuffer(TestJobId.successNel[Fault]))
-    } withClient { client =>
+    } usingClient { client =>
       client.registerJob(TestJobSpec).map { validatedJobId =>
         validatedJobId.toEither.right.value shouldBe TestJobId
       }
@@ -145,7 +173,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val expectedFault = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
     inProtocol(HttpProtocol) ensuringRequest isRegisterJob replyWith {
       _ => HttpSuccess(DataBuffer(expectedFault.failureNel[JobId]))
-    } withClient { client =>
+    } usingClient { client =>
       client.registerJob(TestJobSpec).map { validatedJobId =>
         validatedJobId.toEither.left.value shouldBe NonEmptyList(expectedFault)
       }
@@ -154,12 +182,15 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Fetch Jobs
 
-  val isFetchJobs = hasMethod(HttpMethod.Get) and hasUrl(uris.jobs) and hasPassport(TestPassport)
+  val isFetchJobs = hasMethod(HttpMethod.Get) and
+    hasUrl(uris.jobs) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
 
   "fetchJobs" should "return a map of the job specs" in {
     inProtocol(HttpProtocol) ensuringRequest isFetchJobs replyWith { _ =>
       HttpSuccess(DataBuffer(Map(TestJobId -> TestJobSpec)))
-    } withClient { client =>
+    } usingClient { client =>
       client.fetchJobs.map { jobMap =>
         jobMap should contain key TestJobId
         jobMap should contain value TestJobSpec
@@ -169,7 +200,10 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Fetch Job
 
-  val isFetchJob = hasMethod(HttpMethod.Get) and hasUrl(uris.fetchJob) and hasPassport(TestPassport)
+  val isFetchJob = hasMethod(HttpMethod.Get) and
+    hasUrl(uris.fetchJob) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
 
   "fetchJob" should "return the job spec for a job ID" in {
     val urlPattern = uris.fetchJob.r
@@ -180,7 +214,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       } else {
         HttpError(500, s"Invalid JobId: $id")
       }
-    } withClient { client =>
+    } usingClient { client =>
       client.fetchJob(TestJobId).map { jobSpec =>
         jobSpec shouldBe defined
         inside(jobSpec) { case Some(spec) =>
@@ -196,7 +230,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       val urlPattern(id) = req.url
       if (JobId(id) == TestJobId) HttpError(404, "TEST 404")
       else HttpError(500, s"Invalid URL: ${req.url}")
-    } withClient { client =>
+    } usingClient { client =>
       client.fetchJob(TestJobId).map { jobSpec =>
         jobSpec should not be defined
       }
@@ -205,7 +239,10 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Enable Job
 
-  val isEnableJob = hasMethod(HttpMethod.Post) and hasUrl(uris.enableJob) and hasPassport(TestPassport)
+  val isEnableJob = hasMethod(HttpMethod.Post) and
+    hasUrl(uris.enableJob) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
 
   "enableJob" should "return the acknowledgement that the job is been disabled" in {
     val urlPattern = uris.enableJob.r
@@ -214,7 +251,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol(HttpProtocol) ensuringRequest isEnableJob replyWith { req =>
       val urlPattern(id) = req.url
       HttpSuccess(DataBuffer(expectedResult(JobId(id))))
-    } withClient { client =>
+    } usingClient { client =>
       client.enableJob(TestJobId).map { ack =>
         ack shouldBe expectedResult(TestJobId)
       }
@@ -227,7 +264,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol(HttpProtocol) ensuringRequest isEnableJob replyWith { req =>
       val urlPattern(id) = req.url
       HttpError(404, entity = DataBuffer(notFound[JobEnabled](JobId(id))))
-    } withClient { client =>
+    } usingClient { client =>
       client.enableJob(TestJobId).map { res =>
         res shouldBe notFound[JobEnabled](TestJobId)
       }
@@ -236,7 +273,10 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Disable Job
 
-  val isDisableJob = hasMethod(HttpMethod.Post) and hasUrl(uris.disableJob) and hasPassport(TestPassport)
+  val isDisableJob = hasMethod(HttpMethod.Post) and
+    hasUrl(uris.disableJob) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
 
   "disableJob" should "return the acknowledgement that the job is been disabled" in {
     val urlPattern = uris.disableJob.r
@@ -245,7 +285,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol(HttpProtocol) ensuringRequest isDisableJob replyWith { req =>
       val urlPattern(id) = req.url
       HttpSuccess(DataBuffer(expectedResult(JobId(id))))
-    } withClient { client =>
+    } usingClient { client =>
       client.disableJob(TestJobId).map { ack =>
         ack shouldBe expectedResult(TestJobId)
       }
@@ -258,7 +298,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol(HttpProtocol) ensuringRequest isDisableJob replyWith { req =>
       val urlPattern(id) = req.url
       HttpError(404, entity = DataBuffer(notFound[JobDisabled](JobId(id))))
-    } withClient { client =>
+    } usingClient { client =>
       client.disableJob(TestJobId).map { res =>
         res shouldBe notFound[JobDisabled](TestJobId)
       }

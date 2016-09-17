@@ -13,11 +13,11 @@ import scala.concurrent.Future
   */
 trait StubClient { this: Assertions with Matchers =>
 
-  class ClientRunner[P <: Protocol](client: QuckooClientV2[P]) {
-    def withClient(exec: QuckooClientV2[P] => Future[Assertion]) = exec(client)
+  final class ClientRunner[P <: Protocol](client: QuckooClientV2[P]) {
+    def usingClient(exec: QuckooClientV2[P] => Future[Assertion]) = exec(client)
   }
 
-  class RequestClause[P <: Protocol, Req, Res](transport: TestTransport[P], matcher: Matcher[Req]) {
+  final class RequestClause[P <: Protocol, Req, Res](transport: TestTransport[P], matcher: Matcher[Req]) {
     def replyWith(process: Req => LawfulTry[Res]): ClientRunner[P] = {
       val handleRequest: Req => LawfulTry[Res] = { req =>
         OutcomeOf.outcomeOf(req should matcher) match {
@@ -34,7 +34,7 @@ trait StubClient { this: Assertions with Matchers =>
     }
   }
 
-  class InProtocolClause[P <: Protocol](protocol: P) {
+  final class InProtocolClause[P <: Protocol](protocol: P) {
     val transport = new TestTransport[P](protocol)
 
     def ensuringRequest(
@@ -43,6 +43,6 @@ trait StubClient { this: Assertions with Matchers =>
       new RequestClause[P, transport.protocol.Request, transport.protocol.Response](transport, matcher)
   }
 
-  def inProtocol[P <: Protocol](protocol: P) = new InProtocolClause(protocol)
+  final def inProtocol[P <: Protocol](protocol: P) = new InProtocolClause(protocol)
 
 }

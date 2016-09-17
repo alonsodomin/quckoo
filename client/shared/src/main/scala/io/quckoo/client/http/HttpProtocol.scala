@@ -19,7 +19,7 @@ import Scalaz._
 /**
   * Created by alonsodomin on 17/09/2016.
   */
-trait HttpProtocol extends Protocol with LazyLogging {
+sealed trait HttpProtocol extends Protocol with LazyLogging {
   type Request = HttpRequest
   type Response = HttpResponse
 
