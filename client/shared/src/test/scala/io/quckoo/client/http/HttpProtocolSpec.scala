@@ -135,7 +135,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
       if (JobId(id) == TestJobId) {
         HttpSuccess(DataBuffer(TestJobSpec.some))
       } else {
-        HttpError(500)
+        HttpError(500, s"Invalid URL: ${req.url}")
       }
     }
 
@@ -152,7 +152,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
     val client = onRequest { req =>
       val urlPattern(id) = req.url
       if (JobId(id) == TestJobId) HttpError(404, "TEST 404")
-      else HttpError(500)
+      else HttpError(500, s"Invalid URL: ${req.url}")
     }
 
     client.fetchJob(TestJobId).map { jobSpec =>
