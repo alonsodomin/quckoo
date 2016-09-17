@@ -57,6 +57,14 @@ abstract class QuckooClientV2[P <: Protocol](driver: Driver[P]) {
     driver.invoke[FetchJobOp].run(cmd)
   }
 
+  def fetchJobs(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Map[JobId, JobSpec]] = {
+    val cmd = AuthCmd((), timeout, passport)
+    driver.invoke[FetchJobsOp].run(cmd)
+  }
+
   def enableJob(jobId: JobId)(
     implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport

@@ -77,8 +77,8 @@ final class HttpProtocol extends Protocol with LazyLogging {
     override implicit val fetchJobOp: FetchJobOp = new JsonUnmarshall[FetchJobOp] with FetchJobOp {
 
       override val marshall: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
-        val hrds = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}", cmd.timeout, hrds).right[Throwable]
+        val hdrs = Map(cmd.passport.asHttpHeader)
+        HttpRequest(HttpMethod.Get, s"$JobsURI/${cmd.payload}", cmd.timeout, hdrs).right[Throwable]
       }
 
       override val unmarshall: Unmarshall[HttpResponse, Option[JobSpec]] = { res =>
@@ -88,17 +88,24 @@ final class HttpProtocol extends Protocol with LazyLogging {
 
     }
 
+    override implicit val fetchJobsOp: FetchJobsOp = new JsonUnmarshall[FetchJobsOp] with FetchJobsOp {
+      override val marshall: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
+        val hdrs = Map(cmd.passport.asHttpHeader)
+        HttpRequest(HttpMethod.Get, JobsURI, cmd.timeout, hdrs).right[Throwable]
+      }
+    } 
+
     override implicit val enableJobOp: EnableJobOp = new JsonUnmarshall[EnableJobOp] with EnableJobOp {
       override val marshall: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
-        val hrds = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/enable", cmd.timeout, hrds).right[Throwable]
+        val hdrs = Map(cmd.passport.asHttpHeader)
+        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/enable", cmd.timeout, hdrs).right[Throwable]
       }
     }
 
     override implicit val disableJobOp: DisableJobOp = new JsonUnmarshall[DisableJobOp] with DisableJobOp {
       override val marshall: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
-        val hrds = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/disable", cmd.timeout, hrds).right[Throwable]
+        val hdrs = Map(cmd.passport.asHttpHeader)
+        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/disable", cmd.timeout, hdrs).right[Throwable]
       }
     }
   }
@@ -109,8 +116,8 @@ final class HttpProtocol extends Protocol with LazyLogging {
     override implicit val clusterStateOp: ClusterStateOp = new JsonUnmarshall[ClusterStateOp] with ClusterStateOp {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
         logger.debug("Retrieving current cluster state...")
-        val hrds = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Get, ClusterStateURI, cmd.timeout, headers = hrds).right[Throwable]
+        val hdrs = Map(cmd.passport.asHttpHeader)
+        HttpRequest(HttpMethod.Get, ClusterStateURI, cmd.timeout, headers = hdrs).right[Throwable]
       }
     }
   }

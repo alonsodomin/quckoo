@@ -28,7 +28,7 @@ final case class HttpRequest(
   entity: DataBuffer = DataBuffer.Empty
 )
 
-final case class HttpResponse(statusCode: Int, statusLine: String, entity: DataBuffer) {
+final case class HttpResponse(statusCode: Int, statusLine: String, entity: DataBuffer = DataBuffer.Empty) {
   def isFailure: Boolean = statusCode >= 400
   def isSuccess: Boolean = !isFailure
 }

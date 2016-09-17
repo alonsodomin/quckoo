@@ -40,11 +40,13 @@ trait Protocol {
   trait RegistryOps {
     trait RegisterJobOp extends AuthOp { type In = RegisterJob; type Rslt = ValidationNel[Fault, JobId] }
     trait FetchJobOp extends AuthOp { type In = JobId; type Rslt = Option[JobSpec] }
+    trait FetchJobsOp extends AuthOp { type In = Unit; type Rslt = Map[JobId, JobSpec] }
     trait EnableJobOp extends AuthOp { type In = JobId; type Rslt = JobNotFound \/ JobEnabled }
     trait DisableJobOp extends AuthOp { type In = JobId; type Rslt = JobNotFound \/ JobDisabled }
 
     implicit val registerJobOp: RegisterJobOp
     implicit val fetchJobOp: FetchJobOp
+    implicit val fetchJobsOp: FetchJobsOp
     implicit val enableJobOp: EnableJobOp
     implicit val disableJobOp: DisableJobOp
   }

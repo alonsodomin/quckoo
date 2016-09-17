@@ -12,7 +12,7 @@ package object http {
   private[http] val BaseURI = "/api"
   private[http] val LoginURI = BaseURI + "/auth/login"
   private[http] val AuthRefreshURI = BaseURI + "/auth/refresh"
-  private[http] val LogoutURI = BaseURI + "/logout"
+  private[http] val LogoutURI = BaseURI + "/auth/logout"
 
   private[http] val ClusterStateURI = BaseURI + "/cluster"
   private[http] val MasterEventsURI = ClusterStateURI + "/master"
