@@ -28,9 +28,18 @@ import io.quckoo.JobSpec
  */
 object JobId {
 
+  /**
+    * NOT SUPPORTED on ScalaJS!
+    *
+    * Generates the JobId related to a specific JobSpec
+    *
+    * @param jobSpec a job specification
+    * @return a job ID
+    */
   def apply(jobSpec: JobSpec): JobId = {
     val plainId = s"${jobSpec.artifactId.toString}!${jobSpec.jobClass}"
-    JobId(UUID.nameUUIDFromBytes(plainId.getBytes(StandardCharsets.UTF_8)))
+    val idAsBytes = plainId.getBytes(StandardCharsets.UTF_8)
+    JobId(UUID.nameUUIDFromBytes(idAsBytes))
   }
 
   @inline def apply(id: UUID) = new JobId(id)
@@ -46,7 +55,7 @@ object JobId {
 
 }
 
-final class JobId(private val id: UUID) extends AnyVal {
+final class JobId private (private val id: UUID) extends AnyVal {
 
   override def toString = id.toString
 

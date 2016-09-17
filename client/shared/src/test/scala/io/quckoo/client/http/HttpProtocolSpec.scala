@@ -27,6 +27,7 @@ object HttpProtocolSpec {
   implicit final val TestDuration = Duration.Inf
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "latest")
+  final val TestJobId = JobId(UUID.randomUUID())
   final val TestJobSpec = JobSpec("foo",
     artifactId = TestArtifactId,
     jobClass = "com.example.Job"
@@ -84,11 +85,11 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   }
 
   "registerJob" should "return a validated JobId when it succeeds" in {
-    val transport = new TestHttpTransport(_ => DataBuffer(JobId(TestJobSpec).successNel[Fault]).map(HttpSuccess))
+    val transport = new TestHttpTransport(_ => DataBuffer(TestJobId.successNel[Fault]).map(HttpSuccess))
     val client = new TestClient(transport)
 
     client.registerJob(TestJobSpec).map { validatedJobId =>
-      validatedJobId.toEither.right.value shouldBe JobId(TestJobSpec)
+      validatedJobId.toEither.right.value shouldBe TestJobId
     }
   }
 
@@ -103,11 +104,10 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   }
 
   "fetchJob" should "return the job spec for a job ID" in {
-    val jobId = JobId(TestJobSpec)
     val transport = new TestHttpTransport(_ => DataBuffer(TestJobSpec.some).map(HttpSuccess))
     val client = new TestClient(transport)
 
-    client.fetchJob(jobId).map { jobSpec =>
+    client.fetchJob(TestJobId).map { jobSpec =>
       jobSpec shouldBe defined
       inside(jobSpec) { case Some(spec) =>
         spec shouldBe TestJobSpec
@@ -116,11 +116,10 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   }
 
   it should "return None if the job does not exist" in {
-    val jobId = JobId(UUID.randomUUID())
     val transport = new TestHttpTransport(_ => HttpError(404, "TEST 404").right[Throwable])
     val client = new TestClient(transport)
 
-    client.fetchJob(jobId).map { jobSpec =>
+    client.fetchJob(TestJobId).map { jobSpec =>
       jobSpec should not be defined
     }
   }

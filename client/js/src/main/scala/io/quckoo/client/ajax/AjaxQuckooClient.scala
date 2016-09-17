@@ -191,9 +191,10 @@ private[ajax] class AjaxQuckooClient(private var authToken: Option[String])
   override def schedule(scheduleJob: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
     withAuthRefresh { () =>
       logger.debug("Sending schedule job request. jobId={}", scheduleJob.jobId)
-      Ajax.post(ExecutionPlansURI, write(scheduleJob), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
+      /*Ajax.post(ExecutionPlansURI, write(scheduleJob), headers = authHeaders ++ JsonRequestHeaders).map { xhr =>
         Right(read[ExecutionPlanStarted](xhr.responseText))
-      }
+      }*/
+      ???
     } recover {
       case NonFatal(ajaxEx: AjaxException) if ajaxEx.xhr.status == 404 =>
         logger.info("Specified job id was not found in the server. jobId={}", scheduleJob.jobId)
