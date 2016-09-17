@@ -10,7 +10,7 @@ import scalaz.std.scalaFuture._
 /**
   * Created by alonsodomin on 08/09/2016.
   */
-abstract class Driver[P <: Protocol](private[client] val transport: Transport[P]) {
+class Driver[P <: Protocol](private[client] val transport: Transport.For[P]) {
   import transport.protocol._
 
   val ops = transport.protocol.ops
@@ -19,8 +19,6 @@ abstract class Driver[P <: Protocol](private[client] val transport: Transport[P]
     def encodeRequest  = Kleisli(op.marshall).transform(lawfulTry2Future)
     def decodeResponse = Kleisli(op.unmarshall).transform(lawfulTry2Future)
 
-    //val execute = encodeRequest >=> transport.send >=> decodeResponse
-    //execute.mapT(_.recover(op.recover))
     encodeRequest >=> transport.send >=> decodeResponse
   }
 

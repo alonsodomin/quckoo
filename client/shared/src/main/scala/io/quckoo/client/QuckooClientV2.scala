@@ -16,7 +16,14 @@ import scalaz._
 /**
   * Created by alonsodomin on 10/09/2016.
   */
-abstract class QuckooClientV2[P <: Protocol](driver: Driver[P]) {
+object QuckooClientV2 {
+
+  def apply[P <: Protocol](implicit driver: Driver[P]): QuckooClientV2[P] =
+    new QuckooClientV2[P](driver)
+
+}
+
+final class QuckooClientV2[P <: Protocol] private[client] (driver: Driver[P]) {
   import driver.ops._
 
   def authenticate(username: String, password: String)(

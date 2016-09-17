@@ -5,6 +5,8 @@ import io.quckoo.client.core.Transport
 /**
   * Created by alonsodomin on 09/09/2016.
   */
-abstract class HttpTransport extends Transport[HttpProtocol] {
-  final val protocol = new HttpProtocol
+trait HttpTransport extends Transport {
+  type P = HttpProtocol
+
+  final val protocol = HttpProtocol
 }

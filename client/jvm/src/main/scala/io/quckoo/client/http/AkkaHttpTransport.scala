@@ -15,7 +15,7 @@ import scalaz.Kleisli
 /**
   * Created by alonsodomin on 11/09/2016.
   */
-private[http] class AkkaTransport(host: String, port: Int = 80)(implicit val actorSystem: ActorSystem) extends HttpTransport {
+final class AkkaHttpTransport private[http](host: String, port: Int = 80)(implicit val actorSystem: ActorSystem) extends HttpTransport {
   implicit val materializer = ActorMaterializer(ActorMaterializerSettings(actorSystem), "quckoo-http")
 
   val connection = Http().outgoingConnection(host, port)
@@ -42,4 +42,11 @@ private[http] class AkkaTransport(host: String, port: Int = 80)(implicit val act
       mapAsync(1)(parseRawResponse).
       runWith(Sink.head[HttpResponse])
   }
+}
+
+object AkkaHttpTransport {
+
+  def apply(host: String, port: Int = 80)(implicit actorSystem: ActorSystem): AkkaHttpTransport =
+    new AkkaHttpTransport(host, port)
+
 }

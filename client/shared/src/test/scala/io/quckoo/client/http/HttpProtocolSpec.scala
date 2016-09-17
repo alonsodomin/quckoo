@@ -4,7 +4,7 @@ import java.util.UUID
 
 import io.quckoo.JobSpec
 import io.quckoo.auth.{InvalidCredentialsException, Passport}
-import io.quckoo.client.QuckooClientV2
+import io.quckoo.client.core.StubClient
 import io.quckoo.fault.{DownloadFailed, Fault}
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
@@ -13,10 +13,8 @@ import io.quckoo.serialization.json._
 import io.quckoo.util._
 
 import org.scalatest._
-import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.util.matching.Regex
 
@@ -36,14 +34,6 @@ object HttpProtocolSpec {
     artifactId = TestArtifactId,
     jobClass = "com.example.Job"
   )
-
-  class TestHttpTransport private[HttpProtocolSpec] (f: HttpRequest => LawfulTry[HttpResponse]) extends HttpTransport {
-    def send: Kleisli[Future, HttpRequest, HttpResponse] =
-      Kleisli(f).transform(lawfulTry2Future)
-  }
-
-  class TestClient private[HttpProtocolSpec] (transport: TestHttpTransport)
-    extends QuckooClientV2[HttpProtocol](HttpDriver(transport))
 
   object HttpSuccess {
     def apply(entity: DataBuffer): LawfulTry[HttpResponse] = HttpResponse(200, "", entity).right[Throwable]
@@ -78,76 +68,21 @@ object HttpProtocolSpec {
 
 }
 
-class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues with Inside {
+class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubClient with EitherValues with Inside {
   import HttpProtocolSpec._
-
-  class TestClientRunner(client: TestClient) {
-    def withClient(exec: TestClient => Future[Assertion]) = exec(client)
-  }
-
-  class HttpRequestStatement(matcher: Matcher[HttpRequest]) {
-    def thenDo(process: HttpRequest => LawfulTry[HttpResponse]): TestClientRunner = {
-      def handleRequest(req: HttpRequest): LawfulTry[HttpResponse] = {
-        OutcomeOf.outcomeOf(req should matcher) match {
-          case Succeeded => process(req)
-          case Exceptional(ex) => throw ex
-        }
-      }
-      val transport = new TestHttpTransport(handleRequest)
-      new TestClientRunner(new TestClient(transport))
-    }
-  }
-
-  def hasMethod(method: HttpMethod): Matcher[HttpRequest] = new Matcher[HttpRequest] {
-    override def apply(req: HttpRequest): MatchResult =
-      MatchResult(req.method == method,
-        s"Http method ${req.method} is not a $method method",
-        s"is a ${req.method} http request"
-      )
-  }
-
-  def hasUrl(pattern: Regex): Matcher[HttpRequest] = new Matcher[HttpRequest] {
-    override def apply(req: HttpRequest): MatchResult =
-      MatchResult(pattern.findAllIn(req.url).nonEmpty,
-        s"URL '${req.url}' does not match pattern '$pattern'",
-        s"URL '${req.url}' matches pattern '$pattern'"
-      )
-  }
-
-  def hasAuthHeader(username: String, password: String): Matcher[HttpRequest] = new Matcher[HttpRequest] {
-    override def apply(req: HttpRequest): MatchResult = {
-      val creds = DataBuffer.fromString(s"$username:$password").toBase64
-      MatchResult(
-        req.headers.get(AuthorizationHeader).contains(s"Basic $creds"),
-        s"no '$AuthorizationHeader' header for '$username' with password '$password' was found in the request",
-        s"'$AuthorizationHeader' header has the expected value"
-      )
-    }
-  }
-
-  def hasPassport(passport: Passport): Matcher[HttpRequest] = new Matcher[HttpRequest] {
-    override def apply(req: HttpRequest): MatchResult = {
-      MatchResult(
-        req.headers.get(AuthorizationHeader).contains(s"Bearer ${passport.token}"),
-        s"no '$AuthorizationHeader' header with passport '${passport.token}' was found in the request",
-        s"'$AuthorizationHeader' header has the expected value"
-      )
-    }
-  }
-
-  def ensuringRequest(matcher: Matcher[HttpRequest]): HttpRequestStatement = {
-    new HttpRequestStatement(matcher)
-  }
 
   // -- Login requests
 
   def isLogin(username: String, password: String) =
-    hasMethod(HttpMethod.Post) and hasUrl(uris.login) and hasAuthHeader(username, password)
+    hasMethod(HttpMethod.Post) and
+      hasUrl(uris.login) and
+      hasAuthHeader(username, password) and
+      not(matcher = hasPassport(TestPassport))
 
   "authenticate" should "return the user's passport when result code is 200" in {
     val expectedPassport = new Passport(Map.empty, Map.empty, DataBuffer.fromString("foo"))
 
-    ensuringRequest (isLogin("foo", "bar")) thenDo { _ =>
+    inProtocol(HttpProtocol) ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpSuccess(DataBuffer.fromString(expectedPassport.token))
     } withClient { client =>
       client.authenticate("foo", "bar").map { passport =>
@@ -157,7 +92,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   }
 
   it should "result in invalid credentials if result code is 401" in {
-    ensuringRequest (isLogin("foo", "bar")) thenDo { _ =>
+    inProtocol(HttpProtocol) ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpError(401, "TEST AUTH ERROR")
     } withClient { client =>
       recoverToSucceededIf[InvalidCredentialsException.type](client.authenticate("foo", "bar"))
@@ -165,7 +100,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   }
 
   it should "result in an HTTP error if result code is not 401" in {
-    ensuringRequest (isLogin("foo", "bar")) thenDo { _ =>
+    inProtocol(HttpProtocol) ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpError(500, "TEST AUTH ERROR")
     } withClient { client =>
       recoverToSucceededIf[HttpErrorException](client.authenticate("foo", "bar"))
@@ -177,7 +112,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   val isLogout = hasMethod(HttpMethod.Post) and hasUrl(uris.logout) and hasPassport(TestPassport)
 
   "sing out" should "not return anything if it succeeds" in {
-    ensuringRequest (isLogout) thenDo { _ =>
+    inProtocol(HttpProtocol) ensuringRequest isLogout replyWith { _ =>
       HttpSuccess(DataBuffer.Empty)
     } withClient { client =>
       client.signOut.map(_ => succeed)
@@ -185,7 +120,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   }
 
   it should "result in an HTTP error if result code is not 200" in {
-    ensuringRequest (isLogout) thenDo {
+    inProtocol(HttpProtocol) ensuringRequest isLogout replyWith {
       _ => HttpError(500, "TEST AUTH ERROR")
     } withClient { client =>
       recoverToSucceededIf[HttpErrorException](client.signOut)
@@ -197,7 +132,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   val isRegisterJob = hasMethod(HttpMethod.Put) and hasUrl(uris.jobs) and hasPassport(TestPassport)
 
   "registerJob" should "return a validated JobId when it succeeds" in {
-    ensuringRequest (isRegisterJob) thenDo { _ =>
+    inProtocol(HttpProtocol) ensuringRequest isRegisterJob replyWith { _ =>
       HttpSuccess(DataBuffer(TestJobId.successNel[Fault]))
     } withClient { client =>
       client.registerJob(TestJobSpec).map { validatedJobId =>
@@ -208,7 +143,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
 
   it should "return the missed dependencies when fails to resolve" in {
     val expectedFault = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
-    ensuringRequest (isRegisterJob) thenDo {
+    inProtocol(HttpProtocol) ensuringRequest isRegisterJob replyWith {
       _ => HttpSuccess(DataBuffer(expectedFault.failureNel[JobId]))
     } withClient { client =>
       client.registerJob(TestJobSpec).map { validatedJobId =>
@@ -222,7 +157,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   val isFetchJobs = hasMethod(HttpMethod.Get) and hasUrl(uris.jobs) and hasPassport(TestPassport)
 
   "fetchJobs" should "return a map of the job specs" in {
-    ensuringRequest (isFetchJobs) thenDo { _ =>
+    inProtocol(HttpProtocol) ensuringRequest isFetchJobs replyWith { _ =>
       HttpSuccess(DataBuffer(Map(TestJobId -> TestJobSpec)))
     } withClient { client =>
       client.fetchJobs.map { jobMap =>
@@ -238,7 +173,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
 
   "fetchJob" should "return the job spec for a job ID" in {
     val urlPattern = uris.fetchJob.r
-    ensuringRequest (isFetchJob) thenDo { req =>
+    inProtocol(HttpProtocol) ensuringRequest isFetchJob replyWith { req =>
       val urlPattern(id) = req.url
       if (JobId(id) == TestJobId) {
         HttpSuccess(DataBuffer(TestJobSpec.some))
@@ -257,7 +192,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
 
   it should "return None if the job does not exist" in {
     val urlPattern = uris.fetchJob.r
-    ensuringRequest (isFetchJob) thenDo { req =>
+    inProtocol(HttpProtocol) ensuringRequest isFetchJob replyWith { req =>
       val urlPattern(id) = req.url
       if (JobId(id) == TestJobId) HttpError(404, "TEST 404")
       else HttpError(500, s"Invalid URL: ${req.url}")
@@ -276,7 +211,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
     val urlPattern = uris.enableJob.r
     def expectedResult(jobId: JobId) = JobEnabled(jobId).right[JobNotFound]
 
-    ensuringRequest (isEnableJob) thenDo { req =>
+    inProtocol(HttpProtocol) ensuringRequest isEnableJob replyWith { req =>
       val urlPattern(id) = req.url
       HttpSuccess(DataBuffer(expectedResult(JobId(id))))
     } withClient { client =>
@@ -289,7 +224,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   it should "return JobNotFound if the status code of the result is 404" in {
     val urlPattern = uris.enableJob.r
 
-    ensuringRequest (isEnableJob) thenDo { req =>
+    inProtocol(HttpProtocol) ensuringRequest isEnableJob replyWith { req =>
       val urlPattern(id) = req.url
       HttpError(404, entity = DataBuffer(notFound[JobEnabled](JobId(id))))
     } withClient { client =>
@@ -307,7 +242,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
     val urlPattern = uris.disableJob.r
     def expectedResult(jobId: JobId) = JobDisabled(jobId).right[JobNotFound]
 
-    ensuringRequest (isDisableJob) thenDo { req =>
+    inProtocol(HttpProtocol) ensuringRequest isDisableJob replyWith { req =>
       val urlPattern(id) = req.url
       HttpSuccess(DataBuffer(expectedResult(JobId(id))))
     } withClient { client =>
@@ -320,7 +255,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues wit
   it should "return JobNotFound if the status code of the result is 404" in {
     val urlPattern = uris.disableJob.r
 
-    ensuringRequest (isDisableJob) thenDo { req =>
+    inProtocol(HttpProtocol) ensuringRequest isDisableJob replyWith { req =>
       val urlPattern(id) = req.url
       HttpError(404, entity = DataBuffer(notFound[JobDisabled](JobId(id))))
     } withClient { client =>

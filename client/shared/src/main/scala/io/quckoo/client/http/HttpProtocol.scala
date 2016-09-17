@@ -19,7 +19,7 @@ import Scalaz._
 /**
   * Created by alonsodomin on 17/09/2016.
   */
-final class HttpProtocol extends Protocol with LazyLogging {
+trait HttpProtocol extends Protocol with LazyLogging {
   type Request = HttpRequest
   type Response = HttpResponse
 
@@ -124,3 +124,5 @@ final class HttpProtocol extends Protocol with LazyLogging {
 
   val ops = new HttpClusterOps with HttpRegistryOps with HttpSecurityOps {}
 }
+
+object HttpProtocol extends HttpProtocol
