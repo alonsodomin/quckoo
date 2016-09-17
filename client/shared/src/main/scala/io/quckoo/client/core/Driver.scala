@@ -4,8 +4,8 @@ import io.quckoo.util._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-import scalaz._
-import Scalaz._
+import scalaz.Kleisli
+import scalaz.std.scalaFuture._
 
 /**
   * Created by alonsodomin on 08/09/2016.
@@ -16,11 +16,12 @@ abstract class Driver[P <: Protocol](private[client] val transport: Transport[P]
   val ops = transport.protocol.ops
 
   final def invoke[O <: Op](implicit ec: ExecutionContext, op: O): Kleisli[Future, op.Cmd[op.In], op.Rslt] = {
-    def encodeRequest  = Kleisli(op.marshall).transform(either2Future)
-    def decodeResponse = Kleisli(op.unmarshall).transform(either2Future)
+    def encodeRequest  = Kleisli(op.marshall).transform(lawfulTry2Future)
+    def decodeResponse = Kleisli(op.unmarshall).transform(lawfulTry2Future)
 
-    val execute = encodeRequest >=> transport.send >=> decodeResponse
-    execute.mapT(_.recover(op.recover))
+    //val execute = encodeRequest >=> transport.send >=> decodeResponse
+    //execute.mapT(_.recover(op.recover))
+    encodeRequest >=> transport.send >=> decodeResponse
   }
 
 }

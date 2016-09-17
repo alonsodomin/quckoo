@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 import java.nio.charset.{Charset, StandardCharsets}
 
 import io.quckoo.serialization.json.{JsonReaderT, JsonWriterT}
-import io.quckoo.util.TryE
+import io.quckoo.util.LawfulTry
 
 import upickle.default.{Reader => UReader, Writer => UWriter}
 
@@ -34,7 +34,7 @@ final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal
     new DataBuffer(newBuffer)
   }
 
-  def as[A: UReader]: TryE[A] = JsonReaderT[A].run(asString())
+  def as[A: UReader]: LawfulTry[A] = JsonReaderT[A].run(asString())
 
   def asString(charset: Charset = StandardCharsets.UTF_8): String =
     charset.decode(buffer).toString
@@ -52,7 +52,7 @@ object DataBuffer {
 
   final val Empty = new DataBuffer(ByteBuffer.allocateDirect(0))
 
-  def apply[A: UWriter](a: A, charset: Charset = StandardCharsets.UTF_8): TryE[DataBuffer] =
+  def apply[A: UWriter](a: A, charset: Charset = StandardCharsets.UTF_8): LawfulTry[DataBuffer] =
     JsonWriterT[A].map(str => fromString(str, charset)).run(a)
 
   def apply(buffer: ByteBuffer): DataBuffer =

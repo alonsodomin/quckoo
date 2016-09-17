@@ -1,13 +1,13 @@
 package io.quckoo.client
 
-import io.quckoo.util.TryE
+import io.quckoo.util.LawfulTry
 
 /**
   * Created by alonsodomin on 10/09/2016.
   */
 package object core {
-  type Marshall[Cmd[_] <: Command[_], In, Req] = Cmd[In] => TryE[Req]
-  type Unmarshall[Res, Rslt] = Res => TryE[Rslt]
+  type Marshall[Cmd[_] <: Command[_], In, Req] = Cmd[In] => LawfulTry[Req]
+  type Unmarshall[Res, Rslt] = Res => LawfulTry[Rslt]
 
   type Recover[Rslt] = PartialFunction[Throwable, Rslt]
   object Recover {

@@ -1,6 +1,6 @@
 package io.quckoo.client.core
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scalaz.Kleisli
 
 /**
@@ -9,5 +9,5 @@ import scalaz.Kleisli
 trait Transport[P <: Protocol] {
   val protocol: P
 
-  def send(implicit ec: ExecutionContext): Kleisli[Future, protocol.Request, protocol.Response]
+  def send: Kleisli[Future, protocol.Request, protocol.Response]
 }

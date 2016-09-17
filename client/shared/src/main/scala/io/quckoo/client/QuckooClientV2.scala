@@ -10,6 +10,7 @@ import io.quckoo.protocol.registry.{JobDisabled, JobEnabled, JobNotFound, Regist
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
+
 import scalaz._
 
 /**
@@ -18,47 +19,54 @@ import scalaz._
 abstract class QuckooClientV2[P <: Protocol](driver: Driver[P]) {
   import driver.ops._
 
-  def authenticate(username: String, password: String)(implicit
+  def authenticate(username: String, password: String)(
+    implicit
     ec: ExecutionContext, timeout: Duration
   ): Future[Passport] = {
     val cmd = AnonCmd(Credentials(username, password), timeout)
     driver.invoke[AuthenticateOp].run(cmd)
   }
 
-  def signOut(implicit
+  def signOut(
+    implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport
   ): Future[Unit] =
     driver.invoke[SingOutOp].run(AuthCmd((), timeout, passport))
 
-  def clusterState(implicit
+  def clusterState(
+    implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport
   ): Future[QuckooState] = {
     val cmd = AuthCmd((), timeout, passport)
     driver.invoke[ClusterStateOp].run(cmd)
   }
 
-  def registerJob(job: JobSpec)(implicit
+  def registerJob(job: JobSpec)(
+    implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport
   ): Future[ValidationNel[Fault, JobId]] = {
     val cmd = AuthCmd(RegisterJob(job), timeout, passport)
     driver.invoke[RegisterJobOp].run(cmd)
   }
 
-  def fetchJob(jobId: JobId)(implicit
+  def fetchJob(jobId: JobId)(
+    implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport
   ): Future[Option[JobSpec]] = {
     val cmd = AuthCmd(jobId, timeout, passport)
     driver.invoke[FetchJobOp].run(cmd)
   }
 
-  def enableJob(jobId: JobId)(implicit
+  def enableJob(jobId: JobId)(
+    implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport
   ): Future[JobNotFound \/ JobEnabled] = {
     val cmd = AuthCmd(jobId, timeout, passport)
     driver.invoke[EnableJobOp].run(cmd)
   }
 
-  def disableJob(jobId: JobId)(implicit
+  def disableJob(jobId: JobId)(
+    implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport
   ): Future[JobNotFound \/ JobDisabled] = {
     val cmd = AuthCmd(jobId, timeout, passport)

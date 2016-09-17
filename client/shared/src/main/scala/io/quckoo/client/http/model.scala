@@ -25,11 +25,11 @@ final case class HttpRequest(
   url: String,
   timeout: Duration,
   headers: Map[String, String],
-  entity: Option[DataBuffer]
+  entity: DataBuffer = DataBuffer.Empty
 )
 
-sealed trait HttpResponse
-final case class HttpError(statusCode: Int, statusLine: String) extends HttpResponse
-final case class HttpSuccess(entity: DataBuffer) extends HttpResponse
-
-final case class HttpErrorException(error: HttpError) extends Exception(error.statusLine)
+final case class HttpResponse(statusCode: Int, statusLine: String, entity: DataBuffer) {
+  def isFailure: Boolean = statusCode >= 400
+  def isSuccess: Boolean = !isFailure
+}
+final case class HttpErrorException(statusLine: String) extends Exception(statusLine)

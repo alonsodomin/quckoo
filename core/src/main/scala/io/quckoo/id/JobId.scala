@@ -43,6 +43,7 @@ object JobId {
   }
 
   @inline def apply(id: UUID) = new JobId(id)
+  @inline def apply(id: String) = new JobId(UUID.fromString(id))
 
   // Upickle encoders
 

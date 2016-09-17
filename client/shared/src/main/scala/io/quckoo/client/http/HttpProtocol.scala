@@ -6,9 +6,10 @@ import io.quckoo.JobSpec
 import io.quckoo.auth.{Credentials, InvalidCredentialsException, Passport}
 import io.quckoo.client.core._
 import io.quckoo.id.JobId
-import io.quckoo.protocol.registry.RegisterJob
+import io.quckoo.protocol.registry._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
+import io.quckoo.util.LawfulTry
 
 import slogging.LazyLogging
 
@@ -23,12 +24,11 @@ final class HttpProtocol extends Protocol with LazyLogging {
   type Response = HttpResponse
 
   private[this] abstract class JsonUnmarshall[O <: Op](implicit decoder: UReader[O#Rslt]) {
-    val unmarshall: Unmarshall[HttpResponse, O#Rslt] = {
-      case HttpSuccess(payload) =>
-        payload.as[O#Rslt]
-
-      case err: HttpError =>
-        HttpErrorException(err).left[O#Rslt]
+    val unmarshall: Unmarshall[HttpResponse, O#Rslt] = { res =>
+      if (res.isFailure && res.entity.isEmpty) {
+        HttpErrorException(res.statusLine).left[O#Rslt]
+      }
+      else res.entity.as[O#Rslt]
     }
   }
 
@@ -39,28 +39,25 @@ final class HttpProtocol extends Protocol with LazyLogging {
       override val marshall: Marshall[AnonCmd, Credentials, HttpRequest] = { cmd =>
         val creds = DataBuffer.fromString(s"${cmd.payload.username}:${cmd.payload.password}").toBase64
         val hdrs = Map(AuthorizationHeader -> s"Basic $creds")
-        HttpRequest(HttpMethod.Post, LoginURI, cmd.timeout, headers = hdrs, None).right[Throwable]
+        HttpRequest(HttpMethod.Post, LoginURI, cmd.timeout, headers = hdrs).right[Throwable]
       }
 
-      override val unmarshall: Unmarshall[HttpResponse, Passport] = {
-        case HttpSuccess(payload) =>
-          Passport(payload.asString())
-
-        case err: HttpError if err.statusCode == 401 =>
-          InvalidCredentialsException.left[Passport]
-
-        case err: HttpError if err.statusCode != 401 =>
-          HttpErrorException(err).left[Passport]
+      override val unmarshall: Unmarshall[HttpResponse, Passport] = { res =>
+        if (res.isSuccess) Passport(res.entity.asString())
+        else {
+          if (res.statusCode == 401) InvalidCredentialsException.left[Passport]
+          else HttpErrorException(res.statusLine).left[Passport]
+        }
       }
     }
 
     override implicit val singOutOp: SingOutOp = new SingOutOp {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
-        HttpRequest(HttpMethod.Post, LogoutURI, cmd.timeout, Map(cmd.passport.asHttpHeader), None).right[Throwable]
+        HttpRequest(HttpMethod.Post, LogoutURI, cmd.timeout, Map(cmd.passport.asHttpHeader)).right[Throwable]
       }
-      override val unmarshall: Unmarshall[HttpResponse, Unit] = {
-        case HttpSuccess(_) => ().right[Throwable]
-        case err: HttpError => HttpErrorException(err).left[Unit]
+      override val unmarshall: Unmarshall[HttpResponse, Unit] = { res =>
+        if (res.isSuccess) ().right[Throwable]
+        else HttpErrorException(res.statusLine).left[Unit]
       }
     }
   }
@@ -72,7 +69,7 @@ final class HttpProtocol extends Protocol with LazyLogging {
       override val marshall: Marshall[AuthCmd, RegisterJob, HttpRequest] = { cmd =>
         DataBuffer(cmd.payload) map { entity =>
           val hdrs = JsonRequestHeaders + cmd.passport.asHttpHeader
-          HttpRequest(HttpMethod.Put, JobsURI, cmd.timeout, hdrs, Some(entity))
+          HttpRequest(HttpMethod.Put, JobsURI, cmd.timeout, hdrs, entity)
         }
       }
     }
@@ -81,25 +78,27 @@ final class HttpProtocol extends Protocol with LazyLogging {
 
       override val marshall: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
         val hrds = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}", cmd.timeout, hrds, None).right[Throwable]
+        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}", cmd.timeout, hrds).right[Throwable]
       }
 
-      override val recover: Recover[Option[JobSpec]] = {
-        case HttpErrorException(HttpError(code, _)) if code == 404 => none[JobSpec]
+      override val unmarshall: Unmarshall[HttpResponse, Option[JobSpec]] = { res =>
+        if (res.statusCode == 404) none[JobSpec].right[Throwable]
+        else super.unmarshall(res).asInstanceOf[LawfulTry[Option[JobSpec]]]
       }
+
     }
 
     override implicit val enableJobOp: EnableJobOp = new JsonUnmarshall[EnableJobOp] with EnableJobOp {
       override val marshall: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
         val hrds = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/enable", cmd.timeout, hrds, None).right[Throwable]
+        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/enable", cmd.timeout, hrds).right[Throwable]
       }
     }
 
     override implicit val disableJobOp: DisableJobOp = new JsonUnmarshall[DisableJobOp] with DisableJobOp {
       override val marshall: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
         val hrds = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/disable", cmd.timeout, hrds, None).right[Throwable]
+        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/disable", cmd.timeout, hrds).right[Throwable]
       }
     }
   }
@@ -111,7 +110,7 @@ final class HttpProtocol extends Protocol with LazyLogging {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
         logger.debug("Retrieving current cluster state...")
         val hrds = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Get, ClusterStateURI, cmd.timeout, headers = hrds, None).right[Throwable]
+        HttpRequest(HttpMethod.Get, ClusterStateURI, cmd.timeout, headers = hrds).right[Throwable]
       }
     }
   }

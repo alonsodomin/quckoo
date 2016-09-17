@@ -1,7 +1,7 @@
 package io.quckoo.auth
 
 import io.quckoo.serialization.{Base64, DataBuffer}
-import io.quckoo.util.{TryE, either2Try}
+import io.quckoo.util.{LawfulTry, lawfulTry2Try}
 
 import scalaz._
 import Scalaz._
@@ -13,17 +13,17 @@ object Passport {
 
   private final val SubjectClaim = "sub"
 
-  def apply(token: String): TryE[Passport] = {
+  def apply(token: String): LawfulTry[Passport] = {
     import Base64._
 
-    val tokenParts: TryE[Array[String]] = {
+    val tokenParts: LawfulTry[Array[String]] = {
       val parts = token.split('.')
       if (parts.length == 3) parts.right[InvalidPassportException]
       else InvalidPassportException(token).left[Array[String]]
     }
 
-    def decodePart(part: Int): TryE[DataBuffer] =
-      tokenParts.map(_(part)).flatMap(str => TryE(str.toByteArray)).map(DataBuffer.apply)
+    def decodePart(part: Int): LawfulTry[DataBuffer] =
+      tokenParts.map(_(part)).flatMap(str => LawfulTry(str.toByteArray)).map(DataBuffer.apply)
 
     def parseHeader = decodePart(0).flatMap(_.as[Map[String, String]])
     def parseClaims = decodePart(1).flatMap(_.as[Map[String, String]])
@@ -49,7 +49,7 @@ final class Passport(header: Map[String, String], claims: Map[String, String], s
       cls <- DataBuffer(claims).map(_.toBase64)
     } yield s"$hdr.$cls.${signature.toBase64}"
 
-    either2Try(tk).get
+    lawfulTry2Try(tk).get
   }
 
   lazy val principal: Option[Principal] =
