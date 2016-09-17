@@ -1,11 +1,10 @@
 package io.quckoo.client.http
 
-import io.quckoo.client.core.{Protocol, Transport}
+import io.quckoo.client.core.Transport
 
 /**
   * Created by alonsodomin on 09/09/2016.
   */
-abstract class HttpTransport extends Transport[Protocol.Http] {
-  type Request = HttpRequest
-  type Response = HttpResponse
+abstract class HttpTransport extends Transport[HttpProtocol] {
+  final val protocol = new HttpProtocol
 }

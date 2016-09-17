@@ -7,9 +7,7 @@ import scalaz.Kleisli
   * Created by alonsodomin on 08/09/2016.
   */
 trait Transport[P <: Protocol] {
-  type Request
-  type Response
+  val protocol: P
 
-  def send(implicit ec: ExecutionContext): Kleisli[Future, Request, Response]
-
+  def send(implicit ec: ExecutionContext): Kleisli[Future, protocol.Request, protocol.Response]
 }

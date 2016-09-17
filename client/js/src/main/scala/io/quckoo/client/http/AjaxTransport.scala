@@ -7,6 +7,7 @@ import org.scalajs.dom.ext.Ajax
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
+
 import scalaz._
 
 /**

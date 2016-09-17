@@ -1,26 +1,28 @@
 package io.quckoo.client.http
 
+import java.util.UUID
+
 import io.quckoo.JobSpec
 import io.quckoo.auth.{InvalidCredentialsException, Passport}
 import io.quckoo.client.QuckooClientV2
-import io.quckoo.client.core.Protocol
-import io.quckoo.fault.{DownloadFailed, Fault, MissingDependencies}
+import io.quckoo.fault.{DownloadFailed, Fault}
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 import io.quckoo.util._
 
-import org.scalatest.{AsyncFlatSpec, EitherValues, Matchers}
+import org.scalatest.{AsyncFlatSpec, EitherValues, Inside, Matchers}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
+
 import scalaz._
 import Scalaz._
 
 /**
   * Created by alonsodomin on 15/09/2016.
   */
-object HttpDriverSpec {
+object HttpProtocolSpec {
   implicit final val TestPassport = new Passport(Map.empty, Map.empty, DataBuffer.fromString("foo"))
   implicit final val TestDuration = Duration.Inf
 
@@ -31,15 +33,15 @@ object HttpDriverSpec {
   )
 }
 
-class HttpDriverSpec extends AsyncFlatSpec with Matchers with EitherValues {
-  import HttpDriverSpec._
+class HttpProtocolSpec extends AsyncFlatSpec with Matchers with EitherValues with Inside {
+  import HttpProtocolSpec._
 
   class TestHttpTransport(f: HttpRequest => TryE[HttpResponse]) extends HttpTransport {
     def send(implicit ec: ExecutionContext): Kleisli[Future, HttpRequest, HttpResponse] =
       Kleisli(f).transform(either2Future)
   }
 
-  class TestClient(transport: TestHttpTransport) extends QuckooClientV2[Protocol.Http](new HttpDriver(transport))
+  class TestClient(transport: TestHttpTransport) extends QuckooClientV2[HttpProtocol](HttpDriver(transport))
 
   "authenticate" should "return the user's passport when result code is 200" in {
     val expectedPassport = new Passport(Map.empty, Map.empty, DataBuffer.fromString("foo"))
@@ -90,7 +92,6 @@ class HttpDriverSpec extends AsyncFlatSpec with Matchers with EitherValues {
     }
   }
 
-  assert()
   it should "return the missed dependencies when fails to resolve" in {
     val expectedFault = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
     val transport = new TestHttpTransport(_ => DataBuffer(expectedFault.failureNel[JobId]).map(HttpSuccess))
@@ -98,6 +99,29 @@ class HttpDriverSpec extends AsyncFlatSpec with Matchers with EitherValues {
 
     client.registerJob(TestJobSpec).map { validatedJobId =>
       validatedJobId.toEither.left.value shouldBe NonEmptyList(expectedFault)
+    }
+  }
+
+  "fetchJob" should "return the job spec for a job ID" in {
+    val jobId = JobId(TestJobSpec)
+    val transport = new TestHttpTransport(_ => DataBuffer(TestJobSpec.some).map(HttpSuccess))
+    val client = new TestClient(transport)
+
+    client.fetchJob(jobId).map { jobSpec =>
+      jobSpec shouldBe defined
+      inside(jobSpec) { case Some(spec) =>
+        spec shouldBe TestJobSpec
+      }
+    }
+  }
+
+  it should "return None if the job does not exist" in {
+    val jobId = JobId(UUID.randomUUID())
+    val transport = new TestHttpTransport(_ => HttpError(404, "TEST 404").right[Throwable])
+    val client = new TestClient(transport)
+
+    client.fetchJob(jobId).map { jobSpec =>
+      jobSpec should not be defined
     }
   }
 
