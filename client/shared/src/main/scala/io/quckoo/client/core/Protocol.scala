@@ -1,9 +1,9 @@
 package io.quckoo.client.core
 
-import io.quckoo.JobSpec
+import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.auth.{Credentials, Passport}
 import io.quckoo.fault.Fault
-import io.quckoo.id.JobId
+import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled, JobNotFound, RegisterJob}
 
@@ -16,18 +16,17 @@ trait Protocol {
   type Request
   type Response
 
-  trait Op {
+  protected[client] trait Op {
     type Cmd[_] <: Command[_]
     type In
     type Rslt
 
     val marshall: Marshall[Cmd, In, Request]
     val unmarshall: Unmarshall[Response, Rslt]
-    val recover: Recover[Rslt] = Recover.noRecover
   }
 
-  trait AnonOp extends Op { type Cmd[X] = AnonCmd[X] }
-  trait AuthOp extends Op { type Cmd[X] = AuthCmd[X] }
+  protected trait AnonOp extends Op { type Cmd[X] = AnonCmd[X] }
+  protected trait AuthOp extends Op { type Cmd[X] = AuthCmd[X] }
 
   trait SecurityOps {
     trait AuthenticateOp extends AnonOp { type In = Credentials; type Rslt = Passport }
@@ -35,6 +34,12 @@ trait Protocol {
 
     implicit val authenticateOp: AuthenticateOp
     implicit val singOutOp: SingOutOp
+  }
+
+  trait ClusterOps {
+    trait ClusterStateOp extends AuthOp { type In = Unit; type Rslt = QuckooState }
+
+    implicit val clusterStateOp: ClusterStateOp
   }
 
   trait RegistryOps {
@@ -51,11 +56,17 @@ trait Protocol {
     implicit val disableJobOp: DisableJobOp
   }
 
-  trait ClusterOps {
-    trait ClusterStateOp extends AuthOp { type In = Unit; type Rslt = QuckooState }
+  trait SchedulerOps {
+    trait ExecutionPlansOp extends AuthOp { type In = Unit; type Rslt = Map[PlanId, ExecutionPlan] }
+    trait ExecutionPlanOp extends AuthOp { type In = PlanId; type Rslt = Option[ExecutionPlan] }
+    trait ExecutionsOp extends AuthOp { type In = Unit; type Rslt = Map[TaskId, TaskExecution] }
+    trait ExecutionOp extends AuthOp { type In = TaskId; type Rslt = Option[TaskExecution] }
 
-    implicit val clusterStateOp: ClusterStateOp
+    implicit val executionPlansOp: ExecutionPlansOp
+    implicit val executionPlanOp: ExecutionPlanOp
+    implicit val executionsOp: ExecutionsOp
+    implicit val executionOp: ExecutionOp
   }
 
-  val ops: ClusterOps with RegistryOps with SecurityOps
+  val ops: ClusterOps with RegistryOps with SchedulerOps with SecurityOps
 }

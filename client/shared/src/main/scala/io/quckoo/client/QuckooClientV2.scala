@@ -1,16 +1,15 @@
 package io.quckoo.client
 
-import io.quckoo.JobSpec
+import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.auth.{Credentials, Passport}
 import io.quckoo.client.core._
 import io.quckoo.fault.Fault
-import io.quckoo.id.JobId
+import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled, JobNotFound, RegisterJob}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
-
 import scalaz._
 
 /**
@@ -26,6 +25,8 @@ object QuckooClientV2 {
 final class QuckooClientV2[P <: Protocol] private[client] (driver: Driver[P]) {
   import driver.ops._
 
+  // -- Security
+
   def authenticate(username: String, password: String)(
     implicit
     ec: ExecutionContext, timeout: Duration
@@ -40,6 +41,8 @@ final class QuckooClientV2[P <: Protocol] private[client] (driver: Driver[P]) {
   ): Future[Unit] =
     driver.invoke[SingOutOp].run(AuthCmd((), timeout, passport))
 
+  // -- Cluster
+
   def clusterState(
     implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport
@@ -47,6 +50,8 @@ final class QuckooClientV2[P <: Protocol] private[client] (driver: Driver[P]) {
     val cmd = AuthCmd((), timeout, passport)
     driver.invoke[ClusterStateOp].run(cmd)
   }
+
+  // -- Registry
 
   def registerJob(job: JobSpec)(
     implicit
@@ -86,6 +91,40 @@ final class QuckooClientV2[P <: Protocol] private[client] (driver: Driver[P]) {
   ): Future[JobNotFound \/ JobDisabled] = {
     val cmd = AuthCmd(jobId, timeout, passport)
     driver.invoke[DisableJobOp].run(cmd)
+  }
+
+  // -- Scheduler
+
+  def executionPlans(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Map[PlanId, ExecutionPlan]] = {
+    val cmd = AuthCmd((), timeout, passport)
+    driver.invoke[ExecutionPlansOp].run(cmd)
+  }
+
+  def executionPlan(planId: PlanId)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Option[ExecutionPlan]] = {
+    val cmd = AuthCmd(planId, timeout, passport)
+    driver.invoke[ExecutionPlanOp].run(cmd)
+  }
+
+  def executions(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Map[TaskId, TaskExecution]] = {
+    val cmd = AuthCmd((), timeout, passport)
+    driver.invoke[ExecutionsOp].run(cmd)
+  }
+
+  def execution(taskId: TaskId)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Option[TaskExecution]] = {
+    val cmd = AuthCmd(taskId, timeout, passport)
+    driver.invoke[ExecutionOp].run(cmd)
   }
 
 }

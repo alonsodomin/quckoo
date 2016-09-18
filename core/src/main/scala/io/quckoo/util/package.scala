@@ -4,6 +4,8 @@ import scala.concurrent.Future
 import scala.util.{Try, Success => StdSuccess, Failure => StdFailure}
 
 import scalaz._
+import Scalaz._
+import Isomorphism._
 
 /**
   * Created by alonsodomin on 15/09/2016.
@@ -21,6 +23,18 @@ package object util {
       case -\/(throwable) => StdFailure(throwable)
       case \/-(value)     => StdSuccess(value)
     }
+  }
+
+  final val try2lawfulTry = new (Try ~> LawfulTry) {
+    override def apply[A](fa: Try[A]): LawfulTry[A] = fa match {
+      case StdSuccess(value) => value.right[Throwable]
+      case StdFailure(ex)    => ex.left[A]
+    }
+  }
+
+  final val lawfulTryIso = new (LawfulTry <~> Try) {
+    override def to: ~>[LawfulTry, Try] = lawfulTry2Try
+    override def from: ~>[Try, LawfulTry] = try2lawfulTry
   }
 
   final val try2Future = new (Try ~> Future) {

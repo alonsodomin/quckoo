@@ -10,11 +10,11 @@ import Scalaz._
 /**
   * Created by alonsodomin on 17/09/2016.
   */
-final class TestTransport[P0 <: Protocol](val protocol: P0) extends Transport {
+private[core] final class TestTransport[P0 <: Protocol](val protocol: P0) extends Transport {
   type P = P0
 
   private[this] var logic: protocol.Request => LawfulTry[protocol.Response] = { _ =>
-    new RuntimeException("Not implemented").left[protocol.Response]
+    new IllegalStateException("TestTransport needs to be lifted before being used!").left[protocol.Response]
   }
 
   def lift(f: protocol.Request => LawfulTry[protocol.Response]): TestTransport[P] = {

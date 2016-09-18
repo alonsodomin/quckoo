@@ -2,17 +2,18 @@ package io.quckoo.client.http
 
 import java.util.UUID
 
-import io.quckoo.JobSpec
+import io.quckoo.{ExecutionPlan, JobSpec, Task, TaskExecution, Trigger}
 import io.quckoo.auth.{InvalidCredentialsException, Passport}
 import io.quckoo.client.core.StubClient
 import io.quckoo.fault.{DownloadFailed, Fault}
-import io.quckoo.id.{ArtifactId, JobId}
+import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 import io.quckoo.util._
 
+import org.threeten.bp._
 import org.scalatest._
 
 import scala.concurrent.duration.Duration
@@ -26,6 +27,9 @@ import Scalaz._
   * Created by alonsodomin on 15/09/2016.
   */
 object HttpProtocolSpec {
+  final val FixedInstant = Instant.ofEpochMilli(903029302L)
+  implicit final val FixedClock = Clock.fixed(FixedInstant, ZoneId.of("UTC"))
+
   implicit final val TestPassport = new Passport(Map.empty, Map.empty, DataBuffer.fromString("foo"))
   implicit final val TestDuration = Duration.Inf
 
@@ -34,6 +38,16 @@ object HttpProtocolSpec {
   final val TestJobSpec = JobSpec("foo",
     artifactId = TestArtifactId,
     jobClass = "com.example.Job"
+  )
+
+  final val TestPlanId: PlanId = UUID.randomUUID()
+  final val TestExecutionPlan = ExecutionPlan(
+    TestJobId, TestPlanId, Trigger.Immediate, ZonedDateTime.now(FixedClock)
+  )
+
+  final val TestTaskId: TaskId = UUID.randomUUID()
+  final val TestTaskExecution = TaskExecution(
+    TestPlanId, Task(TestTaskId, TestArtifactId, "com.example.Task"), TaskExecution.Complete
   )
 
   object HttpSuccess {
@@ -55,6 +69,7 @@ object HttpProtocolSpec {
   object uris {
     private[this] final val BaseURI = "/api"
     private[this] final val RegistryURI = s"$BaseURI/registry"
+    private[this] final val SchedulerURI = s"$BaseURI/scheduler"
 
     val login = s"$BaseURI/auth/login"
     val logout = s"$BaseURI/auth/logout"
@@ -65,6 +80,11 @@ object HttpProtocolSpec {
     val fetchJob = s"$jobs/(.+)"
     val enableJob = s"$fetchJob/enable"
     val disableJob = s"$fetchJob/disable"
+
+    val executionPlans = s"$SchedulerURI/plans"
+    val executionPlan = s"$executionPlans/(.+)"
+    val executions = s"$SchedulerURI/executions"
+    val execution = s"$executions/(.+)"
   }
 
   implicit def string2Regex(str: String): Regex = str.r
@@ -301,6 +321,120 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     } usingClient { client =>
       client.disableJob(TestJobId).map { res =>
         res shouldBe notFound[JobDisabled](TestJobId)
+      }
+    }
+  }
+
+  // -- Get execution plans
+
+  val isGetExecutionPlans = hasMethod(HttpMethod.Get) and
+    hasUrl(uris.executionPlans) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
+
+  "executionPlans" should "return a map with current exection plans" in {
+    inProtocol(HttpProtocol) ensuringRequest isGetExecutionPlans replyWith {
+      _ => HttpSuccess(DataBuffer(Map(TestPlanId -> TestExecutionPlan)))
+    } usingClient { client =>
+      client.executionPlans.map { returnedPlans =>
+        returnedPlans should contain key TestPlanId
+        returnedPlans should contain value TestExecutionPlan
+      }
+    }
+  }
+
+  // -- Get execution plan
+
+  val isGetExecutionPlan = hasMethod(HttpMethod.Get) and
+    hasUrl(uris.executionPlan) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
+
+  "executionPlan" should "return an execution plan for a given ID" in {
+    val urlPattern = uris.executionPlan.r
+    inProtocol(HttpProtocol) ensuringRequest isGetExecutionPlan replyWith { req =>
+      val urlPattern(id) = req.url
+      if (UUID.fromString(id) == TestPlanId) {
+        HttpSuccess(DataBuffer(TestExecutionPlan.some))
+      } else {
+        HttpError(500, s"Invalid plan id $id")
+      }
+    } usingClient { client =>
+      client.executionPlan(TestPlanId).map { returnedPlan =>
+        returnedPlan shouldBe TestExecutionPlan.some
+      }
+    }
+  }
+
+  it should "return None if the HTTP status code is 404" in {
+    val urlPattern = uris.executionPlan.r
+    inProtocol(HttpProtocol) ensuringRequest isGetExecutionPlan replyWith { req =>
+      val urlPattern(id) = req.url
+      if (UUID.fromString(id) == TestPlanId) {
+        HttpError(404, s"Should have returned a None instance")
+      } else {
+        HttpError(500, s"Invalid plan id $id")
+      }
+    } usingClient { client =>
+      client.executionPlan(TestPlanId).map { returnedPlan =>
+        returnedPlan should not be defined
+      }
+    }
+  }
+
+  // -- Get executions
+
+  val isGetExecutions = hasMethod(HttpMethod.Get) and
+    hasUrl(uris.executions) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
+
+  "executions" should "return a map with the executions" in {
+    inProtocol(HttpProtocol) ensuringRequest isGetExecutions replyWith {
+      _ => HttpSuccess(DataBuffer(Map(TestTaskId -> TestTaskExecution)))
+    } usingClient { client =>
+      client.executions.map { returnedExecutions =>
+        returnedExecutions should contain key TestTaskId
+        returnedExecutions should contain value TestTaskExecution
+      }
+    }
+  }
+
+  // -- Get execution
+
+  val isGetExecution = hasMethod(HttpMethod.Get) and
+    hasUrl(uris.execution) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
+
+  "execution" should "return an execution for a given ID" in {
+    val urlPattern = uris.execution.r
+    inProtocol(HttpProtocol) ensuringRequest isGetExecution replyWith { req =>
+      val urlPattern(id) = req.url
+      if (UUID.fromString(id) == TestTaskId) {
+        HttpSuccess(DataBuffer(TestTaskExecution.some))
+      } else {
+        HttpError(500, s"Invalid task id $id")
+      }
+    } usingClient { client =>
+      client.execution(TestTaskId).map { returnedExec =>
+        returnedExec shouldBe TestTaskExecution.some
+      }
+    }
+  }
+
+  it should "return None if the HTTP status code is 404" in {
+    val urlPattern = uris.execution.r
+    inProtocol(HttpProtocol) ensuringRequest isGetExecution replyWith { req =>
+      val urlPattern(id) = req.url
+      if (UUID.fromString(id) == TestTaskId) {
+        HttpError(404, s"Should have returned a None instance")
+      } else {
+        HttpError(500, s"Invalid task id $id")
+      }
+    } usingClient { client =>
+      client.execution(TestTaskId).map { returnedExec =>
+        returnedExec should not be defined
       }
     }
   }

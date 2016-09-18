@@ -8,9 +8,4 @@ import io.quckoo.util.LawfulTry
 package object core {
   type Marshall[Cmd[_] <: Command[_], In, Req] = Cmd[In] => LawfulTry[Req]
   type Unmarshall[Res, Rslt] = Res => LawfulTry[Rslt]
-
-  type Recover[Rslt] = PartialFunction[Throwable, Rslt]
-  object Recover {
-    def noRecover[Rslt]: Recover[Rslt] = PartialFunction.empty[Throwable, Rslt]
-  }
 }
