@@ -1,6 +1,0 @@
--Dfile.encoding=UTF8
--Xms1g
--Xmx4g
--Xss2m
--XX:+CMSClassUnloadingEnabled
--XX:+UseConcMarkSweepGC
