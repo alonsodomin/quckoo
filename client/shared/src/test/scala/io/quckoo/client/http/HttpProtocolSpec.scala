@@ -383,6 +383,39 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     }
   }
 
+  // -- Schedule job
+
+  def isScheduleJob(value: ScheduleJob) = hasMethod(HttpMethod.Put) and
+    hasUrl(uris.executionPlans) and
+    hasPassport(TestPassport) and
+    hasBody(value)
+
+  "scheduleJob" should "return the started notification" in {
+    val payload = ScheduleJob(TestJobId)
+    inProtocol(HttpProtocol) ensuringRequest isScheduleJob(payload) replyWith { req =>
+      val result = req.entity.as[ScheduleJob].
+        flatMap(cmd => DataBuffer(ExecutionPlanStarted(cmd.jobId, TestPlanId).right[JobNotFound]))
+      HttpSuccess(result)
+    } usingClient { client =>
+      client.scheduleJob(payload).map { returned =>
+        returned shouldBe ExecutionPlanStarted(TestJobId, TestPlanId).right[JobNotFound]
+      }
+    }
+  }
+
+  it should "return JobNotFound if the HTTP status code is 404" in {
+    val payload = ScheduleJob(TestJobId)
+    inProtocol(HttpProtocol) ensuringRequest isScheduleJob(payload) replyWith { req =>
+      val result = req.entity.as[ScheduleJob].
+        flatMap(cmd => DataBuffer(JobNotFound(cmd.jobId).left[ExecutionPlanStarted]))
+      HttpError(404, entity = result)
+    } usingClient { client =>
+      client.scheduleJob(payload).map { returned =>
+        returned shouldBe JobNotFound(TestJobId).left[ExecutionPlanStarted]
+      }
+    }
+  }
+
   // -- Cancel execution plan
 
   val isCancelExecutionPlan = hasMethod(HttpMethod.Delete) and

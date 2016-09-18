@@ -6,7 +6,7 @@ import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled, JobNotFound, RegisterJob}
-import io.quckoo.protocol.scheduler.ExecutionPlanNotFound
+import io.quckoo.protocol.scheduler.{ScheduleJob, ExecutionPlanNotFound, ExecutionPlanStarted}
 
 import scalaz._
 
@@ -62,12 +62,14 @@ trait Protocol {
     trait ExecutionPlanOp extends AuthOp { type In = PlanId; type Rslt = Option[ExecutionPlan] }
     trait ExecutionsOp extends AuthOp { type In = Unit; type Rslt = Map[TaskId, TaskExecution] }
     trait ExecutionOp extends AuthOp { type In = TaskId; type Rslt = Option[TaskExecution] }
+    trait ScheduleOp extends AuthOp { type In = ScheduleJob; type Rslt = JobNotFound \/ ExecutionPlanStarted }
     trait CancelPlanOp extends AuthOp { type In = PlanId; type Rslt = ExecutionPlanNotFound \/ Unit }
 
     implicit val executionPlansOp: ExecutionPlansOp
     implicit val executionPlanOp: ExecutionPlanOp
     implicit val executionsOp: ExecutionsOp
     implicit val executionOp: ExecutionOp
+    implicit val scheduleOp: ScheduleOp
     implicit val cancelPlanOp: CancelPlanOp
   }
 

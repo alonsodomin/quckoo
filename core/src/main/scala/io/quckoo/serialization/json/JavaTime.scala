@@ -58,10 +58,13 @@ trait JavaTime {
   }
 
   implicit def zonedDateTimeW: JsonWriter[ZonedDateTime] = JsonWriter[ZonedDateTime] {
-    x => Js.Str(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(x))
+    x => Js.Arr(writeJs(x.toInstant), writeJs(x.getZone))
   }
   implicit def zonedDateTimeR: JsonReader[ZonedDateTime] = JsonReader[ZonedDateTime] {
-    case Js.Str(fmt) => ZonedDateTime.parse(fmt, DateTimeFormatter.ISO_ZONED_DATE_TIME)
+    case Js.Arr(inst, zid) =>
+      val instant = readJs[Instant](inst)
+      val zoneId  = readJs[ZoneId](zid)
+      ZonedDateTime.ofInstant(instant, zoneId)
   }
 
   implicit def localDateTimeW: JsonWriter[LocalDateTime] = JsonWriter[LocalDateTime] {

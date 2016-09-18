@@ -112,6 +112,14 @@ final class QuckooClientV2[P <: Protocol] private[client] (driver: Driver[P]) {
     driver.invoke[ExecutionPlanOp].run(cmd)
   }
 
+  def scheduleJob(schedule: ScheduleJob)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[JobNotFound \/ ExecutionPlanStarted] = {
+    val cmd = AuthCmd(schedule, timeout, passport)
+    driver.invoke[ScheduleOp].run(cmd)
+  }
+
   def cancelExecutionPlan(planId: PlanId)(
     implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport

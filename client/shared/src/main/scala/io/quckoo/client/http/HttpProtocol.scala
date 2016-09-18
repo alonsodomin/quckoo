@@ -7,6 +7,7 @@ import io.quckoo.auth.{Credentials, InvalidCredentialsException, Passport}
 import io.quckoo.client.core._
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler.ScheduleJob
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 import io.quckoo.util.LawfulTry
@@ -161,6 +162,15 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
       override val unmarshall: Unmarshall[HttpResponse, Option[TaskExecution]] = { res =>
         if (res.statusCode == 404) none[TaskExecution].right[Throwable]
         else super.unmarshall(res).asInstanceOf[LawfulTry[Option[TaskExecution]]]
+      }
+    }
+
+    override implicit val scheduleOp: ScheduleOp = new JsonUnmarshall[ScheduleOp] with ScheduleOp {
+      override val marshall: Marshall[AuthCmd, ScheduleJob, HttpRequest] = { cmd =>
+        val hdrs = Map(cmd.passport.asHttpHeader)
+        DataBuffer(cmd.payload).map { data =>
+          HttpRequest(HttpMethod.Put, ExecutionPlansURI, cmd.timeout, hdrs, data)
+        }
       }
     }
 

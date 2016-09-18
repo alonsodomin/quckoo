@@ -36,12 +36,16 @@ final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal
 
   def as[A: UReader]: LawfulTry[A] = JsonReaderT[A].run(asString())
 
-  def asString(charset: Charset = StandardCharsets.UTF_8): String =
-    charset.decode(buffer).toString
+  def asString(charset: Charset = StandardCharsets.UTF_8): String = {
+    val content = charset.decode(buffer).toString
+    buffer.rewind()
+    content
+  }
 
   def toBase64: String = {
     val bytes = new Array[Byte](buffer.remaining())
     buffer.get(bytes, buffer.position(), buffer.remaining())
+    buffer.rewind()
     bytes.toBase64
   }
 
