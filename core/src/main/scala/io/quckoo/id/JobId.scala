@@ -56,7 +56,14 @@ object JobId {
 
 }
 
-final class JobId private (private val id: UUID) extends AnyVal {
+final class JobId private (private val id: UUID) {
+
+  override def equals(other: Any): Boolean = other match {
+    case that: JobId => this.id == that.id
+    case _           => false
+  }
+
+  override def hashCode: Int = id.hashCode()
 
   override def toString = id.toString
 

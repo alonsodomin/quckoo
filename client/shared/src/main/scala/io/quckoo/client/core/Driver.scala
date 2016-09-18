@@ -13,7 +13,7 @@ import scalaz.std.scalaFuture._
 class Driver[P <: Protocol](private[client] val transport: Transport.For[P]) {
   import transport.protocol._
 
-  val ops = transport.protocol.ops
+  private[client] val ops = transport.protocol.ops
 
   final def invoke[O <: Op](implicit ec: ExecutionContext, op: O): Kleisli[Future, op.Cmd[op.In], op.Rslt] = {
     def encodeRequest  = Kleisli(op.marshall).transform(lawfulTry2Future)

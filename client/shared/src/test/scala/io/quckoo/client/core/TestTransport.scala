@@ -10,7 +10,7 @@ import Scalaz._
 /**
   * Created by alonsodomin on 17/09/2016.
   */
-private[core] final class TestTransport[P0 <: Protocol](val protocol: P0) extends Transport {
+private[core] final class TestTransport[P0 <: Protocol](private[core] val protocol: P0) extends Transport {
   type P = P0
 
   private[this] var logic: protocol.Request => LawfulTry[protocol.Response] = { _ =>

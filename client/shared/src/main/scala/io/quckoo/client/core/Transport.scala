@@ -9,7 +9,7 @@ import scalaz.Kleisli
 trait Transport {
   type P <: Protocol
 
-  val protocol: P
+  private[client] val protocol: P
 
   def send: Kleisli[Future, protocol.Request, protocol.Response]
 }

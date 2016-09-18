@@ -8,5 +8,5 @@ import io.quckoo.client.core.Transport
 trait HttpTransport extends Transport {
   type P = HttpProtocol
 
-  final val protocol = HttpProtocol
+  private[client] final val protocol = HttpProtocol
 }
