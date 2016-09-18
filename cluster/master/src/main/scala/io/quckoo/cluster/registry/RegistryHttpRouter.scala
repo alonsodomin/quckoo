@@ -29,7 +29,7 @@ import io.quckoo.JobSpec
 import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.id.JobId
 import io.quckoo.cluster.http._
-import io.quckoo.serialization
+import io.quckoo.serialization.json._
 
 /**
   * Created by domingueza on 21/03/16.
@@ -38,8 +38,6 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
   this: RegistryApi with RegistryStreams =>
 
   import StatusCodes._
-  import upickle.default._
-  import serialization.json._
 
   def registryApi(implicit system: ActorSystem, materializer: Materializer): Route =
     pathPrefix("jobs") {

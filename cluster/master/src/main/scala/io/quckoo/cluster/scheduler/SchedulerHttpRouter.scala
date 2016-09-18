@@ -28,7 +28,7 @@ import de.heikoseeberger.akkasse.EventStreamMarshalling
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.cluster.http._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.serialization
+import io.quckoo.serialization.json._
 
 /**
   * Created by domingueza on 21/03/16.
@@ -37,8 +37,6 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
   this: SchedulerApi with SchedulerStreams =>
 
   import StatusCodes._
-  import upickle.default._
-  import serialization.json._
 
   def schedulerApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     pathPrefix("plans") {

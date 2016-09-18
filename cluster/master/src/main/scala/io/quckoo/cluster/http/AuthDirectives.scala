@@ -23,7 +23,7 @@ import akka.http.scaladsl.server.directives._
 
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 
-import io.quckoo.auth._
+import io.quckoo.auth.{XSRFToken, User}
 import io.quckoo.auth.http._
 import io.quckoo.cluster.core.Auth
 
