@@ -163,6 +163,14 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
         else super.unmarshall(res).asInstanceOf[LawfulTry[Option[TaskExecution]]]
       }
     }
+
+    override implicit val cancelPlanOp: CancelPlanOp = new JsonUnmarshall[CancelPlanOp] with CancelPlanOp {
+      override val marshall: Marshall[AuthCmd, PlanId, HttpRequest] = { cmd =>
+        logger.debug("Cancelling execution plan. planId={}", cmd.payload)
+        val hdrs = Map(cmd.passport.asHttpHeader)
+        HttpRequest(HttpMethod.Delete, s"$ExecutionPlansURI/${cmd.payload}", cmd.timeout, hdrs).right[Throwable]
+      }
+    }
   }
 
   val ops = new HttpClusterOps with HttpRegistryOps with HttpSchedulerOps with HttpSecurityOps {}

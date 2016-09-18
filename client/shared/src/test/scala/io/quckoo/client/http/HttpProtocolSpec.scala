@@ -9,6 +9,7 @@ import io.quckoo.fault.{DownloadFailed, Fault}
 import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 import io.quckoo.util._
@@ -378,6 +379,45 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     } usingClient { client =>
       client.executionPlan(TestPlanId).map { returnedPlan =>
         returnedPlan should not be defined
+      }
+    }
+  }
+
+  // -- Cancel execution plan
+
+  val isCancelExecutionPlan = hasMethod(HttpMethod.Delete) and
+    hasUrl(uris.executionPlan) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
+
+  "cancelExecutionPlan" should "return nothing if the plan has been cancelled" in {
+    val urlPattern = uris.executionPlan.r
+    inProtocol(HttpProtocol) ensuringRequest isCancelExecutionPlan replyWith { req =>
+      val urlPattern(id) = req.url
+      if (UUID.fromString(id) == TestPlanId) {
+        HttpSuccess(DataBuffer(().right[ExecutionPlanNotFound]))
+      } else {
+        HttpError(500, s"Invalid plan id $id")
+      }
+    } usingClient { client =>
+      client.cancelExecutionPlan(TestPlanId).map { returned =>
+        returned.isRight shouldBe true
+      }
+    }
+  }
+
+  it should "return not found if the HTTP status code is 404" in {
+    val urlPattern = uris.executionPlan.r
+    inProtocol(HttpProtocol) ensuringRequest isCancelExecutionPlan replyWith { req =>
+      val urlPattern(id) = req.url
+      if (UUID.fromString(id) == TestPlanId) {
+        HttpError(404, entity = DataBuffer(ExecutionPlanNotFound(TestPlanId).left[Unit]))
+      } else {
+        HttpError(500, s"Invalid plan id $id")
+      }
+    } usingClient { client =>
+      client.cancelExecutionPlan(TestPlanId).map { returned =>
+        returned shouldBe ExecutionPlanNotFound(TestPlanId).left[Unit]
       }
     }
   }

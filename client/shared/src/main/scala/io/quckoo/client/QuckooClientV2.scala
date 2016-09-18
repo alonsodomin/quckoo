@@ -6,7 +6,8 @@ import io.quckoo.client.core._
 import io.quckoo.fault.Fault
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
-import io.quckoo.protocol.registry.{JobDisabled, JobEnabled, JobNotFound, RegisterJob}
+import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler._
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
@@ -109,6 +110,14 @@ final class QuckooClientV2[P <: Protocol] private[client] (driver: Driver[P]) {
   ): Future[Option[ExecutionPlan]] = {
     val cmd = AuthCmd(planId, timeout, passport)
     driver.invoke[ExecutionPlanOp].run(cmd)
+  }
+
+  def cancelExecutionPlan(planId: PlanId)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[ExecutionPlanNotFound \/ Unit] = {
+    val cmd = AuthCmd(planId, timeout, passport)
+    driver.invoke[CancelPlanOp].run(cmd)
   }
 
   def executions(
