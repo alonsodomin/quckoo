@@ -49,6 +49,9 @@ final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal
     bytes.toBase64
   }
 
+  def toByteBuffer: ByteBuffer =
+    buffer.asReadOnlyBuffer()
+
 }
 
 object DataBuffer {
@@ -75,8 +78,5 @@ object DataBuffer {
     override def append(f1: DataBuffer, f2: => DataBuffer): DataBuffer = f1 + f2
     override def zero: DataBuffer = Empty
   }
-
-  implicit def toByteBuffer(dataBuffer: DataBuffer): ByteBuffer =
-    dataBuffer.buffer.asReadOnlyBuffer()
 
 }

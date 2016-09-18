@@ -32,8 +32,4 @@ package object http {
     "Content-Type" -> "application/json"
   )
 
-  implicit class HttpPassport(val passport: Passport) extends AnyVal {
-    def asHttpHeader: (String, String) = AuthorizationHeader -> s"Bearer ${passport.token}"
-  }
-
 }

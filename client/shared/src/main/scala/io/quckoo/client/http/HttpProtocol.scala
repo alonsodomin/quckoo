@@ -15,7 +15,7 @@ import io.quckoo.util.LawfulTry
 import slogging.LazyLogging
 
 import scalaz._
-import Scalaz._
+//import Scalaz._
 
 /**
   * Created by alonsodomin on 17/09/2016.
@@ -24,42 +24,89 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
   type Request = HttpRequest
   type Response = HttpResponse
 
+  def jsonMarshall[O <: Op](
+    method: HttpMethod, uri: String, cmd: O#Cmd[O#In], writeBody: Boolean = true)(
+    implicit encoder: UWriter[O#In]
+  ): Marshall[O#Cmd, O#In, HttpRequest] = ???
+
+  def jsonUnmarshall[O <: Op](implicit decoder: UReader[O#Rslt]): Unmarshall[HttpResponse, O#Rslt] = { res =>
+    if (res.isFailure && res.entity.isEmpty) {
+      -\/(HttpErrorException(res.statusLine))
+    }
+    else res.entity.as[O#Rslt](decoder)
+  }
+
   private[this] abstract class JsonUnmarshall[O <: Op](implicit decoder: UReader[O#Rslt]) {
     val unmarshall: Unmarshall[HttpResponse, O#Rslt] = { res =>
       if (res.isFailure && res.entity.isEmpty) {
-        HttpErrorException(res.statusLine).left[O#Rslt]
+        -\/(HttpErrorException(res.statusLine))
       }
       else res.entity.as[O#Rslt]
     }
   }
 
+  private[this] def httpRequest[A: UWriter](
+    method: HttpMethod, uri: String, cmd: Command[A], writeBody: Boolean = true
+  ): LawfulTry[HttpRequest] = {
+    def createReq(passport: Option[Passport], entity: Option[LawfulTry[DataBuffer]]) = {
+      val data = entity.getOrElse(LawfulTry.success(DataBuffer.Empty))
+      val baseHeaders = passport.map(pass => Map(authHeader(pass))).getOrElse(Map.empty[String, String])
+      data.map { buff =>
+        val hdrs = {
+          if (!buff.isEmpty) baseHeaders ++ JsonRequestHeaders
+          else baseHeaders
+        }
+        val baseRequest = HttpRequest(method, uri, cmd.timeout, hdrs)
+        if (!buff.isEmpty) baseRequest.copy(entity = buff)
+        else baseRequest
+      }
+    }
+
+    cmd match {
+      case AuthCmd((), _, passport)                   => createReq(Some(passport), None)
+      case AuthCmd(payload, _, passport) if writeBody => createReq(Some(passport), Some(DataBuffer(payload)))
+      case AuthCmd(payload, _, passport)              => createReq(Some(passport), None)
+
+      case AnonCmd((), _)                   => createReq(None, None)
+      case AnonCmd(payload, _) if writeBody => createReq(None, Some(DataBuffer(payload)))
+      case AnonCmd(payload, _)              => createReq(None, None)
+    }
+  }
+
+  @inline private[this] def authHeader(passport: Passport): (String, String) =
+    AuthorizationHeader -> s"Bearer ${passport.token}"
+
   // -- Security
 
   trait HttpSecurityOps extends SecurityOps {
+
     implicit val authenticateOp: AuthenticateOp = new AuthenticateOp {
       override val marshall: Marshall[AnonCmd, Credentials, HttpRequest] = { cmd =>
         val creds = DataBuffer.fromString(s"${cmd.payload.username}:${cmd.payload.password}").toBase64
         val hdrs = Map(AuthorizationHeader -> s"Basic $creds")
-        HttpRequest(HttpMethod.Post, LoginURI, cmd.timeout, headers = hdrs).right[Throwable]
+
+        LawfulTry.success(HttpRequest(HttpMethod.Post, LoginURI, cmd.timeout, headers = hdrs))
       }
 
       override val unmarshall: Unmarshall[HttpResponse, Passport] = { res =>
         if (res.isSuccess) Passport(res.entity.asString())
-        else {
-          if (res.statusCode == 401) InvalidCredentialsException.left[Passport]
-          else HttpErrorException(res.statusLine).left[Passport]
+        else LawfulTry.failed {
+          if (res.statusCode == 401) InvalidCredentialsException
+          else HttpErrorException(res.statusLine)
         }
       }
     }
 
     override implicit val singOutOp: SingOutOp = new SingOutOp {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
-        HttpRequest(HttpMethod.Post, LogoutURI, cmd.timeout, Map(cmd.passport.asHttpHeader)).right[Throwable]
+        LawfulTry.success {
+          HttpRequest(HttpMethod.Post, LogoutURI, cmd.timeout, Map(authHeader(cmd.passport)))
+        }
       }
 
       override val unmarshall: Unmarshall[HttpResponse, Unit] = { res =>
-        if (res.isSuccess) ().right[Throwable]
-        else HttpErrorException(res.statusLine).left[Unit]
+        if (res.isSuccess) LawfulTry.unit
+        else LawfulTry.failed(HttpErrorException(res.statusLine))
       }
     }
   }
@@ -70,8 +117,7 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
     override implicit val clusterStateOp: ClusterStateOp = new JsonUnmarshall[ClusterStateOp] with ClusterStateOp {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
         logger.debug("Retrieving current cluster state...")
-        val hdrs = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Get, ClusterStateURI, cmd.timeout, headers = hdrs).right[Throwable]
+        httpRequest(HttpMethod.Get, ClusterStateURI, cmd)
       }
     }
   }
@@ -79,23 +125,21 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
   // -- Registry
 
   trait HttpRegistryOps extends RegistryOps {
+    import scalaz.std.option._
+
     override implicit val registerJobOp: RegisterJobOp = new JsonUnmarshall[RegisterJobOp] with RegisterJobOp {
       override val marshall: Marshall[AuthCmd, RegisterJob, HttpRequest] = { cmd =>
-        DataBuffer(cmd.payload) map { entity =>
-          val hdrs = JsonRequestHeaders + cmd.passport.asHttpHeader
-          HttpRequest(HttpMethod.Put, JobsURI, cmd.timeout, hdrs, entity)
-        }
+        httpRequest(HttpMethod.Put, JobsURI, cmd)
       }
     }
 
     override implicit val fetchJobOp: FetchJobOp = new JsonUnmarshall[FetchJobOp] with FetchJobOp {
       override val marshall: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
-        val hdrs = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Get, s"$JobsURI/${cmd.payload}", cmd.timeout, hdrs).right[Throwable]
+        httpRequest(HttpMethod.Get, s"$JobsURI/${cmd.payload}", cmd, writeBody = false)
       }
 
       override val unmarshall: Unmarshall[HttpResponse, Option[JobSpec]] = { res =>
-        if (res.statusCode == 404) none[JobSpec].right[Throwable]
+        if (res.statusCode == 404) LawfulTry.success(none[JobSpec])
         else super.unmarshall(res).asInstanceOf[LawfulTry[Option[JobSpec]]]
       }
 
@@ -103,22 +147,19 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
 
     override implicit val fetchJobsOp: FetchJobsOp = new JsonUnmarshall[FetchJobsOp] with FetchJobsOp {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
-        val hdrs = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Get, JobsURI, cmd.timeout, hdrs).right[Throwable]
+        httpRequest(HttpMethod.Get, JobsURI, cmd)
       }
     }
 
     override implicit val enableJobOp: EnableJobOp = new JsonUnmarshall[EnableJobOp] with EnableJobOp {
       override val marshall: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
-        val hdrs = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/enable", cmd.timeout, hdrs).right[Throwable]
+        httpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/enable", cmd, writeBody = false)
       }
     }
 
     override implicit val disableJobOp: DisableJobOp = new JsonUnmarshall[DisableJobOp] with DisableJobOp {
       override val marshall: Marshall[AuthCmd, JobId, HttpRequest] = { cmd =>
-        val hdrs = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/disable", cmd.timeout, hdrs).right[Throwable]
+        httpRequest(HttpMethod.Post, s"$JobsURI/${cmd.payload}/disable", cmd, writeBody = false)
       }
     }
   }
@@ -128,57 +169,53 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
   trait HttpSchedulerOps extends SchedulerOps {
     override implicit val executionPlansOp: ExecutionPlansOp = new JsonUnmarshall[ExecutionPlansOp] with ExecutionPlansOp {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
-        val hdrs = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Get, ExecutionPlansURI, cmd.timeout, hdrs).right[Throwable]
+        httpRequest(HttpMethod.Get, ExecutionPlansURI, cmd)
       }
     }
 
     override implicit val executionPlanOp: ExecutionPlanOp =
       new JsonUnmarshall[ExecutionPlanOp] with ExecutionPlanOp {
+        import scalaz.std.option._
+
         override val marshall: Marshall[AuthCmd, PlanId, HttpRequest] = { cmd =>
-          val hdrs = Map(cmd.passport.asHttpHeader)
-          HttpRequest(HttpMethod.Get, s"$ExecutionPlansURI/${cmd.payload}", cmd.timeout, hdrs).right[Throwable]
+          httpRequest(HttpMethod.Get, s"$ExecutionPlansURI/${cmd.payload}", cmd, writeBody = false)
         }
 
         override val unmarshall: Unmarshall[HttpResponse, Option[ExecutionPlan]] = { res =>
-          if (res.statusCode == 404) none[ExecutionPlan].right[Throwable]
+          if (res.statusCode == 404) LawfulTry.success(none[ExecutionPlan])
           else super.unmarshall(res).asInstanceOf[LawfulTry[Option[ExecutionPlan]]]
         }
       }
 
     override implicit val executionsOp: ExecutionsOp = new JsonUnmarshall[ExecutionsOp] with ExecutionsOp {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] = { cmd =>
-        val hdrs = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Get, TaskExecutionsURI, cmd.timeout, hdrs).right[Throwable]
+        httpRequest(HttpMethod.Get, TaskExecutionsURI, cmd)
       }
     }
 
     override implicit val executionOp: ExecutionOp = new JsonUnmarshall[ExecutionOp] with ExecutionOp {
+      import scalaz.std.option._
+
       override val marshall: Marshall[AuthCmd, TaskId, HttpRequest] = { cmd =>
-        val hdrs = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Get, s"$TaskExecutionsURI/${cmd.payload}", cmd.timeout, hdrs).right[Throwable]
+        httpRequest(HttpMethod.Get, s"$TaskExecutionsURI/${cmd.payload}", cmd, writeBody = false)
       }
 
       override val unmarshall: Unmarshall[HttpResponse, Option[TaskExecution]] = { res =>
-        if (res.statusCode == 404) none[TaskExecution].right[Throwable]
+        if (res.statusCode == 404) LawfulTry.success(none[TaskExecution])
         else super.unmarshall(res).asInstanceOf[LawfulTry[Option[TaskExecution]]]
       }
     }
 
     override implicit val scheduleOp: ScheduleOp = new JsonUnmarshall[ScheduleOp] with ScheduleOp {
       override val marshall: Marshall[AuthCmd, ScheduleJob, HttpRequest] = { cmd =>
-        val hdrs = Map(cmd.passport.asHttpHeader)
-        DataBuffer(cmd.payload).map { data =>
-          HttpRequest(HttpMethod.Put, ExecutionPlansURI, cmd.timeout, hdrs, data)
-        }
+        httpRequest(HttpMethod.Put, ExecutionPlansURI, cmd)
       }
     }
 
     override implicit val cancelPlanOp: CancelPlanOp = new JsonUnmarshall[CancelPlanOp] with CancelPlanOp {
       override val marshall: Marshall[AuthCmd, PlanId, HttpRequest] = { cmd =>
         logger.debug("Cancelling execution plan. planId={}", cmd.payload)
-        val hdrs = Map(cmd.passport.asHttpHeader)
-        HttpRequest(HttpMethod.Delete, s"$ExecutionPlansURI/${cmd.payload}", cmd.timeout, hdrs).right[Throwable]
+        httpRequest(HttpMethod.Delete, s"$ExecutionPlansURI/${cmd.payload}", cmd, writeBody = false)
       }
     }
   }

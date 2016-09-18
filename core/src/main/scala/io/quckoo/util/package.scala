@@ -16,6 +16,10 @@ package object util {
   object LawfulTry {
     def apply[A](thunk: => A): LawfulTry[A] =
       \/.fromTryCatchNonFatal(thunk)
+
+    def unit: LawfulTry[Unit] = \/.right[Throwable, Unit](())
+    def success[A](a: A): LawfulTry[A] = \/.right[Throwable, A](a)
+    def failed[A](ex: Throwable): LawfulTry[A] = \/.left[Throwable, A](ex)
   }
 
   final val lawfulTry2Try = new (LawfulTry ~> Try) {
