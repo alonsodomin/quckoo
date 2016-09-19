@@ -28,11 +28,11 @@ package object http {
   private[http] val SchedulerEventsURI = SchedulerBaseURI + "/events"
 
   final val AuthorizationHeader = "Authorization"
-  private[http] val JsonRequestHeaders = Map(
-    "Content-Type" -> "application/json"
-  )
+  private[http] val JsonContentTypeHeader = "Content-Type" -> "application/json"
 
   @inline private[http] def authHeader(passport: Passport): (String, String) =
     AuthorizationHeader -> s"Bearer ${passport.token}"
+
+  implicit val httpCommands = Http
 
 }

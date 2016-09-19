@@ -17,32 +17,26 @@ trait StubClient { this: Assertions with Matchers =>
     def usingClient(exec: QuckooClientV2[P] => Future[Assertion]) = exec(client)
   }
 
-  final class RequestClause[P <: Protocol, Req, Res](transport: TestTransport[P], matcher: Matcher[Req]) {
-    def replyWith(process: Req => LawfulTry[Res]): ClientRunner[P] = {
-      val handleRequest: Req => LawfulTry[Res] = { req =>
+  final class RequestClause[P <: Protocol](matcher: Matcher[P#Request])(implicit commands: AllProtocolCmds[P]) {
+    def replyWith(process: P#Request => LawfulTry[P#Response]): ClientRunner[P] = {
+      val handleRequest: P#Request => LawfulTry[P#Response] = { req =>
         OutcomeOf.outcomeOf(req should matcher) match {
           case Succeeded => process(req)
           case Exceptional(ex) => throw ex
         }
       }
 
-      implicit val liftedTransport = transport.lift(
-        // Ugly but safe cast
-        handleRequest.asInstanceOf[transport.protocol.Request => LawfulTry[transport.protocol.Response]]
-      )
+      implicit val transport = new TestTransport[P](handleRequest)
+      implicit val driver = Driver[P]
+
       new ClientRunner(QuckooClientV2[P])
     }
   }
 
-  final class InProtocolClause[P <: Protocol](protocol: P) {
-    val transport = new TestTransport[P](protocol)
-
-    def ensuringRequest(
-      matcher: Matcher[transport.protocol.Request]
-    ): RequestClause[P, transport.protocol.Request, transport.protocol.Response] =
-      new RequestClause[P, transport.protocol.Request, transport.protocol.Response](transport, matcher)
+  final class InProtocolClause[P <: Protocol](implicit commands: AllProtocolCmds[P]) {
+    def ensuringRequest(matcher: Matcher[P#Request]) = new RequestClause[P](matcher)
   }
 
-  final def inProtocol[P <: Protocol](protocol: P) = new InProtocolClause(protocol)
+  final def inProtocol[P <: Protocol](implicit commands: AllProtocolCmds[P]) = new InProtocolClause
 
 }

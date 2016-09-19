@@ -1,7 +1,7 @@
 package io.quckoo.client.http
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{Http => AkkaHttp}
 import akka.http.scaladsl.model.{HttpMethods, HttpMethod => AkkaHttpMethod, HttpRequest => AkkaHttpRequest, HttpResponse => AkkaHttpResponse}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
@@ -15,10 +15,13 @@ import scalaz.Kleisli
 /**
   * Created by alonsodomin on 11/09/2016.
   */
-final class AkkaHttpTransport private[http](host: String, port: Int = 80)(implicit val actorSystem: ActorSystem) extends HttpTransport {
+final class AkkaHttpTransport private[http](host: String, port: Int = 80)
+                                           (implicit val actorSystem: ActorSystem)
+  extends HttpTransport {
+
   implicit val materializer = ActorMaterializer(ActorMaterializerSettings(actorSystem), "quckoo-http")
 
-  val connection = Http().outgoingConnection(host, port)
+  val connection = AkkaHttp().outgoingConnection(host, port)
 
   override def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
     def method: AkkaHttpMethod = req.method match {

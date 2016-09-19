@@ -31,26 +31,30 @@ trait HttpRequestMatchers extends Matchers {
       )
   }
 
-  def hasAuthHeader(username: String, password: String): Matcher[HttpRequest] = new Matcher[HttpRequest] {
+  def hasHeader(name: String, value: String): Matcher[HttpRequest] = new Matcher[HttpRequest] {
     override def apply(req: HttpRequest): MatchResult = {
-      val creds = DataBuffer.fromString(s"$username:$password").toBase64
+      val currValue = req.headers.get(name)
       MatchResult(
-        req.headers.get(AuthorizationHeader).contains(s"Basic $creds"),
-        s"no '$AuthorizationHeader' header for '$username' with password '$password' was found in the request",
-        s"'$AuthorizationHeader' header has the expected value"
+        currValue.contains(value),
+        if (currValue.isDefined) {
+          s"header '$name' with value '${currValue.get} did not match value '$value'"
+        } else {
+          s"no '$name' header found in the request"
+        },
+        s"header '$name' has the correct value"
       )
     }
   }
 
-  def hasPassport(passport: Passport): Matcher[HttpRequest] = new Matcher[HttpRequest] {
-    override def apply(req: HttpRequest): MatchResult = {
-      MatchResult(
-        req.headers.get(AuthorizationHeader).contains(s"Bearer ${passport.token}"),
-        s"no '$AuthorizationHeader' header with passport '${passport.token}' was found in the request",
-        s"'$AuthorizationHeader' header has the expected value"
-      )
-    }
+  val isJsonRequest: Matcher[HttpRequest] = hasHeader("Content-Type", "application/json")
+
+  def hasAuth(username: String, password: String): Matcher[HttpRequest] = {
+    val creds = DataBuffer.fromString(s"$username:$password").toBase64
+    hasHeader(AuthorizationHeader, s"Basic $creds")
   }
+
+  def hasPassport(passport: Passport): Matcher[HttpRequest] =
+    hasHeader(AuthorizationHeader, s"Bearer ${passport.token}")
 
   val hasEmptyBody: Matcher[HttpRequest] = new Matcher[HttpRequest] {
     override def apply(req: HttpRequest): MatchResult = {
