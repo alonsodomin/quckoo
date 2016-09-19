@@ -32,4 +32,7 @@ package object http {
     "Content-Type" -> "application/json"
   )
 
+  @inline private[http] def authHeader(passport: Passport): (String, String) =
+    AuthorizationHeader -> s"Bearer ${passport.token}"
+
 }

@@ -1,23 +1,19 @@
 package io.quckoo.client.core
 
-import io.quckoo.util.LawfulTry
-
-import scalaz.Kleisli
-
 /**
   * Created by alonsodomin on 18/09/2016.
   */
-trait Marshalling[P <: Protocol] {
+trait ProtocolOp[P <: Protocol] {
   type Cmd[_] <: Command[_]
   type In
   type Rslt
 
-  val marshall: Kleisli[LawfulTry, Cmd[In], P#Request]
+  val marshall: Marshall[Cmd, In, P#Request]
   val unmarshall: Unmarshall[P#Response, Rslt]
 }
 
-object Marshalling {
-  trait Aux[P <: Protocol, Cmd0[_] <: Command[_], In0, Rslt0] extends Marshalling[P] {
+object ProtocolOp {
+  trait Aux[P <: Protocol, Cmd0[_] <: Command[_], In0, Rslt0] extends ProtocolOp[P] {
     type Cmd[X] = Cmd0[X]
     type In = In0
     type Rslt = Rslt0
@@ -27,7 +23,7 @@ object Marshalling {
   trait AuthOp[P <: Protocol, In, Rslt] extends Aux[P, AuthCmd, In, Rslt]
 
   implicit def apply[P <: Protocol, Cmd0[_] <: Command[_], In0, Rslt0](
-    implicit req: Marshall[Cmd0, In0, P#Request], res: Unmarshall[P#Response, Rslt0]): Marshalling.Aux[P, Cmd0, In0, Rslt0] =
+    implicit req: Marshall[Cmd0, In0, P#Request], res: Unmarshall[P#Response, Rslt0]): ProtocolOp.Aux[P, Cmd0, In0, Rslt0] =
     new Aux[P, Cmd0, In0, Rslt0] {
       override val marshall = req
       override val unmarshall = res

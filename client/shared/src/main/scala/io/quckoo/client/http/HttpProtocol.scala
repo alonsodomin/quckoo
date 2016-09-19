@@ -15,6 +15,7 @@ import io.quckoo.util.LawfulTry
 import slogging.LazyLogging
 
 import scalaz._
+import scalaz.std.option._
 
 /**
   * Created by alonsodomin on 17/09/2016.
@@ -23,7 +24,7 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
   type Request = HttpRequest
   type Response = HttpResponse
 
-  def jsonMarshall[O <: Op](
+  private def jsonMarshall[O <: Op](
     method: HttpMethod, uriFor: O#Cmd[O#In] => String, writeBody: Boolean = true)(
     implicit encoder: UWriter[O#In]
   ): Marshall[O#Cmd, O#In, HttpRequest] = Marshall[O#Cmd, O#In, HttpRequest] { cmd =>
@@ -42,11 +43,15 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
     }
 
     cmd match {
-      case AuthCmd(_, _, passport) if !writeBody => createReq(Some(passport), None)
-      case AuthCmd(payload, _, passport)   => createReq(Some(passport), Some(DataBuffer(payload.asInstanceOf[O#In])))
+      case AuthCmd(_, _, passport) if !writeBody =>
+        createReq(Some(passport), None)
+      case AuthCmd(payload, _, passport) =>
+        createReq(Some(passport), Some(DataBuffer(payload.asInstanceOf[O#In])))
 
-      case AnonCmd(_, _) if !writeBody => createReq(None, None)
-      case AnonCmd(payload, _)   => createReq(None, Some(DataBuffer(payload.asInstanceOf[O#In])))
+      case AnonCmd(_, _) if !writeBody =>
+        createReq(None, None)
+      case AnonCmd(payload, _) =>
+        createReq(None, Some(DataBuffer(payload.asInstanceOf[O#In])))
     }
   }
 
@@ -58,16 +63,8 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
   }
 
   private[this] abstract class JsonUnmarshall[O <: Op](implicit decoder: UReader[O#Rslt]) {
-    val unmarshall: Unmarshall[HttpResponse, O#Rslt] = Unmarshall { res =>
-      if (res.isFailure && res.entity.isEmpty) {
-        -\/(HttpErrorException(res.statusLine))
-      }
-      else res.entity.as[O#Rslt]
-    }
+    val unmarshall = jsonUnmarshall[O](decoder)
   }
-
-  @inline private[this] def authHeader(passport: Passport): (String, String) =
-    AuthorizationHeader -> s"Bearer ${passport.token}"
 
   // -- Security
 
@@ -109,35 +106,38 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
   trait HttpClusterOps extends ClusterOps {
     override implicit val clusterStateOp: ClusterStateOp = new JsonUnmarshall[ClusterStateOp] with ClusterStateOp {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] =
-        jsonMarshall[ClusterStateOp](HttpMethod.Get, _ => ClusterStateURI)
-
+        jsonMarshall[ClusterStateOp](HttpMethod.Get, _ => ClusterStateURI, writeBody = false)
     }
   }
 
   // -- Registry
 
   trait HttpRegistryOps extends RegistryOps {
-    import scalaz.std.option._
 
     override implicit val registerJobOp: RegisterJobOp = new JsonUnmarshall[RegisterJobOp] with RegisterJobOp {
       override val marshall: Marshall[AuthCmd, RegisterJob, HttpRequest] =
         jsonMarshall[RegisterJobOp](HttpMethod.Put, _ => JobsURI)
     }
 
-    override implicit val fetchJobOp: FetchJobOp = new JsonUnmarshall[FetchJobOp] with FetchJobOp {
+    override implicit val fetchJobOp: FetchJobOp = new FetchJobOp {
       override val marshall: Marshall[AuthCmd, JobId, HttpRequest] =
         jsonMarshall[FetchJobOp](HttpMethod.Get, cmd => s"$JobsURI/${cmd.payload}", writeBody = false)
 
       override val unmarshall: Unmarshall[HttpResponse, Option[JobSpec]] = Unmarshall { res =>
         if (res.statusCode == 404) LawfulTry.success(none[JobSpec])
-        else super.unmarshall(res).asInstanceOf[LawfulTry[Option[JobSpec]]]
+        else jsonUnmarshall[FetchJobOp].run(res)
       }
+
+      /*override val unmarshall: Unmarshall[HttpResponse, Option[JobSpec]] = Unmarshall { res =>
+        if (res.statusCode == 404) LawfulTry.success(none[JobSpec])
+        else super.unmarshall(res).asInstanceOf[LawfulTry[Option[JobSpec]]]
+      }*/
 
     }
 
     override implicit val fetchJobsOp: FetchJobsOp = new JsonUnmarshall[FetchJobsOp] with FetchJobsOp {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] =
-        jsonMarshall[FetchJobsOp](HttpMethod.Get, _ => JobsURI)
+        jsonMarshall[FetchJobsOp](HttpMethod.Get, _ => JobsURI, writeBody = false)
     }
 
     override implicit val enableJobOp: EnableJobOp = new JsonUnmarshall[EnableJobOp] with EnableJobOp {
@@ -156,12 +156,11 @@ sealed trait HttpProtocol extends Protocol with LazyLogging {
   trait HttpSchedulerOps extends SchedulerOps {
     override implicit val executionPlansOp: ExecutionPlansOp = new JsonUnmarshall[ExecutionPlansOp] with ExecutionPlansOp {
       override val marshall: Marshall[AuthCmd, Unit, HttpRequest] =
-        jsonMarshall[ExecutionPlansOp](HttpMethod.Get, _ => ExecutionPlansURI)
+        jsonMarshall[ExecutionPlansOp](HttpMethod.Get, _ => ExecutionPlansURI, writeBody = false)
     }
 
     override implicit val executionPlanOp: ExecutionPlanOp =
       new JsonUnmarshall[ExecutionPlanOp] with ExecutionPlanOp {
-        import scalaz.std.option._
 
         override val marshall: Marshall[AuthCmd, PlanId, HttpRequest] =
           jsonMarshall[ExecutionPlanOp](HttpMethod.Get, cmd => s"$ExecutionPlansURI/${cmd.payload}", writeBody = false)
