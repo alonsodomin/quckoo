@@ -17,6 +17,7 @@ object Dependencies {
     val scalaCheck = "1.13.2"
     val scalaMock  = "3.2.2"
     val mockito    = "1.10.19"
+    val mockserver = "3.10.4"
 
     // Akka ----------
 
@@ -110,9 +111,10 @@ object Dependencies {
 
     val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.1"
 
-    val scalaTest  = "org.scalatest"  %% "scalatest"      % version.scalaTest
-    val scalaMock  = "org.scalamock"  %% "scalamock-core" % version.scalaMock
-    val mockito    = "org.mockito"     % "mockito-core"   % version.mockito
+    val scalaTest  = "org.scalatest"   %% "scalatest"              % version.scalaTest
+    val scalaMock  = "org.scalamock"   %% "scalamock-core"         % version.scalaMock
+    val mockito    = "org.mockito"      % "mockito-core"           % version.mockito
+    val mockserver = "org.mock-server"  % "mockserver-client-java" % version.mockserver
   }
 
   object compiler {
@@ -174,7 +176,8 @@ object Dependencies {
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
-      Akka.kryoSerialization, Akka.http
+      Akka.kryoSerialization, Akka.http,
+      mockserver % Test
     )
   }
 
