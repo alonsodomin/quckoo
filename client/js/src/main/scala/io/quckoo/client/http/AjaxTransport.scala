@@ -40,10 +40,11 @@ private[http] object AjaxTransport extends HttpTransport {
     domReq.timeout = timeout
     domReq.withCredentials = false
     req.headers.foreach(x => domReq.setRequestHeader(x._1, x._2))
+
     if (req.entity.isEmpty)
       domReq.send()
     else
-      domReq.send(InputData.byteBuffer2ajax(req.entity))
+      domReq.send(InputData.byteBuffer2ajax(req.entity.toByteBuffer))
 
     promise.future
   }

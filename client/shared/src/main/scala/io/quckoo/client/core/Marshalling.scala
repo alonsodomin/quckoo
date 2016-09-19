@@ -1,5 +1,9 @@
 package io.quckoo.client.core
 
+import io.quckoo.util.LawfulTry
+
+import scalaz.Kleisli
+
 /**
   * Created by alonsodomin on 18/09/2016.
   */
@@ -8,7 +12,7 @@ trait Marshalling[P <: Protocol] {
   type In
   type Rslt
 
-  val marshall: Marshall[Cmd, In, P#Request]
+  val marshall: Kleisli[LawfulTry, Cmd[In], P#Request]
   val unmarshall: Unmarshall[P#Response, Rslt]
 }
 

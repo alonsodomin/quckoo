@@ -16,8 +16,8 @@ class Driver[P <: Protocol](private[client] val transport: Transport.For[P]) {
   private[client] val ops = transport.protocol.ops
 
   final def invoke[O <: Op](implicit ec: ExecutionContext, op: O): Kleisli[Future, op.Cmd[op.In], op.Rslt] = {
-    def encodeRequest  = Kleisli(op.marshall).transform(lawfulTry2Future)
-    def decodeResponse = Kleisli(op.unmarshall).transform(lawfulTry2Future)
+    def encodeRequest  = op.marshall.transform(lawfulTry2Future)
+    def decodeResponse = op.unmarshall.transform(lawfulTry2Future)
 
     encodeRequest >=> transport.send >=> decodeResponse
   }
