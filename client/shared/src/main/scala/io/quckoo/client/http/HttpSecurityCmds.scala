@@ -10,7 +10,8 @@ import io.quckoo.util.LawfulTry
   * Created by alonsodomin on 19/09/2016.
   */
 trait HttpSecurityCmds extends SecurityCmds[HttpProtocol] {
-  override implicit def authenticateOp = new Anon[HttpProtocol, Credentials, Passport] {
+
+  implicit lazy val authenticateCmd: AuthenticateCmd = new Anon[HttpProtocol, Credentials, Passport] {
 
     override val marshall = Marshall[AnonCmd, Credentials, HttpRequest] { cmd =>
       val creds = DataBuffer.fromString(s"${cmd.payload.username}:${cmd.payload.password}").toBase64
@@ -28,7 +29,22 @@ trait HttpSecurityCmds extends SecurityCmds[HttpProtocol] {
     }
   }
 
-  override implicit def signOutOp = new Auth[HttpProtocol, Unit, Unit] {
+  implicit lazy val refreshTokenCmd: RefreshTokenCmd = new Auth[HttpProtocol, Unit, Passport] {
+    override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
+      LawfulTry.success {
+        HttpRequest(HttpMethod.Post, AuthRefreshURI, cmd.timeout, Map(authHeader(cmd.passport)))
+      }
+    }
+    override val unmarshall = Unmarshall[HttpResponse, Passport] { res =>
+      if (res.isSuccess) Passport(res.entity.asString())
+      else LawfulTry.fail {
+        if (res.statusCode == 401) InvalidCredentialsException
+        else HttpErrorException(res.statusLine)
+      }
+    }
+  }
+
+  implicit lazy val signOutCmd: SingOutCmd = new Auth[HttpProtocol, Unit, Unit] {
     override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
       LawfulTry.success {
         HttpRequest(HttpMethod.Post, LogoutURI, cmd.timeout, Map(authHeader(cmd.passport)))

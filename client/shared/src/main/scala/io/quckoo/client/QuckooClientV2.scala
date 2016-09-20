@@ -33,14 +33,20 @@ final class QuckooClientV2[P <: Protocol] private[client] (driver: Driver[P]) {
     ec: ExecutionContext, timeout: Duration
   ): Future[Passport] = {
     val cmd = AnonCmd(Credentials(username, password), timeout)
-    driver.invoke[AuthenticateOp].run(cmd)
+    driver.invoke[AuthenticateCmd].run(cmd)
   }
+
+  def refreshToken(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Passport] =
+    driver.invoke[RefreshTokenCmd].run(AuthCmd((), timeout, passport))
 
   def signOut(
     implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport
   ): Future[Unit] =
-    driver.invoke[SingOutOp].run(AuthCmd((), timeout, passport))
+    driver.invoke[SingOutCmd].run(AuthCmd((), timeout, passport))
 
   // -- Cluster
 

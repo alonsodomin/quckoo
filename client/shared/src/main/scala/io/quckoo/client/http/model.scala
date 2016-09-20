@@ -33,3 +33,5 @@ final case class HttpResponse(statusCode: Int, statusLine: String, entity: DataB
   def isSuccess: Boolean = !isFailure
 }
 final case class HttpErrorException(statusLine: String) extends Exception(statusLine)
+
+final case class HttpServerSentEvent(data: DataBuffer)

@@ -17,7 +17,7 @@ trait StubClient { this: Assertions with Matchers =>
     def usingClient(exec: QuckooClientV2[P] => Future[Assertion]) = exec(client)
   }
 
-  final class RequestClause[P <: Protocol](matcher: Matcher[P#Request])(implicit commands: AllProtocolCmds[P]) {
+  final class RequestClause[P <: Protocol](matcher: Matcher[P#Request])(implicit commands: ProtocolSpecs[P]) {
     def replyWith(process: P#Request => LawfulTry[P#Response]): ClientRunner[P] = {
       val handleRequest: P#Request => LawfulTry[P#Response] = { req =>
         OutcomeOf.outcomeOf(req should matcher) match {
@@ -33,10 +33,10 @@ trait StubClient { this: Assertions with Matchers =>
     }
   }
 
-  final class InProtocolClause[P <: Protocol](implicit commands: AllProtocolCmds[P]) {
+  final class InProtocolClause[P <: Protocol](implicit commands: ProtocolSpecs[P]) {
     def ensuringRequest(matcher: Matcher[P#Request]) = new RequestClause[P](matcher)
   }
 
-  final def inProtocol[P <: Protocol](implicit commands: AllProtocolCmds[P]) = new InProtocolClause
+  final def inProtocol[P <: Protocol](implicit commands: ProtocolSpecs[P]) = new InProtocolClause
 
 }

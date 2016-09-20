@@ -16,6 +16,10 @@
 
 package io.quckoo.client.ajax
 
+import upickle.default.{Reader => UReader}
+
+import io.quckoo.serialization.json.JsonReader
+
 import monix.execution.Cancelable
 import monix.execution.cancelables.RefCountCancelable
 import monix.reactive.observers.Subscriber
@@ -25,12 +29,10 @@ import org.scalajs.dom.raw.{Event, EventSource, MessageEvent}
 
 import slogging.LazyLogging
 
-import upickle.default._
-
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-private[ajax] class EventSourceObservable[A: Reader] private (url: String, eventType: String)
+private[ajax] class EventSourceObservable[A] private (url: String, eventType: String, reader: JsonReader[A])
     extends (Subscriber.Sync[A] => Cancelable) with LazyLogging {
 
   val source = new EventSource(url)
@@ -49,9 +51,9 @@ private[ajax] class EventSourceObservable[A: Reader] private (url: String, event
     }
 
     source.addEventListener[MessageEvent](eventType, (message: MessageEvent) => {
-      val event = read[A](message.data.toString)
-      subscriber.onNext(event)
-      ()
+      reader(message.data.toString) foreach { event =>
+        subscriber.onNext(event)
+      }
     })
 
     cancelable
@@ -63,7 +65,7 @@ private[ajax] class EventSourceObservable[A: Reader] private (url: String, event
 
 private[ajax] object EventSourceObservable {
 
-  def apply[A: Reader](url: String, eventType: String): Observable[A] =
-    Observable.create[A](OverflowStrategy.DropOld(20))(new EventSourceObservable[A](url, eventType))
+  def apply[A: UReader](url: String, eventType: String): Observable[A] =
+    Observable.create[A](OverflowStrategy.DropOld(20))(new EventSourceObservable[A](url, eventType, JsonReader[A]))
 
 }

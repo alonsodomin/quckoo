@@ -8,4 +8,5 @@ import io.quckoo.client.core.Protocol
 trait HttpProtocol extends Protocol {
   type Request = HttpRequest
   type Response = HttpResponse
+  type EventType = HttpServerSentEvent
 }

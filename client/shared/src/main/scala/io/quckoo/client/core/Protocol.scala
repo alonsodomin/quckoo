@@ -6,4 +6,5 @@ package io.quckoo.client.core
 trait Protocol {
   type Request
   type Response
+  type EventType
 }

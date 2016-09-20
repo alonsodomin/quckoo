@@ -1,13 +1,13 @@
 package io.quckoo.client.http
 
+import io.quckoo.client.core.Channel
 import io.quckoo.serialization.DataBuffer
-
+import monix.reactive.Observable
 import org.scalajs.dom
 import org.scalajs.dom.ext.Ajax.InputData
 
 import scala.concurrent.{Future, Promise}
 import scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
-
 import scalaz.Kleisli
 
 /**
@@ -16,6 +16,8 @@ import scalaz.Kleisli
 private[http] object AjaxBackend extends HttpBackend {
 
   final val ResponseType = "arraybuffer"
+
+  override def subscribe[Ch <: Channel[Http]]: Kleisli[Observable, String, Ch#Event] = super.subscribe
 
   def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
     val timeout = {

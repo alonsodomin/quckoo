@@ -6,9 +6,11 @@ import io.quckoo.auth.{Credentials, Passport}
   * Created by alonsodomin on 19/09/2016.
   */
 trait SecurityCmds[P <: Protocol] {
-  type AuthenticateOp = CmdMarshalling.Anon[P, Credentials, Passport]
-  type SingOutOp      = CmdMarshalling.Auth[P, Unit, Unit]
+  type AuthenticateCmd = CmdMarshalling.Anon[P, Credentials, Passport]
+  type RefreshTokenCmd = CmdMarshalling.Auth[P, Unit, Passport]
+  type SingOutCmd      = CmdMarshalling.Auth[P, Unit, Unit]
 
-  implicit def authenticateOp: AuthenticateOp
-  implicit def signOutOp: SingOutOp
+  implicit def authenticateCmd: AuthenticateCmd
+  implicit def refreshTokenCmd: RefreshTokenCmd
+  implicit def signOutCmd: SingOutCmd
 }

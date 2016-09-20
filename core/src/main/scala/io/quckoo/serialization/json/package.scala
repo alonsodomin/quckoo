@@ -26,22 +26,16 @@ import scalaz.ReaderT
   * Created by alonsodomin on 11/08/2016.
   */
 package object json extends ScalazJson with JavaTime with Cron4s {
-  type JsonReaderT[A] = ReaderT[LawfulTry, String, A]
-  type JsonWriterT[A] = ReaderT[LawfulTry, A, String]
+  type JsonReader[A] = ReaderT[LawfulTry, String, A]
+  type JsonWriter[A] = ReaderT[LawfulTry, A, String]
 
-  object JsonReaderT {
-    def apply[A: UReader]: JsonReaderT[A] = {
-      def doRead(str: String): LawfulTry[A] =
-        LawfulTry[A](read[A](str))
-      ReaderT[LawfulTry, String, A](doRead)
-    }
+  object JsonReader {
+    def apply[A: UReader]: JsonReader[A] =
+      ReaderT[LawfulTry, String, A](str => LawfulTry(read[A](str)))
   }
 
-  object JsonWriterT {
-    def apply[A: UWriter]: JsonWriterT[A] = {
-      def doWrite(a: A): LawfulTry[String] =
-        LawfulTry[String](write[A](a))
-      ReaderT[LawfulTry, A, String](doWrite)
-    }
+  object JsonWriter {
+    def apply[A: UWriter]: JsonWriter[A] =
+      ReaderT[LawfulTry, A, String](a => LawfulTry[String](write[A](a)))
   }
 }
