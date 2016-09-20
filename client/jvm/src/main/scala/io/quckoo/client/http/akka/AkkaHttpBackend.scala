@@ -1,18 +1,24 @@
-package io.quckoo.client.http
+package io.quckoo.client.http.akka
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpHeader.ParsingResult
-import akka.http.scaladsl.{Http => AkkaHttp}
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpHeader, HttpMethods, HttpMethod => AkkaHttpMethod, HttpRequest => AkkaHttpRequest, HttpResponse => AkkaHttpResponse}
+import akka.http.scaladsl.{Http => AkkaHttp}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.util.ByteString
+
+import de.heikoseeberger.akkasse.ServerSentEvent
+import de.heikoseeberger.akkasse.pattern.ServerSentEventClient
+
 import io.quckoo.client.core.Channel
+import io.quckoo.client.http.{HttpMethod, HttpRequest, HttpResponse, _}
 import io.quckoo.serialization.DataBuffer
+
 import monix.reactive.Observable
 
-import scala.concurrent.Future
 import scala.collection.immutable
+import scala.concurrent.Future
 import scalaz.Kleisli
 
 /**
@@ -26,7 +32,16 @@ final class AkkaHttpBackend private[http](host: String, port: Int = 80)
 
   val connection = AkkaHttp().outgoingConnection(host, port)
 
-  override def open[Ch <: Channel[Http]](channel: Ch): Kleisli[Observable, Unit, HttpServerSentEvent] = ???
+  override def open[Ch <: Channel[Http]](channel: Ch) = Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
+    import actorSystem.dispatcher
+
+    val publisherSink = Sink.asPublisher[ServerSentEvent](fanout = true)
+
+    val publisher = ServerSentEventClient(EventsURI, publisherSink, AkkaHttp().singleRequest(_)).runWith(Sink.head)
+    Observable.fromFuture(publisher).flatMap(Observable.fromReactivePublisher).map { sse =>
+      HttpServerSentEvent(DataBuffer.fromString(sse.data))
+    }
+  }
 
   override def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
     def method: AkkaHttpMethod = req.method match {

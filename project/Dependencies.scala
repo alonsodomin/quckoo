@@ -176,7 +176,7 @@ object Dependencies {
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
-      Akka.kryoSerialization, Akka.http,
+      Akka.kryoSerialization, Akka.http, Akka.sse,
       mockserver % Test
     )
   }

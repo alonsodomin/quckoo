@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package io.quckoo.client.http
+package io.quckoo.client.http.dom
 
+import io.quckoo.client.http.HttpServerSentEvent
 import io.quckoo.serialization.DataBuffer
 
 import monix.execution.Cancelable
@@ -30,7 +31,7 @@ import slogging.LazyLogging
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-private[http] class EventSourceSubscriber private(url: String, eventType: String)
+private[dom] class EventSourceSubscriber(url: String, eventType: String)
     extends (Subscriber.Sync[HttpServerSentEvent] => Cancelable) with LazyLogging {
 
   val source = new EventSource(url)

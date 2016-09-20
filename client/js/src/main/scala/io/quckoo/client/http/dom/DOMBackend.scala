@@ -1,13 +1,15 @@
-package io.quckoo.client.http
+package io.quckoo.client.http.dom
 
 import io.quckoo.client.core.Channel
+import io.quckoo.client.http.{HttpRequest, HttpResponse, dom, _}
 import io.quckoo.serialization.DataBuffer
 import monix.reactive.{Observable, OverflowStrategy}
-import org.scalajs.dom
+
+import org.scalajs.dom.{XMLHttpRequest, Event => DOMEvent}
 import org.scalajs.dom.ext.Ajax.InputData
 
 import scala.concurrent.{Future, Promise}
-import scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
+import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import scalaz.Kleisli
 
 /**
@@ -29,10 +31,10 @@ private[http] object DOMBackend extends HttpBackend {
       else 0
     }
 
-    val domReq = new dom.XMLHttpRequest()
+    val domReq = new XMLHttpRequest()
     val promise = Promise[HttpResponse]()
 
-    domReq.onreadystatechange = { (e: dom.Event) =>
+    domReq.onreadystatechange = { (e: DOMEvent) =>
       if (domReq.readyState == 4) {
         val entityData = DataBuffer(TypedArrayBuffer.wrap(domReq.response.asInstanceOf[ArrayBuffer]))
         val response = HttpResponse(domReq.status, domReq.statusText, entityData)
