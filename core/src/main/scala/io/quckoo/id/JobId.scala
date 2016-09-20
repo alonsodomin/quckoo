@@ -48,7 +48,7 @@ object JobId {
   // Upickle encoders
 
   implicit val jobIdW: JsonWriter[JobId] = JsonWriter[JobId] {
-    jobId => writeJs[UUID](jobId.id)
+    jobId => implicitly[JsonWriter[UUID]].write(jobId.id)
   }
   implicit val jobIdR: JsonReader[JobId] = JsonReader[JobId] {
     implicitly[JsonReader[UUID]].read andThen JobId.apply

@@ -63,7 +63,7 @@ object DataBuffer {
     JsonWriterT[A].map(str => fromString(str, charset)).run(a)
 
   def apply(buffer: ByteBuffer): DataBuffer =
-    new DataBuffer(buffer)
+    new DataBuffer(buffer.asReadOnlyBuffer())
 
   def apply(bytes: Array[Byte]): DataBuffer =
     apply(ByteBuffer.wrap(bytes))
