@@ -32,13 +32,13 @@ trait HttpSecurityCmds extends SecurityCmds[HttpProtocol] {
     override val unmarshall = unmarshallPassport[AuthenticateCmd]
   }
 
-  implicit lazy val refreshTokenCmd: RefreshTokenCmd = new Auth[HttpProtocol, Unit, Passport] {
+  implicit lazy val refreshPassportCmd: RefreshPassportCmd = new Auth[HttpProtocol, Unit, Passport] {
     override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
       LawfulTry.success {
         HttpRequest(HttpMethod.Post, AuthRefreshURI, cmd.timeout, Map(authHeader(cmd.passport)))
       }
     }
-    override val unmarshall = unmarshallPassport[RefreshTokenCmd]
+    override val unmarshall = unmarshallPassport[RefreshPassportCmd]
   }
 
   implicit lazy val signOutCmd: SingOutCmd = new Auth[HttpProtocol, Unit, Unit] {

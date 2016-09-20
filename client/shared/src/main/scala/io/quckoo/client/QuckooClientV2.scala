@@ -36,11 +36,11 @@ final class QuckooClientV2[P <: Protocol] private[client] (driver: Driver[P]) {
     driver.invoke[AuthenticateCmd].run(cmd)
   }
 
-  def refreshToken(
+  def refreshPassport(
     implicit
     ec: ExecutionContext, timeout: Duration, passport: Passport
   ): Future[Passport] =
-    driver.invoke[RefreshTokenCmd].run(AuthCmd((), timeout, passport))
+    driver.invoke[RefreshPassportCmd].run(AuthCmd((), timeout, passport))
 
   def signOut(
     implicit

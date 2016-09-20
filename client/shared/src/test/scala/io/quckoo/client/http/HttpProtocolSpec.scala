@@ -71,11 +71,13 @@ object HttpProtocolSpec {
 
   object uris {
     private[this] final val BaseURI = "/api"
+    private[this] final val AuthURI = s"$BaseURI/auth"
     private[this] final val RegistryURI = s"$BaseURI/registry"
     private[this] final val SchedulerURI = s"$BaseURI/scheduler"
 
-    val login = s"$BaseURI/auth/login"
-    val logout = s"$BaseURI/auth/logout"
+    val login = s"$AuthURI/login"
+    val refreshPass = s"$AuthURI/refresh"
+    val logout = s"$AuthURI/logout"
 
     val cluster = s"$BaseURI/cluster"
 
@@ -131,6 +133,41 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       HttpError(500, "TEST AUTH ERROR")
     } usingClient { client =>
       recoverToSucceededIf[HttpErrorException](client.authenticate("foo", "bar"))
+    }
+  }
+
+  // -- Refresh token requests
+
+  val isRefreshPassport = hasMethod(HttpMethod.Post) and
+    hasUrl(uris.refreshPass) and
+    hasPassport(TestPassport) and
+    hasEmptyBody
+
+  "refreshPassport" should "return a new passport" in {
+    val expectedPassport = new Passport(Map.empty, Map.empty, DataBuffer.fromString("bar"))
+
+    inProtocol[HttpProtocol] ensuringRequest isRefreshPassport replyWith { _ =>
+      HttpSuccess(DataBuffer.fromString(expectedPassport.token))
+    } usingClient { client =>
+      client.refreshPassport.map { returnedPass =>
+        returnedPass shouldBe expectedPassport
+      }
+    }
+  }
+
+  it should "result in invalid credentials if result code is 401" in {
+    inProtocol[HttpProtocol] ensuringRequest isRefreshPassport replyWith { _ =>
+      HttpError(401, "TEST AUTH ERROR")
+    } usingClient { client =>
+      recoverToSucceededIf[InvalidCredentialsException.type](client.refreshPassport)
+    }
+  }
+
+  it should "result in an HTTP error if result code is not 401" in {
+    inProtocol[HttpProtocol] ensuringRequest isRefreshPassport replyWith { _ =>
+      HttpError(500, "TEST AUTH ERROR")
+    } usingClient { client =>
+      recoverToSucceededIf[HttpErrorException](client.refreshPassport)
     }
   }
 
