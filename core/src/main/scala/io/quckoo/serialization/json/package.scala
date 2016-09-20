@@ -30,12 +30,12 @@ package object json extends ScalazJson with JavaTime with Cron4s {
   type JsonWriter[A] = ReaderT[LawfulTry, A, String]
 
   object JsonReader {
-    def apply[A: UReader]: JsonReader[A] =
+    @inline def apply[A: UReader]: JsonReader[A] =
       ReaderT[LawfulTry, String, A](str => LawfulTry(read[A](str)))
   }
 
   object JsonWriter {
-    def apply[A: UWriter]: JsonWriter[A] =
+    @inline def apply[A: UWriter]: JsonWriter[A] =
       ReaderT[LawfulTry, A, String](a => LawfulTry[String](write[A](a)))
   }
 }
