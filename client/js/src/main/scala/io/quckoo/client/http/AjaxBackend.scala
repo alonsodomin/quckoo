@@ -13,7 +13,7 @@ import scalaz.Kleisli
 /**
   * Created by alonsodomin on 09/09/2016.
   */
-private[http] object AjaxTransport extends HttpTransport {
+private[http] object AjaxBackend extends HttpBackend {
 
   final val ResponseType = "arraybuffer"
 

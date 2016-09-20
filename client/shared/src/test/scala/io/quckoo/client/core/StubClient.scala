@@ -26,7 +26,7 @@ trait StubClient { this: Assertions with Matchers =>
         }
       }
 
-      implicit val transport = new TestTransport[P](handleRequest)
+      implicit val transport = new TestDriverBackend[P](handleRequest)
       implicit val driver = Driver[P]
 
       new ClientRunner(QuckooClientV2[P])

@@ -18,16 +18,16 @@ import scala.concurrent.duration.Duration
 /**
   * Created by alonsodomin on 20/09/2016.
   */
-class AkkaHttpTransportSpec extends fixture.FlatSpec with MockServer with Matchers {
-  implicit val actorSystem = ActorSystem("AkkaHttpTransportSpec")
+class AkkaHttpBackendSpec extends fixture.FlatSpec with MockServer with Matchers {
+  implicit val actorSystem = ActorSystem("AkkaHttpBackendSpec")
 
   override protected def afterAll(): Unit = {
     actorSystem.terminate()
     super.afterAll()
   }
 
-  "AkkaHttpTransport" should "parse error codes correctly in any HTTP method" in { mockServer =>
-    val transport = new AkkaHttpTransport("localhost", mockServer.getPort)
+  "on send" should "parse error codes correctly in any HTTP method" in { mockServer =>
+    val transport = new AkkaHttpBackend("localhost", mockServer.getPort)
 
     for (method <- HttpMethod.values) {
       val mockHttpRequest = MockHttpRequest.request("/nowhere").withMethod(method.entryName)
@@ -47,7 +47,7 @@ class AkkaHttpTransportSpec extends fixture.FlatSpec with MockServer with Matche
   }
 
   it should "send JSON body request and parse the JSON output" in { mockServer =>
-    val transport = new AkkaHttpTransport("localhost", mockServer.getPort)
+    val transport = new AkkaHttpBackend("localhost", mockServer.getPort)
 
     val input = ArtifactId("com.example", "example", "latest")
     val output = JobId(UUID.randomUUID())
@@ -74,7 +74,7 @@ class AkkaHttpTransportSpec extends fixture.FlatSpec with MockServer with Matche
   }
 
   it should "send Authorization header" in { mockServer =>
-    val transport = new AkkaHttpTransport("localhost", mockServer.getPort)
+    val transport = new AkkaHttpBackend("localhost", mockServer.getPort)
 
     val mockHttpRequest = MockHttpRequest.request("/path").
       withMethod("POST").
