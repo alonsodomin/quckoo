@@ -22,7 +22,7 @@ class AkkaHttpBackendSpec extends fixture.FlatSpec with MockServer with Matchers
   implicit val actorSystem = ActorSystem("AkkaHttpBackendSpec")
 
   override protected def afterAll(): Unit = {
-    actorSystem.terminate()
+    Await.ready(actorSystem.terminate(), Duration.Inf)
     super.afterAll()
   }
 
