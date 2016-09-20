@@ -7,12 +7,12 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpHeader, HttpMetho
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.util.ByteString
-
+import io.quckoo.client.core.Channel
 import io.quckoo.serialization.DataBuffer
+import monix.reactive.Observable
 
 import scala.concurrent.Future
 import scala.collection.immutable
-
 import scalaz.Kleisli
 
 /**
@@ -25,6 +25,8 @@ final class AkkaHttpBackend private[http](host: String, port: Int = 80)
   implicit val materializer = ActorMaterializer(ActorMaterializerSettings(actorSystem), "quckoo-http")
 
   val connection = AkkaHttp().outgoingConnection(host, port)
+
+  override def open[Ch <: Channel[Http]](channel: Ch): Kleisli[Observable, Unit, HttpServerSentEvent] = ???
 
   override def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
     def method: AkkaHttpMethod = req.method match {

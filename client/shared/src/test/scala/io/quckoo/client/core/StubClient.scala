@@ -26,7 +26,7 @@ trait StubClient { this: Assertions with Matchers =>
         }
       }
 
-      implicit val transport = new TestDriverBackend[P](handleRequest)
+      implicit val backend = new TestDriverBackend[P](Seq.empty, handleRequest)
       implicit val driver = Driver[P]
 
       new ClientRunner(QuckooClientV2[P])
@@ -35,6 +35,14 @@ trait StubClient { this: Assertions with Matchers =>
 
   final class InProtocolClause[P <: Protocol](implicit commands: ProtocolSpecs[P]) {
     def ensuringRequest(matcher: Matcher[P#Request]) = new RequestClause[P](matcher)
+    def withEvents(events: Iterable[P#EventType]): ClientRunner[P] = {
+      val requestError = new Exception("Backend should have been used for subscriptions")
+
+      implicit val backend = new TestDriverBackend[P](events, _ => LawfulTry.fail(requestError))
+      implicit val driver = Driver[P]
+
+      new ClientRunner[P](QuckooClientV2[P])
+    }
   }
 
   final def inProtocol[P <: Protocol](implicit commands: ProtocolSpecs[P]) = new InProtocolClause

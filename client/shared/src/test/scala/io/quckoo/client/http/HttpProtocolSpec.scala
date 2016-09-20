@@ -8,11 +8,14 @@ import io.quckoo.client.core.StubClient
 import io.quckoo.fault.{DownloadFailed, Fault}
 import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
+import io.quckoo.protocol.cluster.{MasterEvent, MasterReachable, MasterRemoved}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 import io.quckoo.util._
+
+import monix.execution.Scheduler.Implicits.global
 
 import org.threeten.bp._
 import org.scalatest._
@@ -98,6 +101,26 @@ object HttpProtocolSpec {
 
 class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubClient with EitherValues with Inside {
   import HttpProtocolSpec._
+
+  // -- Subscribe
+
+  "subscribe" should "return an stream of events" in {
+    val givenEvents = List(MasterReachable(UUID.randomUUID()))
+
+    val httpEvents: LawfulTry[List[HttpServerSentEvent]] = EitherT(givenEvents.map(evt => DataBuffer(evt))).
+      map(HttpServerSentEvent(_)).
+      run.sequenceU
+
+    lawfulTry2Future(httpEvents).flatMap { events =>
+      inProtocol[HttpProtocol] withEvents events usingClient { client =>
+        val returnedEvents = client.subscribeTo[MasterEvent].toListL.runAsync
+
+        returnedEvents.map { evts =>
+          evts shouldBe givenEvents
+        }
+      }
+    }
+  }
 
   // -- Login requests
 

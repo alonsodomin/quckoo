@@ -6,7 +6,7 @@ package io.quckoo.client.core
 trait Channel[P <: Protocol] {
   type Event
 
-  val uri: String
+  val eventDef: EventDef[Event]
   val unmarshall: Unmarshall[P#EventType, Event]
 }
 

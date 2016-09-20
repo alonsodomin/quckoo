@@ -11,5 +11,6 @@ sealed trait Http extends HttpProtocol
   with HttpSchedulerCmds
   with HttpRegistryCmds
   with HttpSecurityCmds
+  with SSEChannels
 
 object Http extends Http

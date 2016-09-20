@@ -1,5 +1,7 @@
 package io.quckoo.client.core
 
+import upickle.default.{Reader => UReader}
+
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.registry.RegistryEvent
 import io.quckoo.protocol.scheduler.SchedulerEvent
@@ -15,9 +17,11 @@ trait Channels[P <: Protocol] {
   type RegistryChannel  = Channel.Aux[P, RegistryEvent]
   type SchedulerChannel = Channel.Aux[P, SchedulerEvent]
 
-  implicit def masterCh: MasterChannel
+  def createChannel[E: EventDef : UReader]: Channel.Aux[P, E]
+
+  /*implicit def masterCh: MasterChannel
   implicit def workerCh: WorkerChannel
   implicit def registryCh: RegistryChannel
-  implicit def schedulerCh: SchedulerChannel
+  implicit def schedulerCh: SchedulerChannel*/
 
 }

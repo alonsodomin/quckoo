@@ -9,20 +9,22 @@ import scalaz.\/
   */
 package object http {
 
-  private[http] val BaseURI = "/api"
-  private[http] val LoginURI = BaseURI + "/auth/login"
-  private[http] val AuthRefreshURI = BaseURI + "/auth/refresh"
-  private[http] val LogoutURI = BaseURI + "/auth/logout"
+  private[http] val ApiURI = "/api"
+  private[http] val EventsURI = "/events"
 
-  private[http] val ClusterStateURI = BaseURI + "/cluster"
+  private[http] val LoginURI = ApiURI + "/auth/login"
+  private[http] val AuthRefreshURI = ApiURI + "/auth/refresh"
+  private[http] val LogoutURI = ApiURI + "/auth/logout"
+
+  private[http] val ClusterStateURI = ApiURI + "/cluster"
   private[http] val MasterEventsURI = ClusterStateURI + "/master"
   private[http] val WorkerEventsURI = ClusterStateURI + "/worker"
 
-  private[http] val RegistryBaseURI = BaseURI + "/registry"
+  private[http] val RegistryBaseURI = ApiURI + "/registry"
   private[http] val JobsURI = RegistryBaseURI + "/jobs"
   private[http] val RegistryEventsURI = RegistryBaseURI + "/events"
 
-  private[http] val SchedulerBaseURI = BaseURI + "/scheduler"
+  private[http] val SchedulerBaseURI = ApiURI + "/scheduler"
   private[http] val ExecutionPlansURI = SchedulerBaseURI + "/plans"
   private[http] val TaskExecutionsURI = SchedulerBaseURI + "/executions"
   private[http] val SchedulerEventsURI = SchedulerBaseURI + "/events"

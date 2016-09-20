@@ -1,9 +1,13 @@
 package io.quckoo.client.core
 
+import upickle.default.{Reader => UReader}
+
 import io.quckoo.util._
 
-import scala.concurrent.{ExecutionContext, Future}
+import monix.reactive.Observable
+import monix.scalaz._
 
+import scala.concurrent.{ExecutionContext, Future}
 import scalaz.Kleisli
 import scalaz.std.scalaFuture._
 
@@ -12,10 +16,15 @@ import scalaz.std.scalaFuture._
   */
 final class Driver[P <: Protocol] private (
     private[client] val backend: DriverBackend[P],
-    private[client] val commands: ProtocolSpecs[P]
+    private[client] val specs: ProtocolSpecs[P]
   ) {
 
-  def subscribeOn[Ch <: Channel[P]] = backend.subscribe[Ch]
+  private[client] def channelFor[E : EventDef : UReader] = specs.createChannel[E]
+
+  def subscribeOn[E](ch: Channel.Aux[P, E]): Kleisli[Observable, Unit, ch.Event] = {
+    def decodeEvent = ch.unmarshall.transform(lawfulTry2Observable)
+    backend.open(ch) >=> decodeEvent
+  }
 
   def invoke[C <: CmdMarshalling[P]](implicit ec: ExecutionContext, cmd: C): Kleisli[Future, cmd.Cmd[cmd.In], cmd.Rslt] = {
     def encodeRequest  = cmd.marshall.transform(lawfulTry2Future)

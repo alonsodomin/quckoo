@@ -1,7 +1,8 @@
 package io.quckoo.client.http
 
-import enumeratum.EnumEntry._
 import enumeratum._
+import enumeratum.EnumEntry._
+
 import io.quckoo.serialization.DataBuffer
 
 import scala.concurrent.duration.Duration

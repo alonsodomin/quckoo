@@ -8,6 +8,7 @@ import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
+import monix.reactive.Observable
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,7 +25,12 @@ object QuckooClientV2 {
 }
 
 final class QuckooClientV2[P <: Protocol] private[client] (driver: Driver[P]) {
-  import driver.commands._
+  import driver.specs._
+
+  def subscribeTo[E](implicit magnet: ChannelMagnet[E]): Observable[E] = {
+    val channel = magnet.resolve(driver)
+    driver.subscribeOn[E](channel).run(())
+  }
 
   // -- Security
 

@@ -2,7 +2,7 @@ package io.quckoo.client.http
 
 import io.quckoo.client.core.Channel
 import io.quckoo.serialization.DataBuffer
-import monix.reactive.Observable
+import monix.reactive.{Observable, OverflowStrategy}
 import org.scalajs.dom
 import org.scalajs.dom.ext.Ajax.InputData
 
@@ -13,11 +13,14 @@ import scalaz.Kleisli
 /**
   * Created by alonsodomin on 09/09/2016.
   */
-private[http] object AjaxBackend extends HttpBackend {
+private[http] object DOMBackend extends HttpBackend {
 
   final val ResponseType = "arraybuffer"
 
-  override def subscribe[Ch <: Channel[Http]]: Kleisli[Observable, String, Ch#Event] = super.subscribe
+  override def open[Ch <: Channel[Http]](channel: Ch) = Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
+    val subscriber = new EventSourceSubscriber(EventsURI, channel.eventDef.typeName)
+    Observable.create(OverflowStrategy.DropOld(20))(subscriber)
+  }
 
   def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
     val timeout = {

@@ -9,6 +9,6 @@ import scalaz.Kleisli
   * Created by alonsodomin on 08/09/2016.
   */
 trait DriverBackend[P <: Protocol] {
-  def subscribe[Ch <: Channel[P]]: Kleisli[Observable, String, Ch#Event] = ???
+  def open[Ch <: Channel[P]](channel: Ch): Kleisli[Observable, Unit, P#EventType]
   def send: Kleisli[Future, P#Request, P#Response]
 }
