@@ -19,12 +19,13 @@ import monix.reactive.Observable
 
 import scala.collection.immutable
 import scala.concurrent.Future
+
 import scalaz.Kleisli
 
 /**
   * Created by alonsodomin on 11/09/2016.
   */
-final class AkkaHttpBackend private[http](host: String, port: Int = 80)
+private[http] final class HttpAkkaBackend(host: String, port: Int = 80)
                                          (implicit val actorSystem: ActorSystem)
   extends HttpBackend {
 
@@ -32,7 +33,7 @@ final class AkkaHttpBackend private[http](host: String, port: Int = 80)
 
   val connection = AkkaHttp().outgoingConnection(host, port)
 
-  override def open[Ch <: Channel[Http]](channel: Ch) = Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
+  override def open[Ch <: Channel[HttpProtocol]](channel: Ch) = Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
     import actorSystem.dispatcher
 
     val publisherSink = Sink.asPublisher[ServerSentEvent](fanout = true)
@@ -77,9 +78,9 @@ final class AkkaHttpBackend private[http](host: String, port: Int = 80)
   }
 }
 
-object AkkaHttpBackend {
+object HttpAkkaBackend {
 
-  def apply(host: String, port: Int = 80)(implicit actorSystem: ActorSystem): AkkaHttpBackend =
-    new AkkaHttpBackend(host, port)
+  def apply(host: String, port: Int = 80)(implicit actorSystem: ActorSystem): HttpAkkaBackend =
+    new HttpAkkaBackend(host, port)
 
 }

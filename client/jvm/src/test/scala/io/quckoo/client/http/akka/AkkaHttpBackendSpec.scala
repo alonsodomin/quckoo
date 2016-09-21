@@ -25,7 +25,7 @@ class AkkaHttpBackendSpec extends fixture.FlatSpec with MockServer with Matchers
   }
 
   "on send" should "parse error codes correctly in any HTTP method" in { mockServer =>
-    val transport = new AkkaHttpBackend("localhost", mockServer.getPort)
+    val transport = new HttpAkkaBackend("localhost", mockServer.getPort)
 
     for (method <- HttpMethod.values) {
       val mockHttpRequest = MockHttpRequest.request("/nowhere").withMethod(method.entryName)
@@ -45,7 +45,7 @@ class AkkaHttpBackendSpec extends fixture.FlatSpec with MockServer with Matchers
   }
 
   it should "send JSON body request and parse the JSON output" in { mockServer =>
-    val transport = new AkkaHttpBackend("localhost", mockServer.getPort)
+    val transport = new HttpAkkaBackend("localhost", mockServer.getPort)
 
     val input = ArtifactId("com.example", "example", "latest")
     val output = JobId(UUID.randomUUID())
@@ -72,7 +72,7 @@ class AkkaHttpBackendSpec extends fixture.FlatSpec with MockServer with Matchers
   }
 
   it should "send Authorization header" in { mockServer =>
-    val transport = new AkkaHttpBackend("localhost", mockServer.getPort)
+    val transport = new HttpAkkaBackend("localhost", mockServer.getPort)
 
     val mockHttpRequest = MockHttpRequest.request("/path").
       withMethod("POST").

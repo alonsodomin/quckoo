@@ -13,7 +13,7 @@ object MultiNode {
     ).map(_ % MultiJvm),
     compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
     parallelExecution in Test := false,
-    jvmOptions in MultiJvm := Seq("-Xmx256M"),
+    jvmOptions in MultiJvm := Seq("-Xmx512M"),
     executeTests in Test <<= (executeTests in Test, executeTests in MultiJvm) map {
       case (testResults, multiNodeResults) =>
         val overall = {
