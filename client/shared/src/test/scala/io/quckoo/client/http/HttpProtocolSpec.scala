@@ -35,7 +35,7 @@ object HttpProtocolSpec {
   final val FixedInstant = Instant.ofEpochMilli(903029302L)
   implicit final val FixedClock = Clock.fixed(FixedInstant, ZoneId.of("UTC"))
 
-  implicit final val TestPassport = new Passport(Map.empty, Map.empty, DataBuffer.fromString("foo"))
+  implicit final val TestPassport = new Passport(Map.empty, "foo")
   implicit final val TestDuration = Duration.Inf
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "latest")
