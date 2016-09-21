@@ -38,16 +38,16 @@ object SiteMap {
   import ConsoleRoute._
 
   def dashboardPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity(_))(DashboardView(_))
+    proxy.wrap(identity)(DashboardView(_))
 
   def loginPage(proxy: ModelProxy[ConsoleScope])(referral: Option[ConsoleRoute]) =
-    proxy.wrap(identity(_))(p => LoginPage(p, referral))
+    proxy.wrap(identity)(p => LoginPage(p, referral))
 
   def registryPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity(_))(RegistryPage(_))
+    proxy.wrap(identity)(RegistryPage(_))
 
   def schedulerPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity(_))(SchedulerPage(_))
+    proxy.wrap(identity)(SchedulerPage(_))
 
   private[this] def publicPages(proxy: ModelProxy[ConsoleScope]) = RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
     import dsl._

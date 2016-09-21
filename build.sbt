@@ -276,6 +276,7 @@ lazy val clusterMaster = (project in file("cluster/master")).
   settings(MultiNode.settings).
   settings(
     //reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
+    baseDirectory in reStart := file("cluster/master/target")
   ).
   settings(Packaging.masterSettings: _*).
   dependsOn(clusterShared, consoleResources, testSupportJVM % Test)
@@ -291,6 +292,9 @@ lazy val clusterWorker = (project in file("cluster/worker")).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterWorker).
   settings(Packaging.workerSettings: _*).
+  settings(
+    baseDirectory in reStart := file("cluster/worker/target")
+  ).
   dependsOn(clusterShared, testSupportJVM % Test)
 
 // Test Support Utils ========================================

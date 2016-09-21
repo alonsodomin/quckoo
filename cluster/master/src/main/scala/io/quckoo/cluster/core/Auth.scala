@@ -17,8 +17,10 @@
 package io.quckoo.cluster.core
 
 import akka.http.scaladsl.server.directives.Credentials
+
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
-import io.quckoo.auth.User
+
+import io.quckoo.auth.{Passport, Principal, User}
 import io.quckoo.serialization.Base64._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,19 +33,20 @@ trait Auth {
   val Realm = "QuckooRealm"
   val secretKey = "dqwjq0jd9wjd192u4ued9hd0ew".getBytes("UTF-8").toBase64
 
-  def basic(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[User]] = {
+  def basic(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Passport]] = {
     credentials match {
       case p @ Credentials.Provided(identifier) =>
-        if (identifier == "admin" && p.verify("password"))
-          Future.successful(Some(User(identifier)))
-        else Future.successful(None)
+        if (identifier == "admin" && p.verify("password")) {
+          val passport = generatePassport(User(identifier))
+          Future.successful(Some(passport))
+        } else Future.successful(None)
 
       case _ =>
         Future.successful(None)
     }
   }
 
-  def token(acceptExpired: Boolean = false)(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[User]] = {
+  def passport(acceptExpired: Boolean = false)(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Passport]] = {
     credentials match {
       case p @ Credentials.Provided(token) =>
         if (isValidToken(token)) {
@@ -53,7 +56,7 @@ trait Auth {
 
             case _ => None
           }
-          Future.successful(claims.map(claimSet => User(claimSet("sub"))))
+          Future.successful(claims.map(claimSet => new Passport(claimSet, token)))
         } else {
           Future.successful(None)
         }
@@ -65,11 +68,13 @@ trait Auth {
 
   def isValidToken(token: String): Boolean = JsonWebToken.validate(token, secretKey)
 
-  def generateToken(user: User) = {
+  def generatePassport(principal: Principal): Passport = {
     val header = JwtHeader("HS256")
-    val claimsSet = JwtClaimsSet(Map("sub" -> user.id))
+    val claimsSet = JwtClaimsSet(Map("sub" -> principal.id))
 
-    JsonWebToken(header, claimsSet, secretKey)
+    val jwt = JsonWebToken(header, claimsSet, secretKey)
+    // FIXME the claims map must be a multi map
+    new Passport(claimsSet.claims.mapValues(_.toString), jwt)
   }
 
 }

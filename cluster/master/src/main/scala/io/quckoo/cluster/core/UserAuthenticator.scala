@@ -16,7 +16,8 @@
 
 package io.quckoo.cluster.core
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, ActorLogging, Props}
+
 import io.quckoo.auth.XSRFToken
 import io.quckoo.auth.UserId
 import io.quckoo.cluster.http._
@@ -36,12 +37,13 @@ object UserAuthenticator {
 
 }
 
-class UserAuthenticator(sessionTimeout: FiniteDuration) extends Actor {
+class UserAuthenticator(sessionTimeout: FiniteDuration) extends Actor with ActorLogging {
   import UserAuthenticator._
 
   def receive = {
     case Authenticate(userId, password) =>
       if (userId == "admin" && password.mkString == "password") {
+        log.info("Authenticating user '{}'.", userId)
         val authInfo = new XSRFToken(userId, generateAuthToken)
         sender() ! AuthenticationSuccess(authInfo)
       } else {

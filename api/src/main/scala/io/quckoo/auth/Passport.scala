@@ -25,32 +25,17 @@ object Passport {
     def decodePart(part: Int): LawfulTry[DataBuffer] =
       tokenParts.map(_(part)).flatMap(str => LawfulTry(str.toByteArray)).map(DataBuffer.apply)
 
-    def parseHeader = decodePart(0).flatMap(_.as[Map[String, String]])
     def parseClaims = decodePart(1).flatMap(_.as[Map[String, String]])
-    def parseSig    = decodePart(2)
 
-    for {
-      header <- parseHeader
-      claims <- parseClaims
-      sig    <- parseSig
-    } yield new Passport(header, claims, sig)
+    parseClaims.map(claims => new Passport(claims, token))
   }
 
   implicit val instance = Equal.equalA[Passport]
 
 }
 
-final class Passport(header: Map[String, String], claims: Map[String, String], signature: DataBuffer) {
+final class Passport(claims: Map[String, String], val token: String) {
   import Passport._
-
-  lazy val token: String = {
-    val tk = for {
-      hdr <- DataBuffer(header).map(_.toBase64)
-      cls <- DataBuffer(claims).map(_.toBase64)
-    } yield s"$hdr.$cls.${signature.toBase64}"
-
-    lawfulTry2Try(tk).get
-  }
 
   lazy val principal: Option[Principal] =
     claims.get(SubjectClaim).map(User)

@@ -44,11 +44,11 @@ trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerH
         }
       } ~ path("refresh") {
         get {
-          refreshToken
+          refreshPassport
         }
       }
-    } ~ authenticated { user =>
-      path("logout") {
+    } ~ authenticated { implicit passport =>
+      path("auth" / "logout") {
         post {
           invalidateAuth {
             complete(OK)
