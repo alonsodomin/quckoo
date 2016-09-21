@@ -3,11 +3,13 @@ package io.quckoo.client.http
 import upickle.default.{Reader => UReader}
 
 import io.quckoo.auth.Passport
+import io.quckoo.api.RequestTimeoutHeader
 import io.quckoo.serialization.DataBuffer
 
 import org.scalatest.Matchers
 import org.scalatest.matchers.{MatchResult, Matcher}
 
+import scala.concurrent.duration.FiniteDuration
 import scala.util.matching.Regex
 
 /**
@@ -55,6 +57,9 @@ trait HttpRequestMatchers extends Matchers {
 
   def hasPassport(passport: Passport): Matcher[HttpRequest] =
     hasHeader(AuthorizationHeader, s"Bearer ${passport.token}")
+
+  def hasTimeout(timeout: FiniteDuration): Matcher[HttpRequest] =
+    hasHeader(RequestTimeoutHeader, timeout.toMillis.toString)
 
   val hasEmptyBody: Matcher[HttpRequest] = new Matcher[HttpRequest] {
     override def apply(req: HttpRequest): MatchResult = {

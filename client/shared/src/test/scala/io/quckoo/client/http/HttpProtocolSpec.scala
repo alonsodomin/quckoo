@@ -20,7 +20,7 @@ import monix.execution.Scheduler
 import org.threeten.bp._
 import org.scalatest._
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 import scala.util.matching.Regex
@@ -43,7 +43,7 @@ object HttpProtocolSpec {
   }
 
   implicit final val TestPassport = generatePassport()
-  implicit final val TestDuration = Duration.Inf
+  implicit final val TestTimeout = 10 seconds
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "latest")
   final val TestJobId = JobId(UUID.randomUUID())
@@ -139,7 +139,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       hasUrl(uris.login) and
       hasEmptyBody and
       hasAuth(username, password) and
-      not(matcher = hasPassport(TestPassport))
+      not(matcher = hasPassport(TestPassport)) and
+      hasTimeout(TestTimeout)
 
   "authenticate" should "return the user's passport when result code is 200" in {
     val expectedPassport = generatePassport()
@@ -174,7 +175,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isRefreshPassport = hasMethod(HttpMethod.Post) and
     hasUrl(uris.refreshPass) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "refreshPassport" should "return a new passport" in {
     val expectedPassport = generatePassport()
@@ -209,7 +211,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isLogout = hasMethod(HttpMethod.Post) and
     hasUrl(uris.logout) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "sing out" should "not return anything if it succeeds" in {
     inProtocol[HttpProtocol] ensuringRequest isLogout replyWith { _ =>
@@ -232,7 +235,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isGetClusterState = hasMethod(HttpMethod.Get) and
     hasUrl(uris.cluster) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "clusterState" should "return the cluster state details" in {
     val expectedState = QuckooState()
@@ -251,7 +255,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     hasUrl(uris.jobs) and
     hasPassport(TestPassport) and
     hasBody(RegisterJob(TestJobSpec)) and
-    isJsonRequest
+    isJsonRequest and
+    hasTimeout(TestTimeout)
 
   "registerJob" should "return a validated JobId when it succeeds" in {
     inProtocol[HttpProtocol] ensuringRequest isRegisterJob replyWith { _ =>
@@ -279,7 +284,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isFetchJobs = hasMethod(HttpMethod.Get) and
     hasUrl(uris.jobs) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "fetchJobs" should "return a map of the job specs" in {
     inProtocol[HttpProtocol] ensuringRequest isFetchJobs replyWith { _ =>
@@ -297,7 +303,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isFetchJob = hasMethod(HttpMethod.Get) and
     hasUrl(uris.fetchJob) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "fetchJob" should "return the job spec for a job ID" in {
     val urlPattern = uris.fetchJob.r
@@ -336,7 +343,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isEnableJob = hasMethod(HttpMethod.Post) and
     hasUrl(uris.enableJob) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "enableJob" should "return the acknowledgement that the job is been disabled" in {
     val urlPattern = uris.enableJob.r
@@ -370,7 +378,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isDisableJob = hasMethod(HttpMethod.Post) and
     hasUrl(uris.disableJob) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "disableJob" should "return the acknowledgement that the job is been disabled" in {
     val urlPattern = uris.disableJob.r
@@ -404,7 +413,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isGetExecutionPlans = hasMethod(HttpMethod.Get) and
     hasUrl(uris.executionPlans) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "executionPlans" should "return a map with current exection plans" in {
     inProtocol[HttpProtocol] ensuringRequest isGetExecutionPlans replyWith {
@@ -422,7 +432,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isGetExecutionPlan = hasMethod(HttpMethod.Get) and
     hasUrl(uris.executionPlan) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "executionPlan" should "return an execution plan for a given ID" in {
     val urlPattern = uris.executionPlan.r
@@ -462,7 +473,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     hasUrl(uris.executionPlans) and
     hasPassport(TestPassport) and
     hasBody(value) and
-    isJsonRequest
+    isJsonRequest and
+    hasTimeout(TestTimeout)
 
   "scheduleJob" should "return the started notification" in {
     val payload = ScheduleJob(TestJobId)
@@ -495,7 +507,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isCancelExecutionPlan = hasMethod(HttpMethod.Delete) and
     hasUrl(uris.executionPlan) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "cancelExecutionPlan" should "return nothing if the plan has been cancelled" in {
     val urlPattern = uris.executionPlan.r
@@ -534,7 +547,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isGetExecutions = hasMethod(HttpMethod.Get) and
     hasUrl(uris.executions) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "executions" should "return a map with the executions" in {
     inProtocol[HttpProtocol] ensuringRequest isGetExecutions replyWith {
@@ -552,7 +566,8 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isGetExecution = hasMethod(HttpMethod.Get) and
     hasUrl(uris.execution) and
     hasPassport(TestPassport) and
-    hasEmptyBody
+    hasEmptyBody and
+    hasTimeout(TestTimeout)
 
   "execution" should "return an execution for a given ID" in {
     val urlPattern = uris.execution.r

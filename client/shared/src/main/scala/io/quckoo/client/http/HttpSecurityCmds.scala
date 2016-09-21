@@ -9,7 +9,7 @@ import io.quckoo.util.LawfulTry
 /**
   * Created by alonsodomin on 19/09/2016.
   */
-trait HttpSecurityCmds extends SecurityCmds[HttpProtocol] {
+trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
 
   private[this] def unmarshallPassport[O <: CmdMarshalling[HttpProtocol]] =
     Unmarshall[HttpResponse, Passport] { res =>
@@ -24,9 +24,11 @@ trait HttpSecurityCmds extends SecurityCmds[HttpProtocol] {
 
     override val marshall = Marshall[AnonCmd, Credentials, HttpRequest] { cmd =>
       val creds = DataBuffer.fromString(s"${cmd.payload.username}:${cmd.payload.password}").toBase64
-      val hdrs = Map(AuthorizationHeader -> s"Basic $creds")
+      val authHdr = AuthorizationHeader -> s"Basic $creds"
 
-      LawfulTry.success(HttpRequest(HttpMethod.Post, LoginURI, cmd.timeout, headers = hdrs))
+      LawfulTry.success {
+        HttpRequest(HttpMethod.Post, LoginURI, cmd.timeout, headers = httpHeaders(None, cmd.timeout) + authHdr)
+      }
     }
 
     override val unmarshall = unmarshallPassport[AuthenticateCmd]
@@ -35,7 +37,7 @@ trait HttpSecurityCmds extends SecurityCmds[HttpProtocol] {
   implicit lazy val refreshPassportCmd: RefreshPassportCmd = new Auth[HttpProtocol, Unit, Passport] {
     override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
       LawfulTry.success {
-        HttpRequest(HttpMethod.Post, AuthRefreshURI, cmd.timeout, Map(authHeader(cmd.passport)))
+        HttpRequest(HttpMethod.Post, AuthRefreshURI, cmd.timeout, httpHeaders(Some(cmd.passport), cmd.timeout))
       }
     }
     override val unmarshall = unmarshallPassport[RefreshPassportCmd]
@@ -44,7 +46,7 @@ trait HttpSecurityCmds extends SecurityCmds[HttpProtocol] {
   implicit lazy val signOutCmd: SingOutCmd = new Auth[HttpProtocol, Unit, Unit] {
     override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
       LawfulTry.success {
-        HttpRequest(HttpMethod.Post, LogoutURI, cmd.timeout, Map(authHeader(cmd.passport)))
+        HttpRequest(HttpMethod.Post, LogoutURI, cmd.timeout, httpHeaders(Some(cmd.passport), cmd.timeout))
       }
     }
 

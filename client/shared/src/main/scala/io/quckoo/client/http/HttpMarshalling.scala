@@ -2,10 +2,14 @@ package io.quckoo.client.http
 
 import upickle.default.{Reader => UReader, Writer => UWriter}
 
+import io.quckoo.api.RequestTimeoutHeader
 import io.quckoo.auth.Passport
 import io.quckoo.client.core._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.util._
+
+import scala.concurrent.duration.Duration
+import scala.collection.mutable
 
 import scalaz.Kleisli
 
@@ -14,11 +18,22 @@ import scalaz.Kleisli
   */
 trait HttpMarshalling {
 
+  protected def httpHeaders(passport: Option[Passport], timeout: Duration): Map[String, String] = {
+    val headerMap = mutable.Map.empty[String, String]
+    if (timeout.isFinite()) {
+      headerMap += (RequestTimeoutHeader -> timeout.toMillis.toString)
+    }
+    passport.foreach { pass =>
+      headerMap += authHeader(pass)
+    }
+    headerMap.toMap
+  }
+
   protected def marshallEmpty[O <: CmdMarshalling[HttpProtocol]](
     method: HttpMethod, uriFor: O#Cmd[O#In] => String
   ) = Marshall[O#Cmd, O#In, HttpRequest] { cmd =>
     def createRequest(passport: Option[Passport]) = {
-      val headers = passport.map(pass => Map(authHeader(pass))).getOrElse(Map.empty[String, String])
+      val headers = httpHeaders(passport, cmd.timeout)
       LawfulTry.success(HttpRequest(method, uriFor(cmd), cmd.timeout, headers))
     }
 
