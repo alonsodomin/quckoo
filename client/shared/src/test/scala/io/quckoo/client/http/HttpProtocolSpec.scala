@@ -135,7 +135,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       not(matcher = hasPassport(TestPassport))
 
   "authenticate" should "return the user's passport when result code is 200" in {
-    val expectedPassport = new Passport(Map.empty, Map.empty, DataBuffer.fromString("foo"))
+    val expectedPassport = new Passport(Map.empty, "foo")
 
     inProtocol[HttpProtocol] ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpSuccess(DataBuffer.fromString(expectedPassport.token))
@@ -170,7 +170,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     hasEmptyBody
 
   "refreshPassport" should "return a new passport" in {
-    val expectedPassport = new Passport(Map.empty, Map.empty, DataBuffer.fromString("bar"))
+    val expectedPassport = new Passport(Map.empty, "bar")
 
     inProtocol[HttpProtocol] ensuringRequest isRefreshPassport replyWith { _ =>
       HttpSuccess(DataBuffer.fromString(expectedPassport.token))
