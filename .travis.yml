@@ -13,7 +13,11 @@ cache:
     - $HOME/.ivy2
 
 before_install:
-  - scripts/setup_travis.sh
+  - gem install compass
+  - wget https://s3.amazonaws.com/travis-phantomjs/phantomjs-2.0.0-ubuntu-12.04.tar.bz2
+  - tar -xjf phantomjs-2.0.0-ubuntu-12.04.tar.bz2
+  - sudo rm -rf /usr/local/phantomjs/bin/phantomjs
+  - sudo mv phantomjs /usr/local/phantomjs/bin/phantomjs
 
 script:
   - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
