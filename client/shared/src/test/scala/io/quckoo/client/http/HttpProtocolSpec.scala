@@ -16,12 +16,12 @@ import io.quckoo.serialization.json._
 import io.quckoo.util._
 
 import monix.execution.Scheduler
-import monix.execution.UncaughtExceptionReporter._
 
 import org.threeten.bp._
 import org.scalatest._
 
 import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 import scala.util.matching.Regex
 
@@ -103,11 +103,12 @@ object HttpProtocolSpec {
 class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubClient with EitherValues with Inside {
   import HttpProtocolSpec._
 
+  implicit val scheduler: Scheduler = Scheduler.global
+  override implicit def executionContext: ExecutionContext = scheduler
+
   // -- Subscribe
 
-  /*"subscribe" should "return an stream of events" in {
-    implicit val scheduler: Scheduler = Scheduler(LogExceptionsToStandardErr)
-
+  "subscribe" should "return an stream of events" in {
     val givenEvents = List(MasterReachable(UUID.randomUUID()))
 
     val httpEvents: LawfulTry[List[HttpServerSentEvent]] = EitherT(givenEvents.map(evt => DataBuffer(evt))).
@@ -122,7 +123,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
         }
       }
     }
-  }*/
+  }
 
   // -- Login requests
 
