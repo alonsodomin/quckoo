@@ -1,7 +1,7 @@
 package io.quckoo.client.http.dom
 
 import io.quckoo.client.core.Channel
-import io.quckoo.client.http.{HttpRequest, HttpResponse, dom, _}
+import io.quckoo.client.http.{HttpRequest, HttpResponse, _}
 import io.quckoo.serialization.DataBuffer
 import monix.reactive.{Observable, OverflowStrategy}
 
@@ -10,6 +10,7 @@ import org.scalajs.dom.ext.Ajax.InputData
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
+
 import scalaz.Kleisli
 
 /**

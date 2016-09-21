@@ -13,8 +13,8 @@ object MultiNode {
     ).map(_ % MultiJvm),
     compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
     parallelExecution in Test := false,
-    jvmOptions in MultiJvm := Seq("-Xmx512M"),
-    executeTests in Test <<= (executeTests in Test, executeTests in MultiJvm) map {
+    jvmOptions in MultiJvm := Seq("-Xmx512M")
+    /*executeTests in Test <<= (executeTests in Test, executeTests in MultiJvm) map {
       case (testResults, multiNodeResults) =>
         val overall = {
           if (testResults.overall.id < multiNodeResults.overall.id)
@@ -26,7 +26,7 @@ object MultiNode {
           testResults.events ++ multiNodeResults.events,
           testResults.summaries ++ multiNodeResults.summaries
         )
-    }
+    }*/
   ) ++ HeaderPlugin.settingsFor(MultiJvm)
 
 }
