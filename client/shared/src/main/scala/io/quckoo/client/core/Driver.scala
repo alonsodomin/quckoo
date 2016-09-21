@@ -21,7 +21,7 @@ final class Driver[P <: Protocol] private (
 
   private[client] def channelFor[E : EventDef : UReader] = specs.createChannel[E]
 
-  def subscribeOn[E](ch: Channel.Aux[P, E]): Kleisli[Observable, Unit, ch.Event] = {
+  def openChannel[E](ch: Channel.Aux[P, E]): Kleisli[Observable, Unit, ch.Event] = {
     def decodeEvent = ch.unmarshall.transform(lawfulTry2Observable)
     backend.open(ch) >=> decodeEvent
   }
@@ -36,6 +36,6 @@ final class Driver[P <: Protocol] private (
 }
 
 object Driver {
-  @inline def apply[P <: Protocol](implicit transport: DriverBackend[P], commands: ProtocolSpecs[P]): Driver[P] =
-    new Driver[P](transport, commands)
+  @inline implicit def apply[P <: Protocol](implicit backend: DriverBackend[P], commands: ProtocolSpecs[P]): Driver[P] =
+    new Driver[P](backend, commands)
 }

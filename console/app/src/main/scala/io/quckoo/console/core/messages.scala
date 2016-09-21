@@ -19,7 +19,7 @@ package io.quckoo.console.core
 import diode.data.{AsyncAction, Pot, PotState}
 
 import io.quckoo._
-import io.quckoo.client.QuckooClient
+import io.quckoo.auth.Passport
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
 import io.quckoo.fault.Fault
@@ -31,7 +31,7 @@ import scala.util.{Failure, Try}
 import scalaz.ValidationNel
 
 final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None) extends Command
-final case class LoggedIn(client: QuckooClient, referral: Option[ConsoleRoute]) extends Event
+final case class LoggedIn(passport: Passport, referral: Option[ConsoleRoute]) extends Event
 
 case object Logout extends Command
 case object LoggedOut extends Event

@@ -14,27 +14,18 @@
  * limitations under the License.
  */
 
-package io.quckoo.client.ajax
+package io.quckoo.console.core
 
-import org.scalajs.dom
+import diode.{ActionHandler, ActionResult}
+
+import io.quckoo.auth.Passport
 
 /**
- * Created by alonsodomin on 13/10/2015.
- */
-object Cookie {
+  * Created by alonsodomin on 26/03/2016.
+  */
+private[core] trait AuthHandler[S] { this: ActionHandler[ConsoleScope, S] =>
 
-  private[this] def rawCookies: Map[String, String] = {
-    import dom.document
-
-    val pairs = document.cookie.split("; ").map { c =>
-      val namePair = c.split("=")
-      namePair(0) -> namePair(1)
-    }
-
-    Map(pairs: _*)
-  }
-
-  def apply(name: String): Option[String] =
-    rawCookies.get(name)
+  def withAuth(f: Passport => ActionResult[ConsoleScope]): ActionResult[ConsoleScope] =
+    this.modelRW.root.zoomMap(_.passport)(identity).value.map(f).getOrElse(noChange)
 
 }

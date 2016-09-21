@@ -1,47 +1,159 @@
-/*
- * Copyright 2016 Antonio Alonso Dominguez
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.quckoo.client
 
-import io.quckoo.api.{Cluster, Registry, Scheduler}
-import io.quckoo.auth.User
-import io.quckoo.protocol.cluster.MasterEvent
-import io.quckoo.protocol.registry.RegistryEvent
-import io.quckoo.protocol.scheduler.{SchedulerEvent, TaskQueueUpdated}
-import io.quckoo.protocol.worker.WorkerEvent
+import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
+import io.quckoo.auth.{Credentials, Passport}
+import io.quckoo.client.core._
+import io.quckoo.fault.Fault
+import io.quckoo.id.{JobId, PlanId, TaskId}
+import io.quckoo.net.QuckooState
+import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler._
 import monix.reactive.Observable
-import slogging.LoggerHolder
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
+import scalaz._
 
 /**
-  * Created by alonsodomin on 26/03/2016.
+  * Created by alonsodomin on 10/09/2016.
   */
-trait QuckooClient extends Cluster with Registry with Scheduler { this: LoggerHolder =>
+object QuckooClient {
 
-  def registryEvents: Observable[RegistryEvent]
+  def apply[P <: Protocol](implicit driver: Driver[P]): QuckooClient[P] =
+    new QuckooClient[P](driver)
 
-  def masterEvents: Observable[MasterEvent]
+}
 
-  def workerEvents: Observable[WorkerEvent]
+final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
+  import driver.specs._
 
-  def schedulerEvents: Observable[SchedulerEvent]
+  def channel[E](implicit magnet: ChannelMagnet[E]): Observable[E] = {
+    val channelDef = magnet.resolve(driver)
+    driver.openChannel[E](channelDef).run(())
+  }
 
-  def principal: Option[User]
+  // -- Security
 
-  def close()(implicit ec: ExecutionContext): Future[Unit]
+  def authenticate(username: String, password: String)(
+    implicit
+    ec: ExecutionContext, timeout: Duration
+  ): Future[Passport] = {
+    val cmd = AnonCmd(Credentials(username, password), timeout)
+    driver.invoke[AuthenticateCmd].run(cmd)
+  }
+
+  def refreshPassport(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Passport] =
+    driver.invoke[RefreshPassportCmd].run(AuthCmd((), timeout, passport))
+
+  def signOut(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Unit] =
+    driver.invoke[SingOutCmd].run(AuthCmd((), timeout, passport))
+
+  // -- Cluster
+
+  def clusterState(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[QuckooState] = {
+    val cmd = AuthCmd((), timeout, passport)
+    driver.invoke[GetClusterStateCmd].run(cmd)
+  }
+
+  // -- Registry
+
+  def registerJob(job: JobSpec)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[ValidationNel[Fault, JobId]] = {
+    val cmd = AuthCmd(RegisterJob(job), timeout, passport)
+    driver.invoke[RegisterJobCmd].run(cmd)
+  }
+
+  def fetchJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Option[JobSpec]] = {
+    val cmd = AuthCmd(jobId, timeout, passport)
+    driver.invoke[GetJobCmd].run(cmd)
+  }
+
+  def fetchJobs(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Map[JobId, JobSpec]] = {
+    val cmd = AuthCmd((), timeout, passport)
+    driver.invoke[GetJobsCmd].run(cmd)
+  }
+
+  def enableJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[JobNotFound \/ JobEnabled] = {
+    val cmd = AuthCmd(jobId, timeout, passport)
+    driver.invoke[EnableJobCmd].run(cmd)
+  }
+
+  def disableJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[JobNotFound \/ JobDisabled] = {
+    val cmd = AuthCmd(jobId, timeout, passport)
+    driver.invoke[DisableJobCmd].run(cmd)
+  }
+
+  // -- Scheduler
+
+  def executionPlans(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Map[PlanId, ExecutionPlan]] = {
+    val cmd = AuthCmd((), timeout, passport)
+    driver.invoke[GetPlansCmd].run(cmd)
+  }
+
+  def executionPlan(planId: PlanId)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Option[ExecutionPlan]] = {
+    val cmd = AuthCmd(planId, timeout, passport)
+    driver.invoke[GetPlanCmd].run(cmd)
+  }
+
+  def scheduleJob(schedule: ScheduleJob)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[JobNotFound \/ ExecutionPlanStarted] = {
+    val cmd = AuthCmd(schedule, timeout, passport)
+    driver.invoke[ScheduleJobCmd].run(cmd)
+  }
+
+  def cancelExecutionPlan(planId: PlanId)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[ExecutionPlanNotFound \/ Unit] = {
+    val cmd = AuthCmd(planId, timeout, passport)
+    driver.invoke[CancelPlanCmd].run(cmd)
+  }
+
+  def executions(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Map[TaskId, TaskExecution]] = {
+    val cmd = AuthCmd((), timeout, passport)
+    driver.invoke[GetExecutionsCmd].run(cmd)
+  }
+
+  def execution(taskId: TaskId)(
+    implicit
+    ec: ExecutionContext, timeout: Duration, passport: Passport
+  ): Future[Option[TaskExecution]] = {
+    val cmd = AuthCmd(taskId, timeout, passport)
+    driver.invoke[GetExecutionCmd].run(cmd)
+  }
 
 }

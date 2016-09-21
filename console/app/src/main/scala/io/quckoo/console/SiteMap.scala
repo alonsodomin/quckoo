@@ -64,7 +64,7 @@ object SiteMap {
     implicit val redirectMethod = Redirect.Push
 
     def isLoggedIn: CallbackB =
-      CallbackTo { proxy().currentUser.isDefined }
+      CallbackTo { proxy().passport.isDefined }
 
     def redirectToLogin(referral: ConsoleRoute) =
       Some(render(loginPage(proxy)(Some(referral))))
@@ -94,8 +94,8 @@ object SiteMap {
   )
 
   def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute], res: Resolution[ConsoleRoute]): ReactElement = {
-    def navigation = proxy.wrap(_.currentUser){ user =>
-      Navigation(mainMenu.head, mainMenu, ctrl, res.page, user)
+    def navigation = proxy.wrap(_.passport.flatMap(_.principal)){ principal =>
+      Navigation(mainMenu.head, mainMenu, ctrl, res.page, principal)
     }
 
     <.div(navigation, res.render())

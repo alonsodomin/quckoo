@@ -20,8 +20,9 @@ import diode._
 import diode.data.{AsyncAction, PotMap}
 import diode.react.ReactConnector
 
-import io.quckoo.client.QuckooClient
-import io.quckoo.client.ajax.AjaxQuckooClientFactory
+import io.quckoo.auth.Passport
+import io.quckoo.client.http.HttpQuckooClient
+import io.quckoo.client.http.dom._
 import io.quckoo.console.components.Notification
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
@@ -29,10 +30,11 @@ import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
-import io.quckoo.{ExecutionPlan, TaskExecution, JobSpec}
+import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 
 import slogging.LazyLogging
 
+import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalaz.{-\/, \/-}
 
@@ -41,6 +43,8 @@ import scalaz.{-\/, \/-}
   */
 object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleScope]
     with ConsoleOps with ConsoleSubscriptions with LazyLogging {
+
+  private[this] implicit val client: HttpQuckooClient = HttpDOMQuckooClient
 
   protected def initialModel: ConsoleScope = ConsoleScope.initial
 
@@ -55,8 +59,8 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
     notificationHandler
   )
 
-  def zoomIntoClient: ModelRW[ConsoleScope, Option[QuckooClient]] =
-    zoomRW(_.client) { (model, c) => model.copy(client = c) }
+  def zoomIntoPassport: ModelRW[ConsoleScope, Option[Passport]] =
+    zoomRW(_.passport) { (model, pass) => model.copy(passport = pass) }
 
   def zoomIntoClusterState: ModelRW[ConsoleScope, QuckooState] =
     zoomRW(_.clusterState) { (model, value) => model.copy(clusterState = value) }
@@ -79,29 +83,30 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
       None
   }
 
-  val loginHandler = new ActionHandler(zoomIntoClient) {
+  val loginHandler = new ActionHandler(zoomIntoPassport) {
+    //implicit val timeout = 5 seconds
 
     override def handle = {
       case Login(username, password, referral) =>
         effectOnly(Effect(
-          AjaxQuckooClientFactory.connect(username, password).
-            map(client => LoggedIn(client, referral)).
+          client.authenticate(username, password).
+            map(pass => LoggedIn(pass, referral)).
             recover { case _ => LoginFailed }
         ))
 
       case Logout =>
-        value.map { client =>
-          effectOnly(Effect(client.close().map(_ => LoggedOut)))
+        value.map { implicit passport =>
+          effectOnly(Effect(client.signOut.map(_ => LoggedOut)))
         } getOrElse noChange
     }
   }
 
   val clusterStateHandler = new ActionHandler(zoomIntoClusterState)
-      with ConnectedHandler[QuckooState] {
+      with AuthHandler[QuckooState] {
 
     override def handle = {
       case GetClusterStatus =>
-        withClient { implicit client =>
+        withAuth { implicit passport =>
           effectOnly(Effect(refreshClusterStatus))
         }
 
@@ -109,7 +114,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         updated(state, StartClusterSubscription)
 
       case StartClusterSubscription =>
-        withClient { implicit client =>
+        withAuth { implicit passport =>
           subscribeClusterState
           noChange
         }
@@ -150,12 +155,12 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val registryHandler = new ActionHandler(zoomIntoUserScope)
-      with ConnectedHandler[UserScope] {
+      with AuthHandler[UserScope] {
 
     override def handle = {
       case RegisterJob(spec) =>
-        withClient { client =>
-          effectOnly(Effect(client.registerJob(spec).map(RegisterJobResult)))
+        withAuth { implicit passport =>
+          effectOnly(Effect(registerJob(spec)))
         }
 
       case RegisterJobResult(validated) =>
@@ -177,30 +182,30 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         }
 
       case EnableJob(jobId) =>
-        withClient { client =>
-          effectOnly(Effect(client.enableJob(jobId)))
+        withAuth { implicit passport =>
+          effectOnly(Effect(enableJob(jobId)))
         }
 
       case DisableJob(jobId) =>
-        withClient { client =>
-          effectOnly(Effect(client.disableJob(jobId)))
+        withAuth { implicit passport =>
+          effectOnly(Effect(disableJob(jobId)))
         }
     }
 
   }
 
   val scheduleHandler = new ActionHandler(zoomIntoUserScope)
-      with ConnectedHandler[UserScope] {
+      with AuthHandler[UserScope] {
 
     override def handle = {
       case msg: ScheduleJob =>
-        withClient { client =>
-          effectOnly(Effect(client.schedule(msg).map(_.fold(identity, identity))))
+        withAuth { implicit passport =>
+          effectOnly(Effect(scheduleJob(msg)))
         }
 
       case CancelExecutionPlan(planId) =>
-        withClient { client =>
-          effectOnly(Effect(client.cancelPlan(planId).map(_ => ExecutionPlanCancelled(planId))))
+        withAuth { implicit passport =>
+          effectOnly(Effect(cancelPlan(planId)))
         }
 
       case JobNotFound(jobId) =>
@@ -254,11 +259,11 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val jobSpecMapHandler = new ActionHandler(zoomIntoJobSpecs)
-      with ConnectedHandler[PotMap[JobId, JobSpec]] {
+      with AuthHandler[PotMap[JobId, JobSpec]] {
 
     override protected def handle = {
       case LoadJobSpecs =>
-        withClient { implicit client =>
+        withAuth { implicit passport =>
           effectOnly(Effect(loadJobSpecs().map(JobSpecsLoaded)))
         }
 
@@ -278,8 +283,8 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         ))
 
       case action: RefreshJobSpecs =>
-        withClient { implicit client =>
-          val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
+        withAuth { implicit passport =>
+          val updateEffect = action.effect(loadJobSpecs(action.keys))(identity _)
           action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
         }
     }
@@ -287,11 +292,11 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val executionPlanMapHandler = new ActionHandler(zoomIntoExecutionPlans)
-      with ConnectedHandler[PotMap[PlanId, ExecutionPlan]] {
+      with AuthHandler[PotMap[PlanId, ExecutionPlan]] {
 
     override protected def handle = {
       case LoadExecutionPlans =>
-        withClient { implicit client =>
+        withAuth { implicit passport =>
           effectOnly(Effect(loadPlans().map(ExecutionPlansLoaded)))
         }
 
@@ -299,7 +304,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         updated(PotMap(ExecutionPlanFetcher, plans))
 
       case action: RefreshExecutionPlans =>
-        withClient { implicit client =>
+        withAuth { implicit passport =>
           val refreshEffect = action.effect(loadPlans(action.keys))(identity)
           action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
         }
@@ -308,11 +313,11 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val taskHandler = new ActionHandler(zoomIntoExecutions)
-      with ConnectedHandler[PotMap[TaskId, TaskExecution]] {
+      with AuthHandler[PotMap[TaskId, TaskExecution]] {
 
     override protected def handle = {
       case LoadExecutions =>
-        withClient { implicit client =>
+        withAuth { implicit passport =>
           effectOnly(Effect(loadTasks().map(ExecutionsLoaded)))
         }
 
@@ -320,7 +325,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         updated(PotMap(ExecutionFetcher, tasks))
 
       case action: RefreshExecutions =>
-        withClient { implicit client =>
+        withAuth { implicit passport =>
           val refreshEffect = action.effect(loadTasks(action.keys))(identity)
           action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
         }

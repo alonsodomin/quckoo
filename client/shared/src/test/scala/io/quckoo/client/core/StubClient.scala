@@ -1,6 +1,6 @@
 package io.quckoo.client.core
 
-import io.quckoo.client.QuckooClientV2
+import io.quckoo.client.QuckooClient
 import io.quckoo.util.LawfulTry
 
 import org.scalatest._
@@ -13,8 +13,8 @@ import scala.concurrent.Future
   */
 trait StubClient { this: Assertions with Matchers =>
 
-  final class ClientRunner[P <: Protocol](client: QuckooClientV2[P]) {
-    def usingClient(exec: QuckooClientV2[P] => Future[Assertion]) = exec(client)
+  final class ClientRunner[P <: Protocol](client: QuckooClient[P]) {
+    def usingClient(exec: QuckooClient[P] => Future[Assertion]) = exec(client)
   }
 
   final class RequestClause[P <: Protocol](matcher: Matcher[P#Request])(implicit commands: ProtocolSpecs[P]) {
@@ -29,7 +29,7 @@ trait StubClient { this: Assertions with Matchers =>
       implicit val backend = new TestDriverBackend[P](Seq.empty, handleRequest)
       implicit val driver = Driver[P]
 
-      new ClientRunner(QuckooClientV2[P])
+      new ClientRunner(QuckooClient[P])
     }
   }
 
@@ -41,7 +41,7 @@ trait StubClient { this: Assertions with Matchers =>
       implicit val backend = new TestDriverBackend[P](events, _ => LawfulTry.fail(requestError))
       implicit val driver = Driver[P]
 
-      new ClientRunner[P](QuckooClientV2[P])
+      new ClientRunner[P](QuckooClient[P])
     }
   }
 

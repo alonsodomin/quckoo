@@ -16,10 +16,11 @@
 
 package io.quckoo.console.core
 
-import io.quckoo.client.QuckooClient
+import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.scheduler.SchedulerEvent
 import io.quckoo.protocol.worker.WorkerEvent
+import io.quckoo.serialization.json._
 
 import monix.execution.Scheduler.Implicits.global
 
@@ -28,10 +29,10 @@ import monix.execution.Scheduler.Implicits.global
   */
 private[core] trait ConsoleSubscriptions {
 
-  def subscribeClusterState(implicit client: QuckooClient): Unit = {
-    client.masterEvents.subscribe(new SimpleEventSubscriber[MasterEvent])
-    client.workerEvents.subscribe(new SimpleEventSubscriber[WorkerEvent])
-    client.schedulerEvents.subscribe(new SimpleEventSubscriber[SchedulerEvent])
+  def subscribeClusterState(implicit client: HttpQuckooClient): Unit = {
+    client.channel[MasterEvent].subscribe(new SimpleEventSubscriber[MasterEvent])
+    client.channel[WorkerEvent].subscribe(new SimpleEventSubscriber[WorkerEvent])
+    client.channel[SchedulerEvent].subscribe(new SimpleEventSubscriber[SchedulerEvent])
   }
 
 }

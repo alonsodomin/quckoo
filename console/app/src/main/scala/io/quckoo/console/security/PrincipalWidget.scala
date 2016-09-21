@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-package io.quckoo.client
+package io.quckoo.console.security
 
-import scala.concurrent.{ExecutionContext, Future}
+import io.quckoo.auth.Principal
+import io.quckoo.console.components._
+
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.prefix_<^._
 
 /**
-  * Created by alonsodomin on 26/03/2016.
+  * Created by alonsodomin on 20/02/2016.
   */
-trait QuckooClientFactory {
+object PrincipalWidget {
 
-  def connect(username: String, password: String)(implicit ec: ExecutionContext): Future[QuckooClient]
+  private[this] val component = ReactComponentB[Principal]("UserDisplay").
+    render_P { user =>
+      <.span(Icons.user, user.id)
+    } build
+
+  def apply(user: Principal) = component(user)
 
 }

@@ -113,7 +113,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
     lawfulTry2Future(httpEvents).flatMap { events =>
       inProtocol[HttpProtocol] withEvents events usingClient { client =>
-        val returnedEvents = client.subscribeTo[MasterEvent].toListL.runAsync
+        val returnedEvents = client.channel[MasterEvent].toListL.runAsync
 
         returnedEvents.map { evts =>
           evts shouldBe givenEvents

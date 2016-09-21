@@ -15,11 +15,11 @@ import scalaz.Kleisli
 /**
   * Created by alonsodomin on 09/09/2016.
   */
-private[http] object DOMBackend extends HttpBackend {
+private[http] object HttpDOMBackend extends HttpBackend {
 
   final val ResponseType = "arraybuffer"
 
-  override def open[Ch <: Channel[Http]](channel: Ch) = Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
+  override def open[Ch <: Channel[HttpProtocol]](channel: Ch) = Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
     val subscriber = new EventSourceSubscriber(EventsURI, channel.eventDef.typeName)
     Observable.create(OverflowStrategy.DropOld(20))(subscriber)
   }
