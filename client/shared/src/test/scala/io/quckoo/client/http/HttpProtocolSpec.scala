@@ -35,7 +35,14 @@ object HttpProtocolSpec {
   final val FixedInstant = Instant.ofEpochMilli(903029302L)
   implicit final val FixedClock = Clock.fixed(FixedInstant, ZoneId.of("UTC"))
 
-  implicit final val TestPassport = new Passport(Map.empty, "foo")
+  def generatePassport(): Passport = {
+    val header = DataBuffer.fromString("{}").toBase64
+    val claims = DataBuffer.fromString("{}").toBase64
+    val signature = DataBuffer.fromString(System.currentTimeMillis().toString).toBase64
+    new Passport(Map.empty, s"$header.$claims.$signature")
+  }
+
+  implicit final val TestPassport = generatePassport()
   implicit final val TestDuration = Duration.Inf
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "latest")
@@ -135,7 +142,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       not(matcher = hasPassport(TestPassport))
 
   "authenticate" should "return the user's passport when result code is 200" in {
-    val expectedPassport = new Passport(Map.empty, "foo")
+    val expectedPassport = generatePassport()
 
     inProtocol[HttpProtocol] ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpSuccess(DataBuffer.fromString(expectedPassport.token))
@@ -170,7 +177,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     hasEmptyBody
 
   "refreshPassport" should "return a new passport" in {
-    val expectedPassport = new Passport(Map.empty, "bar")
+    val expectedPassport = generatePassport()
 
     inProtocol[HttpProtocol] ensuringRequest isRefreshPassport replyWith { _ =>
       HttpSuccess(DataBuffer.fromString(expectedPassport.token))

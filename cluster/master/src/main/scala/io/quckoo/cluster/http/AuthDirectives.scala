@@ -23,12 +23,15 @@ import akka.http.scaladsl.server.directives._
 
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 
-import io.quckoo.auth.Passport
+import io.quckoo.auth.{Passport, Principal}
 import io.quckoo.auth.http._
 import io.quckoo.cluster.core.Auth
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
+
+import scalaz._
+import Scalaz._
 
 /**
  * Created by alonsodomin on 14/10/2015.
@@ -36,12 +39,29 @@ import scala.reflect.ClassTag
 trait AuthDirectives extends UpickleSupport { auth: Auth =>
   import Directives._
 
-  def authenticateUser: Route =
+  private[this] val QuckooHttpChallenge = HttpChallenge("FormBased", Realm)
+
+  private[this] def authenticationResult[T](result: => Future[Option[T]])(
+    implicit ec: ExecutionContext
+  ): Future[AuthenticationResult[T]] = {
+    OptionT(result).map(_.right[HttpChallenge]).
+      getOrElse(QuckooHttpChallenge.left[T]).
+      map(_.toEither)
+  }
+
+  def authenticateUser: Route = {
+    def basicHttpAuth(creds: Option[BasicHttpCredentials])(implicit ec: ExecutionContext): Future[AuthenticationResult[Principal]] = {
+      authenticationResult(auth.basic(Credentials(creds)))
+    }
+
     extractExecutionContext { implicit ec =>
       implicit val ev = implicitly[ClassTag[BasicHttpCredentials]]
-      val directive = authenticate0[BasicHttpCredentials, Passport]("FormBased", auth.basic)
-      directive { completeWithPassport(_) }
+      val authenticate = authenticateOrRejectWithChallenge[BasicHttpCredentials, Principal](basicHttpAuth)
+      authenticate { (principal: Principal) =>
+        completeWithPassport(auth.generatePassport(principal))
+      }
     }
+  }
 
   def refreshPassport: Route =
     extractPassport(acceptExpired = true)(completeWithPassport)
@@ -49,24 +69,14 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
   def authenticated: Directive1[Passport] =
     extractPassport(acceptExpired = false).flatMap(provide)
 
-  private[this] def authenticate0[C <: HttpCredentials: ClassTag, U](
-    challengeScheme: String,
-    authenticator: Credentials => Future[Option[U]]
-  ): AuthenticationDirective[U] = {
-    extractExecutionContext.flatMap { implicit ec =>
-      authenticateOrRejectWithChallenge[C, U] { cred ⇒
-        authenticator(Credentials(cred)).map {
-          case Some(u) => AuthenticationResult.success(u)
-          case None => AuthenticationResult.failWithChallenge(HttpChallenge(challengeScheme, auth.Realm))
-        }
-      }
-    }
-  }
-
   private[this] def extractPassport(acceptExpired: Boolean = false): AuthenticationDirective[Passport] = {
+    def oauth2Http(creds: Option[OAuth2BearerToken])(implicit ec: ExecutionContext): Future[AuthenticationResult[Passport]] = {
+      authenticationResult(auth.bearer(acceptExpired)(Credentials(creds)))
+    }
+
     extractExecutionContext.flatMap { implicit ec =>
       implicit val ev = implicitly[ClassTag[OAuth2BearerToken]]
-      authenticate0[OAuth2BearerToken, Passport]("Bearer", auth.passport(acceptExpired))
+      authenticateOrRejectWithChallenge[OAuth2BearerToken, Passport](oauth2Http _)
     }
   }
 

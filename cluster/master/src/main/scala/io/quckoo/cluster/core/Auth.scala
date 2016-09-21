@@ -16,14 +16,16 @@
 
 package io.quckoo.cluster.core
 
+import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.directives.Credentials
-
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
-
 import io.quckoo.auth.{Passport, Principal, User}
 import io.quckoo.serialization.Base64._
 
 import scala.concurrent.{ExecutionContext, Future}
+
+import scalaz._
+import Scalaz._
 
 /**
  * Created by alonsodomin on 14/10/2015.
@@ -33,20 +35,19 @@ trait Auth {
   val Realm = "QuckooRealm"
   val secretKey = "dqwjq0jd9wjd192u4ued9hd0ew".getBytes("UTF-8").toBase64
 
-  def basic(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Passport]] = {
+  def basic(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Principal]] = {
     credentials match {
       case p @ Credentials.Provided(identifier) =>
         if (identifier == "admin" && p.verify("password")) {
-          val passport = generatePassport(User(identifier))
-          Future.successful(Some(passport))
-        } else Future.successful(None)
+          Future.successful(User(identifier).some)
+        } else Future.successful(none[User])
 
       case _ =>
-        Future.successful(None)
+        Future.successful(none[User])
     }
   }
 
-  def passport(acceptExpired: Boolean = false)(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Passport]] = {
+  def bearer(acceptExpired: Boolean = false)(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Passport]] = {
     credentials match {
       case p @ Credentials.Provided(token) =>
         if (isValidToken(token)) {
