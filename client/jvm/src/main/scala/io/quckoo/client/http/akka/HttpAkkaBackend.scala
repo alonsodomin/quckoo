@@ -2,7 +2,8 @@ package io.quckoo.client.http.akka
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpHeader.ParsingResult
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpHeader, HttpMethods, HttpMethod => AkkaHttpMethod, HttpRequest => AkkaHttpRequest, HttpResponse => AkkaHttpResponse}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpHeader, HttpMethods}
+import akka.http.scaladsl.model.{HttpMethod => AkkaHttpMethod, HttpRequest => AkkaHttpRequest, HttpResponse => AkkaHttpResponse}
 import akka.http.scaladsl.{Http => AkkaHttp}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
@@ -76,11 +77,4 @@ private[http] final class HttpAkkaBackend(host: String, port: Int = 80)
       mapAsync(1)(parseRawResponse).
       runWith(Sink.head[HttpResponse])
   }
-}
-
-object HttpAkkaBackend {
-
-  def apply(host: String, port: Int = 80)(implicit actorSystem: ActorSystem): HttpAkkaBackend =
-    new HttpAkkaBackend(host, port)
-
 }

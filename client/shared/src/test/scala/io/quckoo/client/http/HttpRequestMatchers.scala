@@ -36,9 +36,9 @@ trait HttpRequestMatchers extends Matchers {
       val currValue = req.headers.get(name)
       MatchResult(
         currValue.contains(value),
-        if (currValue.isDefined) {
-          s"header '$name' with value '${currValue.get} did not match value '$value'"
-        } else {
+        currValue.map { v =>
+          s"header '$name' with value '$v' did not match value '$value'"
+        } getOrElse {
           s"no '$name' header found in the request"
         },
         s"header '$name' has the correct value"
