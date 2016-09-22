@@ -1,8 +1,8 @@
 package io.quckoo.client.http
 
+import io.quckoo.api.EventDef
 import upickle.default.{Reader => UReader}
-
-import io.quckoo.client.core.{Channel, Channels, EventDef, Unmarshall}
+import io.quckoo.client.core.{Channel, Channels, Unmarshall}
 
 /**
   * Created by domingueza on 20/09/2016.

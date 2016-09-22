@@ -27,11 +27,13 @@ import io.quckoo.auth.{Passport, Principal}
 import io.quckoo.auth.http._
 import io.quckoo.cluster.core.Auth
 
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
 import scalaz._
 import Scalaz._
+
 
 /**
  * Created by alonsodomin on 14/10/2015.
@@ -49,8 +51,10 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
       map(_.toEither)
   }
 
-  def authenticateUser: Route = {
-    def basicHttpAuth(creds: Option[BasicHttpCredentials])(implicit ec: ExecutionContext): Future[AuthenticationResult[Principal]] = {
+  def authenticateUser(implicit timeout: FiniteDuration): Route = {
+    def basicHttpAuth(creds: Option[BasicHttpCredentials])(
+      implicit ec: ExecutionContext
+    ): Future[AuthenticationResult[Principal]] = {
       authenticationResult(auth.basic(Credentials(creds)))
     }
 
@@ -63,7 +67,7 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
     }
   }
 
-  def refreshPassport: Route =
+  def refreshPassport(implicit timeout: FiniteDuration): Route =
     extractPassport(acceptExpired = true)(completeWithPassport)
 
   def authenticated: Directive1[Passport] =

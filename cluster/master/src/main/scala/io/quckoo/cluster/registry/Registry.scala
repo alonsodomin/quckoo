@@ -32,7 +32,7 @@ import io.quckoo.id.JobId
 import io.quckoo.cluster.QuckooClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.topics
-import io.quckoo.fault.ExceptionThrown
+import io.quckoo.fault._
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
@@ -137,8 +137,10 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
         sender() ! JobNotFound(jobId)
       }
 
-    case msg: RegistryWriteCommand =>
-      shardRegion forward msg
+    case msg: RegistryJobCommand =>
+      if (jobIds.contains(msg.jobId))
+        shardRegion forward msg
+      else sender() ! JobNotFound(msg.jobId)
 
     case event: RegistryEvent =>
       handleEvent(event)

@@ -2,8 +2,8 @@ package io.quckoo.client.core
 
 import io.quckoo.{ExecutionPlan, TaskExecution}
 import io.quckoo.id._
-import io.quckoo.protocol.registry.JobNotFound
-import io.quckoo.protocol.scheduler.{ExecutionPlanNotFound, ExecutionPlanStarted, ScheduleJob}
+import io.quckoo.fault._
+import io.quckoo.protocol.scheduler.{ExecutionPlanCancelled, ExecutionPlanStarted, ScheduleJob}
 
 import scalaz.\/
 
@@ -18,7 +18,7 @@ trait SchedulerCmds[P <: Protocol] {
   type GetPlanCmd       = Auth[P, PlanId, Option[ExecutionPlan]]
   type GetExecutionsCmd = Auth[P, Unit, Map[TaskId, TaskExecution]]
   type GetExecutionCmd  = Auth[P, TaskId, Option[TaskExecution]]
-  type CancelPlanCmd    = Auth[P, PlanId, ExecutionPlanNotFound \/ Unit]
+  type CancelPlanCmd    = Auth[P, PlanId, ExecutionPlanNotFound \/ ExecutionPlanCancelled]
 
   implicit def scheduleJobCmd: ScheduleJobCmd
   implicit def getPlansCmd: GetPlansCmd

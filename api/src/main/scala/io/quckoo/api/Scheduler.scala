@@ -16,28 +16,49 @@
 
 package io.quckoo.api
 
+import io.quckoo.auth.Passport
 import io.quckoo.{ExecutionPlan, TaskExecution}
 import io.quckoo.id.{PlanId, TaskId}
-import io.quckoo.protocol.registry.JobNotFound
+import io.quckoo.fault._
 import io.quckoo.protocol.scheduler._
 
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
+import scalaz.\/
 
 /**
   * Created by alonsodomin on 13/03/2016.
   */
 trait Scheduler {
 
-  def cancelPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Unit]
+  def cancelPlan(planId: PlanId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[ExecutionPlanNotFound \/ ExecutionPlanCancelled]
 
-  def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]]
+  def executionPlan(planId: PlanId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Option[ExecutionPlan]]
 
-  def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]]
+  def executionPlans(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Map[PlanId, ExecutionPlan]]
 
-  def executions(implicit ec: ExecutionContext): Future[Map[TaskId, TaskExecution]]
+  def executions(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Map[TaskId, TaskExecution]]
 
-  def execution(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskExecution]]
+  def execution(taskId: TaskId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Option[TaskExecution]]
 
-  def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]]
+  def scheduleJob(schedule: ScheduleJob)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Fault \/ ExecutionPlanStarted]
 
 }

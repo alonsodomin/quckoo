@@ -17,18 +17,21 @@
 package io.quckoo.console.core
 
 import diode.data.{Pot, Ready, Unavailable}
+
 import io.quckoo.auth.Passport
 import io.quckoo.client.http.HttpQuckooClient
+import io.quckoo.fault.Fault
 import io.quckoo.id._
 import io.quckoo.protocol.Event
-import io.quckoo.protocol.registry.RegistryEvent
-import io.quckoo.protocol.scheduler.{ScheduleJob, SchedulerEvent}
+import io.quckoo.protocol.scheduler.ScheduleJob
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
+
 import slogging.LoggerHolder
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+
 import scalaz._
 import Scalaz._
 
@@ -56,15 +59,15 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
   def enableJob(jobId: JobId)(
     implicit
     client: HttpQuckooClient, passport: Passport
-  ): Future[RegistryEvent] = {
-    EitherT(client.enableJob(jobId)).fold(identity, identity)
+  ): Future[Event] = {
+    foldIntoEvent(client.enableJob(jobId))
   }
 
   def disableJob(jobId: JobId)(
     implicit
     client: HttpQuckooClient, passport: Passport
-  ): Future[RegistryEvent] = {
-    EitherT(client.disableJob(jobId)).fold(identity, identity)
+  ): Future[Event] = {
+    foldIntoEvent(client.disableJob(jobId))
   }
 
   def loadJobSpec(jobId: JobId)(
@@ -92,14 +95,14 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
     implicit
     client: HttpQuckooClient, passport: Passport
   ): Future[Event] = {
-    EitherT(client.scheduleJob(details)).fold(identity, identity)
+    foldIntoEvent(client.scheduleJob(details))
   }
 
   def cancelPlan(planId: PlanId)(
     implicit
     client: HttpQuckooClient, passport: Passport
   ): Future[Event] = {
-    EitherT(client.cancelExecutionPlan(planId)).map(_ => ExecutionPlanCancelled(planId)).fold(identity, identity)
+    foldIntoEvent(client.cancelPlan(planId))
   }
 
   def loadPlans(ids: Set[PlanId] = Set.empty)(
@@ -143,5 +146,8 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       case None       => id -> Unavailable
     }
   }
+
+  private[this] def foldIntoEvent[A <: Event](f: => Future[Fault \/ A]): Future[Event] =
+    EitherT(f).leftMap(fault => Failed(NonEmptyList[Fault](fault))).fold(identity, identity)
 
 }

@@ -1,7 +1,7 @@
 package io.quckoo.client.core
 
+import io.quckoo.api.EventDef
 import upickle.default.{Reader => UReader}
-
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.registry.RegistryEvent
 import io.quckoo.protocol.scheduler.SchedulerEvent

@@ -3,8 +3,8 @@ package io.quckoo.client.http
 import io.quckoo.{ExecutionPlan, TaskExecution}
 import io.quckoo.client.core._
 import io.quckoo.id._
-import io.quckoo.protocol.registry.JobNotFound
-import io.quckoo.protocol.scheduler.{ExecutionPlanNotFound, ExecutionPlanStarted, ScheduleJob}
+import io.quckoo.fault._
+import io.quckoo.protocol.scheduler.{ExecutionPlanCancelled, ExecutionPlanStarted, ScheduleJob}
 import io.quckoo.serialization.json._
 
 import scalaz.\/
@@ -45,7 +45,7 @@ trait HttpSchedulerCmds extends HttpMarshalling with SchedulerCmds[HttpProtocol]
     override val unmarshall = unmarshallFromJson[GetExecutionCmd]
   }
 
-  implicit lazy val cancelPlanCmd: CancelPlanCmd = new Auth[HttpProtocol, PlanId, ExecutionPlanNotFound \/ Unit] {
+  implicit lazy val cancelPlanCmd: CancelPlanCmd = new Auth[HttpProtocol, PlanId, ExecutionPlanNotFound \/ ExecutionPlanCancelled] {
     override val marshall = marshallEmpty[CancelPlanCmd](HttpMethod.Delete, planUrl)
     override val unmarshall = unmarshallFromJson[CancelPlanCmd]
   }

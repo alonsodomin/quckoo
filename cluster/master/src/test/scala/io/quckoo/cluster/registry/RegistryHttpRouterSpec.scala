@@ -8,16 +8,22 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
 
-import io.quckoo.fault.Fault
+import io.quckoo.fault._
 import io.quckoo.api.{Registry => RegistryApi}
+import io.quckoo.auth.Passport
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
+import io.quckoo.serialization.DataBuffer
 import io.quckoo.{JobSpec, serialization}
 
 import org.scalatest.{Matchers, WordSpec}
 
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+
 import scalaz._
+import scalaz.syntax.either._
+import scalaz.syntax.validation._
 
 /**
   * Created by domingueza on 21/03/16.
@@ -35,6 +41,14 @@ object RegistryHttpRouterSpec {
     JobId(TestJobSpec) -> TestJobSpec
   )
 
+  implicit final val TestTimeout = 1 second
+  implicit final val TestPassport = {
+    val header = DataBuffer.fromString("{}").toBase64
+    val claims = DataBuffer.fromString("{}").toBase64
+    val signature = DataBuffer.fromString(System.currentTimeMillis().toString).toBase64
+    new Passport(Map.empty, s"$header.$claims.$signature")
+  }
+
 }
 
 class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matchers
@@ -48,19 +62,47 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
     registryApi
   }
 
-  override def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] =
-    Future.successful(JobEnabled(jobId))
+  override def enableJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[JobNotFound \/ JobEnabled] = {
+    val response = {
+      if (TestJobMap.contains(jobId)) JobEnabled(jobId).right[JobNotFound]
+      else JobNotFound(jobId).left[JobEnabled]
+    }
+    Future.successful(response)
+  }
 
-  override def disableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobDisabled] =
-    Future.successful(JobDisabled(jobId))
+  override def disableJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[JobNotFound \/ JobDisabled] = {
+    val response = {
+      if (TestJobMap.contains(jobId)) JobDisabled(jobId).right[JobNotFound]
+      else JobNotFound(jobId).left[JobDisabled]
+    }
+    Future.successful(response)
+  }
 
-  override def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[ValidationNel[Fault, JobId]] =
-    Future.successful(JobSpec.validate(jobSpec)).map(validSpec => validSpec.map(JobId(_)).leftMap(_.map(_.asInstanceOf[Fault])))
+  override def registerJob(jobSpec: JobSpec)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[ValidationNel[Fault, JobId]] = Future.successful {
+    EitherT.fromDisjunction(JobSpec.validate(jobSpec).disjunction).
+      map(JobId(_)).leftMap(_.map(_.asInstanceOf[Fault])).
+      run.validation
+  }
 
-  override def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] =
+  override def fetchJobs(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Map[JobId, JobSpec]] =
     Future.successful(TestJobMap)
 
-  override def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] =
+  override def fetchJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Option[JobSpec]] =
     Future.successful(TestJobMap.get(jobId))
 
   override def registryEvents: Source[RegistryEvent, NotUsed] = ???
@@ -71,21 +113,20 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
 
     "return a map of jobs" in {
       Get(endpoint("/jobs")) ~> entryPoint ~> check {
-        responseAs[Map[JobId, JobSpec]] should be (TestJobMap)
+        responseAs[Map[JobId, JobSpec]] shouldBe TestJobMap
       }
     }
 
     "return a JobId if the job spec is valid" in {
-      import Scalaz._
-
       Put(endpoint("/jobs"), Some(TestJobSpec)) ~> entryPoint ~> check {
-        responseAs[ValidationNel[Fault, JobId]] should be (JobId(TestJobSpec).successNel[Fault])
+        responseAs[JobId] shouldBe JobId(TestJobSpec)
       }
     }
 
     "return validation errors if the job spec is invalid" in {
       Put(endpoint("/jobs"), Some(TestInvalidJobSpec)) ~> entryPoint ~> check {
-        responseAs[ValidationNel[Fault, JobId]] should be (JobSpec.validate(TestInvalidJobSpec))
+        status == BadRequest
+        responseAs[NonEmptyList[Fault]].failure[JobId] shouldBe JobSpec.validate(TestInvalidJobSpec)
       }
     }
 
@@ -98,21 +139,37 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
 
     "return a job spec if the ID exists" in {
       Get(endpoint(s"/jobs/${JobId(TestJobSpec)}")) ~> entryPoint ~> check {
-        responseAs[JobSpec] should be (TestJobSpec)
+        responseAs[JobSpec] shouldBe TestJobSpec
       }
     }
 
     "return a job enabled message if enabling succeeds" in {
       val jobId = JobId(TestJobSpec)
       Post(endpoint(s"/jobs/$jobId/enable")) ~> entryPoint ~> check {
-        responseAs[JobEnabled] should be (JobEnabled(jobId))
+        responseAs[JobEnabled] shouldBe JobEnabled(jobId)
+      }
+    }
+
+    "return 404 when enabling a job if it does not exist" in {
+      val id = UUID.randomUUID()
+      Post(endpoint(s"/jobs/$id/enable")) ~> entryPoint ~> check {
+        responseAs[JobId] shouldBe JobId(id)
+        status === NotFound
       }
     }
 
     "return a job disabled message if enabling succeeds" in {
       val jobId = JobId(TestJobSpec)
       Post(endpoint(s"/jobs/$jobId/disable")) ~> entryPoint ~> check {
-        responseAs[JobDisabled] should be (JobDisabled(jobId))
+        responseAs[JobDisabled] shouldBe JobDisabled(jobId)
+      }
+    }
+
+    "return 404 when disabling a job if it does not exist" in {
+      val id = UUID.randomUUID()
+      Post(endpoint(s"/jobs/$id/disable")) ~> entryPoint ~> check {
+        responseAs[JobId] shouldBe JobId(id)
+        status === NotFound
       }
     }
 

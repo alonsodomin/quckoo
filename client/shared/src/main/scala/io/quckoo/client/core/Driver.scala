@@ -1,9 +1,8 @@
 package io.quckoo.client.core
 
+import io.quckoo.api.EventDef
 import upickle.default.{Reader => UReader}
-
 import io.quckoo.util._
-
 import monix.reactive.Observable
 import monix.scalaz._
 

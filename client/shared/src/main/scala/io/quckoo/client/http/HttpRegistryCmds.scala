@@ -2,9 +2,9 @@ package io.quckoo.client.http
 
 import io.quckoo.JobSpec
 import io.quckoo.client.core._
-import io.quckoo.fault.Fault
+import io.quckoo.fault._
 import io.quckoo.id.JobId
-import io.quckoo.protocol.registry.{JobDisabled, JobEnabled, JobNotFound, RegisterJob}
+import io.quckoo.protocol.registry.{JobDisabled, JobEnabled, RegisterJob}
 import io.quckoo.serialization.json._
 
 import scalaz._

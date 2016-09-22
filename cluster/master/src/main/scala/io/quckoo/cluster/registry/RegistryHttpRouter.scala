@@ -27,9 +27,14 @@ import de.heikoseeberger.akkasse.EventStreamMarshalling
 
 import io.quckoo.JobSpec
 import io.quckoo.api.{Registry => RegistryApi}
+import io.quckoo.auth.Passport
 import io.quckoo.id.JobId
-import io.quckoo.cluster.http._
+import io.quckoo.fault._
+import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.serialization.json._
+
+import scala.concurrent.duration.FiniteDuration
+import scalaz.{Failure => Failurez, Success => Successz, _}
 
 /**
   * Created by domingueza on 21/03/16.
@@ -39,7 +44,7 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
 
   import StatusCodes._
 
-  def registryApi(implicit system: ActorSystem, materializer: Materializer): Route =
+  def registryApi(implicit system: ActorSystem, materializer: Materializer, timeout: FiniteDuration, passport: Passport): Route =
     pathPrefix("jobs") {
       pathEnd {
         get {
@@ -49,7 +54,10 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
         } ~ put {
           entity(as[JobSpec]) { jobSpec =>
             extractExecutionContext { implicit ec =>
-              complete(registerJob(jobSpec))
+              onSuccess(registerJob(jobSpec)) {
+                case Successz(jobId)  => complete(jobId)
+                case Failurez(errors) => complete(BadRequest -> errors)
+              }
             }
           }
         }
@@ -58,30 +66,36 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
           get {
             extractExecutionContext { implicit ec =>
               onSuccess(fetchJob(JobId(jobId))) {
-                case Some(jobSpec) => complete(jobSpec)
-                case _             => complete(NotFound)
+                case Some(spec) => complete(spec)
+                case _          => complete(NotFound)
               }
             }
           }
         } ~ path("enable") {
           post {
             extractExecutionContext { implicit ec =>
-              complete(enableJob(JobId(jobId)))
+              onSuccess(enableJob(JobId(jobId))) {
+                case \/-(res @ JobEnabled(_))  => complete(res)
+                case -\/(JobNotFound(_))       => complete(NotFound -> jobId)
+              }
             }
           }
         } ~ path("disable") {
           post {
             extractExecutionContext { implicit ec =>
-              complete(disableJob(JobId(jobId)))
+              onSuccess(disableJob(JobId(jobId))) {
+                case \/-(res @ JobDisabled(_)) => complete(res)
+                case -\/(JobNotFound(_))       => complete(NotFound -> jobId)
+              }
             }
           }
         }
       }
-    } ~ path("events") {
+    } /*~ path("events") {
       get {
         complete(asSSE(registryEvents, "registry"))
       }
-    }
+    }*/
 
 
 

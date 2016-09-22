@@ -5,7 +5,7 @@ import java.util.UUID
 import io.quckoo._
 import io.quckoo.auth.{InvalidCredentialsException, Passport}
 import io.quckoo.client.core.StubClient
-import io.quckoo.fault.{DownloadFailed, Fault}
+import io.quckoo.fault._
 import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster.{MasterEvent, MasterReachable, MasterRemoved}
@@ -515,12 +515,12 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isCancelExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
       if (UUID.fromString(id) == TestPlanId) {
-        HttpSuccess(DataBuffer(().right[ExecutionPlanNotFound]))
+        HttpSuccess(DataBuffer(ExecutionPlanCancelled(TestJobId, TestPlanId).right[ExecutionPlanNotFound]))
       } else {
         HttpError(500, s"Invalid plan id $id")
       }
     } usingClient { client =>
-      client.cancelExecutionPlan(TestPlanId).map { returned =>
+      client.cancelPlan(TestPlanId).map { returned =>
         returned.isRight shouldBe true
       }
     }
@@ -531,13 +531,13 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isCancelExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
       if (UUID.fromString(id) == TestPlanId) {
-        HttpError(404, entity = DataBuffer(ExecutionPlanNotFound(TestPlanId).left[Unit]))
+        HttpError(404, entity = DataBuffer(ExecutionPlanNotFound(TestPlanId).left[ExecutionPlanCancelled]))
       } else {
         HttpError(500, s"Invalid plan id $id")
       }
     } usingClient { client =>
-      client.cancelExecutionPlan(TestPlanId).map { returned =>
-        returned shouldBe ExecutionPlanNotFound(TestPlanId).left[Unit]
+      client.cancelPlan(TestPlanId).map { returned =>
+        returned shouldBe ExecutionPlanNotFound(TestPlanId).left[ExecutionPlanCancelled]
       }
     }
   }

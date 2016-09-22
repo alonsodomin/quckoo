@@ -1,17 +1,20 @@
 package io.quckoo.client
 
+import io.quckoo.api.{Cluster, Registry, Scheduler}
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.auth.{Credentials, Passport}
 import io.quckoo.client.core._
-import io.quckoo.fault.Fault
+import io.quckoo.fault._
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
+
 import monix.reactive.Observable
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
+
 import scalaz._
 
 /**
@@ -24,7 +27,8 @@ object QuckooClient {
 
 }
 
-final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
+final class QuckooClient[P <: Protocol] private[client](driver: Driver[P])
+  extends Cluster with Registry with Scheduler {
   import driver.specs._
 
   def channel[E](implicit magnet: ChannelMagnet[E]): Observable[E] = {
@@ -36,7 +40,7 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def authenticate(username: String, password: String)(
     implicit
-    ec: ExecutionContext, timeout: Duration
+    ec: ExecutionContext, timeout: FiniteDuration
   ): Future[Passport] = {
     val cmd = AnonCmd(Credentials(username, password), timeout)
     driver.invoke[AuthenticateCmd].run(cmd)
@@ -44,13 +48,13 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def refreshPassport(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[Passport] =
     driver.invoke[RefreshPassportCmd].run(AuthCmd((), timeout, passport))
 
   def signOut(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[Unit] =
     driver.invoke[SingOutCmd].run(AuthCmd((), timeout, passport))
 
@@ -58,7 +62,7 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def clusterState(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[QuckooState] = {
     val cmd = AuthCmd((), timeout, passport)
     driver.invoke[GetClusterStateCmd].run(cmd)
@@ -68,7 +72,7 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def registerJob(job: JobSpec)(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[ValidationNel[Fault, JobId]] = {
     val cmd = AuthCmd(RegisterJob(job), timeout, passport)
     driver.invoke[RegisterJobCmd].run(cmd)
@@ -76,7 +80,7 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def fetchJob(jobId: JobId)(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[Option[JobSpec]] = {
     val cmd = AuthCmd(jobId, timeout, passport)
     driver.invoke[GetJobCmd].run(cmd)
@@ -84,7 +88,7 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def fetchJobs(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[Map[JobId, JobSpec]] = {
     val cmd = AuthCmd((), timeout, passport)
     driver.invoke[GetJobsCmd].run(cmd)
@@ -92,7 +96,7 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def enableJob(jobId: JobId)(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[JobNotFound \/ JobEnabled] = {
     val cmd = AuthCmd(jobId, timeout, passport)
     driver.invoke[EnableJobCmd].run(cmd)
@@ -100,7 +104,7 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def disableJob(jobId: JobId)(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[JobNotFound \/ JobDisabled] = {
     val cmd = AuthCmd(jobId, timeout, passport)
     driver.invoke[DisableJobCmd].run(cmd)
@@ -110,7 +114,7 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def executionPlans(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[Map[PlanId, ExecutionPlan]] = {
     val cmd = AuthCmd((), timeout, passport)
     driver.invoke[GetPlansCmd].run(cmd)
@@ -118,7 +122,7 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def executionPlan(planId: PlanId)(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[Option[ExecutionPlan]] = {
     val cmd = AuthCmd(planId, timeout, passport)
     driver.invoke[GetPlanCmd].run(cmd)
@@ -126,23 +130,23 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def scheduleJob(schedule: ScheduleJob)(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[JobNotFound \/ ExecutionPlanStarted] = {
     val cmd = AuthCmd(schedule, timeout, passport)
     driver.invoke[ScheduleJobCmd].run(cmd)
   }
 
-  def cancelExecutionPlan(planId: PlanId)(
+  def cancelPlan(planId: PlanId)(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
-  ): Future[ExecutionPlanNotFound \/ Unit] = {
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[ExecutionPlanNotFound \/ ExecutionPlanCancelled] = {
     val cmd = AuthCmd(planId, timeout, passport)
     driver.invoke[CancelPlanCmd].run(cmd)
   }
 
   def executions(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[Map[TaskId, TaskExecution]] = {
     val cmd = AuthCmd((), timeout, passport)
     driver.invoke[GetExecutionsCmd].run(cmd)
@@ -150,7 +154,7 @@ final class QuckooClient[P <: Protocol] private[client](driver: Driver[P]) {
 
   def execution(taskId: TaskId)(
     implicit
-    ec: ExecutionContext, timeout: Duration, passport: Passport
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[Option[TaskExecution]] = {
     val cmd = AuthCmd(taskId, timeout, passport)
     driver.invoke[GetExecutionCmd].run(cmd)

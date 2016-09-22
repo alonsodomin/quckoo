@@ -1,5 +1,6 @@
 package io.quckoo.client.core
 
+import io.quckoo.api.EventDef
 import upickle.default.{Reader => UReader}
 
 /**

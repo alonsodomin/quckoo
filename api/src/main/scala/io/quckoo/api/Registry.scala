@@ -17,26 +17,44 @@
 package io.quckoo.api
 
 import io.quckoo.JobSpec
-import io.quckoo.fault.Fault
+import io.quckoo.auth.Passport
+import io.quckoo.fault._
 import io.quckoo.id.JobId
 import io.quckoo.protocol.registry._
 
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
-import scalaz.ValidationNel
+
+import scalaz.{ValidationNel, \/}
 
 /**
   * Created by alonsodomin on 13/12/2015.
   */
 trait Registry {
 
-  def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled]
+  def enableJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[JobNotFound \/ JobEnabled]
 
-  def disableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobDisabled]
+  def disableJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[JobNotFound \/ JobDisabled]
 
-  def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]]
+  def fetchJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Option[JobSpec]]
 
-  def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[ValidationNel[Fault, JobId]]
+  def registerJob(jobSpec: JobSpec)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[ValidationNel[Fault, JobId]]
 
-  def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]]
+  def fetchJobs(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Map[JobId, JobSpec]]
 
 }

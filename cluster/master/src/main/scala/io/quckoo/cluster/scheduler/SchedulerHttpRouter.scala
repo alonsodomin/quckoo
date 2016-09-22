@@ -26,9 +26,15 @@ import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
 
 import io.quckoo.api.{Scheduler => SchedulerApi}
+import io.quckoo.auth.Passport
+import io.quckoo.fault._
 import io.quckoo.cluster.http._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.json._
+
+import scala.concurrent.duration._
+
+import scalaz._
 
 /**
   * Created by domingueza on 21/03/16.
@@ -38,7 +44,13 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
 
   import StatusCodes._
 
-  def schedulerApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+  def schedulerApi(
+    implicit
+    system: ActorSystem,
+    materializer: ActorMaterializer,
+    timeout: FiniteDuration,
+    passport: Passport
+  ): Route =
     pathPrefix("plans") {
       pathEnd {
         get {
@@ -48,9 +60,11 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
         } ~ post {
           entity(as[ScheduleJob]) { req =>
             extractExecutionContext { implicit ec =>
-              onSuccess(schedule(req)) {
-                case Left(notFound) => complete(NotFound -> notFound.jobId)
-                case Right(plan)    => complete(plan)
+              onSuccess(scheduleJob(req)) {
+                case \/-(res)                  => complete(res)
+                case -\/(JobNotEnabled(jobId)) => complete(BadRequest -> jobId)
+                case -\/(JobNotFound(jobId))   => complete(NotFound -> jobId)
+                case -\/(error)                => complete(InternalServerError -> error)
               }
             }
           }
@@ -60,12 +74,15 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
           extractExecutionContext { implicit ec =>
             onSuccess(executionPlan(planId)) {
               case Some(plan) => complete(plan)
-              case _          => complete(NotFound)
+              case _          => complete(NotFound -> planId)
             }
           }
         } ~ delete {
           extractExecutionContext { implicit ec =>
-            complete(cancelPlan(planId))
+            onSuccess(cancelPlan(planId)) {
+              case \/-(res)                      => complete(res)
+              case -\/(ExecutionPlanNotFound(_)) => complete(NotFound -> planId)
+            }
           }
         }
       }
@@ -81,7 +98,7 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
           extractExecutionContext { implicit ec =>
             onSuccess(execution(taskId)) {
               case Some(task) => complete(task)
-              case _          => complete(NotFound)
+              case _          => complete(NotFound -> taskId)
             }
           }
         }

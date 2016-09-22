@@ -24,6 +24,7 @@ import io.quckoo.auth.Passport
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.client.http.dom._
 import io.quckoo.console.components.Notification
+import io.quckoo.fault._
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster._
@@ -34,7 +35,6 @@ import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 
 import slogging.LazyLogging
 
-import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scalaz.{-\/, \/-}
 
@@ -84,7 +84,6 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val loginHandler = new ActionHandler(zoomIntoPassport) {
-    //implicit val timeout = 5 seconds
 
     override def handle = {
       case Login(username, password, referral) =>
@@ -208,11 +207,6 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
           effectOnly(Effect(cancelPlan(planId)))
         }
 
-      case JobNotFound(jobId) =>
-        effectOnly(Growl(
-          Notification.danger(s"Job not found $jobId")
-        ))
-
       case ExecutionPlanStarted(jobId, planId) =>
         val effect = Effects.set(
           Growl(Notification.success(s"Started execution plan for job. planId=$planId")),
@@ -227,7 +221,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         )
         effectOnly(effect)
 
-      case ExecutionPlanCancelled(planId) =>
+      case ExecutionPlanCancelled(_, planId) =>
         val effects = Effects.set(
           Growl(Notification.danger(s"Execution plan $planId has been cancelled")),
           RefreshExecutionPlans(Set(planId))
@@ -284,7 +278,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
       case action: RefreshJobSpecs =>
         withAuth { implicit passport =>
-          val updateEffect = action.effect(loadJobSpecs(action.keys))(identity _)
+          val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
           action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
         }
     }

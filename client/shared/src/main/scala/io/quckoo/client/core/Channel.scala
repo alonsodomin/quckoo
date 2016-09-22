@@ -1,5 +1,7 @@
 package io.quckoo.client.core
 
+import io.quckoo.api.EventDef
+
 /**
   * Created by domingueza on 20/09/2016.
   */
