@@ -311,7 +311,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isFetchJob replyWith { req =>
       val urlPattern(id) = req.url
       if (JobId(id) == TestJobId) {
-        HttpSuccess(DataBuffer(TestJobSpec.some))
+        HttpSuccess(DataBuffer(TestJobSpec))
       } else {
         HttpError(500, s"Invalid JobId: $id")
       }
@@ -329,7 +329,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val urlPattern = uris.fetchJob.r
     inProtocol[HttpProtocol] ensuringRequest isFetchJob replyWith { req =>
       val urlPattern(id) = req.url
-      if (JobId(id) == TestJobId) HttpError(404, "TEST 404", DataBuffer(none[JobSpec]))
+      if (JobId(id) == TestJobId) HttpError(404, "TEST 404")
       else HttpError(500, s"Invalid URL: ${req.url}")
     } usingClient { client =>
       client.fetchJob(TestJobId).map { jobSpec =>
@@ -348,14 +348,13 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   "enableJob" should "return the acknowledgement that the job is been disabled" in {
     val urlPattern = uris.enableJob.r
-    def expectedResult(jobId: JobId) = JobEnabled(jobId).right[JobNotFound]
 
     inProtocol[HttpProtocol] ensuringRequest isEnableJob replyWith { req =>
       val urlPattern(id) = req.url
-      HttpSuccess(DataBuffer(expectedResult(JobId(id))))
+      HttpSuccess(DataBuffer(JobEnabled(JobId(id))))
     } usingClient { client =>
       client.enableJob(TestJobId).map { ack =>
-        ack shouldBe expectedResult(TestJobId)
+        ack shouldBe JobEnabled(TestJobId).right[JobNotFound]
       }
     }
   }
@@ -365,7 +364,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
     inProtocol[HttpProtocol] ensuringRequest isEnableJob replyWith { req =>
       val urlPattern(id) = req.url
-      HttpError(404, entity = DataBuffer(notFound[JobEnabled](JobId(id))))
+      HttpError(404, entity = DataBuffer(JobId(id)))
     } usingClient { client =>
       client.enableJob(TestJobId).map { res =>
         res shouldBe notFound[JobEnabled](TestJobId)
@@ -383,14 +382,13 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   "disableJob" should "return the acknowledgement that the job is been disabled" in {
     val urlPattern = uris.disableJob.r
-    def expectedResult(jobId: JobId) = JobDisabled(jobId).right[JobNotFound]
 
     inProtocol[HttpProtocol] ensuringRequest isDisableJob replyWith { req =>
       val urlPattern(id) = req.url
-      HttpSuccess(DataBuffer(expectedResult(JobId(id))))
+      HttpSuccess(DataBuffer(JobDisabled(JobId(id))))
     } usingClient { client =>
       client.disableJob(TestJobId).map { ack =>
-        ack shouldBe expectedResult(TestJobId)
+        ack shouldBe JobDisabled(TestJobId).right[JobNotFound]
       }
     }
   }
@@ -400,7 +398,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
     inProtocol[HttpProtocol] ensuringRequest isDisableJob replyWith { req =>
       val urlPattern(id) = req.url
-      HttpError(404, entity = DataBuffer(notFound[JobDisabled](JobId(id))))
+      HttpError(404, entity = DataBuffer(JobId(id)))
     } usingClient { client =>
       client.disableJob(TestJobId).map { res =>
         res shouldBe notFound[JobDisabled](TestJobId)
@@ -440,7 +438,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isGetExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
       if (UUID.fromString(id) == TestPlanId) {
-        HttpSuccess(DataBuffer(TestExecutionPlan.some))
+        HttpSuccess(DataBuffer(TestExecutionPlan))
       } else {
         HttpError(500, s"Invalid plan id $id")
       }
@@ -456,7 +454,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isGetExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
       if (UUID.fromString(id) == TestPlanId) {
-        HttpError(404, s"Should have returned a None instance", DataBuffer(none[ExecutionPlan]))
+        HttpError(404, s"Should have returned a None instance")
       } else {
         HttpError(500, s"Invalid plan id $id")
       }
@@ -480,7 +478,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val payload = ScheduleJob(TestJobId)
     inProtocol[HttpProtocol] ensuringRequest isScheduleJob(payload) replyWith { req =>
       val result = req.entity.as[ScheduleJob].
-        flatMap(cmd => DataBuffer(ExecutionPlanStarted(cmd.jobId, TestPlanId).right[JobNotFound]))
+        flatMap(cmd => DataBuffer(ExecutionPlanStarted(cmd.jobId, TestPlanId)))
       HttpSuccess(result)
     } usingClient { client =>
       client.scheduleJob(payload).map { returned =>
@@ -493,7 +491,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val payload = ScheduleJob(TestJobId)
     inProtocol[HttpProtocol] ensuringRequest isScheduleJob(payload) replyWith { req =>
       val result = req.entity.as[ScheduleJob].
-        flatMap(cmd => DataBuffer(JobNotFound(cmd.jobId).left[ExecutionPlanStarted]))
+        flatMap(cmd => DataBuffer(cmd.jobId))
       HttpError(404, entity = result)
     } usingClient { client =>
       client.scheduleJob(payload).map { returned =>
@@ -515,7 +513,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isCancelExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
       if (UUID.fromString(id) == TestPlanId) {
-        HttpSuccess(DataBuffer(ExecutionPlanCancelled(TestJobId, TestPlanId).right[ExecutionPlanNotFound]))
+        HttpSuccess(DataBuffer(ExecutionPlanCancelled(TestJobId, TestPlanId)))
       } else {
         HttpError(500, s"Invalid plan id $id")
       }
@@ -531,7 +529,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isCancelExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
       if (UUID.fromString(id) == TestPlanId) {
-        HttpError(404, entity = DataBuffer(ExecutionPlanNotFound(TestPlanId).left[ExecutionPlanCancelled]))
+        HttpError(404, entity = DataBuffer(TestPlanId))
       } else {
         HttpError(500, s"Invalid plan id $id")
       }
@@ -574,7 +572,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isGetExecution replyWith { req =>
       val urlPattern(id) = req.url
       if (UUID.fromString(id) == TestTaskId) {
-        HttpSuccess(DataBuffer(TestTaskExecution.some))
+        HttpSuccess(DataBuffer(TestTaskExecution))
       } else {
         HttpError(500, s"Invalid task id $id")
       }
@@ -590,7 +588,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isGetExecution replyWith { req =>
       val urlPattern(id) = req.url
       if (UUID.fromString(id) == TestTaskId) {
-        HttpError(404, s"Should have returned a None instance", DataBuffer(none[TaskExecution]))
+        HttpError(404, s"Should have returned a None instance")
       } else {
         HttpError(500, s"Invalid task id $id")
       }

@@ -1,7 +1,6 @@
 package io.quckoo.client.http
 
 import upickle.default.{Reader => UReader, Writer => UWriter}
-
 import io.quckoo.api.RequestTimeoutHeader
 import io.quckoo.auth.Passport
 import io.quckoo.client.core._
@@ -11,7 +10,9 @@ import io.quckoo.util._
 import scala.concurrent.duration.Duration
 import scala.collection.mutable
 
-import scalaz.Kleisli
+import scalaz.{Kleisli, \/, Validation}
+import scalaz.syntax.either._
+import scalaz.syntax.validation._
 
 /**
   * Created by alonsodomin on 19/09/2016.
@@ -67,6 +68,29 @@ trait HttpMarshalling {
       LawfulTry.fail(HttpErrorException(res.statusLine))
     }
     else res.entity.as[O#Rslt](decoder)
+  }
+
+  protected def unmarshalOption[A](
+    implicit decoder: UReader[A]
+  ): Unmarshall[HttpResponse, Option[A]] = Unmarshall { res =>
+    if (res.isSuccess) res.entity.as[A].map(Some(_))
+    else LawfulTry.success(None)
+  }
+
+  protected def unmarshalEither[E, A](
+    implicit
+    errDecode: UReader[E], succDecode: UReader[A]
+  ): Unmarshall[HttpResponse, E \/ A] = Unmarshall { res =>
+    if (res.isFailure) res.entity.as[E].map(_.left[A])
+    else res.entity.as[A].map(_.right[E])
+  }
+
+  protected def unmarshalValidation[E, A](
+    implicit
+    errDecode: UReader[E], succDecode: UReader[A]
+  ): Unmarshall[HttpResponse, Validation[E, A]] = Unmarshall { res =>
+    if (res.isFailure) res.entity.as[E].map(_.failure[A])
+    else res.entity.as[A].map(_.success[E])
   }
 
 }

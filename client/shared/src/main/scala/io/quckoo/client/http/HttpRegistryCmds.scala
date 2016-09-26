@@ -27,7 +27,7 @@ trait HttpRegistryCmds extends HttpMarshalling with RegistryCmds[HttpProtocol] {
 
   implicit lazy val getJobCmd: GetJobCmd = new Auth[HttpProtocol, JobId, Option[JobSpec]] {
     override val marshall = marshallEmpty[GetJobCmd](HttpMethod.Get, jobUrl)
-    override val unmarshall = unmarshallFromJson[GetJobCmd]
+    override val unmarshall = unmarshalOption[JobSpec]
   }
 
   implicit lazy val getJobsCmd: GetJobsCmd = new Auth[HttpProtocol, Unit, Map[JobId, JobSpec]] {
@@ -37,11 +37,11 @@ trait HttpRegistryCmds extends HttpMarshalling with RegistryCmds[HttpProtocol] {
 
   implicit lazy val enableJobCmd: EnableJobCmd = new Auth[HttpProtocol, JobId, JobNotFound \/ JobEnabled] {
     override val marshall = marshallEmpty[EnableJobCmd](HttpMethod.Post, jobUrl(Some("enable")))
-    override val unmarshall = unmarshallFromJson[EnableJobCmd]
+    override val unmarshall = unmarshalEither[JobId, JobEnabled].map(_.leftMap(JobNotFound))
   }
 
   implicit lazy val disableJobCmd: DisableJobCmd = new Auth[HttpProtocol, JobId, JobNotFound \/ JobDisabled] {
     override val marshall = marshallEmpty[DisableJobCmd](HttpMethod.Post, jobUrl(Some("disable")))
-    override val unmarshall = unmarshallFromJson[DisableJobCmd]
+    override val unmarshall = unmarshalEither[JobId, JobDisabled].map(_.leftMap(JobNotFound))
   }
 }
