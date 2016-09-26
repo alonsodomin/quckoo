@@ -36,7 +36,7 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "0.11.1"
+    val scalaJsReact    = "0.11.2"
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.0"
 
@@ -64,7 +64,7 @@ object Dependencies {
     val jquery = "1.11.1"
     val bootstrap = "3.3.2"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs = "15.2.1"
+    val reactJs = "15.3.2"
   }
 
   // Common library definitions
