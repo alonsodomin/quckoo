@@ -16,8 +16,6 @@
 
 package io.quckoo.cluster.http
 
-import upickle.default._
-
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.model._
@@ -25,19 +23,21 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
-
-import de.heikoseeberger.akkasse.EventStreamMarshalling
-
-import io.quckoo.api.RequestTimeoutHeader
+import akka.stream.scaladsl.Source
+import de.heikoseeberger.akkasse.{EventStreamMarshalling, ServerSentEvent}
+import io.quckoo.api.{EventDef, RequestTimeoutHeader}
 import io.quckoo.cluster.core.QuckooServer
 import io.quckoo.cluster.registry.RegistryHttpRouter
 import io.quckoo.cluster.scheduler.SchedulerHttpRouter
+import io.quckoo.protocol.Event
+import io.quckoo.protocol.cluster.MasterEvent
+import io.quckoo.serialization.json._
 import io.quckoo.util.LawfulTry
 
 import scala.concurrent.duration._
 
 trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerHttpRouter
-  with AuthDirectives with EventStreamMarshalling { this: QuckooServer =>
+  with AuthDirectives with EventStream with EventStreamMarshalling { this: QuckooServer =>
 
   import StatusCodes._
 
@@ -109,6 +109,8 @@ trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerH
           handleRejections(rejectionHandler(system.log)) {
             pathPrefix("api") {
               defineApi
+            } ~ path("events") {
+              complete(eventBus)
             } ~ staticResources
           }
         }
