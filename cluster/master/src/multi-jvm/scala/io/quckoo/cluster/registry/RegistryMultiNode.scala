@@ -5,6 +5,8 @@ import java.util.UUID
 import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.{ImplicitSender, TestActors, TestProbe}
+
+import io.quckoo.fault._
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.registry._

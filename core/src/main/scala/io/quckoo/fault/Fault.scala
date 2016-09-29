@@ -16,7 +16,7 @@
 
 package io.quckoo.fault
 
-import io.quckoo.id.{ArtifactId, JobId}
+import io.quckoo.id._
 
 import scalaz.NonEmptyList
 
@@ -24,6 +24,13 @@ import scalaz.NonEmptyList
   * Created by alonsodomin on 28/12/2015.
   */
 sealed trait Fault extends Serializable
+
+// == Business errors ===============
+
+final case class JobNotFound(jobId: JobId) extends Fault
+final case class JobNotEnabled(jobId: JobId) extends Fault
+final case class ExecutionPlanNotFound(planId: PlanId) extends Fault
+final case class TaskExecutionNotFound(taskId: TaskId) extends Fault
 
 // == Generic errors ================
 

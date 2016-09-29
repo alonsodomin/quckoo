@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package io.quckoo.serialization.json
+package io.quckoo.console.security
 
-import io.quckoo.id.JobId
+import io.quckoo.auth.Principal
+import io.quckoo.console.components._
 
-import upickle.Js
-import upickle.default.{Reader => JsonReader, Writer => JsonWriter, _}
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.prefix_<^._
 
 /**
-  * Created by alonsodomin on 04/07/2016.
+  * Created by alonsodomin on 20/02/2016.
   */
-trait CustomModel {
+object PrincipalWidget {
 
-  implicit val jobIdW: JsonWriter[JobId] = JsonWriter[JobId] {
-    jobId => Js.Str(jobId.toString)
-  }
+  private[this] val component = ReactComponentB[Principal]("UserDisplay").
+    render_P { user =>
+      <.span(Icons.user, user.id)
+    } build
 
-  implicit val jobIdR: JsonReader[JobId] = JsonReader[JobId] {
-    case Js.Str(id) => JobId(id)
-  }
+  def apply(user: Principal) = component(user)
 
 }

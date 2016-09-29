@@ -14,28 +14,29 @@
  * limitations under the License.
  */
 
-package io.quckoo.client.ajax
+package io.quckoo.client.http.dom
+
+import io.quckoo.client.http.HttpServerSentEvent
+import io.quckoo.serialization.DataBuffer
 
 import monix.execution.Cancelable
 import monix.execution.cancelables.RefCountCancelable
 import monix.reactive.observers.Subscriber
-import monix.reactive.{Observable, OverflowStrategy}
 
 import org.scalajs.dom.raw.{Event, EventSource, MessageEvent}
 
 import slogging.LazyLogging
 
-import upickle.default._
 
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-private[ajax] class EventSourceObservable[A: Reader] private (url: String, eventType: String)
-    extends (Subscriber.Sync[A] => Cancelable) with LazyLogging {
+private[dom] class EventSourceSubscriber(url: String, eventType: String)
+    extends (Subscriber.Sync[HttpServerSentEvent] => Cancelable) with LazyLogging {
 
   val source = new EventSource(url)
 
-  override def apply(subscriber: Subscriber.Sync[A]): Cancelable = {
+  override def apply(subscriber: Subscriber.Sync[HttpServerSentEvent]): Cancelable = {
     val cancelable = RefCountCancelable(source.close())
 
     source.onerror = (event: Event) => {
@@ -49,21 +50,13 @@ private[ajax] class EventSourceObservable[A: Reader] private (url: String, event
     }
 
     source.addEventListener[MessageEvent](eventType, (message: MessageEvent) => {
-      val event = read[A](message.data.toString)
-      subscriber.onNext(event)
-      ()
+      val data = DataBuffer.fromString(message.data.toString)
+      subscriber.onNext(HttpServerSentEvent(data))
     })
 
     cancelable
   }
 
   def close(): Unit = source.close()
-
-}
-
-private[ajax] object EventSourceObservable {
-
-  def apply[A: Reader](url: String, eventType: String): Observable[A] =
-    Observable.create[A](OverflowStrategy.DropOld(20))(new EventSourceObservable[A](url, eventType))
 
 }

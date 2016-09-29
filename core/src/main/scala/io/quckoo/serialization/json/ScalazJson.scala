@@ -17,7 +17,7 @@
 package io.quckoo.serialization.json
 
 import upickle.Js
-import upickle.default.{Writer => JsonWriter, Reader => JsonReader, _}
+import upickle.default.{Writer => UWriter, Reader => UReader, _}
 
 import scala.language.implicitConversions
 import scalaz._
@@ -29,11 +29,11 @@ trait ScalazJson {
 
   // NonEmptyList
 
-  implicit def nonEmptyListW[T: JsonWriter]: JsonWriter[NonEmptyList[T]] = JsonWriter[NonEmptyList[T]] {
+  implicit def nonEmptyListW[T: UWriter]: UWriter[NonEmptyList[T]] = UWriter[NonEmptyList[T]] {
     x => Js.Arr(x.list.toList.map(writeJs(_)).toArray: _*)
   }
 
-  implicit def nonEmptyListR[T: JsonReader]: JsonReader[NonEmptyList[T]] = JsonReader[NonEmptyList[T]]( {
+  implicit def nonEmptyListR[T: UReader]: UReader[NonEmptyList[T]] = UReader[NonEmptyList[T]]( {
     case Js.Arr(x @ _*) =>
       val seq = x.map(readJs[T])
       NonEmptyList(seq.head, seq.tail: _*)
@@ -41,80 +41,80 @@ trait ScalazJson {
 
   // Either \/
 
-  implicit def zeitherW[E: JsonWriter, A: JsonWriter]: JsonWriter[E \/ A] = {
-    JsonWriter[E \/ A] {
+  implicit def zeitherW[E: UWriter, A: UWriter]: UWriter[E \/ A] = {
+    UWriter[E \/ A] {
       case -\/(e) => Js.Arr(Js.Num(10), writeJs(e))
       case \/-(a) => Js.Arr(Js.Num(11), writeJs(a))
     }
   }
 
-  implicit def zleftW[E: JsonWriter, A: JsonWriter]: JsonWriter[-\/[E]] =
-    JsonWriter[-\/[E]](zeitherW[E, A].write)
+  implicit def zleftW[E: UWriter, A: UWriter]: UWriter[-\/[E]] =
+    UWriter[-\/[E]](zeitherW[E, A].write)
 
-  implicit def zrightW[E: JsonWriter, A: JsonWriter]: JsonWriter[\/-[A]] =
-    JsonWriter[\/-[A]](zeitherW[E, A].write)
+  implicit def zrightW[E: UWriter, A: UWriter]: UWriter[\/-[A]] =
+    UWriter[\/-[A]](zeitherW[E, A].write)
 
-  implicit def zeitherR[E: JsonReader, A: JsonReader]: JsonReader[E \/ A] =
-    JsonReader[E \/ A](zrightR[A].read orElse zleftR[E].read)
+  implicit def zeitherR[E: UReader, A: UReader]: UReader[E \/ A] =
+    UReader[E \/ A](zrightR[A].read orElse zleftR[E].read)
 
-  implicit def zleftR[E: JsonReader]: JsonReader[-\/[E]] = JsonReader[-\/[E]] {
+  implicit def zleftR[E: UReader]: UReader[-\/[E]] = UReader[-\/[E]] {
     case Js.Arr(Js.Num(10), e) => -\/[E](readJs[E](e))
   }
-  implicit def zrightR[A: JsonReader]: JsonReader[\/-[A]] = JsonReader[\/-[A]] {
+  implicit def zrightR[A: UReader]: UReader[\/-[A]] = UReader[\/-[A]] {
     case Js.Arr(Js.Num(11), a) => \/-[A](readJs[A](a))
   }
 
   // These \&/
 
-  implicit def theseW[A: JsonWriter, B: JsonWriter]: JsonWriter[A \&/ B] = JsonWriter[A \&/ B] {
+  implicit def theseW[A: UWriter, B: UWriter]: UWriter[A \&/ B] = UWriter[A \&/ B] {
     case \&/.This(a)    => Js.Arr(Js.Num(20), writeJs(a))
     case \&/.That(b)    => Js.Arr(Js.Num(21), writeJs(b))
     case \&/.Both(a, b) => Js.Arr(Js.Num(22), writeJs(a), writeJs(b))
   }
 
-  implicit def thisW[A: JsonWriter, B: JsonWriter]: JsonWriter[\&/.This[A]] =
-    JsonWriter[\&/.This[A]](theseW[A, B].write)
+  implicit def thisW[A: UWriter, B: UWriter]: UWriter[\&/.This[A]] =
+    UWriter[\&/.This[A]](theseW[A, B].write)
 
-  implicit def thatW[A: JsonWriter, B: JsonWriter]: JsonWriter[\&/.That[B]] =
-    JsonWriter[\&/.That[B]](theseW[A, B].write)
+  implicit def thatW[A: UWriter, B: UWriter]: UWriter[\&/.That[B]] =
+    UWriter[\&/.That[B]](theseW[A, B].write)
 
-  implicit def bothW[A: JsonWriter, B: JsonWriter]: JsonWriter[\&/.Both[A, B]] =
-    JsonWriter[\&/.Both[A, B]](theseW[A, B].write)
+  implicit def bothW[A: UWriter, B: UWriter]: UWriter[\&/.Both[A, B]] =
+    UWriter[\&/.Both[A, B]](theseW[A, B].write)
 
-  implicit def theseR[A: JsonReader, B: JsonReader]: JsonReader[A \&/ B] =
-    JsonReader[A \&/ B](thisR[A].read orElse thatR[B].read orElse bothR[A, B].read)
+  implicit def theseR[A: UReader, B: UReader]: UReader[A \&/ B] =
+    UReader[A \&/ B](thisR[A].read orElse thatR[B].read orElse bothR[A, B].read)
 
-  implicit def thisR[A: JsonReader]: JsonReader[\&/.This[A]] = JsonReader[\&/.This[A]] {
+  implicit def thisR[A: UReader]: UReader[\&/.This[A]] = UReader[\&/.This[A]] {
     case Js.Arr(Js.Num(20), a) => \&/.This[A](readJs[A](a))
   }
-  implicit def thatR[B: JsonReader]: JsonReader[\&/.That[B]] = JsonReader[\&/.That[B]] {
+  implicit def thatR[B: UReader]: UReader[\&/.That[B]] = UReader[\&/.That[B]] {
     case Js.Arr(Js.Num(21), b) => \&/.That[B](readJs[B](b))
   }
-  implicit def bothR[A: JsonReader, B: JsonReader]: JsonReader[\&/.Both[A, B]] = JsonReader[\&/.Both[A, B]] {
+  implicit def bothR[A: UReader, B: UReader]: UReader[\&/.Both[A, B]] = UReader[\&/.Both[A, B]] {
     case Js.Arr(Js.Num(22), a, b) => \&/.Both[A, B](readJs[A](a), readJs[B](b))
   }
 
   // Validation
 
-  implicit def validationW[E: JsonWriter, A: JsonWriter]: JsonWriter[Validation[E, A]] = {
-    JsonWriter[Validation[E, A]] {
-      case Failure(e) => Js.Arr(Js.Num(30), writeJs(e))
-      case Success(a) => Js.Arr(Js.Num(31), writeJs(a))
+  implicit def validationW[E: UWriter, A: UWriter]: UWriter[Validation[E, A]] = {
+    UWriter[Validation[E, A]] {
+      case Failure(e) => Js.Arr(Js.Num(30), writeJs[E](e))
+      case Success(a) => Js.Arr(Js.Num(31), writeJs[A](a))
     }
   }
 
-  implicit def successW[E: JsonWriter, A: JsonWriter]: JsonWriter[Success[A]] =
-    JsonWriter[Success[A]](validationW[E, A].write)
-  implicit def failureW[E: JsonWriter, A: JsonWriter]: JsonWriter[Failure[E]] =
-    JsonWriter[Failure[E]](validationW[E, A].write)
+  implicit def successW[E: UWriter, A: UWriter]: UWriter[Success[A]] =
+    UWriter[Success[A]](validationW[E, A].write)
+  implicit def failureW[E: UWriter, A: UWriter]: UWriter[Failure[E]] =
+    UWriter[Failure[E]](validationW[E, A].write)
 
-  implicit def validationR[E: JsonReader, A: JsonReader]: JsonReader[Validation[E, A]] =
-    JsonReader[Validation[E, A]](successR[A].read orElse failureR[E].read)
+  implicit def validationR[E: UReader, A: UReader]: UReader[Validation[E, A]] =
+    UReader[Validation[E, A]](successR[A].read orElse failureR[E].read)
 
-  implicit def successR[A: JsonReader]: JsonReader[Success[A]] = JsonReader[Success[A]] {
+  implicit def successR[A: UReader]: UReader[Success[A]] = UReader[Success[A]] {
     case Js.Arr(Js.Num(31), a) => Success[A](readJs[A](a))
   }
-  implicit def failureR[E: JsonReader]: JsonReader[Failure[E]] = JsonReader[Failure[E]] {
+  implicit def failureR[E: UReader]: UReader[Failure[E]] = UReader[Failure[E]] {
     case Js.Arr(Js.Num(30), e) => Failure[E](readJs[E](e))
   }
 

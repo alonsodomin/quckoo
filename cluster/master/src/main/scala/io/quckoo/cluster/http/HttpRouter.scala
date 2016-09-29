@@ -17,59 +17,74 @@
 package io.quckoo.cluster.http
 
 import akka.actor.ActorSystem
-import akka.event.{Logging, LoggingAdapter}
+import akka.event.LoggingAdapter
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
-
-import de.heikoseeberger.akkasse.EventStreamMarshalling
-
+import akka.stream.scaladsl.Source
+import de.heikoseeberger.akkasse.{EventStreamMarshalling, ServerSentEvent}
+import io.quckoo.api.{EventDef, RequestTimeoutHeader}
 import io.quckoo.cluster.core.QuckooServer
 import io.quckoo.cluster.registry.RegistryHttpRouter
 import io.quckoo.cluster.scheduler.SchedulerHttpRouter
+import io.quckoo.protocol.Event
+import io.quckoo.protocol.cluster.MasterEvent
+import io.quckoo.serialization.json._
+import io.quckoo.util.LawfulTry
 
-import upickle.default._
+import scala.concurrent.duration._
 
 trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerHttpRouter
-  with AuthDirectives with EventStreamMarshalling { this: QuckooServer =>
+  with AuthDirectives with EventStream with EventStreamMarshalling { this: QuckooServer =>
 
   import StatusCodes._
 
+  private[this] val DefaultTimeout = 2500 millis
+
+  private[this] def extractTimeout: Directive1[FiniteDuration] = {
+    optionalHeaderValueByName(RequestTimeoutHeader).map(_.flatMap { timeoutValue =>
+      LawfulTry(timeoutValue.toLong).map(_ millis).toOption
+    } getOrElse DefaultTimeout)
+  }
+
   private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
-    pathPrefix("auth") {
-      path("login") {
-        post {
-          authenticateUser
-        }
-      } ~ path("refresh") {
-        get {
-          refreshToken
-        }
-      }
-    } ~ authenticated { user =>
-      path("logout") {
-        post {
-          invalidateAuth {
-            complete(OK)
+    extractTimeout { implicit timeout =>
+      pathPrefix("auth") {
+        path("login") {
+          post {
+            authenticateUser
+          }
+        } ~ path("refresh") {
+          get {
+            refreshPassport
           }
         }
-      } ~ pathPrefix("cluster") {
-        get {
-          pathEnd {
-            extractExecutionContext { implicit ec =>
-              complete(clusterState)
+      } ~ authenticated { implicit passport =>
+        path("auth" / "logout") {
+          post {
+            invalidateAuth {
+              complete(OK)
             }
-          } ~ path("master") {
-            complete(asSSE(masterEvents, "master"))
-          } ~ path("worker") {
-            complete(asSSE(workerEvents, "worker"))
           }
+        } ~ pathPrefix("cluster") {
+          get {
+            pathEnd {
+              extractExecutionContext { implicit ec =>
+                complete(clusterState)
+              }
+            /*} ~ path("master") {
+              complete(asSSE(masterEvents, "master"))
+            } ~ path("worker") {
+              complete(asSSE(workerEvents, "worker"))*/
+            }
+          }
+        } ~ pathPrefix("registry") {
+          registryApi
+        } ~ pathPrefix("scheduler") {
+          schedulerApi
         }
-      } ~ pathPrefix("registry") {
-        registryApi
-      } ~ pathPrefix("scheduler") {
-        schedulerApi
       }
     }
 
@@ -94,6 +109,8 @@ trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerH
           handleRejections(rejectionHandler(system.log)) {
             pathPrefix("api") {
               defineApi
+            } ~ path("events") {
+              complete(eventBus)
             } ~ staticResources
           }
         }

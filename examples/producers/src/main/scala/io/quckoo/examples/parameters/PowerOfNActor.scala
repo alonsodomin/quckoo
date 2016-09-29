@@ -17,7 +17,9 @@
 package io.quckoo.examples.parameters
 
 import akka.actor._
+
 import io.quckoo._
+import io.quckoo.fault.JobNotEnabled
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._

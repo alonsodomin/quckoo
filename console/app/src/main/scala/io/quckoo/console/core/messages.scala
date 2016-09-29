@@ -19,10 +19,10 @@ package io.quckoo.console.core
 import diode.data.{AsyncAction, Pot, PotState}
 
 import io.quckoo._
-import io.quckoo.client.QuckooClient
+import io.quckoo.auth.Passport
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
-import io.quckoo.fault.Fault
+import io.quckoo.fault.{Fault, Faults}
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.{Command, Event}
@@ -30,8 +30,10 @@ import io.quckoo.protocol.{Command, Event}
 import scala.util.{Failure, Try}
 import scalaz.ValidationNel
 
+final case class Failed(fault: Faults) extends Event
+
 final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None) extends Command
-final case class LoggedIn(client: QuckooClient, referral: Option[ConsoleRoute]) extends Event
+final case class LoggedIn(passport: Passport, referral: Option[ConsoleRoute]) extends Event
 
 case object Logout extends Command
 case object LoggedOut extends Event
@@ -72,8 +74,6 @@ final case class RefreshExecutionPlans(
     copy(state = newState, result = newValue)
 
 }
-
-final case class ExecutionPlanCancelled(planId: PlanId) extends Event
 
 case object LoadExecutions extends Command
 

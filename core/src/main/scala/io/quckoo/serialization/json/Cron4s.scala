@@ -4,7 +4,7 @@ import cron4s._
 import cron4s.expr._
 
 import upickle.Js
-import upickle.default.{Reader => JsonReader, Writer => JsonWriter}
+import upickle.default.{Reader => UReader, Writer => UWriter}
 
 import scalaz._
 import Scalaz._
@@ -14,11 +14,11 @@ import Scalaz._
   */
 trait Cron4s {
 
-  implicit def cronExprW: JsonWriter[CronExpr] = JsonWriter[CronExpr] {
+  implicit def cronExprW: UWriter[CronExpr] = UWriter[CronExpr] {
     expr => Js.Str(expr.toString)
   }
 
-  implicit def cronExprR: JsonReader[CronExpr] = JsonReader[CronExpr] {
+  implicit def cronExprR: UReader[CronExpr] = UReader[CronExpr] {
     def extractExpr: PartialFunction[Js.Value, String] = {
       case Js.Str(expr) => expr
     }

@@ -14,17 +14,27 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.core
+package io.quckoo.client.http.dom
 
-import diode.{ActionHandler, ActionResult}
-import io.quckoo.client.QuckooClient
+import org.scalajs.dom
 
 /**
-  * Created by alonsodomin on 26/03/2016.
-  */
-private[core] trait ConnectedHandler[S] { this: ActionHandler[ConsoleScope, S] =>
+ * Created by alonsodomin on 13/10/2015.
+ */
+object Cookie {
 
-  def withClient(f: QuckooClient => ActionResult[ConsoleScope]): ActionResult[ConsoleScope] =
-    this.modelRW.root.zoomMap(_.client)(identity).value.map(f).getOrElse(noChange)
+  private[this] def rawCookies: Map[String, String] = {
+    import dom.document
+
+    val pairs = document.cookie.split("; ").map { c =>
+      val namePair = c.split("=")
+      namePair(0) -> namePair(1)
+    }
+
+    Map(pairs: _*)
+  }
+
+  def apply(name: String): Option[String] =
+    rawCookies.get(name)
 
 }

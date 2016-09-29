@@ -50,10 +50,10 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
         logger.warn("Login failed!")
         EffectOnly(Growl(authFailedNotification))
 
-      case LoggedIn(client, referral) =>
+      case LoggedIn(passport, referral) =>
         val destination = referral.getOrElse(DashboardRoute)
         val newModel = currentModel.copy(
-          client = Some(client),
+          passport = Some(passport),
           lastLogin = Some(LocalDateTime.now(clock))
         )
         logger.info("Successfully logged in! Redirecting to {}", destination)
@@ -62,7 +62,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
       case LoggedOut =>
         logger.info("Successfully logged out.")
         val action = Effect.action(NavigateTo(DashboardRoute))
-        ModelUpdateEffect(currentModel.copy(client = None), action)
+        ModelUpdateEffect(currentModel.copy(passport = None), action)
 
       case NavigateTo(route) =>
         routerCtl.set(route).runNow()

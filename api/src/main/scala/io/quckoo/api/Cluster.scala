@@ -16,8 +16,10 @@
 
 package io.quckoo.api
 
+import io.quckoo.auth.Passport
 import io.quckoo.net.QuckooState
 
+import scala.concurrent.duration.{FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -25,6 +27,6 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait Cluster {
 
-  def clusterState(implicit ec: ExecutionContext): Future[QuckooState]
+  def clusterState(implicit ec: ExecutionContext, timeout: FiniteDuration, passport: Passport): Future[QuckooState]
 
 }

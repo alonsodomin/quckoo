@@ -23,31 +23,40 @@ import akka.pattern._
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
+
+import io.quckoo.api.EventDef
+import io.quckoo.auth.Passport
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.journal.QuckooProductionJournal
 import io.quckoo.cluster.registry.RegistryEventPublisher
 import io.quckoo.cluster.scheduler.SchedulerEventPublisher
-import io.quckoo.fault.Fault
+import io.quckoo.fault._
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
+import io.quckoo.protocol.Event
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
+
 import org.slf4s.Logging
+
 import org.threeten.bp.Clock
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
+
 import scalaz._
+import Scalaz._
 
 /**
   * Created by alonsodomin on 13/12/2015.
   */
 object QuckooFacade extends Logging {
-  import Scalaz._
+
+  final val DefaultTimeout = 2500 millis
 
   def start(settings: QuckooClusterSettings)(implicit system: ActorSystem, clock: Clock): Future[Unit] = {
     def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
@@ -75,21 +84,33 @@ final class QuckooFacade(core: ActorRef)
 
   implicit val materializer = ActorMaterializer()
 
-  def cancelPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Unit] = {
-    implicit val timeout = Timeout(3 seconds)
-    (core ? CancelExecutionPlan(planId)).mapTo[ExecutionPlanFinished].map(_ => ())
+  def cancelPlan(planId: PlanId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[ExecutionPlanNotFound \/ ExecutionPlanCancelled] = {
+    implicit val to = Timeout(timeout)
+    (core ? CancelExecutionPlan(planId)).map {
+      case msg: ExecutionPlanNotFound  => msg.left[ExecutionPlanCancelled]
+      case msg: ExecutionPlanCancelled => msg.right[ExecutionPlanNotFound]
+    }
   }
 
-  def executionPlans(implicit ec: ExecutionContext): Future[Map[PlanId, ExecutionPlan]] = {
+  def executionPlans(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Map[PlanId, ExecutionPlan]] = {
     val executionPlans = Source.actorRef[(PlanId, ExecutionPlan)](100, OverflowStrategy.fail).
       mapMaterializedValue(upstream => core.tell(GetExecutionPlans, upstream))
 
     executionPlans.runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
   }
 
-  def executionPlan(planId: PlanId)(implicit ec: ExecutionContext): Future[Option[ExecutionPlan]] = {
+  def executionPlan(planId: PlanId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Option[ExecutionPlan]] = {
     def internalRequest: Future[Option[ExecutionPlan]] = {
-      implicit val timeout = Timeout(2 seconds)
+      implicit val to = Timeout(timeout)
       (core ? GetExecutionPlan(planId)).map {
         case ExecutionPlanNotFound(`planId`) => None
         case plan: ExecutionPlan             => Some(plan)
@@ -100,61 +121,106 @@ final class QuckooFacade(core: ActorRef)
     retry(internalRequest, 250 millis, 3)
   }
 
-  def executions(implicit ec: ExecutionContext): Future[Map[TaskId, TaskExecution]] = {
+  def executions(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Map[TaskId, TaskExecution]] = {
     val tasks = Source.actorRef[(TaskId, TaskExecution)](100, OverflowStrategy.fail).
       mapMaterializedValue(upstream => core.tell(GetTaskExecutions, upstream))
     tasks.runFold(Map.empty[TaskId, TaskExecution])((map, pair) => map + pair)
   }
 
-  def execution(taskId: TaskId)(implicit ec: ExecutionContext): Future[Option[TaskExecution]] = {
-    implicit val timeout = Timeout(5 seconds)
-
+  def execution(taskId: TaskId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Option[TaskExecution]] = {
+    implicit val to = Timeout(timeout)
     (core ? GetTaskExecution(taskId)) map {
       case task: TaskExecution             => Some(task)
       case TaskExecutionNotFound(`taskId`) => None
     }
   }
 
-  def schedule(schedule: ScheduleJob)(implicit ec: ExecutionContext): Future[Either[JobNotFound, ExecutionPlanStarted]] = {
-    implicit val timeout = Timeout(5 seconds)
-
+  def scheduleJob(schedule: ScheduleJob)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Fault \/ ExecutionPlanStarted] = {
+    implicit val to = Timeout(timeout)
     (core ? schedule) map {
-      case invalid: JobNotFound        => Left(invalid)
-      case valid: ExecutionPlanStarted => Right(valid)
+      case fault: Fault                  => fault.left[ExecutionPlanStarted]
+      case started: ExecutionPlanStarted => started.right[Fault]
     }
   }
 
-  def schedulerEvents: Source[SchedulerEvent, NotUsed] =
+  lazy val events: Source[(Event, EventDef[_ <: Event]), NotUsed] = {
+    val masterEvents = Source.actorPublisher[MasterEvent](MasterEventPublisher.props).
+      mapMaterializedValue(_ => NotUsed).
+      map((_, EventDef[MasterEvent]))
+
+    val workerEvents = Source.actorPublisher[WorkerEvent](WorkerEventPublisher.props).
+      mapMaterializedValue(_ => NotUsed).
+      map((_, EventDef[WorkerEvent]))
+
+    val registryEvents = Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props).
+      mapMaterializedValue(_ => NotUsed).
+      map((_, EventDef[RegistryEvent]))
+
+    val schedulerEvents = Source.actorPublisher[SchedulerEvent](SchedulerEventPublisher.props).
+      mapMaterializedValue(_ => NotUsed).
+      map((_, EventDef[SchedulerEvent]))
+
+    masterEvents.merge(workerEvents).merge(registryEvents).merge(schedulerEvents)
+  }
+
+  lazy val schedulerEvents: Source[SchedulerEvent, NotUsed] =
     Source.actorPublisher[SchedulerEvent](SchedulerEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
 
-  def masterEvents: Source[MasterEvent, NotUsed] =
+  lazy val masterEvents: Source[MasterEvent, NotUsed] =
     Source.actorPublisher[MasterEvent](MasterEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
 
-  def workerEvents: Source[WorkerEvent, NotUsed] =
+  lazy val workerEvents: Source[WorkerEvent, NotUsed] =
     Source.actorPublisher[WorkerEvent](WorkerEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
 
-  def enableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobEnabled] = {
-    implicit val timeout = Timeout(5 seconds)
-    (core ? EnableJob(jobId)).mapTo[JobEnabled]
+  def enableJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[JobNotFound \/ JobEnabled] = {
+    implicit val to = Timeout(timeout)
+    (core ? EnableJob(jobId)).map {
+      case msg: JobNotFound => msg.left[JobEnabled]
+      case msg: JobEnabled  => msg.right[JobNotFound]
+    }
   }
 
-  def disableJob(jobId: JobId)(implicit ec: ExecutionContext): Future[JobDisabled] = {
-    implicit val timeout = Timeout(5 seconds)
-    (core ? DisableJob(jobId)).mapTo[JobDisabled]
+  def disableJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[JobNotFound \/ JobDisabled] = {
+    implicit val to = Timeout(timeout)
+    (core ? DisableJob(jobId)).map {
+      case msg: JobNotFound => msg.left[JobDisabled]
+      case msg: JobDisabled => msg.right[JobNotFound]
+    }
   }
 
-  def fetchJob(jobId: JobId)(implicit ec: ExecutionContext): Future[Option[JobSpec]] = {
-    implicit val timeout = Timeout(5 seconds)
+  def fetchJob(jobId: JobId)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[Option[JobSpec]] = {
+    implicit val to = Timeout(timeout)
     (core ? GetJob(jobId)).map {
       case JobNotFound(_) => None
       case spec: JobSpec  => Some(spec)
     }
   }
 
-  def registerJob(jobSpec: JobSpec)(implicit ec: ExecutionContext): Future[ValidationNel[Fault, JobId]] = {
+  def registerJob(jobSpec: JobSpec)(
+    implicit
+    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+  ): Future[ValidationNel[Fault, JobId]] = {
     import scalaz._
     import Scalaz._
 
@@ -162,9 +228,9 @@ final class QuckooFacade(core: ActorRef)
     if (valid.isFailure) {
       Future.successful(valid.asInstanceOf[ValidationNel[Fault, JobId]])
     } else {
+      implicit val to = Timeout(timeout)
       log.info(s"Registering job spec: $jobSpec")
 
-      implicit val timeout = Timeout(30 seconds)
       (core ? RegisterJob(jobSpec)) map {
         case JobAccepted(jobId, _) => jobId.successNel[Fault]
         case JobRejected(_, error) => error.failureNel[JobId]
@@ -172,7 +238,7 @@ final class QuckooFacade(core: ActorRef)
     }
   }
 
-  def fetchJobs(implicit ec: ExecutionContext): Future[Map[JobId, JobSpec]] = {
+  def fetchJobs(implicit ec: ExecutionContext, timeout: FiniteDuration, passport: Passport): Future[Map[JobId, JobSpec]] = {
     Source.actorRef[(JobId, JobSpec)](100, OverflowStrategy.fail).
       mapMaterializedValue { upstream =>
         core.tell(GetJobs, upstream)
@@ -181,13 +247,12 @@ final class QuckooFacade(core: ActorRef)
       }
   }
 
-  def registryEvents: Source[RegistryEvent, NotUsed] =
+  lazy val registryEvents: Source[RegistryEvent, NotUsed] =
     Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
 
-  def clusterState(implicit ec: ExecutionContext): Future[QuckooState] = {
-    implicit val timeout = Timeout(5 seconds)
-
+  def clusterState(implicit ec: ExecutionContext, timeout: FiniteDuration, passport: Passport): Future[QuckooState] = {
+    implicit val to = Timeout(timeout)
     (core ? GetClusterStatus).mapTo[QuckooState]
   }
 
