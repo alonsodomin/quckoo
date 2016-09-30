@@ -16,13 +16,9 @@
 
 package io.quckoo.cluster.core
 
-import akka.NotUsed
-import akka.stream.scaladsl.Source
-
-import io.quckoo.api.{Cluster, EventDef, Registry, Scheduler}
+import io.quckoo.api.{Cluster, Registry, Scheduler}
 import io.quckoo.cluster.registry.RegistryStreams
 import io.quckoo.cluster.scheduler.SchedulerStreams
-import io.quckoo.protocol.Event
 
 /**
  * Created by alonsodomin on 14/10/2015.
@@ -30,8 +26,4 @@ import io.quckoo.protocol.Event
 trait QuckooServer extends Auth
     with Cluster with ClusterStreams
     with Registry with RegistryStreams
-    with Scheduler with SchedulerStreams {
-
-  def events: Source[(Event, EventDef[_ <: Event]), NotUsed]
-
-}
+    with Scheduler with SchedulerStreams

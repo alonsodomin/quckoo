@@ -153,26 +153,6 @@ final class QuckooFacade(core: ActorRef)
     }
   }
 
-  lazy val events: Source[(Event, EventDef[_ <: Event]), NotUsed] = {
-    val masterEvents = Source.actorPublisher[MasterEvent](MasterEventPublisher.props).
-      mapMaterializedValue(_ => NotUsed).
-      map((_, EventDef[MasterEvent]))
-
-    val workerEvents = Source.actorPublisher[WorkerEvent](WorkerEventPublisher.props).
-      mapMaterializedValue(_ => NotUsed).
-      map((_, EventDef[WorkerEvent]))
-
-    val registryEvents = Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props).
-      mapMaterializedValue(_ => NotUsed).
-      map((_, EventDef[RegistryEvent]))
-
-    val schedulerEvents = Source.actorPublisher[SchedulerEvent](SchedulerEventPublisher.props).
-      mapMaterializedValue(_ => NotUsed).
-      map((_, EventDef[SchedulerEvent]))
-
-    masterEvents.merge(workerEvents).merge(registryEvents).merge(schedulerEvents)
-  }
-
   lazy val schedulerEvents: Source[SchedulerEvent, NotUsed] =
     Source.actorPublisher[SchedulerEvent](SchedulerEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
@@ -248,7 +228,7 @@ final class QuckooFacade(core: ActorRef)
       }
   }
 
-  lazy val registryEvents: Source[RegistryEvent, NotUsed] =
+  def registryEvents: Source[RegistryEvent, NotUsed] =
     Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props).
       mapMaterializedValue(_ => NotUsed)
 

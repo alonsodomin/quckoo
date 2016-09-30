@@ -8,14 +8,14 @@ import upickle.default.{Reader => UReader}
   */
 trait ChannelMagnet[E] {
   implicit def eventDef: EventDef[E]
-  implicit def uReader: UReader[E]
+  implicit def decoder: UReader[E]
 
   def resolve[P <: Protocol](driver: Driver[P]): Channel.Aux[P, E] = driver.channelFor[E]
 }
 
 object ChannelMagnet {
-  implicit def apply[E](implicit ev: EventDef[E], reader: UReader[E]): ChannelMagnet[E] = new ChannelMagnet[E] {
+  implicit def apply[E](implicit ev: EventDef[E], decoderEv: UReader[E]): ChannelMagnet[E] = new ChannelMagnet[E] {
     implicit val eventDef: EventDef[E] = ev
-    implicit val uReader: UReader[E] = reader
+    implicit val decoder: UReader[E] = decoderEv
   }
 }

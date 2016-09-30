@@ -1,12 +1,17 @@
 package io.quckoo.client.core
 
-import io.quckoo.api.EventDef
 import upickle.default.{Reader => UReader}
+
+import io.quckoo.api.EventDef
 import io.quckoo.util._
+
 import monix.reactive.Observable
 import monix.scalaz._
 
+import slogging.LazyLogging
+
 import scala.concurrent.{ExecutionContext, Future}
+
 import scalaz.Kleisli
 import scalaz.std.scalaFuture._
 
@@ -16,11 +21,12 @@ import scalaz.std.scalaFuture._
 final class Driver[P <: Protocol] private (
     private[client] val backend: DriverBackend[P],
     private[client] val specs: ProtocolSpecs[P]
-  ) {
+  ) extends LazyLogging {
 
   private[client] def channelFor[E : EventDef : UReader] = specs.createChannel[E]
 
   def openChannel[E](ch: Channel.Aux[P, E]): Kleisli[Observable, Unit, ch.Event] = {
+    logger.debug(s"Opening channel for event ${ch.eventDef.typeName}")
     def decodeEvent = ch.unmarshall.transform(lawfulTry2Observable)
     backend.open(ch) >=> decodeEvent
   }

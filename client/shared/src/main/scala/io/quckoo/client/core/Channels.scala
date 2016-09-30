@@ -19,9 +19,4 @@ trait Channels[P <: Protocol] {
 
   def createChannel[E: EventDef : UReader]: Channel.Aux[P, E]
 
-  /*implicit def masterCh: MasterChannel
-  implicit def workerCh: WorkerChannel
-  implicit def registryCh: RegistryChannel
-  implicit def schedulerCh: SchedulerChannel*/
-
 }

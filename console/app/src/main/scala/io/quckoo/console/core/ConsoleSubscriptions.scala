@@ -19,6 +19,7 @@ package io.quckoo.console.core
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.scheduler.SchedulerEvent
+import io.quckoo.protocol.registry.RegistryEvent
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.serialization.json._
 
@@ -33,6 +34,7 @@ private[core] trait ConsoleSubscriptions {
     client.channel[MasterEvent].subscribe(new SimpleEventSubscriber[MasterEvent])
     client.channel[WorkerEvent].subscribe(new SimpleEventSubscriber[WorkerEvent])
     client.channel[SchedulerEvent].subscribe(new SimpleEventSubscriber[SchedulerEvent])
+    client.channel[RegistryEvent].subscribe(new SimpleEventSubscriber[RegistryEvent])
   }
 
 }
