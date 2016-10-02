@@ -169,8 +169,10 @@ class ExecutionDriver(implicit clock: Clock)
 
   override def persistenceId = s"$ShardName-" + self.path.name
 
-  override def preStart(): Unit =
+  override def preStart(): Unit = {
+    log.debug("Execution driver starting with persistence ID: {}", persistenceId)
     mediator ! Subscribe(topics.Registry, self)
+  }
 
   override def receiveRecover: Receive = {
     case create: Created =>
@@ -183,7 +185,7 @@ class ExecutionDriver(implicit clock: Clock)
 
     case RecoveryCompleted =>
       stateDuringRecovery.foreach { st =>
-        log.debug("Execution driver recovery finished. state={}")
+        log.debug("Execution driver recovery finished. state={}", st.plan)
 
         if (st.fired) {
           val taskId = st.plan.currentTask.get.id
@@ -216,8 +218,8 @@ class ExecutionDriver(implicit clock: Clock)
           context become shuttingDown(state)
 
         case other =>
-          self ! other
           unstashAll()
+          self ! other
           context.become(ready(state))
       }
     }
@@ -333,7 +335,9 @@ class ExecutionDriver(implicit clock: Clock)
     case ScheduleTask(_, _) =>
       log.warning("Received a `ScheduleTask` command while an execution is running!")
 
-    case _ => stash()
+    case msg =>
+      log.debug("Stashing message {} while running.", msg)
+      stash()
   }
 
   /**
@@ -347,6 +351,9 @@ class ExecutionDriver(implicit clock: Clock)
         mediator ! Unsubscribe(topics.Registry, self)
         context.become(shuttingDown(state.updated(event)))
       }
+
+    case FinishPlan =>
+      mediator ! Unsubscribe(topics.Registry, self)
 
     case UnsubscribeAck(Unsubscribe(topic, _, `self`)) if topic == topics.Registry =>
       context.parent ! Passivate(stopMessage = PoisonPill)
@@ -368,17 +375,20 @@ class ExecutionDriver(implicit clock: Clock)
   }
 
   private def scheduleOrFinish(state: DriverState) = {
-    def createTask = Task(
-      UUID.randomUUID(),
-      state.jobSpec.artifactId,
-      state.jobSpec.jobClass
-    )
-    val task = state.plan.currentTask.getOrElse(createTask)
-    state.plan.nextExecutionTime.map(when => ScheduleTask(task, when)).getOrElse(FinishPlan)
+    if (state.finished) FinishPlan
+    else {
+      def createTask = Task(
+        UUID.randomUUID(),
+        state.jobSpec.artifactId,
+        state.jobSpec.jobClass
+      )
+      val task = state.plan.currentTask.getOrElse(createTask)
+      state.plan.nextExecutionTime.map(when => ScheduleTask(task, when)).getOrElse(FinishPlan)
+    }
   }
 
   private def proceedNext(state: DriverState, lastTaskId: TaskId, outcome: TaskExecution.Outcome): Unit = {
-    def nextCommand = {
+    val nextCommand = {
       if (state.plan.trigger.isRecurring) {
         outcome match {
           case TaskExecution.Success =>
@@ -404,6 +414,7 @@ class ExecutionDriver(implicit clock: Clock)
         context become shuttingDown(state)
 
       case cmd: ScheduleTask =>
+        log.debug("Swtiching to ready state...")
         self ! cmd
         context become ready(state)
     }
