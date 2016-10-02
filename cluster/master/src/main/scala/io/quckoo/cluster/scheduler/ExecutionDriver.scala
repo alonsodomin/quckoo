@@ -73,7 +73,7 @@ object ExecutionDriver {
 
   // Public execution driver state
   object DriverState {
-    private[scheduler] def apply(created: Created)(implicit clock: Clock): DriverState = DriverState(
+    private[scheduler] def apply(created: Created): DriverState = DriverState(
       ExecutionPlan(created.jobId, created.planId, created.trigger, created.time),
       created.spec,
       created.lifecycleProps,
@@ -85,7 +85,7 @@ object ExecutionDriver {
     jobSpec: JobSpec,
     lifecycleProps: Props,
     completedTasks: Vector[TaskId]
-  )(implicit clock: Clock) {
+  ) {
 
     val jobId = plan.jobId
     val planId = plan.planId
@@ -97,7 +97,8 @@ object ExecutionDriver {
       else {
         val triggerTimeAfterSchedule = for {
           scheduleTime  <- lastScheduledTime
-          triggerTime   <- lastTriggeredTime if triggerTime.isAfter(scheduleTime)
+          triggerTime   <- lastTriggeredTime
+            if triggerTime.isAfter(scheduleTime) || triggerTime.isEqual(scheduleTime)
         } yield triggerTime
 
         triggerTimeAfterSchedule.isDefined
@@ -108,33 +109,33 @@ object ExecutionDriver {
       if (plan.finished) this
       else {
         event match {
-          case TaskScheduled(`jobId`, `planId`, task)
+          case TaskScheduled(`jobId`, `planId`, task, dateTime)
             if plan.currentTask.isEmpty =>
               copy(plan = plan.copy(
                 currentTask = Some(task),
-                lastScheduledTime = Some(ZonedDateTime.now(clock))
+                lastScheduledTime = Some(dateTime)
               ))
 
-          case TaskTriggered(`jobId`, `planId`, taskId)
+          case TaskTriggered(`jobId`, `planId`, taskId, dateTime)
             if plan.currentTask.map(_.id).contains(taskId) =>
               copy(plan = plan.copy(
-                lastTriggeredTime = Some(ZonedDateTime.now(clock))
+                lastTriggeredTime = Some(dateTime)
               ))
 
-          case TaskCompleted(`jobId`, `planId`, taskId, outcome)
+          case TaskCompleted(`jobId`, `planId`, taskId, dateTime, outcome)
             if plan.currentTask.map(_.id).contains(taskId) =>
               copy(plan = plan.copy(
                   currentTask = None,
-                  lastExecutionTime = Some(ZonedDateTime.now(clock)),
+                  lastExecutionTime = Some(dateTime),
                   lastOutcome = Some(outcome)
                 ),
                 completedTasks = completedTasks :+ taskId
               )
 
-          case ExecutionPlanFinished(`jobId`, `planId`) =>
+          case ExecutionPlanFinished(`jobId`, `planId`, dateTime) =>
             copy(plan = plan.copy(
               currentTask = None,
-              finishedTime = Some(ZonedDateTime.now(clock))
+              finishedTime = Some(dateTime)
             ))
 
           case _ => this
@@ -202,7 +203,7 @@ class ExecutionDriver(implicit clock: Clock)
 
   private def activatePlan(state: DriverState): Unit = {
     log.info("Activating execution plan. planId={}", state.planId)
-    persist(ExecutionPlanStarted(state.jobId, state.planId)) { event =>
+    persist(ExecutionPlanStarted(state.jobId, state.planId, ZonedDateTime.now(clock))) { event =>
       mediator ! Publish(topics.Scheduler, event)
       performTransition(state)(scheduleOrFinish(state))
     }
@@ -267,7 +268,7 @@ class ExecutionDriver(implicit clock: Clock)
 
       // Create a trigger to fire the task
       val trigger = createTrigger(task, state.planId, lifecycle, time)
-      persist(TaskScheduled(state.jobId, state.planId, task)) { event =>
+      persist(TaskScheduled(state.jobId, state.planId, task, ZonedDateTime.now(clock))) { event =>
         unstashAll()
 
         mediator ! Publish(topics.Scheduler, event)
@@ -285,7 +286,7 @@ class ExecutionDriver(implicit clock: Clock)
                                trigger: Option[Cancellable] = None): Receive = {
     case ExecutionLifecycle.Triggered(task) =>
       log.debug("Trigger for task {} has successfully fired.", task.id)
-      persist(TaskTriggered(state.jobId, state.planId, task.id)) { event =>
+      persist(TaskTriggered(state.jobId, state.planId, task.id, ZonedDateTime.now(clock))) { event =>
         mediator ! Publish(topics.Scheduler, event)
         context.become(runningExecution(state.updated(event), lifecycle, None))
       }
@@ -303,7 +304,7 @@ class ExecutionDriver(implicit clock: Clock)
 
     case ExecutionLifecycle.Result(outcome) =>
       state.plan.currentTask.foreach { task =>
-        persist(TaskCompleted(state.jobId, state.planId, task.id, outcome)) { event =>
+        persist(TaskCompleted(state.jobId, state.planId, task.id, ZonedDateTime.now(clock), outcome)) { event =>
           log.debug("Task finished. taskId={}, outcome={}", task.id, outcome)
           mediator ! Publish(topics.Scheduler, event)
 
@@ -326,7 +327,7 @@ class ExecutionDriver(implicit clock: Clock)
   private def shuttingDown(state: DriverState): Receive = {
     case FinishPlan if !state.plan.finished =>
       log.info("Finishing execution plan. planId={}", state.planId)
-      persist(ExecutionPlanFinished(state.jobId, state.planId)) { event =>
+      persist(ExecutionPlanFinished(state.jobId, state.planId, ZonedDateTime.now(clock))) { event =>
         mediator ! Publish(topics.Scheduler, event)
         mediator ! Unsubscribe(topics.Registry, self)
         context.become(shuttingDown(state.updated(event)))

@@ -207,42 +207,42 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
           effectOnly(Effect(cancelPlan(planId)))
         }
 
-      case ExecutionPlanStarted(jobId, planId) =>
+      case ExecutionPlanStarted(jobId, planId, _) =>
         val effect = Effects.set(
           Growl(Notification.success(s"Started execution plan for job. planId=$planId")),
           RefreshExecutionPlans(Set(planId))
         )
         effectOnly(effect)
 
-      case ExecutionPlanFinished(jobId, planId) =>
+      case ExecutionPlanFinished(jobId, planId, _) =>
         val effect = Effects.set(
           Growl(Notification.info(s"Execution plan $planId has finished")),
           RefreshExecutionPlans(Set(planId))
         )
         effectOnly(effect)
 
-      case ExecutionPlanCancelled(_, planId) =>
+      case ExecutionPlanCancelled(_, planId, _) =>
         val effects = Effects.set(
           Growl(Notification.danger(s"Execution plan $planId has been cancelled")),
           RefreshExecutionPlans(Set(planId))
         )
         effectOnly(effects)
 
-      case TaskScheduled(_, _, task) =>
+      case TaskScheduled(_, _, task, _) =>
         val effects = Effects.set(
           Growl(Notification.info(s"Task ${task.id} has been scheduled.")),
           RefreshExecutions(Set(task.id))
         )
         effectOnly(effects)
 
-      case TaskTriggered(_, _, taskId) =>
+      case TaskTriggered(_, _, taskId, _) =>
         val effects = Effects.set(
           Growl(Notification.info(s"Task $taskId has been triggered.")),
           RefreshExecutions(Set(taskId))
         )
         effectOnly(effects)
 
-      case TaskCompleted(_, _, taskId, _) =>
+      case TaskCompleted(_, _, taskId, _, _) =>
         val effects = Effects.set(
           Growl(Notification.info(s"Task $taskId has completed.")),
           RefreshExecutions(Set(taskId))
