@@ -338,9 +338,9 @@ private class ExecutionDriverTerminator(
   }
 
   def waitingForTermination: Receive = {
-    case response @ ExecutionPlanFinished(_, `planId`, _) =>
+    case response @ ExecutionPlanFinished(jobId, `planId`, dateTime) =>
       log.debug("Execution plan has been stopped. planId={}", planId)
-      killCmd.replyTo ! response
+      killCmd.replyTo ! ExecutionPlanCancelled(jobId, planId, dateTime)
       mediator ! Unsubscribe(topics.Scheduler, self)
       context.become(shuttingDown)
   }

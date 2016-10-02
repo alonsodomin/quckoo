@@ -276,6 +276,12 @@ object Dependencies {
 
   // Support modules ================================
 
+  lazy val testSupport = Def.settings {
+    libraryDependencies ++= Seq(
+      "io.github.soc"  %%% "scala-java-time"    % version.scalaTime
+    )
+  }
+
   lazy val testSupportJVM = Def.settings {
     import libs._
     libraryDependencies ++= Seq(

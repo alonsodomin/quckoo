@@ -178,7 +178,7 @@ lazy val client = (crossProject in file("client")).
   jsSettings(commonJsSettings: _*).
   jsSettings(Dependencies.clientJS: _*).
   jvmSettings(Dependencies.clientJVM: _*).
-  dependsOn(api)
+  dependsOn(api, testSupport % Test)
 
 lazy val clientJS = client.js
 lazy val clientJVM = client.jvm
@@ -306,6 +306,7 @@ lazy val testSupport = (crossProject in file("test-support")).
   ).
   settings(commonSettings: _*).
   settings(noPublishSettings: _*).
+  settings(Dependencies.testSupport: _*).
   jvmSettings(Dependencies.testSupportJVM: _*)
 
 lazy val testSupportJS = testSupport.js

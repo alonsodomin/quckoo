@@ -13,10 +13,9 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
+import io.quckoo.test.ImplicitClock
 import io.quckoo.util._
-
 import monix.execution.Scheduler
-
 import org.threeten.bp._
 import org.scalatest._
 
@@ -24,7 +23,6 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 import scala.util.matching.Regex
-
 import scalaz._
 import Scalaz._
 
@@ -107,7 +105,8 @@ object HttpProtocolSpec {
 
 }
 
-class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubClient with EitherValues with Inside {
+class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubClient with EitherValues with Inside
+    with ImplicitClock {
   import HttpProtocolSpec._
 
   implicit val scheduler: Scheduler = Scheduler.global
@@ -478,11 +477,11 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val payload = ScheduleJob(TestJobId)
     inProtocol[HttpProtocol] ensuringRequest isScheduleJob(payload) replyWith { req =>
       val result = req.entity.as[ScheduleJob].
-        flatMap(cmd => DataBuffer(ExecutionPlanStarted(cmd.jobId, TestPlanId)))
+        flatMap(cmd => DataBuffer(ExecutionPlanStarted(cmd.jobId, TestPlanId, currentDateTime)))
       HttpSuccess(result)
     } usingClient { client =>
       client.scheduleJob(payload).map { returned =>
-        returned shouldBe ExecutionPlanStarted(TestJobId, TestPlanId).right[JobNotFound]
+        returned shouldBe ExecutionPlanStarted(TestJobId, TestPlanId, currentDateTime).right[JobNotFound]
       }
     }
   }
@@ -513,7 +512,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isCancelExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
       if (UUID.fromString(id) == TestPlanId) {
-        HttpSuccess(DataBuffer(ExecutionPlanCancelled(TestJobId, TestPlanId)))
+        HttpSuccess(DataBuffer(ExecutionPlanCancelled(TestJobId, TestPlanId, currentDateTime)))
       } else {
         HttpError(500, s"Invalid plan id $id")
       }
