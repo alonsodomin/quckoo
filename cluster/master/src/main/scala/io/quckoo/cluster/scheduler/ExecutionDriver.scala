@@ -66,8 +66,10 @@ object ExecutionDriver {
     trigger: Trigger, lifecycleProps: Props,
     time: ZonedDateTime
   )
-  private final case class ScheduleTask(task: Task, time: ZonedDateTime)
-  private case object FinishPlan
+
+  sealed trait InternalCmd
+  private final case class ScheduleTask(task: Task, time: ZonedDateTime) extends InternalCmd
+  private case object FinishPlan extends InternalCmd
 
   // Public execution driver state
   object DriverState {
@@ -101,9 +103,6 @@ object ExecutionDriver {
         triggerTimeAfterSchedule.isDefined
       }
     }
-
-    def finished: Boolean =
-      plan.finishedTime.isDefined
 
     def updated(event: SchedulerEvent): DriverState = {
       if (plan.finished) this
@@ -189,18 +188,11 @@ class ExecutionDriver(implicit clock: Clock)
 
         if (st.fired) {
           val taskId = st.plan.currentTask.get.id
+          log.info("Re-triggering task after successful recovery. taskId={}", taskId)
           val lifecycle = context.watch(context.actorOf(st.lifecycleProps, taskId.toString))
           context.become(runningExecution(st, lifecycle))
         } else {
-          scheduleOrFinish(st) match {
-            case schedule: ScheduleTask =>
-              self ! schedule
-              context.become(ready(st))
-
-            case _ =>
-              self ! FinishPlan
-              context.become(shuttingDown(st))
-          }
+          performTransition(st)(scheduleOrFinish(st))
         }
       }
       stateDuringRecovery = None
@@ -212,16 +204,7 @@ class ExecutionDriver(implicit clock: Clock)
     log.info("Activating execution plan. planId={}", state.planId)
     persist(ExecutionPlanStarted(state.jobId, state.planId)) { event =>
       mediator ! Publish(topics.Scheduler, event)
-      scheduleOrFinish(state) match {
-        case FinishPlan =>
-          self ! FinishPlan
-          context become shuttingDown(state)
-
-        case other =>
-          unstashAll()
-          self ! other
-          context.become(ready(state))
-      }
+      performTransition(state)(scheduleOrFinish(state))
     }
   }
 
@@ -327,8 +310,7 @@ class ExecutionDriver(implicit clock: Clock)
           val newState = state.updated(event)
           context.unwatch(lifecycle)
 
-          unstashAll()
-          proceedNext(newState, task.id, outcome)
+          performTransition(newState)(nextCommand(newState, task.id, outcome))
         }
       }
 
@@ -372,8 +354,20 @@ class ExecutionDriver(implicit clock: Clock)
       Restart
   }
 
-  private def scheduleOrFinish(state: DriverState) = {
-    if (state.finished) FinishPlan
+  private[this] def performTransition(state: DriverState)(cmd: InternalCmd): Unit = {
+    unstashAll()
+    self ! cmd
+
+    val behaviour = cmd match {
+      case FinishPlan => shuttingDown(state)
+      case _          => ready(state)
+    }
+
+    context become behaviour
+  }
+
+  private def scheduleOrFinish(state: DriverState): InternalCmd = {
+    if (state.plan.finished) FinishPlan
     else {
       def createTask = Task(
         UUID.randomUUID(),
@@ -381,40 +375,30 @@ class ExecutionDriver(implicit clock: Clock)
         state.jobSpec.jobClass
       )
       val task = state.plan.currentTask.getOrElse(createTask)
-      state.plan.nextExecutionTime.map(when => ScheduleTask(task, when)).getOrElse(FinishPlan)
+      state.plan.nextExecutionTime.map { when =>
+        ScheduleTask(task, when)
+      } getOrElse FinishPlan
     }
   }
 
-  private def proceedNext(state: DriverState, lastTaskId: TaskId, outcome: TaskExecution.Outcome): Unit = {
-    val nextCommand = {
-      if (state.plan.trigger.isRecurring) {
-        outcome match {
-          case TaskExecution.Success =>
+  private def nextCommand(state: DriverState, lastTaskId: TaskId, outcome: TaskExecution.Outcome): InternalCmd = {
+    if (state.plan.trigger.isRecurring) {
+      outcome match {
+        case TaskExecution.Success =>
+          scheduleOrFinish(state)
+
+        case TaskExecution.Failure(cause) =>
+          if (shouldRetry(cause)) {
+            // TODO improve retry process
             scheduleOrFinish(state)
+          } else {
+            log.warning("Failed task {} won't be retried.", lastTaskId)
+            FinishPlan
+          }
 
-          case TaskExecution.Failure(cause) =>
-            if (shouldRetry(cause)) {
-              // TODO improve retry process
-              scheduleOrFinish(state)
-            } else {
-              log.warning("Failed task {} won't be retried.", lastTaskId)
-              FinishPlan
-            }
-
-          case _ => FinishPlan
-        }
-      } else FinishPlan
-    }
-
-    nextCommand match {
-      case FinishPlan =>
-        self ! FinishPlan
-        context become shuttingDown(state)
-
-      case cmd: ScheduleTask =>
-        self ! cmd
-        context become ready(state)
-    }
+        case _ => FinishPlan
+      }
+    } else FinishPlan
   }
 
   private def shouldRetry(cause: Fault): Boolean = cause match {
