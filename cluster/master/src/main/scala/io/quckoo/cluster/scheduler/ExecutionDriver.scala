@@ -335,9 +335,7 @@ class ExecutionDriver(implicit clock: Clock)
     case ScheduleTask(_, _) =>
       log.warning("Received a `ScheduleTask` command while an execution is running!")
 
-    case msg =>
-      log.debug("Stashing message {} while running.", msg)
-      stash()
+    case _ => stash()
   }
 
   /**
@@ -414,7 +412,6 @@ class ExecutionDriver(implicit clock: Clock)
         context become shuttingDown(state)
 
       case cmd: ScheduleTask =>
-        log.debug("Swtiching to ready state...")
         self ! cmd
         context become ready(state)
     }
