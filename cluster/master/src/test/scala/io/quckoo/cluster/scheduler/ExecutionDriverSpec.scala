@@ -131,9 +131,9 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val executionDriver = TestActorRef(executionDriverProps,
-      self, "executionDriverWithRecurringTriggerAndCancellation"
-    )
+    val driverName = "executionDriverWithRecurringTriggerAndCancellation"
+    //val executionDriver = TestActorRef(executionDriverProps, self, driverName)
+    val executionDriver = system.actorOf(executionDriverProps, driverName)
     watch(executionDriver)
 
     "create an execution from a job specification" in {
@@ -169,10 +169,22 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       finishedMsg.planId shouldBe planId
 
       executionProbe.expectNoMsg()
-      expectMsg(ShardRegion.Passivate(PoisonPill))
+      //expectMsg(ShardRegion.Passivate(PoisonPill))
 
       executionDriver ! PoisonPill
       expectTerminated(executionDriver)
+    }
+
+    "should self-passivate if restarted again" in {
+      val reencarnatedDriver = system.actorOf(executionDriverProps, driverName)
+      watch(reencarnatedDriver)
+
+      reencarnatedDriver ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+
+      eventListener.expectNoMsg()
+      reencarnatedDriver ! PoisonPill
+
+      expectTerminated(reencarnatedDriver)
     }
   }
 
