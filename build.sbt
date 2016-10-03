@@ -307,6 +307,7 @@ lazy val testSupport = (crossProject in file("test-support")).
   settings(commonSettings: _*).
   settings(noPublishSettings: _*).
   settings(Dependencies.testSupport: _*).
+  jsSettings(commonJsSettings: _*).
   jvmSettings(Dependencies.testSupportJVM: _*)
 
 lazy val testSupportJS = testSupport.js
