@@ -9,6 +9,7 @@ import de.heikoseeberger.akkasse.{EventStreamElement, ServerSentEvent}
 
 import io.quckoo.api.EventDef
 import io.quckoo.cluster.core.QuckooServer
+import io.quckoo.serialization.json._
 
 import scala.concurrent.duration._
 

@@ -138,7 +138,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
         finishedMsg.planId shouldBe planId
         finishedMsg.jobId shouldBe TestJobId
 
-        expectMsg(finishedMsg)
+        expectMsg(ExecutionPlanCancelled(TestJobId, planId, finishedMsg.dateTime))
       }
     }
 

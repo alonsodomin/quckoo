@@ -15,6 +15,7 @@ import io.quckoo._
 import io.quckoo.auth.Passport
 import io.quckoo.fault._
 import io.quckoo.serialization.DataBuffer
+import io.quckoo.test.ImplicitClock
 
 import org.scalatest.{Matchers, WordSpec}
 import org.threeten.bp.{Clock, Instant, ZoneId, ZonedDateTime}
@@ -63,7 +64,7 @@ object SchedulerHttpRouterSpec {
 }
 
 class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matchers
-    with SchedulerHttpRouter with SchedulerApi with SchedulerStreams {
+    with SchedulerHttpRouter with SchedulerApi with SchedulerStreams with ImplicitClock {
 
   import SchedulerHttpRouterSpec._
   import StatusCodes._
@@ -78,7 +79,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[ExecutionPlanNotFound \/ ExecutionPlanCancelled] = Future.successful {
     TestPlanMap.get(planId).
-      map(plan => ExecutionPlanCancelled(plan.jobId, planId).right[ExecutionPlanNotFound]).
+      map(plan => ExecutionPlanCancelled(plan.jobId, planId, ZonedDateTime.now(clock)).right[ExecutionPlanNotFound]).
       getOrElse(ExecutionPlanNotFound(planId).left[ExecutionPlanCancelled])
   }
 
@@ -93,7 +94,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[JobNotFound \/ ExecutionPlanStarted] = Future.successful {
     TestPlanMap.values.find(_.jobId == schedule.jobId).
-      map(plan => ExecutionPlanStarted(schedule.jobId, plan.planId).right[JobNotFound]).
+      map(plan => ExecutionPlanStarted(schedule.jobId, plan.planId, ZonedDateTime.now(clock)).right[JobNotFound]).
       getOrElse(JobNotFound(schedule.jobId).left[ExecutionPlanStarted])
   }
 
