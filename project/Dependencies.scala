@@ -22,7 +22,7 @@ object Dependencies {
     // Akka ----------
 
     object akka {
-      val main = "2.4.10"
+      val main = "2.4.11"
       val kryo = "0.4.1"
 
       // http extensions
