@@ -36,7 +36,7 @@ trait HttpRegistryCmds extends HttpMarshalling with RegistryCmds[HttpProtocol] {
   private[this] def jobUrl(suffix: Option[String])(cmd: Command[JobId]): String =
     s"$JobsURI/${cmd.payload}" + suffix.map(str => s"/$str").getOrElse("")
 
-  implicit lazy val registerJobCmd: RegisterJobCmd = new Auth[HttpProtocol, RegisterJob, ValidationNel[Fault, JobId]] {
+  implicit lazy val registerJobCmd: RegisterJobCmd = new Auth[HttpProtocol, JobSpec, ValidationNel[Fault, JobId]] {
     override val marshall = marshallToJson[RegisterJobCmd](HttpMethod.Put, _ => JobsURI)
     override val unmarshall = unmarshallFromJson[RegisterJobCmd]
   }

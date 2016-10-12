@@ -29,7 +29,7 @@ import scalaz._
 trait RegistryCmds[P <: Protocol] {
   import CmdMarshalling.Auth
 
-  type RegisterJobCmd = Auth[P, RegisterJob, ValidationNel[Fault, JobId]]
+  type RegisterJobCmd = Auth[P, JobSpec, ValidationNel[Fault, JobId]]
   type GetJobCmd      = Auth[P, JobId, Option[JobSpec]]
   type GetJobsCmd     = Auth[P, Unit, Map[JobId, JobSpec]]
   type EnableJobCmd   = Auth[P, JobId, JobNotFound \/ JobEnabled]

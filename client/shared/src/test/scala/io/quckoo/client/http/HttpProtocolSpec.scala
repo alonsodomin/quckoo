@@ -253,7 +253,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   val isRegisterJob = hasMethod(HttpMethod.Put) and
     hasUrl(uris.jobs) and
     hasPassport(TestPassport) and
-    hasBody(RegisterJob(TestJobSpec)) and
+    hasBody(TestJobSpec) and
     isJsonRequest and
     hasTimeout(TestTimeout)
 
