@@ -1,6 +1,6 @@
 import com.typesafe.sbt.SbtNativePackager.autoImport._
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging.autoImport._
-import com.typesafe.sbt.packager.docker.Cmd
+import com.typesafe.sbt.packager.docker.{CmdLike, Cmd, ExecCmd}
 import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport._
 import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
 import com.typesafe.sbt.packager.universal.UniversalPlugin.autoImport._
@@ -35,14 +35,36 @@ object Packaging {
     defaultLinuxInstallLocation in Docker := linuxHomeLocation
   )
 
+  private[this] val dumbInitLocation = "/usr/local/bin/dumb-init"
+  private[this] val dumbInitVersion = "1.2.0"
+
+  private[this] def withDumbInit(cmds: Seq[CmdLike]) = {
+    val installDumbInit = Seq(
+      ExecCmd("RUN", "wget", "--quiet", "-O", dumbInitLocation,
+        s"https://github.com/Yelp/dumb-init/releases/download/v$dumbInitVersion/dumb-init_${dumbInitVersion}_amd64"
+      ),
+      ExecCmd("RUN", "chmod", "+x", dumbInitLocation)
+    )
+
+    val userCmdIdx = Some(cmds.indexWhere {
+      case Cmd("USER", _) => true
+      case _              => false
+    }).filter(_ >= 0).getOrElse(0)
+
+    val (rootCmds, userCmds) = cmds.splitAt(userCmdIdx)
+
+    rootCmds ++ installDumbInit ++ userCmds
+  }
+
   private[this] lazy val serverDockerSettings = baseDockerSettings ++ Seq(
     dockerExposedVolumes ++= Seq(
       s"$linuxHomeLocation/resolver/cache",
       s"$linuxHomeLocation/resolver/local"
     ),
-    dockerCommands ++= Seq(
+    dockerCommands := withDumbInit(dockerCommands.value) ++ Seq(
       Cmd("ENV", "QUCKOO_HOME", linuxHomeLocation)
-    )
+    ),
+    dockerEntrypoint := Seq(dumbInitLocation, "--") ++ dockerEntrypoint.value
   )
 
   lazy val masterSettings = universalServerSettings ++ serverDockerSettings ++ Seq(
