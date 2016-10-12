@@ -1,8 +1,0 @@
---style defaultWithAlign
---formatSbtFiles false
---maxColumn 100
---binPackParentConstructors
---continuationIndentCallSite 2
---continuationIndentDefnSite 4
---alignByOpenParenCallSite false
---danglingParentheses true
