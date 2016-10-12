@@ -29,8 +29,8 @@ import scalaz.NonEmptyList
   */
 object Table {
 
-  type RowCallback[Id] = Id => Callback
-  type RowCellRender[Id, Item] = (Id, Item, String) => ReactNode
+  type RowCallback[Id]             = Id => Callback
+  type RowCellRender[Id, Item]     = (Id, Item, String) => ReactNode
   type RowActionsFactory[Id, Item] = (Id, Item) => Seq[RowAction[Id, Item]]
 
   type ItemSeq[Id, Item] = Traversable[(Id, Pot[Item])]
@@ -40,108 +40,101 @@ object Table {
   final case class RowAction[Id, Item](children: NonEmptyList[ReactNode], execute: RowCallback[Id])
 
   private[this] final case class RowProps[Id, Item](
-    rowId: Id,
-    columns: List[String],
-    item: Pot[Item],
-    render: RowCellRender[Id, Item],
-    allowSelect: Boolean,
-    selected: Boolean,
-    toggleSelected: RowCallback[Id],
-    actions: Option[RowActionsFactory[Id, Item]]
+      rowId: Id,
+      columns: List[String],
+      item: Pot[Item],
+      render: RowCellRender[Id, Item],
+      allowSelect: Boolean,
+      selected: Boolean,
+      toggleSelected: RowCallback[Id],
+      actions: Option[RowActionsFactory[Id, Item]]
   )
 
-  private[this] val HeaderCell = ReactComponentB[String]("HeaderCell").
-    stateless.
-    render_P(title => <.th(title)).
-    build
+  private[this] val HeaderCell =
+    ReactComponentB[String]("HeaderCell").stateless.render_P(title => <.th(title)).build
 
-  private[this] val BodyCell = ReactComponentB[ReactNode]("BodyCell").
-    stateless.
-    render_P(node => <.td(node)).
-    build
+  private[this] val BodyCell =
+    ReactComponentB[ReactNode]("BodyCell").stateless.render_P(node => <.td(node)).build
 
   private[this] case class CheckboxCellProps(
-    id: String, selected: Boolean, action: Callback, header: Boolean = false
+      id: String,
+      selected: Boolean,
+      action: Callback,
+      header: Boolean = false
   )
-  private[this] val CheckboxCell = ReactComponentB[CheckboxCellProps]("CheckboxCell").
-    stateless.
-    render_P { case CheckboxCellProps(id, selected, action, header) =>
-      val cb = <.input.checkbox(
-        ^.id := id,
-        ^.checked := selected,
-        ^.onChange --> action
-      )
+  private[this] val CheckboxCell =
+    ReactComponentB[CheckboxCellProps]("CheckboxCell").stateless.render_P {
+      case CheckboxCellProps(id, selected, action, header) =>
+        val cb = <.input.checkbox(
+          ^.id := id,
+          ^.checked := selected,
+          ^.onChange --> action
+        )
 
-      if (header) <.th(cb)
-      else <.td(cb)
+        if (header) <.th(cb)
+        else <.td(cb)
     } build
 
   private[this] type ActionsCellProps[Id, Item] = (Id, Item, RowActionsFactory[Id, Item])
-  private[this] def actionsCell[Id, Item] = ReactComponentB[ActionsCellProps[Id, Item]]("ActionsCell").
-    stateless.
-    render_P { case (id, item, factory) =>
-      <.td(
-        factory(id, item).zipWithIndex.map { case (action, idx) =>
-          Button().withKey(s"action-$id-$idx")(Button.Props(
-            Some(action.execute(id))),
-            action.children.list.toList: _*
-          )
-        }
-      )
+  private[this] def actionsCell[Id, Item] =
+    ReactComponentB[ActionsCellProps[Id, Item]]("ActionsCell").stateless.render_P {
+      case (id, item, factory) =>
+        <.td(
+          factory(id, item).zipWithIndex.map {
+            case (action, idx) =>
+              Button().withKey(s"action-$id-$idx")(
+                Button.Props(Some(action.execute(id))),
+                action.children.list.toList: _*)
+          }
+        )
     } build
 
-  private[this] def row[Id, Item] = ReactComponentB[RowProps[Id, Item]]("Row").
-    stateless.
-    render_P { props =>
-      <.tr(props.selected ?= (^.`class` := "info"),
-        props.item.renderFailed { ex =>
-          <.td(^.colSpan := props.columns.size, Notification.danger(ex))
-        },
-        props.item.renderPending { _ =>
-          <.td(^.colSpan := props.columns.size, "Loading ...")
-        },
-        props.item.render { item =>
-          val cells: List[ReactElement] = {
-            val columns = props.columns.map { column =>
-              BodyCell.withKey(s"$column-data-${props.rowId}")(
-                props.render(props.rowId, item, column)
-              )
-            }
-
-            if (props.allowSelect) {
-              val checkboxCell = CheckboxCell.
-                withKey(s"select-${props.rowId}")(CheckboxCellProps(
-                  s"select-item-${props.rowId}",
-                  props.selected,
-                  props.toggleSelected(props.rowId)
-                ))
-
-              checkboxCell :: columns
-            } else columns
-          }
-
-          val actions: Option[ReactElement] = props.actions.map { actions =>
-            actionsCell[Id, Item].withKey(s"actions-${props.rowId}")(
-              (props.rowId, item, actions)
+  private[this] def row[Id, Item] =
+    ReactComponentB[RowProps[Id, Item]]("Row").stateless.render_P { props =>
+      <.tr(props.selected ?= (^.`class` := "info"), props.item.renderFailed { ex =>
+        <.td(^.colSpan := props.columns.size, Notification.danger(ex))
+      }, props.item.renderPending { _ =>
+        <.td(^.colSpan := props.columns.size, "Loading ...")
+      }, props.item.render { item =>
+        val cells: List[ReactElement] = {
+          val columns = props.columns.map { column =>
+            BodyCell.withKey(s"$column-data-${props.rowId}")(
+              props.render(props.rowId, item, column)
             )
           }
-          actions.map(actCell => cells :+ actCell).
-            getOrElse[List[ReactElement]](cells)
+
+          if (props.allowSelect) {
+            val checkboxCell = CheckboxCell.withKey(s"select-${props.rowId}")(
+              CheckboxCellProps(
+                s"select-item-${props.rowId}",
+                props.selected,
+                props.toggleSelected(props.rowId)
+              ))
+
+            checkboxCell :: columns
+          } else columns
         }
-      )
+
+        val actions: Option[ReactElement] = props.actions.map { actions =>
+          actionsCell[Id, Item].withKey(s"actions-${props.rowId}")(
+            (props.rowId, item, actions)
+          )
+        }
+        actions.map(actCell => cells :+ actCell).getOrElse[List[ReactElement]](cells)
+      })
     } build
 
   final case class Props[Id, Item](
-    headers: List[String],
-    items: ItemSeq[Id, Item],
-    render: RowCellRender[Id, Item],
-    allowSelect: Boolean = false,
-    actions: Option[RowActionsFactory[Id, Item]] = None,
-    filter: Option[Filter[Id, Item]] = None
+      headers: List[String],
+      items: ItemSeq[Id, Item],
+      render: RowCellRender[Id, Item],
+      allowSelect: Boolean = false,
+      actions: Option[RowActionsFactory[Id, Item]] = None,
+      filter: Option[Filter[Id, Item]] = None
   )
   final case class State[Id](selected: Set[Id], allSelected: Boolean = false)
 
-  class Backend[Id, Item]($: BackendScope[Props[Id, Item], State[Id]]) {
+  class Backend[Id, Item]($ : BackendScope[Props[Id, Item], State[Id]]) {
 
     def toggleSelectAll(props: Props[Id, Item]): Callback = {
       $.modState { state =>
@@ -170,11 +163,13 @@ object Table {
 
         val selectableColumns = {
           if (props.allowSelect) {
-            val selectAllCheckbox = CheckboxCell.
-              withKey("select-all")(
-                CheckboxCellProps("selectAll", state.allSelected,
-                  toggleSelectAll(props), header = true)
-              )
+            val selectAllCheckbox = CheckboxCell.withKey("select-all")(
+              CheckboxCellProps(
+                "selectAll",
+                state.allSelected,
+                toggleSelectAll(props),
+                header = true)
+            )
             selectAllCheckbox :: columns
           } else columns
         }
@@ -191,27 +186,29 @@ object Table {
         }
       } getOrElse props.items
 
-      <.table(^.`class` := "table table-striped",
-        <.thead(<.tr(headers)),
-        <.tbody(items.map { case (id, item) =>
+      <.table(^.`class` := "table table-striped", <.thead(<.tr(headers)), <.tbody(items.map {
+        case (id, item) =>
           row[Id, Item].withKey(s"row-$id")(
-            RowProps(id, props.headers, item, props.render,
+            RowProps(
+              id,
+              props.headers,
+              item,
+              props.render,
               props.allowSelect,
               state.selected.contains(id) || state.allSelected,
               toggleSelectItem(props),
-              props.actions
-            )
+              props.actions)
           )
-        })
-      )
+      }))
     }
 
   }
 
-  private[components] def component[Id, Item] = ReactComponentB[Props[Id, Item]]("Table").
-    initialState(State(Set.empty[Id])).
-    renderBackend[Backend[Id, Item]].
-    build
+  private[components] def component[Id, Item] =
+    ReactComponentB[Props[Id, Item]]("Table")
+      .initialState(State(Set.empty[Id]))
+      .renderBackend[Backend[Id, Item]]
+      .build
 
   def apply[Id, Item](headers: List[String],
                       items: ItemSeq[Id, Item],

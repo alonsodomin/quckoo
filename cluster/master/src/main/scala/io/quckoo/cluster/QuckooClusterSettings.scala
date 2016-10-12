@@ -24,15 +24,15 @@ import io.quckoo.resolver.ivy.IvyConfiguration
 import scala.concurrent.duration._
 
 /**
- * Created by domingueza on 28/08/15.
- */
+  * Created by domingueza on 28/08/15.
+  */
 object QuckooClusterSettings {
 
   final val DefaultHttpInterface = "0.0.0.0"
-  final val DefaultHttpPort = 8095
+  final val DefaultHttpPort      = 8095
 
   final val DefaultTcpInterface = "127.0.0.1"
-  final val DefaultTcpPort = 2551
+  final val DefaultTcpPort      = 2551
 
   def apply(system: ActorSystem): QuckooClusterSettings = {
     val config = system.settings.config.getConfig(BaseConfigNamespace)
@@ -46,7 +46,7 @@ object QuckooClusterSettings {
 
 }
 
-final case class QuckooClusterSettings private(
+final case class QuckooClusterSettings private (
     ivyConfiguration: IvyConfiguration,
     queueMaxWorkTimeout: FiniteDuration,
     httpInterface: String = QuckooClusterSettings.DefaultHttpInterface,

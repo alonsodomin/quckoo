@@ -23,8 +23,8 @@ import java.util
 import scala.collection.JavaConversions._
 
 /**
- * Created by aalonsodominguez on 25/07/15.
- */
+  * Created by aalonsodominguez on 25/07/15.
+  */
 object ArtifactClassLoader {
 
   private val allPermissions = new PermissionCollection {
@@ -33,14 +33,16 @@ object ArtifactClassLoader {
 
     override def implies(permission: Permission): Boolean = true
 
-    override def elements(): util.Enumeration[Permission] = util.Collections.enumeration(List(allPermission))
+    override def elements(): util.Enumeration[Permission] =
+      util.Collections.enumeration(List(allPermission))
 
     override def add(permission: Permission): Unit = ()
   }
 
 }
 
-class ArtifactClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+class ArtifactClassLoader(urls: Array[URL], parent: ClassLoader)
+    extends URLClassLoader(urls, parent) {
   import ArtifactClassLoader._
 
   private val systemClassLoader = ClassLoader.getSystemClassLoader

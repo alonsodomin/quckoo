@@ -32,13 +32,13 @@ import scala.collection.immutable.Queue
 import scala.concurrent.duration._
 
 /**
- * Created by aalonsodominguez on 16/08/15.
- */
+  * Created by aalonsodominguez on 16/08/15.
+  */
 object TaskQueue {
 
   type AcceptedTask = (Task, ActorRef)
 
-  val PendingKey = PNCounterMapKey("pendingCount")
+  val PendingKey    = PNCounterMapKey("pendingCount")
   val InProgressKey = PNCounterMapKey("inProgressCount")
 
   def props(maxWorkTimeout: FiniteDuration = 10 minutes) =
@@ -54,9 +54,9 @@ object TaskQueue {
   private object WorkerState {
     sealed trait WorkerStatus
 
-    case object Idle extends WorkerStatus
+    case object Idle                                    extends WorkerStatus
     case class Busy(taskId: TaskId, deadline: Deadline) extends WorkerStatus
-    case class Unreachable(previous: WorkerStatus) extends WorkerStatus
+    case class Unreachable(previous: WorkerStatus)      extends WorkerStatus
   }
 
   private case class WorkerState(ref: ActorRef, status: WorkerState.WorkerStatus)
@@ -71,13 +71,13 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
   val replicationTimeout = 5 seconds
 
-  implicit val cluster = Cluster(context.system)
-  private[this] val mediator = DistributedPubSub(context.system).mediator
+  implicit val cluster         = Cluster(context.system)
+  private[this] val mediator   = DistributedPubSub(context.system).mediator
   private[this] val replicator = DistributedData(context.system).replicator
 
-  private[this] var workers = Map.empty[NodeId, WorkerState]
-  private[this] var pendingTasks = Queue.empty[AcceptedTask]
-  private[this] var inProgressTasks = Map.empty[TaskId, ActorRef]
+  private[this] var workers           = Map.empty[NodeId, WorkerState]
+  private[this] var pendingTasks      = Queue.empty[AcceptedTask]
+  private[this] var inProgressTasks   = Map.empty[TaskId, ActorRef]
   private[this] var workerRemoveTasks = Map.empty[NodeId, Cancellable]
 
   private[this] val cleanupTask = createCleanUpTask()
@@ -100,7 +100,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         val currentState = workers(workerId)
         val newStatus = currentState.status match {
           case Unreachable(previous) => previous
-          case any => any
+          case any                   => any
         }
 
         workers += (workerId -> currentState.copy(ref = sender(), status = newStatus))
@@ -112,7 +112,8 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
         val workerLocation = workerRef.location
         log.info("Worker registered. workerId={}, location={}", workerId, workerLocation)
-        mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerJoined(workerId, workerLocation))
+        mediator ! DistributedPubSubMediator
+          .Publish(topics.Worker, WorkerJoined(workerId, workerLocation))
         if (pendingTasks.nonEmpty) {
           sender ! TaskReady
         }
@@ -146,17 +147,21 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         case Some(workerState @ WorkerState(_, WorkerState.Idle)) =>
           def dispatchTask(task: Task, lifecycle: ActorRef): Unit = {
             val timeout = Deadline.now + maxWorkTimeout
-            workers += (workerId -> workerState.copy(status = Busy(task.id, timeout)))
+            workers += (workerId        -> workerState.copy(status = Busy(task.id, timeout)))
             inProgressTasks += (task.id -> lifecycle)
 
             log.info("Delivering execution to worker. taskId={}, workerId={}", task.id, workerId)
             workerState.ref ! task
             lifecycle ! ExecutionLifecycle.Start
 
-            replicator ! Replicator.Update(PendingKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
-              _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
-            }
-            replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+            replicator ! Replicator
+              .Update(PendingKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+                _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
+              }
+            replicator ! Replicator.Update(
+              InProgressKey,
+              PNCounterMap(),
+              Replicator.WriteMajority(replicationTimeout)) {
               _.increment(cluster.selfUniqueAddress.toNodeId.toString)
             }
           }
@@ -184,9 +189,10 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         inProgressTasks -= taskId
 
         sender ! TaskDoneAck(taskId)
-        replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
-          _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
-        }
+        replicator ! Replicator
+          .Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+            _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
+          }
         notifyWorkers()
       }
 
@@ -195,18 +201,20 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       changeWorkerToIdle(workerId, taskId)
       inProgressTasks(taskId) ! ExecutionLifecycle.Finish(Some(cause))
       inProgressTasks -= taskId
-      replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
-        _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
-      }
+      replicator ! Replicator
+        .Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+          _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
+        }
       notifyWorkers()
 
     case Enqueue(task) =>
       // Enqueue messages will always come from inside the cluster so accept them all
       log.debug("Enqueueing task {} before sending to workers.", task.id)
       pendingTasks = pendingTasks.enqueue((task, sender()))
-      replicator ! Replicator.Update(PendingKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
-        _.increment(cluster.selfUniqueAddress.toNodeId.toString)
-      }
+      replicator ! Replicator
+        .Update(PendingKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+          _.increment(cluster.selfUniqueAddress.toNodeId.toString)
+        }
       sender ! EnqueueAck(task.id)
       notifyWorkers()
 
@@ -231,14 +239,14 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
       workers.find {
         case (_, WorkerState(`workerRef`, _)) => true
-        case _ => false
-      } foreach { case (workerId, state) => scheduleRemoval(workerId, state) }
+        case _                                => false
+      } foreach { case (workerId, state)      => scheduleRemoval(workerId, state) }
 
   }
 
   override def unhandled(message: Any): Unit = message match {
     case Replicator.UpdateSuccess(PendingKey, _) => // ignored
-    case _ => super.unhandled(message)
+    case _                                       => super.unhandled(message)
   }
 
   private def notifyWorkers(): Unit = if (pendingTasks.nonEmpty) {
@@ -246,21 +254,26 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
     randomWorkers.foreach {
       case (_, WorkerState(ref, WorkerState.Idle)) => ref ! TaskReady
-      case _ => // busy
+      case _                                       => // busy
     }
   }
 
   private def createCleanUpTask(): Cancellable = {
     import context.dispatcher
     context.system.scheduler.schedule(
-      maxWorkTimeout / 2, maxWorkTimeout / 2, self, CleanupTick
+      maxWorkTimeout / 2,
+      maxWorkTimeout / 2,
+      self,
+      CleanupTick
     )
   }
 
   private def createRemoveWorkerTask(nodeId: NodeId): Cancellable = {
     import context.dispatcher
     context.system.scheduler.scheduleOnce(
-      5 seconds, self, RemoveWorker(nodeId)
+      5 seconds,
+      self,
+      RemoveWorker(nodeId)
     )
   }
 
@@ -272,15 +285,17 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       // ok, might happen after standby recovery, worker state is not persisted
     }
 
-  private def timeoutWorker(workerId: NodeId, taskId: TaskId): Unit = if (inProgressTasks.contains(taskId)) {
-    workers -= workerId
-    inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
-    inProgressTasks -= taskId
-    mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
-    replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
-      _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
+  private def timeoutWorker(workerId: NodeId, taskId: TaskId): Unit =
+    if (inProgressTasks.contains(taskId)) {
+      workers -= workerId
+      inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
+      inProgressTasks -= taskId
+      mediator ! DistributedPubSubMediator.Publish(topics.Worker, WorkerRemoved(workerId))
+      replicator ! Replicator
+        .Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+          _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
+        }
+      notifyWorkers()
     }
-    notifyWorkers()
-  }
 
 }

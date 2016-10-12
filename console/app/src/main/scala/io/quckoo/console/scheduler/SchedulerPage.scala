@@ -31,8 +31,8 @@ import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
 /**
- * Created by alonsodomin on 17/10/2015.
- */
+  * Created by alonsodomin on 17/10/2015.
+  */
 object SchedulerPage {
 
   object Style extends StyleSheet.Inline {
@@ -44,7 +44,7 @@ object SchedulerPage {
   case class Props(proxy: ModelProxy[ConsoleScope])
   case class State(selectedSchedule: Option[ExecutionPlan] = None, showForm: Boolean = false)
 
-  class ExecutionsBackend($: BackendScope[Props, State]) {
+  class ExecutionsBackend($ : BackendScope[Props, State]) {
 
     def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
@@ -63,27 +63,28 @@ object SchedulerPage {
       val userScopeConnector = props.proxy.connect(_.userScope)
       val executionConnector = props.proxy.connect(_.userScope.executions)
 
-      <.div(Style.content,
+      <.div(
+        Style.content,
         <.h2("Scheduler"),
-        <.div(GlobalStyles.pageToolbar,
-          Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan")
-        ),
+        <.div(
+          GlobalStyles.pageToolbar,
+          Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan")),
         if (state.showForm) {
-          props.proxy.wrap(_.userScope.jobSpecs)(ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
+          props.proxy.wrap(_.userScope.jobSpecs)(
+            ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
         } else EmptyTag,
         TabPanel(
           "Execution Plans" -> userScopeConnector(ExecutionPlanList(_)),
           "Executions"      -> executionConnector(TaskExecutionList(_))
-        )
-      )
+        ))
     }
 
   }
 
-  private[this] val component = ReactComponentB[Props]("ExecutionsPage").
-    initialState(State()).
-    renderBackend[ExecutionsBackend].
-    build
+  private[this] val component = ReactComponentB[Props]("ExecutionsPage")
+    .initialState(State())
+    .renderBackend[ExecutionsBackend]
+    .build
 
   def apply(proxy: ModelProxy[ConsoleScope]) = component(Props(proxy))
 

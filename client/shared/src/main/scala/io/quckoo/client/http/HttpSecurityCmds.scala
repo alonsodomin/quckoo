@@ -30,39 +30,55 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
   private[this] def unmarshallPassport[O <: CmdMarshalling[HttpProtocol]] =
     Unmarshall[HttpResponse, Passport] { res =>
       if (res.isSuccess) Passport(res.entity.asString())
-      else LawfulTry.fail {
-        if (res.statusCode == 401) InvalidCredentialsException
-        else HttpErrorException(res.statusLine)
-      }
+      else
+        LawfulTry.fail {
+          if (res.statusCode == 401) InvalidCredentialsException
+          else HttpErrorException(res.statusLine)
+        }
     }
 
-  implicit lazy val authenticateCmd: AuthenticateCmd = new Anon[HttpProtocol, Credentials, Passport] {
+  implicit lazy val authenticateCmd: AuthenticateCmd =
+    new Anon[HttpProtocol, Credentials, Passport] {
 
-    override val marshall = Marshall[AnonCmd, Credentials, HttpRequest] { cmd =>
-      val creds = DataBuffer.fromString(s"${cmd.payload.username}:${cmd.payload.password}").toBase64
-      val authHdr = AuthorizationHeader -> s"Basic $creds"
+      override val marshall = Marshall[AnonCmd, Credentials, HttpRequest] { cmd =>
+        val creds =
+          DataBuffer.fromString(s"${cmd.payload.username}:${cmd.payload.password}").toBase64
+        val authHdr = AuthorizationHeader -> s"Basic $creds"
 
-      LawfulTry.success {
-        HttpRequest(HttpMethod.Post, LoginURI, cmd.timeout, headers = httpHeaders(None, cmd.timeout) + authHdr)
+        LawfulTry.success {
+          HttpRequest(
+            HttpMethod.Post,
+            LoginURI,
+            cmd.timeout,
+            headers = httpHeaders(None, cmd.timeout) + authHdr)
+        }
       }
+
+      override val unmarshall = unmarshallPassport[AuthenticateCmd]
     }
 
-    override val unmarshall = unmarshallPassport[AuthenticateCmd]
-  }
-
-  implicit lazy val refreshPassportCmd: RefreshPassportCmd = new Auth[HttpProtocol, Unit, Passport] {
-    override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
-      LawfulTry.success {
-        HttpRequest(HttpMethod.Post, AuthRefreshURI, cmd.timeout, httpHeaders(Some(cmd.passport), cmd.timeout))
+  implicit lazy val refreshPassportCmd: RefreshPassportCmd =
+    new Auth[HttpProtocol, Unit, Passport] {
+      override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
+        LawfulTry.success {
+          HttpRequest(
+            HttpMethod.Post,
+            AuthRefreshURI,
+            cmd.timeout,
+            httpHeaders(Some(cmd.passport), cmd.timeout))
+        }
       }
+      override val unmarshall = unmarshallPassport[RefreshPassportCmd]
     }
-    override val unmarshall = unmarshallPassport[RefreshPassportCmd]
-  }
 
   implicit lazy val signOutCmd: SingOutCmd = new Auth[HttpProtocol, Unit, Unit] {
     override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
       LawfulTry.success {
-        HttpRequest(HttpMethod.Post, LogoutURI, cmd.timeout, httpHeaders(Some(cmd.passport), cmd.timeout))
+        HttpRequest(
+          HttpMethod.Post,
+          LogoutURI,
+          cmd.timeout,
+          httpHeaders(Some(cmd.passport), cmd.timeout))
       }
     }
 

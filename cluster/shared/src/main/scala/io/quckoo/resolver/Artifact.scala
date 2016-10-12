@@ -29,8 +29,8 @@ import scalaz._
 import Scalaz._
 
 /**
- * Created by aalonsodominguez on 17/07/15.
- */
+  * Created by aalonsodominguez on 17/07/15.
+  */
 object Artifact {
 
   def apply(moduleId: ArtifactId, classpath: Seq[URL]): Artifact = {
@@ -39,7 +39,9 @@ object Artifact {
 
 }
 
-final class Artifact private[resolver] (val artifactId: ArtifactId, classLoader: ArtifactClassLoader) extends Logging {
+final class Artifact private[resolver] (val artifactId: ArtifactId,
+                                        classLoader: ArtifactClassLoader)
+    extends Logging {
 
   logCreation()
 
@@ -58,12 +60,11 @@ final class Artifact private[resolver] (val artifactId: ArtifactId, classLoader:
       Try(jobClass.newInstance()).map { job =>
         if (params.nonEmpty) {
           log.info("Injecting parameters into job instance.")
-          jobClass.getDeclaredFields.
-            filter(field => params.contains(field.getName)).
-            foreach { field =>
+          jobClass.getDeclaredFields.filter(field => params.contains(field.getName)).foreach {
+            field =>
               val paramValue = params(field.getName)
               field.set(job, paramValue)
-            }
+          }
         }
         job
       }

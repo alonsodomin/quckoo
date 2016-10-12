@@ -36,18 +36,20 @@ object Button {
 
   case class State(enabled: Boolean = true)
 
-  val component = ReactComponentB[Props]("Button").
-    initialState(State()).
-    renderPCS { (_, p, children, state) =>
+  val component = ReactComponentB[Props]("Button")
+    .initialState(State())
+    .renderPCS { (_, p, children, state) =>
       val buttonType = if (p.onClick.isEmpty) "submit" else "button"
-      <.button(lookAndFeel.buttonOpt(p.style), p.addStyles, ^.tpe := buttonType,
+      <.button(
+        lookAndFeel.buttonOpt(p.style),
+        p.addStyles,
+        ^.tpe := buttonType,
         p.onClick.map(handler => ^.onClick --> handler),
         p.disabled ?= (^.disabled := true),
-        children
-      )
-    }.
-    build
+        children)
+    }
+    .build
 
-  def apply() = component
+  def apply()                                   = component
   def apply(props: Props, children: ReactNode*) = component(props, children: _*)
 }

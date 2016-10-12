@@ -19,16 +19,16 @@ package io.quckoo.serialization
 import scala.collection.immutable.HashMap
 
 /**
- * Created by alonsodomin on 14/10/2015.
- */
+  * Created by alonsodomin on 14/10/2015.
+  */
 object Base64 {
 
   private[this] val zero = Array(0, 0).map(_.toByte)
   class B64Scheme(val encodeTable: IndexedSeq[Char]) {
-    lazy val decodeTable = HashMap(encodeTable.zipWithIndex: _ *)
+    lazy val decodeTable = HashMap(encodeTable.zipWithIndex: _*)
   }
 
-  lazy val base64 = new B64Scheme(('A' to 'Z') ++ ('a' to 'z') ++ ('0' to '9') ++ Seq('+', '/'))
+  lazy val base64    = new B64Scheme(('A' to 'Z') ++ ('a' to 'z') ++ ('0' to '9') ++ Seq('+', '/'))
   lazy val base64Url = new B64Scheme(base64.encodeTable.dropRight(2) ++ Seq('-', '_'))
 
   implicit class Encoder(b: Array[Byte]) {
@@ -43,33 +43,32 @@ object Base64 {
         val d = (x(2)) & 0x3f
         Array(a, b, c, d)
       }
-      ((b ++ zero.take(pad)).grouped(3)
+      ((b ++ zero.take(pad))
+        .grouped(3)
         .flatMap(sixBits)
         .map(scheme.encodeTable)
         .toArray
-        .dropRight(pad) :+ "=" * pad)
-        .mkString
+        .dropRight(pad) :+ "=" * pad).mkString
     }
   }
 
   implicit class Decoder(s: String) {
     lazy val cleanS = s.reverse.dropWhile(_ == '=').reverse
-    lazy val pad = s.length - cleanS.length
+    lazy val pad    = s.length - cleanS.length
 
     def toByteArray(implicit scheme: B64Scheme = base64): Array[Byte] = {
       def threeBytes(s: String): Array[Byte] = {
         val r = s.map(scheme.decodeTable(_)).foldLeft(0)((a, b) => (a << 6) | b)
         Array((r >> 16).toByte, (r >> 8).toByte, r.toByte)
       }
-      if (pad > 2 || s.length % 4 != 0) throw new java.lang.IllegalArgumentException("Invalid Base64 String:" + s)
+      if (pad > 2 || s.length % 4 != 0)
+        throw new java.lang.IllegalArgumentException("Invalid Base64 String:" + s)
       try {
-        (cleanS + "A" * pad)
-          .grouped(4)
-          .map(threeBytes)
-          .flatten
-          .toArray
-          .dropRight(pad)
-      } catch {case e:NoSuchElementException => throw new java.lang.IllegalArgumentException("Invalid Base64 String:" + s) }
+        (cleanS + "A" * pad).grouped(4).map(threeBytes).flatten.toArray.dropRight(pad)
+      } catch {
+        case e: NoSuchElementException =>
+          throw new java.lang.IllegalArgumentException("Invalid Base64 String:" + s)
+      }
     }
   }
 

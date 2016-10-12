@@ -36,8 +36,9 @@ import io.quckoo.util.LawfulTry
 
 import scala.concurrent.duration._
 
-trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerHttpRouter
-  with AuthDirectives with EventStream with EventStreamMarshalling { this: QuckooServer =>
+trait HttpRouter
+    extends StaticResources with RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives
+    with EventStream with EventStreamMarshalling { this: QuckooServer =>
 
   import StatusCodes._
 
@@ -49,7 +50,8 @@ trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerH
     } getOrElse DefaultTimeout)
   }
 
-  private[this] def defineApi(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+  private[this] def defineApi(implicit system: ActorSystem,
+                              materializer: ActorMaterializer): Route =
     extractTimeout { implicit timeout =>
       pathPrefix("auth") {
         path("login") {
@@ -74,7 +76,7 @@ trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerH
               extractExecutionContext { implicit ec =>
                 complete(clusterState)
               }
-            /*} ~ path("master") {
+              /*} ~ path("master") {
               complete(asSSE(masterEvents, "master"))
             } ~ path("worker") {
               complete(asSSE(workerEvents, "worker"))*/
@@ -96,11 +98,12 @@ trait HttpRouter extends StaticResources with RegistryHttpRouter with SchedulerH
       }
   }
 
-  private[this] def rejectionHandler(log: LoggingAdapter) = RejectionHandler.newBuilder().
-    handle { case ValidationRejection(msg, cause) =>
+  private[this] def rejectionHandler(log: LoggingAdapter) =
+    RejectionHandler.newBuilder().handle {
+      case ValidationRejection(msg, cause) =>
         log.error(s"$msg - reason: $cause")
         complete(HttpResponse(BadRequest, entity = msg))
-    } result()
+    } result ()
 
   def router(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     logRequest("HTTPRequest") {

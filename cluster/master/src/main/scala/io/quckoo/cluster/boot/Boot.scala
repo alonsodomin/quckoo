@@ -30,8 +30,8 @@ import scopt.OptionParser
 import scala.util.{Failure, Success}
 
 /**
- * Created by domingueza on 09/07/15.
- */
+  * Created by domingueza on 09/07/15.
+  */
 object Boot extends App with Logging {
 
   val parser = new OptionParser[Options]("quckoo-master") {

@@ -25,20 +25,20 @@ import io.quckoo.cluster.QuckooClusterSettings
 import scala.collection.JavaConversions._
 
 /**
- * Created by aalonsodominguez on 03/10/2015.
- */
+  * Created by aalonsodominguez on 03/10/2015.
+  */
 object Options {
 
   final val SystemName = "QuckooClusterSystem"
 
-  final val AkkaRemoteNettyHost = "akka.remote.netty.tcp.hostname"
-  final val AkkaRemoteNettyPort = "akka.remote.netty.tcp.port"
+  final val AkkaRemoteNettyHost     = "akka.remote.netty.tcp.hostname"
+  final val AkkaRemoteNettyPort     = "akka.remote.netty.tcp.port"
   final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
   final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
 
   final val AkkaClusterSeedNodes = "akka.cluster.seed-nodes"
 
-  final val CassandraJournalContactPoints = "cassandra-journal.contact-points"
+  final val CassandraJournalContactPoints  = "cassandra-journal.contact-points"
   final val CassandraSnapshotContactPoints = "cassandra-snapshot-store.contact-points"
 
   final val KairosHttpBindPort = "quckoo.http.bind-port"
@@ -63,7 +63,7 @@ case class Options(
     val (bindHost, bindPort) = bindAddress.map { addr =>
       val HostAndPort(h, p) = addr
       (h, p.toInt)
-    } getOrElse((QuckooClusterSettings.DefaultTcpInterface, port))
+    } getOrElse ((QuckooClusterSettings.DefaultTcpInterface, port))
 
     valueMap.put(AkkaRemoteNettyHost, bindHost)
     valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))
@@ -81,9 +81,11 @@ case class Options(
         List(s"akka.tcp://$SystemName@$bindHost:$bindPort")
       else
         List.empty[String]
-    } ::: seedNodes.map({ node =>
-      s"akka.tcp://$SystemName@$node"
-    }).toList
+    } ::: seedNodes
+      .map({ node =>
+        s"akka.tcp://$SystemName@$node"
+      })
+      .toList
 
     valueMap.put(AkkaClusterSeedNodes, seqAsJavaList(clusterSeedNodes))
 

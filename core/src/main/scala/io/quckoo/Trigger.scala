@@ -24,13 +24,12 @@ import org.threeten.bp.{Clock, ZonedDateTime, Duration => JavaDuration}
 import scala.concurrent.duration._
 
 /**
- * Created by aalonsodominguez on 08/07/15.
- */
+  * Created by aalonsodominguez on 08/07/15.
+  */
 sealed trait Trigger {
   import Trigger.ReferenceTime
 
-  def nextExecutionTime(referenceTime: ReferenceTime)
-                       (implicit clock: Clock): Option[ZonedDateTime]
+  def nextExecutionTime(referenceTime: ReferenceTime)(implicit clock: Clock): Option[ZonedDateTime]
 
   def isRecurring: Boolean = false
 
@@ -41,13 +40,13 @@ object Trigger {
   sealed trait ReferenceTime {
     val when: ZonedDateTime
   }
-  case class ScheduledTime(when: ZonedDateTime) extends ReferenceTime
+  case class ScheduledTime(when: ZonedDateTime)     extends ReferenceTime
   case class LastExecutionTime(when: ZonedDateTime) extends ReferenceTime
 
   case object Immediate extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)
-                                  (implicit clock: Clock): Option[ZonedDateTime] = referenceTime match {
+    override def nextExecutionTime(referenceTime: ReferenceTime)(
+        implicit clock: Clock): Option[ZonedDateTime] = referenceTime match {
       case ScheduledTime(_)     => Some(ZonedDateTime.now(clock))
       case LastExecutionTime(_) => None
     }
@@ -56,8 +55,8 @@ object Trigger {
 
   final case class After(delay: FiniteDuration) extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)
-                                  (implicit clock: Clock): Option[ZonedDateTime] =
+    override def nextExecutionTime(referenceTime: ReferenceTime)(
+        implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
         case ScheduledTime(time) =>
           val nanos = delay.toNanos
@@ -68,15 +67,16 @@ object Trigger {
 
   }
 
-  final case class At(when: ZonedDateTime, graceTime: Option[FiniteDuration] = None) extends Trigger {
+  final case class At(when: ZonedDateTime, graceTime: Option[FiniteDuration] = None)
+      extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)
-                                  (implicit clock: Clock): Option[ZonedDateTime] =
+    override def nextExecutionTime(referenceTime: ReferenceTime)(
+        implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
         case ScheduledTime(_) =>
           if (graceTime.isDefined) {
             graceTime.flatMap { margin =>
-              val now = ZonedDateTime.now(clock)
+              val now  = ZonedDateTime.now(clock)
               val diff = JavaDuration.between(now, when)
               if (diff.abs.toMillis <= margin.toMillis) Some(now)
               else if (now < when) Some(when)
@@ -89,10 +89,11 @@ object Trigger {
 
   }
 
-  final case class Every(frequency: FiniteDuration, startingIn: Option[FiniteDuration] = None) extends Trigger {
+  final case class Every(frequency: FiniteDuration, startingIn: Option[FiniteDuration] = None)
+      extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)
-                                  (implicit clock: Clock): Option[ZonedDateTime] =
+    override def nextExecutionTime(referenceTime: ReferenceTime)(
+        implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
         case ScheduledTime(time) =>
           val delay = (startingIn getOrElse 0.seconds).toNanos
@@ -109,8 +110,8 @@ object Trigger {
 
   final case class Cron(expr: CronExpr) extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)
-                                  (implicit clock: Clock): Option[ZonedDateTime] =
+    override def nextExecutionTime(referenceTime: ReferenceTime)(
+        implicit clock: Clock): Option[ZonedDateTime] =
       expr.next(referenceTime.when)
 
     override val isRecurring: Boolean = true

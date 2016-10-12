@@ -41,8 +41,8 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 /**
- * Created by aalonsodominguez on 24/08/15.
- */
+  * Created by aalonsodominguez on 24/08/15.
+  */
 object Registry {
 
   final val EventTag = "registry"
@@ -75,12 +75,13 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
   ClusterClientReceptionist(context.system).registerService(self)
 
   final implicit val materializer = ActorMaterializer(
-    ActorMaterializerSettings(context.system), "registry"
+    ActorMaterializerSettings(context.system),
+    "registry"
   )
 
-  private[this] val cluster = Cluster(context.system)
-  private[this] val mediator = DistributedPubSub(context.system).mediator
-  private[this] val resolver = context.actorOf(settings.resolverProps, "resolver")
+  private[this] val cluster     = Cluster(context.system)
+  private[this] val mediator    = DistributedPubSub(context.system).mediator
+  private[this] val resolver    = context.actorOf(settings.resolverProps, "resolver")
   private[this] val shardRegion = startShardRegion
 
   private[this] var jobIds = Set.empty[JobId]
@@ -126,9 +127,9 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
         (shardRegion ? GetJob(jobId)).mapTo[JobSpec].map(jobId -> _)
       }
 
-      Source(jobIds).
-        mapAsync(2)(fetchJobAsync).
-        runWith(Sink.actorRef(origSender, Status.Success(GetJobs)))
+      Source(jobIds)
+        .mapAsync(2)(fetchJobAsync)
+        .runWith(Sink.actorRef(origSender, Status.Success(GetJobs)))
 
     case get @ GetJob(jobId) =>
       if (jobIds.contains(jobId)) {
@@ -175,28 +176,31 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
     case _ =>
   }
 
-  private def startShardRegion: ActorRef = if (cluster.selfRoles.contains("registry")) {
-    log.info("Starting registry shards...")
-    ClusterSharding(context.system).start(
-      typeName        = PersistentJob.ShardName,
-      entityProps     = PersistentJob.props,
-      settings        = ClusterShardingSettings(context.system).withRole("registry"),
-      extractEntityId = PersistentJob.idExtractor,
-      extractShardId  = PersistentJob.shardResolver
-    )
-  } else {
-    log.info("Starting registry proxy...")
-    ClusterSharding(context.system).startProxy(
-      typeName        = PersistentJob.ShardName,
-      role            = None,
-      extractEntityId = PersistentJob.idExtractor,
-      extractShardId  = PersistentJob.shardResolver
-    )
-  }
+  private def startShardRegion: ActorRef =
+    if (cluster.selfRoles.contains("registry")) {
+      log.info("Starting registry shards...")
+      ClusterSharding(context.system).start(
+        typeName = PersistentJob.ShardName,
+        entityProps = PersistentJob.props,
+        settings = ClusterShardingSettings(context.system).withRole("registry"),
+        extractEntityId = PersistentJob.idExtractor,
+        extractShardId = PersistentJob.shardResolver
+      )
+    } else {
+      log.info("Starting registry proxy...")
+      ClusterSharding(context.system).startProxy(
+        typeName = PersistentJob.ShardName,
+        role = None,
+        extractEntityId = PersistentJob.idExtractor,
+        extractShardId = PersistentJob.shardResolver
+      )
+    }
 
   private def warmUp(): Unit = {
-    journal.read.currentEventsByTag(EventTag, 0).
-      runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
+    journal.read
+      .currentEventsByTag(EventTag, 0)
+      .runWith(
+        Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
   }
 
   private def handlerProps(jobSpec: JobSpec, replyTo: ActorRef): Props =
@@ -209,7 +213,7 @@ private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef,
   import Resolver._
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
-  private val jobId = JobId(jobSpec)
+  private val jobId          = JobId(jobSpec)
 
   override def preStart(): Unit = {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
@@ -227,8 +231,7 @@ private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef,
 
   def resolvingArtifact: Receive = {
     case ArtifactResolved(artifact) =>
-      log.debug("Job artifact has been successfully resolved. artifactId={}",
-        artifact.artifactId)
+      log.debug("Job artifact has been successfully resolved. artifactId={}", artifact.artifactId)
       shardRegion ! PersistentJob.CreateJob(jobId, jobSpec)
       context.setReceiveTimeout(10 seconds)
       context become registeringJob

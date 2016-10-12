@@ -21,8 +21,8 @@ import java.util.{HashMap => JHashMap, Map => JMap}
 import scala.collection.JavaConversions._
 
 /**
- * Created by aalonsodominguez on 04/10/2015.
- */
+  * Created by aalonsodominguez on 04/10/2015.
+  */
 object CliOptions {
 
   final val QuckooContactPoints = "quckoo.contact-points"

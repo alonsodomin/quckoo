@@ -22,8 +22,8 @@ import io.quckoo.fault.Faults
 import io.quckoo.id._
 
 /**
- * Created by aalonsodominguez on 17/08/15.
- */
+  * Created by aalonsodominguez on 17/08/15.
+  */
 package object scheduler {
 
   type TaskResult = Either[Faults, Any]

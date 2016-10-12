@@ -34,7 +34,7 @@ object ClockWidget {
 
   final case class State(dateTime: ZonedDateTime)
 
-  class Backend($: BackendScope[Clock, State]) extends TimerSupport {
+  class Backend($ : BackendScope[Clock, State]) extends TimerSupport {
 
     protected[ClockWidget] def mounted(clock: Clock) =
       setInterval(tick(clock), 1 second)
@@ -48,12 +48,12 @@ object ClockWidget {
 
   }
 
-  private[this] val component = ReactComponentB[Clock]("Clock").
-    initialState_P(clock => State(ZonedDateTime.now(clock))).
-    renderBackend[Backend].
-    componentDidMount($ => $.backend.mounted($.props)).
-    configure(TimerSupport.install).
-    build
+  private[this] val component = ReactComponentB[Clock]("Clock")
+    .initialState_P(clock => State(ZonedDateTime.now(clock)))
+    .renderBackend[Backend]
+    .componentDidMount($ => $.backend.mounted($.props))
+    .configure(TimerSupport.install)
+    .build
 
   def apply(implicit clock: Clock) = component.withKey("clock")(clock)
 

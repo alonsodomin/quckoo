@@ -27,18 +27,17 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object JobSelect {
 
-  case class Props(jobs: Map[JobId, JobSpec], value: Option[JobId], onUpdate: Option[JobId] => Callback)
+  case class Props(jobs: Map[JobId, JobSpec],
+                   value: Option[JobId],
+                   onUpdate: Option[JobId] => Callback)
 
-  val JobOption = ReactComponentB[(JobId, JobSpec)]("JobOption").
-    stateless.
-    render_P { case (jobId, spec) =>
-      val desc = spec.description.map(text=> s"| $text").getOrElse("")
-      <.option(^.value := jobId.toString(),
-        s"${spec.displayName} $desc"
-      )
-    } build
+  val JobOption = ReactComponentB[(JobId, JobSpec)]("JobOption").stateless.render_P {
+    case (jobId, spec) =>
+      val desc = spec.description.map(text => s"| $text").getOrElse("")
+      <.option(^.value := jobId.toString(), s"${spec.displayName} $desc")
+  } build
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def onUpdate(evt: ReactEventI): Callback = {
       val newValue = {
@@ -50,26 +49,25 @@ object JobSelect {
     }
 
     def render(props: Props) = {
-      <.div(^.`class` := "form-group",
+      <.div(
+        ^.`class` := "form-group",
         <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobId", "Job"),
-        <.div(^.`class` := "col-sm-10",
-          <.select(^.id := "jobId", ^.`class` := "form-control",
+        <.div(
+          ^.`class` := "col-sm-10",
+          <.select(
+            ^.id := "jobId",
+            ^.`class` := "form-control",
             props.value.map(id => ^.value := id.toString()),
             ^.onChange ==> onUpdate,
             <.option("Select a job"),
-            props.jobs.filter(!_._2.disabled).
-              map(jobPair => JobOption.withKey(jobPair._1.toString)(jobPair))
-          )
-        )
-      )
+            props.jobs
+              .filter(!_._2.disabled)
+              .map(jobPair => JobOption.withKey(jobPair._1.toString)(jobPair)))))
     }
 
   }
 
-  val component = ReactComponentB[Props]("JobSelect").
-    stateless.
-    renderBackend[Backend].
-    build
+  val component = ReactComponentB[Props]("JobSelect").stateless.renderBackend[Backend].build
 
   def apply(jobs: Map[JobId, JobSpec], value: Option[JobId], onUpdate: Option[JobId] => Callback) =
     component(Props(jobs, value, onUpdate))

@@ -19,8 +19,8 @@ package io.quckoo.client.http.dom
 import org.scalajs.dom
 
 /**
- * Created by alonsodomin on 13/10/2015.
- */
+  * Created by alonsodomin on 13/10/2015.
+  */
 object Cookie {
 
   private[this] def rawCookies: Map[String, String] = {

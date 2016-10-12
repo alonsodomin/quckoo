@@ -28,7 +28,8 @@ import scala.scalajs.js.annotation.JSName
 trait BootstrapNotify extends JQueryStatic {
 
   @JSName("notify")
-  def showNotification(content: String, options: js.Any = js.Dynamic.literal()): this.type = js.native
+  def showNotification(content: String, options: js.Any = js.Dynamic.literal()): this.type =
+    js.native
 
   @JSName("notifyDefaults")
   def notificationDefaults(options: js.Any): BootstrapNotify = js.native

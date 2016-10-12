@@ -33,28 +33,33 @@ import scalaz.{ValidationNel, \/}
 trait Registry {
 
   def enableJob(jobId: JobId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[JobNotFound \/ JobEnabled]
 
   def disableJob(jobId: JobId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[JobNotFound \/ JobDisabled]
 
   def fetchJob(jobId: JobId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Option[JobSpec]]
 
   def registerJob(jobSpec: JobSpec)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[ValidationNel[Fault, JobId]]
 
   def fetchJobs(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Map[JobId, JobSpec]]
 
 }

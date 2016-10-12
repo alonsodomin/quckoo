@@ -30,12 +30,13 @@ import scala.concurrent.duration._
 package object http {
 
   def asSSE[A: UWriter](
-    source: Source[A, _], eventType: String,
-    keepAlive: FiniteDuration = 1 second
+      source: Source[A, _],
+      eventType: String,
+      keepAlive: FiniteDuration = 1 second
   ): Source[EventStreamElement, _] = {
     source.map { event =>
       ServerSentEvent(write[A](event), eventType)
-    } keepAlive(keepAlive, () => ServerSentEvent.Heartbeat)
+    } keepAlive (keepAlive, () => ServerSentEvent.Heartbeat)
   }
 
   def generateAuthToken = UUID.randomUUID().toString

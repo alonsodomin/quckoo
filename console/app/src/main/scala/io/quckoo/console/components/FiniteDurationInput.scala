@@ -37,7 +37,9 @@ object FiniteDurationInput {
     DAYS         -> "Days"
   )
 
-  case class Props(id: String, value: Option[FiniteDuration], onUpdate: Option[FiniteDuration] => Callback)
+  case class Props(id: String,
+                   value: Option[FiniteDuration],
+                   onUpdate: Option[FiniteDuration] => Callback)
   case class State(length: Option[Long], unit: Option[TimeUnit]) {
 
     def this(duration: Option[FiniteDuration]) =
@@ -46,9 +48,9 @@ object FiniteDurationInput {
   }
 
   implicit val propsReuse: Reusability[Props] = Reusability.by(_.value)
-  implicit val stateReuse = Reusability.caseClass[State]
+  implicit val stateReuse                     = Reusability.caseClass[State]
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     def propagateUpdate: Callback = {
       val valuePair = $.state.map(st => st.length.flatMap(l => st.unit.map(u => (l, u))))
@@ -77,34 +79,36 @@ object FiniteDurationInput {
 
     def render(props: Props, state: State) = {
       val id = props.id
-      <.div(^.`class` := "container-fluid",
-        <.div(^.`class` := "row",
-          <.div(^.`class` := "col-sm-4",
-            lengthInput(state.length, ^.id := s"${id}_length")
-          ),
-          <.div(^.`class` := "col-sm-6",
-            <.select(^.id := s"${id}_unit", ^.`class` := "form-control",
+      <.div(
+        ^.`class` := "container-fluid",
+        <.div(
+          ^.`class` := "row",
+          <.div(^.`class` := "col-sm-4", lengthInput(state.length, ^.id := s"${id}_length")),
+          <.div(
+            ^.`class` := "col-sm-6",
+            <.select(
+              ^.id := s"${id}_unit",
+              ^.`class` := "form-control",
               state.unit.map(u => ^.value := u.toString()),
               ^.onChange ==> onUnitUpdate,
               <.option("Select a time unit..."),
-              SupportedUnits.map { case (u, text) =>
-                <.option(^.value := u.name(), text)
-              }
-            )
-          )
-        )
-      )
+              SupportedUnits.map {
+                case (u, text) =>
+                  <.option(^.value := u.name(), text)
+              }))))
     }
 
   }
 
-  val component = ReactComponentB[Props]("FiniteDurationInput").
-    initialState_P(props => new State(props.value)).
-    renderBackend[Backend].
-    configure(Reusability.shouldComponentUpdate).
-    build
+  val component = ReactComponentB[Props]("FiniteDurationInput")
+    .initialState_P(props => new State(props.value))
+    .renderBackend[Backend]
+    .configure(Reusability.shouldComponentUpdate)
+    .build
 
-  def apply(id: String, value: Option[FiniteDuration], onUpdate: Option[FiniteDuration] => Callback) =
+  def apply(id: String,
+            value: Option[FiniteDuration],
+            onUpdate: Option[FiniteDuration] => Callback) =
     component(Props(id, value, onUpdate))
 
 }

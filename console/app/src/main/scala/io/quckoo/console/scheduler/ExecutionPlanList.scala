@@ -37,8 +37,13 @@ import Scalaz._
 object ExecutionPlanList {
 
   final val Columns = List(
-    "Job", "Current task", "Trigger", "Last Scheduled", "Last Execution",
-    "Last Outcome", "Next Execution"
+    "Job",
+    "Current task",
+    "Trigger",
+    "Last Scheduled",
+    "Last Execution",
+    "Last Outcome",
+    "Next Execution"
   )
 
   final val AllFilter: Table.Filter[PlanId, ExecutionPlan] =
@@ -51,7 +56,7 @@ object ExecutionPlanList {
   final case class Props(proxy: ModelProxy[UserScope])
   final case class State(filter: Table.Filter[PlanId, ExecutionPlan])
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     def mounted(props: Props): Callback = {
       val model = props.proxy()
@@ -65,18 +70,20 @@ object ExecutionPlanList {
       loadJobs >> loadPlans
     }
 
-    def renderItem(model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: String): ReactNode = column match {
-      case "Job" =>
-        val jobSpec = model.jobSpecs.get(plan.jobId)
-        jobSpec.render(_.displayName)
+    def renderItem(
+        model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: String): ReactNode =
+      column match {
+        case "Job" =>
+          val jobSpec = model.jobSpecs.get(plan.jobId)
+          jobSpec.render(_.displayName)
 
-      case "Current task"   => plan.currentTask.map(_.show).getOrElse(Cord.empty).toString()
-      case "Trigger"        => plan.trigger.toString()
-      case "Last Scheduled" => DateTimeDisplay(plan.lastScheduledTime)
-      case "Last Execution" => DateTimeDisplay(plan.lastExecutionTime)
-      case "Last Outcome"   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
-      case "Next Execution" => DateTimeDisplay(plan.nextExecutionTime)
-    }
+        case "Current task"   => plan.currentTask.map(_.show).getOrElse(Cord.empty).toString()
+        case "Trigger"        => plan.trigger.toString()
+        case "Last Scheduled" => DateTimeDisplay(plan.lastScheduledTime)
+        case "Last Execution" => DateTimeDisplay(plan.lastExecutionTime)
+        case "Last Outcome"   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
+        case "Next Execution" => DateTimeDisplay(plan.nextExecutionTime)
+      }
 
     def cancelPlan(props: Props)(planId: PlanId): Callback =
       props.proxy.dispatch(CancelExecutionPlan(planId))
@@ -84,7 +91,9 @@ object ExecutionPlanList {
     def rowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
       if (plan.nextExecutionTime.isDefined) {
         Seq(
-          Table.RowAction[PlanId, ExecutionPlan](NonEmptyList(Icons.stop, "Cancel"), cancelPlan(props))
+          Table.RowAction[PlanId, ExecutionPlan](
+            NonEmptyList(Icons.stop, "Cancel"),
+            cancelPlan(props))
         )
       } else Seq.empty
     }
@@ -98,24 +107,26 @@ object ExecutionPlanList {
     def render(props: Props, state: State) = {
       val model = props.proxy()
       NavBar(
-        NavBar.Props(List("All", "Active", "Inactive"), "All", filterClicked, style = NavStyle.pills),
-        Table(Columns, model.executionPlans.seq,
+        NavBar
+          .Props(List("All", "Active", "Inactive"), "All", filterClicked, style = NavStyle.pills),
+        Table(
+          Columns,
+          model.executionPlans.seq,
           renderItem(model),
           key = Some("executionPlans"),
           allowSelect = true,
           actions = Some(rowActions(props)(_, _)),
-          filter = Some(state.filter)
-        )
+          filter = Some(state.filter))
       )
     }
 
   }
 
-  private[this] val component = ReactComponentB[Props]("ExecutionPlanList").
-    initialState(State(filter = AllFilter)).
-    renderBackend[Backend].
-    componentDidMount($ => $.backend.mounted($.props)).
-    build
+  private[this] val component = ReactComponentB[Props]("ExecutionPlanList")
+    .initialState(State(filter = AllFilter))
+    .renderBackend[Backend]
+    .componentDidMount($ => $.backend.mounted($.props))
+    .build
 
   def apply(proxy: ModelProxy[UserScope]) =
     component.withKey("execution-plan-list")(Props(proxy))

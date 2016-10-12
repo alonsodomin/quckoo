@@ -33,8 +33,8 @@ package object util {
     @inline def apply[A](thunk: => A): LawfulTry[A] =
       \/.fromTryCatchNonFatal(thunk)
 
-    @inline def unit: LawfulTry[Unit] = \/.right[Throwable, Unit](())
-    @inline def success[A](a: A): LawfulTry[A] = \/.right[Throwable, A](a)
+    @inline def unit: LawfulTry[Unit]                = \/.right[Throwable, Unit](())
+    @inline def success[A](a: A): LawfulTry[A]       = \/.right[Throwable, A](a)
     @inline def fail[A](ex: Throwable): LawfulTry[A] = \/.left[Throwable, A](ex)
   }
 
@@ -53,7 +53,7 @@ package object util {
   }
 
   final val lawfulTryIso = new (LawfulTry <~> Try) {
-    override def to: ~>[LawfulTry, Try] = lawfulTry2Try
+    override def to: ~>[LawfulTry, Try]   = lawfulTry2Try
     override def from: ~>[Try, LawfulTry] = try2lawfulTry
   }
 
@@ -63,6 +63,5 @@ package object util {
   }
 
   final val lawfulTry2Future: LawfulTry ~> Future = lawfulTry2Try andThen try2Future
-
 
 }

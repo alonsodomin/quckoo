@@ -27,6 +27,8 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait Cluster {
 
-  def clusterState(implicit ec: ExecutionContext, timeout: FiniteDuration, passport: Passport): Future[QuckooState]
+  def clusterState(implicit ec: ExecutionContext,
+                   timeout: FiniteDuration,
+                   passport: Passport): Future[QuckooState]
 
 }

@@ -22,9 +22,8 @@ import scalaz._
 import Scalaz._
 
 /**
- * Created by aalonsodominguez on 05/07/15.
- */
-
+  * Created by aalonsodominguez on 05/07/15.
+  */
 final case class Task(
     id: TaskId,
     artifactId: ArtifactId,

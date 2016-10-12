@@ -29,7 +29,10 @@ trait PathMockFactory extends SuiteMixin with MockFactoryBase with Mock with Tes
   type ExpectationException = TestFailedException
 
   protected def newExpectationException(message: String, methodName: Option[Symbol]) =
-    new TestFailedException((_: StackDepthException) => Some(message), None, failedCodeStackDepthFn(methodName))
+    new TestFailedException(
+      (_: StackDepthException) => Some(message),
+      None,
+      failedCodeStackDepthFn(methodName))
 
   /**
     * Verify all expectations.

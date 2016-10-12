@@ -23,13 +23,15 @@ import org.scalatest.exceptions.StackDepthException
   */
 package object scalamock {
 
-  private[this] final val InternalPackages = List("org.scalamock", "org.scalatest", this.getClass.getPackage.getName)
+  private[this] final val InternalPackages =
+    List("org.scalamock", "org.scalatest", this.getClass.getPackage.getName)
 
-  private[scalamock] def failedCodeStackDepthFn(methodName: Option[Symbol]): StackDepthException => Int = e => {
+  private[scalamock] def failedCodeStackDepthFn(
+      methodName: Option[Symbol]): StackDepthException => Int = e => {
     e.getStackTrace indexWhere { s =>
       !InternalPackages.exists(pck => s.getClassName.startsWith(pck)) &&
-        !(s.getMethodName == "newExpectationException") && !(s.getMethodName == "reportUnexpectedCall") &&
-        !(methodName.isDefined && s.getMethodName == methodName.get.name)
+      !(s.getMethodName == "newExpectationException") && !(s.getMethodName == "reportUnexpectedCall") &&
+      !(methodName.isDefined && s.getMethodName == methodName.get.name)
     }
   }
 

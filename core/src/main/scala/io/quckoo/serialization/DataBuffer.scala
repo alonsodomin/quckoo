@@ -90,7 +90,7 @@ object DataBuffer {
 
   implicit val dataBufferInstance = new Monoid[DataBuffer] {
     override def append(f1: DataBuffer, f2: => DataBuffer): DataBuffer = f1 + f2
-    override def zero: DataBuffer = Empty
+    override def zero: DataBuffer                                      = Empty
   }
 
 }

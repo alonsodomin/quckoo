@@ -25,7 +25,7 @@ import io.quckoo.resolver.ivy.IvyConfiguration
 object QuckooWorkerSettings {
 
   final val DefaultTcpInterface = "127.0.0.1"
-  final val DefaultTcpPort = 5001
+  final val DefaultTcpPort      = 5001
 
   final val QuckooContactPoints = "contact-points"
 
@@ -38,4 +38,4 @@ object QuckooWorkerSettings {
 
 }
 
-case class QuckooWorkerSettings private(ivyConfiguration: IvyConfiguration)
+case class QuckooWorkerSettings private (ivyConfiguration: IvyConfiguration)

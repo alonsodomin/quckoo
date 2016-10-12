@@ -29,4 +29,5 @@ sealed trait Command[A] {
 }
 
 final case class AnonCmd[A](payload: A, timeout: FiniteDuration) extends Command[A]
-final case class AuthCmd[A](payload: A, timeout: FiniteDuration, passport: Passport) extends Command[A]
+final case class AuthCmd[A](payload: A, timeout: FiniteDuration, passport: Passport)
+    extends Command[A]

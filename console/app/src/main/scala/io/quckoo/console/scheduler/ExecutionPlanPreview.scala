@@ -35,20 +35,21 @@ object ExecutionPlanPreview {
   case class Props(trigger: Trigger)
   case class State(maxRows: Int)
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     def generateTimeline(props: Props, state: State): Stream[ZonedDateTime] = {
       import Trigger._
 
       def genNext(prev: ReferenceTime): (ReferenceTime, Boolean) = {
-        props.trigger.nextExecutionTime(prev).
-          map(next => (LastExecutionTime(next), true)).
-          getOrElse((prev, false))
+        props.trigger
+          .nextExecutionTime(prev)
+          .map(next => (LastExecutionTime(next), true))
+          .getOrElse((prev, false))
       }
 
-      val first = genNext(ScheduledTime(ZonedDateTime.now(systemClock)))
+      val first  = genNext(ScheduledTime(ZonedDateTime.now(systemClock)))
       val stream = Stream.iterate(first) { case (prev, _) => genNext(prev) }
-      stream.takeWhile { case (_, continue) => continue } map(_._1.when) take state.maxRows
+      stream.takeWhile { case (_, continue) => continue } map (_._1.when) take state.maxRows
     }
 
     def onRowsSelectionUpdate(evt: ReactEventI): Callback =
@@ -56,24 +57,25 @@ object ExecutionPlanPreview {
 
     def render(props: Props, state: State) = {
       <.div(
-        <.div(^.`class` := "form-group",
+        <.div(
+          ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2", "Trigger"),
-          <.div(^.`class` := "col-sm-10", props.trigger.toString())
-        ),
-        <.div(^.`class` := "form-group",
+          <.div(^.`class` := "col-sm-10", props.trigger.toString())),
+        <.div(
+          ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2", "Max Rows"),
-          <.div(^.`class` := "col-sm-2",
-            <.select(^.id := "previewRows",
+          <.div(
+            ^.`class` := "col-sm-2",
+            <.select(
+              ^.id := "previewRows",
               ^.`class` := "form-control",
               ^.value := state.maxRows,
               ^.onChange ==> onRowsSelectionUpdate,
               <.option(^.value := 10, "10"),
               <.option(^.value := 25, "25"),
-              <.option(^.value := 50, "50")
-            )
-          )
-        ),
-        <.table(^.`class` := "table table-striped",
+              <.option(^.value := 50, "50")))),
+        <.table(
+          ^.`class` := "table table-striped",
           <.thead(
             <.tr(<.th("Expected Executions"))
           ),
@@ -81,17 +83,16 @@ object ExecutionPlanPreview {
             generateTimeline(props, state).map { time =>
               <.tr(<.td(formatter.format(time)))
             }
-          )
-        )
+          ))
       )
     }
 
   }
 
-  val component = ReactComponentB[Props]("ExecutionPlanPreview").
-    initialState(State(10)).
-    renderBackend[Backend].
-    build
+  val component = ReactComponentB[Props]("ExecutionPlanPreview")
+    .initialState(State(10))
+    .renderBackend[Backend]
+    .build
 
   def apply(trigger: Trigger) =
     component(Props(trigger))

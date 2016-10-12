@@ -30,8 +30,8 @@ object EventDef {
 
   @inline def apply[A](implicit ev: EventDef[A]) = ev
 
-  implicit object MasterEventDef extends EventDef[MasterEvent]("MASTER_EVENT")
-  implicit object WorkerEventDef extends EventDef[WorkerEvent]("WORKER_EVENT")
-  implicit object RegistryEventDef extends EventDef[RegistryEvent]("REGISTRY_EVENT")
+  implicit object MasterEventDef    extends EventDef[MasterEvent]("MASTER_EVENT")
+  implicit object WorkerEventDef    extends EventDef[WorkerEvent]("WORKER_EVENT")
+  implicit object RegistryEventDef  extends EventDef[RegistryEvent]("REGISTRY_EVENT")
   implicit object SchedulerEventDef extends EventDef[SchedulerEvent]("SCHEDULER_EVENT")
 }

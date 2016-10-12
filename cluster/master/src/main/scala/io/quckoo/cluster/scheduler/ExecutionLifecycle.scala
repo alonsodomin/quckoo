@@ -29,23 +29,23 @@ import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
 /**
- * Created by aalonsodominguez on 17/08/15.
- */
+  * Created by aalonsodominguez on 17/08/15.
+  */
 object ExecutionLifecycle {
   import TaskExecution._
 
-  final val DefaultEnqueueTimeout = 10 seconds
+  final val DefaultEnqueueTimeout     = 10 seconds
   final val DefaultMaxEnqueueAttempts = 3
 
   final val PersistenceIdPrefix = "Execution-"
 
   sealed trait Command
   final case class Awake(task: Task, queue: ActorSelection) extends Command
-  case object Start extends Command
-  final case class Finish(fault: Option[Fault]) extends Command
-  final case class Cancel(reason: UncompletedReason) extends Command
-  case object TimeOut extends Command
-  case object Get extends Command
+  case object Start                                         extends Command
+  final case class Finish(fault: Option[Fault])             extends Command
+  final case class Cancel(reason: UncompletedReason)        extends Command
+  case object TimeOut                                       extends Command
+  case object Get                                           extends Command
 
   sealed trait Phase extends PersistentFSM.FSMState
   case object Sleeping extends Phase {
@@ -63,11 +63,11 @@ object ExecutionLifecycle {
 
   sealed trait ExecutionEvent
   final case class Awaken(task: Task, planId: PlanId, queue: ActorSelection) extends ExecutionEvent
-  final case class Cancelled(reason: UncompletedReason) extends ExecutionEvent
-  final case class Triggered(task: Task) extends ExecutionEvent
-  case object Started extends ExecutionEvent
-  final case class Completed(fault: Option[Fault]) extends ExecutionEvent
-  case object TimedOut extends ExecutionEvent
+  final case class Cancelled(reason: UncompletedReason)                      extends ExecutionEvent
+  final case class Triggered(task: Task)                                     extends ExecutionEvent
+  case object Started                                                        extends ExecutionEvent
+  final case class Completed(fault: Option[Fault])                           extends ExecutionEvent
+  case object TimedOut                                                       extends ExecutionEvent
 
   final case class Result(outcome: Outcome)
 
@@ -78,7 +78,7 @@ object ExecutionLifecycle {
       outcome: Option[Outcome] = None
   ) {
 
-    private[scheduler] def <<= (out: Outcome): ExecutionState =
+    private[scheduler] def <<=(out: Outcome): ExecutionState =
       this.copy(outcome = Some(out))
 
   }
@@ -87,7 +87,12 @@ object ExecutionLifecycle {
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
             maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
             executionTimeout: Option[FiniteDuration] = None) =
-    Props(classOf[ExecutionLifecycle], planId, enqueueTimeout, maxEnqueueAttempts, executionTimeout)
+    Props(
+      classOf[ExecutionLifecycle],
+      planId,
+      enqueueTimeout,
+      maxEnqueueAttempts,
+      executionTimeout)
 
 }
 
@@ -96,8 +101,13 @@ class ExecutionLifecycle(
     enqueueTimeout: FiniteDuration,
     maxEnqueueAttempts: Int,
     executionTimeout: Option[FiniteDuration]
-  ) extends PersistentFSM[ExecutionLifecycle.Phase, ExecutionLifecycle.ExecutionState, ExecutionLifecycle.ExecutionEvent]
-    with LoggingPersistentFSM[ExecutionLifecycle.Phase, ExecutionLifecycle.ExecutionState, ExecutionLifecycle.ExecutionEvent] {
+) extends PersistentFSM[
+      ExecutionLifecycle.Phase,
+      ExecutionLifecycle.ExecutionState,
+      ExecutionLifecycle.ExecutionEvent] with LoggingPersistentFSM[
+      ExecutionLifecycle.Phase,
+      ExecutionLifecycle.ExecutionState,
+      ExecutionLifecycle.ExecutionEvent] {
 
   import ExecutionLifecycle._
   import TaskExecution._
@@ -127,7 +137,7 @@ class ExecutionLifecycle(
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
       stay replying TaskExecution(planId, task, Scheduled, outcome) forMax enqueueTimeout
 
-    case Event(StateTimeout, ExecutionState(_, Some(task), Some(queue), _))  =>
+    case Event(StateTimeout, ExecutionState(_, Some(task), Some(queue), _)) =>
       enqueueAttempts += 1
       if (enqueueAttempts < maxEnqueueAttempts) {
         log.debug("Task {} failed to be enqueued. Retrying...", task.id)
@@ -146,7 +156,10 @@ class ExecutionLifecycle(
       executionTimeout.map(duration => st forMax duration).getOrElse(st)
 
     case Event(Cancel(reason), data) =>
-      log.debug("Cancelling execution of task {} upon request. Reason: {}", data.task.get.id, reason)
+      log.debug(
+        "Cancelling execution of task {} upon request. Reason: {}",
+        data.task.get.id,
+        reason)
       stop applying Cancelled(reason)
 
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
@@ -187,29 +200,34 @@ class ExecutionLifecycle(
 
   override def domainEventClassTag: ClassTag[ExecutionEvent] = ClassTag(classOf[ExecutionEvent])
 
-  override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState = event match {
-    case Awaken(task, `planId`, queue) =>
-      log.debug("Execution lifecycle for task {} is allocating a slot at the local queue.", task.id)
-      queue ! TaskQueue.Enqueue(task)
-      previous.copy(task = Some(task), queue = Some(queue))
+  override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState =
+    event match {
+      case Awaken(task, `planId`, queue) =>
+        log.debug(
+          "Execution lifecycle for task {} is allocating a slot at the local queue.",
+          task.id)
+        queue ! TaskQueue.Enqueue(task)
+        previous.copy(task = Some(task), queue = Some(queue))
 
-    case event @ Triggered(task) =>
-      log.debug("Execution for task {} has been triggered.", task.id)
-      context.parent ! event
-      previous
+      case event @ Triggered(task) =>
+        log.debug("Execution for task {} has been triggered.", task.id)
+        context.parent ! event
+        previous
 
-    case Completed(result) => result match {
-      case Some(fault) => previous <<= Failure(fault)
-      case _           => previous <<= Success
+      case Completed(result) =>
+        result match {
+          case Some(fault) => previous <<= Failure(fault)
+          case _           => previous <<= Success
+        }
+
+      case Cancelled(reason) =>
+        stateName match {
+          case Running => previous <<= Interrupted(reason)
+          case _       => previous <<= NeverRun(reason)
+        }
+
+      case TimedOut => previous <<= NeverEnding
+      case _        => previous
     }
-
-    case Cancelled(reason) => stateName match {
-      case Running => previous <<= Interrupted(reason)
-      case _       => previous <<= NeverRun(reason)
-    }
-
-    case TimedOut => previous <<= NeverEnding
-    case _        => previous
-  }
 
 }

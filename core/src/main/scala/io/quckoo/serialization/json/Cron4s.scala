@@ -30,8 +30,8 @@ import Scalaz._
   */
 trait Cron4s {
 
-  implicit def cronExprW: UWriter[CronExpr] = UWriter[CronExpr] {
-    expr => Js.Str(expr.toString)
+  implicit def cronExprW: UWriter[CronExpr] = UWriter[CronExpr] { expr =>
+    Js.Str(expr.toString)
   }
 
   implicit def cronExprR: UReader[CronExpr] = UReader[CronExpr] {

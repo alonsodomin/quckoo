@@ -29,8 +29,8 @@ import io.quckoo.worker.{JobExecutor, Worker}
 import scopt.OptionParser
 
 /**
- * Created by domingueza on 09/07/15.
- */
+  * Created by domingueza on 09/07/15.
+  */
 object Boot extends App {
 
   val parser = new OptionParser[Options]("quckoo-worker") {
@@ -43,8 +43,9 @@ object Boot extends App {
       options.copy(port = p)
     } text "Worker node port"
 
-    opt[Seq[String]]("master") required() valueName "<host:port>,<host:port>" action { (nodes, options) =>
-      options.copy(masterNodes = nodes)
+    opt[Seq[String]]("master") required () valueName "<host:port>,<host:port>" action {
+      (nodes, options) =>
+        options.copy(masterNodes = nodes)
     } text "Comma separated list of Quckoo master nodes"
   }
 

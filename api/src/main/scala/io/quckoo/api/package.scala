@@ -21,7 +21,7 @@ package io.quckoo
   */
 package object api {
 
-  final val AuthorizationHeader = "Authorization"
+  final val AuthorizationHeader  = "Authorization"
   final val RequestTimeoutHeader = "X-QUCKOO-REQ-TIMEOUT"
 
 }

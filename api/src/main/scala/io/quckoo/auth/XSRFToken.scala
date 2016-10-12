@@ -22,11 +22,11 @@ import scalaz._
 import Scalaz._
 
 /**
- * Created by alonsodomin on 14/10/2015.
- */
+  * Created by alonsodomin on 14/10/2015.
+  */
 object XSRFToken {
 
-  private final val TokenSeparator = ":"
+  private final val TokenSeparator     = ":"
   private[this] final val TokenPattern = s"(.+?)$TokenSeparator(.+)".r
 
   private final val ExpiredToken = "EXPIRED"

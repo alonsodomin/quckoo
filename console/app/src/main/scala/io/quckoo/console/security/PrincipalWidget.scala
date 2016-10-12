@@ -27,10 +27,9 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object PrincipalWidget {
 
-  private[this] val component = ReactComponentB[Principal]("UserDisplay").
-    render_P { user =>
-      <.span(Icons.user, user.id)
-    } build
+  private[this] val component = ReactComponentB[Principal]("UserDisplay").render_P { user =>
+    <.span(Icons.user, user.id)
+  } build
 
   def apply(user: Principal) = component(user)
 

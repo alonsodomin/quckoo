@@ -29,7 +29,7 @@ import org.threeten.bp.ZonedDateTime
 import scala.concurrent.duration.FiniteDuration
 
 sealed trait SchedulerCommand extends Command
-sealed trait SchedulerEvent extends Event
+sealed trait SchedulerEvent   extends Event
 sealed trait ExecutionEvent extends SchedulerEvent {
   val dateTime: ZonedDateTime
 }
@@ -42,21 +42,34 @@ final case class ScheduleJob(
     timeout: Option[FiniteDuration] = None
 ) extends SchedulerCommand
 
-final case class TaskScheduled(jobId: JobId, planId: PlanId, task: Task, dateTime: ZonedDateTime) extends ExecutionEvent
-final case class TaskTriggered(jobId: JobId, planId: PlanId, taskId: TaskId, dateTime: ZonedDateTime) extends ExecutionEvent
-final case class TaskCompleted(jobId: JobId, planId: PlanId, taskId: TaskId, dateTime: ZonedDateTime, outcome: TaskExecution.Outcome) extends ExecutionEvent
+final case class TaskScheduled(jobId: JobId, planId: PlanId, task: Task, dateTime: ZonedDateTime)
+    extends ExecutionEvent
+final case class TaskTriggered(jobId: JobId,
+                               planId: PlanId,
+                               taskId: TaskId,
+                               dateTime: ZonedDateTime)
+    extends ExecutionEvent
+final case class TaskCompleted(jobId: JobId,
+                               planId: PlanId,
+                               taskId: TaskId,
+                               dateTime: ZonedDateTime,
+                               outcome: TaskExecution.Outcome)
+    extends ExecutionEvent
 
 final case class JobFailedToSchedule(jobId: JobId, cause: Fault) extends SchedulerEvent
 
-final case class ExecutionPlanStarted(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime) extends ExecutionEvent
-final case class ExecutionPlanFinished(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime) extends ExecutionEvent
-final case class ExecutionPlanCancelled(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime) extends ExecutionEvent
+final case class ExecutionPlanStarted(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime)
+    extends ExecutionEvent
+final case class ExecutionPlanFinished(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime)
+    extends ExecutionEvent
+final case class ExecutionPlanCancelled(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime)
+    extends ExecutionEvent
 
-case object GetExecutionPlans extends SchedulerCommand
-final case class GetExecutionPlan(planId: PlanId) extends SchedulerCommand
+case object GetExecutionPlans                        extends SchedulerCommand
+final case class GetExecutionPlan(planId: PlanId)    extends SchedulerCommand
 final case class CancelExecutionPlan(planId: PlanId) extends SchedulerCommand
 
-case object GetTaskExecutions extends SchedulerCommand
+case object GetTaskExecutions                     extends SchedulerCommand
 final case class GetTaskExecution(taskId: TaskId) extends SchedulerCommand
 
 final case class TaskQueueUpdated(pendingTasks: Int, inProgressTasks: Int) extends SchedulerEvent

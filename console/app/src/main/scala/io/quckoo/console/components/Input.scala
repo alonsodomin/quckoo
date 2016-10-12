@@ -40,12 +40,12 @@ object Input {
     }
 
     implicit val string: Converter[String] = new Converter[String] {
-      def to: String => String = identity
+      def to: String => String   = identity
       def from: String => String = identity
     }
 
     implicit val password: Converter[Password] = new Converter[Password] {
-      def to: Password => String = _.value
+      def to: Password => String   = _.value
       def from: String => Password = new Password(_)
     }
 
@@ -70,12 +70,12 @@ object Input {
   @implicitNotFound("Type $A is not supported as Input component")
   sealed abstract class Type[A](val html: String)
   object Type {
-    implicit val string   = new Type[String]("text") {}
+    implicit val string   = new Type[String]("text")       {}
     implicit val password = new Type[Password]("password") {}
-    implicit val int      = new Type[Int]("number") {}
-    implicit val long     = new Type[Long]("number") {}
-    implicit val date     = new Type[LocalDate]("date") {}
-    implicit val time     = new Type[LocalTime]("time") {}
+    implicit val int      = new Type[Int]("number")        {}
+    implicit val long     = new Type[Long]("number")       {}
+    implicit val date     = new Type[LocalDate]("date")    {}
+    implicit val time     = new Type[LocalTime]("time")    {}
   }
 
   type OnUpdate[A] = Option[A] => Callback
@@ -87,7 +87,7 @@ object Input {
       attrs: Seq[TagMod]
   )(implicit val converter: Converter[A], val `type`: Type[A])
 
-  class Backend[A]($: BackendScope[Props[A], Unit]) {
+  class Backend[A]($ : BackendScope[Props[A], Unit]) {
 
     def onUpdate(props: Props[A])(evt: ReactEventI): Callback = {
       def convertNewValue: CallbackTo[Option[A]] = CallbackTo {
@@ -107,37 +107,37 @@ object Input {
       def valueAttr: TagMod =
         ^.value := props.value.map(v => props.converter.to(v)).getOrElse("")
 
-      <.input(^.`type` := props.`type`.html,
+      <.input(
+        ^.`type` := props.`type`.html,
         ^.`class` := "form-control",
         defaultValueAttr.getOrElse(valueAttr),
         ^.onChange ==> onUpdate(props),
         ^.onBlur ==> onUpdate(props),
-        props.attrs
-      )
+        props.attrs)
     }
 
   }
 
-  def apply[A : Reusability](onUpdate: OnUpdate[A]) = new Input[A](onUpdate)
+  def apply[A: Reusability](onUpdate: OnUpdate[A]) = new Input[A](onUpdate)
 
 }
 
-class Input[A : Reusability] private[components] (onUpdate: Input.OnUpdate[A]) {
+class Input[A: Reusability] private[components] (onUpdate: Input.OnUpdate[A]) {
   import Input._
 
   implicit val propsReuse: Reusability[Props[A]] =
     Reusability.by[Props[A], (Option[A], Option[A])](p => (p.value, p.defaultValue))
 
-  private[components] val component = ReactComponentB[Props[A]]("Input").
-    stateless.
-    renderBackend[Backend[A]].
-    configure(Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode]).
-    build
+  private[components] val component = ReactComponentB[Props[A]]("Input").stateless
+    .renderBackend[Backend[A]]
+    .configure(Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode])
+    .build
 
   def apply(value: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
     component(Props(value, None, onUpdate, attrs))
 
-  def apply(value: Option[A], defaultValue: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+  def apply(value: Option[A], defaultValue: Option[A], attrs: TagMod*)(implicit C: Converter[A],
+                                                                       T: Type[A]) =
     component(Props(value, defaultValue, onUpdate, attrs))
 
 }

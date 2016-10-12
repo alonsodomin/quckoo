@@ -24,22 +24,21 @@ import org.threeten.bp._
 /**
   * Created by alonsodomin on 20/02/2016.
   */
-
 final case class ConsoleScope private (
-  passport: Option[Passport],
-  clusterState: QuckooState,
-  userScope: UserScope,
-  lastLogin: Option[LocalDateTime]
+    passport: Option[Passport],
+    clusterState: QuckooState,
+    userScope: UserScope,
+    lastLogin: Option[LocalDateTime]
 )
 
 object ConsoleScope {
 
   def initial =
     ConsoleScope(
-      passport     = None,
+      passport = None,
       clusterState = QuckooState(),
-      userScope    = UserScope.initial,
-      lastLogin    = None
+      userScope = UserScope.initial,
+      lastLogin = None
     )
 
 }

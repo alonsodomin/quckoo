@@ -30,8 +30,9 @@ class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
   val global  = Domain.ofValues(default, primary, success, info, warning, danger)
   val context = Domain.ofValues(success, info, warning, danger)
 
-  def from[A](domain: Domain[A], base: String)(implicit lookup: StyleLookup[A]) = styleF(domain) { opt =>
-    styleS(addClassNames(base, s"$base-$opt"))
+  def from[A](domain: Domain[A], base: String)(implicit lookup: StyleLookup[A]) = styleF(domain) {
+    opt =>
+      styleS(addClassNames(base, s"$base-$opt"))
   }
 
   def wrap(classNames: String*) = style(addClassNames(classNames: _*))
@@ -50,16 +51,16 @@ class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
   object nav {
     val domain = Domain.ofValues(NavStyle.tabs, NavStyle.pills, NavStyle.stacked)
 
-    private val opt     = from(domain, "nav")
-    val tabs    = opt(NavStyle.tabs)
-    val pills   = opt(NavStyle.pills)
-    val stacked = opt(NavStyle.stacked)
+    private val opt = from(domain, "nav")
+    val tabs        = opt(NavStyle.tabs)
+    val pills       = opt(NavStyle.pills)
+    val stacked     = opt(NavStyle.stacked)
 
     def apply(navStyle: NavStyle.Value) = opt(navStyle)
   }
 
-  val alert    = from(context, "alert")
-  val close    = wrap("close")
+  val alert = from(context, "alert")
+  val close = wrap("close")
 
   object modal {
     val modal   = wrap("modal")

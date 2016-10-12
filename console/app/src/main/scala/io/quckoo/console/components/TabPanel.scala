@@ -26,7 +26,7 @@ object TabPanel {
   final case class Props(items: Map[String, ReactNode], initial: String)
   final case class State(selected: Option[String] = None)
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     def tabClicked(title: String): Callback =
       $.modState(_.copy(selected = Some(title)))
@@ -41,10 +41,8 @@ object TabPanel {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("TabPanel").
-    initialState(State()).
-    renderBackend[Backend].
-    build
+  private[this] val component =
+    ReactComponentB[Props]("TabPanel").initialState(State()).renderBackend[Backend].build
 
   def apply(tabItems: (String, ReactNode)*) = {
     val initial = tabItems.head._1

@@ -26,8 +26,8 @@ import scalacss.ScalaCssReact._
 import scalacss.StyleSheet
 
 /**
- * Created by alonsodomin on 13/10/2015.
- */
+  * Created by alonsodomin on 13/10/2015.
+  */
 object DashboardView {
 
   object Style extends StyleSheet.Inline {
@@ -43,17 +43,20 @@ object DashboardView {
 
   case class Props(proxy: ModelProxy[ConsoleScope])
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def render(props: Props) = {
       val clusterState = props.proxy.connect(_.clusterState)
       val masterNodes  = props.proxy.connect(_.clusterState.masterNodes)
       val workerNodes  = props.proxy.connect(_.clusterState.workerNodes)
 
-      <.div(^.`class` := "container",
-        <.div(^.`class` := "row",
+      <.div(
+        ^.`class` := "container",
+        <.div(
+          ^.`class` := "row",
           <.div(Style.leftPanel, clusterState(ClusterView(_))),
-          <.div(Style.content,
+          <.div(
+            Style.content,
             <.div(
               <.h3("Master nodes"),
               masterNodes(NodeList(_))
@@ -61,18 +64,13 @@ object DashboardView {
             <.div(
               <.h3("Worker nodes"),
               workerNodes(NodeList(_))
-            )
-          )
-        )
-      )
+            ))))
     }
 
   }
 
-  private[this] val component = ReactComponentB[Props]("HomePage").
-    stateless.
-    renderBackend[Backend].
-    build
+  private[this] val component =
+    ReactComponentB[Props]("HomePage").stateless.renderBackend[Backend].build
 
   def apply(proxy: ModelProxy[ConsoleScope]) = component(Props(proxy))
 
