@@ -29,8 +29,8 @@ import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
 /**
- * Created by alonsodomin on 13/10/2015.
- */
+  * Created by alonsodomin on 13/10/2015.
+  */
 object LoginPage {
 
   object Style extends StyleSheet.Inline {
@@ -49,23 +49,21 @@ object LoginPage {
 
   case class Props(proxy: ModelProxy[ConsoleScope], referral: Option[ConsoleRoute])
 
-  class LoginBackend($: BackendScope[Props, Unit]) {
+  class LoginBackend($ : BackendScope[Props, Unit]) {
 
     def loginHandler(props: Props)(username: String, password: String): Callback =
       props.proxy.dispatch(Login(username, password, props.referral))
 
     def render(props: Props) =
-      <.div(Style.formPlacement,
-        Panel(Panel.Props("Quckoo Console - Sign in", ContextStyle.primary),
-          LoginForm(loginHandler(props))
-        )
-      )
+      <.div(
+        Style.formPlacement,
+        Panel(
+          Panel.Props("Quckoo Console - Sign in", ContextStyle.primary),
+          LoginForm(loginHandler(props))))
   }
 
-  private[this] val component = ReactComponentB[Props]("LoginPage").
-    stateless.
-    renderBackend[LoginBackend].
-    build
+  private[this] val component =
+    ReactComponentB[Props]("LoginPage").stateless.renderBackend[LoginBackend].build
 
   def apply(proxy: ModelProxy[ConsoleScope], referral: Option[ConsoleRoute] = None) =
     component(Props(proxy, referral))

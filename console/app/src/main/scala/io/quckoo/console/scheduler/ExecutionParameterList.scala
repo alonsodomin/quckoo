@@ -37,7 +37,7 @@ object ExecutionParameterList {
   case class ParamRowProps(value: Param, onUpdate: Param => Callback, onDelete: Callback)
   case class ParamRowState(name: String, value: String)
 
-  class ParamRowBackend($: BackendScope[ParamRowProps, ParamRowState]) {
+  class ParamRowBackend($ : BackendScope[ParamRowProps, ParamRowState]) {
 
     def propagateChange: Callback = {
       val param = $.state.map(st => Param(st.name, st.value))
@@ -52,35 +52,37 @@ object ExecutionParameterList {
 
     def render(props: ParamRowProps, state: ParamRowState) = {
       <.div(
-        <.div(^.`class` := "col-sm-5",
-          <.input.text(^.`class` := "form-control",
+        <.div(
+          ^.`class` := "col-sm-5",
+          <.input.text(
+            ^.`class` := "form-control",
             ^.value := state.name,
-            ^.onChange ==> onParamNameUpdate
-          )
-        ),
-        <.div(^.`class` := "col-sm-5",
-          <.input.text(^.`class` := "form-control",
+            ^.onChange ==> onParamNameUpdate)),
+        <.div(
+          ^.`class` := "col-sm-5",
+          <.input.text(
+            ^.`class` := "form-control",
             ^.value := state.value,
-            ^.onChange ==> onParamValueUpdate
-          )
-        ),
-        <.div(^.`class` := "col-sm-2",
-          Button(Button.Props(Some(props.onDelete), style = ContextStyle.default), Icons.minus.noPadding)
-        )
+            ^.onChange ==> onParamValueUpdate)),
+        <.div(
+          ^.`class` := "col-sm-2",
+          Button(
+            Button.Props(Some(props.onDelete), style = ContextStyle.default),
+            Icons.minus.noPadding))
       )
     }
 
   }
 
-  val ParamRow = ReactComponentB[ParamRowProps]("ParamRow").
-    initialState_P(props => ParamRowState(props.value.name, props.value.value)).
-    renderBackend[ParamRowBackend].
-    build
+  val ParamRow = ReactComponentB[ParamRowProps]("ParamRow")
+    .initialState_P(props => ParamRowState(props.value.name, props.value.value))
+    .renderBackend[ParamRowBackend]
+    .build
 
   case class Props(value: Map[String, String], onUpdate: (String, String) => Callback)
   @Lenses case class State(params: Vector[Param])
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     def addParam(): Callback =
       $.modState(st => st.copy(params = st.params :+ Param("", "")))
@@ -100,27 +102,27 @@ object ExecutionParameterList {
 
     def render(props: Props, state: State) = {
       <.div(
-        <.div(^.`class` := "form-group",
+        <.div(
+          ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Parameters"),
-          <.div(^.`class` := "col-sm-10",
-            Button(Button.Props(Some(addParam()), style = ContextStyle.default), Icons.plus.noPadding)
-          )
-        ),
+          <.div(
+            ^.`class` := "col-sm-10",
+            Button(
+              Button.Props(Some(addParam()), style = ContextStyle.default),
+              Icons.plus.noPadding))),
         if (state.params.isEmpty) EmptyTag
         else {
           <.div(
-            <.div(^.`class` := "col-sm-offset-2",
-              <.div(^.`class` := "col-sm-5",
-                <.label(^.`class` := "control-label", "Name")
-              ),
-              <.div(^.`class` := "col-sm-5",
-                <.label(^.`class` := "control-label", "Value")
-              )
-            ),
-            state.params.zipWithIndex.map { case (param, idx) =>
-              <.div(^.`class` := "col-sm-offset-2",
-                ParamRow.withKey(idx)(ParamRowProps(param, onParamUpdate(idx), deleteParam(idx)))
-              )
+            <.div(
+              ^.`class` := "col-sm-offset-2",
+              <.div(^.`class` := "col-sm-5", <.label(^.`class` := "control-label", "Name")),
+              <.div(^.`class` := "col-sm-5", <.label(^.`class` := "control-label", "Value"))),
+            state.params.zipWithIndex.map {
+              case (param, idx) =>
+                <.div(
+                  ^.`class` := "col-sm-offset-2",
+                  ParamRow
+                    .withKey(idx)(ParamRowProps(param, onParamUpdate(idx), deleteParam(idx))))
             }
           )
         }
@@ -129,10 +131,10 @@ object ExecutionParameterList {
 
   }
 
-  val component = ReactComponentB[Props]("ParameterList").
-    initialState_P(props => State(Vector.empty)).
-    renderBackend[Backend].
-    build
+  val component = ReactComponentB[Props]("ParameterList")
+    .initialState_P(props => State(Vector.empty))
+    .renderBackend[Backend]
+    .build
 
   def apply(value: Map[String, String], onUpdate: (String, String) => Callback) =
     component(Props(value, onUpdate))

@@ -30,14 +30,16 @@ trait ScalazJson {
   // NonEmptyList
 
   implicit def nonEmptyListW[T: UWriter]: UWriter[NonEmptyList[T]] = UWriter[NonEmptyList[T]] {
-    x => Js.Arr(x.list.toList.map(writeJs(_)).toArray: _*)
+    x =>
+      Js.Arr(x.list.toList.map(writeJs(_)).toArray: _*)
   }
 
-  implicit def nonEmptyListR[T: UReader]: UReader[NonEmptyList[T]] = UReader[NonEmptyList[T]]( {
-    case Js.Arr(x @ _*) =>
-      val seq = x.map(readJs[T])
-      NonEmptyList(seq.head, seq.tail: _*)
-  })
+  implicit def nonEmptyListR[T: UReader]: UReader[NonEmptyList[T]] =
+    UReader[NonEmptyList[T]]({
+      case Js.Arr(x @ _ *) =>
+        val seq = x.map(readJs[T])
+        NonEmptyList(seq.head, seq.tail: _*)
+    })
 
   // Either \/
 

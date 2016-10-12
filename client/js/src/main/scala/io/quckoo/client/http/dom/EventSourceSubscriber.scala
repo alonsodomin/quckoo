@@ -27,7 +27,6 @@ import org.scalajs.dom.raw.{Event, EventSource, MessageEvent}
 
 import slogging.LazyLogging
 
-
 /**
   * Created by alonsodomin on 02/04/2016.
   */

@@ -23,7 +23,12 @@ import io.quckoo.id.ArtifactId
 import io.quckoo.resolver._
 
 import org.apache.ivy.Ivy
-import org.apache.ivy.core.module.descriptor.{Configuration, DefaultDependencyDescriptor, DefaultModuleDescriptor, ModuleDescriptor}
+import org.apache.ivy.core.module.descriptor.{
+  Configuration,
+  DefaultDependencyDescriptor,
+  DefaultModuleDescriptor,
+  ModuleDescriptor
+}
 import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
 import org.apache.ivy.core.report.{ArtifactDownloadReport, ResolveReport}
 import org.apache.ivy.core.resolve.ResolveOptions
@@ -34,8 +39,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scalaz._
 
 /**
- * Created by aalonsodominguez on 17/07/15.
- */
+  * Created by aalonsodominguez on 17/07/15.
+  */
 object IvyResolve {
 
   private final val DefaultConfName = "default"
@@ -57,39 +62,53 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
   import IvyResolve._
   import Scalaz._
 
-  def apply(artifactId: ArtifactId, download: Boolean)
-           (implicit ec: ExecutionContext): Future[Validation[Fault, Artifact]] = Future {
+  def apply(artifactId: ArtifactId, download: Boolean)(
+      implicit ec: ExecutionContext): Future[Validation[Fault, Artifact]] = Future {
 
-    def unresolvedDependencies(report: ResolveReport): ValidationNel[DependencyFault, ResolveReport] = {
-      val validations: List[Validation[DependencyFault, ResolveReport]] = report.getUnresolvedDependencies.map(_.getId).map { moduleId =>
-        val unresolvedId = ArtifactId(moduleId.getOrganisation, moduleId.getName, moduleId.getRevision)
-        UnresolvedDependency(unresolvedId).failure[ResolveReport]
-      } toList
+    def unresolvedDependencies(
+        report: ResolveReport): ValidationNel[DependencyFault, ResolveReport] = {
+      val validations: List[Validation[DependencyFault, ResolveReport]] =
+        report.getUnresolvedDependencies
+          .map(_.getId)
+          .map { moduleId =>
+            val unresolvedId =
+              ArtifactId(moduleId.getOrganisation, moduleId.getName, moduleId.getRevision)
+            UnresolvedDependency(unresolvedId).failure[ResolveReport]
+        } toList
 
-      validations.foldLeft(report.successNel[DependencyFault])((acc, v) => (acc |@| v.toValidationNel) { (_, r) => r })
+      validations.foldLeft(report.successNel[DependencyFault])((acc, v) =>
+        (acc |@| v.toValidationNel) { (_, r) =>
+          r
+      })
     }
 
     def downloadFailed(report: ResolveReport): ValidationNel[DependencyFault, ResolveReport] = {
-      val validations: List[Validation[DependencyFault, ResolveReport]] = report.getFailedArtifactsReports.map { artifactReport =>
-        val moduleRevisionId = artifactReport.getArtifact.getModuleRevisionId
-        val artifactId = ArtifactId(moduleRevisionId.getOrganisation, moduleRevisionId.getName, moduleRevisionId.getRevision)
-        val reason = {
-          if (artifactReport.getDownloadDetails == ArtifactDownloadReport.MISSING_ARTIFACT) {
-            DownloadFailed.NotFound
-          } else {
-            DownloadFailed.Other(artifactReport.getDownloadDetails)
+      val validations: List[Validation[DependencyFault, ResolveReport]] =
+        report.getFailedArtifactsReports.map { artifactReport =>
+          val moduleRevisionId = artifactReport.getArtifact.getModuleRevisionId
+          val artifactId = ArtifactId(
+            moduleRevisionId.getOrganisation,
+            moduleRevisionId.getName,
+            moduleRevisionId.getRevision)
+          val reason = {
+            if (artifactReport.getDownloadDetails == ArtifactDownloadReport.MISSING_ARTIFACT) {
+              DownloadFailed.NotFound
+            } else {
+              DownloadFailed.Other(artifactReport.getDownloadDetails)
+            }
           }
-        }
-        DownloadFailed(artifactId, reason).failure[ResolveReport]
-      } toList
+          DownloadFailed(artifactId, reason).failure[ResolveReport]
+        } toList
 
-      validations.foldLeft(report.successNel[DependencyFault])((acc, v) => (acc |@| v.toValidationNel) { (_, r) => r })
+      validations.foldLeft(report.successNel[DependencyFault])((acc, v) =>
+        (acc |@| v.toValidationNel) { (_, r) =>
+          r
+      })
     }
 
     def artifactLocations(artifactReports: Seq[ArtifactDownloadReport]): Seq[URL] = {
       for (report <- artifactReports) yield {
-        val localFile = Option(report.getUnpackedLocalFile).
-          orElse(Option(report.getLocalFile))
+        val localFile = Option(report.getUnpackedLocalFile).orElse(Option(report.getLocalFile))
 
         localFile match {
           case Some(file) => Right(file)
@@ -99,12 +118,12 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
     }
 
     val moduleDescriptor = newCallerInstance(artifactId)
-    val resolveOptions = new ResolveOptions().
-      setTransitive(true).
-      setValidate(true).
-      setDownload(download).
-      setOutputReport(false).
-      setConfs(Array(DefaultConfName))
+    val resolveOptions = new ResolveOptions()
+      .setTransitive(true)
+      .setValidate(true)
+      .setDownload(download)
+      .setOutputReport(false)
+      .setConfs(Array(DefaultConfName))
 
     log.debug(s"Resolving $moduleDescriptor")
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
@@ -116,16 +135,24 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
 
   private[this] def newCallerInstance(artifactId: ArtifactId): ModuleDescriptor = {
     val moduleRevisionId: IvyModuleId = IvyModuleId.newInstance(
-      artifactId.organization, artifactId.name, artifactId.version
+      artifactId.organization,
+      artifactId.name,
+      artifactId.version
     )
 
-    val descriptor = new DefaultModuleDescriptor(IvyModuleId.newInstance(
-      moduleRevisionId.getOrganisation, moduleRevisionId.getName + "-job", "working"), "integration", null, true
-    )
+    val descriptor = new DefaultModuleDescriptor(
+      IvyModuleId.newInstance(
+        moduleRevisionId.getOrganisation,
+        moduleRevisionId.getName + "-job",
+        "working"),
+      "integration",
+      null,
+      true)
     Configurations.foreach(c => descriptor.addConfiguration(new Configuration(c)))
     descriptor.setLastModified(System.currentTimeMillis)
 
-    val dependencyDescriptor = new DefaultDependencyDescriptor(descriptor, moduleRevisionId, false, false, true)
+    val dependencyDescriptor =
+      new DefaultDependencyDescriptor(descriptor, moduleRevisionId, false, false, true)
     Configurations.foreach(c => dependencyDescriptor.addDependencyConfiguration(c, c))
     descriptor.addDependency(dependencyDescriptor)
 

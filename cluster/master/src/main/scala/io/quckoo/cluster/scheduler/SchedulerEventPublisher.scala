@@ -30,4 +30,5 @@ object SchedulerEventPublisher {
 
 }
 
-class SchedulerEventPublisher extends PubSubSubscribedEventPublisher[SchedulerEvent](topics.Scheduler)
+class SchedulerEventPublisher
+    extends PubSubSubscribedEventPublisher[SchedulerEvent](topics.Scheduler)

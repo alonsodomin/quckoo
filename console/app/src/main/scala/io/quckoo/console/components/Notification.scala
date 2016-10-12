@@ -58,10 +58,10 @@ object Notification {
   )
 
   final case class Props(
-    message: String,
-    title: Option[String] = None,
-    url: Option[String] = None,
-    closable: Boolean = true
+      message: String,
+      title: Option[String] = None,
+      url: Option[String] = None,
+      closable: Boolean = true
   )
 
   sealed trait PropsMagnet {
@@ -108,10 +108,12 @@ final case class Notification private[components] (
   }
 
   def inline: ReactNode = {
-    Alert(AlertStyle(level), <.div(^.`class` := "row",
-      <.div(^.`class` := "col-sm-2", AlertIcon(level)),
-      <.div(^.`class` := "col-sm-10", props.message)
-    ))
+    Alert(
+      AlertStyle(level),
+      <.div(
+        ^.`class` := "row",
+        <.div(^.`class` := "col-sm-2", AlertIcon(level)),
+        <.div(^.`class` := "col-sm-10", props.message)))
   }
 
 }

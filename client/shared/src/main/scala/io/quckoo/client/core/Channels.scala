@@ -33,6 +33,6 @@ trait Channels[P <: Protocol] {
   type RegistryChannel  = Channel.Aux[P, RegistryEvent]
   type SchedulerChannel = Channel.Aux[P, SchedulerEvent]
 
-  def createChannel[E: EventDef : UReader]: Channel.Aux[P, E]
+  def createChannel[E: EventDef: UReader]: Channel.Aux[P, E]
 
 }

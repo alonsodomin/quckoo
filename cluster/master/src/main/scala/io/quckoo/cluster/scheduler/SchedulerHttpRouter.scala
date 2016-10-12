@@ -45,11 +45,10 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
   import StatusCodes._
 
   def schedulerApi(
-    implicit
-    system: ActorSystem,
-    materializer: ActorMaterializer,
-    timeout: FiniteDuration,
-    passport: Passport
+      implicit system: ActorSystem,
+      materializer: ActorMaterializer,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Route =
     pathPrefix("plans") {
       pathEnd {

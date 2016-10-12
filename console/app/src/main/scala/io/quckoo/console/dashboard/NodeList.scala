@@ -34,13 +34,14 @@ object NodeList {
 
   case class Props[N <: QuckooNode](proxy: ModelProxy[Map[NodeId, N]])
 
-  class Backend[N <: QuckooNode]($: BackendScope[Props[N], Unit]) {
+  class Backend[N <: QuckooNode]($ : BackendScope[Props[N], Unit]) {
 
-    def renderItem(props: Props[N])(nodeId: NodeId, node: N, column: String): ReactNode = column match {
-      case "ID" => nodeId.toString
-      case "Location" => node.location.host
-      case "Status"   => node.status.toString
-    }
+    def renderItem(props: Props[N])(nodeId: NodeId, node: N, column: String): ReactNode =
+      column match {
+        case "ID"       => nodeId.toString
+        case "Location" => node.location.host
+        case "Status"   => node.status.toString
+      }
 
     def render(props: Props[N]) = {
       val model = props.proxy()
@@ -51,10 +52,8 @@ object NodeList {
 
   }
 
-  private[this] def component[N <: QuckooNode] = ReactComponentB[Props[N]]("NodeList").
-    stateless.
-    renderBackend[Backend[N]].
-    build
+  private[this] def component[N <: QuckooNode] =
+    ReactComponentB[Props[N]]("NodeList").stateless.renderBackend[Backend[N]].build
 
   def apply[N <: QuckooNode](proxy: ModelProxy[Map[NodeId, N]]) = component(Props(proxy))
 

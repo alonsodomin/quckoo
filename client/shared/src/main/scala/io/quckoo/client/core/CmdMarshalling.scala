@@ -31,8 +31,8 @@ trait CmdMarshalling[P <: Protocol] {
 object CmdMarshalling {
   trait Aux[P <: Protocol, Cmd0[_] <: Command[_], In0, Rslt0] extends CmdMarshalling[P] {
     type Cmd[X] = Cmd0[X]
-    type In = In0
-    type Rslt = Rslt0
+    type In     = In0
+    type Rslt   = Rslt0
   }
 
   trait Anon[P <: Protocol, In, Rslt] extends Aux[P, AnonCmd, In, Rslt]

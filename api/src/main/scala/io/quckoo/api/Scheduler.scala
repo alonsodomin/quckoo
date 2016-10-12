@@ -32,33 +32,39 @@ import scalaz.\/
 trait Scheduler {
 
   def cancelPlan(planId: PlanId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[ExecutionPlanNotFound \/ ExecutionPlanCancelled]
 
   def executionPlan(planId: PlanId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Option[ExecutionPlan]]
 
   def executionPlans(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Map[PlanId, ExecutionPlan]]
 
   def executions(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Map[TaskId, TaskExecution]]
 
   def execution(taskId: TaskId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Option[TaskExecution]]
 
   def scheduleJob(schedule: ScheduleJob)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Fault \/ ExecutionPlanStarted]
 
 }

@@ -38,41 +38,54 @@ import scala.concurrent.Promise
 import scala.concurrent.duration._
 
 /**
- * Created by domingueza on 24/08/15.
- */
+  * Created by domingueza on 24/08/15.
+  */
 object QuckooGuardian {
 
   final val DefaultSessionTimeout: FiniteDuration = 30 minutes
 
-  def props(settings: QuckooClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(implicit clock: Clock) =
+  def props(settings: QuckooClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(
+      implicit clock: Clock) =
     Props(classOf[QuckooGuardian], settings, journal, boot, clock)
 
   case object Shutdown
 
 }
 
-class QuckooGuardian(settings: QuckooClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(implicit clock: Clock)
+class QuckooGuardian(settings: QuckooClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(
+    implicit clock: Clock)
     extends Actor with ActorLogging with Stash {
 
   import QuckooGuardian._
 
   ClusterClientReceptionist(context.system).registerService(self)
 
-  private[this] val cluster = Cluster(context.system)
+  private[this] val cluster  = Cluster(context.system)
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
-  private[this] val userAuth = context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
+  private[this] val userAuth =
+    context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
-  private[this] val registry = context.watch(context.actorOf(Registry.props(settings, journal), "registry"))
-  private[this] val scheduler = context.watch(context.actorOf(Scheduler.props(
-    settings, journal, registry
-  ), "scheduler"))
+  private[this] val registry =
+    context.watch(context.actorOf(Registry.props(settings, journal), "registry"))
+  private[this] val scheduler = context.watch(
+    context.actorOf(
+      Scheduler.props(
+        settings,
+        journal,
+        registry
+      ),
+      "scheduler"))
 
-  private[this] var clients = Set.empty[ActorRef]
+  private[this] var clients      = Set.empty[ActorRef]
   private[this] var clusterState = QuckooState(masterNodes = masterNodes(cluster))
 
   override def preStart(): Unit = {
-    cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent], classOf[ReachabilityEvent])
+    cluster.subscribe(
+      self,
+      initialStateMode = InitialStateAsEvents,
+      classOf[MemberEvent],
+      classOf[ReachabilityEvent])
 
     context.system.eventStream.subscribe(self, classOf[Registry.Signal])
     context.system.eventStream.subscribe(self, classOf[Scheduler.Signal])
@@ -136,37 +149,41 @@ class QuckooGuardian(settings: QuckooClusterSettings, journal: QuckooJournal, bo
 
     case Disconnect =>
       clients -= sender()
-      log.info("Quckoo client disconnected from cluster node. clientAddress={}", sender().path.address)
+      log.info(
+        "Quckoo client disconnected from cluster node. clientAddress={}",
+        sender().path.address)
       sender() ! Disconnected
 
     case GetClusterStatus =>
       sender() ! clusterState
 
-    case evt: MemberEvent => evt match {
-      case MemberUp(member) =>
-        val event = MasterJoined(member.nodeId, member.address.toLocation)
-        clusterState = clusterState.updated(event)
-        mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
+    case evt: MemberEvent =>
+      evt match {
+        case MemberUp(member) =>
+          val event = MasterJoined(member.nodeId, member.address.toLocation)
+          clusterState = clusterState.updated(event)
+          mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
 
-      case MemberRemoved(member, _) =>
-        val event = MasterRemoved(member.nodeId)
-        clusterState = clusterState.updated(event)
-        mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
+        case MemberRemoved(member, _) =>
+          val event = MasterRemoved(member.nodeId)
+          clusterState = clusterState.updated(event)
+          mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
 
-      case _ =>
-    }
+        case _ =>
+      }
 
-    case evt: ReachabilityEvent => evt match {
-      case ReachableMember(member) =>
-        val event = MasterReachable(member.nodeId)
-        clusterState = clusterState.updated(event)
-        mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
+    case evt: ReachabilityEvent =>
+      evt match {
+        case ReachableMember(member) =>
+          val event = MasterReachable(member.nodeId)
+          clusterState = clusterState.updated(event)
+          mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
 
-      case UnreachableMember(member) =>
-        val event = MasterUnreachable(member.nodeId)
-        clusterState = clusterState.updated(event)
-        mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
-    }
+        case UnreachableMember(member) =>
+          val event = MasterUnreachable(member.nodeId)
+          clusterState = clusterState.updated(event)
+          mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
+      }
 
     case evt: WorkerEvent =>
       clusterState = clusterState.updated(evt)

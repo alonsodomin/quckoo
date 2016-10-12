@@ -38,18 +38,19 @@ object TaskExecutionList {
 
   final case class Props(proxy: ModelProxy[PotMap[TaskId, TaskExecution]])
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def mounted(props: Props): Callback =
       Callback.when(props.proxy().size == 0)(props.proxy.dispatch(LoadExecutions))
 
-    def renderItem(taskId: TaskId, execution: TaskExecution, column: String): ReactNode = column match {
-      case "Task ID"   => taskId.toString
-      case "Artifact"  => execution.task.artifactId.shows
-      case "Job Class" => execution.task.jobClass
-      case "Status"    => execution.status.toString
-      case "Outcome"   => execution.outcome.map(_.toString).getOrElse[String]("")
-    }
+    def renderItem(taskId: TaskId, execution: TaskExecution, column: String): ReactNode =
+      column match {
+        case "Task ID"   => taskId.toString
+        case "Artifact"  => execution.task.artifactId.shows
+        case "Job Class" => execution.task.jobClass
+        case "Status"    => execution.status.toString
+        case "Outcome"   => execution.outcome.map(_.toString).getOrElse[String]("")
+      }
 
     def render(props: Props) = {
       val model = props.proxy()
@@ -58,11 +59,10 @@ object TaskExecutionList {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("TaskExecutionList").
-    stateless.
-    renderBackend[Backend].
-    componentDidMount($ => $.backend.mounted($.props)).
-    build
+  private[this] val component = ReactComponentB[Props]("TaskExecutionList").stateless
+    .renderBackend[Backend]
+    .componentDidMount($ => $.backend.mounted($.props))
+    .build
 
   def apply(proxy: ModelProxy[PotMap[TaskId, TaskExecution]]) =
     component.withKey("task-execution-list")(Props(proxy))

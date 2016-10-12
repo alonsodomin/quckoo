@@ -33,26 +33,25 @@ object AfterTriggerInput {
   case class Props(value: Option[Trigger.After], onUpdate: Option[Trigger.After] => Callback)
   implicit val propsReuse = Reusability.by[Props, Option[Trigger.After]](_.value)
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def onUpdate(value: Option[FiniteDuration]) =
       $.props.flatMap(_.onUpdate(value.map(Trigger.After)))
 
     def render(props: Props): ReactElement =
-      <.div(^.`class` := "form-group",
+      <.div(
+        ^.`class` := "form-group",
         <.label(^.`class` := "col-sm-2 control-label", "Delay"),
-        <.div(^.`class` := "col-sm-10",
-          FiniteDurationInput("afterTrigger", props.value.map(_.delay), onUpdate)
-        )
-      )
+        <.div(
+          ^.`class` := "col-sm-10",
+          FiniteDurationInput("afterTrigger", props.value.map(_.delay), onUpdate)))
 
   }
 
-  val component = ReactComponentB[Props]("AfterTriggerInput").
-    stateless.
-    renderBackend[Backend].
-    configure(Reusability.shouldComponentUpdate).
-    build
+  val component = ReactComponentB[Props]("AfterTriggerInput").stateless
+    .renderBackend[Backend]
+    .configure(Reusability.shouldComponentUpdate)
+    .build
 
   def apply(value: Option[Trigger.After], onUpdate: Option[Trigger.After] => Callback) =
     component(Props(value, onUpdate))

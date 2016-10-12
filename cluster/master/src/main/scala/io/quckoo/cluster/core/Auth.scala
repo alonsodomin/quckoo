@@ -28,11 +28,11 @@ import scalaz._
 import Scalaz._
 
 /**
- * Created by alonsodomin on 14/10/2015.
- */
+  * Created by alonsodomin on 14/10/2015.
+  */
 trait Auth {
 
-  val Realm = "QuckooRealm"
+  val Realm     = "QuckooRealm"
   val secretKey = "dqwjq0jd9wjd192u4ued9hd0ew".getBytes("UTF-8").toBase64
 
   def basic(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Principal]] = {
@@ -47,7 +47,8 @@ trait Auth {
     }
   }
 
-  def bearer(acceptExpired: Boolean = false)(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Passport]] = {
+  def bearer(acceptExpired: Boolean = false)(credentials: Credentials)(
+      implicit ec: ExecutionContext): Future[Option[Passport]] = {
     credentials match {
       case p @ Credentials.Provided(token) =>
         if (isValidToken(token)) {
@@ -70,7 +71,7 @@ trait Auth {
   def isValidToken(token: String): Boolean = JsonWebToken.validate(token, secretKey)
 
   def generatePassport(principal: Principal): Passport = {
-    val header = JwtHeader("HS256")
+    val header    = JwtHeader("HS256")
     val claimsSet = JwtClaimsSet(Map("sub" -> principal.id))
 
     val jwt = JsonWebToken(header, claimsSet, secretKey)

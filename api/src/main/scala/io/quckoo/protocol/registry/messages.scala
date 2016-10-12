@@ -23,8 +23,8 @@ import io.quckoo.protocol.{Command, Event}
 
 import scalaz.NonEmptyList
 
-sealed trait RegistryCommand extends Command
-sealed trait RegistryReadCommand extends RegistryCommand
+sealed trait RegistryCommand      extends Command
+sealed trait RegistryReadCommand  extends RegistryCommand
 sealed trait RegistryWriteCommand extends RegistryCommand
 
 sealed trait RegistryJobCommand extends RegistryCommand {
@@ -37,13 +37,13 @@ sealed trait RegistryEvent extends Event {
 sealed trait RegistryResolutionEvent extends RegistryEvent
 
 final case class GetJob(jobId: JobId) extends RegistryReadCommand with RegistryJobCommand
-case object GetJobs extends RegistryReadCommand
+case object GetJobs                   extends RegistryReadCommand
 
-final case class RegisterJob(job: JobSpec) extends RegistryWriteCommand
+final case class RegisterJob(job: JobSpec)               extends RegistryWriteCommand
 final case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryResolutionEvent
 final case class JobRejected(jobId: JobId, fault: Fault) extends RegistryResolutionEvent
 
-final case class DisableJob(jobId: JobId) extends RegistryWriteCommand with RegistryJobCommand
+final case class DisableJob(jobId: JobId)  extends RegistryWriteCommand with RegistryJobCommand
 final case class JobDisabled(jobId: JobId) extends RegistryEvent
 
 final case class EnableJob(jobId: JobId) extends RegistryWriteCommand with RegistryJobCommand

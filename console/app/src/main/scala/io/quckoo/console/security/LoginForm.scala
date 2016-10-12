@@ -24,8 +24,8 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import monocle.macros.Lenses
 
 /**
- * Created by aalonsodominguez on 12/10/2015.
- */
+  * Created by aalonsodominguez on 12/10/2015.
+  */
 object LoginForm {
 
   type LoginHandler = (String, String) => Callback
@@ -33,7 +33,7 @@ object LoginForm {
   @Lenses
   case class State(username: Option[String], password: Option[Password])
 
-  class LoginBackend($: BackendScope[LoginHandler, State]) {
+  class LoginBackend($ : BackendScope[LoginHandler, State]) {
 
     def onUsernameChange(username: Option[String]): Callback =
       $.modState(_.copy(username = username))
@@ -56,28 +56,32 @@ object LoginForm {
     val passwordInput = Input[Password](onPasswordChange)
 
     def render(handler: LoginHandler, state: State) = {
-      <.form(^.name := "loginForm", ^.onSubmit ==> submit(handler),
-        <.div(^.`class` := "form-group",
+      <.form(
+        ^.name := "loginForm",
+        ^.onSubmit ==> submit(handler),
+        <.div(
+          ^.`class` := "form-group",
           <.label(^.`for` := "username", ^.`class` := "control-label", "Username"),
-          usernameInput(state.username, ^.id := "username")
-        ),
-        <.div(^.`class` := "form-group",
+          usernameInput(state.username, ^.id := "username")),
+        <.div(
+          ^.`class` := "form-group",
           <.label(^.`for` := "password", ^.`class` := "control-label", "Password"),
-          passwordInput(state.password, ^.id := "password")
-        ),
-        Button(Button.Props(
-          style = ContextStyle.primary,
-          disabled = state.username.isEmpty || state.password.isEmpty
-        ), Icons.signIn, "Sign in")
-      )
+          passwordInput(state.password, ^.id := "password")),
+        Button(
+          Button.Props(
+            style = ContextStyle.primary,
+            disabled = state.username.isEmpty || state.password.isEmpty
+          ),
+          Icons.signIn,
+          "Sign in"))
     }
 
   }
 
-  private[this] val component = ReactComponentB[LoginHandler]("LoginForm").
-    initialState(State(None, None)).
-    renderBackend[LoginBackend].
-    build
+  private[this] val component = ReactComponentB[LoginHandler]("LoginForm")
+    .initialState(State(None, None))
+    .renderBackend[LoginBackend]
+    .build
 
   def apply(loginHandler: LoginHandler) = component(loginHandler)
 

@@ -24,18 +24,20 @@ import monocle.macros.Lenses
 import scalaz._
 
 /**
- * Created by aalonsodominguez on 15/07/15.
- */
+  * Created by aalonsodominguez on 15/07/15.
+  */
 object ArtifactId {
   import Scalaz._
 
-  final val GroupSeparator : Char = ':'
-  final val VersionSeparator : Char = '#'
+  final val GroupSeparator: Char   = ':'
+  final val VersionSeparator: Char = '#'
 
   def validate(artifactId: ArtifactId): ValidationNel[ValidationFault, ArtifactId] =
     validate(artifactId.organization, artifactId.name, artifactId.version)
 
-  def validate(organization: String, name: String, version: String): ValidationNel[ValidationFault, ArtifactId] = {
+  def validate(organization: String,
+               name: String,
+               version: String): ValidationNel[ValidationFault, ArtifactId] = {
     import Validations._
 
     def validGroup: Validation[ValidationFault, String] =
@@ -47,7 +49,8 @@ object ArtifactId {
     def validVersion: Validation[ValidationFault, String] =
       notNullOrEmpty(version)("version")
 
-    (validGroup.toValidationNel |@| validArtifactId.toValidationNel |@| validVersion.toValidationNel)(ArtifactId.apply)
+    (validGroup.toValidationNel |@| validArtifactId.toValidationNel |@| validVersion.toValidationNel)(
+      ArtifactId.apply)
   }
 
   implicit val instance = new Equal[ArtifactId] with Show[ArtifactId] {

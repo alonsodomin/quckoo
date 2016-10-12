@@ -9,28 +9,30 @@ organization in ThisBuild := "io.quckoo"
 scalaVersion in ThisBuild := "2.11.8"
 
 lazy val commonSettings = Seq(
-  licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
-  scalacOptions ++= Seq(
-    "-encoding", "UTF-8",
-    "-Xexperimental",
-    "-language:postfixOps",
-    "-language:higherKinds",
-    "-feature",
-    "-unchecked",
-    "-deprecation",
-    "-Xlint",
-    "-Ywarn-dead-code",
-    "-Xfatal-warnings"
-  ),
-  resolvers ++= Seq(
-    Opts.resolver.mavenLocalFile,
-    Resolver.bintrayRepo("krasserm", "maven"),
-    Resolver.bintrayRepo("hseeberger", "maven"),
-    Resolver.bintrayRepo("dnvriend", "maven")
-  ),
-  scalafmtConfig := Some(file(".scalafmt.conf")),
-  parallelExecution in Test := false
-) ++ Licensing.settings
+    licenses += ("Apache-2.0", url(
+      "http://opensource.org/licenses/Apache-2.0")),
+    scalacOptions ++= Seq(
+      "-encoding",
+      "UTF-8",
+      "-Xexperimental",
+      "-language:postfixOps",
+      "-language:higherKinds",
+      "-feature",
+      "-unchecked",
+      "-deprecation",
+      "-Xlint",
+      "-Ywarn-dead-code",
+      "-Xfatal-warnings"
+    ),
+    resolvers ++= Seq(
+      Opts.resolver.mavenLocalFile,
+      Resolver.bintrayRepo("krasserm", "maven"),
+      Resolver.bintrayRepo("hseeberger", "maven"),
+      Resolver.bintrayRepo("dnvriend", "maven")
+    ),
+    scalafmtConfig := Some(file(".scalafmt.conf")),
+    parallelExecution in Test := false
+  ) ++ Licensing.settings
 
 lazy val commonJsSettings = Seq(
   coverageEnabled := false,
@@ -65,14 +67,15 @@ lazy val publishSettings = Seq(
   // see issue #980
   // this code was copied from https://github.com/mongodb/mongo-spark
   pomPostProcess := { (node: xml.Node) =>
-    new RuleTransformer(
-      new RewriteRule {
-        override def transform(node: xml.Node): Seq[xml.Node] = node match {
-          case e: xml.Elem
-            if e.label == "dependency" && e.child.exists(child => child.label == "groupId" && child.text == "org.scoverage") => Nil
-          case _ => Seq(node)
-        }
-      }).transform(node).head
+    new RuleTransformer(new RewriteRule {
+      override def transform(node: xml.Node): Seq[xml.Node] = node match {
+        case e: xml.Elem
+            if e.label == "dependency" && e.child.exists(child =>
+              child.label == "groupId" && child.text == "org.scoverage") =>
+          Nil
+        case _ => Seq(node)
+      }
+    }).transform(node).head
   },
   pomExtra :=
     <scm>
@@ -91,7 +94,8 @@ lazy val publishSettings = Seq(
 lazy val releaseSettings = {
   import ReleaseTransformations._
 
-  val sonatypeReleaseAll = ReleaseStep(action = Command.process("sonatypeReleaseAll", _))
+  val sonatypeReleaseAll = ReleaseStep(
+    action = Command.process("sonatypeReleaseAll", _))
   val dockerRelease = ReleaseStep(action = st => {
     val extracted = Project.extract(st)
     val projectRef: ProjectRef = extracted.get(thisProjectRef)
@@ -118,103 +122,112 @@ lazy val releaseSettings = {
   )
 }
 
-lazy val quckoo = (project in file(".")).
-  settings(
+lazy val quckoo = (project in file("."))
+  .settings(
     name := "quckoo",
     moduleName := "quckoo-root"
-  ).
-  settings(noPublishSettings).
-  settings(releaseSettings).
-  enablePlugins(AutomateHeaderPlugin).
-  aggregate(
-    coreJS, coreJVM, apiJS, apiJVM, clientJS, clientJVM,
-    cluster, console, examples, testSupportJS, testSupportJVM
+  )
+  .settings(noPublishSettings)
+  .settings(releaseSettings)
+  .enablePlugins(AutomateHeaderPlugin)
+  .aggregate(
+    coreJS,
+    coreJVM,
+    apiJS,
+    apiJVM,
+    clientJS,
+    clientJVM,
+    cluster,
+    console,
+    examples,
+    testSupportJS,
+    testSupportJVM
   )
 
 // Core ==================================================
 
-lazy val core = (crossProject.crossType(CrossType.Pure) in file("core")).
-  settings(
+lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
+  .settings(
     name := "core",
     moduleName := "quckoo-core"
-  ).
-  settings(commonSettings: _*).
-  settings(scoverageSettings: _*).
-  settings(publishSettings: _*).
-  settings(Dependencies.core: _*).
-  jsSettings(commonJsSettings: _*)
+  )
+  .settings(commonSettings: _*)
+  .settings(scoverageSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Dependencies.core: _*)
+  .jsSettings(commonJsSettings: _*)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
 // API ==================================================
 
-lazy val api = (crossProject.crossType(CrossType.Pure) in file("api")).
-  settings(
+lazy val api = (crossProject.crossType(CrossType.Pure) in file("api"))
+  .settings(
     name := "api",
     moduleName := "quckoo-api"
-  ).
-  settings(commonSettings: _*).
-  settings(scoverageSettings: _*).
-  settings(publishSettings: _*).
-  settings(Dependencies.api: _*).
-  jsSettings(commonJsSettings: _*).
-  dependsOn(core)
+  )
+  .settings(commonSettings: _*)
+  .settings(scoverageSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Dependencies.api: _*)
+  .jsSettings(commonJsSettings: _*)
+  .dependsOn(core)
 
 lazy val apiJS = api.js
 lazy val apiJVM = api.jvm
 
 // Client ==================================================
 
-lazy val client = (crossProject in file("client")).
-  settings(
+lazy val client = (crossProject in file("client"))
+  .settings(
     name := "client",
     moduleName := "quckoo-client",
     requiresDOM := true
-  ).
-  settings(commonSettings: _*).
-  settings(scoverageSettings: _*).
-  settings(publishSettings: _*).
-  settings(Dependencies.client: _*).
-  jsSettings(commonJsSettings: _*).
-  jsSettings(Dependencies.clientJS: _*).
-  jvmSettings(Dependencies.clientJVM: _*).
-  dependsOn(api, testSupport % Test)
+  )
+  .settings(commonSettings: _*)
+  .settings(scoverageSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Dependencies.client: _*)
+  .jsSettings(commonJsSettings: _*)
+  .jsSettings(Dependencies.clientJS: _*)
+  .jvmSettings(Dependencies.clientJVM: _*)
+  .dependsOn(api, testSupport % Test)
 
 lazy val clientJS = client.js
 lazy val clientJVM = client.jvm
 
 // Console ==================================================
 
-lazy val console = (project in file("console")).
-  settings(
+lazy val console = (project in file("console"))
+  .settings(
     name := "console",
     moduleName := "quckoo-console"
-  ).
-  settings(noPublishSettings).
-  aggregate(consoleApp, consoleResources)
+  )
+  .settings(noPublishSettings)
+  .aggregate(consoleApp, consoleResources)
 
-lazy val consoleApp = (project in file("console/app")).
-  enablePlugins(ScalaJSPlugin).
-  settings(
+lazy val consoleApp = (project in file("console/app"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
     name := "console-app",
     moduleName := "quckoo-console-app",
     requiresDOM := true,
     persistLauncher in Compile := true
-  ).
-  settings(commonSettings: _*).
-  settings(commonJsSettings: _*).
-  settings(publishSettings: _*).
-  settings(Dependencies.consoleApp: _*).
-  dependsOn(clientJS)
+  )
+  .settings(commonSettings: _*)
+  .settings(commonJsSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Dependencies.consoleApp: _*)
+  .dependsOn(clientJS)
 
-lazy val consoleResources = (project in file("console/resources")).
-  aggregate(consoleApp).
-  enablePlugins(SbtSass).
-  settings(commonSettings: _*).
-  settings(noPublishSettings: _*).
-  settings(Dependencies.consoleResources).
-  settings(
+lazy val consoleResources = (project in file("console/resources"))
+  .aggregate(consoleApp)
+  .enablePlugins(SbtSass)
+  .settings(commonSettings: _*)
+  .settings(noPublishSettings: _*)
+  .settings(Dependencies.consoleResources)
+  .settings(
     name := "console-resources",
     moduleName := "quckoo-console-resources",
     exportJars := true,
@@ -222,24 +235,28 @@ lazy val consoleResources = (project in file("console/resources")).
     includeFilter in (Compile, unmanagedResources) := ("*.js" || "*.css" || "*.js.map"),
     excludeFilter in (Compile, unmanagedResources) := "index.js",
     mappings in (Compile, packageBin) ~= { (ms: Seq[(File, String)]) =>
-      ms.filter { case (file, _) => !file.getName.endsWith("scss") }.map { case (file, path) =>
-        val prefix = {
-          if (file.getName.indexOf(".css") >= 0) "css/"
-          else if (file.getName.indexOf(".js") >= 0) "js/"
-          else ""
-        }
-        (file, s"quckoo/$prefix${file.getName}")
+      ms.filter { case (file, _) => !file.getName.endsWith("scss") }.map {
+        case (file, path) =>
+          val prefix = {
+            if (file.getName.indexOf(".css") >= 0) "css/"
+            else if (file.getName.indexOf(".js") >= 0) "js/"
+            else ""
+          }
+          (file, s"quckoo/$prefix${file.getName}")
       }
     },
-    mappings in (Compile, packageBin) <++= (WebKeys.webJarsDirectory in Assets).map { path =>
-      val fontPaths = Seq(
-        path / "lib" / "font-awesome"   / "fonts",
-        path / "lib" / "bootstrap-sass" / "fonts" / "bootstrap"
-      )
+    mappings in (Compile, packageBin) <++= (WebKeys.webJarsDirectory in Assets).map {
+      path =>
+        val fontPaths = Seq(
+          path / "lib" / "font-awesome" / "fonts",
+          path / "lib" / "bootstrap-sass" / "fonts" / "bootstrap"
+        )
 
-      fontPaths.flatMap { p =>
-        p.listFiles().map { src => (src, "quckoo/fonts/" + src.getName) }
-      }
+        fontPaths.flatMap { p =>
+          p.listFiles().map { src =>
+            (src, "quckoo/fonts/" + src.getName)
+          }
+        }
     },
     packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleApp),
     test := ()
@@ -247,104 +264,107 @@ lazy val consoleResources = (project in file("console/resources")).
 
 // Cluster ==================================================
 
-lazy val cluster = (project in file("cluster")).
-  settings(name := "quckoo-cluster").
-  settings(noPublishSettings).
-  settings(scoverageSettings).
-  aggregate(clusterShared, clusterMaster, clusterWorker)
+lazy val cluster = (project in file("cluster"))
+  .settings(name := "quckoo-cluster")
+  .settings(noPublishSettings)
+  .settings(scoverageSettings)
+  .aggregate(clusterShared, clusterMaster, clusterWorker)
 
-lazy val clusterShared = (project in file("cluster/shared")).
-  settings(
+lazy val clusterShared = (project in file("cluster/shared"))
+  .settings(
     name := "cluster-shared",
     moduleName := "quckoo-cluster-shared"
-  ).
-  settings(commonSettings).
-  settings(publishSettings: _*).
-  settings(Dependencies.clusterShared).
-  dependsOn(apiJVM, testSupportJVM % Test)
+  )
+  .settings(commonSettings)
+  .settings(publishSettings: _*)
+  .settings(Dependencies.clusterShared)
+  .dependsOn(apiJVM, testSupportJVM % Test)
 
-lazy val clusterMaster = (project in file("cluster/master")).
-  enablePlugins(JavaServerAppPackaging, DockerPlugin).
-  configs(MultiJvm).
-  settings(
+lazy val clusterMaster = (project in file("cluster/master"))
+  .enablePlugins(JavaServerAppPackaging, DockerPlugin)
+  .configs(MultiJvm)
+  .settings(
     name := "cluster-master",
     moduleName := "quckoo-cluster-master"
-  ).
-  settings(commonSettings: _*).
-  settings(publishSettings: _*).
-  settings(Revolver.settings: _*).
-  settings(Dependencies.clusterMaster).
-  settings(MultiNode.settings).
-  settings(
+  )
+  .settings(commonSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Revolver.settings: _*)
+  .settings(Dependencies.clusterMaster)
+  .settings(MultiNode.settings)
+  .settings(
     //reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
     baseDirectory in reStart := file("cluster/master/target")
-  ).
-  settings(Packaging.masterSettings: _*).
-  dependsOn(clusterShared, consoleResources, testSupportJVM % Test)
+  )
+  .settings(Packaging.masterSettings: _*)
+  .dependsOn(clusterShared, consoleResources, testSupportJVM % Test)
 
-lazy val clusterWorker = (project in file("cluster/worker")).
-  enablePlugins(JavaServerAppPackaging, DockerPlugin).
-  settings(
+lazy val clusterWorker = (project in file("cluster/worker"))
+  .enablePlugins(JavaServerAppPackaging, DockerPlugin)
+  .settings(
     name := "cluster-worker",
     moduleName := "quckoo-cluster-worker"
-  ).
-  settings(commonSettings: _*).
-  settings(publishSettings: _*).
-  settings(Revolver.settings: _*).
-  settings(Dependencies.clusterWorker).
-  settings(Packaging.workerSettings: _*).
-  settings(
+  )
+  .settings(commonSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Revolver.settings: _*)
+  .settings(Dependencies.clusterWorker)
+  .settings(Packaging.workerSettings: _*)
+  .settings(
     baseDirectory in reStart := file("cluster/worker/target")
-  ).
-  dependsOn(clusterShared, testSupportJVM % Test)
+  )
+  .dependsOn(clusterShared, testSupportJVM % Test)
 
 // Test Support Utils ========================================
 
-lazy val testSupport = (crossProject in file("test-support")).
-  settings(
+lazy val testSupport = (crossProject in file("test-support"))
+  .settings(
     name := "test-support",
     moduleName := "quckoo-test-support"
-  ).
-  settings(commonSettings: _*).
-  settings(noPublishSettings: _*).
-  settings(Dependencies.testSupport: _*).
-  jsSettings(commonJsSettings: _*).
-  jvmSettings(Dependencies.testSupportJVM: _*)
+  )
+  .settings(commonSettings: _*)
+  .settings(noPublishSettings: _*)
+  .settings(Dependencies.testSupport: _*)
+  .jsSettings(commonJsSettings: _*)
+  .jvmSettings(Dependencies.testSupportJVM: _*)
 
 lazy val testSupportJS = testSupport.js
 lazy val testSupportJVM = testSupport.jvm
 
 // Examples ==================================================
 
-lazy val examples = (project in file("examples")).
-  settings(moduleName := "quckoo-examples").
-  aggregate(exampleJobs, exampleProducers).
-  settings(noPublishSettings)
+lazy val examples = (project in file("examples"))
+  .settings(moduleName := "quckoo-examples")
+  .aggregate(exampleJobs, exampleProducers)
+  .settings(noPublishSettings)
 
-lazy val exampleJobs = (project in file("examples/jobs")).
-  settings(
+lazy val exampleJobs = (project in file("examples/jobs"))
+  .settings(
     name := "example-jobs",
     moduleName := "quckoo-example-jobs"
-  ).
-  settings(commonSettings: _*).
-  settings(publishSettings: _*).
-  settings(Dependencies.exampleJobs).
-  dependsOn(coreJVM)
+  )
+  .settings(commonSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Dependencies.exampleJobs)
+  .dependsOn(coreJVM)
 
-lazy val exampleProducers = (project in file("examples/producers")).
-  enablePlugins(JavaAppPackaging, DockerPlugin).
-  settings(
+lazy val exampleProducers = (project in file("examples/producers"))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
+  .settings(
     name := "example-producers",
     moduleName := "quckoo-example-producers"
-  ).
-  settings(commonSettings: _*).
-  settings(publishSettings: _*).
-  settings(Revolver.settings: _*).
-  settings(Dependencies.exampleProducers).
-  settings(Packaging.exampleProducersSettings: _*).
-  dependsOn(clientJVM, exampleJobs)
+  )
+  .settings(commonSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Revolver.settings: _*)
+  .settings(Dependencies.exampleProducers)
+  .settings(Packaging.exampleProducersSettings: _*)
+  .dependsOn(clientJVM, exampleJobs)
 
 // Command aliases ==================================================
 
-addCommandAlias("testJS", ";coreJS/test;apiJS/test;clientJS/test;consoleApp/test")
-addCommandAlias("testJVM", ";coreJVM/test;apiJVM/test;clientJVM/test;cluster/test;examples/test")
+addCommandAlias("testJS",
+                ";coreJS/test;apiJS/test;clientJS/test;consoleApp/test")
+addCommandAlias(
+  "testJVM",
+  ";coreJVM/test;apiJVM/test;clientJVM/test;cluster/test;examples/test")

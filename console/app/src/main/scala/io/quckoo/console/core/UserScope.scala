@@ -30,9 +30,9 @@ final case class UserScope(
 object UserScope {
 
   def initial = UserScope(
-    jobSpecs       = PotMap(JobSpecFetcher),
+    jobSpecs = PotMap(JobSpecFetcher),
     executionPlans = PotMap(ExecutionPlanFetcher),
-    executions     = PotMap(ExecutionFetcher)
+    executions = PotMap(ExecutionFetcher)
   )
 
 }

@@ -37,9 +37,9 @@ object ArtifactInput {
   }
 
   implicit val propsReuse: Reusability[Props] = Reusability.by(_.value)
-  implicit val stateReuse = Reusability.caseClass[State]
+  implicit val stateReuse                     = Reusability.caseClass[State]
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     def propagateUpdate: Callback = {
       val artifactId = for {
@@ -65,40 +65,40 @@ object ArtifactInput {
     val versionInput      = Input[String](onVersionUpdate)
 
     def render(props: Props, state: State) = {
-      <.div(^.`class` := "container-fluid",
-        <.div(^.`class` := "row",
-          <.div(^.`class` := "col-sm-4",
+      <.div(
+        ^.`class` := "container-fluid",
+        <.div(
+          ^.`class` := "row",
+          <.div(
+            ^.`class` := "col-sm-4",
             organizationInput(
               state.organization,
               ^.id := "artifactOrganization",
               ^.placeholder := "Organization"
-            )
-          ),
-          <.div(^.`class` := "col-sm-4",
+            )),
+          <.div(
+            ^.`class` := "col-sm-4",
             nameInput(
               state.name,
               ^.id := "artifactName",
               ^.placeholder := "Name"
-            )
-          ),
-          <.div(^.`class` := "col-sm-4",
+            )),
+          <.div(
+            ^.`class` := "col-sm-4",
             versionInput(
               state.version,
               ^.id := "artifactVerion",
               ^.placeholder := "Version"
-            )
-          )
-        )
-      )
+            ))))
     }
 
   }
 
-  val component = ReactComponentB[Props]("ArtifactInput").
-    initialState_P(props => new State(props.value)).
-    renderBackend[Backend].
-    configure(Reusability.shouldComponentUpdate).
-    build
+  val component = ReactComponentB[Props]("ArtifactInput")
+    .initialState_P(props => new State(props.value))
+    .renderBackend[Backend]
+    .configure(Reusability.shouldComponentUpdate)
+    .build
 
   def apply(value: Option[ArtifactId], onUpdate: Option[ArtifactId] => Callback) =
     component(Props(value, onUpdate))

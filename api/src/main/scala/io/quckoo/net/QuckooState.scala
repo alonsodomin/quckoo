@@ -49,7 +49,11 @@ import monocle.macros.Lenses
 
   def updated(event: WorkerEvent): QuckooState = event match {
     case WorkerJoined(workerId, location) =>
-      copy(workerNodes = workerNodes + (workerId -> WorkerNode(workerId, location, NodeStatus.Active)))
+      copy(
+        workerNodes = workerNodes + (workerId -> WorkerNode(
+            workerId,
+            location,
+            NodeStatus.Active)))
 
     case WorkerLost(workerId) =>
       val currentState = workerNodes.get(workerId)

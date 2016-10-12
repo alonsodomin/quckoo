@@ -26,11 +26,10 @@ import scalacss.ScalaCssReact._
 object Alert {
   case class Props(style: ContextStyle.Value)
 
-  val component = ReactComponentB[Props]("Alert").
-    renderPC { (_, p, c) =>
-      <.div(lookAndFeel.alert(p.style), ^.role := "alert", ^.padding := 5.px, c)
-    } build
+  val component = ReactComponentB[Props]("Alert").renderPC { (_, p, c) =>
+    <.div(lookAndFeel.alert(p.style), ^.role := "alert", ^.padding := 5.px, c)
+  } build
 
-  def apply() = component
+  def apply()                                                = component
   def apply(style: ContextStyle.Value, children: ReactNode*) = component(Props(style), children)
 }

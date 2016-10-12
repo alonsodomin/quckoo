@@ -44,7 +44,10 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
 
   import StatusCodes._
 
-  def registryApi(implicit system: ActorSystem, materializer: Materializer, timeout: FiniteDuration, passport: Passport): Route =
+  def registryApi(implicit system: ActorSystem,
+                  materializer: Materializer,
+                  timeout: FiniteDuration,
+                  passport: Passport): Route =
     pathPrefix("jobs") {
       pathEnd {
         get {
@@ -75,8 +78,8 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
           post {
             extractExecutionContext { implicit ec =>
               onSuccess(enableJob(JobId(jobId))) {
-                case \/-(res @ JobEnabled(_))  => complete(res)
-                case -\/(JobNotFound(_))       => complete(NotFound -> jobId)
+                case \/-(res @ JobEnabled(_)) => complete(res)
+                case -\/(JobNotFound(_))      => complete(NotFound -> jobId)
               }
             }
           }
@@ -96,7 +99,5 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
         complete(asSSE(registryEvents, "registry"))
       }
     }*/
-
-
 
 }

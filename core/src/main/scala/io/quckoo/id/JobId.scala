@@ -24,8 +24,8 @@ import upickle.default.{Reader => JsonReader, Writer => JsonWriter, _}
 import io.quckoo.JobSpec
 
 /**
- * Created by aalonsodominguez on 24/08/15.
- */
+  * Created by aalonsodominguez on 24/08/15.
+  */
 object JobId {
 
   /**
@@ -37,18 +37,18 @@ object JobId {
     * @return a job ID
     */
   def apply(jobSpec: JobSpec): JobId = {
-    val plainId = s"${jobSpec.artifactId.toString}!${jobSpec.jobClass}"
+    val plainId   = s"${jobSpec.artifactId.toString}!${jobSpec.jobClass}"
     val idAsBytes = plainId.getBytes(StandardCharsets.UTF_8)
     JobId(UUID.nameUUIDFromBytes(idAsBytes))
   }
 
-  @inline def apply(id: UUID) = new JobId(id)
+  @inline def apply(id: UUID)   = new JobId(id)
   @inline def apply(id: String) = new JobId(UUID.fromString(id))
 
   // Upickle encoders
 
-  implicit val jobIdW: JsonWriter[JobId] = JsonWriter[JobId] {
-    jobId => implicitly[JsonWriter[UUID]].write(jobId.id)
+  implicit val jobIdW: JsonWriter[JobId] = JsonWriter[JobId] { jobId =>
+    implicitly[JsonWriter[UUID]].write(jobId.id)
   }
   implicit val jobIdR: JsonReader[JobId] = JsonReader[JobId] {
     implicitly[JsonReader[UUID]].read andThen JobId.apply

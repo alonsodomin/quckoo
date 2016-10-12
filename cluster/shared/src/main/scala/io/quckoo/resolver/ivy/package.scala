@@ -50,10 +50,13 @@ package object ivy extends Logging {
     ivySettings
   }
 
-  private[this] def buildResolverChain(name: String, repos: Seq[Repository])(implicit settings: IvySettings): ChainResolver = {
+  private[this] def buildResolverChain(name: String, repos: Seq[Repository])(
+      implicit settings: IvySettings): ChainResolver = {
     val resolver = new ChainResolver
     resolver.setName(name)
-    repos.foreach { repo => resolver.add(RepositoryConversion(repo, settings)) }
+    repos.foreach { repo =>
+      resolver.add(RepositoryConversion(repo, settings))
+    }
     resolver
   }
 

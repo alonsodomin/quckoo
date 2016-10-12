@@ -28,8 +28,8 @@ import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ThreadLocalRandom
 
 /**
- * Created by aalonsodominguez on 05/07/15.
- */
+  * Created by aalonsodominguez on 05/07/15.
+  */
 object PowerOfNActor {
 
   def props(client: ActorRef): Props = Props(classOf[PowerOfNActor], client)
@@ -42,7 +42,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
   import context.dispatcher
 
   def scheduler = context.system.scheduler
-  def rnd = ThreadLocalRandom.current
+  def rnd       = ThreadLocalRandom.current
 
   val jobSpec = JobSpec(
     displayName = "Power Of N",
@@ -50,7 +50,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
     jobClass = classOf[PowerOfNJob].getName
   )
 
-  var n = 0
+  var n            = 0
   var jobId: JobId = _
 
   override def preStart(): Unit =
@@ -76,7 +76,8 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
       context.setReceiveTimeout(Duration.Undefined)
 
     case ReceiveTimeout =>
-      log.warning("Timeout waiting for a response when registering a job specification. Retrying...")
+      log.warning(
+        "Timeout waiting for a response when registering a job specification. Retrying...")
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
   }
 
@@ -98,10 +99,14 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
       context.unbecome()
 
     case JobNotEnabled(id) if jobId == id =>
-      log.error("Job scheduling has failed because the job hasn't been registered in the first place. jobId={}", jobId)
+      log.error(
+        "Job scheduling has failed because the job hasn't been registered in the first place. jobId={}",
+        jobId)
 
     case JobFailedToSchedule(id, cause) if jobId == id =>
-      log.error("Job scheduling has thrown an error. Will retry after a while. message={}", cause.toString)
+      log.error(
+        "Job scheduling has thrown an error. Will retry after a while. message={}",
+        cause.toString)
       scheduler.scheduleOnce(3.seconds, self, Tick)
       context.unbecome()
   }
@@ -111,7 +116,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
       val delay = rnd.nextInt(1, 30)
       Trigger.After(delay seconds)
     case 2 => // Every random seconds
-      val freq = rnd.nextInt(5, 10)
+      val freq  = rnd.nextInt(5, 10)
       val delay = rnd.nextInt(5, 30)
       Trigger.Every(freq seconds, Option(delay seconds))
     case _ => // Immediate

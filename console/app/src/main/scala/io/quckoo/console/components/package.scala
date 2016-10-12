@@ -42,18 +42,18 @@ package object components {
   final val NBSP = "\u00a0"
 
   // React's reusability instances for common types
-  implicit val timeUnitReuse = Reusability.byRef[TimeUnit]
+  implicit val timeUnitReuse       = Reusability.byRef[TimeUnit]
   implicit val finiteDurationReuse = Reusability.byRef[FiniteDuration]
-  implicit val localDateReuse = Reusability.byRef[LocalDate]
-  implicit val localTimeReuse = Reusability.byRef[LocalTime]
-  implicit val localDateTimeReuse = Reusability.byRef[LocalDateTime]
-  implicit val zonedDateTimeReuse = Reusability.byRef[ZonedDateTime]
-  implicit val artifactIdReuse = Reusability.byRef[ArtifactId]
+  implicit val localDateReuse      = Reusability.byRef[LocalDate]
+  implicit val localTimeReuse      = Reusability.byRef[LocalTime]
+  implicit val localDateTimeReuse  = Reusability.byRef[LocalDateTime]
+  implicit val zonedDateTimeReuse  = Reusability.byRef[ZonedDateTime]
+  implicit val artifactIdReuse     = Reusability.byRef[ArtifactId]
 
   implicit val immediateTriggerReuse = Reusability.byRef[Trigger.Immediate.type]
-  implicit val afterTriggerReuse = Reusability.caseClass[Trigger.After]
-  implicit val everyTriggerReuse = Reusability.caseClass[Trigger.Every]
-  implicit val atTriggerReuse = Reusability.caseClass[Trigger.At]
+  implicit val afterTriggerReuse     = Reusability.caseClass[Trigger.After]
+  implicit val everyTriggerReuse     = Reusability.caseClass[Trigger.Every]
+  implicit val atTriggerReuse        = Reusability.caseClass[Trigger.At]
 
   implicit def toReactNode(notification: Notification): ReactNode =
     notification.inline

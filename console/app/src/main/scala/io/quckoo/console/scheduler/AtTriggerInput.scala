@@ -36,14 +36,14 @@ object AtTriggerInput {
   implicit val propsReuse = Reusability.by[Props, Option[Trigger.At]](_.value)
   implicit val stateReuse = Reusability.caseClass[State]
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     def propagateUpdate: Callback = {
       val value = $.state.map(st => st.date.flatMap(date => st.time.map(time => (date, time))))
       value.flatMap {
         case Some((date, time)) =>
           val dateTime = LocalDateTime.of(date, time)
-          val trigger = Trigger.At(dateTime.atZone(ZoneId.systemDefault))
+          val trigger  = Trigger.At(dateTime.atZone(ZoneId.systemDefault))
           $.props.flatMap(_.onUpdate(Some(trigger)))
 
         case _ =>
@@ -62,28 +62,24 @@ object AtTriggerInput {
 
     def render(props: Props, state: State) = {
       <.div(
-        <.div(^.`class` := "form-group",
+        <.div(
+          ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Date"),
-          <.div(^.`class` := "col-sm-10",
-            dateInput(state.date)
-          )
-        ),
-        <.div(^.`class` := "form-group",
+          <.div(^.`class` := "col-sm-10", dateInput(state.date))),
+        <.div(
+          ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Time"),
-          <.div(^.`class` := "col-sm-10",
-            timeInput(state.time)
-          )
-        )
+          <.div(^.`class` := "col-sm-10", timeInput(state.time)))
       )
     }
 
   }
 
-  val component = ReactComponentB[Props]("AtTriggerInput").
-    initialState_P(_ => State(None, None)).
-    renderBackend[Backend].
-    configure(Reusability.shouldComponentUpdate).
-    build
+  val component = ReactComponentB[Props]("AtTriggerInput")
+    .initialState_P(_ => State(None, None))
+    .renderBackend[Backend]
+    .configure(Reusability.shouldComponentUpdate)
+    .build
 
   def apply(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback) =
     component(Props(value, onUpdate))

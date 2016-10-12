@@ -23,8 +23,8 @@ import io.quckoo.fault.Fault
 import scalaz._
 
 /**
- * Created by aalonsodominguez on 07/07/15.
- */
+  * Created by aalonsodominguez on 07/07/15.
+  */
 package object quckoo {
 
   type JobClass = Class[_ <: Callable[_]]

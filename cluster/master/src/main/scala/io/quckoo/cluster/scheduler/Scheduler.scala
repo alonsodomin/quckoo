@@ -43,8 +43,8 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 /**
- * Created by aalonsodominguez on 16/08/15.
- */
+  * Created by aalonsodominguez on 16/08/15.
+  */
 object Scheduler {
 
   type PlanIndexPropsProvider = ActorRef => Props
@@ -60,22 +60,25 @@ object Scheduler {
   case object Ready extends Signal
 
   private[scheduler] case class CreateExecutionDriver(
-    spec: JobSpec, cmd: ScheduleJob, replyTo: ActorRef
+      spec: JobSpec,
+      cmd: ScheduleJob,
+      replyTo: ActorRef
   )
   private[scheduler] case class StopExecutionDriver(
-    cmd: Any, replyTo: ActorRef
+      cmd: Any,
+      replyTo: ActorRef
   )
 
-  def props(settings: QuckooClusterSettings, journal: QuckooJournal, registry: ActorRef)
-           (implicit clock: Clock): Props = {
+  def props(settings: QuckooClusterSettings, journal: QuckooJournal, registry: ActorRef)(
+      implicit clock: Clock): Props = {
     val queueProps = TaskQueue.props(settings.queueMaxWorkTimeout)
     Props(classOf[Scheduler], journal, registry, queueProps, clock)
   }
 
 }
 
-class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)
-               (implicit clock: Clock)
+class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
+    implicit clock: Clock)
     extends Actor with ActorLogging with Stash {
 
   import Scheduler._
@@ -84,22 +87,23 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)
   ClusterClientReceptionist(context.system).registerService(self)
 
   final implicit val materializer = ActorMaterializer(
-    ActorMaterializerSettings(context.system), "scheduler"
+    ActorMaterializerSettings(context.system),
+    "scheduler"
   )
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
-  private[this] val monitor = context.actorOf(TaskQueueMonitor.props, "monitor")
+  private[this] val monitor   = context.actorOf(TaskQueueMonitor.props, "monitor")
   private[this] val taskQueue = context.actorOf(queueProps, "queue")
   private[this] val shardRegion = ClusterSharding(context.system).start(
     ExecutionDriver.ShardName,
-    entityProps     = ExecutionDriver.props,
-    settings        = ClusterShardingSettings(context.system).withRememberEntities(true),
+    entityProps = ExecutionDriver.props,
+    settings = ClusterShardingSettings(context.system).withRememberEntities(true),
     extractEntityId = ExecutionDriver.idExtractor,
-    extractShardId  = ExecutionDriver.shardResolver
+    extractShardId = ExecutionDriver.shardResolver
   )
 
-  private[this] var planIds = Set.empty[PlanId]
+  private[this] var planIds    = Set.empty[PlanId]
   private[this] var executions = Map.empty[TaskId, TaskExecution]
 
   override def preStart(): Unit = {
@@ -132,7 +136,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)
 
     case cmd @ CreateExecutionDriver(_, config, _) =>
       val planId = UUID.randomUUID()
-      val props = factoryProps(config.jobId, planId, cmd)
+      val props  = factoryProps(config.jobId, planId, cmd)
       log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
       context.actorOf(props, s"execution-driver-factory-$planId")
 
@@ -157,9 +161,9 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)
         (shardRegion ? GetExecutionPlan(planId)).mapTo[ExecutionPlan].map(planId -> _)
       }
 
-      Source(planIds).
-        mapAsync(2)(fetchPlanAsync).
-        runWith(Sink.actorRef(origSender, Status.Success(GetExecutionPlans)))
+      Source(planIds)
+        .mapAsync(2)(fetchPlanAsync)
+        .runWith(Sink.actorRef(origSender, Status.Success(GetExecutionPlans)))
 
     case get @ GetTaskExecution(taskId) =>
       if (executions.contains(taskId)) {
@@ -225,20 +229,30 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)
 
   private def warmUp(): Unit = {
     val executionPlanEvents = journal.read.currentEventsByTag(tags.ExecutionPlan, 0)
-    val executionEvents = journal.read.currentEventsByTag(tags.Task, 0)
+    val executionEvents     = journal.read.currentEventsByTag(tags.Task, 0)
 
-    executionPlanEvents.concat(executionEvents).
-      runWith(Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
+    executionPlanEvents
+      .concat(executionEvents)
+      .runWith(
+        Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
   }
 
-  private[this] def jobFetcherProps(jobId: JobId, requestor: ActorRef, config: ScheduleJob): Props =
+  private[this] def jobFetcherProps(jobId: JobId,
+                                    requestor: ActorRef,
+                                    config: ScheduleJob): Props =
     Props(classOf[JobFetcher], jobId, requestor, config)
 
-  private[this] def factoryProps(jobId: JobId, planId: PlanId, createCmd: CreateExecutionDriver): Props =
+  private[this] def factoryProps(jobId: JobId,
+                                 planId: PlanId,
+                                 createCmd: CreateExecutionDriver): Props =
     Props(classOf[ExecutionDriverFactory], jobId, planId, createCmd, shardRegion)
 
   private[this] def terminatorProps(cancelCmd: CancelExecutionPlan): Props =
-    Props(classOf[ExecutionDriverTerminator], cancelCmd.planId, StopExecutionDriver(cancelCmd, sender()), shardRegion)
+    Props(
+      classOf[ExecutionDriverTerminator],
+      cancelCmd.planId,
+      StopExecutionDriver(cancelCmd, sender()),
+      shardRegion)
 
 }
 
@@ -277,12 +291,11 @@ private class JobFetcher(jobId: JobId, replyTo: ActorRef, config: ScheduleJob)
 
 }
 
-private class ExecutionDriverFactory(
-    jobId: JobId,
-    planId: PlanId,
-    createCmd: Scheduler.CreateExecutionDriver,
-    shardRegion: ActorRef)
-  extends Actor with ActorLogging {
+private class ExecutionDriverFactory(jobId: JobId,
+                                     planId: PlanId,
+                                     createCmd: Scheduler.CreateExecutionDriver,
+                                     shardRegion: ActorRef)
+    extends Actor with ActorLogging {
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
@@ -297,7 +310,8 @@ private class ExecutionDriverFactory(
 
       log.debug("Starting execution plan for job {}.", jobId)
       val executionProps = ExecutionLifecycle.props(
-        planId, executionTimeout = cmd.timeout
+        planId,
+        executionTimeout = cmd.timeout
       )
       shardRegion ! ExecutionDriver.New(jobId, spec, planId, cmd.trigger, executionProps)
 
@@ -319,7 +333,7 @@ private class ExecutionDriverTerminator(
     planId: PlanId,
     killCmd: Scheduler.StopExecutionDriver,
     shardRegion: ActorRef
-  ) extends Actor with ActorLogging {
+) extends Actor with ActorLogging {
 
   import DistributedPubSubMediator._
 

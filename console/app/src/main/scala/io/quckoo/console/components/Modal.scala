@@ -34,7 +34,7 @@ object Modal {
                    backdrop: Boolean = true,
                    keyboard: Boolean = true)
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def hide = Callback {
       jQuery($.getDOMNode()).modal("hide")
@@ -46,35 +46,40 @@ object Modal {
 
     def render(p: Props, c: PropsChildren) = {
       val modalStyle = lookAndFeel.modal
-      <.div(modalStyle.modal, modalStyle.fade, ^.role := "dialog", ^.aria.hidden := true,
-        <.div(modalStyle.dialog,
-          <.div(modalStyle.content,
+      <.div(
+        modalStyle.modal,
+        modalStyle.fade,
+        ^.role := "dialog",
+        ^.aria.hidden := true,
+        <.div(
+          modalStyle.dialog,
+          <.div(
+            modalStyle.content,
             <.div(modalStyle.header, p.header(hide)),
             <.div(modalStyle.body, c),
-            <.div(modalStyle.footer, p.footer(hide))
-          )
-        )
-      )
+            <.div(modalStyle.footer, p.footer(hide)))))
     }
   }
 
-  val component = ReactComponentB[Props]("Modal").
-    renderBackend[Backend].
-    componentDidMount(scope => Callback {
-      val p = scope.props
-      // instruct Bootstrap to show the modal
-      jQuery(scope.getDOMNode()).modal(
-        js.Dynamic.literal(
-          "backdrop" -> p.backdrop,
-          "keyboard" -> p.keyboard,
-          "show"     -> true
+  val component = ReactComponentB[Props]("Modal")
+    .renderBackend[Backend]
+    .componentDidMount(scope =>
+      Callback {
+        val p = scope.props
+        // instruct Bootstrap to show the modal
+        jQuery(scope.getDOMNode()).modal(
+          js.Dynamic.literal(
+            "backdrop" -> p.backdrop,
+            "keyboard" -> p.keyboard,
+            "show"     -> true
+          )
         )
-      )
 
-      // register event listener to be notified when the modal is closed
-      jQuery(scope.getDOMNode()).on("hidden.bs.modal", null, null, scope.backend.hidden _)
-    }).build
+        // register event listener to be notified when the modal is closed
+        jQuery(scope.getDOMNode()).on("hidden.bs.modal", null, null, scope.backend.hidden _)
+    })
+    .build
 
-  def apply() = component
+  def apply()                                   = component
   def apply(props: Props, children: ReactNode*) = component(props, children: _*)
 }

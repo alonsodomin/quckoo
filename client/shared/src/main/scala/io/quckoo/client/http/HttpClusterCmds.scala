@@ -25,9 +25,11 @@ import io.quckoo.net.QuckooState
 trait HttpClusterCmds extends HttpMarshalling with ClusterCmds[HttpProtocol] {
   import CmdMarshalling.Auth
 
-  implicit lazy val getClusterStateCmd: GetClusterStateCmd = new Auth[HttpProtocol, Unit, QuckooState] {
-    override val marshall = marshallEmpty[GetClusterStateCmd](HttpMethod.Get, _ => ClusterStateURI)
-    override val unmarshall = unmarshallFromJson[GetClusterStateCmd]
-  }
+  implicit lazy val getClusterStateCmd: GetClusterStateCmd =
+    new Auth[HttpProtocol, Unit, QuckooState] {
+      override val marshall =
+        marshallEmpty[GetClusterStateCmd](HttpMethod.Get, _ => ClusterStateURI)
+      override val unmarshall = unmarshallFromJson[GetClusterStateCmd]
+    }
 
 }

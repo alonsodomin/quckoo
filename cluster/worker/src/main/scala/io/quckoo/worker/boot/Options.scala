@@ -25,16 +25,16 @@ import io.quckoo.worker.QuckooWorkerSettings
 import scala.collection.JavaConversions._
 
 /**
- * Created by aalonsodominguez on 03/10/2015.
- */
+  * Created by aalonsodominguez on 03/10/2015.
+  */
 object Options {
 
   final val SystemName = "QuckooWorkerSystem"
 
   final val DefaultPort = 5001
 
-  final val AkkaRemoteNettyHost = "akka.remote.netty.tcp.hostname"
-  final val AkkaRemoteNettyPort = "akka.remote.netty.tcp.port"
+  final val AkkaRemoteNettyHost     = "akka.remote.netty.tcp.hostname"
+  final val AkkaRemoteNettyPort     = "akka.remote.netty.tcp.port"
   final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
   final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
 
@@ -55,7 +55,7 @@ case class Options(bindAddress: Option[String] = None,
     val (bindHost, bindPort) = bindAddress.map { addr =>
       val HostAndPort(h, p) = addr
       (h, p.toInt)
-    } getOrElse((QuckooWorkerSettings.DefaultTcpInterface, port))
+    } getOrElse ((QuckooWorkerSettings.DefaultTcpInterface, port))
 
     valueMap.put(AkkaRemoteNettyHost, bindHost)
     valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))

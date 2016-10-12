@@ -37,17 +37,17 @@ object PersistentJob {
   final val PersistenceIdPrefix = "PersistentJob"
 
   val idExtractor: ShardRegion.ExtractEntityId = {
-    case c: CreateJob   => (c.jobId.toString, c)
-    case g: GetJob      => (g.jobId.toString, g)
-    case d: DisableJob  => (d.jobId.toString, d)
-    case e: EnableJob   => (e.jobId.toString, e)
+    case c: CreateJob  => (c.jobId.toString, c)
+    case g: GetJob     => (g.jobId.toString, g)
+    case d: DisableJob => (d.jobId.toString, d)
+    case e: EnableJob  => (e.jobId.toString, e)
   }
 
   val shardResolver: ShardRegion.ExtractShardId = {
-    case CreateJob(jobId, _)  => (jobId.hashCode % NumberOfShards).toString
-    case GetJob(jobId)        => (jobId.hashCode % NumberOfShards).toString
-    case DisableJob(jobId)    => (jobId.hashCode % NumberOfShards).toString
-    case EnableJob(jobId)     => (jobId.hashCode % NumberOfShards).toString
+    case CreateJob(jobId, _) => (jobId.hashCode % NumberOfShards).toString
+    case GetJob(jobId)       => (jobId.hashCode % NumberOfShards).toString
+    case DisableJob(jobId)   => (jobId.hashCode % NumberOfShards).toString
+    case EnableJob(jobId)    => (jobId.hashCode % NumberOfShards).toString
   }
 
   private[registry] final case class CreateJob(jobId: JobId, spec: JobSpec)
@@ -59,7 +59,7 @@ object PersistentJob {
 class PersistentJob extends PersistentActor with ActorLogging with Stash {
   import PersistentJob._
 
-  private[this] val mediator = DistributedPubSub(context.system).mediator
+  private[this] val mediator                             = DistributedPubSub(context.system).mediator
   private[this] var stateDuringRecovery: Option[JobSpec] = None
 
   override def persistenceId: String = s"$PersistenceIdPrefix-${self.path.name}"

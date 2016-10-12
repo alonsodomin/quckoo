@@ -25,8 +25,8 @@ import io.quckoo.client.core.{Channel, Channels, Unmarshall}
   */
 trait SSEChannels extends Channels[HttpProtocol] {
 
-  override def createChannel[E: EventDef : UReader] = new Channel.Aux[HttpProtocol, E] {
-    override val eventDef = implicitly[EventDef[E]]
+  override def createChannel[E: EventDef: UReader] = new Channel.Aux[HttpProtocol, E] {
+    override val eventDef   = implicitly[EventDef[E]]
     override val unmarshall = Unmarshall[HttpServerSentEvent, E](_.data.as[E])
   }
 

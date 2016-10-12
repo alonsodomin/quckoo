@@ -35,8 +35,8 @@ import org.threeten.bp.{Clock, ZonedDateTime, Duration => JavaDuration}
 import scala.concurrent.duration._
 
 /**
- * Created by aalonsodominguez on 16/08/15.
- */
+  * Created by aalonsodominguez on 16/08/15.
+  */
 object ExecutionDriver {
 
   final val ShardName      = "ExecutionDriver"
@@ -56,20 +56,26 @@ object ExecutionDriver {
 
   // Only for internal usage from the Scheduler actor
   private[scheduler] case class New(
-      jobId: JobId, spec: JobSpec, planId: PlanId,
-      trigger: Trigger, executionProps: Props
+      jobId: JobId,
+      spec: JobSpec,
+      planId: PlanId,
+      trigger: Trigger,
+      executionProps: Props
   )
 
   // Private messages, used for managing the internal lifecycle
   private[scheduler] final case class Created(
-    jobId: JobId, spec: JobSpec, planId: PlanId,
-    trigger: Trigger, lifecycleProps: Props,
-    time: ZonedDateTime
+      jobId: JobId,
+      spec: JobSpec,
+      planId: PlanId,
+      trigger: Trigger,
+      lifecycleProps: Props,
+      time: ZonedDateTime
   )
 
   sealed trait InternalCmd
   private final case class ScheduleTask(task: Task, time: ZonedDateTime) extends InternalCmd
-  private case object FinishPlan extends InternalCmd
+  private case object FinishPlan                                         extends InternalCmd
 
   // Public execution driver state
   object DriverState {
@@ -81,13 +87,13 @@ object ExecutionDriver {
     )
   }
   final case class DriverState(
-    plan: ExecutionPlan,
-    jobSpec: JobSpec,
-    lifecycleProps: Props,
-    completedTasks: Vector[TaskId]
+      plan: ExecutionPlan,
+      jobSpec: JobSpec,
+      lifecycleProps: Props,
+      completedTasks: Vector[TaskId]
   ) {
 
-    val jobId = plan.jobId
+    val jobId  = plan.jobId
     val planId = plan.planId
 
     def fired: Boolean = {
@@ -96,9 +102,9 @@ object ExecutionDriver {
       if (lastScheduledTime.isEmpty || currentTask.isEmpty) false
       else {
         val triggerTimeAfterSchedule = for {
-          scheduleTime  <- lastScheduledTime
-          triggerTime   <- lastTriggeredTime
-            if triggerTime.isAfter(scheduleTime) || triggerTime.isEqual(scheduleTime)
+          scheduleTime <- lastScheduledTime
+          triggerTime  <- lastTriggeredTime
+          if triggerTime.isAfter(scheduleTime) || triggerTime.isEqual(scheduleTime)
         } yield triggerTime
 
         triggerTimeAfterSchedule.isDefined
@@ -109,34 +115,36 @@ object ExecutionDriver {
       if (plan.finished) this
       else {
         event match {
-          case TaskScheduled(`jobId`, `planId`, task, dateTime)
-            if plan.currentTask.isEmpty =>
-              copy(plan = plan.copy(
+          case TaskScheduled(`jobId`, `planId`, task, dateTime) if plan.currentTask.isEmpty =>
+            copy(
+              plan = plan.copy(
                 currentTask = Some(task),
                 lastScheduledTime = Some(dateTime)
               ))
 
           case TaskTriggered(`jobId`, `planId`, taskId, dateTime)
-            if plan.currentTask.map(_.id).contains(taskId) =>
-              copy(plan = plan.copy(
+              if plan.currentTask.map(_.id).contains(taskId) =>
+            copy(
+              plan = plan.copy(
                 lastTriggeredTime = Some(dateTime)
               ))
 
           case TaskCompleted(`jobId`, `planId`, taskId, dateTime, outcome)
-            if plan.currentTask.map(_.id).contains(taskId) =>
-              copy(plan = plan.copy(
-                  currentTask = None,
-                  lastExecutionTime = Some(dateTime),
-                  lastOutcome = Some(outcome)
-                ),
-                completedTasks = completedTasks :+ taskId
-              )
+              if plan.currentTask.map(_.id).contains(taskId) =>
+            copy(
+              plan = plan.copy(
+                currentTask = None,
+                lastExecutionTime = Some(dateTime),
+                lastOutcome = Some(outcome)
+              ),
+              completedTasks = completedTasks :+ taskId)
 
           case ExecutionPlanFinished(`jobId`, `planId`, dateTime) =>
-            copy(plan = plan.copy(
-              currentTask = None,
-              finishedTime = Some(dateTime)
-            ))
+            copy(
+              plan = plan.copy(
+                currentTask = None,
+                finishedTime = Some(dateTime)
+              ))
 
           case _ => this
         }
@@ -150,8 +158,7 @@ object ExecutionDriver {
 
 }
 
-class ExecutionDriver(implicit clock: Clock)
-    extends PersistentActor with ActorLogging {
+class ExecutionDriver(implicit clock: Clock) extends PersistentActor with ActorLogging {
 
   import ExecutionDriver._
   import ShardRegion.Passivate
@@ -159,7 +166,8 @@ class ExecutionDriver(implicit clock: Clock)
   import DistributedPubSubMediator._
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
-  private[this] val triggerDispatcher = context.system.dispatchers.lookup("quckoo.trigger-dispatcher")
+  private[this] val triggerDispatcher =
+    context.system.dispatchers.lookup("quckoo.trigger-dispatcher")
   private[this] val taskQueue = context.actorSelection(
     RootActorPath(self.path.address) / "user" / "quckoo" / "scheduler" / "queue"
   )
@@ -210,9 +218,9 @@ class ExecutionDriver(implicit clock: Clock)
   }
 
   /**
-   * Initial state for the ExecutionDriver as it needs to wait for acknowledge from
-   * the distributed pub/sub and an initial New command
-   */
+    * Initial state for the ExecutionDriver as it needs to wait for acknowledge from
+    * the distributed pub/sub and an initial New command
+    */
   private def initial(subscribed: Boolean = false, state: Option[DriverState] = None): Receive = {
     case SubscribeAck(Subscribe(topic, _, `self`)) if topic == topics.Registry =>
       if (state.isDefined) {
@@ -224,8 +232,13 @@ class ExecutionDriver(implicit clock: Clock)
     case GetExecutionPlan(_) => stash()
 
     case cmd: New =>
-      val created = Created(cmd.jobId, cmd.spec, cmd.planId, cmd.trigger,
-          cmd.executionProps, ZonedDateTime.now(clock))
+      val created = Created(
+        cmd.jobId,
+        cmd.spec,
+        cmd.planId,
+        cmd.trigger,
+        cmd.executionProps,
+        ZonedDateTime.now(clock))
       persist(created) { evt =>
         val st = DriverState(evt)
         log.debug("Creating new execution plan. planId={}", st.planId)
@@ -239,11 +252,14 @@ class ExecutionDriver(implicit clock: Clock)
   }
 
   /**
-   * Ready state, it accepts scheduling new tasks or gracefully finishing the execution plan
-   */
+    * Ready state, it accepts scheduling new tasks or gracefully finishing the execution plan
+    */
   private def ready(state: DriverState): Receive = {
     case JobDisabled(id) if id == state.jobId =>
-      log.info("Job has been disabled, finishing execution plan. jobId={}, planId={}", id, state.planId)
+      log.info(
+        "Job has been disabled, finishing execution plan. jobId={}, planId={}",
+        id,
+        state.planId)
       self ! FinishPlan
       context become shuttingDown(state)
 
@@ -251,7 +267,10 @@ class ExecutionDriver(implicit clock: Clock)
       sender() ! state.plan
 
     case ScheduleTask(task, time) =>
-      def createTrigger(task: Task, planId: PlanId, lifecycle: ActorRef, when: ZonedDateTime): Cancellable = {
+      def createTrigger(task: Task,
+                        planId: PlanId,
+                        lifecycle: ActorRef,
+                        when: ZonedDateTime): Cancellable = {
         val delay = {
           val now = ZonedDateTime.now(clock)
           if (when.isBefore(now) || when.isEqual(now)) 0 millis
@@ -260,7 +279,8 @@ class ExecutionDriver(implicit clock: Clock)
 
         implicit val dispatcher = triggerDispatcher
         log.debug("Task {} in plan {} will be triggered after {}", task.id, planId, delay)
-        context.system.scheduler.scheduleOnce(delay, lifecycle, ExecutionLifecycle.Awake(task, taskQueue))
+        context.system.scheduler
+          .scheduleOnce(delay, lifecycle, ExecutionLifecycle.Awake(task, taskQueue))
       }
 
       // Instantiate a new execution lifecycle
@@ -279,16 +299,18 @@ class ExecutionDriver(implicit clock: Clock)
   }
 
   /**
-   * Running execution, waits for the execution to notify its completeness and
-   * accepts cancellation (if possible)
-   */
-  private def runningExecution(state: DriverState, lifecycle: ActorRef,
+    * Running execution, waits for the execution to notify its completeness and
+    * accepts cancellation (if possible)
+    */
+  private def runningExecution(state: DriverState,
+                               lifecycle: ActorRef,
                                trigger: Option[Cancellable] = None): Receive = {
     case ExecutionLifecycle.Triggered(task) =>
       log.debug("Trigger for task {} has successfully fired.", task.id)
-      persist(TaskTriggered(state.jobId, state.planId, task.id, ZonedDateTime.now(clock))) { event =>
-        mediator ! Publish(topics.Scheduler, event)
-        context.become(runningExecution(state.updated(event), lifecycle, None))
+      persist(TaskTriggered(state.jobId, state.planId, task.id, ZonedDateTime.now(clock))) {
+        event =>
+          mediator ! Publish(topics.Scheduler, event)
+          context.become(runningExecution(state.updated(event), lifecycle, None))
       }
 
     case GetExecutionPlan(_) =>
@@ -304,14 +326,16 @@ class ExecutionDriver(implicit clock: Clock)
 
     case ExecutionLifecycle.Result(outcome) =>
       state.plan.currentTask.foreach { task =>
-        persist(TaskCompleted(state.jobId, state.planId, task.id, ZonedDateTime.now(clock), outcome)) { event =>
-          log.debug("Task finished. taskId={}, outcome={}", task.id, outcome)
-          mediator ! Publish(topics.Scheduler, event)
+        persist(
+          TaskCompleted(state.jobId, state.planId, task.id, ZonedDateTime.now(clock), outcome)) {
+          event =>
+            log.debug("Task finished. taskId={}, outcome={}", task.id, outcome)
+            mediator ! Publish(topics.Scheduler, event)
 
-          val newState = state.updated(event)
-          context.unwatch(lifecycle)
+            val newState = state.updated(event)
+            context.unwatch(lifecycle)
 
-          performTransition(newState)(nextCommand(newState, task.id, outcome))
+            performTransition(newState)(nextCommand(newState, task.id, outcome))
         }
       }
 
@@ -322,15 +346,16 @@ class ExecutionDriver(implicit clock: Clock)
   }
 
   /**
-   * State prior to fully stopping the actor.
-   */
+    * State prior to fully stopping the actor.
+    */
   private def shuttingDown(state: DriverState): Receive = {
     case FinishPlan if !state.plan.finished =>
       log.info("Finishing execution plan. planId={}", state.planId)
-      persist(ExecutionPlanFinished(state.jobId, state.planId, ZonedDateTime.now(clock))) { event =>
-        mediator ! Publish(topics.Scheduler, event)
-        mediator ! Unsubscribe(topics.Registry, self)
-        context.become(shuttingDown(state.updated(event)))
+      persist(ExecutionPlanFinished(state.jobId, state.planId, ZonedDateTime.now(clock))) {
+        event =>
+          mediator ! Publish(topics.Scheduler, event)
+          mediator ! Unsubscribe(topics.Registry, self)
+          context.become(shuttingDown(state.updated(event)))
       }
 
     case FinishPlan =>
@@ -343,13 +368,16 @@ class ExecutionDriver(implicit clock: Clock)
       sender() ! state.plan
 
     case msg: Any =>
-      log.warning("Execution plan '{}' has finished. Ignoring message " +
-        "{} while shutting down.", state.planId, msg)
+      log.warning(
+        "Execution plan '{}' has finished. Ignoring message " +
+          "{} while shutting down.",
+        state.planId,
+        msg)
   }
 
   override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy() {
     case _: ActorInitializationException => Stop
-    case _: DeathPactException => Stop
+    case _: DeathPactException           => Stop
     case cause: Exception =>
       log.error(cause, "Error thrown from the execution state manager")
       Restart
@@ -382,7 +410,9 @@ class ExecutionDriver(implicit clock: Clock)
     }
   }
 
-  private def nextCommand(state: DriverState, lastTaskId: TaskId, outcome: TaskExecution.Outcome): InternalCmd = {
+  private def nextCommand(state: DriverState,
+                          lastTaskId: TaskId,
+                          outcome: TaskExecution.Outcome): InternalCmd = {
     if (state.plan.trigger.isRecurring) {
       outcome match {
         case TaskExecution.Success =>

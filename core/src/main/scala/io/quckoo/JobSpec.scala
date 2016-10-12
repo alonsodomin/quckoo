@@ -24,16 +24,18 @@ import monocle.macros.Lenses
 import scalaz._
 
 /**
- * Created by aalonsodominguez on 10/07/15.
- */
+  * Created by aalonsodominguez on 10/07/15.
+  */
 object JobSpec {
   import Scalaz._
 
   def validate(jobSpec: JobSpec): ValidationNel[ValidationFault, JobSpec] =
     validate(jobSpec.displayName, jobSpec.description, jobSpec.artifactId, jobSpec.jobClass)
 
-  def validate(displayName: String, description: Option[String],
-               artifactId: ArtifactId, jobClass: String): ValidationNel[ValidationFault, JobSpec] = {
+  def validate(displayName: String,
+               description: Option[String],
+               artifactId: ArtifactId,
+               jobClass: String): ValidationNel[ValidationFault, JobSpec] = {
     import Validations._
 
     def validDisplayName: Validation[ValidationFault, String] =
@@ -53,8 +55,7 @@ object JobSpec {
 
     (validDisplayName.toValidationNel |@| validDescription.toValidationNel
       |@| validArtifactId |@| validJobClass.toValidationNel
-      |@| false.successNel[ValidationFault]
-    )(JobSpec.apply)
+      |@| false.successNel[ValidationFault])(JobSpec.apply)
   }
 
 }

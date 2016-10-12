@@ -29,9 +29,7 @@ import io.quckoo.net._
 package object net {
 
   def masterNodes(cluster: Cluster): Map[NodeId, MasterNode] =
-    cluster.state.members.map(_.toQuckooMember).
-      map(member => member.id -> member).
-      toMap
+    cluster.state.members.map(_.toQuckooMember).map(member => member.id -> member).toMap
 
   implicit class RichMember(val member: Member) extends AnyVal {
 

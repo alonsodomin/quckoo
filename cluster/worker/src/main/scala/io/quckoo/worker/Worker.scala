@@ -31,19 +31,27 @@ import io.quckoo.resolver.Resolver
 import scala.concurrent.duration._
 
 /**
- * Created by aalonsodominguez on 05/07/15.
- */
+  * Created by aalonsodominguez on 05/07/15.
+  */
 object Worker {
 
   final val DefaultRegisterFrequency = 10 seconds
-  final val DefaultQueueAckTimeout = 5 seconds
+  final val DefaultQueueAckTimeout   = 5 seconds
 
   protected[worker] final val SchedulerPath = "/user/quckoo/scheduler"
 
-  def props(clusterClient: ActorRef, resolverProps: Props, jobExecutorProps: Props,
+  def props(clusterClient: ActorRef,
+            resolverProps: Props,
+            jobExecutorProps: Props,
             registerInterval: FiniteDuration = DefaultRegisterFrequency,
             queueAckTimeout: FiniteDuration = DefaultQueueAckTimeout): Props =
-    Props(classOf[Worker], clusterClient, resolverProps, jobExecutorProps, registerInterval, queueAckTimeout)
+    Props(
+      classOf[Worker],
+      clusterClient,
+      resolverProps,
+      jobExecutorProps,
+      registerInterval,
+      queueAckTimeout)
 
 }
 
@@ -58,15 +66,17 @@ class Worker(clusterClient: ActorRef,
   import context.dispatcher
 
   val workerId = UUID.randomUUID()
-  
+
   val registerTask = context.system.scheduler.schedule(
-    0 seconds, registerInterval, clusterClient,
+    0 seconds,
+    registerInterval,
+    clusterClient,
     SendToAll(SchedulerPath, RegisterWorker(workerId))
   )
 
-  private val resolver = context.watch(context.actorOf(resolverProps, "resolver"))
+  private val resolver    = context.watch(context.actorOf(resolverProps, "resolver"))
   private val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "executor"))
-  
+
   private var currentTaskId: Option[TaskId] = None
 
   def taskId: TaskId = currentTaskId match {
@@ -121,7 +131,9 @@ class Worker(clusterClient: ActorRef,
       context.become(idle)
 
     case ReceiveTimeout =>
-      log.warning("Didn't receive any ack from task queue in the last {}, retrying", queueAckTimeout)
+      log.warning(
+        "Didn't receive any ack from task queue in the last {}, retrying",
+        queueAckTimeout)
       sendToQueue(TaskDone(workerId, taskId, result))
       context.setReceiveTimeout(queueAckTimeout)
   }
@@ -132,10 +144,10 @@ class Worker(clusterClient: ActorRef,
 
   override def supervisorStrategy = OneForOneStrategy() {
     case _: ActorInitializationException => Stop
-    case _: DeathPactException => Stop
+    case _: DeathPactException           => Stop
     case cause: Exception =>
-      currentTaskId.foreach {
-        taskId => sendToQueue(TaskFailed(workerId, taskId, ExceptionThrown.from(cause)))
+      currentTaskId.foreach { taskId =>
+        sendToQueue(TaskFailed(workerId, taskId, ExceptionThrown.from(cause)))
       }
       context.become(idle)
       Restart
@@ -143,8 +155,8 @@ class Worker(clusterClient: ActorRef,
 
   override def unhandled(message: Any): Unit = message match {
     case Terminated(`jobExecutor`) => context.stop(self)
-    case TaskReady =>
-    case _ => super.unhandled(message)
+    case TaskReady                 =>
+    case _                         => super.unhandled(message)
   }
 
 }

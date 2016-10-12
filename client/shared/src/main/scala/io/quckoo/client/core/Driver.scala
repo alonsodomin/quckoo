@@ -37,9 +37,9 @@ import scalaz.std.scalaFuture._
 final class Driver[P <: Protocol] private (
     private[client] val backend: DriverBackend[P],
     private[client] val specs: ProtocolSpecs[P]
-  ) extends LazyLogging {
+) extends LazyLogging {
 
-  private[client] def channelFor[E : EventDef : UReader] = specs.createChannel[E]
+  private[client] def channelFor[E: EventDef: UReader] = specs.createChannel[E]
 
   def openChannel[E](ch: Channel.Aux[P, E]): Kleisli[Observable, Unit, ch.Event] = {
     logger.debug(s"Opening channel for event ${ch.eventDef.typeName}")
@@ -47,7 +47,8 @@ final class Driver[P <: Protocol] private (
     backend.open(ch) >=> decodeEvent
   }
 
-  def invoke[C <: CmdMarshalling[P]](implicit ec: ExecutionContext, cmd: C): Kleisli[Future, cmd.Cmd[cmd.In], cmd.Rslt] = {
+  def invoke[C <: CmdMarshalling[P]](implicit ec: ExecutionContext,
+                                     cmd: C): Kleisli[Future, cmd.Cmd[cmd.In], cmd.Rslt] = {
     def encodeRequest  = cmd.marshall.transform(lawfulTry2Future)
     def decodeResponse = cmd.unmarshall.transform(lawfulTry2Future)
 
@@ -57,6 +58,7 @@ final class Driver[P <: Protocol] private (
 }
 
 object Driver {
-  @inline implicit def apply[P <: Protocol](implicit backend: DriverBackend[P], commands: ProtocolSpecs[P]): Driver[P] =
+  @inline implicit def apply[P <: Protocol](implicit backend: DriverBackend[P],
+                                            commands: ProtocolSpecs[P]): Driver[P] =
     new Driver[P](backend, commands)
 }

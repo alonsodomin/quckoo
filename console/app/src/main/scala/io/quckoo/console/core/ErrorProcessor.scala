@@ -16,7 +16,6 @@
 
 package io.quckoo.console.core
 
-
 import diode.{ActionProcessor, ActionResult, Dispatcher, Effect}
 
 import io.quckoo.console.components.Notification
@@ -37,17 +36,17 @@ class ErrorProcessor extends ActionProcessor[ConsoleScope] with LazyLogging {
   import ActionResult._
 
   override def process(
-    dispatch: Dispatcher, action: Any,
-    next: (Any) => ActionResult[ConsoleScope],
-    currentModel: ConsoleScope
+      dispatch: Dispatcher,
+      action: Any,
+      next: (Any) => ActionResult[ConsoleScope],
+      currentModel: ConsoleScope
   ): ActionResult[ConsoleScope] = {
     action match {
       case Failed(errors) =>
         val notifications = errors.map(generateNotification.lift).toList.flatMap(_.toList)
         if (notifications.isEmpty) NoChange
         else {
-          val growlActions = notifications.
-            map(Growl).map(Effect.action(_))
+          val growlActions = notifications.map(Growl).map(Effect.action(_))
           EffectOnly(Effects.seq(growlActions.head, growlActions.tail: _*))
         }
 
@@ -55,7 +54,7 @@ class ErrorProcessor extends ActionProcessor[ConsoleScope] with LazyLogging {
     }
   }
 
-  private[this] def generateNotification: PartialFunction[Fault, Notification] ={
+  private[this] def generateNotification: PartialFunction[Fault, Notification] = {
     case JobNotFound(jobId) =>
       Notification.danger(s"Job not found: $jobId")
 

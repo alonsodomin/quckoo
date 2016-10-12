@@ -29,7 +29,7 @@ import scala.concurrent.Future
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-final class SimpleEventSubscriber[A : ActionType] extends Observer[A] with LazyLogging {
+final class SimpleEventSubscriber[A: ActionType] extends Observer[A] with LazyLogging {
 
   override def onError(ex: Throwable): Unit = {
     logger.error("Event stream threw an exception.", ex)

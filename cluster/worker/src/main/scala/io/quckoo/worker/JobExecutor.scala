@@ -24,8 +24,8 @@ import io.quckoo.resolver.{Artifact, Resolve}
 import scala.util.{Failure, Success, Try}
 
 /**
- * Created by aalonsodominguez on 05/07/15.
- */
+  * Created by aalonsodominguez on 05/07/15.
+  */
 object JobExecutor {
 
   final case class Execute(task: Task, artifact: Artifact)

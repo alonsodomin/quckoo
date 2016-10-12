@@ -59,18 +59,21 @@ object QuckooFacade extends Logging {
 
   final val DefaultTimeout = 2500 millis
 
-  def start(settings: QuckooClusterSettings)(implicit system: ActorSystem, clock: Clock): Future[Unit] = {
+  def start(settings: QuckooClusterSettings)(implicit system: ActorSystem,
+                                             clock: Clock): Future[Unit] = {
     def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
       implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system), "http")
 
-      Http().bindAndHandle(facade.router, settings.httpInterface, settings.httpPort).
-        map(_ => log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
+      Http()
+        .bindAndHandle(facade.router, settings.httpInterface, settings.httpPort)
+        .map(_ =>
+          log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
     }
 
     log.info("Starting Quckoo server...")
 
-    val promise = Promise[Unit]()
-    val journal = new QuckooProductionJournal
+    val promise  = Promise[Unit]()
+    val journal  = new QuckooProductionJournal
     val guardian = system.actorOf(QuckooGuardian.props(settings, journal, promise), "quckoo")
 
     import system.dispatcher
@@ -79,15 +82,15 @@ object QuckooFacade extends Logging {
 
 }
 
-final class QuckooFacade(core: ActorRef)
-                        (implicit system: ActorSystem, clock: Clock)
+final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Clock)
     extends HttpRouter with QuckooServer with Logging {
 
   implicit val materializer = ActorMaterializer()
 
   def cancelPlan(planId: PlanId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[ExecutionPlanNotFound \/ ExecutionPlanCancelled] = {
     implicit val to = Timeout(timeout)
     (core ? CancelExecutionPlan(planId)).map {
@@ -97,18 +100,21 @@ final class QuckooFacade(core: ActorRef)
   }
 
   def executionPlans(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Map[PlanId, ExecutionPlan]] = {
-    val executionPlans = Source.actorRef[(PlanId, ExecutionPlan)](100, OverflowStrategy.fail).
-      mapMaterializedValue(upstream => core.tell(GetExecutionPlans, upstream))
+    val executionPlans = Source
+      .actorRef[(PlanId, ExecutionPlan)](100, OverflowStrategy.fail)
+      .mapMaterializedValue(upstream => core.tell(GetExecutionPlans, upstream))
 
     executionPlans.runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
   }
 
   def executionPlan(planId: PlanId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Option[ExecutionPlan]] = {
     def internalRequest: Future[Option[ExecutionPlan]] = {
       implicit val to = Timeout(timeout)
@@ -123,17 +129,20 @@ final class QuckooFacade(core: ActorRef)
   }
 
   def executions(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Map[TaskId, TaskExecution]] = {
-    val tasks = Source.actorRef[(TaskId, TaskExecution)](100, OverflowStrategy.fail).
-      mapMaterializedValue(upstream => core.tell(GetTaskExecutions, upstream))
+    val tasks = Source
+      .actorRef[(TaskId, TaskExecution)](100, OverflowStrategy.fail)
+      .mapMaterializedValue(upstream => core.tell(GetTaskExecutions, upstream))
     tasks.runFold(Map.empty[TaskId, TaskExecution])((map, pair) => map + pair)
   }
 
   def execution(taskId: TaskId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Option[TaskExecution]] = {
     implicit val to = Timeout(timeout)
     (core ? GetTaskExecution(taskId)) map {
@@ -143,8 +152,9 @@ final class QuckooFacade(core: ActorRef)
   }
 
   def scheduleJob(schedule: ScheduleJob)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Fault \/ ExecutionPlanStarted] = {
     implicit val to = Timeout(timeout)
     (core ? schedule) map {
@@ -154,20 +164,24 @@ final class QuckooFacade(core: ActorRef)
   }
 
   lazy val schedulerEvents: Source[SchedulerEvent, NotUsed] =
-    Source.actorPublisher[SchedulerEvent](SchedulerEventPublisher.props).
-      mapMaterializedValue(_ => NotUsed)
+    Source
+      .actorPublisher[SchedulerEvent](SchedulerEventPublisher.props)
+      .mapMaterializedValue(_ => NotUsed)
 
   lazy val masterEvents: Source[MasterEvent, NotUsed] =
-    Source.actorPublisher[MasterEvent](MasterEventPublisher.props).
-      mapMaterializedValue(_ => NotUsed)
+    Source
+      .actorPublisher[MasterEvent](MasterEventPublisher.props)
+      .mapMaterializedValue(_ => NotUsed)
 
   lazy val workerEvents: Source[WorkerEvent, NotUsed] =
-    Source.actorPublisher[WorkerEvent](WorkerEventPublisher.props).
-      mapMaterializedValue(_ => NotUsed)
+    Source
+      .actorPublisher[WorkerEvent](WorkerEventPublisher.props)
+      .mapMaterializedValue(_ => NotUsed)
 
   def enableJob(jobId: JobId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[JobNotFound \/ JobEnabled] = {
     implicit val to = Timeout(timeout)
     (core ? EnableJob(jobId)).map {
@@ -177,8 +191,9 @@ final class QuckooFacade(core: ActorRef)
   }
 
   def disableJob(jobId: JobId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[JobNotFound \/ JobDisabled] = {
     implicit val to = Timeout(timeout)
     (core ? DisableJob(jobId)).map {
@@ -188,8 +203,9 @@ final class QuckooFacade(core: ActorRef)
   }
 
   def fetchJob(jobId: JobId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Option[JobSpec]] = {
     implicit val to = Timeout(timeout)
     (core ? GetJob(jobId)).map {
@@ -199,8 +215,9 @@ final class QuckooFacade(core: ActorRef)
   }
 
   def registerJob(jobSpec: JobSpec)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[ValidationNel[Fault, JobId]] = {
     import scalaz._
     import Scalaz._
@@ -219,20 +236,27 @@ final class QuckooFacade(core: ActorRef)
     }
   }
 
-  def fetchJobs(implicit ec: ExecutionContext, timeout: FiniteDuration, passport: Passport): Future[Map[JobId, JobSpec]] = {
-    Source.actorRef[(JobId, JobSpec)](100, OverflowStrategy.fail).
-      mapMaterializedValue { upstream =>
+  def fetchJobs(implicit ec: ExecutionContext,
+                timeout: FiniteDuration,
+                passport: Passport): Future[Map[JobId, JobSpec]] = {
+    Source
+      .actorRef[(JobId, JobSpec)](100, OverflowStrategy.fail)
+      .mapMaterializedValue { upstream =>
         core.tell(GetJobs, upstream)
-      }.runFold(Map.empty[JobId, JobSpec]) { (map, pair) =>
+      }
+      .runFold(Map.empty[JobId, JobSpec]) { (map, pair) =>
         map + pair
       }
   }
 
   def registryEvents: Source[RegistryEvent, NotUsed] =
-    Source.actorPublisher[RegistryEvent](RegistryEventPublisher.props).
-      mapMaterializedValue(_ => NotUsed)
+    Source
+      .actorPublisher[RegistryEvent](RegistryEventPublisher.props)
+      .mapMaterializedValue(_ => NotUsed)
 
-  def clusterState(implicit ec: ExecutionContext, timeout: FiniteDuration, passport: Passport): Future[QuckooState] = {
+  def clusterState(implicit ec: ExecutionContext,
+                   timeout: FiniteDuration,
+                   passport: Passport): Future[QuckooState] = {
     implicit val to = Timeout(timeout)
     (core ? GetClusterStatus).mapTo[QuckooState]
   }

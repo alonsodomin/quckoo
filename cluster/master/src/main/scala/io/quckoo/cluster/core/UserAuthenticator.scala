@@ -25,15 +25,16 @@ import io.quckoo.cluster.http._
 import scala.concurrent.duration.FiniteDuration
 
 /**
- * Created by alonsodomin on 14/10/2015.
- */
+  * Created by alonsodomin on 14/10/2015.
+  */
 object UserAuthenticator {
 
   case class Authenticate(userId: UserId, password: Array[Char])
   case class AuthenticationSuccess(authInfo: XSRFToken)
   case object AuthenticationFailed
 
-  def props(sessionTimeout: FiniteDuration): Props = Props(classOf[UserAuthenticator], sessionTimeout)
+  def props(sessionTimeout: FiniteDuration): Props =
+    Props(classOf[UserAuthenticator], sessionTimeout)
 
 }
 
@@ -50,5 +51,5 @@ class UserAuthenticator(sessionTimeout: FiniteDuration) extends Actor with Actor
         sender() ! AuthenticationFailed
       }
   }
-  
+
 }

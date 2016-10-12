@@ -47,7 +47,10 @@ trait AbstractMockFactory extends SuiteMixin with MockFactoryBase with TestSuite
   }
 
   protected def newExpectationException(message: String, methodName: Option[Symbol]) =
-    new TestFailedException((_: StackDepthException) => Some(message), None, failedCodeStackDepthFn(methodName))
+    new TestFailedException(
+      (_: StackDepthException) => Some(message),
+      None,
+      failedCodeStackDepthFn(methodName))
 
   protected var autoVerify = true
 }

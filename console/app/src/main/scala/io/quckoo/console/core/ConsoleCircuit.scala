@@ -41,8 +41,9 @@ import scalaz.{-\/, \/-}
 /**
   * Created by alonsodomin on 20/02/2016.
   */
-object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleScope]
-    with ConsoleOps with ConsoleSubscriptions with LazyLogging {
+object ConsoleCircuit
+    extends Circuit[ConsoleScope] with ReactConnector[ConsoleScope] with ConsoleOps
+    with ConsoleSubscriptions with LazyLogging {
 
   private[this] implicit val client: HttpQuckooClient = HttpDOMQuckooClient
 
@@ -60,38 +61,52 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   )
 
   def zoomIntoPassport: ModelRW[ConsoleScope, Option[Passport]] =
-    zoomRW(_.passport) { (model, pass) => model.copy(passport = pass) }
+    zoomRW(_.passport) { (model, pass) =>
+      model.copy(passport = pass)
+    }
 
   def zoomIntoClusterState: ModelRW[ConsoleScope, QuckooState] =
-    zoomRW(_.clusterState) { (model, value) => model.copy(clusterState = value) }
+    zoomRW(_.clusterState) { (model, value) =>
+      model.copy(clusterState = value)
+    }
 
   def zoomIntoUserScope: ModelRW[ConsoleScope, UserScope] =
-    zoomRW(_.userScope) { (model, value) => model.copy(userScope = value) }
+    zoomRW(_.userScope) { (model, value) =>
+      model.copy(userScope = value)
+    }
 
   def zoomIntoExecutionPlans: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]] =
-    zoomIntoUserScope.zoomRW(_.executionPlans) { (model, plans) => model.copy(executionPlans = plans) }
+    zoomIntoUserScope.zoomRW(_.executionPlans) { (model, plans) =>
+      model.copy(executionPlans = plans)
+    }
 
   def zoomIntoJobSpecs: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]] =
-    zoomIntoUserScope.zoomRW(_.jobSpecs) { (model, specs) => model.copy(jobSpecs = specs) }
+    zoomIntoUserScope.zoomRW(_.jobSpecs) { (model, specs) =>
+      model.copy(jobSpecs = specs)
+    }
 
   def zoomIntoExecutions: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]] =
-    zoomIntoUserScope.zoomRW(_.executions) { (model, tasks) => model.copy(executions = tasks) }
+    zoomIntoUserScope.zoomRW(_.executions) { (model, tasks) =>
+      model.copy(executions = tasks)
+    }
 
-  val notificationHandler: HandlerFunction = (model, action) => action match {
-    case Growl(notification) =>
-      notification.growl()
-      None
+  val notificationHandler: HandlerFunction = (model, action) =>
+    action match {
+      case Growl(notification) =>
+        notification.growl()
+        None
   }
 
   val loginHandler = new ActionHandler(zoomIntoPassport) {
 
     override def handle = {
       case Login(username, password, referral) =>
-        effectOnly(Effect(
-          client.authenticate(username, password).
-            map(pass => LoggedIn(pass, referral)).
-            recover { case _ => LoginFailed }
-        ))
+        effectOnly(
+          Effect(
+            client.authenticate(username, password).map(pass => LoggedIn(pass, referral)).recover {
+              case _ => LoginFailed
+            }
+          ))
 
       case Logout =>
         value.map { implicit passport =>
@@ -100,8 +115,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
     }
   }
 
-  val clusterStateHandler = new ActionHandler(zoomIntoClusterState)
-      with AuthHandler[QuckooState] {
+  val clusterStateHandler = new ActionHandler(zoomIntoClusterState) with AuthHandler[QuckooState] {
 
     override def handle = {
       case GetClusterStatus =>
@@ -153,8 +167,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
   }
 
-  val registryHandler = new ActionHandler(zoomIntoUserScope)
-      with AuthHandler[UserScope] {
+  val registryHandler = new ActionHandler(zoomIntoUserScope) with AuthHandler[UserScope] {
 
     override def handle = {
       case RegisterJob(spec) =>
@@ -193,8 +206,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
 
   }
 
-  val scheduleHandler = new ActionHandler(zoomIntoUserScope)
-      with AuthHandler[UserScope] {
+  val scheduleHandler = new ActionHandler(zoomIntoUserScope) with AuthHandler[UserScope] {
 
     override def handle = {
       case msg: ScheduleJob =>
@@ -253,7 +265,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val jobSpecMapHandler = new ActionHandler(zoomIntoJobSpecs)
-      with AuthHandler[PotMap[JobId, JobSpec]] {
+  with AuthHandler[PotMap[JobId, JobSpec]] {
 
     override protected def handle = {
       case LoadJobSpecs =>
@@ -265,16 +277,18 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
         updated(PotMap(JobSpecFetcher, specs))
 
       case JobEnabled(jobId) =>
-        effectOnly(Effects.set(
-          Growl(Notification.info(s"Job enabled: $jobId")),
-          RefreshJobSpecs(Set(jobId))
-        ))
+        effectOnly(
+          Effects.set(
+            Growl(Notification.info(s"Job enabled: $jobId")),
+            RefreshJobSpecs(Set(jobId))
+          ))
 
       case JobDisabled(jobId) =>
-        effectOnly(Effects.set(
-          Growl(Notification.info(s"Job disabled: $jobId")),
-          RefreshJobSpecs(Set(jobId))
-        ))
+        effectOnly(
+          Effects.set(
+            Growl(Notification.info(s"Job disabled: $jobId")),
+            RefreshJobSpecs(Set(jobId))
+          ))
 
       case action: RefreshJobSpecs =>
         withAuth { implicit passport =>
@@ -286,7 +300,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val executionPlanMapHandler = new ActionHandler(zoomIntoExecutionPlans)
-      with AuthHandler[PotMap[PlanId, ExecutionPlan]] {
+  with AuthHandler[PotMap[PlanId, ExecutionPlan]] {
 
     override protected def handle = {
       case LoadExecutionPlans =>
@@ -307,7 +321,7 @@ object ConsoleCircuit extends Circuit[ConsoleScope] with ReactConnector[ConsoleS
   }
 
   val taskHandler = new ActionHandler(zoomIntoExecutions)
-      with AuthHandler[PotMap[TaskId, TaskExecution]] {
+  with AuthHandler[PotMap[TaskId, TaskExecution]] {
 
     override protected def handle = {
       case LoadExecutions =>

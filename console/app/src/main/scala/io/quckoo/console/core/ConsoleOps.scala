@@ -43,46 +43,46 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
   implicit val DefaultTimeout = 2500 millis
 
   def refreshClusterStatus(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[ClusterStateLoaded] = {
     client.clusterState.map(ClusterStateLoaded)
   }
 
   def registerJob(jobSpec: JobSpec)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[RegisterJobResult] = {
     client.registerJob(jobSpec).map(RegisterJobResult)
   }
 
   def enableJob(jobId: JobId)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[Event] = {
     foldIntoEvent(client.enableJob(jobId))
   }
 
   def disableJob(jobId: JobId)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[Event] = {
     foldIntoEvent(client.disableJob(jobId))
   }
 
   def loadJobSpec(jobId: JobId)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[(JobId, Pot[JobSpec])] = {
     client.fetchJob(jobId).map {
       case Some(spec) => (jobId, Ready(spec))
-      case None => (jobId, Unavailable)
+      case None       => (jobId, Unavailable)
     }
   }
 
   def loadJobSpecs(keys: Set[JobId] = Set.empty)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[Map[JobId, Pot[JobSpec]]] = {
     if (keys.isEmpty) {
       client.fetchJobs.map(_.map { case (k, v) => (k, Ready(v)) })
@@ -92,22 +92,22 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
   }
 
   def scheduleJob(details: ScheduleJob)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[Event] = {
     foldIntoEvent(client.scheduleJob(details))
   }
 
   def cancelPlan(planId: PlanId)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[Event] = {
     foldIntoEvent(client.cancelPlan(planId))
   }
 
   def loadPlans(ids: Set[PlanId] = Set.empty)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[Map[PlanId, Pot[ExecutionPlan]]] = {
     if (ids.isEmpty) {
       client.executionPlans.map(_.map { case (k, v) => (k, Ready(v)) })
@@ -117,8 +117,8 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
   }
 
   def loadPlan(id: PlanId)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[(PlanId, Pot[ExecutionPlan])] = {
     client.executionPlan(id).map {
       case Some(plan) => id -> Ready(plan)
@@ -127,8 +127,8 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
   }
 
   def loadTasks(ids: Set[TaskId] = Set.empty)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[Map[TaskId, Pot[TaskExecution]]] = {
     if (ids.isEmpty) {
       client.executions.map(_.map { case (k, v) => (k, Ready(v)) })
@@ -138,8 +138,8 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
   }
 
   def loadTask(id: TaskId)(
-    implicit
-    client: HttpQuckooClient, passport: Passport
+      implicit client: HttpQuckooClient,
+      passport: Passport
   ): Future[(TaskId, Pot[TaskExecution])] = {
     client.execution(id).map {
       case Some(task) => id -> Ready(task)

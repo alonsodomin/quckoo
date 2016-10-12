@@ -22,6 +22,6 @@ package io.quckoo.net
 sealed trait NodeStatus
 
 object NodeStatus {
-  case object Active extends NodeStatus
+  case object Active      extends NodeStatus
   case object Unreachable extends NodeStatus
 }

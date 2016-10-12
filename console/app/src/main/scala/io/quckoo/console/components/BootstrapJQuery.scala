@@ -26,7 +26,6 @@ import scala.language.implicitConversions
   */
 @js.native
 trait BootstrapJQuery extends JQuery {
-  def modal(action: String): BootstrapJQuery = js.native
+  def modal(action: String): BootstrapJQuery  = js.native
   def modal(options: js.Any): BootstrapJQuery = js.native
 }
-

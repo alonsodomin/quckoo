@@ -33,20 +33,20 @@ import scalaz._
 import scalaz.syntax.show._
 
 /**
- * Created by alonsodomin on 17/10/2015.
- */
+  * Created by alonsodomin on 17/10/2015.
+  */
 object JobSpecList {
 
   final val Columns = List("Name", "Description", "Artifact ID", "Job Class", "Status")
 
-  final val AllFilter: Table.Filter[JobId, JobSpec] = (id, job) => true
+  final val AllFilter: Table.Filter[JobId, JobSpec]      = (id, job) => true
   final val DisabledFilter: Table.Filter[JobId, JobSpec] = (id, job) => job.disabled
-  final val EnabledFilter: Table.Filter[JobId, JobSpec] = !DisabledFilter(_, _)
+  final val EnabledFilter: Table.Filter[JobId, JobSpec]  = !DisabledFilter(_, _)
 
   final case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
   final case class State(filter: Table.Filter[JobId, JobSpec])
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     def mounted(props: Props) = {
       def dispatchJobLoading: Callback =
@@ -60,7 +60,7 @@ object JobSpecList {
       case "Description" => jobSpec.description.getOrElse[String]("")
       case "Artifact ID" => jobSpec.artifactId.shows
       case "Job Class"   => jobSpec.jobClass
-      case "Status"      =>
+      case "Status" =>
         if (jobSpec.disabled) {
           <.span(^.color.red, "DISABLED")
         } else {
@@ -92,22 +92,25 @@ object JobSpecList {
       val model = p.proxy()
 
       NavBar(
-        NavBar.Props(List("All", "Enabled", "Disabled"), "All", filterClicked, style = NavStyle.pills),
-        Table(Columns, model.seq, renderItem,
+        NavBar
+          .Props(List("All", "Enabled", "Disabled"), "All", filterClicked, style = NavStyle.pills),
+        Table(
+          Columns,
+          model.seq,
+          renderItem,
           allowSelect = true,
           actions = Some(rowActions(p)(_, _)),
-          filter = Some(state.filter)
-        )
+          filter = Some(state.filter))
       )
     }
 
   }
 
-  private[this] val component = ReactComponentB[Props]("JobSpecList").
-    initialState(State(AllFilter)).
-    renderBackend[Backend].
-    componentDidMount($ => $.backend.mounted($.props)).
-    build
+  private[this] val component = ReactComponentB[Props]("JobSpecList")
+    .initialState(State(AllFilter))
+    .renderBackend[Backend]
+    .componentDidMount($ => $.backend.mounted($.props))
+    .build
 
   def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]]) = component(Props(proxy))
 

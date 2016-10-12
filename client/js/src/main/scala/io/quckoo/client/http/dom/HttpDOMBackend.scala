@@ -36,10 +36,11 @@ private[http] object HttpDOMBackend extends HttpBackend {
 
   final val ResponseType = "arraybuffer"
 
-  override def open[Ch <: Channel[HttpProtocol]](channel: Ch) = Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
-    val subscriber = new EventSourceSubscriber(EventsURI, channel.eventDef.typeName)
-    Observable.create(OverflowStrategy.DropOld(20))(subscriber)
-  }
+  override def open[Ch <: Channel[HttpProtocol]](channel: Ch) =
+    Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
+      val subscriber = new EventSourceSubscriber(EventsURI, channel.eventDef.typeName)
+      Observable.create(OverflowStrategy.DropOld(20))(subscriber)
+    }
 
   def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
     val timeout = {
@@ -48,12 +49,13 @@ private[http] object HttpDOMBackend extends HttpBackend {
       else 0
     }
 
-    val domReq = new XMLHttpRequest()
+    val domReq  = new XMLHttpRequest()
     val promise = Promise[HttpResponse]()
 
     domReq.onreadystatechange = { (e: DOMEvent) =>
       if (domReq.readyState == 4) {
-        val entityData = DataBuffer(TypedArrayBuffer.wrap(domReq.response.asInstanceOf[ArrayBuffer]))
+        val entityData =
+          DataBuffer(TypedArrayBuffer.wrap(domReq.response.asInstanceOf[ArrayBuffer]))
         val response = HttpResponse(domReq.status, domReq.statusText, entityData)
         promise.success(response)
       }

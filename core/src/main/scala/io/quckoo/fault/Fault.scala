@@ -27,8 +27,8 @@ sealed trait Fault extends Serializable
 
 // == Business errors ===============
 
-final case class JobNotFound(jobId: JobId) extends Fault
-final case class JobNotEnabled(jobId: JobId) extends Fault
+final case class JobNotFound(jobId: JobId)             extends Fault
+final case class JobNotEnabled(jobId: JobId)           extends Fault
 final case class ExecutionPlanNotFound(planId: PlanId) extends Fault
 final case class TaskExecutionNotFound(taskId: TaskId) extends Fault
 
@@ -54,10 +54,11 @@ case class UnresolvedDependency(artifactId: ArtifactId) extends DependencyFault
 
 object DownloadFailed {
   sealed trait Reason
-  case object NotFound extends Reason
+  case object NotFound                    extends Reason
   final case class Other(message: String) extends Reason
 }
-case class DownloadFailed(artifactId: ArtifactId, reason: DownloadFailed.Reason) extends DependencyFault
+case class DownloadFailed(artifactId: ArtifactId, reason: DownloadFailed.Reason)
+    extends DependencyFault
 
 // == Validation errors ====================
 

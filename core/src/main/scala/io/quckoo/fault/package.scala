@@ -24,6 +24,6 @@ import scalaz._
 package object fault {
 
   type Faulty[+A] = Fault \/ A
-  type Faults = NonEmptyList[Fault]
+  type Faults     = NonEmptyList[Fault]
 
 }
