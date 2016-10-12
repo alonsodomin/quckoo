@@ -28,7 +28,7 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("hseeberger", "maven"),
     Resolver.bintrayRepo("dnvriend", "maven")
   ),
-  scalafmtConfig := Some(file(".scalafmt")),
+  scalafmtConfig := Some(file(".scalafmt.conf")),
   parallelExecution in Test := false
 ) ++ Licensing.settings
 
