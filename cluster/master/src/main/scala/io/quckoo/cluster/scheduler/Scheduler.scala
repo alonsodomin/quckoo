@@ -32,6 +32,7 @@ import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.{QuckooClusterSettings, topics}
+import io.quckoo.fault._
 import io.quckoo.id._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -202,18 +203,18 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)
   }
 
   private def handleEvent(event: Any): Unit = event match {
-    case ExecutionPlanStarted(_, planId) =>
+    case ExecutionPlanStarted(_, planId, _) =>
       log.debug("Indexing execution plan {}", planId)
       planIds += planId
 
-    case TaskScheduled(jobId, planId, task) =>
+    case TaskScheduled(jobId, planId, task, _) =>
       val execution = TaskExecution(planId, task, TaskExecution.Scheduled)
       executions += (task.id -> execution)
 
-    case TaskTriggered(_, _, taskId) =>
+    case TaskTriggered(_, _, taskId, _) =>
       executions += (taskId -> executions(taskId).copy(status = TaskExecution.InProgress))
 
-    case TaskCompleted(_, _, taskId, outcome) =>
+    case TaskCompleted(_, _, taskId, _, outcome) =>
       executions += (taskId -> executions(taskId).copy(
         status = TaskExecution.Complete,
         outcome = Some(outcome)
@@ -300,7 +301,7 @@ private class ExecutionDriverFactory(
       )
       shardRegion ! ExecutionDriver.New(jobId, spec, planId, cmd.trigger, executionProps)
 
-    case response @ ExecutionPlanStarted(`jobId`, _) =>
+    case response @ ExecutionPlanStarted(`jobId`, _, _) =>
       log.info("Execution plan for job {} has been started.", jobId)
       createCmd.replyTo ! response
       mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
@@ -337,9 +338,9 @@ private class ExecutionDriverTerminator(
   }
 
   def waitingForTermination: Receive = {
-    case response @ ExecutionPlanFinished(_, `planId`) =>
+    case response @ ExecutionPlanFinished(jobId, `planId`, dateTime) =>
       log.debug("Execution plan has been stopped. planId={}", planId)
-      killCmd.replyTo ! response
+      killCmd.replyTo ! ExecutionPlanCancelled(jobId, planId, dateTime)
       mediator ! Unsubscribe(topics.Scheduler, self)
       context.become(shuttingDown)
   }

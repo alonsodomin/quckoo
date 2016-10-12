@@ -27,21 +27,24 @@ sealed trait RegistryCommand extends Command
 sealed trait RegistryReadCommand extends RegistryCommand
 sealed trait RegistryWriteCommand extends RegistryCommand
 
+sealed trait RegistryJobCommand extends RegistryCommand {
+  val jobId: JobId
+}
+
 sealed trait RegistryEvent extends Event {
-  def jobId: JobId
+  val jobId: JobId
 }
 sealed trait RegistryResolutionEvent extends RegistryEvent
 
-final case class GetJob(jobId: JobId) extends RegistryReadCommand
+final case class GetJob(jobId: JobId) extends RegistryReadCommand with RegistryJobCommand
 case object GetJobs extends RegistryReadCommand
-final case class JobNotFound(jobId: JobId) extends RegistryEvent
 
 final case class RegisterJob(job: JobSpec) extends RegistryWriteCommand
 final case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryResolutionEvent
 final case class JobRejected(jobId: JobId, fault: Fault) extends RegistryResolutionEvent
 
-final case class DisableJob(jobId: JobId) extends RegistryWriteCommand
+final case class DisableJob(jobId: JobId) extends RegistryWriteCommand with RegistryJobCommand
 final case class JobDisabled(jobId: JobId) extends RegistryEvent
 
-final case class EnableJob(jobId: JobId) extends RegistryWriteCommand
+final case class EnableJob(jobId: JobId) extends RegistryWriteCommand with RegistryJobCommand
 final case class JobEnabled(jobId: JobId) extends RegistryEvent

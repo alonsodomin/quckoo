@@ -51,7 +51,7 @@ package object net {
   implicit class RichUniqueAddress(val uniqueAddress: UniqueAddress) extends AnyVal {
 
     def toNodeId: NodeId = {
-      val addressUrl = s"${uniqueAddress.address.toString}#${uniqueAddress.uid}"
+      val addressUrl = s"${uniqueAddress.address.toString}#${uniqueAddress.longUid}"
       UUID.nameUUIDFromBytes(addressUrl.getBytes("UTF-8"))
     }
 

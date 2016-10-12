@@ -16,7 +16,10 @@
 
 package io.quckoo.id
 
+import java.nio.charset.StandardCharsets
 import java.util.UUID
+
+import upickle.default.{Reader => JsonReader, Writer => JsonWriter, _}
 
 import io.quckoo.JobSpec
 
@@ -25,18 +28,43 @@ import io.quckoo.JobSpec
  */
 object JobId {
 
+  /**
+    * NOT SUPPORTED on ScalaJS!
+    *
+    * Generates the JobId related to a specific JobSpec
+    *
+    * @param jobSpec a job specification
+    * @return a job ID
+    */
   def apply(jobSpec: JobSpec): JobId = {
     val plainId = s"${jobSpec.artifactId.toString}!${jobSpec.jobClass}"
-    val id = UUID.nameUUIDFromBytes(plainId.getBytes("UTF-8"))
-    new JobId(id.toString)
+    val idAsBytes = plainId.getBytes(StandardCharsets.UTF_8)
+    JobId(UUID.nameUUIDFromBytes(idAsBytes))
   }
 
-  @inline def apply(id: UUID): JobId = new JobId(id.toString)
+  @inline def apply(id: UUID) = new JobId(id)
+  @inline def apply(id: String) = new JobId(UUID.fromString(id))
+
+  // Upickle encoders
+
+  implicit val jobIdW: JsonWriter[JobId] = JsonWriter[JobId] {
+    jobId => implicitly[JsonWriter[UUID]].write(jobId.id)
+  }
+  implicit val jobIdR: JsonReader[JobId] = JsonReader[JobId] {
+    implicitly[JsonReader[UUID]].read andThen JobId.apply
+  }
 
 }
 
-final case class JobId(private val id: String) {
+final class JobId private (private val id: UUID) {
 
-  override def toString = id
+  override def equals(other: Any): Boolean = other match {
+    case that: JobId => this.id == that.id
+    case _           => false
+  }
+
+  override def hashCode: Int = id.hashCode()
+
+  override def toString = id.toString
 
 }

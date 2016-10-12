@@ -17,11 +17,12 @@ object Dependencies {
     val scalaCheck = "1.13.2"
     val scalaMock  = "3.2.2"
     val mockito    = "1.10.19"
+    val mockserver = "3.10.4"
 
     // Akka ----------
 
     object akka {
-      val main = "2.4.10"
+      val main = "2.4.11"
       val kryo = "0.4.1"
 
       // http extensions
@@ -35,7 +36,7 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "0.11.1"
+    val scalaJsReact    = "0.11.2"
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.0"
 
@@ -50,19 +51,20 @@ object Dependencies {
 
     // Other utils ---
 
-    val scopt    = "3.5.0"
-    val slogging = "0.5.0"
-    val monocle  = "1.2.2"
-    val scalaz   = "7.2.4"
-    val monix    = "2.0.0"
-    val cron4s   = "0.2.0"
+    val scopt      = "3.5.0"
+    val slogging   = "0.5.0"
+    val monocle    = "1.2.2"
+    val scalaz     = "7.2.6"
+    val monix      = "2.0.1"
+    val cron4s     = "0.2.0"
+    val enumeratum = "1.4.14"
 
     // JavaScript Libraries
 
     val jquery = "1.11.1"
     val bootstrap = "3.3.2"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs = "15.2.1"
+    val reactJs = "15.3.2"
   }
 
   // Common library definitions
@@ -109,9 +111,10 @@ object Dependencies {
 
     val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.1"
 
-    val scalaTest  = "org.scalatest"  %% "scalatest"      % version.scalaTest
-    val scalaMock  = "org.scalamock"  %% "scalamock-core" % version.scalaMock
-    val mockito    = "org.mockito"     % "mockito-core"   % version.mockito
+    val scalaTest  = "org.scalatest"   %% "scalatest"              % version.scalaTest
+    val scalaMock  = "org.scalamock"   %% "scalamock-core"         % version.scalaMock
+    val mockito    = "org.mockito"      % "mockito-core"           % version.mockito
+    val mockserver = "org.mock-server"  % "mockserver-netty"       % version.mockserver
   }
 
   object compiler {
@@ -124,10 +127,12 @@ object Dependencies {
     libraryDependencies ++= Seq(
       compilerPlugin(Dependencies.compiler.macroParadise),
 
-      "com.lihaoyi"    %%% "upickle"         % version.upickle,
-      "org.scalaz"     %%% "scalaz-core"     % version.scalaz,
-      "io.github.soc"  %%% "scala-java-time" % version.scalaTime,
-      "org.scalatest"  %%% "scalatest"       % version.scalaTest  % Test,
+      "com.lihaoyi"    %%% "upickle"            % version.upickle,
+      "com.beachape"   %%% "enumeratum"         % version.enumeratum,
+      "com.beachape"   %%% "enumeratum-upickle" % version.enumeratum,
+      "org.scalaz"     %%% "scalaz-core"        % version.scalaz,
+      "io.github.soc"  %%% "scala-java-time"    % version.scalaTime,
+      "org.scalatest"  %%% "scalatest"          % version.scalaTest  % Test,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
@@ -141,10 +146,11 @@ object Dependencies {
   lazy val api = Def.settings(
     addCompilerPlugin(compiler.macroParadise),
     libraryDependencies ++= Seq(
-      "me.chrons"      %%% "diode"          % version.diode,
-      "io.monix"       %%% "monix-reactive" % version.monix,
-      "org.scalatest"  %%% "scalatest"      % version.scalaTest  % Test,
-      "org.scalacheck" %%% "scalacheck"     % version.scalaCheck % Test
+      "me.chrons"      %%% "diode"           % version.diode,
+      "io.monix"       %%% "monix-reactive"  % version.monix,
+      "io.monix"       %%% "monix-scalaz-72" % version.monix,
+      "org.scalatest"  %%% "scalatest"       % version.scalaTest  % Test,
+      "org.scalacheck" %%% "scalacheck"      % version.scalaCheck % Test
     )
   )
 
@@ -170,7 +176,8 @@ object Dependencies {
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
-      Akka.kryoSerialization
+      Akka.kryoSerialization, Akka.http, Akka.sse,
+      mockserver % Test
     )
   }
 
@@ -268,6 +275,12 @@ object Dependencies {
   }
 
   // Support modules ================================
+
+  lazy val testSupport = Def.settings {
+    libraryDependencies ++= Seq(
+      "io.github.soc"  %%% "scala-java-time"    % version.scalaTime
+    )
+  }
 
   lazy val testSupportJVM = Def.settings {
     import libs._

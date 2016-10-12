@@ -12,7 +12,7 @@ import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.test.{ImplicitClock, TestActorSystem}
-import io.quckoo.{TaskExecution, JobSpec, Trigger}
+import io.quckoo.{JobSpec, Task, TaskExecution, Trigger}
 
 import org.scalatest._
 
@@ -65,9 +65,8 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val executionPlan = TestActorRef(executionDriverProps,
-      self, "executionDriverWithRecurringTrigger"
-    )
+    val driverName = "executionDriverWithRecurringTrigger"
+    val executionPlan = system.actorOf(executionDriverProps, driverName)
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -118,10 +117,21 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       finishedMsg.planId shouldBe planId
 
       executionProbe.expectNoMsg()
-      expectMsg(ShardRegion.Passivate(PoisonPill))
 
       executionPlan ! PoisonPill
       expectTerminated(executionPlan)
+    }
+
+    "should self-passivate if restarted again" in {
+      val reencarnatedDriver = system.actorOf(executionDriverProps, driverName)
+      watch(reencarnatedDriver)
+
+      reencarnatedDriver ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+
+      eventListener.expectNoMsg()
+      reencarnatedDriver ! PoisonPill
+
+      expectTerminated(reencarnatedDriver)
     }
   }
 
@@ -131,9 +141,8 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
     val planId = UUID.randomUUID()
-    val executionDriver = TestActorRef(executionDriverProps,
-      self, "executionDriverWithRecurringTriggerAndCancellation"
-    )
+    val driverName = "executionDriverWithRecurringTriggerAndCancellation"
+    val executionDriver = system.actorOf(executionDriverProps, driverName)
     watch(executionDriver)
 
     "create an execution from a job specification" in {
@@ -169,10 +178,21 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       finishedMsg.planId shouldBe planId
 
       executionProbe.expectNoMsg()
-      expectMsg(ShardRegion.Passivate(PoisonPill))
 
       executionDriver ! PoisonPill
       expectTerminated(executionDriver)
+    }
+
+    "should self-passivate if restarted again" in {
+      val reencarnatedDriver = system.actorOf(executionDriverProps, driverName)
+      watch(reencarnatedDriver)
+
+      reencarnatedDriver ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+
+      eventListener.expectNoMsg()
+      reencarnatedDriver ! PoisonPill
+
+      expectTerminated(reencarnatedDriver)
     }
   }
 
@@ -217,6 +237,56 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
 
       executionPlan ! PoisonPill
       expectTerminated(executionPlan)
+    }
+  }
+
+  "An execution driver that dies after firing the task" should {
+    val trigger = Trigger.Immediate
+    val executionProbe = TestProbe()
+    val executionProps = TestActors.forwardActorProps(executionProbe.ref)
+
+    val planId = UUID.randomUUID()
+    val driverName = "executionDriverThatDiesAfterFire"
+    val executionPlan = system.actorOf(executionDriverProps, driverName)
+    watch(executionPlan)
+
+    var task: Task = null
+
+    "create an execution from a job specification before dying" in {
+      executionPlan ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+
+      val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
+      startedMsg.jobId shouldBe TestJobId
+      startedMsg.planId shouldBe planId
+
+      val scheduledMsg = eventListener.expectMsgType[TaskScheduled]
+      scheduledMsg.jobId shouldBe TestJobId
+      scheduledMsg.planId shouldBe planId
+
+      executionProbe.expectMsgType[ExecutionLifecycle.Awake]
+      executionProbe.reply(ExecutionLifecycle.Triggered(scheduledMsg.task))
+
+      val triggeredMsg = eventListener.expectMsgType[TaskTriggered]
+      triggeredMsg.jobId shouldBe TestJobId
+      triggeredMsg.planId shouldBe planId
+      triggeredMsg.taskId shouldBe scheduledMsg.task.id
+
+      task = scheduledMsg.task
+
+      executionPlan ! PoisonPill
+      expectTerminated(executionPlan)
+    }
+
+    "restore the execution after re-encarnating" in {
+      val reencarnatedDriver = system.actorOf(executionDriverProps, driverName)
+      watch(reencarnatedDriver)
+
+      executionProbe.send(reencarnatedDriver, ExecutionLifecycle.Triggered(task))
+
+      val triggeredMsg = eventListener.expectMsgType[TaskTriggered]
+      triggeredMsg.jobId shouldBe TestJobId
+      triggeredMsg.planId shouldBe planId
+      triggeredMsg.taskId shouldBe task.id
     }
   }
 

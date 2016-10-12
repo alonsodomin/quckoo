@@ -10,6 +10,7 @@ import akka.testkit._
 import io.quckoo.cluster.journal.QuckooTestJournal
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution, Trigger}
 import io.quckoo.cluster.topics
+import io.quckoo.fault._
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -137,7 +138,7 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
         finishedMsg.planId shouldBe planId
         finishedMsg.jobId shouldBe TestJobId
 
-        expectMsg(finishedMsg)
+        expectMsg(ExecutionPlanCancelled(TestJobId, planId, finishedMsg.dateTime))
       }
     }
 

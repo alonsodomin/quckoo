@@ -23,131 +23,71 @@ import akka.http.scaladsl.server.directives._
 
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 
-import io.quckoo.auth._
+import io.quckoo.auth.{Passport, Principal}
 import io.quckoo.auth.http._
 import io.quckoo.cluster.core.Auth
 
-import scala.concurrent.Future
-import scala.concurrent.duration._
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
+
+import scalaz._
+import Scalaz._
+
 
 /**
  * Created by alonsodomin on 14/10/2015.
  */
 trait AuthDirectives extends UpickleSupport { auth: Auth =>
   import Directives._
-  //import RouteDirectives._
-  import AuthenticationFailedRejection._
 
-  def extractAuthInfo: Directive1[XSRFToken] =
-    headerValueByName(XSRFTokenHeader).flatMap { header =>
-      provide(XSRFToken(header))
+  private[this] val QuckooHttpChallenge = HttpChallenge("FormBased", Realm)
+
+  private[this] def authenticationResult[T](result: => Future[Option[T]])(
+    implicit ec: ExecutionContext
+  ): Future[AuthenticationResult[T]] = {
+    OptionT(result).map(_.right[HttpChallenge]).
+      getOrElse(QuckooHttpChallenge.left[T]).
+      map(_.toEither)
+  }
+
+  def authenticateUser(implicit timeout: FiniteDuration): Route = {
+    def basicHttpAuth(creds: Option[BasicHttpCredentials])(
+      implicit ec: ExecutionContext
+    ): Future[AuthenticationResult[Principal]] = {
+      authenticationResult(auth.basic(Credentials(creds)))
     }
 
-  def authenticateUser: Route =
     extractExecutionContext { implicit ec =>
       implicit val ev = implicitly[ClassTag[BasicHttpCredentials]]
-      val directive = authenticate0[BasicHttpCredentials, User]("FormBased", auth.basic)
-      directive { completeWithAuthToken(_) }
-    }
-
-  def refreshToken: Route =
-    authenticateToken(acceptExpired = true)(completeWithAuthToken)
-
-  def authenticated: Directive1[User] =
-    authenticateToken(acceptExpired = false).recoverPF {
-      case AuthenticationFailedRejection(CredentialsMissing, _) :: _ => authenticateTokenCookie
-    } flatMap(provide(_))
-
-  private[this] def authenticate0[C <: HttpCredentials: ClassTag, U](
-    challengeScheme: String,
-    authenticator: Credentials => Future[Option[U]]
-  ): AuthenticationDirective[U] = {
-    extractExecutionContext.flatMap { implicit ec =>
-      authenticateOrRejectWithChallenge[C, U] { cred ⇒
-        authenticator(Credentials(cred)).map {
-          case Some(u) => AuthenticationResult.success(u)
-          case None => AuthenticationResult.failWithChallenge(HttpChallenge(challengeScheme, auth.Realm))
-        }
+      val authenticate = authenticateOrRejectWithChallenge[BasicHttpCredentials, Principal](basicHttpAuth)
+      authenticate { (principal: Principal) =>
+        completeWithPassport(auth.generatePassport(principal))
       }
     }
   }
 
-  def authenticateWithCookie[U](
-    challengeScheme: String,
-    authenticator: Credentials => Future[Option[U]]
-  ): AuthenticationDirective[U] = {
-    extractExecutionContext.flatMap { implicit ec =>
-      optionalCookie(AuthCookie).flatMap { authCookie =>
-        val creds = Credentials(authCookie.map(cookie => OAuth2BearerToken(cookie.value)))
-        val authResult = authenticator(creds).map {
-          case Some(u) => AuthenticationResult.success(u)
-          case None => AuthenticationResult.failWithChallenge(HttpChallenge(challengeScheme, auth.Realm))
-        }
-        onSuccess(authResult).flatMap {
-          case Right(u) => provide(u)
-          case Left(challenge) =>
-            val cause = creds match {
-              case Credentials.Missing => CredentialsMissing
-              case _                   => CredentialsRejected
-            }
-            reject(AuthenticationFailedRejection(cause, challenge)): Directive1[U]
-        }
-      }
-    }
-  }
+  def refreshPassport(implicit timeout: FiniteDuration): Route =
+    extractPassport(acceptExpired = true)(completeWithPassport)
 
-  private[this] def authenticateToken(acceptExpired: Boolean = false): AuthenticationDirective[User] = {
+  def authenticated: Directive1[Passport] =
+    extractPassport(acceptExpired = false).flatMap(provide)
+
+  private[this] def extractPassport(acceptExpired: Boolean = false): AuthenticationDirective[Passport] = {
+    def oauth2Http(creds: Option[OAuth2BearerToken])(implicit ec: ExecutionContext): Future[AuthenticationResult[Passport]] = {
+      authenticationResult(auth.bearer(acceptExpired)(Credentials(creds)))
+    }
+
     extractExecutionContext.flatMap { implicit ec =>
       implicit val ev = implicitly[ClassTag[OAuth2BearerToken]]
-      authenticate0[OAuth2BearerToken, User]("Bearer", auth.token(acceptExpired))
+      authenticateOrRejectWithChallenge[OAuth2BearerToken, Passport](oauth2Http _)
     }
   }
 
-  private[this] def authenticateTokenCookie: AuthenticationDirective[User] = {
-    extractExecutionContext.flatMap { implicit ec =>
-      authenticateWithCookie("Bearer", auth.token(acceptExpired = false))
-    }
-  }
-
-  private[this] def completeWithAuthToken(user: User): Route = {
-    val jwt = auth.generateToken(user)
-    val authCookie = HttpCookie(
-      AuthCookie, jwt, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
-    )
-    setCookie(authCookie) {
-      complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, jwt))
-    }
-  }
-
-  def authorizeRequest: Directive0 = {
-    optionalCookie(XSRFTokenCookie).flatMap {
-      case Some(cookie) =>
-        headerValueByName(XSRFTokenHeader).flatMap { header =>
-          if (header != cookie.value) {
-            reject(AuthorizationFailedRejection)
-          } else {
-            pass & cancelRejection(AuthorizationFailedRejection) & refreshAuthInfo
-          }
-        }
-
-      case None =>
-        reject(AuthorizationFailedRejection)
-    }
-  }
+  private[this] def completeWithPassport(passport: Passport): Route =
+    complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, passport.token))
 
   def invalidateAuth: Directive0 =
     setCookie(HttpCookie(AuthCookie, "", path = Some("/"), expires = Some(DateTime.now)))
-
-  // TODO remove this method
-  def refreshAuthInfo: Directive0 =
-    extractAuthInfo.flatMap { authInfo =>
-      addAuthCookies(authInfo)
-    }
-
-  private[this] def addAuthCookies(auth: XSRFToken): Directive0 =
-    setCookie(HttpCookie(
-      XSRFTokenCookie, auth.toString, path = Some("/"), expires = Some(DateTime.now + 30.minutes.toMillis)
-    ))
 
 }

@@ -18,11 +18,11 @@ package io.quckoo.console.layout
 
 import diode.react.ModelProxy
 
-import io.quckoo.auth.User
+import io.quckoo.auth.Principal
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components._
 import io.quckoo.console.core.Logout
-import io.quckoo.console.security.UserWidget
+import io.quckoo.console.security.PrincipalWidget
 import io.quckoo.time.implicits.systemClock
 
 import japgolly.scalajs.react._
@@ -42,7 +42,7 @@ object Navigation {
 
   case class Props(initial: NavigationItem, menu: List[NavigationMenu],
                    routerCtl: RouterCtl[ConsoleRoute], current: ConsoleRoute,
-                   proxy: ModelProxy[Option[User]])
+                   proxy: ModelProxy[Option[Principal]])
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -85,7 +85,7 @@ object Navigation {
     def onLogoutClicked(e: ReactEventI): Callback =
       e.preventDefaultCB >> $.props.flatMap(_.proxy.dispatch(Logout))
 
-    def render(props: Props): ReactElement = <.div(props.proxy().map { user =>
+    def render(props: Props): ReactElement = <.div(props.proxy().map { principal =>
       <.nav(^.`class` := "navbar navbar-default navbar-fixed-top",
         <.div(^.`class` := "container-fluid",
           <.div(^.`class` := "navbar-header",
@@ -101,7 +101,7 @@ object Navigation {
             ),
             <.ul(^.`class` := "nav navbar-nav navbar-right",
               <.li(^.`class` := "navbar-text", ClockWidget(systemClock)),
-              <.li(^.`class` := "navbar-text", UserWidget(user)),
+              <.li(^.`class` := "navbar-text", PrincipalWidget(principal)),
               <.li(<.a(^.href := "#", ^.onClick ==> onLogoutClicked, Icons.signOut, "Logout"))
             )
           )
@@ -118,7 +118,7 @@ object Navigation {
 
   def apply(initial: NavigationItem, menu: List[NavigationMenu],
             routerCtl: RouterCtl[ConsoleRoute], current: ConsoleRoute,
-            proxy: ModelProxy[Option[User]]) =
+            proxy: ModelProxy[Option[Principal]]) =
     component(Props(initial, menu, routerCtl, current, proxy))
 
 }

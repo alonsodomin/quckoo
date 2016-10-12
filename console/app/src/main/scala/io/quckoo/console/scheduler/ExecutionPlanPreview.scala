@@ -37,7 +37,7 @@ object ExecutionPlanPreview {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def generateTimeline(props: Props, state: State): Seq[ZonedDateTime] = {
+    def generateTimeline(props: Props, state: State): Stream[ZonedDateTime] = {
       import Trigger._
 
       def genNext(prev: ReferenceTime): (ReferenceTime, Boolean) = {

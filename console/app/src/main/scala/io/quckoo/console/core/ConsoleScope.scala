@@ -16,8 +16,7 @@
 
 package io.quckoo.console.core
 
-import io.quckoo.client.QuckooClient
-import io.quckoo.client.ajax.AjaxQuckooClientFactory
+import io.quckoo.auth.Passport
 import io.quckoo.net.QuckooState
 
 import org.threeten.bp._
@@ -27,21 +26,17 @@ import org.threeten.bp._
   */
 
 final case class ConsoleScope private (
-  client: Option[QuckooClient],
+  passport: Option[Passport],
   clusterState: QuckooState,
   userScope: UserScope,
   lastLogin: Option[LocalDateTime]
-) {
-
-  def currentUser = client.flatMap(_.principal)
-
-}
+)
 
 object ConsoleScope {
 
   def initial =
     ConsoleScope(
-      client       = AjaxQuckooClientFactory.autoConnect(),
+      passport     = None,
       clusterState = QuckooState(),
       userScope    = UserScope.initial,
       lastLogin    = None

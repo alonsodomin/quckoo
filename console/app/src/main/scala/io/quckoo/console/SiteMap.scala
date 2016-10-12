@@ -17,16 +17,14 @@
 package io.quckoo.console
 
 import diode.react.ModelProxy
-
 import io.quckoo.console.components._
-import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, LoginProcessor}
+import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, ErrorProcessor, LoginProcessor}
 import io.quckoo.console.dashboard.DashboardView
 import io.quckoo.console.layout.Navigation
 import io.quckoo.console.layout.Navigation.NavigationItem
 import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -38,16 +36,16 @@ object SiteMap {
   import ConsoleRoute._
 
   def dashboardPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity(_))(DashboardView(_))
+    proxy.wrap(identity)(DashboardView(_))
 
   def loginPage(proxy: ModelProxy[ConsoleScope])(referral: Option[ConsoleRoute]) =
-    proxy.wrap(identity(_))(p => LoginPage(p, referral))
+    proxy.wrap(identity)(p => LoginPage(p, referral))
 
   def registryPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity(_))(RegistryPage(_))
+    proxy.wrap(identity)(RegistryPage(_))
 
   def schedulerPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity(_))(SchedulerPage(_))
+    proxy.wrap(identity)(SchedulerPage(_))
 
   private[this] def publicPages(proxy: ModelProxy[ConsoleScope]) = RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
     import dsl._
@@ -64,7 +62,7 @@ object SiteMap {
     implicit val redirectMethod = Redirect.Push
 
     def isLoggedIn: CallbackB =
-      CallbackTo { proxy().currentUser.isDefined }
+      CallbackTo { proxy().passport.isDefined }
 
     def redirectToLogin(referral: ConsoleRoute) =
       Some(render(loginPage(proxy)(Some(referral))))
@@ -94,8 +92,8 @@ object SiteMap {
   )
 
   def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute], res: Resolution[ConsoleRoute]): ReactElement = {
-    def navigation = proxy.wrap(_.currentUser){ user =>
-      Navigation(mainMenu.head, mainMenu, ctrl, res.page, user)
+    def navigation = proxy.wrap(_.passport.flatMap(_.principal)){ principal =>
+      Navigation(mainMenu.head, mainMenu, ctrl, res.page, principal)
     }
 
     <.div(navigation, res.render())
@@ -106,11 +104,14 @@ object SiteMap {
   def apply(proxy: ModelProxy[ConsoleScope]) = {
     val cfg = config(proxy)
     val logic = new RouterLogic(baseUrl, cfg)
-    val processor = new LoginProcessor(logic.ctl)
+    val processors = List(
+      new LoginProcessor(logic.ctl),
+      new ErrorProcessor
+    )
 
     val component = Router.componentUnbuiltC(baseUrl, cfg, logic).
-      componentWillMount(_ => Callback(ConsoleCircuit.addProcessor(processor))).
-      componentWillUnmount(_ => Callback(ConsoleCircuit.removeProcessor(processor))).
+      componentWillMount(_ => Callback(processors.foreach(ConsoleCircuit.addProcessor))).
+      componentWillUnmount(_ => Callback(processors.foreach(ConsoleCircuit.removeProcessor))).
       build
 
     component()

@@ -179,7 +179,7 @@ lazy val client = (crossProject in file("client")).
   jsSettings(commonJsSettings: _*).
   jsSettings(Dependencies.clientJS: _*).
   jvmSettings(Dependencies.clientJVM: _*).
-  dependsOn(api)
+  dependsOn(api, testSupport % Test)
 
 lazy val clientJS = client.js
 lazy val clientJVM = client.jvm
@@ -277,6 +277,7 @@ lazy val clusterMaster = (project in file("cluster/master")).
   settings(MultiNode.settings).
   settings(
     //reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
+    baseDirectory in reStart := file("cluster/master/target")
   ).
   settings(Packaging.masterSettings: _*).
   dependsOn(clusterShared, consoleResources, testSupportJVM % Test)
@@ -292,6 +293,9 @@ lazy val clusterWorker = (project in file("cluster/worker")).
   settings(Revolver.settings: _*).
   settings(Dependencies.clusterWorker).
   settings(Packaging.workerSettings: _*).
+  settings(
+    baseDirectory in reStart := file("cluster/worker/target")
+  ).
   dependsOn(clusterShared, testSupportJVM % Test)
 
 // Test Support Utils ========================================
@@ -303,6 +307,8 @@ lazy val testSupport = (crossProject in file("test-support")).
   ).
   settings(commonSettings: _*).
   settings(noPublishSettings: _*).
+  settings(Dependencies.testSupport: _*).
+  jsSettings(commonJsSettings: _*).
   jvmSettings(Dependencies.testSupportJVM: _*)
 
 lazy val testSupportJS = testSupport.js
@@ -340,5 +346,5 @@ lazy val exampleProducers = (project in file("examples/producers")).
 
 // Command aliases ==================================================
 
-//addCommandAlias("testJS", ";commonJS/test;consoleJS/test")
-//addCommandAlias("testJVM", ";commonJVM/test;client/test;consoleJVM/test;cluster/test;examples/test")
+addCommandAlias("testJS", ";coreJS/test;apiJS/test;clientJS/test;consoleApp/test")
+addCommandAlias("testJVM", ";coreJVM/test;apiJVM/test;clientJVM/test;cluster/test;examples/test")

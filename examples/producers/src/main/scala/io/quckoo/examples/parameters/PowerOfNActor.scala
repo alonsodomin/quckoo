@@ -17,7 +17,9 @@
 package io.quckoo.examples.parameters
 
 import akka.actor._
+
 import io.quckoo._
+import io.quckoo.fault.JobNotEnabled
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -88,7 +90,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
   }
 
   def waitAccepted: Receive = {
-    case TaskScheduled(id, planId, taskId) if jobId == id =>
+    case TaskScheduled(id, planId, taskId, _) if jobId == id =>
       log.info("Job schedule has been accepted by the cluster. executionPlanId={}", planId)
       if (n < 25) {
         scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
