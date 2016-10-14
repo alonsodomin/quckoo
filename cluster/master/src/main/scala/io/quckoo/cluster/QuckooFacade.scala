@@ -24,7 +24,7 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrate
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 
-import io.quckoo.api.EventDef
+import io.quckoo.Info
 import io.quckoo.auth.Passport
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.pattern._
@@ -35,7 +35,6 @@ import io.quckoo.cluster.scheduler.SchedulerEventPublisher
 import io.quckoo.fault._
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
-import io.quckoo.protocol.Event
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
@@ -70,7 +69,7 @@ object QuckooFacade extends Logging {
           log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
     }
 
-    log.info("Starting Quckoo server...")
+    log.info(s"Starting Quckoo Server ${Info.version} ...")
 
     val promise  = Promise[Unit]()
     val journal  = new QuckooProductionJournal

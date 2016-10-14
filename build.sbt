@@ -149,8 +149,12 @@ lazy val quckoo = (project in file("."))
 lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
   .settings(
     name := "core",
-    moduleName := "quckoo-core"
+    moduleName := "quckoo-core",
+    buildInfoPackage := "io.quckoo",
+    buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
+    buildInfoObject := "Info"
   )
+  .enablePlugins(BuildInfoPlugin)
   .settings(commonSettings: _*)
   .settings(scoverageSettings: _*)
   .settings(publishSettings: _*)

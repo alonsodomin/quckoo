@@ -22,16 +22,19 @@ import akka.japi.Util._
 
 import com.typesafe.config.{Config, ConfigFactory}
 
+import io.quckoo.Info
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.{IvyConfiguration, IvyResolve}
 import io.quckoo.worker.{JobExecutor, Worker}
+
+import org.slf4s.Logging
 
 import scopt.OptionParser
 
 /**
   * Created by domingueza on 09/07/15.
   */
-object Boot extends App {
+object Boot extends App with Logging {
 
   val parser = new OptionParser[Options]("quckoo-worker") {
     head("quckoo-worker", "0.1.0")
@@ -53,6 +56,8 @@ object Boot extends App {
     opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
+    log.info(s"Starting Quckoo Worker ${Info.version} ...")
+
     val system = ActorSystem(Options.SystemName, config)
     sys.addShutdownHook { system.terminate() }
 

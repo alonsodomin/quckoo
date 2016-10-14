@@ -18,6 +18,7 @@ package io.quckoo.console.layout
 
 import diode.react.ModelProxy
 
+import io.quckoo.Info
 import io.quckoo.auth.Principal
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components._
@@ -92,7 +93,7 @@ object Navigation {
             <.a(^.`class` := "navbar-brand",
               ^.href := props.routerCtl.urlFor(DashboardRoute).value,
               ^.onClick ==> navigationItemClicked(props.initial),
-              Icons.home, <.span("Quckoo")
+              Icons.home, <.span("Quckoo", Info.version)
             )
           ),
           <.div(^.`class` := "collapse navbar-collapse",
