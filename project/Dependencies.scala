@@ -26,8 +26,8 @@ object Dependencies {
       val kryo = "0.4.1"
 
       // http extensions
-      val json = "1.9.0"
-      val sse  = "1.10.0"
+      val json = "1.10.1"
+      val sse  = "1.11.0"
 
       // persistence plugins
       val cassandra = "0.18"
@@ -46,7 +46,7 @@ object Dependencies {
 
     val diode = "1.0.0"
 
-    val upickle   = "0.4.1"
+    val upickle   = "0.4.3"
     val scalatags = "0.6.0"
 
     // Other utils ---
@@ -55,7 +55,7 @@ object Dependencies {
     val slogging   = "0.5.0"
     val monocle    = "1.2.2"
     val scalaz     = "7.2.6"
-    val monix      = "2.0.1"
+    val monix      = "2.0.3"
     val cron4s     = "0.2.0"
     val enumeratum = "1.4.14"
 
