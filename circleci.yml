@@ -1,8 +1,9 @@
+machine:
+  pre:
+    - gem install compass
+
 dependencies:
   cache_directories:
     - $HOME/.m2
     - $HOME/.sbt
     - $HOME/.ivy2
-
-  pre:
-    - gem install compass
