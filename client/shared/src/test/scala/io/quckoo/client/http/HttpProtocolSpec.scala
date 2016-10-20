@@ -34,10 +34,13 @@ object HttpProtocolSpec {
   implicit final val FixedClock = Clock.fixed(FixedInstant, ZoneId.of("UTC"))
 
   def generatePassport(): Passport = {
-    val header = DataBuffer.fromString("{}").toBase64
-    val claims = DataBuffer.fromString("{}").toBase64
-    val signature = DataBuffer.fromString(System.currentTimeMillis().toString).toBase64
-    new Passport(Map.empty, s"$header.$claims.$signature")
+    val \/-(passport) = for {
+      header    <- DataBuffer.fromString("{}").toBase64
+      claims    <- DataBuffer.fromString("{}").toBase64
+      signature <- DataBuffer.fromString(System.currentTimeMillis().toString).toBase64
+    } yield new Passport(Map.empty, s"$header.$claims.$signature")
+
+    passport
   }
 
   implicit final val TestPassport = generatePassport()
