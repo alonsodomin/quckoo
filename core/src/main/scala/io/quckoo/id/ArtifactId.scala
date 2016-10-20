@@ -22,15 +22,31 @@ import io.quckoo.validation._
 import monocle.macros.Lenses
 
 import scalaz._
+import Scalaz._
 
 /**
   * Created by aalonsodominguez on 15/07/15.
   */
 object ArtifactId {
-  import Scalaz._
 
   final val GroupSeparator: Char   = ':'
   final val VersionSeparator: Char = '#'
+
+  val validator = {
+    import Validators._
+
+    val validGroup = nonEmpty[Char]
+    val validArtifact = nonEmpty[Char]
+    val validVersion = nonEmpty[Char]
+
+    validGroup * validArtifact * validVersion
+  }
+
+  def validate2(artifactId: ArtifactId): ValidationNel[Violation, ArtifactId] = {
+    validator.run((artifactId.organization, artifactId.name, artifactId.version)).map {
+      case (a, b, c) => ArtifactId(a.mkString, b.mkString, c.mkString)
+    }
+  }
 
   def validate(artifactId: ArtifactId): ValidationNel[ValidationFault, ArtifactId] =
     validate(artifactId.organization, artifactId.name, artifactId.version)
