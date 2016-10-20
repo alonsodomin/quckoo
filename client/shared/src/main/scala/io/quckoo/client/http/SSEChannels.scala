@@ -25,9 +25,10 @@ import io.quckoo.serialization.Decoder
   */
 trait SSEChannels extends Channels[HttpProtocol] {
 
-  override def createChannel[E: EventDef](implicit decoder: Decoder[String, E]) = new Channel.Aux[HttpProtocol, E] {
-    override val eventDef   = implicitly[EventDef[E]]
-    override val unmarshall = Unmarshall[HttpServerSentEvent, E](_.data.as[E])
-  }
+  override def createChannel[E: EventDef](implicit decoder: Decoder[String, E]) =
+    new Channel.Aux[HttpProtocol, E] {
+      override val eventDef   = implicitly[EventDef[E]]
+      override val unmarshall = Unmarshall[HttpServerSentEvent, E](_.data.as[E])
+    }
 
 }

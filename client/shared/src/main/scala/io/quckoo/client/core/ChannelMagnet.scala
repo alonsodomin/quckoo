@@ -30,9 +30,10 @@ trait ChannelMagnet[E] {
 }
 
 object ChannelMagnet {
-  implicit def apply[E](implicit ev: EventDef[E], decoderEv: Decoder[String, E]): ChannelMagnet[E] =
+  implicit def apply[E](implicit ev: EventDef[E],
+                        decoderEv: Decoder[String, E]): ChannelMagnet[E] =
     new ChannelMagnet[E] {
-      implicit val eventDef: EventDef[E] = ev
+      implicit val eventDef: EventDef[E]       = ev
       implicit val decoder: Decoder[String, E] = decoderEv
     }
 }

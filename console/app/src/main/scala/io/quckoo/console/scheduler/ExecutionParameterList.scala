@@ -121,8 +121,8 @@ object ExecutionParameterList {
               case (param, idx) =>
                 <.div(
                   ^.`class` := "col-sm-offset-2",
-                  ParamRow
-                    .withKey(idx)(ParamRowProps(param, onParamUpdate(idx), deleteParam(idx))))
+                  ParamRow.withKey(idx)(
+                    ParamRowProps(param, onParamUpdate(idx), deleteParam(idx))))
             }
           )
         }

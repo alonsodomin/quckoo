@@ -41,7 +41,6 @@ class UserAuthenticator(sessionTimeout: FiniteDuration) extends Actor with Actor
 
   def receive = {
     case Authenticate(userId, password) =>
-
   }
 
 }

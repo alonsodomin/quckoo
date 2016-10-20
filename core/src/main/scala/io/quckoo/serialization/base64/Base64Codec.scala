@@ -19,9 +19,10 @@ class Base64Codec(scheme: Scheme) extends Codec[String, Array[Byte]] {
 
     if (pad > 2 || a.length % 4 != 0) Attempt.fail {
       new java.lang.IllegalArgumentException("Invalid Base64 String:" + a)
-    } else Attempt {
-      (cleanS + "A" * pad).grouped(4).map(threeBytes).flatten.toArray.dropRight(pad)
-    }
+    } else
+      Attempt {
+        (cleanS + "A" * pad).grouped(4).map(threeBytes).flatten.toArray.dropRight(pad)
+      }
   }
 
   override def decode(input: Array[Byte]): Attempt[String] = {
