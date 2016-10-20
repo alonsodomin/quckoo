@@ -16,7 +16,7 @@
 
 package io.quckoo.client
 
-import io.quckoo.util.LawfulTry
+import io.quckoo.util.Attempt
 import monix.reactive.Observable
 
 import scalaz._
@@ -26,22 +26,22 @@ import scalaz._
   */
 package object core {
 
-  type Marshall[Cmd[_] <: Command[_], In, Req] = Kleisli[LawfulTry, Cmd[In], Req]
+  type Marshall[Cmd[_] <: Command[_], In, Req] = Kleisli[Attempt, Cmd[In], Req]
   object Marshall {
     @inline
     def apply[Cmd[_] <: Command[_], In, Req](
-        run: Cmd[In] => LawfulTry[Req]): Marshall[Cmd, In, Req] =
-      Kleisli[LawfulTry, Cmd[In], Req](run)
+        run: Cmd[In] => Attempt[Req]): Marshall[Cmd, In, Req] =
+      Kleisli[Attempt, Cmd[In], Req](run)
   }
 
-  type Unmarshall[Res, Rslt] = Kleisli[LawfulTry, Res, Rslt]
+  type Unmarshall[Res, Rslt] = Kleisli[Attempt, Res, Rslt]
   object Unmarshall {
-    @inline def apply[Res, Rslt](run: Res => LawfulTry[Rslt]): Unmarshall[Res, Rslt] =
-      Kleisli[LawfulTry, Res, Rslt](run)
+    @inline def apply[Res, Rslt](run: Res => Attempt[Rslt]): Unmarshall[Res, Rslt] =
+      Kleisli[Attempt, Res, Rslt](run)
   }
 
-  final val lawfulTry2Observable = new (LawfulTry ~> Observable) {
-    override def apply[A](fa: LawfulTry[A]): Observable[A] = fa match {
+  final val lawfulTry2Observable = new (Attempt ~> Observable) {
+    override def apply[A](fa: Attempt[A]): Observable[A] = fa match {
       case \/-(value) => Observable.eval(value)
       case -\/(ex)    => Observable.raiseError(ex)
     }

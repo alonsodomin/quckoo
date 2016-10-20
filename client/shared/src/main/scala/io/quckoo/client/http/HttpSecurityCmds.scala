@@ -20,7 +20,7 @@ import io.quckoo.auth.{Credentials, InvalidCredentialsException, Passport}
 import io.quckoo.client.core.CmdMarshalling.{Anon, Auth}
 import io.quckoo.client.core._
 import io.quckoo.serialization.DataBuffer
-import io.quckoo.util.LawfulTry
+import io.quckoo.util.Attempt
 
 /**
   * Created by alonsodomin on 19/09/2016.

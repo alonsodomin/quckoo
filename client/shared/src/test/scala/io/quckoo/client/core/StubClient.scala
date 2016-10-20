@@ -1,7 +1,7 @@
 package io.quckoo.client.core
 
 import io.quckoo.client.QuckooClient
-import io.quckoo.util.LawfulTry
+import io.quckoo.util.Attempt
 
 import org.scalatest._
 import org.scalatest.matchers.Matcher
@@ -18,8 +18,8 @@ trait StubClient { this: Assertions with Matchers =>
   }
 
   final class RequestClause[P <: Protocol](matcher: Matcher[P#Request])(implicit commands: ProtocolSpecs[P]) {
-    def replyWith(process: P#Request => LawfulTry[P#Response]): ClientRunner[P] = {
-      val handleRequest: P#Request => LawfulTry[P#Response] = { req =>
+    def replyWith(process: P#Request => Attempt[P#Response]): ClientRunner[P] = {
+      val handleRequest: P#Request => Attempt[P#Response] = { req =>
         OutcomeOf.outcomeOf(req should matcher) match {
           case Succeeded => process(req)
           case Exceptional(ex) => throw ex

@@ -52,7 +52,7 @@ trait HttpMarshalling {
   ) = Marshall[O#Cmd, O#In, HttpRequest] { cmd =>
     def createRequest(passport: Option[Passport]) = {
       val headers = httpHeaders(passport, cmd.timeout)
-      LawfulTry.success(HttpRequest(method, uriFor(cmd), cmd.timeout, headers))
+      Attempt.success(HttpRequest(method, uriFor(cmd), cmd.timeout, headers))
     }
 
     cmd match {
@@ -65,9 +65,9 @@ trait HttpMarshalling {
                                                                   uriFor: O#Cmd[O#In] => String)(
       implicit encoder: UWriter[O#In]
   ): Marshall[O#Cmd, O#In, HttpRequest] = {
-    val encodePayload = Kleisli[LawfulTry, O#Cmd[O#In], DataBuffer] { cmd =>
+    val encodePayload = Kleisli[Attempt, O#Cmd[O#In], DataBuffer] { cmd =>
       cmd.payload match {
-        case ()  => LawfulTry.success(DataBuffer.Empty)
+        case ()  => Attempt.success(DataBuffer.Empty)
         case any => DataBuffer(any.asInstanceOf[O#In])
       }
     }
@@ -83,7 +83,7 @@ trait HttpMarshalling {
       implicit decoder: UReader[O#Rslt]
   ): Unmarshall[HttpResponse, O#Rslt] = Unmarshall { res =>
     if (res.isFailure && res.entity.isEmpty) {
-      LawfulTry.fail(HttpErrorException(res.statusLine))
+      Attempt.fail(HttpErrorException(res.statusLine))
     } else res.entity.as[O#Rslt](decoder)
   }
 
@@ -91,7 +91,7 @@ trait HttpMarshalling {
       implicit decoder: UReader[A]
   ): Unmarshall[HttpResponse, Option[A]] = Unmarshall { res =>
     if (res.isSuccess) res.entity.as[A].map(Some(_))
-    else LawfulTry.success(None)
+    else Attempt.success(None)
   }
 
   protected def unmarshalEither[E, A](

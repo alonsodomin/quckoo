@@ -32,7 +32,7 @@ import io.quckoo.cluster.scheduler.SchedulerHttpRouter
 import io.quckoo.protocol.Event
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.serialization.json._
-import io.quckoo.util.LawfulTry
+import io.quckoo.util.Attempt
 
 import scala.concurrent.duration._
 

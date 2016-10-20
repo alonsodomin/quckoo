@@ -16,7 +16,7 @@
 
 package io.quckoo.serialization
 
-import io.quckoo.util.LawfulTry
+import io.quckoo.util.Attempt
 
 import upickle.default.{Reader => UReader, Writer => UWriter, _}
 
@@ -26,16 +26,16 @@ import scalaz.ReaderT
   * Created by alonsodomin on 11/08/2016.
   */
 package object json extends ScalazJson with JavaTime with Cron4s {
-  type JsonReader[A] = ReaderT[LawfulTry, String, A]
-  type JsonWriter[A] = ReaderT[LawfulTry, A, String]
+  type JsonReader[A] = ReaderT[Attempt, String, A]
+  type JsonWriter[A] = ReaderT[Attempt, A, String]
 
   object JsonReader {
     @inline def apply[A: UReader]: JsonReader[A] =
-      ReaderT[LawfulTry, String, A](str => LawfulTry(read[A](str)))
+      ReaderT[Attempt, String, A](str => LawfulTry(read[A](str)))
   }
 
   object JsonWriter {
     @inline def apply[A: UWriter]: JsonWriter[A] =
-      ReaderT[LawfulTry, A, String](a => LawfulTry[String](write[A](a)))
+      ReaderT[Attempt, A, String](a => LawfulTry[String](write[A](a)))
   }
 }

@@ -49,8 +49,8 @@ final class Driver[P <: Protocol] private (
 
   def invoke[C <: CmdMarshalling[P]](implicit ec: ExecutionContext,
                                      cmd: C): Kleisli[Future, cmd.Cmd[cmd.In], cmd.Rslt] = {
-    def encodeRequest  = cmd.marshall.transform(lawfulTry2Future)
-    def decodeResponse = cmd.unmarshall.transform(lawfulTry2Future)
+    def encodeRequest  = cmd.marshall.transform(attempt2Future)
+    def decodeResponse = cmd.unmarshall.transform(attempt2Future)
 
     encodeRequest >=> backend.send >=> decodeResponse
   }

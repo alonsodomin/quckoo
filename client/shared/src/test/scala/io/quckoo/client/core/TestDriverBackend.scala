@@ -11,11 +11,11 @@ import scalaz.Kleisli
   */
 private[core] final class TestDriverBackend[P <: Protocol](
     stream: Iterable[P#EventType],
-    command: P#Request => LawfulTry[P#Response]
+    command: P#Request => Attempt[P#Response]
   ) extends DriverBackend[P] {
 
   @inline def send =
-    Kleisli[LawfulTry, P#Request, P#Response](command).transform(lawfulTry2Future)
+    Kleisli[Attempt, P#Request, P#Response](command).transform(attempt2Future)
 
   @inline def open[Ch <: Channel[P]](channel: Ch) =
     Kleisli[Observable, Unit, P#EventType](_ => Observable.fromIterable(stream))

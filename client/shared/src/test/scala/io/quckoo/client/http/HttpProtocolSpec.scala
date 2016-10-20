@@ -61,17 +61,17 @@ object HttpProtocolSpec {
   )
 
   object HttpSuccess {
-    def apply(entity: DataBuffer): LawfulTry[HttpResponse] =
-      LawfulTry.success(HttpResponse(200, "", entity))
+    def apply(entity: DataBuffer): Attempt[HttpResponse] =
+      Attempt.success(HttpResponse(200, "", entity))
 
-    def apply(tryEntity: LawfulTry[DataBuffer]): LawfulTry[HttpResponse] = tryEntity.flatMap(apply)
+    def apply(tryEntity: Attempt[DataBuffer]): Attempt[HttpResponse] = tryEntity.flatMap(apply)
   }
   object HttpError {
     def apply(
       statusCode: Int,
       statusLine: String = "",
-      entity: LawfulTry[DataBuffer] = LawfulTry.success(DataBuffer.Empty)
-    ): LawfulTry[HttpResponse] =
+      entity: Attempt[DataBuffer] = Attempt.success(DataBuffer.Empty)
+    ): Attempt[HttpResponse] =
       entity.map(data => HttpResponse(statusCode, statusLine, data))
   }
 
@@ -117,11 +117,11 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   "subscribe" should "return an stream of events" in {
     val givenEvents = List(MasterReachable(UUID.randomUUID()))
 
-    val httpEvents: LawfulTry[List[HttpServerSentEvent]] = EitherT(givenEvents.map(evt => DataBuffer(evt))).
+    val httpEvents: Attempt[List[HttpServerSentEvent]] = EitherT(givenEvents.map(evt => DataBuffer(evt))).
       map(HttpServerSentEvent(_)).
       run.sequenceU
 
-    lawfulTry2Future(httpEvents).flatMap { events =>
+    attempt2Future(httpEvents).flatMap { events =>
       inProtocol[HttpProtocol] withEvents events usingClient { client =>
         val collectEvents = client.channel[MasterEvent].toListL
         collectEvents.runAsync.map { evts =>

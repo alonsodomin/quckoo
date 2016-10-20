@@ -28,33 +28,33 @@ import Isomorphism._
   */
 package object util {
 
-  type LawfulTry[+A] = Throwable \/ A
-  object LawfulTry {
-    @inline def apply[A](thunk: => A): LawfulTry[A] =
+  type Attempt[+A] = Throwable \/ A
+  object Attempt {
+    @inline def apply[A](thunk: => A): Attempt[A] =
       \/.fromTryCatchNonFatal(thunk)
 
-    @inline def unit: LawfulTry[Unit]                = \/.right[Throwable, Unit](())
-    @inline def success[A](a: A): LawfulTry[A]       = \/.right[Throwable, A](a)
-    @inline def fail[A](ex: Throwable): LawfulTry[A] = \/.left[Throwable, A](ex)
+    @inline def unit: Attempt[Unit]                = \/.right[Throwable, Unit](())
+    @inline def success[A](a: A): Attempt[A]       = \/.right[Throwable, A](a)
+    @inline def fail[A](ex: Throwable): Attempt[A] = \/.left[Throwable, A](ex)
   }
 
-  final val lawfulTry2Try = new (LawfulTry ~> Try) {
-    override def apply[A](fa: LawfulTry[A]): Try[A] = fa match {
+  final val attempt2Try = new (Attempt ~> Try) {
+    override def apply[A](fa: Attempt[A]): Try[A] = fa match {
       case -\/(throwable) => StdFailure(throwable)
       case \/-(value)     => StdSuccess(value)
     }
   }
 
-  final val try2lawfulTry = new (Try ~> LawfulTry) {
-    override def apply[A](fa: Try[A]): LawfulTry[A] = fa match {
+  final val try2Attempt = new (Try ~> Attempt) {
+    override def apply[A](fa: Try[A]): Attempt[A] = fa match {
       case StdSuccess(value) => value.right[Throwable]
       case StdFailure(ex)    => ex.left[A]
     }
   }
 
-  final val lawfulTryIso = new (LawfulTry <~> Try) {
-    override def to: ~>[LawfulTry, Try]   = lawfulTry2Try
-    override def from: ~>[Try, LawfulTry] = try2lawfulTry
+  final val attemptIso = new (Attempt <~> Try) {
+    override def to: ~>[Attempt, Try]   = attempt2Try
+    override def from: ~>[Try, Attempt] = try2Attempt
   }
 
   final val try2Future = new (Try ~> Future) {
@@ -62,6 +62,6 @@ package object util {
       Future.fromTry(fa)
   }
 
-  final val lawfulTry2Future: LawfulTry ~> Future = lawfulTry2Try andThen try2Future
+  final val attempt2Future: Attempt ~> Future = attempt2Try andThen try2Future
 
 }
