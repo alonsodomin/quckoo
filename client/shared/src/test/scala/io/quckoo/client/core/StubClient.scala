@@ -38,7 +38,7 @@ trait StubClient { this: Assertions with Matchers =>
     def withEvents(events: Iterable[P#EventType]): ClientRunner[P] = {
       val requestError = new Exception("Backend should have been used for subscriptions")
 
-      implicit val backend = new TestDriverBackend[P](events, _ => LawfulTry.fail(requestError))
+      implicit val backend = new TestDriverBackend[P](events, _ => Attempt.fail(requestError))
       implicit val driver = Driver[P]
 
       new ClientRunner[P](QuckooClient[P])

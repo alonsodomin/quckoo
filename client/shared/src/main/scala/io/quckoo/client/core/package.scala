@@ -40,7 +40,7 @@ package object core {
       Kleisli[Attempt, Res, Rslt](run)
   }
 
-  final val lawfulTry2Observable = new (Attempt ~> Observable) {
+  final val attempt2Observable = new (Attempt ~> Observable) {
     override def apply[A](fa: Attempt[A]): Observable[A] = fa match {
       case \/-(value) => Observable.eval(value)
       case -\/(ex)    => Observable.raiseError(ex)

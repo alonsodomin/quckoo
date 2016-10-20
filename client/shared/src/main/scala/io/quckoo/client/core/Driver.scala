@@ -43,7 +43,7 @@ final class Driver[P <: Protocol] private (
 
   def openChannel[E](ch: Channel.Aux[P, E]): Kleisli[Observable, Unit, ch.Event] = {
     logger.debug(s"Opening channel for event ${ch.eventDef.typeName}")
-    def decodeEvent = ch.unmarshall.transform(lawfulTry2Observable)
+    def decodeEvent = ch.unmarshall.transform(attempt2Observable)
     backend.open(ch) >=> decodeEvent
   }
 

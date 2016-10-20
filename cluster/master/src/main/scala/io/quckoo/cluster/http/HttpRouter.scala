@@ -46,7 +46,7 @@ trait HttpRouter
 
   private[this] def extractTimeout: Directive1[FiniteDuration] = {
     optionalHeaderValueByName(RequestTimeoutHeader).map(_.flatMap { timeoutValue =>
-      LawfulTry(timeoutValue.toLong).map(_ millis).toOption
+      Attempt(timeoutValue.toLong).map(_ millis).toOption
     } getOrElse DefaultTimeout)
   }
 

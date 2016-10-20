@@ -17,7 +17,7 @@
 package io.quckoo.auth
 
 import io.quckoo.serialization.{Base64, DataBuffer}
-import io.quckoo.util.{Attempt, attempt2Try}
+import io.quckoo.util.Attempt
 
 import scalaz._
 import Scalaz._
@@ -39,7 +39,7 @@ object Passport {
     }
 
     def decodePart(part: Int): Attempt[DataBuffer] =
-      tokenParts.map(_(part)).flatMap(str => LawfulTry(str.toByteArray)).map(DataBuffer.apply)
+      tokenParts.map(_(part)).flatMap(str => Attempt(str.toByteArray)).map(DataBuffer.apply)
 
     def parseClaims = decodePart(1).flatMap(_.as[Map[String, String]])
 

@@ -31,7 +31,7 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
     Unmarshall[HttpResponse, Passport] { res =>
       if (res.isSuccess) Passport(res.entity.asString())
       else
-        LawfulTry.fail {
+        Attempt.fail {
           if (res.statusCode == 401) InvalidCredentialsException
           else HttpErrorException(res.statusLine)
         }
@@ -45,7 +45,7 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
           DataBuffer.fromString(s"${cmd.payload.username}:${cmd.payload.password}").toBase64
         val authHdr = AuthorizationHeader -> s"Basic $creds"
 
-        LawfulTry.success {
+        Attempt.success {
           HttpRequest(
             HttpMethod.Post,
             LoginURI,
@@ -60,7 +60,7 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
   implicit lazy val refreshPassportCmd: RefreshPassportCmd =
     new Auth[HttpProtocol, Unit, Passport] {
       override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
-        LawfulTry.success {
+        Attempt.success {
           HttpRequest(
             HttpMethod.Post,
             AuthRefreshURI,
@@ -73,7 +73,7 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
 
   implicit lazy val signOutCmd: SingOutCmd = new Auth[HttpProtocol, Unit, Unit] {
     override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
-      LawfulTry.success {
+      Attempt.success {
         HttpRequest(
           HttpMethod.Post,
           LogoutURI,
@@ -83,8 +83,8 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
     }
 
     override val unmarshall = Unmarshall[HttpResponse, Unit] { res =>
-      if (res.isSuccess) LawfulTry.unit
-      else LawfulTry.fail(HttpErrorException(res.statusLine))
+      if (res.isSuccess) Attempt.unit
+      else Attempt.fail(HttpErrorException(res.statusLine))
     }
   }
 }
