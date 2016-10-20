@@ -20,22 +20,15 @@ import io.quckoo.util.Attempt
 
 import upickle.default.{Reader => UReader, Writer => UWriter, _}
 
-import scalaz.ReaderT
-
 /**
   * Created by alonsodomin on 11/08/2016.
   */
 package object json extends ScalazJson with JavaTime with Cron4s {
-  type JsonReader[A] = ReaderT[Attempt, String, A]
-  type JsonWriter[A] = ReaderT[Attempt, A, String]
 
-  object JsonReader {
-    @inline def apply[A: UReader]: JsonReader[A] =
-      ReaderT[Attempt, String, A](str => Attempt(read[A](str)))
+  implicit def JsonCodec[A : UReader : UWriter]: Codec[A, String] = new Codec[A, String] {
+    def encode(a: A): Attempt[String] = Attempt(write[A](a))
+
+    def decode(input: String): Attempt[A] = Attempt(read[A](input))
   }
 
-  object JsonWriter {
-    @inline def apply[A: UWriter]: JsonWriter[A] =
-      ReaderT[Attempt, A, String](a => Attempt[String](write[A](a)))
-  }
 }

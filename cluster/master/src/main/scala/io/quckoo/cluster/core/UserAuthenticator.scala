@@ -18,9 +18,7 @@ package io.quckoo.cluster.core
 
 import akka.actor.{Actor, ActorLogging, Props}
 
-import io.quckoo.auth.XSRFToken
 import io.quckoo.auth.UserId
-import io.quckoo.cluster.http._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -30,7 +28,7 @@ import scala.concurrent.duration.FiniteDuration
 object UserAuthenticator {
 
   case class Authenticate(userId: UserId, password: Array[Char])
-  case class AuthenticationSuccess(authInfo: XSRFToken)
+  case class AuthenticationSuccess()
   case object AuthenticationFailed
 
   def props(sessionTimeout: FiniteDuration): Props =
@@ -43,13 +41,7 @@ class UserAuthenticator(sessionTimeout: FiniteDuration) extends Actor with Actor
 
   def receive = {
     case Authenticate(userId, password) =>
-      if (userId == "admin" && password.mkString == "password") {
-        log.info("Authenticating user '{}'.", userId)
-        val authInfo = new XSRFToken(userId, generateAuthToken)
-        sender() ! AuthenticationSuccess(authInfo)
-      } else {
-        sender() ! AuthenticationFailed
-      }
+
   }
 
 }

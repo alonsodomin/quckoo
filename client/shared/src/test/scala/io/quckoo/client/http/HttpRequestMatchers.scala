@@ -1,10 +1,8 @@
 package io.quckoo.client.http
 
-import upickle.default.{Reader => UReader}
-
 import io.quckoo.auth.Passport
 import io.quckoo.api.RequestTimeoutHeader
-import io.quckoo.serialization.DataBuffer
+import io.quckoo.serialization.{DataBuffer, Decoder}
 
 import org.scalatest.Matchers
 import org.scalatest.matchers.{MatchResult, Matcher}
@@ -71,7 +69,7 @@ trait HttpRequestMatchers extends Matchers {
     }
   }
 
-  def hasBody[A: UReader](body: A): Matcher[HttpRequest] = new Matcher[HttpRequest] {
+  def hasBody[A](body: A)(implicit decoder: Decoder[String, A]): Matcher[HttpRequest] = new Matcher[HttpRequest] {
     override def apply(req: HttpRequest): MatchResult = {
       MatchResult(
         req.entity.as[A].toOption.contains(body),

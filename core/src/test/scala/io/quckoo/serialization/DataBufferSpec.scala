@@ -2,7 +2,9 @@ package io.quckoo.serialization
 
 import java.nio.charset.StandardCharsets
 
-import upickle.default._
+import io.quckoo.serialization.base64.Base64Codec
+import io.quckoo.serialization.json._
+
 import org.scalatest.{EitherValues, FlatSpec, Matchers}
 
 /**
@@ -44,20 +46,27 @@ class DataBufferSpec extends FlatSpec with EitherValues with Matchers {
   }
 
   it should "decode strings in Base64" in {
-    import Base64._
 
     for (charset <- sampleCharsets) {
-      val fooBase64 = "foo".getBytes(charset).toBase64
-      DataBuffer.fromBase64(fooBase64).asString(charset) shouldBe "foo"
+      val result = Base64Codec.decode("foo".getBytes(charset))
+        .flatMap(DataBuffer.fromBase64)
+        .map(_.asString(charset))
+        .toEither
+
+      result.right.value shouldBe "foo"
     }
   }
 
   it should "encode anything is Base64" in {
-    import Base64._
 
     for (charset <- sampleCharsets) {
-      val expected = "banana".getBytes(charset).toBase64
-      DataBuffer.fromString("banana", charset).toBase64 shouldBe expected
+      val result = DataBuffer.fromString("banana", charset)
+        .toBase64
+        .flatMap(Base64Codec.encode)
+        .toEither
+
+      val expected = "banana".getBytes(charset)
+      result.right.value shouldBe expected
     }
   }
 

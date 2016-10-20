@@ -18,9 +18,11 @@ package io.quckoo.cluster.core
 
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.directives.Credentials
+
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
+
 import io.quckoo.auth.{Passport, Principal, User}
-import io.quckoo.serialization.Base64._
+import io.quckoo.serialization.DataBuffer
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -32,8 +34,8 @@ import Scalaz._
   */
 trait Auth {
 
-  val Realm     = "QuckooRealm"
-  val secretKey = "dqwjq0jd9wjd192u4ued9hd0ew".getBytes("UTF-8").toBase64
+  val Realm                        = "QuckooRealm"
+  private[this] val \/-(secretKey) = DataBuffer.fromString("dqwjq0jd9wjd192u4ued9hd0ew").toBase64
 
   def basic(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Principal]] = {
     credentials match {

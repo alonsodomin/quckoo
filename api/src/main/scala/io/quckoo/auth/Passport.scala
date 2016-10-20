@@ -16,7 +16,8 @@
 
 package io.quckoo.auth
 
-import io.quckoo.serialization.{Base64, DataBuffer}
+import io.quckoo.serialization.DataBuffer
+import io.quckoo.serialization.json._
 import io.quckoo.util.Attempt
 
 import scalaz._
@@ -30,8 +31,6 @@ object Passport {
   private final val SubjectClaim = "sub"
 
   def apply(token: String): Attempt[Passport] = {
-    import Base64._
-
     val tokenParts: Attempt[Array[String]] = {
       val parts = token.split('.')
       if (parts.length == 3) parts.right[InvalidPassportException]
@@ -39,7 +38,7 @@ object Passport {
     }
 
     def decodePart(part: Int): Attempt[DataBuffer] =
-      tokenParts.map(_(part)).flatMap(str => Attempt(str.toByteArray)).map(DataBuffer.apply)
+      tokenParts.map(_(part)).flatMap(DataBuffer.fromBase64)
 
     def parseClaims = decodePart(1).flatMap(_.as[Map[String, String]])
 
