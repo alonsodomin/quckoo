@@ -16,11 +16,11 @@
 
 package io.quckoo.client.http
 
-import upickle.default.{Reader => UReader, Writer => UWriter}
 import io.quckoo.api.RequestTimeoutHeader
 import io.quckoo.auth.Passport
 import io.quckoo.client.core._
-import io.quckoo.serialization.DataBuffer
+import io.quckoo.serialization.{DataBuffer, Encoder, Decoder}
+import io.quckoo.serialization.json._
 import io.quckoo.util._
 
 import scala.concurrent.duration.Duration
@@ -63,7 +63,7 @@ trait HttpMarshalling {
 
   protected def marshallToJson[O <: CmdMarshalling[HttpProtocol]](method: HttpMethod,
                                                                   uriFor: O#Cmd[O#In] => String)(
-      implicit encoder: UWriter[O#In]
+      implicit encoder: Encoder[O#In, String]
   ): Marshall[O#Cmd, O#In, HttpRequest] = {
     val encodePayload = Kleisli[Attempt, O#Cmd[O#In], DataBuffer] { cmd =>
       cmd.payload match {
@@ -80,7 +80,7 @@ trait HttpMarshalling {
   }
 
   protected def unmarshallFromJson[O <: CmdMarshalling[HttpProtocol]](
-      implicit decoder: UReader[O#Rslt]
+      implicit decoder: Decoder[String, O#Rslt]
   ): Unmarshall[HttpResponse, O#Rslt] = Unmarshall { res =>
     if (res.isFailure && res.entity.isEmpty) {
       Attempt.fail(HttpErrorException(res.statusLine))
@@ -88,23 +88,23 @@ trait HttpMarshalling {
   }
 
   protected def unmarshalOption[A](
-      implicit decoder: UReader[A]
+      implicit decoder: Decoder[String, A]
   ): Unmarshall[HttpResponse, Option[A]] = Unmarshall { res =>
     if (res.isSuccess) res.entity.as[A].map(Some(_))
     else Attempt.success(None)
   }
 
   protected def unmarshalEither[E, A](
-      implicit errDecode: UReader[E],
-      succDecode: UReader[A]
+      implicit errDecode: Decoder[String, E],
+      succDecode: Decoder[String, A]
   ): Unmarshall[HttpResponse, E \/ A] = Unmarshall { res =>
     if (res.isFailure) res.entity.as[E].map(_.left[A])
     else res.entity.as[A].map(_.right[E])
   }
 
   protected def unmarshalValidation[E, A](
-      implicit errDecode: UReader[E],
-      succDecode: UReader[A]
+      implicit errDecode: Decoder[String, E],
+      succDecode: Decoder[String, A]
   ): Unmarshall[HttpResponse, Validation[E, A]] = Unmarshall { res =>
     if (res.isFailure) res.entity.as[E].map(_.failure[A])
     else res.entity.as[A].map(_.success[E])

@@ -16,9 +16,8 @@
 
 package io.quckoo.client.core
 
-import upickle.default.{Reader => UReader}
-
 import io.quckoo.api.EventDef
+import io.quckoo.serialization.Decoder
 import io.quckoo.util._
 
 import monix.reactive.Observable
@@ -39,7 +38,8 @@ final class Driver[P <: Protocol] private (
     private[client] val specs: ProtocolSpecs[P]
 ) extends LazyLogging {
 
-  private[client] def channelFor[E: EventDef: UReader] = specs.createChannel[E]
+  private[client] def channelFor[E: EventDef](implicit decoder: Decoder[String, E]) =
+    specs.createChannel[E]
 
   def openChannel[E](ch: Channel.Aux[P, E]): Kleisli[Observable, Unit, ch.Event] = {
     logger.debug(s"Opening channel for event ${ch.eventDef.typeName}")

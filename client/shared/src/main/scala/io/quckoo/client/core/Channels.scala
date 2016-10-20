@@ -17,11 +17,11 @@
 package io.quckoo.client.core
 
 import io.quckoo.api.EventDef
-import upickle.default.{Reader => UReader}
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.registry.RegistryEvent
 import io.quckoo.protocol.scheduler.SchedulerEvent
 import io.quckoo.protocol.worker.WorkerEvent
+import io.quckoo.serialization.Decoder
 
 /**
   * Created by domingueza on 20/09/2016.
@@ -33,6 +33,6 @@ trait Channels[P <: Protocol] {
   type RegistryChannel  = Channel.Aux[P, RegistryEvent]
   type SchedulerChannel = Channel.Aux[P, SchedulerEvent]
 
-  def createChannel[E: EventDef: UReader]: Channel.Aux[P, E]
+  def createChannel[E: EventDef](implicit decoder: Decoder[String, E]): Channel.Aux[P, E]
 
 }

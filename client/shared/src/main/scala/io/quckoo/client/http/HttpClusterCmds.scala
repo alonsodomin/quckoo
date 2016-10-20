@@ -18,6 +18,7 @@ package io.quckoo.client.http
 
 import io.quckoo.client.core._
 import io.quckoo.net.QuckooState
+import io.quckoo.serialization.json._
 
 /**
   * Created by alonsodomin on 19/09/2016.

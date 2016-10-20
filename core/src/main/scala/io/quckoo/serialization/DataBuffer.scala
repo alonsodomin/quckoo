@@ -16,21 +16,18 @@
 
 package io.quckoo.serialization
 
-import upickle.default.{Reader => UReader, Writer => UWriter}
 import java.nio.ByteBuffer
 import java.nio.charset.{Charset, StandardCharsets}
 
-import io.quckoo.serialization.json.{JsonReader, JsonWriter}
+import io.quckoo.serialization.base64._
 import io.quckoo.util.Attempt
 
-import scala.language.implicitConversions
 import scalaz._
 
 /**
   * Created by alonsodomin on 15/09/2016.
   */
 final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal {
-  import Base64._
 
   def isEmpty: Boolean = buffer.remaining() == 0
 
@@ -48,7 +45,8 @@ final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal
     new DataBuffer(newBuffer)
   }
 
-  def as[A: UReader]: Attempt[A] = JsonReader[A].run(asString())
+  def as[A](implicit decoder: Decoder[String, A]): Attempt[A] =
+    decoder.decode(asString())
 
   def asString(charset: Charset = StandardCharsets.UTF_8): String = {
     val content = charset.decode(buffer).toString
@@ -56,12 +54,15 @@ final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal
     content
   }
 
-  def toBase64: String = {
+  def toArray: Array[Byte] = {
     val bytes = new Array[Byte](buffer.remaining())
     buffer.get(bytes, buffer.position(), buffer.remaining())
     buffer.rewind()
-    bytes.toBase64
+    bytes
   }
+
+  def toBase64: Attempt[String] =
+    Base64Codec.decode(toArray)
 
   def toByteBuffer: ByteBuffer =
     buffer.asReadOnlyBuffer()
@@ -69,12 +70,12 @@ final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal
 }
 
 object DataBuffer {
-  import Base64._
 
   final val Empty = new DataBuffer(ByteBuffer.allocateDirect(0))
 
-  def apply[A: UWriter](a: A, charset: Charset = StandardCharsets.UTF_8): Attempt[DataBuffer] =
-    JsonWriter[A].map(str => fromString(str, charset)).run(a)
+  def apply[A](a: A, charset: Charset = StandardCharsets.UTF_8)(
+      implicit encoder: Encoder[A, String]): Attempt[DataBuffer] =
+    encoder.encode(a).map(str => fromString(str, charset))
 
   def apply(buffer: ByteBuffer): DataBuffer =
     new DataBuffer(buffer.asReadOnlyBuffer())
@@ -85,8 +86,8 @@ object DataBuffer {
   def fromString(str: String, charset: Charset = StandardCharsets.UTF_8): DataBuffer =
     apply(str.getBytes(charset))
 
-  def fromBase64(str: String): DataBuffer =
-    apply(str.toByteArray)
+  def fromBase64(str: String): Attempt[DataBuffer] =
+    Base64Codec.encode(str).map(apply)
 
   implicit val dataBufferInstance = new Monoid[DataBuffer] {
     override def append(f1: DataBuffer, f2: => DataBuffer): DataBuffer = f1 + f2
