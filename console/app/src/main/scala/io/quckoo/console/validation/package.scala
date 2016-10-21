@@ -17,16 +17,22 @@
 package io.quckoo.console
 
 import io.quckoo.fault.{Required, ValidationFault}
+import io.quckoo.validation._
+
+import japgolly.scalajs.react.CallbackTo
+import japgolly.scalajs.react.ScalazReact._
 
 import scalaz._
+import Scalaz._
 
 /**
   * Created by alonsodomin on 21/02/2016.
   */
 package object validation {
-  import Scalaz._
 
-  type Validator[A] = A => ValidationNel[ValidationFault, String]
+  implicit class ReactValidatorSyntax[A](self: Validator[A]) {
+    def callback: ValidatorK[CallbackTo, A] = self.lift[CallbackTo]
+  }
 
   def notEmptyStr(fieldId: String)(str: String): Validation[ValidationFault, String] = {
     if (str.isEmpty) Required(fieldId).failure[String]

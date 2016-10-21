@@ -63,4 +63,12 @@ package object validation {
     }
     def *[C](other: ValidatorK[F, C]): ValidatorK[F, (A, B, C)] = product(other)
   }
+
+  implicit class ValidatorK3Ops[F[_]: Applicative, A, B, C](self: ValidatorK[F, (A, B, C)]) {
+    def product[D](other: ValidatorK[F, D]): ValidatorK[F, (A, B, C, D)] = Kleisli { case (a, b, c, d) =>
+      (self.run((a, b, c)) |@| other.run(d))((l, r) => (l |@| r) { case ((a1, b1, c1), d1) => (a1, b1, c1, d1) })
+    }
+    def *[D](other: ValidatorK[F, D]): ValidatorK[F, (A, B, C, D)] = product(other)
+  }
+
 }

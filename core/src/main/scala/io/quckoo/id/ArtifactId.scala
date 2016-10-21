@@ -35,16 +35,16 @@ object ArtifactId {
   val validator = {
     import Validators._
 
-    val validGroup = nonEmpty[Char]
-    val validArtifact = nonEmpty[Char]
-    val validVersion = nonEmpty[Char]
+    val validOrg     = nonEmpty[String]
+    val validName    = nonEmpty[String]
+    val validVersion = nonEmpty[String]
 
-    validGroup * validArtifact * validVersion
+    validOrg * validName * validVersion
   }
 
   def validate2(artifactId: ArtifactId): ValidationNel[Violation, ArtifactId] = {
     validator.run((artifactId.organization, artifactId.name, artifactId.version)).map {
-      case (a, b, c) => ArtifactId(a.mkString, b.mkString, c.mkString)
+      case (a, b, c) => ArtifactId(a, b, c)
     }
   }
 
