@@ -2,7 +2,7 @@
 logLevel := Level.Warn
 
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.8.0")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.12")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.13")
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.2.0-M6")
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.3.11")
 addSbtPlugin("org.madoushi.sbt" % "sbt-sass" % "0.9.3")
