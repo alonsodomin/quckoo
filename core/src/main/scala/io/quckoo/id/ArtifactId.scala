@@ -32,20 +32,10 @@ object ArtifactId {
   final val GroupSeparator: Char   = ':'
   final val VersionSeparator: Char = '#'
 
-  val validator = {
+  val valid = {
     import Validators._
 
-    val validOrg     = nonEmpty[String]
-    val validName    = nonEmpty[String]
-    val validVersion = nonEmpty[String]
-
-    validOrg * validName * validVersion
-  }
-
-  def validate2(artifactId: ArtifactId): ValidationNel[Violation, ArtifactId] = {
-    validator.run((artifactId.organization, artifactId.name, artifactId.version)).map {
-      case (a, b, c) => ArtifactId(a, b, c)
-    }
+    caseClass3(nonEmpty[String], nonEmpty[String], nonEmpty[String])(ArtifactId.unapply, ArtifactId.apply)
   }
 
   def validate(artifactId: ArtifactId): ValidationNel[ValidationFault, ArtifactId] =

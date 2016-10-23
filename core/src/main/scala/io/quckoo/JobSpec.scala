@@ -19,15 +19,22 @@ package io.quckoo
 import io.quckoo.fault._
 import io.quckoo.id._
 import io.quckoo.validation._
+
 import monocle.macros.Lenses
 
 import scalaz._
+import Scalaz._
 
 /**
   * Created by aalonsodominguez on 10/07/15.
   */
 object JobSpec {
-  import Scalaz._
+
+  val valid = {
+    import Validators._
+
+    caseClass5(nonEmpty[String], any[Option[String]], ArtifactId.valid, nonEmpty[String], any[Boolean])(JobSpec.unapply, JobSpec.apply)
+  }
 
   def validate(jobSpec: JobSpec): ValidationNel[ValidationFault, JobSpec] =
     validate(jobSpec.displayName, jobSpec.description, jobSpec.artifactId, jobSpec.jobClass)

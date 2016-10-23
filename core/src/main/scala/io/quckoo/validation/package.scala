@@ -16,6 +16,8 @@ package object validation {
     def apply[F[_]: Functor, A](test: A => F[Boolean], err: A => Violation): ValidatorK[F, A] = Kleisli { a =>
       test(a).map(cond => if (cond) a.successNel[Violation] else err(a).failureNel[A])
     }
+
+    def accept[F[_], A](implicit ev: Applicative[F]): ValidatorK[F, A] = Kleisli { a => ev.pure(a.successNel[Violation]) }
   }
 
   object conjunction {
@@ -69,6 +71,13 @@ package object validation {
       (self.run((a, b, c)) |@| other.run(d))((l, r) => (l |@| r) { case ((a1, b1, c1), d1) => (a1, b1, c1, d1) })
     }
     def *[D](other: ValidatorK[F, D]): ValidatorK[F, (A, B, C, D)] = product(other)
+  }
+
+  implicit class ValidatorK4Ops[F[_]: Applicative, A, B, C, D](self: ValidatorK[F, (A, B, C, D)]) {
+    def product[E](other: ValidatorK[F, E]): ValidatorK[F, (A, B, C, D, E)] = Kleisli { case (a, b, c, d, e) =>
+      (self.run((a, b, c, d)) |@| other.run(e))((l, r) => (l |@| r) { case ((a1, b1, c1, d1), e1) => (a1, b1, c1, d1, e1) })
+    }
+    def *[E](other: ValidatorK[F, E]): ValidatorK[F, (A, B, C, D, E)] = product(other)
   }
 
 }
