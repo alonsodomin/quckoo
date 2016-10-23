@@ -88,7 +88,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
     implicit
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
   ): Future[ValidationNel[Fault, JobId]] = Future.successful {
-    EitherT.fromDisjunction(JobSpec.validate(jobSpec).disjunction).
+    EitherT.fromDisjunction(JobSpec.valid.run(jobSpec).disjunction).
       map(JobId(_)).leftMap(_.map(_.asInstanceOf[Fault])).
       run.validation
   }
@@ -126,7 +126,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
     "return validation errors if the job spec is invalid" in {
       Put(endpoint("/jobs"), Some(TestInvalidJobSpec)) ~> entryPoint ~> check {
         status == BadRequest
-        responseAs[NonEmptyList[Fault]].failure[JobId] shouldBe JobSpec.validate(TestInvalidJobSpec)
+        responseAs[NonEmptyList[Fault]].failure[JobId] shouldBe JobSpec.valid.run(TestInvalidJobSpec)
       }
     }
 

@@ -17,6 +17,7 @@
 package io.quckoo.fault
 
 import io.quckoo.id._
+import io.quckoo.validation.Violation
 
 import scalaz.NonEmptyList
 
@@ -62,7 +63,4 @@ case class DownloadFailed(artifactId: ArtifactId, reason: DownloadFailed.Reason)
 
 // == Validation errors ====================
 
-sealed trait ValidationFault extends Fault
-
-case class NotNull(msg: String) extends ValidationFault
-case class Required(msg: String) extends ValidationFault
+case class ValidationFault(violations: NonEmptyList[Violation]) extends Fault

@@ -16,13 +16,11 @@
 
 package io.quckoo.id
 
-import io.quckoo.fault._
 import io.quckoo.validation._
 
 import monocle.macros.Lenses
 
 import scalaz._
-import Scalaz._
 
 /**
   * Created by aalonsodominguez on 15/07/15.
@@ -40,27 +38,6 @@ object ArtifactId {
     val validVersion      = nonEmpty[String].at("version")
 
     caseClass3(validOrganization, validName, validVersion)(ArtifactId.unapply, ArtifactId.apply)
-  }
-
-  def validate(artifactId: ArtifactId): ValidationNel[ValidationFault, ArtifactId] =
-    validate(artifactId.organization, artifactId.name, artifactId.version)
-
-  def validate(organization: String,
-               name: String,
-               version: String): ValidationNel[ValidationFault, ArtifactId] = {
-    import Validations._
-
-    def validGroup: Validation[ValidationFault, String] =
-      notNullOrEmpty(organization)("organization")
-
-    def validArtifactId: Validation[ValidationFault, String] =
-      notNullOrEmpty(name)("name")
-
-    def validVersion: Validation[ValidationFault, String] =
-      notNullOrEmpty(version)("version")
-
-    (validGroup.toValidationNel |@| validArtifactId.toValidationNel |@| validVersion.toValidationNel)(
-      ArtifactId.apply)
   }
 
   implicit val instance = new Equal[ArtifactId] with Show[ArtifactId] {

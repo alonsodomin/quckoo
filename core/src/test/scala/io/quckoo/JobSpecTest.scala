@@ -1,43 +1,29 @@
 package io.quckoo
 
-import io.quckoo.fault.{Required, NotNull}
 import io.quckoo.id.ArtifactId
+import io.quckoo.validation._
+
 import org.scalatest.{FlatSpec, Matchers}
 
 import scalaz._
+import Scalaz._
 
 /**
   * Created by alonsodomin on 24/01/2016.
   */
 class JobSpecTest extends FlatSpec with Matchers {
-  import Scalaz._
+  import Violation._
 
-  "Validation for JobSpec parameters" should "not accept nulls" in {
+  "Validation for JobSpec parameters" should "not accept empty values" in {
     val expectedErrors = NonEmptyList(
-      Required("displayName"),
-      NotNull("description"),
-      NotNull("artifactId"),
-      Required("jobClass")
-    ).failure[JobSpec]
-    JobSpec.validate(null, null, null, null) should be (expectedErrors)
-  }
+      PathViolation(Path("displayName"), Empty),
+      PathViolation(Path("artifactId", "organization"), Empty),
+      PathViolation(Path("artifactId", "name"), Empty),
+      PathViolation(Path("artifactId", "version"), Empty),
+      PathViolation(Path("jobClass"), Empty)
+    ).flatMap(identity).failure[JobSpec]
 
-  it should "not accept empty strings in displayName or jobClass" in {
-    val expectedErrors = NonEmptyList(
-      Required("displayName"),
-      NotNull("artifactId"),
-      Required("jobClass")
-    ).failure[JobSpec]
-    JobSpec.validate("", None, null, "") should be (expectedErrors)
-  }
-
-  it should "not accept an invalid artifactId" in {
-    val expectedErrors = NonEmptyList(
-      Required("organization"),
-      Required("name"),
-      Required("version")
-    ).failure[JobSpec]
-    JobSpec.validate("foo", None, ArtifactId(null, null, null), "bar") should be (expectedErrors)
+    JobSpec.valid.run(JobSpec("", None, ArtifactId("", "", ""), "")) shouldBe expectedErrors
   }
 
 }

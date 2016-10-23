@@ -16,7 +16,6 @@
 
 package io.quckoo.console
 
-import io.quckoo.fault.{Required, ValidationFault}
 import io.quckoo.validation._
 
 import japgolly.scalajs.react.CallbackTo
@@ -32,11 +31,6 @@ package object validation {
 
   implicit class ReactValidatorSyntax[A](self: Validator[A]) {
     def callback: ValidatorK[CallbackTo, A] = self.lift[CallbackTo]
-  }
-
-  def notEmptyStr(fieldId: String)(str: String): Validation[ValidationFault, String] = {
-    if (str.isEmpty) Required(fieldId).failure[String]
-    else str.success[ValidationFault]
   }
 
 }
