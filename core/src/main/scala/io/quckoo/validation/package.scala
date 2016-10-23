@@ -57,6 +57,9 @@ package object validation {
       (self.run(a) |@| other.run(b))((l, r) => (l |@| r)(_ -> _))
     }
     def *[B](other: ValidatorK[F, B]): ValidatorK[F, (A, B)] = product(other)
+
+    def at(label: String): ValidatorK[F, A] =
+      self.map(_.bimap(_.flatMap(v => PathViolation(Path(label), v)), identity))
   }
 
   implicit class ValidatorK2Ops[F[_]: Applicative, A, B](self: ValidatorK[F, (A, B)]) {

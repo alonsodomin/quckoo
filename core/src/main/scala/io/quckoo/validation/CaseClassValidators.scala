@@ -1,11 +1,14 @@
 package io.quckoo.validation
 
-import scalaz.Applicative
+import scalaz.{Applicative, Functor}
 
 /**
   * Created by alonsodomin on 23/10/2016.
   */
 trait CaseClassValidators {
+
+  def caseClass1[F[_]: Functor, T, A](valid: ValidatorK[F, A])(f: T => Option[A], g: A => T): ValidatorK[F, T] =
+    valid.dimap(f(_).get, _.map(g))
 
   def caseClass2[F[_]: Applicative, T, A, B](aValid: ValidatorK[F, A], bValid: ValidatorK[F, B])
                                (f: T => Option[(A, B)], g: (A, B) => T): ValidatorK[F, T] = {

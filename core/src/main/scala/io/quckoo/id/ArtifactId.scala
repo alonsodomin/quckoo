@@ -35,7 +35,11 @@ object ArtifactId {
   val valid = {
     import Validators._
 
-    caseClass3(nonEmpty[String], nonEmpty[String], nonEmpty[String])(ArtifactId.unapply, ArtifactId.apply)
+    val validOrganization = nonEmpty[String].at("organization")
+    val validName         = nonEmpty[String].at("name")
+    val validVersion      = nonEmpty[String].at("version")
+
+    caseClass3(validOrganization, validName, validVersion)(ArtifactId.unapply, ArtifactId.apply)
   }
 
   def validate(artifactId: ArtifactId): ValidationNel[ValidationFault, ArtifactId] =

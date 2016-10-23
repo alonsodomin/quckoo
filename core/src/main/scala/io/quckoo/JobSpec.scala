@@ -33,7 +33,11 @@ object JobSpec {
   val valid = {
     import Validators._
 
-    caseClass5(nonEmpty[String], any[Option[String]], ArtifactId.valid, nonEmpty[String], any[Boolean])(JobSpec.unapply, JobSpec.apply)
+    val validDisplayName = nonEmpty[String].at("displayName")
+    val validArtifactId  = ArtifactId.valid.at("artifactId")
+    val validJobClass    = nonEmpty[String].at("jobClass")
+
+    caseClass5(validDisplayName, any[Option[String]], validArtifactId, validJobClass, any[Boolean])(JobSpec.unapply, JobSpec.apply)
   }
 
   def validate(jobSpec: JobSpec): ValidationNel[ValidationFault, JobSpec] =
@@ -64,6 +68,8 @@ object JobSpec {
       |@| validArtifactId |@| validJobClass.toValidationNel
       |@| false.successNel[ValidationFault])(JobSpec.apply)
   }
+
+  implicit val display: Show[JobSpec] = Show.showFromToString[JobSpec]
 
 }
 
