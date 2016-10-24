@@ -8,6 +8,8 @@ import Scalaz._
   */
 trait AnyValidators {
 
-  def any[A]: Validator[A] = Validator.accept[Id, A]
+  def anyK[F[_]: Applicative, A]: ValidatorK[F, A] = Validator.accept[F, A]
+
+  def any[A]: Validator[A] = anyK[Id, A]
 
 }

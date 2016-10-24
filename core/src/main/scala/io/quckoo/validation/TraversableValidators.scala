@@ -10,7 +10,9 @@ import Scalaz._
   */
 trait TraversableValidators {
 
-  def nonEmpty[A](implicit ev: IsTraversable[A]): Validator[A] =
-    Validator[Id, A](a => ev.subst(a).nonEmpty, _ => Violation.Empty)
+  def nonEmptyK[F[_]: Applicative, A](implicit ev: IsTraversable[A]): ValidatorK[F, A] =
+    Validator[F, A](a => Applicative[F].pure(ev.subst(a).nonEmpty), _ => Violation.Empty)
+
+  def nonEmpty[A](implicit ev: IsTraversable[A]): Validator[A] = nonEmptyK[Id, A]
 
 }

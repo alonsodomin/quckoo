@@ -10,10 +10,14 @@ import Violation._
   */
 trait OrderValidators {
 
-  def greaterThan[A](value: A)(implicit order: Order[A]): Validator[A] =
-    Validator[Id, A](a => order.greaterThan(a, value), a => GreaterThan[A](value, a))
+  def greaterThanK[F[_]: Applicative, A](value: A)(implicit order: Order[A]): ValidatorK[F, A] =
+    Validator[F, A](a => Applicative[F].pure(order.greaterThan(a, value)), a => GreaterThan[A](value, a))
 
-  def lessThan[A](value: A)(implicit order: Order[A]): Validator[A] =
-    Validator[Id, A](a => order.lessThan(a, value), a => LessThan[A](value, a))
+  def greaterThan[A: Order](value: A): Validator[A] = greaterThanK[Id, A](value)
+
+  def lessThanK[F[_]: Applicative, A](value: A)(implicit order: Order[A]): ValidatorK[F, A] =
+    Validator[F, A](a => Applicative[F].pure(order.lessThan(a, value)), a => LessThan[A](value, a))
+
+  def lessThan[A: Order](value: A): Validator[A] = lessThanK[Id, A](value)
 
 }

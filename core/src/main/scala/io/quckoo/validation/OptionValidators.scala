@@ -10,7 +10,9 @@ import Violation.Undefined
   */
 trait OptionValidators {
 
-  def defined[A]: Validator[Option[A]] =
-    Validator[Id, Option[A]](_.isEmpty, _ => Undefined)
+  def definedK[F[_]: Applicative, A]: ValidatorK[F, Option[A]] =
+    Validator[F, Option[A]](a => Applicative[F].pure(a.isEmpty), _ => Undefined)
+
+  def defined[A]: Validator[Option[A]] = definedK[Id, A]
 
 }

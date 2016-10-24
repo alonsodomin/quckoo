@@ -21,8 +21,10 @@ package object validation {
   }
 
   object conjunction {
-    implicit def semigroup[F[_]: Applicative]: Plus[ValidatorK[F, ?]] = new Plus[ValidatorK[F, ?]] {
-      override def plus[A](a: ValidatorK[F, A], b: => ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
+    implicit def instance[F[_]: Applicative]: PlusEmpty[ValidatorK[F, ?]] = new PlusEmpty[ValidatorK[F, ?]] {
+      def empty[A]: ValidatorK[F, A] = Validator.accept[F, A]
+
+      def plus[A](a: ValidatorK[F, A], b: => ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
         (a.run(x) |@| b.run(x)) {
           case (l, r) => (l |@| r)((_, out) => out)
         }
@@ -31,8 +33,10 @@ package object validation {
   }
 
   object disjunction {
-    implicit def semigroup[F[_]: Applicative]: Plus[ValidatorK[F, ?]] = new Plus[ValidatorK[F, ?]] {
-      override def plus[A](a: ValidatorK[F, A], b: => ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
+    implicit def instance[F[_]: Applicative]: PlusEmpty[ValidatorK[F, ?]] = new PlusEmpty[ValidatorK[F, ?]] {
+      def empty[A]: ValidatorK[F, A] = Validator.accept[F, A]
+
+      def plus[A](a: ValidatorK[F, A], b: => ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
         (a.run(x) |@| b.run(x)) {
           case (l, r) => l.orElse(r)
         }
@@ -46,11 +50,11 @@ package object validation {
 
   implicit class ValidatorKOps[F[_]: Applicative, A](self: ValidatorK[F, A]) {
     def and(other: ValidatorK[F, A]): ValidatorK[F, A] =
-      conjunction.semigroup[F].plus(self, other)
+      conjunction.instance[F].plus(self, other)
     def &&(other: ValidatorK[F, A]): ValidatorK[F, A] = and(other)
 
     def or(other: ValidatorK[F, A]): ValidatorK[F, A] =
-      disjunction.semigroup[F].plus(self, other)
+      disjunction.instance[F].plus(self, other)
     def ||(other: ValidatorK[F, A]): ValidatorK[F, A] = or(other)
 
     def product[B](other: ValidatorK[F, B]): ValidatorK[F, (A, B)] = Kleisli { case (a, b) =>
@@ -59,7 +63,7 @@ package object validation {
     def *[B](other: ValidatorK[F, B]): ValidatorK[F, (A, B)] = product(other)
 
     def at(label: String): ValidatorK[F, A] =
-      self.map(_.bimap(_.flatMap(v => PathViolation(Path(label), v)), identity))
+      self.map(_.leftMap(_.flatMap(v => PathViolation(Path(label), v))))
   }
 
   implicit class ValidatorK2Ops[F[_]: Applicative, A, B](self: ValidatorK[F, (A, B)]) {
@@ -82,5 +86,15 @@ package object validation {
     }
     def *[E](other: ValidatorK[F, E]): ValidatorK[F, (A, B, C, D, E)] = product(other)
   }
+
+  /*def forall[C[_], F[_]: Applicative, A](c: C[ValidatorK[F, A]])(implicit ev1: Foldable[C], ev2: Applicative[C], ev3: Comonad[C]): ValidatorK[F, C[A]] = {
+    implicit val monoid = conjunction.instance[F].monoid[C[A]]
+    ev1.foldMap(c)(_.dimap(ev3.copure, _.map(ev2.pure)))
+  }
+
+  def exists[C[_], F[_]: Applicative, A](c: C[ValidatorK[F, A]])(implicit ev1: Foldable[C], ev2: Applicative[C], ev3: Comonad[C]): ValidatorK[F, C[A]] = {
+    implicit val monoid = disjunction.instance[F].monoid[C[A]]
+    ev1.foldMap(c)(_.dimap(ev3.copure, _.map(ev2.pure)))
+  }*/
 
 }
