@@ -1,5 +1,10 @@
 package io.quckoo.validation
 
+import upickle.Js
+import upickle.default.{Reader => UReader, Writer => UWriter, _}
+
+import io.quckoo.serialization.json._
+
 import scalaz._
 import Scalaz._
 
@@ -19,21 +24,41 @@ object Violation {
     case Empty => "non empty"
     case Undefined => "not defined"
   }
+
+  implicit val jsonWriter: UWriter[Violation] = UWriter[Violation] {
+    case PathViolation(path, violations) =>
+      Js.Obj("path" -> Js.Str(path.shows), "violations" -> implicitly[UWriter[NonEmptyList[Violation]]].write(violations))
+    case Empty => Js.Str("EMPTY")
+    case Undefined => Js.Str("UNDEFINED")
+    case _ => ???
+  }
+
+  implicit def jsonReader: UReader[Violation] = UReader[Violation] {
+    case Js.Obj(Seq(("path", path), ("violations", violations))) =>
+      val pathReader = implicitly[UReader[Path]].read.lift
+      val violationsReader = implicitly[UReader[NonEmptyList[Violation]]].read.lift
+
+      // TODO this needs the usage of an Arrow
+      //pathReader.andThen(_.flatMap(p => violationsReader.andThen(_.map(vs => PathViolation(p, vs)))))
+
+      /*val parsedPath = Path.unapply(path)
+      val parsedNested = implicitly[UReader[NonEmptyList[Violation]]].read.lift(violations)
+      parsedPath.flatMap(p => parsedNested.map(vs => PathViolation(p, vs)))*/
+      ???
+
+    case _ => ???
+  }
 }
 
-trait PathViolation extends Violation {
-  val path: Path
-  val violations: NonEmptyList[Violation]
-}
+case class PathViolation(path: Path, violations: NonEmptyList[Violation]) extends Violation
 
 object PathViolation {
-  case class PViolation(path: Path, violations: NonEmptyList[Violation]) extends PathViolation
 
   def apply(path: Path, violation: Violation): NonEmptyList[Violation] = violation match {
-    case PViolation(otherPath, violations) =>
+    case PathViolation(otherPath, violations) =>
       violations.flatMap(v => apply(path ++ otherPath, v))
 
-    case _ => NonEmptyList(PViolation(path, NonEmptyList(violation)))
+    case _ => NonEmptyList(PathViolation(path, NonEmptyList(violation)))
   }
 
   def show(pathSeparator: String): Show[PathViolation] = Show.shows { value =>
