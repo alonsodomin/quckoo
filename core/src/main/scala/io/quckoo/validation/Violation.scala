@@ -25,28 +25,36 @@ object Violation {
     case Undefined => "not defined"
   }
 
-  implicit val jsonWriter: UWriter[Violation] = UWriter[Violation] {
+  implicit def jsonWriter: UWriter[Violation] = UWriter[Violation] {
     case PathViolation(path, violations) =>
-      Js.Obj("path" -> Js.Str(path.shows), "violations" -> implicitly[UWriter[NonEmptyList[Violation]]].write(violations))
+      Js.Obj(
+        "path"       -> implicitly[UWriter[Path]].write(path),
+        "violations" -> implicitly[UWriter[NonEmptyList[Violation]]].write(violations)
+      )
+
     case Empty => Js.Str("EMPTY")
     case Undefined => Js.Str("UNDEFINED")
     case _ => ???
   }
 
   implicit def jsonReader: UReader[Violation] = UReader[Violation] {
-    case Js.Obj(Seq(("path", path), ("violations", violations))) =>
-      val pathReader = implicitly[UReader[Path]].read.lift
-      val violationsReader = implicitly[UReader[NonEmptyList[Violation]]].read.lift
+    val readPathViolation = {
+      val pathReader = Kleisli(implicitly[UReader[Path]].read.lift)
+      val violationsReader = Kleisli(implicitly[UReader[NonEmptyList[Violation]]].read.lift)
 
-      // TODO this needs the usage of an Arrow
-      //pathReader.andThen(_.flatMap(p => violationsReader.andThen(_.map(vs => PathViolation(p, vs)))))
+      val prod = Kleisli[Option, (Js.Value, Js.Value), PathViolation] { case (path, violations) =>
+        (pathReader.run(path) |@| violationsReader.run(violations))((p, vs) => PathViolation(p, vs))
+      }
 
-      /*val parsedPath = Path.unapply(path)
-      val parsedNested = implicitly[UReader[NonEmptyList[Violation]]].read.lift(violations)
-      parsedPath.flatMap(p => parsedNested.map(vs => PathViolation(p, vs)))*/
-      ???
+      val extractJsValues: PartialFunction[Js.Value, (Js.Value, Js.Value)] = {
+        case Js.Obj(Seq(("path", path: Js.Value), ("violations", violations: Js.Value))) => (path, violations)
+      }
 
-    case _ => ???
+      Function.unlift(prod.composeK(extractJsValues.lift).run)
+    }
+    readPathViolation.orElse {
+      case _ => ???
+    }
   }
 }
 
@@ -65,4 +73,5 @@ object PathViolation {
     val violationsDesc = value.violations.map(_.show).intercalate1(" and ")
     s"expected $violationsDesc at ${value.path.shows}"
   }
+
 }
