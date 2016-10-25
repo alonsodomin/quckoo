@@ -25,7 +25,29 @@ object Violation {
     case Undefined => "not defined"
   }
 
-  implicit def jsonWriter: UWriter[Violation] = UWriter[Violation] {
+  implicit def greaterThanReader[A: UReader]: UReader[GreaterThan[A]] = UReader[GreaterThan[A]] {
+    case Js.Obj(Seq(("expected", expected: Js.Value), ("actual", actual: Js.Value))) =>
+      GreaterThan[A](readJs[A](expected), readJs[A](actual))
+  }
+  implicit def greaterThanWriter[A: UWriter]: UWriter[GreaterThan[A]] = UWriter[GreaterThan[A]] {
+    gt => Js.Obj(
+      "expected" -> writeJs(gt.expected),
+      "actual"   -> writeJs(gt.actual)
+    )
+  }
+
+  implicit def lessThanReader[A: UReader]: UReader[LessThan[A]] = UReader[LessThan[A]] {
+    case Js.Obj(Seq(("expected", expected: Js.Value), ("actual", actual: Js.Value))) =>
+      LessThan[A](readJs[A](expected), readJs[A](actual))
+  }
+  implicit def lessThanWriter[A: UWriter]: UWriter[LessThan[A]] = UWriter[LessThan[A]] {
+    lt => Js.Obj(
+      "expected" -> writeJs(lt.expected),
+      "actual"   -> writeJs(lt.actual)
+    )
+  }
+
+  /*implicit def jsonWriter: UWriter[Violation] = UWriter[Violation] {
     case PathViolation(path, violations) =>
       Js.Obj(
         "path"       -> implicitly[UWriter[Path]].write(path),
@@ -55,7 +77,7 @@ object Violation {
     readPathViolation.orElse {
       case _ => ???
     }
-  }
+  }*/
 }
 
 case class PathViolation(path: Path, violations: NonEmptyList[Violation]) extends Violation
@@ -72,6 +94,28 @@ object PathViolation {
   def show(pathSeparator: String): Show[PathViolation] = Show.shows { value =>
     val violationsDesc = value.violations.map(_.show).intercalate1(" and ")
     s"expected $violationsDesc at ${value.path.shows}"
+  }
+
+  implicit def jsonWriter: UWriter[PathViolation] = UWriter[PathViolation] {
+    pv => Js.Obj(
+      "path"       -> implicitly[UWriter[Path]].write(pv.path),
+      "violations" -> implicitly[UWriter[NonEmptyList[Violation]]].write(pv.violations)
+    )
+  }
+
+  implicit def jsonReader: UReader[PathViolation] = UReader[PathViolation] {
+    val pathReader = Kleisli(implicitly[UReader[Path]].read.lift)
+    val violationsReader = Kleisli(implicitly[UReader[NonEmptyList[Violation]]].read.lift)
+
+    val prod = Kleisli[Option, (Js.Value, Js.Value), PathViolation] { case (path, violations) =>
+      (pathReader.run(path) |@| violationsReader.run(violations))((p, vs) => PathViolation(p, vs))
+    }
+
+    val extractJsValues: PartialFunction[Js.Value, (Js.Value, Js.Value)] = {
+      case Js.Obj(Seq(("path", path: Js.Value), ("violations", violations: Js.Value))) => (path, violations)
+    }
+
+    Function.unlift(prod.composeK(extractJsValues.lift).run)
   }
 
 }
