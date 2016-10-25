@@ -204,67 +204,18 @@ lazy val clientJVM = client.jvm
 // Console ==================================================
 
 lazy val console = (project in file("console"))
+  .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
   .settings(
     name := "console",
-    moduleName := "quckoo-console"
-  )
-  .settings(noPublishSettings)
-  .aggregate(consoleApp, consoleResources)
-
-lazy val consoleApp = (project in file("console/app"))
-  .enablePlugins(ScalaJSPlugin)
-  .settings(
-    name := "console-app",
-    moduleName := "quckoo-console-app",
+    moduleName := "quckoo-console",
     requiresDOM := true,
     persistLauncher in Compile := true
   )
   .settings(commonSettings: _*)
   .settings(commonJsSettings: _*)
   .settings(publishSettings: _*)
-  .settings(Dependencies.consoleApp: _*)
+  .settings(Dependencies.console: _*)
   .dependsOn(clientJS)
-
-lazy val consoleResources = (project in file("console/resources"))
-  .aggregate(consoleApp)
-  .enablePlugins(SbtSass)
-  .settings(commonSettings: _*)
-  .settings(noPublishSettings: _*)
-  .settings(Dependencies.consoleResources)
-  .settings(
-    name := "console-resources",
-    moduleName := "quckoo-console-resources",
-    exportJars := true,
-    unmanagedResourceDirectories in Compile += (crossTarget in consoleApp).value,
-    includeFilter in (Compile, unmanagedResources) := ("*.js" || "*.css" || "*.js.map"),
-    excludeFilter in (Compile, unmanagedResources) := "index.js",
-    mappings in (Compile, packageBin) ~= { (ms: Seq[(File, String)]) =>
-      ms.filter { case (file, _) => !file.getName.endsWith("scss") }.map {
-        case (file, path) =>
-          val prefix = {
-            if (file.getName.indexOf(".css") >= 0) "css/"
-            else if (file.getName.indexOf(".js") >= 0) "js/"
-            else ""
-          }
-          (file, s"quckoo/$prefix${file.getName}")
-      }
-    },
-    mappings in (Compile, packageBin) <++= (WebKeys.webJarsDirectory in Assets).map {
-      path =>
-        val fontPaths = Seq(
-          path / "lib" / "font-awesome" / "fonts",
-          path / "lib" / "bootstrap-sass" / "fonts" / "bootstrap"
-        )
-
-        fontPaths.flatMap { p =>
-          p.listFiles().map { src =>
-            (src, "quckoo/fonts/" + src.getName)
-          }
-        }
-    },
-    packageBin in Compile <<= (packageBin in Compile) dependsOn ((fastOptJS in Compile) in consoleApp),
-    test := ()
-  )
 
 // Cluster ==================================================
 
@@ -285,23 +236,25 @@ lazy val clusterShared = (project in file("cluster/shared"))
   .dependsOn(apiJVM, testSupportJVM % Test)
 
 lazy val clusterMaster = (project in file("cluster/master"))
-  .enablePlugins(JavaServerAppPackaging, DockerPlugin)
+  .enablePlugins(SbtSass, SbtTwirl, JavaServerAppPackaging, DockerPlugin)
   .configs(MultiJvm)
   .settings(
     name := "cluster-master",
-    moduleName := "quckoo-cluster-master"
+    moduleName := "quckoo-cluster-master",
+    scalaJSProjects := Seq(console),
+    baseDirectory in reStart := file("cluster/master/target"),
+    compile in Compile <<= (compile in Compile) dependsOn scalaJSPipeline,
+    WebKeys.packagePrefix in Assets := "public/",
+    managedClasspath in Runtime += (packageBin in Assets).value,
+    pipelineStages in Assets := Seq(scalaJSPipeline)
   )
   .settings(commonSettings: _*)
   .settings(publishSettings: _*)
   .settings(Revolver.settings: _*)
   .settings(Dependencies.clusterMaster)
   .settings(MultiNode.settings)
-  .settings(
-    //reStart <<= reStart dependsOn ((packageBin in Compile) in consoleResources)
-    baseDirectory in reStart := file("cluster/master/target")
-  )
   .settings(Packaging.masterSettings: _*)
-  .dependsOn(clusterShared, consoleResources, testSupportJVM % Test)
+  .dependsOn(clusterShared, testSupportJVM % Test)
 
 lazy val clusterWorker = (project in file("cluster/worker"))
   .enablePlugins(JavaServerAppPackaging, DockerPlugin)

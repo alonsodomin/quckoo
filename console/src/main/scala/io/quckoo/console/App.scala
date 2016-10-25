@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.boot
+package io.quckoo.console
 
-import io.quckoo.console.SiteMap
 import io.quckoo.console.core.ConsoleCircuit
 import io.quckoo.console.dashboard.{ClusterView, DashboardView}
 import io.quckoo.console.layout._
 import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
-
 import org.scalajs.dom
-
 import slogging._
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
-
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 import scalacss.internal.mutable.GlobalRegistry
@@ -58,7 +54,6 @@ object App extends JSApp {
     inlineStyles()
 
     val container = dom.document.getElementById("viewport")
-    //dom.document.head.appendChild(GlobalStyle.contents)
     ConsoleCircuit.wrap(identity(_))(p => SiteMap(p)).render(container)
   }
 }
