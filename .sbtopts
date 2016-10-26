@@ -3,6 +3,7 @@
 -J-Xss2m
 -J-XX:+CMSClassUnloadingEnabled
 -J-XX:+UseConcMarkSweepGC
+-J-XX:ReservedCodeCacheSize=512m
 -J-XX:MaxMetaspaceSize=1g
 
 

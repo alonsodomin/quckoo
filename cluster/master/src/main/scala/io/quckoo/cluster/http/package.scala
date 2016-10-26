@@ -18,9 +18,16 @@ package io.quckoo.cluster
 
 import java.util.UUID
 
+import upickle.default.{write, Writer => UWriter}
+
+import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import akka.http.scaladsl.model.MediaType
+import akka.http.scaladsl.model.MediaTypes
 import akka.stream.scaladsl.Source
+
 import de.heikoseeberger.akkasse.{EventStreamElement, ServerSentEvent}
-import upickle.default.{Writer => UWriter, write}
+
+import play.twirl.api.{Html, Txt, Xml}
 
 import scala.concurrent.duration._
 
@@ -28,6 +35,16 @@ import scala.concurrent.duration._
   * Created by alonsodomin on 24/03/2016.
   */
 package object http {
+  import MediaTypes._
+
+  /** Twirl marshallers for Xml, Html and Txt mediatypes */
+  implicit val twirlHtmlMarshaller = twirlMarshaller[Html](`text/html`)
+  implicit val twirlTxtMarshaller  = twirlMarshaller[Txt](`text/plain`)
+  implicit val twirlXmlMarshaller  = twirlMarshaller[Xml](`text/xml`)
+
+  def twirlMarshaller[A](contentType: MediaType): ToEntityMarshaller[A] = {
+    Marshaller.StringMarshaller.wrap(contentType)(_.toString)
+  }
 
   def asSSE[A: UWriter](
       source: Source[A, _],
