@@ -28,10 +28,10 @@ import Scalaz._
   * Created by alonsodomin on 21/02/2016.
   */
 package object validation {
-  type ValidationCallback[A] = ValidatorK[CallbackTo, A]
+  type ValidatorCallback[A] = ValidatorK[CallbackTo, A]
 
   implicit class ReactValidatorSyntax[A](self: Validator[A]) {
-    def callback: ValidationCallback[A] = self.lift[CallbackTo]
+    def callback: ValidatorCallback[A] = self.lift[CallbackTo]
   }
 
 }

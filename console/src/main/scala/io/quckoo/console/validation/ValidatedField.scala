@@ -16,13 +16,13 @@
 
 package io.quckoo.console.validation
 
-import io.quckoo.fault.Fault
+import io.quckoo.validation.Violation
 
 /**
   * Created by alonsodomin on 01/03/2016.
   */
-case class ValidatedField[A](value: Option[A] = None, errors: List[Fault] = List()) {
+case class ValidatedField[A](value: Option[A] = None, errors: List[Violation] = List.empty) {
 
-  def valid = value.isDefined && errors.isEmpty
+  def valid = (value.isDefined && errors.isEmpty) || value.isEmpty
 
 }

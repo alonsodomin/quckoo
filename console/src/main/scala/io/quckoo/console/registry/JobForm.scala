@@ -88,9 +88,9 @@ object JobForm {
       props.handler(jobSpec)
     }
 
-    val displayNameInput = Input[String](onDisplayNameUpdate)
-    val descriptionInput = Input[String](onDescriptionUpdate)
-    val jobClassInput    = Input[String](onJobClassUpdate)
+    val displayNameInput = Input[String]()
+    val descriptionInput = Input[String]()
+    val jobClassInput    = Input[String]()
 
     def render(props: Props, state: State) = {
       <.form(^.name := "jobDetails",
@@ -112,14 +112,18 @@ object JobForm {
           ),
           <.div(lnf.formGroup,
             <.label(^.`for` := "displayName", "Display Name"),
-            displayNameInput(state.spec.displayName,
+            displayNameInput(
+              state.spec.displayName,
+              onDisplayNameUpdate _,
               ^.id := "displayName",
               ^.placeholder := "Job's name"
             )
           ),
           <.div(lnf.formGroup,
             <.label(^.`for` := "description", "Description"),
-            descriptionInput(state.spec.description,
+            descriptionInput(
+              state.spec.description,
+              onDescriptionUpdate _,
               ^.id := "description",
               ^.placeholder := "Job's description"
             )
@@ -130,7 +134,9 @@ object JobForm {
           ),
           <.div(lnf.formGroup,
             <.label(^.`for` := "jobClass", "Job Class"),
-            jobClassInput(state.spec.jobClass,
+            jobClassInput(
+              state.spec.jobClass,
+              onJobClassUpdate _,
               ^.id := "jobClass",
               ^.placeholder := "Fully classified job class name"
             )

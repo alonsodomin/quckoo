@@ -68,13 +68,13 @@ object CronTriggerInput {
     def onUpdate(value: Option[String]) =
       $.modState(_.copy(inputExpr = value)) >> doValidate(value)
 
-    val expressionInput = Input[String](onUpdate)
+    val expressionInput = Input[String]()
 
     def render(props: Props, state: State) = {
       <.div(
         ^.`class` := "form-group",
         <.label(^.`class` := "col-sm-2 control-label", "Expression"),
-        <.div(^.`class` := "col-sm-10", expressionInput(state.inputExpr, ^.id := "cronTrigger")),
+        <.div(^.`class` := "col-sm-10", expressionInput(state.inputExpr, onUpdate _, ^.id := "cronTrigger")),
         <.div(
           ^.`class` := "col-sm-offset-2",
           state.inputExpr.zip(state.parseError).map(p => errorMessage.withKey("cronError")(p))))

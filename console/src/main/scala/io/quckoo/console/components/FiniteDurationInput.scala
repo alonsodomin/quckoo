@@ -18,11 +18,16 @@ package io.quckoo.console.components
 
 import java.util.concurrent.TimeUnit
 
+import io.quckoo.validation.Validators._
+import io.quckoo.console.validation._
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scala.concurrent.duration._
+
+import scalaz._
 
 /**
   * Created by alonsodomin on 08/04/2016.
@@ -75,7 +80,14 @@ object FiniteDurationInput {
       $.modState(_.copy(unit = value), propagateUpdate)
     }
 
-    val lengthInput = Input[Long](onLengthUpdate)
+    val _lengthInput = Input[Long]()
+    val validateLength = {
+      import Scalaz._
+      ValidatedInput[Long](greaterThan(0L).callback)
+    }
+
+    def lengthInput(id: String, state: State)(onUpdate: Option[Long] => Callback) =
+      _lengthInput(state.length, onUpdate, ^.id := s"${id}_length")
 
     def render(props: Props, state: State) = {
       val id = props.id
@@ -83,7 +95,9 @@ object FiniteDurationInput {
         ^.`class` := "container-fluid",
         <.div(
           ^.`class` := "row",
-          <.div(^.`class` := "col-sm-4", lengthInput(state.length, ^.id := s"${id}_length")),
+          <.div(^.`class` := "col-sm-4",
+            validateLength(onLengthUpdate _)(lengthInput(id, state))
+          ),
           <.div(
             ^.`class` := "col-sm-6",
             <.select(
@@ -95,7 +109,11 @@ object FiniteDurationInput {
               SupportedUnits.map {
                 case (u, text) =>
                   <.option(^.value := u.name(), text)
-              }))))
+              }
+            )
+          )
+        )
+      )
     }
 
   }
