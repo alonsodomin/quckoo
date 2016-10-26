@@ -1,0 +1,16 @@
+@(title: String)(content: Html)
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>@title</title>
+        <link rel="stylesheet" type="text/css" href="/assets/css/application.min.css">
+    </head>
+    <body>
+        @content
+        @scalajs.html.scripts("quckoo-console", name => s"/assets/$name", name => getClass.getResource(s"/public/$name") != null)
+    </body>
+</html>

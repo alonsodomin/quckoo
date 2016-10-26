@@ -183,7 +183,7 @@ object Dependencies {
 
   // Console module ===============================
 
-  lazy val consoleApp = Def.settings(
+  lazy val console = Def.settings(
     libraryDependencies ++= Seq(
       compilerPlugin(Dependencies.compiler.macroParadise),
 
@@ -240,22 +240,20 @@ object Dependencies {
         dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js")
     )
   )
-  lazy val consoleResources = Def.settings {
-    libraryDependencies ++= Seq(
-      "org.webjars"       % "bootstrap-sass"  % "3.3.1",
-      "org.webjars"       % "font-awesome"    % "4.5.0",
-      "org.webjars.bower" % "animatewithsass" % "3.2.2"
-    )
-  }
 
-  // Cluster modules ===============================
+  // Server modules ===============================
 
   lazy val clusterShared = Def.settings {
     import libs._
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
-      Akka.kryoSerialization, ivy, scalaXml
+      Akka.kryoSerialization, ivy, scalaXml,
+
+      "com.vmunier"      %% "scalajs-scripts" % "1.0.0",
+      "org.webjars"       % "bootstrap-sass"  % "3.3.1",
+      "org.webjars"       % "font-awesome"    % "4.5.0",
+      "org.webjars.bower" % "animatewithsass" % "3.2.2"
     )
   }
   lazy val clusterMaster = Def.settings {

@@ -17,19 +17,29 @@
 package io.quckoo.cluster.http
 
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server._
+
+import io.quckoo.Info
+import io.quckoo.console.html.index
 
 /**
   * Created by alonsodomin on 07/07/2016.
   */
 trait StaticResources {
 
-  private[this] final val ResourcesDir = "quckoo"
+  private[this] final val AssetsPath = "assets"
+  private[this] final val PublicDir = "public/"
 
-  def staticResources: Route = get {
+  def staticResources =
     pathEndOrSingleSlash {
-      getFromResource(s"$ResourcesDir/index.html")
-    } ~ getFromResourceDirectory(ResourcesDir)
-  }
+      get {
+        complete(index(Info.version))
+      }
+    } ~ pathPrefix(AssetsPath / Remaining) { file =>
+      // optionally compresses the response with Gzip or Deflate
+      // if the client accepts compressed responses
+      encodeResponse {
+        getFromResource(PublicDir + file)
+      }
+    }
 
 }
