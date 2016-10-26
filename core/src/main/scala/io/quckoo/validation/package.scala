@@ -33,7 +33,8 @@ package object validation {
       test(a).map(cond => if (cond) a.successNel[Violation] else err(a).failureNel[A])
     }
 
-    def accept[F[_], A](implicit ev: Applicative[F]): ValidatorK[F, A] = Kleisli { a => ev.pure(a.successNel[Violation]) }
+    def accept[F[_], A](implicit ev: Applicative[F]): ValidatorK[F, A] =
+      Kleisli { a => ev.pure(a.successNel[Violation]) }
   }
 
   object conjunction {
@@ -102,15 +103,5 @@ package object validation {
     }
     def *[E](other: ValidatorK[F, E]): ValidatorK[F, (A, B, C, D, E)] = product(other)
   }
-
-  /*def forall[C[_], F[_]: Applicative, A](c: C[ValidatorK[F, A]])(implicit ev1: Foldable[C], ev2: Applicative[C], ev3: Comonad[C]): ValidatorK[F, C[A]] = {
-    implicit val monoid = conjunction.instance[F].monoid[C[A]]
-    ev1.foldMap(c)(_.dimap(ev3.copure, _.map(ev2.pure)))
-  }
-
-  def exists[C[_], F[_]: Applicative, A](c: C[ValidatorK[F, A]])(implicit ev1: Foldable[C], ev2: Applicative[C], ev3: Comonad[C]): ValidatorK[F, C[A]] = {
-    implicit val monoid = disjunction.instance[F].monoid[C[A]]
-    ev1.foldMap(c)(_.dimap(ev3.copure, _.map(ev2.pure)))
-  }*/
 
 }
