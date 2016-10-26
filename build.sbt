@@ -45,7 +45,7 @@ lazy val commonJsSettings = Seq(
 
 lazy val scoverageSettings = Seq(
   coverageHighlighting := true,
-  coverageExcludedPackages := "io\\.quckoo\\.console\\.client\\..*"
+  coverageExcludedPackages := "io\\.quckoo\\.console\\.html\\..*"
 )
 
 lazy val noPublishSettings = Seq(
