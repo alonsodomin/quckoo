@@ -42,13 +42,19 @@ case class PItem(item: String, tail: Path) extends Path {
 object Path {
   final val DefaultSeparator = "."
 
-  def apply(elements: String*): Path = elements.foldRight(empty)(PItem)
+  def apply(elements: String*): Path =
+    elements.filter(_.nonEmpty).foldRight(empty)(PItem)
 
   def empty: Path = PNil
 
-  def parse(path: String, sep: String): Option[Path] = Some(apply(path.split(sep): _*))
+  def parse(path: String, sep: String): Option[Path] = {
+    val trimmed = path.trim()
+    if (trimmed.isEmpty) Some(PNil)
+    else Some(apply(trimmed.split(sep): _*))
+  }
 
-  def unapply(path: String): Option[Path] = parse(path, DefaultSeparator)
+  def unapply(path: String): Option[Path] =
+    parse(path, s"\\$DefaultSeparator")
 
   def show(sep: String): Show[Path] = Show.shows(_.elements.mkString(sep))
 
