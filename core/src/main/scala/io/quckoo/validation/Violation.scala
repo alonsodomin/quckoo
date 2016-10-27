@@ -63,24 +63,28 @@ object PathViolation {
 
   implicit def jsonWriter: UWriter[PathViolation] = UWriter[PathViolation] {
     pv => Js.Obj(
-      "path"       -> implicitly[UWriter[Path]].write(pv.path),
-      "violations" -> implicitly[UWriter[NonEmptyList[Violation]]].write(pv.violations)
+      "path"       -> Path.pathJsonWriter.write(pv.path),
+      "violations" -> implicitly[UWriter[NonEmptyList[Violation]]].write(pv.violations),
+      "$type"      -> Js.Str(classOf[PathViolation].getName)
     )
   }
 
   implicit def jsonReader: UReader[PathViolation] = UReader[PathViolation] {
-    val pathReader = Kleisli(implicitly[UReader[Path]].read.lift)
+    val pathReader = Kleisli(Path.pathJsonReader.read.lift)
     val violationsReader = Kleisli(implicitly[UReader[NonEmptyList[Violation]]].read.lift)
 
     val prod = Kleisli[Option, (Js.Value, Js.Value), PathViolation] { case (path, violations) =>
       (pathReader.run(path) |@| violationsReader.run(violations))((p, vs) => PathViolation(p, vs))
     }
 
-    val extractJsValues: PartialFunction[Js.Value, (Js.Value, Js.Value)] = {
-      case Js.Obj(Seq(("path", path: Js.Value), ("violations", violations: Js.Value))) => (path, violations)
+    val extractFieldMap: PartialFunction[Js.Value, Map[String, Js.Value]] = {
+      case obj: Js.Obj => obj.value.toMap
+    }
+    val extractJsValues = Kleisli(extractFieldMap.lift).flatMapK { fields =>
+      (fields.get("path") |@| fields.get("violations"))(_ -> _)
     }
 
-    Function.unlift(prod.composeK(extractJsValues.lift).run)
+    Function.unlift(prod.composeK(extractJsValues).run)
   }
 
 }
