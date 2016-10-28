@@ -16,7 +16,23 @@
 
 package io.quckoo.validation
 
+import scalaz._
+import Scalaz._
+
 /**
-  * Created by alonsodomin on 24/01/2016.
+  * Created by alonsodomin on 23/10/2016.
   */
-object Validations extends AnyRefValidations with OptionValidations with StringValidations
+trait AnyValidators {
+
+  def anyK[F[_]: Applicative, A]: ValidatorK[F, A] = Validator.accept[F, A]
+
+  def any[A]: Validator[A] = anyK[Id, A]
+
+  def memberOfK[F[_]: Applicative, A](set: Set[A])(implicit show: Show[A]): ValidatorK[F, A] = Validator[F, A](
+    a => Applicative[F].pure(set.contains(a)), a => Violation.MemberOf(set.map(show.shows), show.shows(a))
+  )
+
+  def memberOf[A: Show](set: Set[A]): Validator[A] =
+    memberOfK[Id, A](set)
+
+}

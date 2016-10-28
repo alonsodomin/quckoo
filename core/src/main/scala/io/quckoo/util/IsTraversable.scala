@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package io.quckoo.validation
-
-import io.quckoo.fault.{Required, ValidationFault}
-
-import scalaz._
+package io.quckoo.util
 
 /**
-  * Created by alonsodomin on 24/01/2016.
+  * Created by alonsodomin on 21/10/2016.
   */
-trait StringValidations {
-  import Scalaz._
+trait IsTraversable[A] {
+  type Elem
+  type T[x] <: Traversable[_]
 
-  def notNullOrEmpty(str: String)(msg: => String): Validation[ValidationFault, String] = {
-    if (str == null || str.isEmpty) Required(msg).failure[String]
-    else str.success[Required]
+  def subst(a: A): T[Elem]
+}
+
+object IsTraversable {
+  def apply[A](implicit ev: IsTraversable[A]): IsTraversable[A] = ev
+
+  implicit def mk[A, E, T0[_] <: Traversable[_]](implicit ev: A => T0[E]): IsTraversable[A] = new IsTraversable[A] {
+    type Elem = E
+    type T[x] = T0[x]
+
+    def subst(a: A): T[E] = ev(a)
   }
-
 }

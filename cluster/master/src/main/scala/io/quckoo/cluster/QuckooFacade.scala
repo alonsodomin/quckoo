@@ -221,18 +221,19 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
     import scalaz._
     import Scalaz._
 
-    val valid = JobSpec.validate(jobSpec)
-    if (valid.isFailure) {
-      Future.successful(valid.asInstanceOf[ValidationNel[Fault, JobId]])
-    } else {
-      implicit val to = Timeout(timeout)
-      log.info(s"Registering job spec: $jobSpec")
+    val validatedJobSpec = JobSpec.valid.async.run(jobSpec)
+      .map(_.leftMap(ValidationFault).leftMap(_.asInstanceOf[Fault]))
 
-      (core ? RegisterJob(jobSpec)) map {
-        case JobAccepted(jobId, _) => jobId.successNel[Fault]
-        case JobRejected(_, error) => error.failureNel[JobId]
-      }
-    }
+    EitherT(validatedJobSpec.map(_.disjunction))
+      .flatMapF { validJobSpec =>
+        implicit val to = Timeout(timeout)
+        log.info(s"Registering job spec: $validJobSpec")
+
+        (core ? RegisterJob(validJobSpec)) map {
+          case JobAccepted(jobId, _) => jobId.right[Fault]
+          case JobRejected(_, error) => error.left[JobId]
+        }
+      }.run.map(_.validationNel)
   }
 
   def fetchJobs(implicit ec: ExecutionContext,

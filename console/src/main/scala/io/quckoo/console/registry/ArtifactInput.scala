@@ -60,9 +60,9 @@ object ArtifactInput {
     def onVersionUpdate(version: Option[String]): Callback =
       $.modState(_.copy(version = version), propagateUpdate)
 
-    val organizationInput = Input[String](onGroupUpdate)
-    val nameInput         = Input[String](onNameUpdate)
-    val versionInput      = Input[String](onVersionUpdate)
+    val organizationInput = Input[String]()
+    val nameInput         = Input[String]()
+    val versionInput      = Input[String]()
 
     def render(props: Props, state: State) = {
       <.div(
@@ -73,6 +73,7 @@ object ArtifactInput {
             ^.`class` := "col-sm-4",
             organizationInput(
               state.organization,
+              onGroupUpdate _,
               ^.id := "artifactOrganization",
               ^.placeholder := "Organization"
             )),
@@ -80,6 +81,7 @@ object ArtifactInput {
             ^.`class` := "col-sm-4",
             nameInput(
               state.name,
+              onNameUpdate _,
               ^.id := "artifactName",
               ^.placeholder := "Name"
             )),
@@ -87,6 +89,7 @@ object ArtifactInput {
             ^.`class` := "col-sm-4",
             versionInput(
               state.version,
+              onVersionUpdate _,
               ^.id := "artifactVerion",
               ^.placeholder := "Version"
             ))))

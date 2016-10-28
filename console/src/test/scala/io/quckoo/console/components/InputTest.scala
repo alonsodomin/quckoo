@@ -31,42 +31,42 @@ class InputTest extends FlatSpec with Matchers {
   "An Input component" should "render an <input> properly typed" in {
     def onUpdate[A]: Input.OnUpdate[A] = _ => Callback.empty
 
-    ComponentTester(Input[String](onUpdate).component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
+    ComponentTester(Input[String].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.string.html}" value="" class="form-control">"""
       component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
     }
 
-    ComponentTester(Input[Password](onUpdate).component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
+    ComponentTester(Input[Password].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.password.html}" value="" class="form-control">"""
       component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
     }
 
-    ComponentTester(Input[Int](onUpdate).component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
+    ComponentTester(Input[Int].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.int.html}" value="" class="form-control">"""
       component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
     }
 
-    ComponentTester(Input[Long](onUpdate).component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
+    ComponentTester(Input[Long].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.long.html}" value="" class="form-control">"""
       component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
     }
 
-    ComponentTester(Input[LocalDate](onUpdate).component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
+    ComponentTester(Input[LocalDate].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.date.html}" value="" class="form-control">"""
       component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
     }
 
-    ComponentTester(Input[LocalTime](onUpdate).component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
+    ComponentTester(Input[LocalTime].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.time.html}" value="" class="form-control">"""

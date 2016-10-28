@@ -16,19 +16,19 @@
 
 package io.quckoo.validation
 
-import io.quckoo.fault.{Required, ValidationFault}
-
 import scalaz._
+import Scalaz._
+
+import Violation.Undefined
 
 /**
-  * Created by alonsodomin on 31/01/2016.
+  * Created by alonsodomin on 21/10/2016.
   */
-trait OptionValidations {
-  import Scalaz._
+trait OptionValidators {
 
-  def defined[T](t: Option[T])(msg: => String): Validation[ValidationFault, Option[T]] = {
-    if (t.isEmpty) Required(msg).failure[Option[T]]
-    else t.success[Required]
-  }
+  def definedK[F[_]: Applicative, A]: ValidatorK[F, Option[A]] =
+    Validator[F, Option[A]](a => Applicative[F].pure(a.isEmpty), _ => Undefined)
+
+  def defined[A]: Validator[Option[A]] = definedK[Id, A]
 
 }

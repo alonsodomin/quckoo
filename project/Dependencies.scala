@@ -118,21 +118,23 @@ object Dependencies {
   }
 
   object compiler {
-    val macroParadise = "org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full
+    val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.0" cross CrossVersion.full
+    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.2" cross CrossVersion.binary
+
+    val plugins = Seq(macroParadise, kindProjector).map(compilerPlugin)
   }
 
   // Core module ===============================
 
   lazy val core = Def.settings {
-    libraryDependencies ++= Seq(
-      compilerPlugin(Dependencies.compiler.macroParadise),
-
+    libraryDependencies ++= compiler.plugins ++ Seq(
       "com.lihaoyi"    %%% "upickle"            % version.upickle,
       "com.beachape"   %%% "enumeratum"         % version.enumeratum,
       "com.beachape"   %%% "enumeratum-upickle" % version.enumeratum,
       "org.scalaz"     %%% "scalaz-core"        % version.scalaz,
       "io.github.soc"  %%% "scala-java-time"    % version.scalaTime,
       "org.scalatest"  %%% "scalatest"          % version.scalaTest  % Test,
+      "org.scalacheck" %%% "scalacheck"         % version.scalaCheck % Test,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
@@ -144,8 +146,7 @@ object Dependencies {
   // API module ===============================
 
   lazy val api = Def.settings(
-    addCompilerPlugin(compiler.macroParadise),
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= compiler.plugins ++ Seq(
       "me.chrons"      %%% "diode"           % version.diode,
       "io.monix"       %%% "monix-reactive"  % version.monix,
       "io.monix"       %%% "monix-scalaz-72" % version.monix,

@@ -67,7 +67,7 @@ object Input {
 
   }
 
-  @implicitNotFound("Type $A is not supported as Input component")
+  @implicitNotFound("Type ${A} is not supported as Input component")
   sealed abstract class Type[A](val html: String)
   object Type {
     implicit val string   = new Type[String]("text")       {}
@@ -118,26 +118,27 @@ object Input {
 
   }
 
-  def apply[A: Reusability](onUpdate: OnUpdate[A]) = new Input[A](onUpdate)
+  def apply[A: Reusability]() = new Input[A]
 
 }
 
-class Input[A: Reusability] private[components] (onUpdate: Input.OnUpdate[A]) {
+class Input[A: Reusability] private[components]() {
   import Input._
 
   implicit val propsReuse: Reusability[Props[A]] =
     Reusability.by[Props[A], (Option[A], Option[A])](p => (p.value, p.defaultValue))
 
-  private[components] val component = ReactComponentB[Props[A]]("Input").stateless
+  private[components] val component = ReactComponentB[Props[A]]("Input")
+    .stateless
     .renderBackend[Backend[A]]
     .configure(Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode])
     .build
 
-  def apply(value: Option[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
+  def apply(value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A], T: Type[A]) =
     component(Props(value, None, onUpdate, attrs))
 
-  def apply(value: Option[A], defaultValue: Option[A], attrs: TagMod*)(implicit C: Converter[A],
-                                                                       T: Type[A]) =
-    component(Props(value, defaultValue, onUpdate, attrs))
+  def apply(value: Option[A], defaultValue: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(
+      implicit C: Converter[A], T: Type[A]
+  ) = component(Props(value, defaultValue, onUpdate, attrs))
 
 }
