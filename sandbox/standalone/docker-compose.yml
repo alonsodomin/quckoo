@@ -1,0 +1,48 @@
+version: '2'
+services:
+  cassandra:
+    image: cassandra
+    ports:
+      - 9042:9042
+      - 7000:7000
+      - 9160:9160
+
+  master_1:
+    image: quckoo/master<localBuild>
+    ports:
+      - 8095:8095
+      - 2551:2551
+    volumes:
+      - ./etc/quckoo:/opt/quckoo/conf
+    command: -b localhost:2551 --nodes localhost:2551,localhost:2552 --cs localhost:9042
+
+  master_2:
+    image: quckoo/master<localBuild>
+    ports:
+      - 8096:8095
+      - 2552:2551
+    volumes:
+      - ./etc/quckoo:/opt/quckoo/conf
+    command: -b localhost:2552 --nodes localhost:2551,localhost:2552 --cs localhost:9042
+
+  worker_1:
+    image: quckoo/worker<localBuild>
+    depends_on:
+      - "master_1"
+      - "master_2"
+    ports:
+      - 5001:5001
+    volumes:
+      - ./etc/quckoo:/opt/quckoo/conf
+    command: --master localhost:2551,localhost:2552 -b localhost:5001
+
+  worker_2:
+    image: quckoo/worker<localBuild>
+    depends_on:
+      - "master_1"
+      - "master_2"
+    ports:
+      - 5002:5001
+    volumes:
+      - ./etc/quckoo:/opt/quckoo/conf
+    command: --master localhost:2551,localhost:2552 -b localhost:5002

@@ -47,15 +47,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision :docker
 
   # Installs minimal software tools and prepares the VM for running the application
-  config.vm.provision :shell, path: "sandbox/provision.sh"
+  config.vm.provision :shell, path: "sandbox/vagrant/provision.sh"
 
   # Sets up the third-party services needed to run the application
-  config.vm.provision :docker_compose, yml: "/vagrant/sandbox/docker-support.yml"
+  config.vm.provision :docker_compose, yml: "/vagrant/sandbox/vagrant/docker-support.yml"
 
   # Builds the latest version of the application code
-  config.vm.provision :shell, inline: "/vagrant/sandbox/build.sh", privileged: false
+  config.vm.provision :shell, inline: "/vagrant/sandbox/vagrant/build.sh", privileged: false
 
   # Starts the application cluster
-  config.vm.provision :docker_compose, yml: "/vagrant/sandbox/docker-quckoo.yml"
+  config.vm.provision :docker_compose, yml: "/vagrant/sandbox/vagrant/docker-quckoo.yml"
 
 end

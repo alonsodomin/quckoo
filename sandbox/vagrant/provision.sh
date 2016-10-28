@@ -8,7 +8,7 @@ function config_sbt() {
         if [ ! -d /home/vagrant/.sbt/0.13 ]; then
             mkdir -p /home/vagrant/.sbt/0.13
         fi
-        ln -s /vagrant/sandbox/etc/sbt/0.13/artifactory.sbt /home/vagrant/.sbt/0.13/artifactory.sbt
+        ln -s /vagrant/sandbox/vagrant/etc/sbt/0.13/artifactory.sbt /home/vagrant/.sbt/0.13/artifactory.sbt
         chown -R vagrant:vagrant /home/vagrant/.sbt
     fi
 }
@@ -49,4 +49,3 @@ test -f ~/.devtools_provisioned || install_devtools
 
 # Link SBT configuration if it does not exists
 config_sbt
-
