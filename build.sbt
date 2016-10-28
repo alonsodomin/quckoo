@@ -8,6 +8,8 @@ organization in ThisBuild := "io.quckoo"
 
 scalaVersion in ThisBuild := "2.11.8"
 
+val sandbox = settingKey[String]("The name of the environment sandbox to use.")
+
 lazy val commonSettings = Seq(
     licenses += ("Apache-2.0", url(
       "http://opensource.org/licenses/Apache-2.0")),
@@ -123,9 +125,13 @@ lazy val releaseSettings = {
 }
 
 lazy val quckoo = (project in file("."))
+  .enablePlugins(AutomateHeaderPlugin, DockerComposePlugin)
   .settings(
     name := "quckoo",
-    moduleName := "quckoo-root"
+    moduleName := "quckoo-root",
+    sandbox := "standalone",
+    dockerImageCreationTask := (publishLocal in Docker).value,
+    composeFile := s"./sandbox/${sandbox.value}/docker-compose.yml"
   )
   .settings(noPublishSettings)
   .settings(releaseSettings)
