@@ -41,11 +41,9 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
     new Anon[HttpProtocol, Credentials, Passport] {
 
       override val marshall = Marshall[AnonCmd, Credentials, HttpRequest] { cmd =>
-        val creds =
-          DataBuffer.fromString(s"${cmd.payload.username}:${cmd.payload.password}").toBase64
-        val authHdr = AuthorizationHeader -> s"Basic $creds"
+        DataBuffer.fromString(s"${cmd.payload.username}:${cmd.payload.password}").toBase64.map { creds =>
+          val authHdr = AuthorizationHeader -> s"Basic $creds"
 
-        Attempt.success {
           HttpRequest(
             HttpMethod.Post,
             LoginURI,
