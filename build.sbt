@@ -41,7 +41,6 @@ lazy val commonJsSettings = Seq(
   coverageExcludedFiles := ".*",
   persistLauncher in Test := false,
   scalaJSStage in Test := FastOptStage,
-  scalaJSUseRhino in Global := false,
   jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
 )
 
@@ -251,7 +250,7 @@ lazy val clusterMaster = (project in file("cluster/master"))
     moduleName := "quckoo-cluster-master",
     scalaJSProjects := Seq(console),
     baseDirectory in reStart := file("cluster/master/target"),
-    compile in Compile <<= (compile in Compile) dependsOn scalaJSPipeline,
+    compile in Compile := ((compile in Compile) dependsOn scalaJSPipeline).value,
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
     pipelineStages in Assets := Seq(scalaJSPipeline)

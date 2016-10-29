@@ -11,21 +11,22 @@ object MultiNode {
       "com.typesafe.akka" %% "akka-multi-node-testkit"  % Dependencies.version.akka.main,
       "org.scoverage"     %% "scalac-scoverage-runtime" % "1.1.1"
     ).map(_ % MultiJvm),
-    compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
+    compile in MultiJvm := ((compile in MultiJvm) triggeredBy (compile in Test)).value,
     parallelExecution in Test := false,
     jvmOptions in MultiJvm := Seq("-Xmx512M"),
-    executeTests in Test <<= (executeTests in Test, executeTests in MultiJvm) map {
-      case (testResults, multiNodeResults) =>
-        val overall = {
-          if (testResults.overall.id < multiNodeResults.overall.id)
-            multiNodeResults.overall
-          else
-            testResults.overall
-        }
-        Tests.Output(overall,
-          testResults.events ++ multiNodeResults.events,
-          testResults.summaries ++ multiNodeResults.summaries
-        )
+    executeTests in Test := {
+      val testResults = (executeTests in Test).value
+      val multiNodeResults = (executeTests in MultiJvm).value
+      val overall = {
+        if (testResults.overall.id < multiNodeResults.overall.id)
+          multiNodeResults.overall
+        else
+          testResults.overall
+      }
+      Tests.Output(overall,
+        testResults.events ++ multiNodeResults.events,
+        testResults.summaries ++ multiNodeResults.summaries
+      )
     }
   ) ++ HeaderPlugin.settingsFor(MultiJvm)
 
