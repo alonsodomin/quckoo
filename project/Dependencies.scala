@@ -30,7 +30,7 @@ object Dependencies {
       val sse  = "1.11.0"
 
       // persistence plugins
-      val cassandra = "0.18"
+      val cassandra = "0.19"
       val inmemory  = "1.3.8"
     }
 
