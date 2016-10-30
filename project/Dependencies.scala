@@ -251,6 +251,8 @@ object Dependencies {
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
       Akka.kryoSerialization, ivy, scalaXml,
 
+      "com.tecsisa" %% "constructr-coordination-consul" % "0.3.0",
+
       "com.vmunier"      %% "scalajs-scripts" % "1.0.0",
       "org.webjars"       % "bootstrap-sass"  % "3.3.1",
       "org.webjars"       % "font-awesome"    % "4.5.0",

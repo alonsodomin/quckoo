@@ -2,18 +2,20 @@ version: '2'
 services:
   consul:
     image: consul
-    network_mode: "host"
     ports:
+      - 8400:8400
       - 8500:8500
+      - 8600:53
+    command: agent -server -bootstrap -client=0.0.0.0 -ui
 
-  registrator:
-    image: gliderlabs/registrator
-    network_mode: "host"
-    depends_on:
-      - "consul"
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock
-    command: consul://localhost:8500
+  #registrator:
+  #  image: gliderlabs/registrator
+  #  network_mode: "host"
+  #  depends_on:
+  #    - "consul"
+  #  volumes:
+  #    - /var/run/docker.sock:/tmp/docker.sock
+  #  command: consul://localhost:8500
 
   cassandra:
     image: cassandra
