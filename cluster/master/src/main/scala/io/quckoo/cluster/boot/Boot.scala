@@ -17,14 +17,11 @@
 package io.quckoo.cluster.boot
 
 import akka.actor._
-
 import com.typesafe.config.{Config, ConfigFactory}
-
+import io.quckoo._
 import io.quckoo.cluster.{QuckooClusterSettings, QuckooFacade}
 import io.quckoo.time.implicits.systemClock
-
 import org.slf4s.Logging
-
 import scopt.OptionParser
 
 import scala.util.{Failure, Success}
@@ -67,6 +64,8 @@ object Boot extends App with Logging {
     opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
+    log.info(s"Starting Quckoo Server ${Info.version}...\n" + Logo)
+
     implicit val system = ActorSystem(Options.SystemName, config)
     sys.addShutdownHook {
       log.info("Received kill signal, terminating...")

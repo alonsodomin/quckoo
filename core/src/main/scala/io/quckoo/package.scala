@@ -18,14 +18,21 @@ package io
 
 import java.util.concurrent.Callable
 
-import io.quckoo.fault.Fault
-
-import scalaz._
-
 /**
   * Created by aalonsodominguez on 07/07/15.
   */
 package object quckoo {
+
+  final val Logo =
+    s"""
+       |       ____             __
+       |      / __ \\__  _______/ /______  ____
+       |     / / / / / / / ___/ //_/ __ \\/ __ \\
+       |    / /_/ / /_/ / /__/ ,< / /_/ / /_/ /
+       |    \\___\\_\\__,_/\\___/_/|_|\\____/\\____/
+       |                                        v${Info.version}
+       |
+     """.stripMargin
 
   type JobClass = Class[_ <: Callable[_]]
 

@@ -22,7 +22,7 @@ import akka.japi.Util._
 
 import com.typesafe.config.{Config, ConfigFactory}
 
-import io.quckoo.Info
+import io.quckoo.{Info, Logo}
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.{IvyConfiguration, IvyResolve}
 import io.quckoo.worker.{JobExecutor, Worker}
@@ -56,7 +56,7 @@ object Boot extends App with Logging {
     opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
-    log.info(s"Starting Quckoo Worker ${Info.version} ...")
+    log.info(s"Starting Quckoo Worker ${Info.version}...\n" + Logo)
 
     val system = ActorSystem(Options.SystemName, config)
     sys.addShutdownHook { system.terminate() }
