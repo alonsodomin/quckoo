@@ -101,6 +101,7 @@ object ConsoleCircuit
 
     override def handle = {
       case Login(username, password, referral) =>
+        implicit val timeout = DefaultTimeout
         effectOnly(
           Effect(
             client.authenticate(username, password).map(pass => LoggedIn(pass, referral)).recover {
@@ -109,6 +110,7 @@ object ConsoleCircuit
           ))
 
       case Logout =>
+        implicit val timeout = DefaultTimeout
         value.map { implicit passport =>
           effectOnly(Effect(client.signOut.map(_ => LoggedOut)))
         } getOrElse noChange

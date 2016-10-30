@@ -40,12 +40,13 @@ import Scalaz._
   */
 private[core] trait ConsoleOps { this: LoggerHolder =>
 
-  implicit val DefaultTimeout = 2500 millis
+  val DefaultTimeout = 2500 millis
 
   def refreshClusterStatus(
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[ClusterStateLoaded] = {
+    implicit val timeout = DefaultTimeout
     client.clusterState.map(ClusterStateLoaded)
   }
 
@@ -53,6 +54,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[RegisterJobResult] = {
+    implicit val timeout = 20.minutes
     client.registerJob(jobSpec).map(RegisterJobResult)
   }
 
@@ -60,6 +62,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[Event] = {
+    implicit val timeout = DefaultTimeout
     foldIntoEvent(client.enableJob(jobId))
   }
 
@@ -67,6 +70,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[Event] = {
+    implicit val timeout = DefaultTimeout
     foldIntoEvent(client.disableJob(jobId))
   }
 
@@ -74,6 +78,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[(JobId, Pot[JobSpec])] = {
+    implicit val timeout = DefaultTimeout
     client.fetchJob(jobId).map {
       case Some(spec) => (jobId, Ready(spec))
       case None       => (jobId, Unavailable)
@@ -84,6 +89,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[Map[JobId, Pot[JobSpec]]] = {
+    implicit val timeout = DefaultTimeout
     if (keys.isEmpty) {
       client.fetchJobs.map(_.map { case (k, v) => (k, Ready(v)) })
     } else {
@@ -95,6 +101,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[Event] = {
+    implicit val timeout = DefaultTimeout
     foldIntoEvent(client.scheduleJob(details))
   }
 
@@ -102,6 +109,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[Event] = {
+    implicit val timeout = DefaultTimeout
     foldIntoEvent(client.cancelPlan(planId))
   }
 
@@ -109,6 +117,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[Map[PlanId, Pot[ExecutionPlan]]] = {
+    implicit val timeout = DefaultTimeout
     if (ids.isEmpty) {
       client.executionPlans.map(_.map { case (k, v) => (k, Ready(v)) })
     } else {
@@ -120,6 +129,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[(PlanId, Pot[ExecutionPlan])] = {
+    implicit val timeout = DefaultTimeout
     client.executionPlan(id).map {
       case Some(plan) => id -> Ready(plan)
       case None       => id -> Unavailable
@@ -130,6 +140,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[Map[TaskId, Pot[TaskExecution]]] = {
+    implicit val timeout = DefaultTimeout
     if (ids.isEmpty) {
       client.executions.map(_.map { case (k, v) => (k, Ready(v)) })
     } else {
@@ -141,6 +152,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       implicit client: HttpQuckooClient,
       passport: Passport
   ): Future[(TaskId, Pot[TaskExecution])] = {
+    implicit val timeout = DefaultTimeout
     client.execution(id).map {
       case Some(task) => id -> Ready(task)
       case None       => id -> Unavailable

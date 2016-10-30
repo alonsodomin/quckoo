@@ -43,61 +43,63 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
   this: SchedulerApi with SchedulerStreams =>
 
   import StatusCodes._
+  import TimeoutDirectives._
 
   def schedulerApi(
       implicit system: ActorSystem,
       materializer: ActorMaterializer,
-      timeout: FiniteDuration,
       passport: Passport
   ): Route =
-    pathPrefix("plans") {
-      pathEnd {
-        get {
-          extractExecutionContext { implicit ec =>
-            complete(executionPlans)
-          }
-        } ~ post {
-          entity(as[ScheduleJob]) { req =>
+    extractTimeout(DefaultTimeout) { implicit timeout =>
+      pathPrefix("plans") {
+        pathEnd {
+          get {
             extractExecutionContext { implicit ec =>
-              onSuccess(scheduleJob(req)) {
-                case \/-(res)                  => complete(res)
-                case -\/(JobNotEnabled(jobId)) => complete(BadRequest -> jobId)
-                case -\/(JobNotFound(jobId))   => complete(NotFound -> jobId)
-                case -\/(error)                => complete(InternalServerError -> error)
+              complete(executionPlans)
+            }
+          } ~ put {
+            entity(as[ScheduleJob]) { req =>
+              extractExecutionContext { implicit ec =>
+                onSuccess(scheduleJob(req)) {
+                  case \/-(res) => complete(res)
+                  case -\/(JobNotEnabled(jobId)) => complete(BadRequest -> jobId)
+                  case -\/(JobNotFound(jobId)) => complete(NotFound -> jobId)
+                  case -\/(error) => complete(InternalServerError -> error)
+                }
+              }
+            }
+          }
+        } ~ path(JavaUUID) { planId =>
+          get {
+            extractExecutionContext { implicit ec =>
+              onSuccess(executionPlan(planId)) {
+                case Some(plan) => complete(plan)
+                case _ => complete(NotFound -> planId)
+              }
+            }
+          } ~ delete {
+            extractExecutionContext { implicit ec =>
+              onSuccess(cancelPlan(planId)) {
+                case \/-(res) => complete(res)
+                case -\/(ExecutionPlanNotFound(_)) => complete(NotFound -> planId)
               }
             }
           }
         }
-      } ~ path(JavaUUID) { planId =>
-        get {
-          extractExecutionContext { implicit ec =>
-            onSuccess(executionPlan(planId)) {
-              case Some(plan) => complete(plan)
-              case _          => complete(NotFound -> planId)
+      } ~ pathPrefix("executions") {
+        pathEnd {
+          get {
+            extractExecutionContext { implicit ec =>
+              complete(executions)
             }
           }
-        } ~ delete {
-          extractExecutionContext { implicit ec =>
-            onSuccess(cancelPlan(planId)) {
-              case \/-(res)                      => complete(res)
-              case -\/(ExecutionPlanNotFound(_)) => complete(NotFound -> planId)
-            }
-          }
-        }
-      }
-    } ~ pathPrefix("executions") {
-      pathEnd {
-        get {
-          extractExecutionContext { implicit ec =>
-            complete(executions)
-          }
-        }
-      } ~ path(JavaUUID) { taskId =>
-        get {
-          extractExecutionContext { implicit ec =>
-            onSuccess(execution(taskId)) {
-              case Some(task) => complete(task)
-              case _          => complete(NotFound -> taskId)
+        } ~ path(JavaUUID) { taskId =>
+          get {
+            extractExecutionContext { implicit ec =>
+              onSuccess(execution(taskId)) {
+                case Some(task) => complete(task)
+                case _ => complete(NotFound -> taskId)
+              }
             }
           }
         }

@@ -164,7 +164,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
     "return a 404 when scheduling a job that does not exist" in {
       val scheduleMsg = ScheduleJob(JobId(UUID.randomUUID()))
-      Post(endpoint(s"/plans"), Some(scheduleMsg)) ~> entryPoint ~> check {
+      Put(endpoint(s"/plans"), Some(scheduleMsg)) ~> entryPoint ~> check {
         status === NotFound
         responseAs[JobId] should be (scheduleMsg.jobId)
       }

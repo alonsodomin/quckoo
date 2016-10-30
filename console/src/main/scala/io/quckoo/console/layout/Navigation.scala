@@ -93,7 +93,7 @@ object Navigation {
             <.a(^.`class` := "navbar-brand",
               ^.href := props.routerCtl.urlFor(DashboardRoute).value,
               ^.onClick ==> navigationItemClicked(props.initial),
-              Icons.home, <.span("Quckoo", Info.version)
+              Icons.home, "Quckoo"
             )
           ),
           <.div(^.`class` := "collapse navbar-collapse",
