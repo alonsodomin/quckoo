@@ -61,10 +61,11 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
           extractTimeout(10 minutes) { implicit timeout =>
             entity(as[JobSpec]) { jobSpec =>
               extractExecutionContext { implicit ec =>
-                onSuccess(registerJob(jobSpec)) {
+                /*onSuccess(registerJob(jobSpec)) {
                   case Successz(jobId) => complete(jobId)
                   case Failurez(errors) => complete(BadRequest -> errors)
-                }
+                }*/
+                complete(registerJob(jobSpec))
               }
             }
           }

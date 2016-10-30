@@ -136,7 +136,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
 
     "return a JobId if the job spec is valid" in {
       Put(endpoint("/jobs"), Some(TestJobSpec)) ~> entryPoint ~> check {
-        responseAs[JobId] shouldBe JobId(TestJobSpec)
+        responseAs[ValidationNel[Fault, JobId]] shouldBe JobId(TestJobSpec).successNel[Fault]
       }
     }
 
@@ -147,8 +147,8 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
         .toValidationNel
 
       Put(endpoint("/jobs"), Some(TestInvalidJobSpec)) ~> entryPoint ~> check {
-        status == BadRequest
-        responseAs[NonEmptyList[Fault]].failure[JobId] shouldBe expectedResponse
+        status === BadRequest
+        responseAs[ValidationNel[Fault, JobId]] shouldBe expectedResponse
       }
     }
 

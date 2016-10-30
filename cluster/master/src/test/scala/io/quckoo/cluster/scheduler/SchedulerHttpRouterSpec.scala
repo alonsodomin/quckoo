@@ -170,9 +170,11 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
       }
     }
 
-    "return the execution plan id when scheduling a job" in {
+    "return ExecutionPlanStarted when scheduling a job" in {
       val scheduleMsg = ScheduleJob(TestPlanMap.head._2.jobId)
-      Post(endpoint(s"/plans"), Some(scheduleMsg)) ~> entryPoint ~> check {
+      Put(endpoint(s"/plans"), Some(scheduleMsg)) ~> entryPoint ~> check {
+        status === OK
+
         val response = responseAs[ExecutionPlanStarted]
         response.jobId should be (scheduleMsg.jobId)
       }
