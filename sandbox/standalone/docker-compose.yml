@@ -26,4 +26,4 @@ services:
       - master
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
-    command: --master master:2551
+    command: --master master:2551 -b worker:5001
