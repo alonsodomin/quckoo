@@ -17,11 +17,15 @@
 package io.quckoo.cluster.boot
 
 import akka.actor._
+
 import com.typesafe.config.{Config, ConfigFactory}
+
 import io.quckoo._
 import io.quckoo.cluster.{QuckooClusterSettings, QuckooFacade}
 import io.quckoo.time.implicits.systemClock
+
 import org.slf4s.Logging
+
 import scopt.OptionParser
 
 import scala.util.{Failure, Success}
@@ -32,7 +36,7 @@ import scala.util.{Failure, Success}
 object Boot extends App with Logging {
 
   val parser = new OptionParser[Options]("quckoo-master") {
-    head("quckoo-master", "0.1.0")
+    head("quckoo-master", Info.version)
 
     opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
       options.copy(bindAddress = Some(b))
@@ -41,6 +45,10 @@ object Boot extends App with Logging {
     opt[Int]('p', "port") valueName "port" action { (p, options) =>
       options.copy(port = p)
     } text "Port to use to listen to connections"
+
+    opt[String]("http") valueName "http" action { (value, options) =>
+      options.copy(httpBindAddress = Some(value))
+    } text "HTTP Address to use to serve the web UI"
 
     opt[Int]("httpPort") valueName "port" action { (p, options) =>
       options.copy(httpPort = Some(p))

@@ -37,7 +37,7 @@ import scopt.OptionParser
 object Boot extends App with Logging {
 
   val parser = new OptionParser[Options]("quckoo-worker") {
-    head("quckoo-worker", "0.1.0")
+    head("quckoo-worker", Info.version)
     opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
       options.copy(bindAddress = Some(b))
     } text "Bind to this external host and port. Useful when using inside Docker containers"

@@ -41,7 +41,8 @@ object Options {
   final val CassandraJournalContactPoints  = "cassandra-journal.contact-points"
   final val CassandraSnapshotContactPoints = "cassandra-snapshot-store.contact-points"
 
-  final val KairosHttpBindPort = "quckoo.http.bind-port"
+  final val QuckooHttpBindInterface = "quckoo.http.bind-interface"
+  final val QuckooHttpBindPort      = "quckoo.http.bind-port"
 
   private final val HostAndPort = """(.+?):(\d+)""".r
 
@@ -50,6 +51,7 @@ object Options {
 case class Options(
     bindAddress: Option[String] = None,
     port: Int = QuckooClusterSettings.DefaultTcpPort,
+    httpBindAddress: Option[String] = None,
     httpPort: Option[Int] = None,
     seed: Boolean = false,
     seedNodes: Seq[String] = Seq(),
@@ -63,7 +65,7 @@ case class Options(
     val (bindHost, bindPort) = bindAddress.map { addr =>
       val HostAndPort(h, p) = addr
       (h, p.toInt)
-    } getOrElse ((QuckooClusterSettings.DefaultTcpInterface, port))
+    } getOrElse (QuckooClusterSettings.DefaultTcpInterface -> port)
 
     valueMap.put(AkkaRemoteNettyHost, bindHost)
     valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))
@@ -74,7 +76,13 @@ case class Options(
       valueMap.put(AkkaRemoteNettyBindPort, Int.box(port))
     }
 
-    httpPort.foreach(p => valueMap.put(KairosHttpBindPort, Int.box(p)))
+    httpBindAddress.map { addr =>
+      val HostAndPort(h, p) = addr
+      (h, p.toInt)
+    } orElse httpPort.map(p => ("0.0.0.0", p)) foreach { case (intf, p) =>
+      valueMap.put(QuckooHttpBindInterface, intf)
+      valueMap.put(QuckooHttpBindPort, Int.box(p))
+    }
 
     val clusterSeedNodes: Seq[String] = {
       if (seed || seedNodes.isEmpty)
