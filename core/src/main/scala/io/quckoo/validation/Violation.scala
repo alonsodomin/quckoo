@@ -27,6 +27,7 @@ import Scalaz._
 sealed trait Violation
 
 object Violation {
+  case class EqualTo(expected: String, actual: String) extends Violation
   case class GreaterThan(expected: String, actual: String) extends Violation
   case class LessThan(expected: String, actual: String) extends Violation
   case class MemberOf(expected: Set[String], actual: String) extends Violation
@@ -36,9 +37,10 @@ object Violation {
 
   implicit val display: Show[Violation] = Show.shows {
     case p: PathViolation => PathViolation.show(".").shows(p)
-    case GreaterThan(expected, actual) => s"'$actual' > '$expected'"
-    case LessThan(expected, actual) => s"'$actual' < '$expected'"
-    case MemberOf(expected, actual) => s"'$actual' not in $expected"
+    case EqualTo(expected, actual) => s"$actual != $expected"
+    case GreaterThan(expected, actual) => s"$actual < $expected"
+    case LessThan(expected, actual) => s"$actual > $expected"
+    case MemberOf(expected, actual) => s"$actual not in $expected"
     case Empty => "non empty"
     case Undefined => "not defined"
   }

@@ -30,10 +30,11 @@ import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.auth.Passport
 import io.quckoo.id.JobId
 import io.quckoo.fault._
+import io.quckoo.cluster.http.TimeoutDirectives
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.serialization.json._
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 import scalaz.{Failure => Failurez, Success => Successz, _}
 
 /**
@@ -43,52 +44,59 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
   this: RegistryApi with RegistryStreams =>
 
   import StatusCodes._
+  import TimeoutDirectives._
 
   def registryApi(implicit system: ActorSystem,
                   materializer: Materializer,
-                  timeout: FiniteDuration,
                   passport: Passport): Route =
     pathPrefix("jobs") {
       pathEnd {
         get {
-          extractExecutionContext { implicit ec =>
-            complete(fetchJobs)
+          extractTimeout(DefaultTimeout) { implicit timeout =>
+            extractExecutionContext { implicit ec =>
+              complete(fetchJobs)
+            }
           }
         } ~ put {
-          entity(as[JobSpec]) { jobSpec =>
-            extractExecutionContext { implicit ec =>
-              onSuccess(registerJob(jobSpec)) {
-                case Successz(jobId)  => complete(jobId)
-                case Failurez(errors) => complete(BadRequest -> errors)
+          extractTimeout(10 minutes) { implicit timeout =>
+            entity(as[JobSpec]) { jobSpec =>
+              extractExecutionContext { implicit ec =>
+                /*onSuccess(registerJob(jobSpec)) {
+                  case Successz(jobId) => complete(jobId)
+                  case Failurez(errors) => complete(BadRequest -> errors)
+                }*/
+                complete(registerJob(jobSpec))
               }
             }
           }
         }
       } ~ pathPrefix(JavaUUID) { jobId =>
-        pathEnd {
-          get {
-            extractExecutionContext { implicit ec =>
-              onSuccess(fetchJob(JobId(jobId))) {
-                case Some(spec) => complete(spec)
-                case _          => complete(NotFound)
+        extractTimeout(DefaultTimeout) { implicit timeout =>
+          pathEnd {
+            get {
+              extractExecutionContext { implicit ec =>
+                onSuccess(fetchJob(JobId(jobId))) {
+                  case Some(spec) => complete(spec)
+                  case _ => complete(NotFound)
+                }
               }
             }
-          }
-        } ~ path("enable") {
-          post {
-            extractExecutionContext { implicit ec =>
-              onSuccess(enableJob(JobId(jobId))) {
-                case \/-(res @ JobEnabled(_)) => complete(res)
-                case -\/(JobNotFound(_))      => complete(NotFound -> jobId)
+          } ~ path("enable") {
+            post {
+              extractExecutionContext { implicit ec =>
+                onSuccess(enableJob(JobId(jobId))) {
+                  case \/-(res@JobEnabled(_)) => complete(res)
+                  case -\/(JobNotFound(_)) => complete(NotFound -> jobId)
+                }
               }
             }
-          }
-        } ~ path("disable") {
-          post {
-            extractExecutionContext { implicit ec =>
-              onSuccess(disableJob(JobId(jobId))) {
-                case \/-(res @ JobDisabled(_)) => complete(res)
-                case -\/(JobNotFound(_))       => complete(NotFound -> jobId)
+          } ~ path("disable") {
+            post {
+              extractExecutionContext { implicit ec =>
+                onSuccess(disableJob(JobId(jobId))) {
+                  case \/-(res@JobDisabled(_)) => complete(res)
+                  case -\/(JobNotFound(_)) => complete(NotFound -> jobId)
+                }
               }
             }
           }

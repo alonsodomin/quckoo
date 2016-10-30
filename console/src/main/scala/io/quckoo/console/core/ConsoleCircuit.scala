@@ -17,7 +17,7 @@
 package io.quckoo.console.core
 
 import diode._
-import diode.data.{AsyncAction, PotMap}
+import diode.data.{AsyncAction, PotMap, Ready}
 import diode.react.ReactConnector
 
 import io.quckoo.auth.Passport
@@ -101,6 +101,7 @@ object ConsoleCircuit
 
     override def handle = {
       case Login(username, password, referral) =>
+        implicit val timeout = DefaultTimeout
         effectOnly(
           Effect(
             client.authenticate(username, password).map(pass => LoggedIn(pass, referral)).recover {
@@ -109,6 +110,7 @@ object ConsoleCircuit
           ))
 
       case Logout =>
+        implicit val timeout = DefaultTimeout
         value.map { implicit passport =>
           effectOnly(Effect(client.signOut.map(_ => LoggedOut)))
         } getOrElse noChange
@@ -275,6 +277,12 @@ object ConsoleCircuit
 
       case JobSpecsLoaded(specs) if specs.nonEmpty =>
         updated(PotMap(JobSpecFetcher, specs))
+
+      case JobAccepted(jobId, spec) =>
+        // TODO re-enable following code once registerJob command is fully async
+        //val growl = Growl(Notification.info(s"Job accepted: $jobId"))
+        //updated(value + (jobId -> Ready(spec)), growl)
+        noChange
 
       case JobEnabled(jobId) =>
         effectOnly(
