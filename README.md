@@ -42,21 +42,34 @@ cd quckoo
 sbt package
 ```
 
-### Sandbox environment
+### Launching the cluster
 
-The repository ships with a `Vagrantfile` in its root folder for ease the setup of a Sandboxed environment. This Vagrant configuration
+The easiest way to launch the cluster right now is by building the Docker images locally and then starting the default docker compose
+cluster setup. This operations can easily be done from within SBT:
+
+```
+sbt
+> docker:publishLocal
+> dockerComposeUp
+```
+
+After the previous commands, using `docker ps` you should be able to see 2 master nodes, one worker node and one Cassandra node running as docker containers
+in your local machine. The cluster will need a few seconds to fully stabilize and then it will be ready to serve requests. You should be able to
+access the Quckoo UI in following URL:
+
+http://192.168.50.25:8095
+
+_Use `admin` and `password` as credentials when prompted._
+
+### Fully isolated environment
+
+The repository ships with a `Vagrantfile` in its root folder for ease the setup of a fully isolated environment. This Vagrant configuration
 will create a virtual machine in the host computer and deploy into it the required components of the architecture as
 Docker containers. To start this environment issue following command in a terminal window from inside your working copy:
 
 ```
 vagrant up
 ```
-
-Once it has finished loading, you should be able to access the Quckoo UI in following URL:
-
-http://192.168.50.25:8095
-
-_Use `admin` and `password` as credentials when prompted._
 
 #### Build error when building the vagrant box
 
