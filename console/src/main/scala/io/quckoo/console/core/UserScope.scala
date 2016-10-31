@@ -21,7 +21,9 @@ import diode.data._
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.id.{JobId, PlanId, TaskId}
 
-final case class UserScope(
+import monocle.macros.Lenses
+
+@Lenses final case class UserScope(
     jobSpecs: PotMap[JobId, JobSpec],
     executionPlans: PotMap[PlanId, ExecutionPlan],
     executions: PotMap[TaskId, TaskExecution]

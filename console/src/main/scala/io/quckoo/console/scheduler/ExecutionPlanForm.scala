@@ -132,8 +132,8 @@ object ExecutionPlanForm {
           <.div(
             JobSelect(jobSpecs(props), jobIdLens.get(state), $.setStateL(jobIdLens)(_)),
             TriggerSelect(triggerLens.get(state), $.setStateL(triggerLens)(_)),
-            ExecutionTimeoutInput(timeoutLens.get(state), $.setStateL(timeoutLens)(_)),
-            ExecutionParameterList(Map.empty, onParamUpdate)
+            ExecutionTimeoutInput(timeoutLens.get(state), $.setStateL(timeoutLens)(_))
+            //ExecutionParameterList(Map.empty, onParamUpdate)
           )
         } else {
           triggerLens.get(state).map(ExecutionPlanPreview(_)).get

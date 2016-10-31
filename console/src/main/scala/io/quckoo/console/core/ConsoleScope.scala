@@ -21,10 +21,12 @@ import io.quckoo.net.QuckooState
 
 import org.threeten.bp._
 
+import monocle.macros.Lenses
+
 /**
   * Created by alonsodomin on 20/02/2016.
   */
-final case class ConsoleScope private (
+@Lenses final case class ConsoleScope private (
     passport: Option[Passport],
     clusterState: QuckooState,
     userScope: UserScope,
