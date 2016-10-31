@@ -57,7 +57,7 @@ After the previous commands, using `docker ps` you should be able to see 2 maste
 in your local machine. The cluster will need a few seconds to fully stabilize and then it will be ready to serve requests. You should be able to
 access the Quckoo UI in following URL:
 
-http://192.168.50.25:8095
+http://localhost:8095
 
 _Use `admin` and `password` as credentials when prompted._
 
@@ -70,6 +70,8 @@ Docker containers. To start this environment issue following command in a termin
 ```
 vagrant up
 ```
+
+_To access the UI in this environment, use this URL: http://192.168.50.25:8095_
 
 #### Build error when building the vagrant box
 
