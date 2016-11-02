@@ -114,7 +114,10 @@ object Dependencies {
     val scalaTest  = "org.scalatest"   %% "scalatest"              % version.scalaTest
     val scalaMock  = "org.scalamock"   %% "scalamock-core"         % version.scalaMock
     val mockito    = "org.mockito"      % "mockito-core"           % version.mockito
-    val mockserver = "org.mock-server"  % "mockserver-netty"       % version.mockserver
+    val mockserver = "org.mock-server"  % "mockserver-netty"       % version.mockserver excludeAll(
+      ExclusionRule(organization = "org.slf4j"),
+      ExclusionRule(organization = "ch.qos.logback")
+    )
   }
 
   object compiler {

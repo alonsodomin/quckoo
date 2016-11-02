@@ -244,11 +244,13 @@ lazy val clusterShared = (project in file("cluster/shared"))
   .dependsOn(apiJVM, testSupportJVM % Test)
 
 lazy val clusterMaster = (project in file("cluster/master"))
-  .enablePlugins(AutomateHeaderPlugin,
-                 SbtSass,
-                 SbtTwirl,
-                 JavaServerAppPackaging,
-                 DockerPlugin)
+  .enablePlugins(
+    AutomateHeaderPlugin,
+    SbtSass,
+    SbtTwirl,
+    JavaServerAppPackaging,
+    DockerPlugin
+  )
   .configs(MultiJvm)
   .settings(
     name := "cluster-master",
@@ -259,7 +261,7 @@ lazy val clusterMaster = (project in file("cluster/master"))
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
     pipelineStages in Assets := Seq(scalaJSPipeline),
-    devCommands in scalaJSPipeline += "docker:publishLocal"
+    devCommands in scalaJSPipeline ++= Seq("test", "docker:publishLocal")
   )
   .settings(commonSettings: _*)
   .settings(publishSettings: _*)
