@@ -194,7 +194,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
       context become ready
 
     case WarmUp.Failed(ex) =>
-      log.error(ex, "Error during Scheduler warm up...")
+      log.error("Error during Scheduler warm up: {}", ex.getMessage)
       import context.dispatcher
       context.system.scheduler.scheduleOnce(2 seconds, () => warmUp())
       unstashAll()

@@ -1,65 +1,78 @@
 version: '2'
 services:
-  consul:
+  consul_server:
     image: consul
+    hostname: consul_server
     ports:
-      - 8400:8400
-      - 8500:8500
-      - 8600:53
+      - "8400:8400"
+      - "8500:8500"
+      - "8600:53"
     command: agent -server -bootstrap -client=0.0.0.0 -ui
 
-  #registrator:
-  #  image: gliderlabs/registrator
-  #  network_mode: "host"
-  #  depends_on:
-  #    - "consul"
-  #  volumes:
-  #    - /var/run/docker.sock:/tmp/docker.sock
-  #  command: consul://localhost:8500
+  consul_agent:
+    image: consul
+    hostname: consul_agent
+    ports:
+      - "8400"
+      - "8500"
+      - "8600"
+    depends_on:
+      - "consul_server"
+    command: agent -join=consul_server -client=0.0.0.0
 
   cassandra:
     image: cassandra
     ports:
-      - 9042:9042
-      - 7000:7000
-      - 9160:9160
+      - "9042:9042"
+      - "7000:7000"
+      - "9160:9160"
 
-  master_1:
+  master1:
     image: quckoo/master<localBuild>
     ports:
-      - 8095:8095
-      - 2551:2551
+      - "8095:8095"
+      - "2551:2551"
+    depends_on:
+      - "consul_server"
+      - "consul_agent"
+    links:
+      - cassandra
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
-    command: -b localhost:2551 --nodes localhost:2551,localhost:2552 --cs localhost:9042
+    command: -b master1:2551 --cs cassandra:9042
 
-  master_2:
+  master2:
     image: quckoo/master<localBuild>
     ports:
-      - 8096:8095
-      - 2552:2551
+      - "8096:8095"
+      - "2552:2551"
+    depends_on:
+      - "consul_server"
+      - "consul_agent"
+    links:
+      - cassandra
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
-    command: -b localhost:2552 --nodes localhost:2551,localhost:2552 --cs localhost:9042
+    command: -b master2:2552 --cs cassandra:9042
 
-  worker_1:
+  worker1:
     image: quckoo/worker<localBuild>
     depends_on:
-      - "master_1"
-      - "master_2"
+      - "master1"
+      - "master2"
     ports:
-      - 5001:5001
+      - "5001:5001"
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
-    command: --master localhost:2551,localhost:2552 -b localhost:5001
+    command: -b worker1:5001
 
-  worker_2:
+  worker2:
     image: quckoo/worker<localBuild>
     depends_on:
-      - "master_1"
-      - "master_2"
+      - "master1"
+      - "master2"
     ports:
-      - 5002:5001
+      - "5002:5001"
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
-    command: --master localhost:2551,localhost:2552 -b localhost:5002
+    command: -b worker2:5002

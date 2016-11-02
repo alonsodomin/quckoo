@@ -37,11 +37,13 @@ class IvyConfiguration private (
 )
 
 object IvyConfiguration {
-  final val BaseDir       = "resolver.work-dir"
-  final val HomeDir       = "resolver.home"
-  final val ResolutionDir = "resolver.resolution-cache-dir"
-  final val RepositoryDir = "resolver.repository-cache-dir"
-  final val Repositories  = "resolver.repositories"
+  final val Namespace = "resolver"
+
+  final val BaseDir       = "work-dir"
+  final val HomeDir       = "home"
+  final val ResolutionDir = "resolution-cache-dir"
+  final val RepositoryDir = "repository-cache-dir"
+  final val Repositories  = "repositories"
 
   val DefaultRepositories = Seq(
     Repository.mavenCentral,
