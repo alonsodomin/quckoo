@@ -16,11 +16,9 @@
 
 package io.quckoo.console.components
 
-import io.quckoo.validation.Violation
 import io.quckoo.console.validation._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scalaz.{Success, Failure}
@@ -41,8 +39,8 @@ object ValidatedInput {
     def onUpdate(props: Props[A])(newValue: Option[A]): Callback = {
       val validate = newValue.map { value =>
         props.validator.run(value).map {
-          case Success(_)          => ValidatedField[A](Some(value))
-          case Failure(violations) => ValidatedField[A](Some(value), violations.list.toList)
+          case Success(_)         => ValidatedField[A](Some(value))
+          case Failure(violation) => ValidatedField[A](Some(value), Some(violation))
         }
       } getOrElse CallbackTo(ValidatedField[A](None))
 
@@ -53,31 +51,19 @@ object ValidatedInput {
       updateState >>= props.onUpdate
     }
 
-    private def renderErrors(errors: List[Violation]) = {
-      if (errors.size > 1) {
-        <.ul(
-          errors.map { violation =>
-            <.li(violation.shows)
-          }
-        )
-      } else {
-        <.span(errors.head.shows)
-      }
-    }
-
     def render(props: Props[A], state: State[A]) = {
       <.div(^.classSet(
           "form-group"  -> true,
-          "has-success" -> state.fieldState.valid,
-          "has-error"   -> !state.fieldState.valid
+          "has-success" -> !state.fieldState.invalid,
+          "has-error"   -> state.fieldState.invalid
         ),
         props.label.map(labelText => <.label(^.`class` := "control-label", labelText)),
         props.component(onUpdate(props)),
-        if (state.fieldState.errors.nonEmpty) {
+        state.fieldState.violation.map { violation =>
           <.span(^.`class` := "help-block",
-            renderErrors(state.fieldState.errors)
+            violation.shows
           )
-        } else EmptyTag
+        }
       )
     }
   }

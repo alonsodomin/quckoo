@@ -63,4 +63,4 @@ case class DownloadFailed(artifactId: ArtifactId, reason: DownloadFailed.Reason)
 
 // == Validation errors ====================
 
-case class ValidationFault(violations: NonEmptyList[Violation]) extends Fault
+case class ValidationFault(violation: Violation) extends Fault

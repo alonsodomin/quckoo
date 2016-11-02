@@ -83,7 +83,7 @@ object FiniteDurationInput {
     val _lengthInput = Input[Long]()
     val validateLength = {
       import Scalaz._
-      ValidatedInput[Long]((greaterThan(0L) or equalTo(0L).at("length")).callback)
+      ValidatedInput[Long]((greaterThan(0L) or equalTo(0L)).callback)
     }
 
     def lengthInput(id: String, state: State)(onUpdate: Option[Long] => Callback) =

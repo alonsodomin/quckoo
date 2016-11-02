@@ -164,6 +164,7 @@ lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
   .settings(publishSettings: _*)
   .settings(Dependencies.core: _*)
   .jsSettings(commonJsSettings: _*)
+  .dependsOn(testSupport % Test)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
@@ -181,7 +182,7 @@ lazy val api = (crossProject.crossType(CrossType.Pure) in file("api"))
   .settings(publishSettings: _*)
   .settings(Dependencies.api: _*)
   .jsSettings(commonJsSettings: _*)
-  .dependsOn(core)
+  .dependsOn(core, testSupport % Test)
 
 lazy val apiJS = api.js
 lazy val apiJVM = api.jvm
@@ -221,7 +222,7 @@ lazy val console = (project in file("console"))
   .settings(commonJsSettings: _*)
   .settings(publishSettings: _*)
   .settings(Dependencies.console: _*)
-  .dependsOn(clientJS)
+  .dependsOn(clientJS, testSupportJS % Test)
 
 // Cluster ==================================================
 
@@ -253,7 +254,8 @@ lazy val clusterMaster = (project in file("cluster/master"))
     compile in Compile := ((compile in Compile) dependsOn scalaJSPipeline).value,
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
-    pipelineStages in Assets := Seq(scalaJSPipeline)
+    pipelineStages in Assets := Seq(scalaJSPipeline),
+    devCommands in scalaJSPipeline += "docker:publishLocal"
   )
   .settings(commonSettings: _*)
   .settings(publishSettings: _*)
