@@ -5,6 +5,7 @@ machine:
     version: openjdk8
   pre:
     - gem install compass
+    - npm install jsdom
 
 dependencies:
   cache_directories:
