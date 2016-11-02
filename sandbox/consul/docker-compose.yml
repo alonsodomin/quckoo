@@ -38,7 +38,7 @@ services:
     links:
       - cassandra
     volumes:
-      - ./etc/quckoo:/opt/quckoo/conf
+      - ./etc/quckoo/master:/opt/quckoo/conf
     command: -b master1:2551 --cs cassandra:9042
 
   master2:
@@ -52,7 +52,7 @@ services:
     links:
       - cassandra
     volumes:
-      - ./etc/quckoo:/opt/quckoo/conf
+      - ./etc/quckoo/master:/opt/quckoo/conf
     command: -b master2:2552 --cs cassandra:9042
 
   worker1:
@@ -63,7 +63,7 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      - ./etc/quckoo:/opt/quckoo/conf
+      - ./etc/quckoo/worker:/opt/quckoo/conf
     command: -b worker1:5001
 
   worker2:
@@ -74,5 +74,5 @@ services:
     ports:
       - "5002:5001"
     volumes:
-      - ./etc/quckoo:/opt/quckoo/conf
+      - ./etc/quckoo/worker:/opt/quckoo/conf
     command: -b worker2:5002
