@@ -22,6 +22,5 @@ package io.quckoo.validation
 object Validators extends AnyValidators
   with OrderValidators
   with OptionValidators
-  with FoldableValidators
   with TraversableValidators
   with CaseClassValidators

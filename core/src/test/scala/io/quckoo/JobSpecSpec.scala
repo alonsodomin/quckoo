@@ -27,19 +27,19 @@ import Scalaz._
 /**
   * Created by alonsodomin on 24/01/2016.
   */
-class JobSpecTest extends FlatSpec with Matchers {
+class JobSpecSpec extends FlatSpec with Matchers {
   import Violation._
 
   "Validation for JobSpec parameters" should "not accept empty values" in {
-    val expectedErrors = NonEmptyList(
-      PathViolation(Path("displayName"), Empty),
-      PathViolation(Path("artifactId", "organization"), Empty),
-      PathViolation(Path("artifactId", "name"), Empty),
-      PathViolation(Path("artifactId", "version"), Empty),
-      PathViolation(Path("jobClass"), Empty)
-    ).flatMap(identity).failure[JobSpec]
+    val expectedError =
+      PathViolation.at(Path("displayName"), Empty) and (
+        PathViolation.at(Path("artifactId", "organization"), Empty) and
+        PathViolation.at(Path("artifactId", "name"), Empty) and
+        PathViolation.at(Path("artifactId", "version"), Empty)
+      ) and
+      PathViolation.at(Path("jobClass"), Empty)
 
-    JobSpec.valid.run(JobSpec("", None, ArtifactId("", "", ""), "")) shouldBe expectedErrors
+    JobSpec.valid.run(JobSpec("", None, ArtifactId("", "", ""), "")) shouldBe expectedError.failure[JobSpec]
   }
 
 }

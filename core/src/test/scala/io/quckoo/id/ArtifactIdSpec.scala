@@ -26,21 +26,21 @@ import Scalaz._
 /**
   * Created by alonsodomin on 24/01/2016.
   */
-class ArtifactIdTest extends FlatSpec with Matchers {
+class ArtifactIdSpec extends FlatSpec with Matchers {
   import Violation._
 
   "ArtifactId" should "not accept empty strings" in {
-    val expectedErrors = NonEmptyList(
-      PathViolation(Path("organization"), Empty),
-      PathViolation(Path("name"), Empty),
+    val expectedError =
+      PathViolation(Path("organization"), Empty) and
+      PathViolation(Path("name"), Empty) and
       PathViolation(Path("version"), Empty)
-    ).flatMap(identity).failure[ArtifactId]
-    ArtifactId.valid.run(ArtifactId("", "", "")) shouldBe expectedErrors
+
+    ArtifactId.valid.run(ArtifactId("", "", "")) shouldBe expectedError.failure[ArtifactId]
   }
 
   it should "accept any other values" in {
     val expectedArtifactId = ArtifactId("foo", "bar", "baz")
-    ArtifactId.valid.run(expectedArtifactId) shouldBe expectedArtifactId.successNel[Violation]
+    ArtifactId.valid.run(expectedArtifactId) shouldBe expectedArtifactId.success[Violation]
   }
 
 }
