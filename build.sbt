@@ -244,7 +244,11 @@ lazy val clusterShared = (project in file("cluster/shared"))
   .dependsOn(apiJVM, testSupportJVM % Test)
 
 lazy val clusterMaster = (project in file("cluster/master"))
-  .enablePlugins(AutomateHeaderPlugin, SbtSass, SbtTwirl, JavaServerAppPackaging, DockerPlugin)
+  .enablePlugins(AutomateHeaderPlugin,
+                 SbtSass,
+                 SbtTwirl,
+                 JavaServerAppPackaging,
+                 DockerPlugin)
   .configs(MultiJvm)
   .settings(
     name := "cluster-master",

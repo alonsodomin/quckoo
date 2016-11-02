@@ -74,7 +74,6 @@ trait HttpRouter
       }
     }
 
-
   private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {
     case exception =>
       extractUri { uri =>

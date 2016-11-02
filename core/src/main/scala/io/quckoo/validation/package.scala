@@ -24,15 +24,18 @@ import Scalaz._
   */
 package object validation extends ValidatorSyntax {
   type ValidatorK[F[_], A] = Kleisli[F, A, Validation[Violation, A]]
-  type Validator[A] = ValidatorK[Id, A]
+  type Validator[A]        = ValidatorK[Id, A]
 
   object Validator {
-    def apply[F[_]: Functor, A](test: A => F[Boolean], err: A => Violation): ValidatorK[F, A] = Kleisli { a =>
-      test(a).map(cond => if (cond) a.success[Violation] else err(a).failure[A])
-    }
+    def apply[F[_]: Functor, A](test: A => F[Boolean], err: A => Violation): ValidatorK[F, A] =
+      Kleisli { a =>
+        test(a).map(cond => if (cond) a.success[Violation] else err(a).failure[A])
+      }
 
     def accept[F[_], A](implicit ev: Applicative[F]): ValidatorK[F, A] =
-      Kleisli { a => ev.pure(a.success[Violation]) }
+      Kleisli { a =>
+        ev.pure(a.success[Violation])
+      }
   }
 
 }

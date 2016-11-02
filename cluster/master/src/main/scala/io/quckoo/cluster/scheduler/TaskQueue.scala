@@ -240,7 +240,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       workers.find {
         case (_, WorkerState(`workerRef`, _)) => true
         case _                                => false
-      } foreach { case (workerId, state)      => scheduleRemoval(workerId, state) }
+      } foreach { case (workerId, state) => scheduleRemoval(workerId, state) }
 
   }
 

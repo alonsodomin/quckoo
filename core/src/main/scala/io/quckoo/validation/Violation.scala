@@ -30,26 +30,26 @@ sealed trait Violation
 
 object Violation {
   case class And(left: Violation, right: Violation) extends Violation
-  case class Or(left: Violation, right: Violation) extends Violation
+  case class Or(left: Violation, right: Violation)  extends Violation
 
-  case class EqualTo(expected: String, actual: String) extends Violation
-  case class GreaterThan(expected: String, actual: String) extends Violation
-  case class LessThan(expected: String, actual: String) extends Violation
+  case class EqualTo(expected: String, actual: String)       extends Violation
+  case class GreaterThan(expected: String, actual: String)   extends Violation
+  case class LessThan(expected: String, actual: String)      extends Violation
   case class MemberOf(expected: Set[String], actual: String) extends Violation
 
-  case object Empty extends Violation
+  case object Empty     extends Violation
   case object Undefined extends Violation
 
   implicit def display: Show[Violation] = Show.shows {
     case And(left, right) => s"${left.shows} and ${right.shows}"
-    case Or(left, right) => s"${left.shows} or ${right.shows}"
+    case Or(left, right)  => s"${left.shows} or ${right.shows}"
 
-    case EqualTo(expected, actual) => s"$actual != $expected"
+    case EqualTo(expected, actual)     => s"$actual != $expected"
     case GreaterThan(expected, actual) => s"$actual < $expected"
-    case LessThan(expected, actual) => s"$actual > $expected"
-    case MemberOf(expected, actual) => s"$actual not in $expected"
+    case LessThan(expected, actual)    => s"$actual > $expected"
+    case MemberOf(expected, actual)    => s"$actual not in $expected"
 
-    case Empty => "non empty"
+    case Empty     => "non empty"
     case Undefined => "not defined"
 
     case p: PathViolation => p.shows
@@ -69,7 +69,7 @@ object Violation {
 
   implicit class ViolationSyntax(val self: Violation) extends AnyVal {
     def and(other: Violation): Violation = And(self, other)
-    def or(other: Violation): Violation = Or(self, other)
+    def or(other: Violation): Violation  = Or(self, other)
   }
 
 }
@@ -96,8 +96,8 @@ object PathViolation {
     s"expected $violationsDesc at ${value.path.shows}"
   }
 
-  implicit def jsonWriter: UWriter[PathViolation] = UWriter[PathViolation] {
-    pv => Js.Obj(
+  implicit def jsonWriter: UWriter[PathViolation] = UWriter[PathViolation] { pv =>
+    Js.Obj(
       "path"      -> Path.pathJsonWriter.write(pv.path),
       "violation" -> implicitly[UWriter[Violation]].write(pv.violation),
       "$type"     -> Js.Str(classOf[PathViolation].getName)
@@ -105,11 +105,12 @@ object PathViolation {
   }
 
   implicit def jsonReader: UReader[PathViolation] = UReader[PathViolation] {
-    val pathReader = Kleisli(Path.pathJsonReader.read.lift)
+    val pathReader       = Kleisli(Path.pathJsonReader.read.lift)
     val violationsReader = Kleisli(implicitly[UReader[Violation]].read.lift)
 
-    val prod = Kleisli[Option, (Js.Value, Js.Value), PathViolation] { case (path, violation) =>
-      (pathReader.run(path) |@| violationsReader.run(violation))((p, v) => PathViolation(p, v))
+    val prod = Kleisli[Option, (Js.Value, Js.Value), PathViolation] {
+      case (path, violation) =>
+        (pathReader.run(path) |@| violationsReader.run(violation))((p, v) => PathViolation(p, v))
     }
 
     val extractFieldMap: PartialFunction[Js.Value, Map[String, Js.Value]] = {

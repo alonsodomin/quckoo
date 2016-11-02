@@ -35,7 +35,12 @@ object JobSpec {
     val validArtifactId  = ArtifactId.valid.at("artifactId")
     val validJobClass    = nonEmpty[String].at("jobClass")
 
-    caseClass5(validDisplayName, any[Option[String]], validArtifactId, validJobClass, any[Boolean])(JobSpec.unapply, JobSpec.apply)
+    caseClass5(
+      validDisplayName,
+      any[Option[String]],
+      validArtifactId,
+      validJobClass,
+      any[Boolean])(JobSpec.unapply, JobSpec.apply)
   }
 
   implicit val display: Show[JobSpec] = Show.showFromToString[JobSpec]

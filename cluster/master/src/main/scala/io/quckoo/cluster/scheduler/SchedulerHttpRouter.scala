@@ -61,10 +61,10 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
             entity(as[ScheduleJob]) { req =>
               extractExecutionContext { implicit ec =>
                 onSuccess(scheduleJob(req)) {
-                  case \/-(res) => complete(res)
+                  case \/-(res)                  => complete(res)
                   case -\/(JobNotEnabled(jobId)) => complete(BadRequest -> jobId)
-                  case -\/(JobNotFound(jobId)) => complete(NotFound -> jobId)
-                  case -\/(error) => complete(InternalServerError -> error)
+                  case -\/(JobNotFound(jobId))   => complete(NotFound -> jobId)
+                  case -\/(error)                => complete(InternalServerError -> error)
                 }
               }
             }
@@ -74,13 +74,13 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
             extractExecutionContext { implicit ec =>
               onSuccess(executionPlan(planId)) {
                 case Some(plan) => complete(plan)
-                case _ => complete(NotFound -> planId)
+                case _          => complete(NotFound -> planId)
               }
             }
           } ~ delete {
             extractExecutionContext { implicit ec =>
               onSuccess(cancelPlan(planId)) {
-                case \/-(res) => complete(res)
+                case \/-(res)                      => complete(res)
                 case -\/(ExecutionPlanNotFound(_)) => complete(NotFound -> planId)
               }
             }
@@ -98,7 +98,7 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
             extractExecutionContext { implicit ec =>
               onSuccess(execution(taskId)) {
                 case Some(task) => complete(task)
-                case _ => complete(NotFound -> taskId)
+                case _          => complete(NotFound -> taskId)
               }
             }
           }

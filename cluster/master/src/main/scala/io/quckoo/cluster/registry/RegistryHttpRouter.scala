@@ -77,7 +77,7 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
               extractExecutionContext { implicit ec =>
                 onSuccess(fetchJob(JobId(jobId))) {
                   case Some(spec) => complete(spec)
-                  case _ => complete(NotFound)
+                  case _          => complete(NotFound)
                 }
               }
             }
@@ -85,8 +85,8 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
             post {
               extractExecutionContext { implicit ec =>
                 onSuccess(enableJob(JobId(jobId))) {
-                  case \/-(res@JobEnabled(_)) => complete(res)
-                  case -\/(JobNotFound(_)) => complete(NotFound -> jobId)
+                  case \/-(res @ JobEnabled(_)) => complete(res)
+                  case -\/(JobNotFound(_))      => complete(NotFound -> jobId)
                 }
               }
             }
@@ -94,8 +94,8 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
             post {
               extractExecutionContext { implicit ec =>
                 onSuccess(disableJob(JobId(jobId))) {
-                  case \/-(res@JobDisabled(_)) => complete(res)
-                  case -\/(JobNotFound(_)) => complete(NotFound -> jobId)
+                  case \/-(res @ JobDisabled(_)) => complete(res)
+                  case -\/(JobNotFound(_))       => complete(NotFound -> jobId)
                 }
               }
             }

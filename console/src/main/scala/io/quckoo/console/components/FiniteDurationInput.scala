@@ -95,9 +95,7 @@ object FiniteDurationInput {
         ^.`class` := "container-fluid",
         <.div(
           ^.`class` := "row",
-          <.div(^.`class` := "col-sm-4",
-            validateLength(onLengthUpdate _)(lengthInput(id, state))
-          ),
+          <.div(^.`class` := "col-sm-4", validateLength(onLengthUpdate _)(lengthInput(id, state))),
           <.div(
             ^.`class` := "col-sm-6",
             <.select(

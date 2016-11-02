@@ -79,9 +79,10 @@ case class Options(
     httpBindAddress.map { addr =>
       val HostAndPort(h, p) = addr
       (h, p.toInt)
-    } orElse httpPort.map(p => ("0.0.0.0", p)) foreach { case (intf, p) =>
-      valueMap.put(QuckooHttpBindInterface, intf)
-      valueMap.put(QuckooHttpBindPort, Int.box(p))
+    } orElse httpPort.map(p => ("0.0.0.0", p)) foreach {
+      case (intf, p) =>
+        valueMap.put(QuckooHttpBindInterface, intf)
+        valueMap.put(QuckooHttpBindPort, Int.box(p))
     }
 
     val clusterSeedNodes: Seq[String] = {

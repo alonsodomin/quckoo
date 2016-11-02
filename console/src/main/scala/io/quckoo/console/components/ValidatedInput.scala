@@ -35,7 +35,7 @@ object ValidatedInput {
   )
   final case class State[A](fieldState: ValidatedField[A])
 
-  class Backend[A]($: BackendScope[Props[A], State[A]]) {
+  class Backend[A]($ : BackendScope[Props[A], State[A]]) {
     def onUpdate(props: Props[A])(newValue: Option[A]): Callback = {
       val validate = newValue.map { value =>
         props.validator.run(value).map {
@@ -52,7 +52,8 @@ object ValidatedInput {
     }
 
     def render(props: Props[A], state: State[A]) = {
-      <.div(^.classSet(
+      <.div(
+        ^.classSet(
           "form-group"  -> true,
           "has-success" -> !state.fieldState.invalid,
           "has-error"   -> state.fieldState.invalid
@@ -60,11 +61,8 @@ object ValidatedInput {
         props.label.map(labelText => <.label(^.`class` := "control-label", labelText)),
         props.component(onUpdate(props)),
         state.fieldState.violation.map { violation =>
-          <.span(^.`class` := "help-block",
-            violation.shows
-          )
-        }
-      )
+          <.span(^.`class` := "help-block", violation.shows)
+        })
     }
   }
 
@@ -72,7 +70,7 @@ object ValidatedInput {
 
 }
 
-class ValidatedInput[A] private[components](validator: ValidatorCallback[A]) {
+class ValidatedInput[A] private[components] (validator: ValidatorCallback[A]) {
   import ValidatedInput._
 
   private[this] val component = ReactComponentB[Props[A]]("ValidatedInput")
@@ -80,7 +78,8 @@ class ValidatedInput[A] private[components](validator: ValidatorCallback[A]) {
     .renderBackend[Backend[A]]
     .build
 
-  def apply(onUpdate: OnUpdate[A], label: Option[String] = None)(factory: OnUpdate[A] => ReactNode) =
+  def apply(onUpdate: OnUpdate[A], label: Option[String] = None)(
+      factory: OnUpdate[A] => ReactNode) =
     component(Props(factory, onUpdate, validator, label))
 
 }

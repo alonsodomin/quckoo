@@ -29,10 +29,11 @@ trait IsTraversable[A] {
 object IsTraversable {
   def apply[A](implicit ev: IsTraversable[A]): IsTraversable[A] = ev
 
-  implicit def mk[A, E, T0[_] <: Traversable[_]](implicit ev: A => T0[E]): IsTraversable[A] = new IsTraversable[A] {
-    type Elem = E
-    type T[x] = T0[x]
+  implicit def mk[A, E, T0[_] <: Traversable[_]](implicit ev: A => T0[E]): IsTraversable[A] =
+    new IsTraversable[A] {
+      type Elem = E
+      type T[x] = T0[x]
 
-    def subst(a: A): T[E] = ev(a)
-  }
+      def subst(a: A): T[E] = ev(a)
+    }
 }

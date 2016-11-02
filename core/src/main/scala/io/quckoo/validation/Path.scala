@@ -30,12 +30,12 @@ sealed trait Path {
 }
 
 case object PNil extends Path {
-  def elements = Nil
+  def elements        = Nil
   def ++(other: Path) = other
 }
 
 case class PItem(item: String, tail: Path) extends Path {
-  def elements = item :: tail.elements
+  def elements        = item :: tail.elements
   def ++(other: Path) = PItem(item, tail ++ other)
 }
 
@@ -66,8 +66,8 @@ object Path {
 
   implicit val pathShow: Show[Path] = show(DefaultSeparator)
 
-  implicit val pathJsonWriter: UWriter[Path] = UWriter[Path] {
-    p => Js.Str(pathShow.shows(p))
+  implicit val pathJsonWriter: UWriter[Path] = UWriter[Path] { p =>
+    Js.Str(pathShow.shows(p))
   }
 
   implicit val pathJsonReader: UReader[Path] = UReader[Path] {

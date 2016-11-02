@@ -26,14 +26,20 @@ import Violation._
   */
 trait OrderValidators {
 
-  def greaterThanK[F[_]: Applicative, A](value: A)(implicit order: Order[A], show: Show[A]): ValidatorK[F, A] =
-    Validator[F, A](a => Applicative[F].pure(order.greaterThan(a, value)), a => GreaterThan(show.shows(value), show.shows(a)))
+  def greaterThanK[F[_]: Applicative, A](value: A)(implicit order: Order[A],
+                                                   show: Show[A]): ValidatorK[F, A] =
+    Validator[F, A](
+      a => Applicative[F].pure(order.greaterThan(a, value)),
+      a => GreaterThan(show.shows(value), show.shows(a)))
 
-  def greaterThan[A : Order : Show](value: A): Validator[A] = greaterThanK[Id, A](value)
+  def greaterThan[A: Order: Show](value: A): Validator[A] = greaterThanK[Id, A](value)
 
-  def lessThanK[F[_]: Applicative, A](value: A)(implicit order: Order[A], show: Show[A]): ValidatorK[F, A] =
-    Validator[F, A](a => Applicative[F].pure(order.lessThan(a, value)), a => LessThan(show.shows(value), show.shows(a)))
+  def lessThanK[F[_]: Applicative, A](value: A)(implicit order: Order[A],
+                                                show: Show[A]): ValidatorK[F, A] =
+    Validator[F, A](
+      a => Applicative[F].pure(order.lessThan(a, value)),
+      a => LessThan(show.shows(value), show.shows(a)))
 
-  def lessThan[A : Order : Show](value: A): Validator[A] = lessThanK[Id, A](value)
+  def lessThan[A: Order: Show](value: A): Validator[A] = lessThanK[Id, A](value)
 
 }
