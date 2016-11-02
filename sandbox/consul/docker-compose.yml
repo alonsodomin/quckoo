@@ -22,6 +22,7 @@ services:
 
   cassandra:
     image: cassandra
+    hostname: cassandra
     ports:
       - "9042:9042"
       - "7000:7000"
@@ -29,6 +30,7 @@ services:
 
   master1:
     image: quckoo/master<localBuild>
+    hostname: master1
     ports:
       - "8095:8095"
       - "2551:2551"
@@ -43,6 +45,7 @@ services:
 
   master2:
     image: quckoo/master<localBuild>
+    hostname: master2
     ports:
       - "8096:8095"
       - "2552:2551"
@@ -59,7 +62,7 @@ services:
     image: quckoo/worker<localBuild>
     depends_on:
       - "master1"
-      - "master2"
+      #- "master2"
     ports:
       - "5001:5001"
     volumes:
@@ -70,7 +73,7 @@ services:
     image: quckoo/worker<localBuild>
     depends_on:
       - "master1"
-      - "master2"
+      #- "master2"
     ports:
       - "5002:5001"
     volumes:

@@ -38,17 +38,17 @@ object WorkerSettings {
   final val Namespace = "worker"
 
   def apply(config: Config): Try[WorkerSettings] = {
-    def contactPoints: Try[Set[ActorPath]] = {
+    def contactPoints: Set[ActorPath] = {
       Try(config.getStringList("contact-points")).map { points =>
         immutableSeq(points).map {
           case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
         } toSet
-      }
+      } getOrElse Set.empty
     }
 
-    contactPoints.map { points =>
+    Try {
       WorkerSettings(
-        contactPoints = points,
+        contactPoints = contactPoints,
         ivy = IvyConfiguration(config.getConfig(IvyConfiguration.Namespace)),
         dispatcherName = Try(config.getString("dispatcher")).toOption
       )
