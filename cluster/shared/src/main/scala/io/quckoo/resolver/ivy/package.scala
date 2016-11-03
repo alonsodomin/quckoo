@@ -18,6 +18,7 @@ package io.quckoo.resolver
 
 import org.apache.ivy.core.settings.IvySettings
 import org.apache.ivy.plugins.resolver.ChainResolver
+
 import org.slf4s.Logging
 
 /**
@@ -26,7 +27,7 @@ import org.slf4s.Logging
 package object ivy extends Logging {
   import scala.language.implicitConversions
 
-  private[ivy] implicit def convertConfig2Settings(config: IvyConfiguration): IvySettings = {
+  private[ivy] implicit def convertConfig2Settings(config: IvyConfig): IvySettings = {
     implicit val ivySettings = new IvySettings()
     ivySettings.setBaseDir(config.baseDir)
     ivySettings.setDefaultResolutionCacheBasedir(config.resolutionDir.getAbsolutePath)

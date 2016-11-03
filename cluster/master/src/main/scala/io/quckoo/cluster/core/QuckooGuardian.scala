@@ -21,17 +21,20 @@ import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+
+import io.quckoo.cluster.config.ClusterConfig
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.net._
 import io.quckoo.cluster.registry.Registry
 import io.quckoo.cluster.scheduler.Scheduler
-import io.quckoo.cluster.{QuckooClusterSettings, topics}
+import io.quckoo.cluster.topics
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.client._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
+
 import org.threeten.bp.Clock
 
 import scala.concurrent.Promise
@@ -44,7 +47,7 @@ object QuckooGuardian {
 
   final val DefaultSessionTimeout: FiniteDuration = 30 minutes
 
-  def props(settings: QuckooClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(
+  def props(settings: ClusterConfig, journal: QuckooJournal, boot: Promise[Unit])(
       implicit clock: Clock) =
     Props(classOf[QuckooGuardian], settings, journal, boot, clock)
 
@@ -52,7 +55,7 @@ object QuckooGuardian {
 
 }
 
-class QuckooGuardian(settings: QuckooClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(
+class QuckooGuardian(settings: ClusterConfig, journal: QuckooJournal, boot: Promise[Unit])(
     implicit clock: Clock)
     extends Actor with ActorLogging with Stash {
 

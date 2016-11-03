@@ -50,7 +50,7 @@ object IvyResolve {
   private final val Configurations =
     Array(DefaultConfName, CompileConfName, RuntimeConfName)
 
-  def apply(config: IvyConfiguration): IvyResolve = {
+  def apply(config: IvyConfig): IvyResolve = {
     val ivy = Ivy.newInstance(config)
     new IvyResolve(ivy)
   }

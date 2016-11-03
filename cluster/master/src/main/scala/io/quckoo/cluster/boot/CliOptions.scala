@@ -20,6 +20,7 @@ import java.net.InetAddress
 import java.util.{HashMap => JHashMap}
 
 import com.typesafe.config.{Config, ConfigFactory}
+
 import io.quckoo.cluster.QuckooClusterSettings
 
 import scala.collection.JavaConversions._
@@ -27,7 +28,7 @@ import scala.collection.JavaConversions._
 /**
   * Created by aalonsodominguez on 03/10/2015.
   */
-object Options {
+object CliOptions {
 
   final val SystemName = "QuckooClusterSystem"
 
@@ -48,7 +49,7 @@ object Options {
 
 }
 
-case class Options(
+case class CliOptions(
     bindAddress: Option[String] = None,
     port: Int = QuckooClusterSettings.DefaultTcpPort,
     httpBindAddress: Option[String] = None,
@@ -57,7 +58,7 @@ case class Options(
     seedNodes: Seq[String] = Seq(),
     cassandraSeedNodes: Seq[String] = Seq()
 ) {
-  import Options._
+  import CliOptions._
 
   def toConfig: Config = {
     val valueMap = new JHashMap[String, Object]()
