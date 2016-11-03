@@ -25,9 +25,13 @@ object Dependencies {
       val main = "2.4.12"
       val kryo = "0.5.0"
 
-      // http extensions
-      val json = "1.10.1"
-      val sse  = "1.11.0"
+      object http {
+        val main = "3.0.0-RC1"
+
+        // http extensions
+        val json = "1.10.1"
+        val sse  = "1.11.0"
+      }
 
       // persistence plugins
       val cassandra = "0.19"
@@ -82,11 +86,14 @@ object Dependencies {
       val clusterTools    = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka.main
       val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka.main
       val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka.main
-      val http            = "com.typesafe.akka" %% "akka-http-experimental" % version.akka.main
       val distributedData = "com.typesafe.akka" %% "akka-distributed-data-experimental" % version.akka.main
-      val httpTestkit     = "com.typesafe.akka" %% "akka-http-testkit"      % version.akka.main % Test
-      val httpUpickle     = "de.heikoseeberger" %% "akka-http-upickle"      % version.akka.json
-      val sse             = "de.heikoseeberger" %% "akka-sse"               % version.akka.sse
+
+      object http {
+        val main    = "com.typesafe.akka" %% "akka-http"         % version.akka.http.main
+        val testkit = "com.typesafe.akka" %% "akka-http-testkit" % version.akka.http.main % Test
+        val upickle = "de.heikoseeberger" %% "akka-http-upickle" % version.akka.http.json
+        val sse     = "de.heikoseeberger" %% "akka-sse"          % version.akka.http.sse
+      }
 
       object persistence {
         val core      = "com.typesafe.akka"   %% "akka-persistence"              % version.akka.main
@@ -182,7 +189,7 @@ object Dependencies {
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
-      Akka.kryoSerialization, Akka.http, Akka.sse,
+      Akka.kryoSerialization, Akka.http.main, Akka.http.sse,
       mockserver % Test
     )
   }
@@ -261,7 +268,7 @@ object Dependencies {
     import libs._
     libraryDependencies ++= Seq(
       Log4j.slf4jImpl,
-      Akka.sharding, Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse,
+      Akka.sharding, Akka.http.main, Akka.http.testkit, Akka.http.upickle, Akka.http.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
       Akka.persistence.query, Akka.persistence.memory, scopt,
       authenticatJwt,

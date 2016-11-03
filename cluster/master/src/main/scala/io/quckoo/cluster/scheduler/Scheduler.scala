@@ -23,7 +23,7 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.pattern._
-import akka.persistence.query.EventEnvelope
+import akka.persistence.query.{EventEnvelope2, Sequence}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
@@ -183,7 +183,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   }
 
   private def warmingUp: Receive = {
-    case EventEnvelope(_, _, _, event) =>
+    case EventEnvelope2(_, _, _, event) =>
       handleEvent(event)
       sender() ! WarmUp.Ack
 
@@ -228,8 +228,8 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   }
 
   private def warmUp(): Unit = {
-    val executionPlanEvents = journal.read.currentEventsByTag(tags.ExecutionPlan, 0)
-    val executionEvents     = journal.read.currentEventsByTag(tags.Task, 0)
+    val executionPlanEvents = journal.read.currentEventsByTag(tags.ExecutionPlan, Sequence(0))
+    val executionEvents     = journal.read.currentEventsByTag(tags.Task, Sequence(0))
 
     executionPlanEvents
       .concat(executionEvents)
