@@ -20,6 +20,15 @@ services:
       - "consul_server"
     command: agent -join=consul_server -client=0.0.0.0
 
+  registrator:
+    image: gliderlabs/registrator
+    depends_on:
+      - "consul_server"
+      - "consul_agent"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+    command: consul://consul_agent:8500
+
   cassandra:
     image: cassandra
     hostname: cassandra
@@ -62,7 +71,7 @@ services:
     image: quckoo/worker<localBuild>
     depends_on:
       - "master1"
-      #- "master2"
+      - "master2"
     ports:
       - "5001:5001"
     volumes:
@@ -73,7 +82,7 @@ services:
     image: quckoo/worker<localBuild>
     depends_on:
       - "master1"
-      #- "master2"
+      - "master2"
     ports:
       - "5002:5001"
     volumes:
