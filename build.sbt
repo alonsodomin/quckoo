@@ -30,7 +30,8 @@ lazy val commonSettings = Seq(
       Opts.resolver.mavenLocalFile,
       Resolver.bintrayRepo("krasserm", "maven"),
       Resolver.bintrayRepo("hseeberger", "maven"),
-      Resolver.bintrayRepo("dnvriend", "maven")
+      Resolver.bintrayRepo("dnvriend", "maven"),
+      Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
     ),
     scalafmtConfig := Some(file(".scalafmt.conf")),
     parallelExecution in Test := false

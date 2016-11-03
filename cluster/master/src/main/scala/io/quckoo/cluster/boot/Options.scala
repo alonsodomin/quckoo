@@ -85,16 +85,14 @@ case class Options(
         valueMap.put(QuckooHttpBindPort, Int.box(p))
     }
 
-    val clusterSeedNodes: Seq[String] = {
-      if (seed || seedNodes.isEmpty)
-        List(s"akka.tcp://$SystemName@$bindHost:$bindPort")
-      else
-        List.empty[String]
-    } ::: seedNodes
-      .map({ node =>
-        s"akka.tcp://$SystemName@$node"
-      })
-      .toList
+    val clusterSeedNodes: List[String] = {
+      val baseSeed = {
+        if (seed) List(s"akka.tcp://$SystemName@$bindHost:$bindPort")
+        else List.empty[String]
+      }
+
+      baseSeed ::: seedNodes.map(node => s"akka.tcp://$SystemName@$node").toList
+    }
 
     valueMap.put(AkkaClusterSeedNodes, seqAsJavaList(clusterSeedNodes))
 

@@ -58,6 +58,7 @@ object Dependencies {
     val monix      = "2.0.3"
     val cron4s     = "0.2.0"
     val enumeratum = "1.4.14"
+    val pureconfig = "0.3.3"
 
     // JavaScript Libraries
 
@@ -110,6 +111,7 @@ object Dependencies {
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
 
     val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.1"
+    val pureconfig     = "com.github.melrief" %% "pureconfig" % version.pureconfig
 
     val scalaTest  = "org.scalatest"   %% "scalatest"              % version.scalaTest
     val scalaMock  = "org.scalamock"   %% "scalamock-core"         % version.scalaMock
@@ -252,21 +254,24 @@ object Dependencies {
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
-      Akka.kryoSerialization, ivy, scalaXml,
+      Akka.kryoSerialization, ivy, scalaXml, pureconfig,
+
+      "com.tecsisa" %% "constructr-coordination-consul" % "0.3.0"
+    )
+  }
+  lazy val clusterMaster = Def.settings {
+    import libs._
+    libraryDependencies ++= Seq(
+      Log4j.slf4jImpl,
+      Akka.sharding, Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse,
+      Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
+      Akka.persistence.query, Akka.persistence.memory, scopt,
+      authenticatJwt,
 
       "com.vmunier"      %% "scalajs-scripts" % "1.0.0",
       "org.webjars"       % "bootstrap-sass"  % "3.3.1",
       "org.webjars"       % "font-awesome"    % "4.5.0",
       "org.webjars.bower" % "animatewithsass" % "3.2.2"
-    )
-  }
-  lazy val clusterMaster = Def.settings {
-    import libs._
-    libraryDependencies ++= Seq(Log4j.slf4jImpl,
-      Akka.sharding, Akka.http, Akka.httpTestkit, Akka.httpUpickle, Akka.sse,
-      Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
-      Akka.persistence.query, Akka.persistence.memory, scopt,
-      authenticatJwt
     )
   }
   lazy val clusterWorker = Def.settings {

@@ -37,7 +37,7 @@ object QuckooClusterSettings {
   def apply(system: ActorSystem): QuckooClusterSettings = {
     val config = system.settings.config.getConfig(BaseConfigNamespace)
     QuckooClusterSettings(
-      IvyConfiguration(config),
+      IvyConfiguration(config.getConfig(IvyConfiguration.Namespace)),
       config.getDuration("task-queue.max-work-timeout", TimeUnit.MILLISECONDS) millis,
       config.getString("http.bind-interface"),
       config.getInt("http.bind-port")
