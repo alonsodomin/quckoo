@@ -16,8 +16,7 @@ import scalaz._
 object registry {
 
   sealed trait RegistryOp[A] extends QuckooAuthOp[A] {
-    protected def primitive[M[_]: Monad](f: driver.Driver => A): Kleisli[M, driver.Driver, A] =
-      Kleisli((d: driver.Driver) => Monad[M].point(f(d)))
+
   }
 
   object RegistryOp {

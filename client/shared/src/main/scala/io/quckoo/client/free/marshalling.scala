@@ -1,17 +1,36 @@
 package io.quckoo.client.free
 
-import io.quckoo.serialization.{Decoder, Encoder}
+import io.quckoo.client.core.Protocol
+import io.quckoo.client.free.capture.Capture
+import io.quckoo.client.http.{HttpRequest, HttpResponse}
+import io.quckoo.util.Attempt
+
+import scalaz.{Kleisli, Monad}
 
 /**
   * Created by domingueza on 03/11/2016.
   */
 object marshalling {
 
-  sealed trait MarshallerOp[In, Out]
-  object MarshallerOp {
-    case class MarshallOp[In, Out](input: In, encoder: Encoder[In, Out]) extends MarshallerOp[In, Out]
-    case class UnmarshallOp[In, Out](input: In, decoder: Decoder[In, Out]) extends MarshallerOp[In, Out]
+  trait Marshaller[P <: Protocol] {
+    def marshall[A]: Kleisli[Attempt, A, P#Request]
+    def unmarshall[A]: Kleisli[Attempt, P#Response, A]
   }
 
+  /*type Marshaller[P <: Protocol, A] = Kleisli[Attempt, A, P#Request]
+  type Unmarshaller[P <: Protocol, A] = Kleisli[Attempt, P#Response, A]
+
+  trait HttpProto extends Protocol {
+    type Request = HttpRequest
+    type Response = HttpResponse
+  }
+
+  type HttpMarshaller[A] = Marshaller[HttpProto, A]
+  type HttpUnmarshaller[A] = Unmarshaller[HttpProto, A]*/
+
+  /*object Marshaller {
+    def apply[M[_] : Monad : Capture, In, Out](f: In => Out): Marshaller[M, In, Out] =
+      Kleisli((input: In) => Capture[M].apply(f(input)))
+  }*/
 
 }
