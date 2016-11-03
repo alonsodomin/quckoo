@@ -28,20 +28,16 @@ object IvyConfigurationTest {
 
   val ConfigWithoutHome = ConfigFactory.parseString(
     """
-      |resolver {
       | work-dir = "target/work"
       | resolution-cache-dir = "target/ivy/cache"
       | repository-cache-dir = "target/ivy/local"
       |
       | repositories = []
-      |}
     """.stripMargin)
 
   val ConfigWithHome = ConfigFactory.parseString(
     """
-      |resolver {
       | home = "target/home"
-      |}
     """.stripMargin).withFallback(ConfigWithoutHome)
 
   val ExpectedWorkDir            = Paths.get("target/work").toAbsolutePath.toFile
@@ -58,21 +54,21 @@ class IvyConfigurationTest extends FlatSpec with Matchers {
   "IvyConfiguration" should "give an instance without home folder if not specified" in {
     val configuration = IvyConfiguration(ConfigWithoutHome)
 
-    configuration.baseDir should be (ExpectedWorkDir)
-    configuration.resolutionDir should be (ExpectedResolutionCacheDir)
-    configuration.repositoryDir should be (ExpectedResolutionRepoDir)
-    configuration.ivyHome should be (None)
-    assert(configuration.repositories.isEmpty)
+    configuration.baseDir shouldBe ExpectedWorkDir
+    configuration.resolutionDir shouldBe ExpectedResolutionCacheDir
+    configuration.repositoryDir shouldBe ExpectedResolutionRepoDir
+    configuration.ivyHome shouldBe None
+    configuration.repositories shouldBe empty
   }
 
   it should "give an instance with a home folder if specified" in {
     val configuration = IvyConfiguration(ConfigWithHome)
 
-    configuration.baseDir should be (ExpectedWorkDir)
-    configuration.resolutionDir should be (ExpectedResolutionCacheDir)
-    configuration.repositoryDir should be (ExpectedResolutionRepoDir)
-    configuration.ivyHome should be (Some(ExpectedHomeDir))
-    assert(configuration.repositories.isEmpty)
+    configuration.baseDir shouldBe ExpectedWorkDir
+    configuration.resolutionDir shouldBe ExpectedResolutionCacheDir
+    configuration.repositoryDir shouldBe ExpectedResolutionRepoDir
+    configuration.ivyHome shouldBe Some(ExpectedHomeDir)
+    configuration.repositories shouldBe empty
   }
 
 }
