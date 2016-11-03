@@ -163,9 +163,7 @@ object Dependencies {
   // Client module ===============================
 
   lazy val client = Def.settings {
-    libraryDependencies ++= Seq(
-      compilerPlugin(Dependencies.compiler.macroParadise),
-
+    libraryDependencies ++= compiler.plugins ++ Seq(
       "biz.enef"      %%% "slogging"  % version.slogging,
       "org.scalatest" %%% "scalatest" % version.scalaTest % Test
     )
