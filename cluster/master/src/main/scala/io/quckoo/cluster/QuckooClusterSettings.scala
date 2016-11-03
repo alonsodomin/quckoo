@@ -19,9 +19,11 @@ package io.quckoo.cluster
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
+import com.typesafe.config.Config
 import io.quckoo.resolver.ivy.IvyConfiguration
 
 import scala.concurrent.duration._
+import scala.util.Try
 
 /**
   * Created by domingueza on 28/08/15.
@@ -43,6 +45,8 @@ object QuckooClusterSettings {
       config.getInt("http.bind-port")
     )
   }
+
+  def apply(config: Config): Try[QuckooClusterSettings] = ???
 
 }
 
