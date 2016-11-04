@@ -31,7 +31,7 @@ object ClusterConfig {
 
   final val Namespace = "quckoo"
 
-  def from(config: Config): Try[ClusterConfig] =
+  def apply(config: Config): Try[ClusterConfig] =
     loadConfig[ClusterConfig](config, Namespace)
 
 }

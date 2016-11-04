@@ -21,44 +21,23 @@ import java.util.{HashMap => JHashMap}
 
 import com.typesafe.config.{Config, ConfigFactory}
 
-import io.quckoo.cluster.QuckooClusterSettings
+import io.quckoo.cluster.SystemName
+import io.quckoo.cluster.config._
 
 import scala.collection.JavaConversions._
 
 /**
   * Created by aalonsodominguez on 03/10/2015.
   */
-object CliOptions {
-
-  final val SystemName = "QuckooClusterSystem"
-
-  final val AkkaRemoteNettyHost     = "akka.remote.netty.tcp.hostname"
-  final val AkkaRemoteNettyPort     = "akka.remote.netty.tcp.port"
-  final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
-  final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
-
-  final val AkkaClusterSeedNodes = "akka.cluster.seed-nodes"
-
-  final val CassandraJournalContactPoints  = "cassandra-journal.contact-points"
-  final val CassandraSnapshotContactPoints = "cassandra-snapshot-store.contact-points"
-
-  final val QuckooHttpBindInterface = "quckoo.http.bind-interface"
-  final val QuckooHttpBindPort      = "quckoo.http.bind-port"
-
-  private final val HostAndPort = """(.+?):(\d+)""".r
-
-}
-
-case class CliOptions(
+final case class CliOptions(
     bindAddress: Option[String] = None,
-    port: Int = QuckooClusterSettings.DefaultTcpPort,
+    port: Int = DefaultTcpPort,
     httpBindAddress: Option[String] = None,
     httpPort: Option[Int] = None,
     seed: Boolean = false,
     seedNodes: Seq[String] = Seq(),
     cassandraSeedNodes: Seq[String] = Seq()
 ) {
-  import CliOptions._
 
   def toConfig: Config = {
     val valueMap = new JHashMap[String, Object]()
@@ -66,7 +45,7 @@ case class CliOptions(
     val (bindHost, bindPort) = bindAddress.map { addr =>
       val HostAndPort(h, p) = addr
       (h, p.toInt)
-    } getOrElse (QuckooClusterSettings.DefaultTcpInterface -> port)
+    } getOrElse (DefaultTcpInterface -> port)
 
     valueMap.put(AkkaRemoteNettyHost, bindHost)
     valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))

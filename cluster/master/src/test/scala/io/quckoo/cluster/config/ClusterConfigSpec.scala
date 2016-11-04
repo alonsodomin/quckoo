@@ -45,7 +45,7 @@ class ClusterConfigSpec extends FlatSpec with Matchers with TryAssertions {
 
   "ClusterConfig" should "be able to load default configuration" in {
     val config = ConfigFactory.load()
-    val clusterConfigAttempt = ClusterConfig.from(config)
+    val clusterConfigAttempt = ClusterConfig(config)
 
     ifSuccessful(clusterConfigAttempt) { clusterConf =>
       clusterConf.taskQueue.maxWorkTimeout shouldBe taskQueue.DefaultMaxWorkTimeout

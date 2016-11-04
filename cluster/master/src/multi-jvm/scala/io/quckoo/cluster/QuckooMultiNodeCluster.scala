@@ -7,6 +7,7 @@ import akka.testkit.ImplicitSender
 
 import com.typesafe.config.ConfigFactory
 
+import io.quckoo.cluster.config.ClusterConfig
 import io.quckoo.cluster.core.QuckooGuardian
 import io.quckoo.cluster.journal.QuckooTestJournal
 import io.quckoo.id.ArtifactId
@@ -16,6 +17,7 @@ import io.quckoo.test.ImplicitClock
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Promise}
+import scala.util.Success
 
 /**
  * Created by domingueza on 26/08/15.
@@ -56,7 +58,7 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
   val journal = new QuckooTestJournal
 
   "A Quckoo cluster" must {
-    val settings = QuckooClusterSettings(system)
+    val Success(settings) = ClusterConfig(system.settings.config)
 
     "send connect commands from one node to the other one" in {
       awaitClusterUp(registry, scheduler)
