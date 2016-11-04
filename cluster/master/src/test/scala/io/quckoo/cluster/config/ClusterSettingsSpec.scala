@@ -27,7 +27,7 @@ import scala.concurrent.duration._
 /**
   * Created by alonsodomin on 04/11/2016.
   */
-object ClusterConfigSpec {
+object ClusterSettingsSpec {
 
   object taskQueue {
     final val DefaultMaxWorkTimeout = 10 minutes
@@ -40,12 +40,12 @@ object ClusterConfigSpec {
 
 }
 
-class ClusterConfigSpec extends FlatSpec with Matchers with TryAssertions {
-  import ClusterConfigSpec._
+class ClusterSettingsSpec extends FlatSpec with Matchers with TryAssertions {
+  import ClusterSettingsSpec._
 
   "ClusterConfig" should "be able to load default configuration" in {
     val config = ConfigFactory.load()
-    val clusterConfigAttempt = ClusterConfig(config)
+    val clusterConfigAttempt = ClusterSettings(config)
 
     ifSuccessful(clusterConfigAttempt) { clusterConf =>
       clusterConf.taskQueue.maxWorkTimeout shouldBe taskQueue.DefaultMaxWorkTimeout

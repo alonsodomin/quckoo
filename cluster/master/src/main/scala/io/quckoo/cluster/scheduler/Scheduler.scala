@@ -28,7 +28,7 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
-import io.quckoo.cluster.config.ClusterConfig
+import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.cluster.protocol._
@@ -69,7 +69,7 @@ object Scheduler {
       replyTo: ActorRef
   )
 
-  def props(settings: ClusterConfig, journal: QuckooJournal, registry: ActorRef)(
+  def props(settings: ClusterSettings, journal: QuckooJournal, registry: ActorRef)(
       implicit clock: Clock): Props = {
     val queueProps = TaskQueue.props(settings.taskQueue.maxWorkTimeout)
     Props(classOf[Scheduler], journal, registry, queueProps, clock)

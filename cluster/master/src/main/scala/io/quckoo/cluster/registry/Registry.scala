@@ -29,7 +29,7 @@ import akka.util.Timeout
 
 import io.quckoo.JobSpec
 import io.quckoo.id.JobId
-import io.quckoo.cluster.config.ClusterConfig
+import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.topics
 import io.quckoo.fault._
@@ -57,7 +57,7 @@ object Registry {
   sealed trait Signal
   case object Ready extends Signal
 
-  def props(settings: ClusterConfig, journal: QuckooJournal) = {
+  def props(settings: ClusterSettings, journal: QuckooJournal) = {
     val resolve = IvyResolve(settings.resolver)
     val props   = Resolver.props(resolve).withDispatcher("quckoo.resolver.dispatcher")
     Props(classOf[Registry], RegistrySettings(props), journal)

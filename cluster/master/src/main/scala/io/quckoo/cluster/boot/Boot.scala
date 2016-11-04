@@ -21,7 +21,7 @@ import akka.actor._
 import com.typesafe.config.ConfigFactory
 
 import io.quckoo._
-import io.quckoo.cluster.config.ClusterConfig
+import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.{QuckooFacade, SystemName}
 import io.quckoo.time.implicits.systemClock
 import io.quckoo.util._
@@ -85,7 +85,7 @@ object Boot extends Logging {
         system.terminate()
       }
 
-      val loadClusterConf = Kleisli(ClusterConfig.apply).transform(try2Future)
+      val loadClusterConf = Kleisli(ClusterSettings.apply).transform(try2Future)
       val startCluster = Kleisli(QuckooFacade.start)
 
       import system.dispatcher

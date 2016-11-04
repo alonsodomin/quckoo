@@ -24,17 +24,17 @@ import pureconfig._
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
 
-final case class ClusterConfig(resolver: IvyConfig, taskQueue: TaskQueueConfig, http: HttpConfig)
+final case class ClusterSettings(resolver: IvyConfig, taskQueue: TaskQueueSettings, http: HttpSettings)
 
-object ClusterConfig {
+object ClusterSettings {
   import IvyConfig._
 
   final val Namespace = "quckoo"
 
-  def apply(config: Config): Try[ClusterConfig] =
-    loadConfig[ClusterConfig](config, Namespace)
+  def apply(config: Config): Try[ClusterSettings] =
+    loadConfig[ClusterSettings](config, Namespace)
 
 }
 
-final case class HttpConfig(bindInterface: String, bindPort: Int, requestTimeout: FiniteDuration)
-final case class TaskQueueConfig(maxWorkTimeout: FiniteDuration)
+final case class HttpSettings(bindInterface: String, bindPort: Int, requestTimeout: FiniteDuration)
+final case class TaskQueueSettings(maxWorkTimeout: FiniteDuration)

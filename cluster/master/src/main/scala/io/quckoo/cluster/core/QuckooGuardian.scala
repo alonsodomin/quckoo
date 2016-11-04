@@ -22,7 +22,7 @@ import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
-import io.quckoo.cluster.config.ClusterConfig
+import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.net._
 import io.quckoo.cluster.registry.Registry
@@ -47,7 +47,7 @@ object QuckooGuardian {
 
   final val DefaultSessionTimeout: FiniteDuration = 30 minutes
 
-  def props(settings: ClusterConfig, journal: QuckooJournal, boot: Promise[Unit])(
+  def props(settings: ClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(
       implicit clock: Clock) =
     Props(classOf[QuckooGuardian], settings, journal, boot, clock)
 
@@ -55,7 +55,7 @@ object QuckooGuardian {
 
 }
 
-class QuckooGuardian(settings: ClusterConfig, journal: QuckooJournal, boot: Promise[Unit])(
+class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(
     implicit clock: Clock)
     extends Actor with ActorLogging with Stash {
 
@@ -71,6 +71,7 @@ class QuckooGuardian(settings: ClusterConfig, journal: QuckooJournal, boot: Prom
 
   private[this] val registry =
     context.watch(context.actorOf(Registry.props(settings, journal), "registry"))
+
   private[this] val scheduler = context.watch(
     context.actorOf(
       Scheduler.props(

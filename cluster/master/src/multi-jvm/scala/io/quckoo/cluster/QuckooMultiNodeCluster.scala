@@ -7,7 +7,7 @@ import akka.testkit.ImplicitSender
 
 import com.typesafe.config.ConfigFactory
 
-import io.quckoo.cluster.config.ClusterConfig
+import io.quckoo.cluster.config.ClusterSettings$
 import io.quckoo.cluster.core.QuckooGuardian
 import io.quckoo.cluster.journal.QuckooTestJournal
 import io.quckoo.id.ArtifactId
@@ -58,7 +58,7 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
   val journal = new QuckooTestJournal
 
   "A Quckoo cluster" must {
-    val Success(settings) = ClusterConfig(system.settings.config)
+    val Success(settings) = ClusterSettings(system.settings.config)
 
     "send connect commands from one node to the other one" in {
       awaitClusterUp(registry, scheduler)
