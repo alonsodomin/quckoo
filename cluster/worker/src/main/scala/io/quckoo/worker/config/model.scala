@@ -18,7 +18,31 @@ package io.quckoo.worker.config
 
 import akka.actor.ActorPath
 
-/**
-  * Created by alonsodomin on 04/11/2016.
-  */
+import com.typesafe.config.Config
+
+import io.quckoo.config._
+import io.quckoo.resolver.config.IvyConfig
+
+import pureconfig._
+
+import scala.util.Try
+
 class ContactPoint(val actorPath: ActorPath) extends AnyVal
+
+final case class ControllerSettings(
+    contactPoints: Set[ContactPoint]
+)
+
+final case class WorkerSettings(
+    worker: ControllerSettings,
+    resolver: IvyConfig
+)
+
+object WorkerSettings {
+  import IvyConfig._
+
+  final val Namespace = "quckoo"
+
+  def apply(config: Config): Try[WorkerSettings] =
+    loadConfig[WorkerSettings](config, Namespace)
+}

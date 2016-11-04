@@ -17,7 +17,9 @@
 package io.quckoo.worker.config
 
 import com.typesafe.config.ConfigFactory
+
 import io.quckoo.test.TryAssertions
+
 import org.scalatest.{FlatSpec, Matchers}
 
 /**
@@ -28,8 +30,8 @@ class WorkerSettingsSpec extends FlatSpec with Matchers with TryAssertions {
   "WorkerSettings" should "load the default configuration settings" in {
     val config = ConfigFactory.load()
 
-    ifSuccessful(WorkerSettings(config.getConfig("quckoo"))) { settings =>
-      assert(true)
+    ifSuccessful(WorkerSettings(config)) { settings =>
+      settings.worker.contactPoints should not be empty
     }
   }
 

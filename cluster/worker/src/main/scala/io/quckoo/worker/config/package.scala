@@ -35,7 +35,7 @@ package object config {
   final val DefaultTcpPort      = 5001
 
   final val ExecutorDispatcher = "quckoo.worker.dispatcher"
-  final val ResolverDispatcher = "quckoo.worker.resolver.dispatcher"
+  final val ResolverDispatcher = "quckoo.resolver.dispatcher"
 
   final val HostAndPort = """(.+?):(\d+)""".r
 

@@ -63,7 +63,7 @@ object Boot extends App with Logging {
     implicit val system = ActorSystem(SystemName, config)
     sys.addShutdownHook { system.terminate() }
 
-    WorkerSettings(config.getConfig("quckoo")) match {
+    WorkerSettings(config) match {
       case Success(settings) => doStart(settings)
       case Failure(ex)       => ex.printStackTrace() // FIXME
     }
@@ -72,8 +72,8 @@ object Boot extends App with Logging {
   private def doStart(settings: WorkerSettings)(implicit system: ActorSystem): Unit = {
     val clientSettings = {
       val ccs = ClusterClientSettings(system)
-      if (settings.contactPoints.nonEmpty)
-        ccs.withInitialContacts(settings.contactPoints.map(_.actorPath))
+      if (settings.worker.contactPoints.nonEmpty)
+        ccs.withInitialContacts(settings.worker.contactPoints.map(_.actorPath))
       else ccs
     }
     val clusterClient  = system.actorOf(ClusterClient.props(clientSettings), "client")
