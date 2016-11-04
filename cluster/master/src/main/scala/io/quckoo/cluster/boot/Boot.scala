@@ -73,30 +73,6 @@ object Boot extends Logging {
     help("help") text "prints this usage text"
   }
 
-  /*def loadConfig(opts: CliOptions): Config =
-    opts.toConfig.withFallback(ConfigFactory.load())
-
-  def start(config: Config): Unit = {
-    implicit val system = ActorSystem(CliOptions.SystemName, config)
-    sys.addShutdownHook {
-      log.info("Received kill signal, terminating...")
-      system.terminate()
-    }
-
-    ClusterConfig.parse.transform(try2Future)
-    val settings = QuckooClusterSettings(system)
-
-    import system.dispatcher
-    QuckooFacade.start(settings) onComplete {
-      case Success(_) =>
-        log.info("Quckoo server initialized!")
-
-      case Failure(ex) =>
-        ex.printStackTrace()
-        system.terminate()
-    }
-  }*/
-
   def main(args: Array[String]): Unit = {
     parser.parse(args, CliOptions()).foreach { opts =>
       log.info(s"Starting Quckoo Server ${Info.version}...\n" + Logo)
