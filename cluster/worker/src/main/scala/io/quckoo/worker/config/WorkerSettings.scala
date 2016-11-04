@@ -18,7 +18,7 @@ package io.quckoo.worker.config
 
 import com.typesafe.config.Config
 
-import io.quckoo.resolver.ivy.IvyConfig
+import io.quckoo.resolver.config.IvyConfig
 
 import pureconfig._
 
@@ -34,8 +34,10 @@ final case class WorkerSettings(
 )
 
 object WorkerSettings {
+  import IvyConfig._
+
   final val Namespace = "worker"
 
   def apply(config: Config): Try[WorkerSettings] =
-    loadConfig(config, Namespace)
+    loadConfig[WorkerSettings](config, Namespace)
 }

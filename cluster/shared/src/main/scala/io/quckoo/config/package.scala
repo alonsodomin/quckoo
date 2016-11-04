@@ -23,6 +23,7 @@ import pureconfig.{CamelCase, ConfigFieldMapping, KebabCase}
   */
 package object config {
 
-  implicit def clusterFieldMapping[A] = ConfigFieldMapping.apply[A](CamelCase, KebabCase)
+  implicit def clusterFieldMapping[A]: ConfigFieldMapping[A] =
+    ConfigFieldMapping.apply[A](CamelCase, KebabCase)
 
 }

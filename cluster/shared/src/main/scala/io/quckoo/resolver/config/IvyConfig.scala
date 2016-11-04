@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package io.quckoo.resolver.ivy
+package io.quckoo.resolver.config
 
 import java.io.File
 import java.nio.file.Paths
 
 import io.quckoo.resolver.{MavenRepository, Repository}
-
 import pureconfig._
 
 /**

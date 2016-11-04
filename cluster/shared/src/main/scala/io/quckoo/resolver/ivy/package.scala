@@ -16,9 +16,9 @@
 
 package io.quckoo.resolver
 
+import io.quckoo.resolver.config.IvyConfig
 import org.apache.ivy.core.settings.IvySettings
 import org.apache.ivy.plugins.resolver.ChainResolver
-
 import org.slf4s.Logging
 
 /**

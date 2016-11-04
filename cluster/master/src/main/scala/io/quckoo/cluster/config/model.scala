@@ -17,10 +17,8 @@
 package io.quckoo.cluster.config
 
 import com.typesafe.config.Config
-
 import io.quckoo.config._
-import io.quckoo.resolver.ivy.IvyConfig
-
+import io.quckoo.resolver.config.IvyConfig
 import pureconfig._
 
 import scala.concurrent.duration.FiniteDuration
