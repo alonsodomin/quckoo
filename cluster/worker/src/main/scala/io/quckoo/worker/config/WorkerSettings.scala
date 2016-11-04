@@ -16,12 +16,11 @@
 
 package io.quckoo.worker.config
 
-import akka.actor.{ActorPath, AddressFromURIString, RootActorPath}
-import akka.japi.Util._
-
 import com.typesafe.config.Config
 
-import io.quckoo.resolver.ivy.IvyConfiguration
+import io.quckoo.resolver.ivy.IvyConfig
+
+import pureconfig._
 
 import scala.util.Try
 
@@ -29,29 +28,14 @@ import scala.util.Try
   * Created by alonsodomin on 02/11/2016.
   */
 final case class WorkerSettings(
-  contactPoints: Set[ActorPath],
-  ivy: IvyConfiguration,
-  dispatcherName: Option[String]
+    contactPoints: Set[ContactPoint],
+    resolver: IvyConfig,
+    dispatcherName: Option[String]
 )
 
 object WorkerSettings {
   final val Namespace = "worker"
 
-  def apply(config: Config): Try[WorkerSettings] = {
-    def contactPoints: Set[ActorPath] = {
-      Try(config.getStringList("contact-points")).map { points =>
-        immutableSeq(points).map {
-          case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
-        } toSet
-      } getOrElse Set.empty
-    }
-
-    Try {
-      WorkerSettings(
-        contactPoints = contactPoints,
-        ivy = IvyConfiguration(config.getConfig(IvyConfiguration.Namespace)),
-        dispatcherName = Try(config.getString("dispatcher")).toOption
-      )
-    }
-  }
+  def apply(config: Config): Try[WorkerSettings] =
+    loadConfig(config, Namespace)
 }

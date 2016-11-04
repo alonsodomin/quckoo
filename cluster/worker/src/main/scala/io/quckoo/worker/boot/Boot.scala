@@ -73,12 +73,12 @@ object Boot extends App with Logging {
     val clientSettings = {
       val ccs = ClusterClientSettings(system)
       if (settings.contactPoints.nonEmpty)
-        ccs.withInitialContacts(settings.contactPoints)
+        ccs.withInitialContacts(settings.contactPoints.map(_.actorPath))
       else ccs
     }
     val clusterClient  = system.actorOf(ClusterClient.props(clientSettings), "client")
 
-    val ivyResolve = IvyResolve(settings.ivy)
+    val ivyResolve = IvyResolve(settings.resolver)
 
     // TODO resolver should be re-implemented since there is not need to be an actor
     val resolverProps    = Resolver.props(ivyResolve).withDispatcher("quckoo.resolver.dispatcher")
