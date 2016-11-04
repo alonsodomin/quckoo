@@ -30,8 +30,8 @@ package object ivy extends Logging {
   private[ivy] implicit def convertConfig2Settings(config: IvyConfig): IvySettings = {
     implicit val ivySettings = new IvySettings()
     ivySettings.setBaseDir(config.baseDir)
-    ivySettings.setDefaultResolutionCacheBasedir(config.resolutionDir.getAbsolutePath)
-    ivySettings.setDefaultRepositoryCacheBasedir(config.repositoryDir.getAbsolutePath)
+    ivySettings.setDefaultResolutionCacheBasedir(config.resolutionCacheDir.getAbsolutePath)
+    ivySettings.setDefaultRepositoryCacheBasedir(config.repositoryCacheDir.getAbsolutePath)
 
     log.debug(s"Using default cache dir: ${ivySettings.getDefaultResolutionCacheBasedir}")
     log.debug(s"Using default repository dir: ${ivySettings.getDefaultRepositoryCacheBasedir}")

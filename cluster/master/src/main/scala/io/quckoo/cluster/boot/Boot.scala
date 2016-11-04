@@ -85,7 +85,7 @@ object Boot extends Logging {
         system.terminate()
       }
 
-      val loadClusterConf = Kleisli(ClusterConfig.apply).transform(try2Future)
+      val loadClusterConf = Kleisli(ClusterConfig.from).transform(try2Future)
       val startCluster = Kleisli(QuckooFacade.start)
 
       import system.dispatcher

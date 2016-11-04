@@ -27,11 +27,11 @@ import pureconfig._
   * Created by domingueza on 03/11/2016.
   */
 case class IvyConfig(
-  baseDir: File,
-  resolutionDir: File,
-  repositoryDir: File,
-  ivyHome: Option[File],
-  repositories: List[MavenRepository]
+    baseDir: File,
+    resolutionCacheDir: File,
+    repositoryCacheDir: File,
+    ivyHome: Option[File],
+    repositories: List[MavenRepository]
 )
 
 object IvyConfig {
