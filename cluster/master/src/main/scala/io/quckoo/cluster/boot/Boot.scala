@@ -18,11 +18,11 @@ package io.quckoo.cluster.boot
 
 import akka.actor._
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 
 import io.quckoo._
 import io.quckoo.cluster.config.ClusterConfig
-import io.quckoo.cluster.{QuckooClusterSettings, QuckooFacade}
+import io.quckoo.cluster.QuckooFacade
 import io.quckoo.time.implicits.systemClock
 import io.quckoo.util._
 
@@ -30,10 +30,10 @@ import org.slf4s.Logging
 
 import scopt.OptionParser
 
-import scala.concurrent.Future
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 import scalaz._
+import scalaz.std.scalaFuture._
 
 /**
   * Created by domingueza on 09/07/15.
