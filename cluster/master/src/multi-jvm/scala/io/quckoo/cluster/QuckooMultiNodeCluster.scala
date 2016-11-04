@@ -7,7 +7,7 @@ import akka.testkit.ImplicitSender
 
 import com.typesafe.config.ConfigFactory
 
-import io.quckoo.cluster.config.ClusterSettings$
+import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.core.QuckooGuardian
 import io.quckoo.cluster.journal.QuckooTestJournal
 import io.quckoo.id.ArtifactId
