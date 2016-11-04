@@ -34,6 +34,9 @@ package object config {
   final val DefaultTcpInterface = "127.0.0.1"
   final val DefaultTcpPort      = 5001
 
+  final val ExecutorDispatcher = "quckoo.worker.dispatcher"
+  final val ResolverDispatcher = "quckoo.worker.resolver.dispatcher"
+
   final val HostAndPort = """(.+?):(\d+)""".r
 
   implicit val contactPointConfig: ConfigConvert[ContactPoint] = ConfigConvert.fromNonEmptyString {

@@ -24,7 +24,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import io.quckoo.{Info, Logo}
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
-import io.quckoo.worker.config.WorkerSettings
+import io.quckoo.worker.config.{WorkerSettings, ResolverDispatcher, ExecutorDispatcher}
 import io.quckoo.worker.{JobExecutor, Worker, SystemName}
 
 import org.slf4s.Logging
@@ -81,13 +81,8 @@ object Boot extends App with Logging {
     val ivyResolve = IvyResolve(settings.resolver)
 
     // TODO resolver should be re-implemented since there is not need to be an actor
-    val resolverProps    = Resolver.props(ivyResolve).withDispatcher("quckoo.resolver.dispatcher")
-    val jobExecutorProps = {
-      val props = JobExecutor.props
-      settings.dispatcherName
-        .map(dispatcher => props.withDispatcher(dispatcher))
-        .getOrElse(props)
-    }
+    val resolverProps    = Resolver.props(ivyResolve).withDispatcher(ResolverDispatcher)
+    val jobExecutorProps = JobExecutor.props.withDispatcher(ExecutorDispatcher)
 
     system.actorOf(Worker.props(clusterClient, resolverProps, jobExecutorProps), "worker")
   }

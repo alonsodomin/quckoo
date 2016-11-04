@@ -16,28 +16,21 @@
 
 package io.quckoo.worker.config
 
-import com.typesafe.config.Config
-
-import io.quckoo.config._
-import io.quckoo.resolver.config.IvyConfig
-
-import pureconfig._
-
-import scala.util.Try
+import com.typesafe.config.ConfigFactory
+import io.quckoo.test.TryAssertions
+import org.scalatest.{FlatSpec, Matchers}
 
 /**
-  * Created by alonsodomin on 02/11/2016.
+  * Created by alonsodomin on 04/11/2016.
   */
-final case class WorkerSettings(
-    contactPoints: Set[ContactPoint],
-    resolver: IvyConfig
-)
+class WorkerSettingsSpec extends FlatSpec with Matchers with TryAssertions {
 
-object WorkerSettings {
-  import IvyConfig._
+  "WorkerSettings" should "load the default configuration settings" in {
+    val config = ConfigFactory.load()
 
-  final val Namespace = "worker"
+    ifSuccessful(WorkerSettings(config.getConfig("quckoo"))) { settings =>
+      assert(true)
+    }
+  }
 
-  def apply(config: Config): Try[WorkerSettings] =
-    loadConfig[WorkerSettings](config, Namespace)
 }
