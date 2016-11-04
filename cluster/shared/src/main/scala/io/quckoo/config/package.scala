@@ -16,7 +16,10 @@
 
 package io.quckoo
 
-import pureconfig.{CamelCase, ConfigFieldMapping, KebabCase}
+import java.io.File
+import java.nio.file.Paths
+
+import pureconfig.{CamelCase, ConfigConvert, ConfigFieldMapping, KebabCase}
 
 /**
   * Created by alonsodomin on 04/11/2016.
@@ -25,5 +28,8 @@ package object config {
 
   implicit def clusterFieldMapping[A]: ConfigFieldMapping[A] =
     ConfigFieldMapping.apply[A](CamelCase, KebabCase)
+
+  implicit val createFileOnLoad: ConfigConvert[File] =
+    ConfigConvert.stringConvert(path => Paths.get(path).toAbsolutePath.toFile, _.getAbsolutePath)
 
 }

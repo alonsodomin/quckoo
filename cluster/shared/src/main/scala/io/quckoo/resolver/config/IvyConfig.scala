@@ -25,13 +25,20 @@ import pureconfig._
 /**
   * Created by domingueza on 03/11/2016.
   */
-case class IvyConfig(
+final case class IvyConfig(
     baseDir: File,
     resolutionCacheDir: File,
     repositoryCacheDir: File,
     ivyHome: Option[File],
     repositories: List[MavenRepository]
-)
+) {
+
+  def createFolders(): Unit = {
+    val folders = List(baseDir, resolutionCacheDir, repositoryCacheDir) ++ ivyHome
+    folders.foreach(_.mkdirs())
+  }
+
+}
 
 object IvyConfig {
 
@@ -40,14 +47,5 @@ object IvyConfig {
     Repository.mavenLocal
     //Repository.sbtLocal("local")
   )
-
-  implicit val createFileOnLoad: ConfigConvert[File] =
-    ConfigConvert.stringConvert(createPathIfNotExists, _.getAbsolutePath)
-
-  private[this] def createPathIfNotExists(pathName: String): File = {
-    val file = Paths.get(pathName).toAbsolutePath.toFile
-    file.mkdirs()
-    file
-  }
 
 }

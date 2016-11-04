@@ -79,6 +79,7 @@ object Boot extends App with Logging {
     val clusterClient  = system.actorOf(ClusterClient.props(clientSettings), "client")
 
     val ivyResolve = IvyResolve(settings.resolver)
+    settings.resolver.createFolders()
 
     // TODO resolver should be re-implemented since there is not need to be an actor
     val resolverProps    = Resolver.props(ivyResolve).withDispatcher(ResolverDispatcher)
