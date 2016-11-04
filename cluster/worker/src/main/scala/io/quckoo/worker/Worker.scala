@@ -51,7 +51,8 @@ object Worker {
       resolverProps,
       jobExecutorProps,
       registerInterval,
-      queueAckTimeout)
+      queueAckTimeout
+    )
 
 }
 

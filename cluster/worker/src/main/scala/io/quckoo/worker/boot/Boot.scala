@@ -25,7 +25,7 @@ import io.quckoo.{Info, Logo}
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
 import io.quckoo.worker.config.WorkerSettings
-import io.quckoo.worker.{JobExecutor, Worker}
+import io.quckoo.worker.{JobExecutor, Worker, SystemName}
 
 import org.slf4s.Logging
 
@@ -38,7 +38,7 @@ import scala.util.{Success, Failure}
   */
 object Boot extends App with Logging {
 
-  val parser = new OptionParser[Options]("quckoo-worker") {
+  val parser = new OptionParser[CliOptions]("quckoo-worker") {
     head("quckoo-worker", Info.version)
     opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
       options.copy(bindAddress = Some(b))
@@ -54,13 +54,13 @@ object Boot extends App with Logging {
     } text "Comma separated list of Quckoo master nodes"
   }
 
-  def loadConfig(opts: Options): Config =
+  def loadConfig(opts: CliOptions): Config =
     opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
     log.info(s"Starting Quckoo Worker ${Info.version}...\n" + Logo)
 
-    implicit val system = ActorSystem(Options.SystemName, config)
+    implicit val system = ActorSystem(SystemName, config)
     sys.addShutdownHook { system.terminate() }
 
     WorkerSettings(config.getConfig("quckoo")) match {
@@ -92,7 +92,7 @@ object Boot extends App with Logging {
     system.actorOf(Worker.props(clusterClient, resolverProps, jobExecutorProps), "worker")
   }
 
-  parser.parse(args, Options()).foreach { opts =>
+  parser.parse(args, CliOptions()).foreach { opts =>
     start(loadConfig(opts))
   }
 
