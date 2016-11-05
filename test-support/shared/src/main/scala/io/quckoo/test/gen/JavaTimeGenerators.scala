@@ -21,16 +21,13 @@ import org.scalacheck._
 import org.threeten.bp._
 import org.threeten.bp.temporal._
 
-import scala.collection.JavaConverters._
-
 /**
   * Created by alonsodomin on 05/11/2016.
   */
 trait JavaTimeGenerators {
   import Arbitrary._
 
-  val zoneIdGen: Gen[ZoneId] = Gen.oneOf(ZoneId.getAvailableZoneIds.asScala.toSeq)
-    .map(id => ZoneId.of(id))
+  val zoneIdGen: Gen[ZoneId] = Gen.oneOf(List("UTC", "GMT", "Z").map(ZoneId.of))
 
   implicit lazy val arbitraryZoneId = Arbitrary(zoneIdGen)
 
