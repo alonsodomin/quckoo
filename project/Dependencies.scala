@@ -52,12 +52,12 @@ object Dependencies {
     // Other utils ---
 
     val scopt      = "3.5.0"
-    val slogging   = "0.5.0"
-    val monocle    = "1.2.2"
-    val scalaz     = "7.2.6"
-    val monix      = "2.0.3"
+    val slogging   = "0.5.1"
+    val monocle    = "1.3.2"
+    val scalaz     = "7.2.7"
+    val monix      = "2.0.6"
     val cron4s     = "0.2.0"
-    val enumeratum = "1.4.14"
+    val enumeratum = "1.4.17"
     val pureconfig = "0.3.3"
 
     // JavaScript Libraries
@@ -254,9 +254,7 @@ object Dependencies {
     libraryDependencies ++= Seq(
       slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
-      Akka.kryoSerialization, ivy, scalaXml, pureconfig,
-
-      "com.tecsisa" %% "constructr-coordination-consul" % "0.3.0"
+      Akka.kryoSerialization, ivy, scalaXml, pureconfig
     )
   }
   lazy val clusterMaster = Def.settings {
@@ -267,6 +265,8 @@ object Dependencies {
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
       Akka.persistence.query, Akka.persistence.memory, scopt,
       authenticatJwt,
+
+      "com.tecsisa" %% "constructr-coordination-consul" % "0.3.0",
 
       "com.vmunier"      %% "scalajs-scripts" % "1.0.0",
       "org.webjars"       % "bootstrap-sass"  % "3.3.1",
