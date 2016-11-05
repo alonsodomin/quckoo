@@ -6,9 +6,9 @@
     </Console>
   </Appenders>
   <Loggers>
-    <Logger name="io.quckoo" level="debug" additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
+    <Logger name="io.quckoo" level="debug" />
+    <Logger name="org.mockserver.mockserver" level="warn"/>
+
     <Root level="info">
       <AppenderRef ref="Console"/>
     </Root>

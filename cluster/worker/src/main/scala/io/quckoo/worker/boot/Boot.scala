@@ -24,8 +24,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 import io.quckoo.{Info, Logo}
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
-import io.quckoo.worker.config.WorkerSettings
-import io.quckoo.worker.{JobExecutor, Worker}
+import io.quckoo.worker.config.{WorkerSettings, ResolverDispatcher, ExecutorDispatcher}
+import io.quckoo.worker.{JobExecutor, Worker, SystemName}
 
 import org.slf4s.Logging
 
@@ -38,7 +38,7 @@ import scala.util.{Success, Failure}
   */
 object Boot extends App with Logging {
 
-  val parser = new OptionParser[Options]("quckoo-worker") {
+  val parser = new OptionParser[CliOptions]("quckoo-worker") {
     head("quckoo-worker", Info.version)
     opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
       options.copy(bindAddress = Some(b))
@@ -54,16 +54,16 @@ object Boot extends App with Logging {
     } text "Comma separated list of Quckoo master nodes"
   }
 
-  def loadConfig(opts: Options): Config =
+  def loadConfig(opts: CliOptions): Config =
     opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
     log.info(s"Starting Quckoo Worker ${Info.version}...\n" + Logo)
 
-    implicit val system = ActorSystem(Options.SystemName, config)
+    implicit val system = ActorSystem(SystemName, config)
     sys.addShutdownHook { system.terminate() }
 
-    WorkerSettings(config.getConfig("quckoo")) match {
+    WorkerSettings(config) match {
       case Success(settings) => doStart(settings)
       case Failure(ex)       => ex.printStackTrace() // FIXME
     }
@@ -72,27 +72,23 @@ object Boot extends App with Logging {
   private def doStart(settings: WorkerSettings)(implicit system: ActorSystem): Unit = {
     val clientSettings = {
       val ccs = ClusterClientSettings(system)
-      if (settings.contactPoints.nonEmpty)
-        ccs.withInitialContacts(settings.contactPoints)
+      if (settings.worker.contactPoints.nonEmpty)
+        ccs.withInitialContacts(settings.worker.contactPoints.map(_.actorPath))
       else ccs
     }
     val clusterClient  = system.actorOf(ClusterClient.props(clientSettings), "client")
 
-    val ivyResolve = IvyResolve(settings.ivy)
+    val ivyResolve = IvyResolve(settings.resolver)
+    settings.resolver.createFolders()
 
     // TODO resolver should be re-implemented since there is not need to be an actor
-    val resolverProps    = Resolver.props(ivyResolve).withDispatcher("quckoo.resolver.dispatcher")
-    val jobExecutorProps = {
-      val props = JobExecutor.props
-      settings.dispatcherName
-        .map(dispatcher => props.withDispatcher(dispatcher))
-        .getOrElse(props)
-    }
+    val resolverProps    = Resolver.props(ivyResolve).withDispatcher(ResolverDispatcher)
+    val jobExecutorProps = JobExecutor.props.withDispatcher(ExecutorDispatcher)
 
     system.actorOf(Worker.props(clusterClient, resolverProps, jobExecutorProps), "worker")
   }
 
-  parser.parse(args, Options()).foreach { opts =>
+  parser.parse(args, CliOptions()).foreach { opts =>
     start(loadConfig(opts))
   }
 

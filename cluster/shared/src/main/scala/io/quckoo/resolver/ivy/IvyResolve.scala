@@ -21,18 +21,12 @@ import java.net.URL
 import io.quckoo.fault._
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver._
-
+import io.quckoo.resolver.config.IvyConfig
 import org.apache.ivy.Ivy
-import org.apache.ivy.core.module.descriptor.{
-  Configuration,
-  DefaultDependencyDescriptor,
-  DefaultModuleDescriptor,
-  ModuleDescriptor
-}
+import org.apache.ivy.core.module.descriptor.{Configuration, DefaultDependencyDescriptor, DefaultModuleDescriptor, ModuleDescriptor}
 import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
 import org.apache.ivy.core.report.{ArtifactDownloadReport, ResolveReport}
 import org.apache.ivy.core.resolve.ResolveOptions
-
 import org.slf4s.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -50,7 +44,7 @@ object IvyResolve {
   private final val Configurations =
     Array(DefaultConfName, CompileConfName, RuntimeConfName)
 
-  def apply(config: IvyConfiguration): IvyResolve = {
+  def apply(config: IvyConfig): IvyResolve = {
     val ivy = Ivy.newInstance(config)
     new IvyResolve(ivy)
   }

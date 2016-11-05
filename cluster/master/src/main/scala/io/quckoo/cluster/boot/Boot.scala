@@ -18,11 +18,13 @@ package io.quckoo.cluster.boot
 
 import akka.actor._
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 
 import io.quckoo._
-import io.quckoo.cluster.{QuckooClusterSettings, QuckooFacade}
+import io.quckoo.cluster.config.ClusterSettings
+import io.quckoo.cluster.{QuckooFacade, SystemName}
 import io.quckoo.time.implicits.systemClock
+import io.quckoo.util._
 
 import org.slf4s.Logging
 
@@ -30,12 +32,15 @@ import scopt.OptionParser
 
 import scala.util.{Failure, Success}
 
+import scalaz._
+import scalaz.std.scalaFuture._
+
 /**
   * Created by domingueza on 09/07/15.
   */
-object Boot extends App with Logging {
+object Boot extends Logging {
 
-  val parser = new OptionParser[Options]("quckoo-master") {
+  val parser = new OptionParser[CliOptions]("quckoo-master") {
     head("quckoo-master", Info.version)
 
     opt[String]('b', "bind") valueName "<host>:<port>" action { (b, options) =>
@@ -68,33 +73,31 @@ object Boot extends App with Logging {
     help("help") text "prints this usage text"
   }
 
-  def loadConfig(opts: Options): Config =
-    opts.toConfig.withFallback(ConfigFactory.load())
+  def main(args: Array[String]): Unit = {
+    parser.parse(args, CliOptions()).foreach { opts =>
+      log.info(s"Starting Quckoo Server ${Info.version}...\n" + Logo)
 
-  def start(config: Config): Unit = {
-    log.info(s"Starting Quckoo Server ${Info.version}...\n" + Logo)
+      val config = opts.toConfig.withFallback(ConfigFactory.load())
 
-    implicit val system = ActorSystem(Options.SystemName, config)
-    sys.addShutdownHook {
-      log.info("Received kill signal, terminating...")
-      system.terminate()
-    }
-
-    val settings = QuckooClusterSettings(system)
-
-    import system.dispatcher
-    QuckooFacade.start(settings) onComplete {
-      case Success(_) =>
-        log.info("Quckoo server initialized!")
-
-      case Failure(ex) =>
-        ex.printStackTrace()
+      implicit val system = ActorSystem(SystemName, config)
+      sys.addShutdownHook {
+        log.info("Received kill signal, terminating...")
         system.terminate()
-    }
-  }
+      }
 
-  parser.parse(args, Options()).foreach { opts =>
-    start(loadConfig(opts))
+      val loadClusterConf = Kleisli(ClusterSettings.apply).transform(try2Future)
+      val startCluster = Kleisli(QuckooFacade.start)
+
+      import system.dispatcher
+      (loadClusterConf andThen startCluster).run(config) onComplete {
+        case Success(_) =>
+          log.info("Quckoo server initialized!")
+
+        case Failure(ex) =>
+          ex.printStackTrace()
+          system.terminate()
+      }
+    }
   }
 
 }

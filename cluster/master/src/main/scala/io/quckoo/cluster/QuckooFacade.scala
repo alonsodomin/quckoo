@@ -24,8 +24,8 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrate
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 
-import io.quckoo.{Info, Logo}
 import io.quckoo.auth.Passport
+import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.pattern._
 import io.quckoo.cluster.http.HttpRouter
@@ -58,15 +58,14 @@ object QuckooFacade extends Logging {
 
   final val DefaultTimeout = 2500 millis
 
-  def start(settings: QuckooClusterSettings)(implicit system: ActorSystem,
-                                             clock: Clock): Future[Unit] = {
+  def start(settings: ClusterSettings)(implicit system: ActorSystem, clock: Clock): Future[Unit] = {
     def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
       implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system), "http")
 
       Http()
-        .bindAndHandle(facade.router, settings.httpInterface, settings.httpPort)
+        .bindAndHandle(facade.router, settings.http.bindInterface, settings.http.bindPort)
         .map(_ =>
-          log.info(s"HTTP server started on ${settings.httpInterface}:${settings.httpPort}"))
+          log.info(s"HTTP server started on ${settings.http.bindInterface}:${settings.http.bindPort}"))
     }
 
     val promise  = Promise[Unit]()

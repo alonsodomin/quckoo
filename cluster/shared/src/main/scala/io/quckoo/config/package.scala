@@ -14,28 +14,22 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker
+package io.quckoo
 
-import akka.actor.ActorSystem
-import io.quckoo.resolver.ivy.IvyConfiguration
+import java.io.File
+import java.nio.file.Paths
+
+import pureconfig.{CamelCase, ConfigConvert, ConfigFieldMapping, KebabCase}
 
 /**
-  * Created by alonsodomin on 23/01/2016.
+  * Created by alonsodomin on 04/11/2016.
   */
-object QuckooWorkerSettings {
+package object config {
 
-  final val DefaultTcpInterface = "127.0.0.1"
-  final val DefaultTcpPort      = 5001
+  implicit def clusterFieldMapping[A]: ConfigFieldMapping[A] =
+    ConfigFieldMapping.apply[A](CamelCase, KebabCase)
 
-  final val QuckooContactPoints = "contact-points"
-
-  def apply(system: ActorSystem): QuckooWorkerSettings = {
-    val sysConfig = system.settings.config
-
-    val quckooConf = sysConfig.getConfig("quckoo")
-    QuckooWorkerSettings(IvyConfiguration(quckooConf))
-  }
+  implicit val createFileOnLoad: ConfigConvert[File] =
+    ConfigConvert.stringConvert(path => Paths.get(path).toAbsolutePath.toFile, _.getAbsolutePath)
 
 }
-
-case class QuckooWorkerSettings private (ivyConfiguration: IvyConfiguration)
