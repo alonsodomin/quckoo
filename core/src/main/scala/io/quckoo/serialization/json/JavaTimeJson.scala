@@ -19,7 +19,7 @@ package io.quckoo.serialization.json
 import upickle.Js
 import upickle.default.{Writer => UWriter, Reader => UReader, _}
 
-import scala.language.implicitConversions
+//import scala.language.implicitConversions
 
 import org.threeten.bp._
 import org.threeten.bp.format._
@@ -27,7 +27,7 @@ import org.threeten.bp.format._
 /**
   * Created by alonsodomin on 11/08/2016.
   */
-trait JavaTime {
+trait JavaTimeJson {
 
   implicit def instantW: UWriter[Instant] = UWriter[Instant] { x =>
     Js.Str(DateTimeFormatter.ISO_INSTANT.format(x))
