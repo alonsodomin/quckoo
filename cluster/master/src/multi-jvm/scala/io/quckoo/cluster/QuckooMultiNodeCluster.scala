@@ -68,7 +68,7 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
       runOn(registry) {
         val bootPromise = Promise[Unit]
         system.actorOf(QuckooGuardian.props(settings, journal, bootPromise), GuardianName)
-        Await.ready(bootPromise.future, Duration.Inf)
+        Await.ready(bootPromise.future, 5 seconds)
 
         enterBarrier("deployed")
 
@@ -88,7 +88,7 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
       runOn(scheduler) {
         val bootPromise = Promise[Unit]
         system.actorOf(QuckooGuardian.props(settings, journal, bootPromise), GuardianName)
-        Await.ready(bootPromise.future, Duration.Inf)
+        Await.ready(bootPromise.future, 5 seconds)
 
         enterBarrier("deployed")
 

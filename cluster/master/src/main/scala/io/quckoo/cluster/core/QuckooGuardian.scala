@@ -89,7 +89,8 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
       self,
       initialStateMode = InitialStateAsEvents,
       classOf[MemberEvent],
-      classOf[ReachabilityEvent])
+      classOf[ReachabilityEvent]
+    )
 
     context.system.eventStream.subscribe(self, classOf[Registry.Signal])
     context.system.eventStream.subscribe(self, classOf[Scheduler.Signal])
