@@ -32,12 +32,12 @@ trait ValidatorSemigroupTests[F[_]] extends Laws {
 
   def laws: ValidatorSemigroupLaws[F]
 
-  def rules(implicit arbitraryValidator: Arbitrary[ValidatorK[F, Int]], arbitraryInt: Arbitrary[Int]): RuleSet =
+  def rules[A : Equal : Arbitrary](semigroupName: String)(implicit arbitraryValidator: Arbitrary[ValidatorK[F, A]]): RuleSet =
     new DefaultRuleSet(
-      name = "Validator",
+      name = semigroupName,
       parent = None,
-      "commutative" -> forAll(laws.commutative[Int] _)
-      //"associative" -> forAll(laws.associative[Int] _)
+      "commutative" -> forAll(laws.commutative[A] _),
+      "associative" -> forAll(laws.associative[A] _)
     )
 
 }

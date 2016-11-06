@@ -48,6 +48,14 @@ object Violation {
   }
 
   implicit val violationEq: Equal[Violation] = Equal.equal {
+    case (left @ And(And(aLeft, bLeft), cLeft), right @ And(aRight, And(bRight, cRight))) =>
+      violationConjEquality.equal(left, And(And(aRight, bRight), cRight)) &&
+      violationConjEquality.equal(And(aLeft, And(bLeft, cLeft)), right)
+
+    case (left @ Or(Or(aLeft, bLeft), cLeft), right @ Or(aRight, Or(bRight, cRight))) =>
+      violationDisjEquality.equal(left, Or(Or(aRight, bRight), cRight)) ||
+      violationDisjEquality.equal(Or(aLeft, Or(bLeft, cLeft)), right)
+
     case (left @ And(_, _), right @ And(_, _)) =>
       violationConjEquality.equal(left, right)
     case (left @ Or(_, _), right @ Or(_, _)) =>

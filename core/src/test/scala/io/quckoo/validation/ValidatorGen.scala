@@ -16,6 +16,7 @@
 
 package io.quckoo.validation
 
+import io.quckoo.util.IsTraversable
 import org.scalacheck._
 
 import scalaz._
@@ -34,6 +35,9 @@ trait ValidatorGen {
 
   def orderGen[F[_]: Applicative, A: Order: Show: Arbitrary]: Gen[ValidatorK[F, A]] =
     Gen.oneOf(greaterThanGen[F, A], lessThanGen[F, A])
+
+  def nonEmptyGen[F[_]: Applicative, A: IsTraversable]: Gen[ValidatorK[F, A]] =
+    Gen.const(nonEmptyK[F, A])
 
   def arbitraryOrderValidator[F[_]: Applicative, A: Order: Show: Arbitrary]: Arbitrary[ValidatorK[F, A]] =
     Arbitrary(orderGen[F, A])
