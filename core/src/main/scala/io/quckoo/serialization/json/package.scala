@@ -23,7 +23,7 @@ import upickle.default.{Reader => UReader, Writer => UWriter, _}
 /**
   * Created by alonsodomin on 11/08/2016.
   */
-package object json extends ScalazJson with JavaTime with Cron4s {
+package object json extends ScalazJson with JavaTimeJson with Cron4s {
 
   implicit def JsonCodec[A: UReader: UWriter]: Codec[A, String] = new Codec[A, String] {
     def encode(a: A): Attempt[String] = Attempt(write[A](a))

@@ -285,8 +285,9 @@ object Dependencies {
 
   lazy val testSupport = Def.settings {
     libraryDependencies ++= Seq(
-      "io.github.soc" %%% "scala-java-time" % version.scalaTime,
-      "org.scalatest" %%% "scalatest"       % version.scalaTest
+      "io.github.soc"  %%% "scala-java-time" % version.scalaTime,
+      "org.scalatest"  %%% "scalatest"       % version.scalaTest,
+      "org.scalacheck" %%% "scalacheck"      % version.scalaCheck
     )
   }
 
