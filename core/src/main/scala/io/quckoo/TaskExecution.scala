@@ -19,10 +19,12 @@ package io.quckoo
 import io.quckoo.fault.Fault
 import io.quckoo.id.PlanId
 
+import monocle.macros.Lenses
+
 /**
   * Created by alonsodomin on 24/07/2016.
   */
-final case class TaskExecution(
+@Lenses final case class TaskExecution(
     planId: PlanId,
     task: Task,
     status: TaskExecution.Status,

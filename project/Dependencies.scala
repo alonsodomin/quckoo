@@ -18,6 +18,7 @@ object Dependencies {
     val scalaMock  = "3.2.2"
     val mockito    = "1.10.19"
     val mockserver = "3.10.4"
+    val discipline = "0.7.1"
 
     // Akka ----------
 
@@ -163,9 +164,7 @@ object Dependencies {
   // Client module ===============================
 
   lazy val client = Def.settings {
-    libraryDependencies ++= Seq(
-      compilerPlugin(Dependencies.compiler.macroParadise),
-
+    libraryDependencies ++= compiler.plugins ++ Seq(
       "biz.enef"      %%% "slogging"  % version.slogging,
       "org.scalatest" %%% "scalatest" % version.scalaTest % Test
     )
@@ -190,9 +189,7 @@ object Dependencies {
   // Console module ===============================
 
   lazy val console = Def.settings(
-    libraryDependencies ++= Seq(
-      compilerPlugin(Dependencies.compiler.macroParadise),
-
+    libraryDependencies ++= compiler.plugins ++ Seq(
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
       "me.chrons"        %%% "diode-react"    % version.diode,
@@ -284,10 +281,12 @@ object Dependencies {
   // Support modules ================================
 
   lazy val testSupport = Def.settings {
-    libraryDependencies ++= Seq(
-      "io.github.soc"  %%% "scala-java-time" % version.scalaTime,
-      "org.scalatest"  %%% "scalatest"       % version.scalaTest,
-      "org.scalacheck" %%% "scalacheck"      % version.scalaCheck
+    libraryDependencies ++= compiler.plugins ++ Seq(
+      "io.github.soc"  %%% "scala-java-time"           % version.scalaTime,
+      "org.scalatest"  %%% "scalatest"                 % version.scalaTest,
+      "org.scalacheck" %%% "scalacheck"                % version.scalaCheck,
+      "org.scalaz"     %%% "scalaz-scalacheck-binding" % version.scalaz,
+      "org.typelevel"  %%% "discipline"                % version.discipline
     )
   }
 

@@ -23,6 +23,8 @@ import io.quckoo.validation.Violation
   */
 case class ValidatedField[A](value: Option[A] = None, violation: Option[Violation] = None) {
 
+  def valid = value.isDefined && violation.isEmpty
+
   def invalid = value.isDefined && violation.nonEmpty
 
 }
