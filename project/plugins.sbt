@@ -7,12 +7,12 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.4.0")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
-addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.4.8")
+addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.4.9")
 addSbtPlugin("com.tapad" % "sbt-docker-compose" % "1.0.12")
 
 // Web plugins
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.13")
-addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.2")
+addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.3")
 addSbtPlugin("org.madoushi.sbt" % "sbt-sass" % "0.9.3")
 addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.1.1")
 
