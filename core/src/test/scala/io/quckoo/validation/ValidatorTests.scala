@@ -27,24 +27,26 @@ import Scalaz._
 /**
   * Created by alonsodomin on 06/11/2016.
   */
-trait ValidatorSemigroupTests[F[_]] extends Laws {
+trait ValidatorTests[F[_]] extends Laws {
   import Prop._
 
-  def laws: ValidatorSemigroupLaws[F]
+  def laws: ValidatorLaws[F]
 
   def rules[A : Equal : Arbitrary](semigroupName: String)(implicit arbitraryValidator: Arbitrary[ValidatorK[F, A]]): RuleSet =
     new DefaultRuleSet(
       name = semigroupName,
       parent = None,
+      "leftIdentity" -> forAll(laws.leftIdentity[A] _),
+      "rightIdentity" -> forAll(laws.rightIdentity[A] _),
       "commutative" -> forAll(laws.commutative[A] _),
       "associative" -> forAll(laws.associative[A] _)
     )
 
 }
 
-object ValidatorSemigroupTests {
-  def apply[F[_]: Applicative : Comonad](implicit tc: Plus[ValidatorK[F, ?]]): ValidatorSemigroupTests[F] =
-    new ValidatorSemigroupTests[F] {
-      val laws: ValidatorSemigroupLaws[F] = ValidatorSemigroupLaws[F]
+object ValidatorTests {
+  def apply[F[_]: Applicative : Comonad](implicit tc: PlusEmpty[ValidatorK[F, ?]]): ValidatorTests[F] =
+    new ValidatorTests[F] {
+      val laws: ValidatorLaws[F] = ValidatorLaws[F]
     }
 }

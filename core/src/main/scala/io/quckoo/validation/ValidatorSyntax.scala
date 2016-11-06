@@ -29,7 +29,9 @@ object syntax extends ValidatorSyntax
 trait ValidatorSyntax {
 
   object conjunction {
-    implicit def instance[F[_]: Applicative]: Plus[ValidatorK[F, ?]] = new Plus[ValidatorK[F, ?]] {
+    implicit def instance[F[_]: Applicative]: PlusEmpty[ValidatorK[F, ?]] = new PlusEmpty[ValidatorK[F, ?]] {
+      def empty[A]: ValidatorK[F, A] = Validator.accept[F, A]
+
       def plus[A](a: ValidatorK[F, A], b: => ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
         import Violation.conjunction._
         implicit val aSemi = Semigroup.firstSemigroup[A]
@@ -39,7 +41,9 @@ trait ValidatorSyntax {
   }
 
   object disjunction {
-    implicit def instance[F[_]: Applicative]: Plus[ValidatorK[F, ?]] = new Plus[ValidatorK[F, ?]] {
+    implicit def instance[F[_]: Applicative]: PlusEmpty[ValidatorK[F, ?]] = new PlusEmpty[ValidatorK[F, ?]] {
+      def empty[A]: ValidatorK[F, A] = Validator.reject[F, A]
+
       def plus[A](a: ValidatorK[F, A], b: => ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
         import Violation.disjunction._
         implicit val aSemi = Semigroup.firstSemigroup[A]

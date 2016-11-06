@@ -22,24 +22,30 @@ import Scalaz._
 /**
   * Created by alonsodomin on 06/11/2016.
   */
-trait ValidatorSemigroupLaws[F[_]] {
+trait ValidatorLaws[F[_]] {
   implicit def A: Applicative[F]
   implicit def C: Comonad[F]
-  implicit def S: Plus[ValidatorK[F, ?]]
+  implicit def TC: PlusEmpty[ValidatorK[F, ?]]
+
+  def leftIdentity[A: Equal](v: ValidatorK[F, A], value: A): Boolean =
+    C.copure(TC.plus[A](TC.empty[A], v).run(value)) === C.copure(v.run(value))
+
+  def rightIdentity[A: Equal](v: ValidatorK[F, A], value: A): Boolean =
+    C.copure(TC.plus[A](v, TC.empty[A]).run(value)) === C.copure(v.run(value))
 
   def associative[A: Equal](va: ValidatorK[F, A], vb: ValidatorK[F, A], vc: ValidatorK[F, A], value: A): Boolean =
-    C.copure(S.plus[A](S.plus[A](va, vb), vc).run(value)) === C.copure(S.plus[A](va, S.plus[A](vb, vc)).run(value))
+    C.copure(TC.plus[A](TC.plus[A](va, vb), vc).run(value)) === C.copure(TC.plus[A](va, TC.plus[A](vb, vc)).run(value))
 
   def commutative[A: Equal](left: ValidatorK[F, A], right: ValidatorK[F, A], value: A): Boolean =
-    C.copure(S.plus[A](left, right).run(value)) === C.copure(S.plus[A](right, left).run(value))
+    C.copure(TC.plus[A](left, right).run(value)) === C.copure(TC.plus[A](right, left).run(value))
 
 }
 
-object ValidatorSemigroupLaws {
-  def apply[F[_]](implicit ap: Applicative[F], co: Comonad[F], tc: Plus[ValidatorK[F, ?]]): ValidatorSemigroupLaws[F] =
-    new ValidatorSemigroupLaws[F] {
+object ValidatorLaws {
+  def apply[F[_]](implicit ap: Applicative[F], co: Comonad[F], tc: PlusEmpty[ValidatorK[F, ?]]): ValidatorLaws[F] =
+    new ValidatorLaws[F] {
       val A: Applicative[F] = ap
       val C: Comonad[F] = co
-      val S: Plus[ValidatorK[F, ?]] = tc
+      val TC: PlusEmpty[ValidatorK[F, ?]] = tc
     }
 }

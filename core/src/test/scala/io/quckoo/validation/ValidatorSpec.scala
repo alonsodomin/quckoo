@@ -37,8 +37,8 @@ class ValidatorSpec extends FunSuite with GeneratorDrivenPropertyChecks with Dis
     implicit val arbitraryIntValidator: Arbitrary[ValidatorK[Id, Int]] = arbitraryOrderValidator[Id, Int]
     implicit val arbitraryStrValidator: Arbitrary[ValidatorK[Id, String]] = Arbitrary(nonEmptyGen[Id, String])
 
-    checkAll("Validator[Int]", ValidatorSemigroupTests[Id].rules[Int]("conjunction"))
-    checkAll("Validator[String]", ValidatorSemigroupTests[Id].rules[String]("conjunction"))
+    checkAll("Validator[Int]", ValidatorTests[Id].rules[Int]("conjunction"))
+    checkAll("Validator[String]", ValidatorTests[Id].rules[String]("conjunction"))
   }
 
   {
@@ -46,8 +46,8 @@ class ValidatorSpec extends FunSuite with GeneratorDrivenPropertyChecks with Dis
     implicit val arbitraryIntValidator = arbitraryOrderValidator[Id, Int]
     implicit val arbitraryStrValidator: Arbitrary[ValidatorK[Id, String]] = Arbitrary(nonEmptyGen[Id, String])
 
-    checkAll("Validator[Int]", ValidatorSemigroupTests[Id].rules[Int]("disjunction"))
-    checkAll("Validator[String]", ValidatorSemigroupTests[Id].rules[String]("disjunction"))
+    checkAll("Validator[Int]", ValidatorTests[Id].rules[Int]("disjunction"))
+    checkAll("Validator[String]", ValidatorTests[Id].rules[String]("disjunction"))
   }
 
 }

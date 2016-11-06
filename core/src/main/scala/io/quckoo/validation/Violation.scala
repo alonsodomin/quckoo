@@ -40,6 +40,8 @@ object Violation {
   case object Empty     extends Violation
   case object Undefined extends Violation
 
+  case class Reject(value: String) extends Violation
+
   val violationConjEquality: Equal[And] = Equal.equal { (a, b) =>
     (a.left === b.left && a.right === b.right) || (a.left === b.right && a.right === b.left)
   }
@@ -60,6 +62,7 @@ object Violation {
       violationConjEquality.equal(left, right)
     case (left @ Or(_, _), right @ Or(_, _)) =>
       violationDisjEquality.equal(left, right)
+
     case (left, right) => left == right
   }
 
@@ -75,24 +78,32 @@ object Violation {
     case Empty     => "non empty"
     case Undefined => "not defined"
 
+    case Reject(value) => s"not $value"
+
     case p: PathViolation => p.shows
+  }
+
+  implicit class ViolationSyntax(val self: Violation) extends AnyVal {
+    def and(other: Violation): Violation = And(self, other)
+    def or(other: Violation): Violation  = self match {
+      case Reject(_) => other
+      case _ => other match {
+        case Reject(_) => self
+        case _ => Or(self, other)
+      }
+    }
   }
 
   object conjunction {
     implicit val violationConjSemigroup: Semigroup[Violation] = new Semigroup[Violation] {
-      def append(left: Violation, right: => Violation): Violation = And(left, right)
+      def append(left: Violation, right: => Violation): Violation = left and right
     }
   }
 
   object disjunction {
     implicit val violationDisjSemigroup: Semigroup[Violation] = new Semigroup[Violation] {
-      def append(left: Violation, right: => Violation): Violation = Or(left, right)
+      def append(left: Violation, right: => Violation): Violation = left or right
     }
-  }
-
-  implicit class ViolationSyntax(val self: Violation) extends AnyVal {
-    def and(other: Violation): Violation = And(self, other)
-    def or(other: Violation): Violation  = Or(self, other)
   }
 
 }
