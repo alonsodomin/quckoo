@@ -36,6 +36,7 @@ package object validation extends ValidatorSyntax {
       Kleisli { a =>
         ev.pure(a.success[Violation])
       }
+
   }
 
 }

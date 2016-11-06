@@ -40,6 +40,21 @@ object Violation {
   case object Empty     extends Violation
   case object Undefined extends Violation
 
+  val violationConjEquality: Equal[And] = Equal.equal { (a, b) =>
+    (a.left === b.left && a.right === b.right) || (a.left === b.right && a.right === b.left)
+  }
+  val violationDisjEquality: Equal[Or] = Equal.equal { (a, b) =>
+    (a.left === b.left && a.right === b.right) || (a.left === b.right && a.right === b.left)
+  }
+
+  implicit val violationEq: Equal[Violation] = Equal.equal {
+    case (left @ And(_, _), right @ And(_, _)) =>
+      violationConjEquality.equal(left, right)
+    case (left @ Or(_, _), right @ Or(_, _)) =>
+      violationDisjEquality.equal(left, right)
+    case (left, right) => left == right
+  }
+
   implicit def display: Show[Violation] = Show.shows {
     case And(left, right) => s"${left.shows} and ${right.shows}"
     case Or(left, right)  => s"${left.shows} or ${right.shows}"

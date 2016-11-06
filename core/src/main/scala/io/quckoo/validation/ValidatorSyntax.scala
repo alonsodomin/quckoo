@@ -28,26 +28,22 @@ object syntax extends ValidatorSyntax
 
 trait ValidatorSyntax {
 
-  private def combine[F[_]: Applicative, A](left: ValidatorK[F, A], right: ValidatorK[F, A])(
-      implicit ev: Semigroup[Violation]): ValidatorK[F, A] = Kleisli { x =>
-    implicit val aSemi = Semigroup.firstSemigroup[A]
-    (left.run(x) |@| right.run(x))(_ +++ _)
-  }
-
   object conjunction {
     implicit def instance[F[_]: Applicative]: Plus[ValidatorK[F, ?]] = new Plus[ValidatorK[F, ?]] {
-      def plus[A](a: ValidatorK[F, A], b: => ValidatorK[F, A]): ValidatorK[F, A] = {
+      def plus[A](a: ValidatorK[F, A], b: => ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
         import Violation.conjunction._
-        combine(a, b)
+        implicit val aSemi = Semigroup.firstSemigroup[A]
+        (a.run(x) |@| b.run(x))(_ +++ _)
       }
     }
   }
 
   object disjunction {
     implicit def instance[F[_]: Applicative]: Plus[ValidatorK[F, ?]] = new Plus[ValidatorK[F, ?]] {
-      def plus[A](a: ValidatorK[F, A], b: => ValidatorK[F, A]): ValidatorK[F, A] = {
+      def plus[A](a: ValidatorK[F, A], b: => ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
         import Violation.disjunction._
-        combine(a, b)
+        implicit val aSemi = Semigroup.firstSemigroup[A]
+        (a.run(x) |@| b.run(x))(_ +|+ _)
       }
     }
   }
