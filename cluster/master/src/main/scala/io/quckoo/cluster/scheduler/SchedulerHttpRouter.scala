@@ -32,8 +32,6 @@ import io.quckoo.cluster.http._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.json._
 
-import scala.concurrent.duration._
-
 import scalaz._
 
 /**

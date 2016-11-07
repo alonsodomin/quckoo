@@ -43,7 +43,7 @@ object Dependencies {
 
     val testState = "2.1.0"
     val scalaCss  = "0.5.0"
-    val scalaTime = "2.0.0-M3"
+    val scalaTime = "2.0.0-M4"
 
     val diode = "1.0.0"
 
