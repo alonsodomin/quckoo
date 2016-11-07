@@ -24,7 +24,7 @@ object Dependencies {
 
     object akka {
       val main = "2.4.11"
-      val kryo = "0.4.1"
+      val kryo = "0.5.0"
 
       // http extensions
       val json = "1.10.1"
