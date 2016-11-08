@@ -65,6 +65,7 @@ trait JavaTimeJson {
   }
   implicit def zonedDateTimeR: UReader[ZonedDateTime] = UReader[ZonedDateTime] {
     case Js.Arr(Js.Str("ZDT"), inst, zid) =>
+
       val instant = readJs[Instant](inst)
       val zoneId  = readJs[ZoneId](zid)
       ZonedDateTime.ofInstant(instant, zoneId)

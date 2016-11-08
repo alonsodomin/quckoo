@@ -120,8 +120,9 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
       }
     }
 
-    implicit val sch = system.scheduler
-    retry(internalRequest, 250 millis, 3)
+    /*implicit val sch = system.scheduler
+    retry(internalRequest, 250 millis, 3)*/
+    internalRequest
   }
 
   def executions(
