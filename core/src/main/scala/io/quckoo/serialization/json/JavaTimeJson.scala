@@ -19,7 +19,7 @@ package io.quckoo.serialization.json
 import upickle.Js
 import upickle.default.{Writer => UWriter, Reader => UReader, _}
 
-import scala.language.implicitConversions
+//import scala.language.implicitConversions
 
 import org.threeten.bp._
 import org.threeten.bp.format._
@@ -27,7 +27,7 @@ import org.threeten.bp.format._
 /**
   * Created by alonsodomin on 11/08/2016.
   */
-trait JavaTime {
+trait JavaTimeJson {
 
   implicit def instantW: UWriter[Instant] = UWriter[Instant] { x =>
     Js.Str(DateTimeFormatter.ISO_INSTANT.format(x))
@@ -51,27 +51,33 @@ trait JavaTime {
   }
 
   implicit def offsetDateTimeW: UWriter[OffsetDateTime] = UWriter[OffsetDateTime] { x =>
-    Js.Str(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(x))
+    Js.Arr(Js.Str("ODT"), writeJs(x.toInstant), writeJs(x.getOffset))
   }
   implicit def offsetDateTimeR: UReader[OffsetDateTime] = UReader[OffsetDateTime] {
-    case Js.Str(fmt) => OffsetDateTime.parse(fmt, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+    case Js.Arr(Js.Str("ODT"), inst, off) =>
+      val instant = readJs[Instant](inst)
+      val offset  = readJs[ZoneOffset](off)
+      instant.atOffset(offset)
   }
 
   implicit def zonedDateTimeW: UWriter[ZonedDateTime] = UWriter[ZonedDateTime] { x =>
-    Js.Arr(writeJs(x.toInstant), writeJs(x.getZone))
+    Js.Arr(Js.Str("ZDT"), writeJs(x.toInstant), writeJs(x.getZone))
   }
   implicit def zonedDateTimeR: UReader[ZonedDateTime] = UReader[ZonedDateTime] {
-    case Js.Arr(inst, zid) =>
+    case Js.Arr(Js.Str("ZDT"), inst, zid) =>
+
       val instant = readJs[Instant](inst)
       val zoneId  = readJs[ZoneId](zid)
       ZonedDateTime.ofInstant(instant, zoneId)
   }
 
   implicit def localDateTimeW: UWriter[LocalDateTime] = UWriter[LocalDateTime] { x =>
-    Js.Str(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(x))
+    writeJs(x.toInstant(ZoneOffset.UTC))
   }
   implicit def localDateTimeR: UReader[LocalDateTime] = UReader[LocalDateTime] {
-    case Js.Str(fmt) => LocalDateTime.parse(fmt, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    val readInstant = implicitly[UReader[Instant]].read.lift
+    val parseLocalTime = readInstant.andThen(_.map(instant => LocalDateTime.ofInstant(instant, ZoneId.of("UTC"))))
+    Function.unlift(parseLocalTime)
   }
 
   implicit def localDateW: UWriter[LocalDate] = UWriter[LocalDate] { x =>
@@ -82,10 +88,10 @@ trait JavaTime {
   }
 
   implicit def localTimeW: UWriter[LocalTime] = UWriter[LocalTime] { x =>
-    Js.Str(DateTimeFormatter.ISO_LOCAL_TIME.format(x))
+    Js.Num(x.toNanoOfDay)
   }
   implicit def localTimeR: UReader[LocalTime] = UReader[LocalTime] {
-    case Js.Str(fmt) => LocalTime.parse(fmt, DateTimeFormatter.ISO_LOCAL_TIME)
+    case Js.Num(nanos) => LocalTime.ofNanoOfDay(nanos.toLong)
   }
 
   implicit def durationW: UWriter[Duration] = UWriter[Duration] { x =>

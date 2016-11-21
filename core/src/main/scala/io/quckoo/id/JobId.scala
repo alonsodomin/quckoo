@@ -56,7 +56,7 @@ object JobId {
 
 }
 
-final class JobId private (private val id: UUID) {
+final class JobId private (private val id: UUID) extends Serializable {
 
   override def equals(other: Any): Boolean = other match {
     case that: JobId => this.id == that.id

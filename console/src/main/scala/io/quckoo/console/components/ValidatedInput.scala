@@ -55,7 +55,7 @@ object ValidatedInput {
       <.div(
         ^.classSet(
           "form-group"  -> true,
-          "has-success" -> !state.fieldState.invalid,
+          "has-success" -> state.fieldState.valid,
           "has-error"   -> state.fieldState.invalid
         ),
         props.label.map(labelText => <.label(^.`class` := "control-label", labelText)),
