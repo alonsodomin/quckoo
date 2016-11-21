@@ -13,9 +13,9 @@ object Dependencies {
 
     // Testing --------
 
-    val scalaTest  = "3.0.0"
-    val scalaCheck = "1.13.2"
-    val scalaMock  = "3.2.2"
+    val scalaTest  = "3.0.1"
+    val scalaCheck = "1.13.4"
+    val scalaMock  = "3.3.0"
     val mockito    = "1.10.19"
     val mockserver = "3.10.4"
     val discipline = "0.7.1"
