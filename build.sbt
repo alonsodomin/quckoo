@@ -13,6 +13,7 @@ val sandbox = settingKey[String]("The name of the environment sandbox to use.")
 lazy val commonSettings = Seq(
     licenses += ("Apache-2.0", url(
       "http://opensource.org/licenses/Apache-2.0")),
+    startYear := Some(2015),
     scalacOptions ++= Seq(
       "-encoding",
       "UTF-8",

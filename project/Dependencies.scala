@@ -23,7 +23,7 @@ object Dependencies {
     // Akka ----------
 
     object akka {
-      val main = "2.4.12"
+      val main = "2.4.14"
       val kryo = "0.5.0"
 
       object http {
@@ -35,7 +35,7 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.20"
+      val cassandra = "0.21"
       val inmemory  = "1.3.13"
     }
 
