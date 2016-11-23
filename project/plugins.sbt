@@ -9,6 +9,7 @@ addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.4.9")
 addSbtPlugin("com.tapad" % "sbt-docker-compose" % "1.0.12")
+addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.2.0-RC1")
 
 // Web plugins
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.13")

@@ -10,6 +10,10 @@ scalaVersion in ThisBuild := "2.11.8"
 
 val sandbox = settingKey[String]("The name of the environment sandbox to use.")
 
+// ==================================================================
+// Global settings
+// ==================================================================
+
 lazy val commonSettings = Seq(
     licenses += ("Apache-2.0", url(
       "http://opensource.org/licenses/Apache-2.0")),
@@ -49,6 +53,10 @@ lazy val scoverageSettings = Seq(
   coverageHighlighting := true,
   coverageExcludedPackages := "io\\.quckoo\\.console\\.html\\..*"
 )
+
+// ==================================================================
+// Publishing
+// ==================================================================
 
 lazy val noPublishSettings = Seq(
   publish := (),
@@ -93,6 +101,10 @@ lazy val publishSettings = Seq(
     </developers>
 )
 
+// ==================================================================
+// Release process
+// ==================================================================
+
 lazy val releaseSettings = {
   import ReleaseTransformations._
 
@@ -124,6 +136,10 @@ lazy val releaseSettings = {
   )
 }
 
+// ==================================================================
+// Parent project
+// ==================================================================
+
 lazy val quckoo = (project in file("."))
   .enablePlugins(AutomateHeaderPlugin, DockerComposePlugin)
   .settings(
@@ -146,10 +162,13 @@ lazy val quckoo = (project in file("."))
     console,
     examples,
     testSupportJS,
-    testSupportJVM
+    testSupportJVM,
+    site
   )
 
-// Core ==================================================
+// ==================================================================
+// Core
+// ==================================================================
 
 lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
   .settings(
@@ -170,7 +189,9 @@ lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
-// API ==================================================
+// ==================================================================
+// API
+// ==================================================================
 
 lazy val api = (crossProject.crossType(CrossType.Pure) in file("api"))
   .settings(
@@ -188,7 +209,9 @@ lazy val api = (crossProject.crossType(CrossType.Pure) in file("api"))
 lazy val apiJS = api.js
 lazy val apiJVM = api.jvm
 
-// Client ==================================================
+// ==================================================================
+// Client
+// ==================================================================
 
 lazy val client = (crossProject in file("client"))
   .settings(
@@ -209,7 +232,9 @@ lazy val client = (crossProject in file("client"))
 lazy val clientJS = client.js
 lazy val clientJVM = client.jvm
 
-// Console ==================================================
+// ==================================================================
+// Console
+// ==================================================================
 
 lazy val console = (project in file("console"))
   .enablePlugins(AutomateHeaderPlugin, ScalaJSPlugin, ScalaJSWeb)
@@ -225,7 +250,9 @@ lazy val console = (project in file("console"))
   .settings(Dependencies.console: _*)
   .dependsOn(clientJS, testSupportJS % Test)
 
-// Cluster ==================================================
+// ==================================================================
+// Cluster
+// ==================================================================
 
 lazy val cluster = (project in file("cluster"))
   .settings(name := "quckoo-cluster")
@@ -288,7 +315,9 @@ lazy val clusterWorker = (project in file("cluster/worker"))
   )
   .dependsOn(clusterShared, testSupportJVM % Test)
 
-// Test Support Utils ========================================
+// ==================================================================
+// Test Support Utils
+// ==================================================================
 
 lazy val testSupport = (crossProject in file("test-support"))
   .settings(
@@ -305,7 +334,9 @@ lazy val testSupport = (crossProject in file("test-support"))
 lazy val testSupportJS = testSupport.js
 lazy val testSupportJVM = testSupport.jvm
 
-// Examples ==================================================
+// ==================================================================
+// Examples
+// ==================================================================
 
 lazy val examples = (project in file("examples"))
   .settings(moduleName := "quckoo-examples")
@@ -336,10 +367,26 @@ lazy val exampleProducers = (project in file("examples/producers"))
   .settings(Packaging.exampleProducersSettings: _*)
   .dependsOn(clientJVM, exampleJobs)
 
-// Command aliases ==================================================
+// ==================================================================
+// Web Site
+// ==================================================================
 
-addCommandAlias("testJS",
-                ";coreJS/test;apiJS/test;clientJS/test;consoleApp/test")
+lazy val site = (project in file("site"))
+  .enablePlugins(HugoPlugin)
+  .settings(
+    name := "site",
+    baseURL in Hugo := url("https://www.quckoo.io").toURI
+  )
+
+// ==================================================================
+// Command aliases
+// ==================================================================
+
+addCommandAlias(
+  "testJS",
+  ";coreJS/test;apiJS/test;clientJS/test;consoleApp/test"
+)
 addCommandAlias(
   "testJVM",
-  ";coreJVM/test;apiJVM/test;clientJVM/test;cluster/test;examples/test")
+  ";coreJVM/test;apiJVM/test;clientJVM/test;cluster/test;examples/test"
+)
