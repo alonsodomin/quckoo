@@ -21,7 +21,7 @@ import upickle.default.{write, Writer => UWriter}
 import akka.NotUsed
 import akka.stream.scaladsl.Source
 
-import de.heikoseeberger.akkasse.{EventStreamElement, ServerSentEvent}
+import de.heikoseeberger.akkasse.ServerSentEvent
 
 import io.quckoo.api.EventDef
 import io.quckoo.cluster.core.QuckooServer
@@ -34,7 +34,7 @@ import scala.concurrent.duration._
   */
 trait EventStream { this: QuckooServer =>
 
-  def eventBus: Source[EventStreamElement, _] = {
+  def eventBus: Source[ServerSentEvent, _] = {
     def convertSSE[A: UWriter: EventDef](
         source: Source[A, NotUsed]): Source[ServerSentEvent, NotUsed] =
       source.map(evt => ServerSentEvent(write[A](evt), EventDef[A].typeName))
@@ -43,7 +43,7 @@ trait EventStream { this: QuckooServer =>
       .merge(convertSSE(workerEvents))
       .merge(convertSSE(registryEvents))
       .merge(convertSSE(schedulerEvents))
-    merged.keepAlive(1 second, () => ServerSentEvent.Heartbeat)
+    merged.keepAlive(1 second, () => ServerSentEvent.heartbeat)
   }
 
 }

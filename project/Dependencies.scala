@@ -27,16 +27,16 @@ object Dependencies {
       val kryo = "0.5.0"
 
       object http {
-        val main = "3.0.0-RC1"
+        val main = "10.0.0"
 
         // http extensions
-        val json = "1.10.1"
-        val sse  = "1.11.0"
+        val json = "1.11.0"
+        val sse  = "2.0.0-M6"
       }
 
       // persistence plugins
       val cassandra = "0.21"
-      val inmemory  = "1.3.13"
+      val inmemory  = "1.3.15"
     }
 
     // ScalaJS -------
@@ -51,7 +51,7 @@ object Dependencies {
 
     val diode = "1.0.0"
 
-    val upickle   = "0.4.3"
+    val upickle   = "0.4.4"
     val scalatags = "0.6.0"
 
     // Other utils ---
@@ -60,7 +60,7 @@ object Dependencies {
     val slogging   = "0.5.1"
     val monocle    = "1.3.2"
     val scalaz     = "7.2.7"
-    val monix      = "2.0.6"
+    val monix      = "2.1.1"
     val cron4s     = "0.2.0"
     val enumeratum = "1.4.17"
     val pureconfig = "0.3.3"

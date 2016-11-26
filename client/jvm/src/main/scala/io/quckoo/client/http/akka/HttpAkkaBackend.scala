@@ -30,7 +30,7 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.util.ByteString
 
 import de.heikoseeberger.akkasse.ServerSentEvent
-import de.heikoseeberger.akkasse.pattern.ServerSentEventClient
+import de.heikoseeberger.akkasse.client.EventSource
 
 import io.quckoo.client.core.Channel
 import io.quckoo.client.http.{HttpMethod, HttpRequest, HttpResponse, _}
@@ -57,14 +57,13 @@ private[http] final class HttpAkkaBackend(host: String, port: Int = 80)(
 
   override def open[Ch <: Channel[HttpProtocol]](channel: Ch) =
     Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
-      import actorSystem.dispatcher
-
       val publisherSink = Sink.asPublisher[ServerSentEvent](fanout = true)
 
-      val publisher = ServerSentEventClient(EventsURI, publisherSink, AkkaHttp().singleRequest(_))
-        .runWith(Sink.head)
-      Observable.fromFuture(publisher).flatMap(Observable.fromReactivePublisher).map { sse =>
-        HttpServerSentEvent(DataBuffer.fromString(sse.data))
+      val eventSource = EventSource(s"http://$host:$port" + EventsURI, AkkaHttp().singleRequest(_))
+        .runWith(publisherSink)
+
+      Observable.fromReactivePublisher(eventSource).map { sse =>
+        HttpServerSentEvent(DataBuffer.fromString(sse.toString))
       }
     }
 

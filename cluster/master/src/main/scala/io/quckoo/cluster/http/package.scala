@@ -25,7 +25,7 @@ import akka.http.scaladsl.model.MediaType
 import akka.http.scaladsl.model.MediaTypes
 import akka.stream.scaladsl.Source
 
-import de.heikoseeberger.akkasse.{EventStreamElement, ServerSentEvent}
+import de.heikoseeberger.akkasse.ServerSentEvent
 
 import play.twirl.api.{Html, Txt, Xml}
 
@@ -50,10 +50,10 @@ package object http {
       source: Source[A, _],
       eventType: String,
       keepAlive: FiniteDuration = 1 second
-  ): Source[EventStreamElement, _] = {
+  ): Source[ServerSentEvent, _] = {
     source.map { event =>
       ServerSentEvent(write[A](event), eventType)
-    } keepAlive (keepAlive, () => ServerSentEvent.Heartbeat)
+    } keepAlive (keepAlive, () => ServerSentEvent.heartbeat)
   }
 
   def generateAuthToken = UUID.randomUUID().toString
