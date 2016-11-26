@@ -27,6 +27,8 @@ import io.quckoo.test.TestActorSystem
 
 import org.scalatest._
 
+import scala.concurrent.duration._
+
 /**
  * Created by domingueza on 21/08/15.
  */
@@ -39,7 +41,7 @@ object PersistentJobSpec {
 }
 
 class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) with ImplicitSender
-    with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll
+    with WordSpecLike with BeforeAndAfterEach with BeforeAndAfterAll
     with Matchers {
 
   import PersistentJobSpec._
@@ -50,16 +52,17 @@ class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) wi
     case DistributedPubSubMediator.UnsubscribeAck(_) => true
   }
 
-  val eventListener = TestProbe()
+  val eventListener = TestProbe("eventListener")
 
-  before {
-    system.eventStream.subscribe(eventListener.ref, classOf[JobAccepted])
+  override def beforeEach() = {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, eventListener.ref)
   }
 
-  after {
-    system.eventStream.unsubscribe(eventListener.ref)
+  override def afterEach() = {
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, eventListener.ref)
+    if (eventListener.msgAvailable) {
+      fail("There are additional messages in the listener queue.")
+    }
   }
 
   override def afterAll(): Unit =
@@ -90,7 +93,7 @@ class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) wi
     "do nothing when trying to disable it again" in {
       job ! DisableJob(BarJobId)
 
-      eventListener.expectNoMsg()
+      eventListener.expectNoMsg(500 millis)
       expectMsgType[JobDisabled].jobId shouldBe BarJobId
     }
 
@@ -110,7 +113,7 @@ class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) wi
     "do nothing when trying to enable it again" in {
       job ! EnableJob(BarJobId)
 
-      eventListener.expectNoMsg()
+      eventListener.expectNoMsg(500 millis)
       expectMsgType[JobEnabled].jobId shouldBe BarJobId
     }
 

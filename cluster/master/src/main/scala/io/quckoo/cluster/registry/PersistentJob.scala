@@ -94,11 +94,9 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
     case CreateJob(jobId, jobSpec) =>
       persist(JobAccepted(jobId, jobSpec)) { event =>
         log.info("Job {} has been successfully registered.", jobId)
-        //context.system.eventStream.publish(IndexJob(jobId))
-        //context.system.eventStream.publish(event)
         mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
-        context.become(enabled(jobId, jobSpec))
         unstashAll()
+        context.become(enabled(jobId, jobSpec))
       }
 
     case _: GetJob => stash()
