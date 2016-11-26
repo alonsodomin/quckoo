@@ -27,6 +27,8 @@ import io.quckoo.test.TestActorSystem
 
 import org.scalatest._
 
+import scala.concurrent.duration._
+
 /**
  * Created by domingueza on 21/08/15.
  */
@@ -39,7 +41,7 @@ object PersistentJobSpec {
 }
 
 class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) with ImplicitSender
-    with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll
+    with WordSpecLike with BeforeAndAfterEach with BeforeAndAfterAll
     with Matchers {
 
   import PersistentJobSpec._
@@ -50,29 +52,30 @@ class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) wi
     case DistributedPubSubMediator.UnsubscribeAck(_) => true
   }
 
-  val eventListener = TestProbe()
+  val eventListener = TestProbe("eventListener")
 
-  before {
-    system.eventStream.subscribe(eventListener.ref, classOf[JobAccepted])
+  override def beforeEach() = {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, eventListener.ref)
   }
 
-  after {
-    system.eventStream.unsubscribe(eventListener.ref)
+  override def afterEach() = {
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, eventListener.ref)
+    if (eventListener.msgAvailable) {
+      fail("There are additional messages in the listener queue.")
+    }
   }
 
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
-  "A job state actor" should {
+  "A persistent job" should {
     val job = TestActorRef(PersistentJob.props.withDispatcher("akka.actor.default-dispatcher"))
 
     "return job accepted when receiving a create command" in {
       job ! PersistentJob.CreateJob(BarJobId, BarJobSpec)
 
       val response = eventListener.expectMsgType[JobAccepted]
-      response.job should be (BarJobSpec)
+      response.job shouldBe BarJobSpec
     }
 
     "return the registered job spec with its status when asked for it" in {
@@ -83,15 +86,15 @@ class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) wi
     "disable a job that has been previously registered and populate the event to the event stream" in {
       job ! DisableJob(BarJobId)
 
-      eventListener.expectMsgType[JobDisabled].jobId should be (BarJobId)
-      expectMsgType[JobDisabled].jobId should be (BarJobId)
+      eventListener.expectMsgType[JobDisabled].jobId shouldBe BarJobId
+      expectMsgType[JobDisabled].jobId shouldBe BarJobId
     }
 
     "do nothing when trying to disable it again" in {
       job ! DisableJob(BarJobId)
 
-      eventListener.expectNoMsg()
-      expectMsgType[JobDisabled].jobId should be (BarJobId)
+      eventListener.expectNoMsg(500 millis)
+      expectMsgType[JobDisabled].jobId shouldBe BarJobId
     }
 
     "return the registered job spec with disabled status" in {
@@ -103,15 +106,15 @@ class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) wi
     "enable a job that has been previously disabled and publish the event" in {
       job ! EnableJob(BarJobId)
 
-      eventListener.expectMsgType[JobEnabled].jobId should be (BarJobId)
-      expectMsgType[JobEnabled].jobId should be (BarJobId)
+      eventListener.expectMsgType[JobEnabled].jobId shouldBe BarJobId
+      expectMsgType[JobEnabled].jobId shouldBe BarJobId
     }
 
     "do nothing when trying to enable it again" in {
       job ! EnableJob(BarJobId)
 
-      eventListener.expectNoMsg()
-      expectMsgType[JobEnabled].jobId should be (BarJobId)
+      eventListener.expectNoMsg(500 millis)
+      expectMsgType[JobEnabled].jobId shouldBe BarJobId
     }
 
     "double check that the job is finally enabled" in {

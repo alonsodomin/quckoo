@@ -13,6 +13,7 @@ val sandbox = settingKey[String]("The name of the environment sandbox to use.")
 lazy val commonSettings = Seq(
     licenses += ("Apache-2.0", url(
       "http://opensource.org/licenses/Apache-2.0")),
+    startYear := Some(2015),
     scalacOptions ++= Seq(
       "-encoding",
       "UTF-8",
@@ -262,7 +263,7 @@ lazy val clusterMaster = (project in file("cluster/master"))
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
     pipelineStages in Assets := Seq(scalaJSPipeline),
-    devCommands in scalaJSPipeline ++= Seq("test", "testQuick", "docker:publishLocal")
+    devCommands in scalaJSPipeline ++= Seq("test", "testQuick", "testOnly", "docker:publishLocal")
   )
   .settings(commonSettings: _*)
   .settings(publishSettings: _*)
