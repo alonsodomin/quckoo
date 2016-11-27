@@ -67,6 +67,7 @@ object Modal {
       Callback {
         val p = scope.props
         // instruct Bootstrap to show the modal
+        // $COVERAGE-OFF$ https://github.com/scoverage/scalac-scoverage-plugin/issues/176
         jQuery(scope.getDOMNode()).modal(
           js.Dynamic.literal(
             "backdrop" -> p.backdrop,
@@ -74,6 +75,7 @@ object Modal {
             "show"     -> true
           )
         )
+        // $COVERAGE-ON$
 
         // register event listener to be notified when the modal is closed
         jQuery(scope.getDOMNode()).on("hidden.bs.modal", null, null, scope.backend.hidden _)
