@@ -7,7 +7,7 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.4.0")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
-addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.4.9")
+addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.4.10")
 addSbtPlugin("com.tapad" % "sbt-docker-compose" % "1.0.12")
 
 // Web plugins

@@ -8,7 +8,7 @@ object Dependencies {
 
     // Logging -------
 
-    val slf4s = "1.7.12"
+    val slf4s = "1.7.13"
     val log4j = "2.6.2"
 
     // Testing --------
@@ -18,7 +18,7 @@ object Dependencies {
     val scalaMock  = "3.3.0"
     val mockito    = "1.10.19"
     val mockserver = "3.10.4"
-    val discipline = "0.7.1"
+    val discipline = "0.7.2"
 
     // Akka ----------
 
@@ -36,7 +36,7 @@ object Dependencies {
 
       // persistence plugins
       val cassandra = "0.21"
-      val inmemory  = "1.3.15"
+      val inmemory  = "1.3.16"
     }
 
     // ScalaJS -------
@@ -52,7 +52,7 @@ object Dependencies {
     val diode = "1.0.0"
 
     val upickle   = "0.4.4"
-    val scalatags = "0.6.0"
+    val scalatags = "0.6.2"
 
     // Other utils ---
 
@@ -62,7 +62,7 @@ object Dependencies {
     val scalaz     = "7.2.7"
     val monix      = "2.1.1"
     val cron4s     = "0.2.0"
-    val enumeratum = "1.4.17"
+    val enumeratum = "1.4.18"
     val pureconfig = "0.3.3"
 
     // JavaScript Libraries
@@ -77,7 +77,7 @@ object Dependencies {
 
   object libs {
 
-    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.5"
+    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
 
     val ivy = "org.apache.ivy" % "ivy" % "2.4.0"
 
@@ -118,7 +118,7 @@ object Dependencies {
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
 
-    val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.1"
+    val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.3"
     val pureconfig     = "com.github.melrief" %% "pureconfig" % version.pureconfig
 
     val scalaTest  = "org.scalatest"   %% "scalatest"              % version.scalaTest
@@ -132,7 +132,7 @@ object Dependencies {
 
   object compiler {
     val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.0" cross CrossVersion.full
-    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.2" cross CrossVersion.binary
+    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.3" cross CrossVersion.binary
 
     val plugins = Seq(macroParadise, kindProjector).map(compilerPlugin)
   }

@@ -18,9 +18,11 @@ package io.quckoo.console.dashboard
 
 import diode.AnyAction._
 import diode.react.ModelProxy
+
 import io.quckoo.id.NodeId
 import io.quckoo.net.{NodeStatus, QuckooNode, QuckooState}
 import io.quckoo.protocol.cluster.GetClusterStatus
+
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
@@ -65,7 +67,6 @@ object ClusterView {
     def mounted(props: Props) = {
       // We assume that if master node map is empty, then we haven't subscribed yet
       val unsubscribed = props.proxy().masterNodes.isEmpty
-
       Callback.when(unsubscribed)(props.proxy.dispatch(GetClusterStatus))
     }
 
