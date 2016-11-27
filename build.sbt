@@ -153,6 +153,12 @@ lazy val quckoo = (project in file("."))
 // Core ==================================================
 
 lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
+  .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
+  .settings(commonSettings: _*)
+  .settings(scoverageSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Dependencies.core: _*)
+  .jsSettings(commonJsSettings: _*)
   .settings(
     name := "core",
     moduleName := "quckoo-core",
@@ -160,12 +166,6 @@ lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
     buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
     buildInfoObject := "Info"
   )
-  .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
-  .settings(commonSettings: _*)
-  .settings(scoverageSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(Dependencies.core: _*)
-  .jsSettings(commonJsSettings: _*)
   .dependsOn(testSupport % Test)
 
 lazy val coreJS = core.js
@@ -174,16 +174,16 @@ lazy val coreJVM = core.jvm
 // API ==================================================
 
 lazy val api = (crossProject.crossType(CrossType.Pure) in file("api"))
-  .settings(
-    name := "api",
-    moduleName := "quckoo-api"
-  )
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings: _*)
   .settings(scoverageSettings: _*)
   .settings(publishSettings: _*)
   .settings(Dependencies.api: _*)
   .jsSettings(commonJsSettings: _*)
+  .settings(
+    name := "api",
+    moduleName := "quckoo-api"
+  )
   .dependsOn(core, testSupport % Test)
 
 lazy val apiJS = api.js
@@ -192,11 +192,6 @@ lazy val apiJVM = api.jvm
 // Client ==================================================
 
 lazy val client = (crossProject in file("client"))
-  .settings(
-    name := "client",
-    moduleName := "quckoo-client",
-    requiresDOM := true
-  )
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings: _*)
   .settings(scoverageSettings: _*)
@@ -205,6 +200,11 @@ lazy val client = (crossProject in file("client"))
   .jsSettings(commonJsSettings: _*)
   .jsSettings(Dependencies.clientJS: _*)
   .jvmSettings(Dependencies.clientJVM: _*)
+  .settings(
+    name := "client",
+    moduleName := "quckoo-client",
+    requiresDOM := true
+  )
   .dependsOn(api, testSupport % Test)
 
 lazy val clientJS = client.js
@@ -214,16 +214,16 @@ lazy val clientJVM = client.jvm
 
 lazy val console = (project in file("console"))
   .enablePlugins(AutomateHeaderPlugin, ScalaJSPlugin, ScalaJSWeb)
+  .settings(commonSettings: _*)
+  .settings(commonJsSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Dependencies.console: _*)
   .settings(
     name := "console",
     moduleName := "quckoo-console",
     requiresDOM := true,
     persistLauncher in Compile := true
   )
-  .settings(commonSettings: _*)
-  .settings(commonJsSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(Dependencies.console: _*)
   .dependsOn(clientJS, testSupportJS % Test)
 
 // Cluster ==================================================
@@ -235,14 +235,14 @@ lazy val cluster = (project in file("cluster"))
   .aggregate(clusterShared, clusterMaster, clusterWorker)
 
 lazy val clusterShared = (project in file("cluster/shared"))
-  .settings(
-    name := "cluster-shared",
-    moduleName := "quckoo-cluster-shared"
-  )
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(publishSettings: _*)
   .settings(Dependencies.clusterShared)
+  .settings(
+    name := "cluster-shared",
+    moduleName := "quckoo-cluster-shared"
+  )
   .dependsOn(apiJVM, testSupportJVM % Test)
 
 lazy val clusterMaster = (project in file("cluster/master"))
@@ -254,6 +254,12 @@ lazy val clusterMaster = (project in file("cluster/master"))
     DockerPlugin
   )
   .configs(MultiJvm)
+  .settings(commonSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Revolver.settings: _*)
+  .settings(Dependencies.clusterMaster)
+  .settings(MultiNode.settings)
+  .settings(Packaging.masterSettings: _*)
   .settings(
     name := "cluster-master",
     moduleName := "quckoo-cluster-master",
@@ -265,26 +271,18 @@ lazy val clusterMaster = (project in file("cluster/master"))
     pipelineStages in Assets := Seq(scalaJSPipeline),
     devCommands in scalaJSPipeline ++= Seq("test", "testQuick", "testOnly", "docker:publishLocal")
   )
-  .settings(commonSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(Revolver.settings: _*)
-  .settings(Dependencies.clusterMaster)
-  .settings(MultiNode.settings)
-  .settings(Packaging.masterSettings: _*)
   .dependsOn(clusterShared, testSupportJVM % Test)
 
 lazy val clusterWorker = (project in file("cluster/worker"))
   .enablePlugins(AutomateHeaderPlugin, JavaServerAppPackaging, DockerPlugin)
-  .settings(
-    name := "cluster-worker",
-    moduleName := "quckoo-cluster-worker"
-  )
   .settings(commonSettings: _*)
   .settings(publishSettings: _*)
   .settings(Revolver.settings: _*)
   .settings(Dependencies.clusterWorker)
   .settings(Packaging.workerSettings: _*)
   .settings(
+    name := "cluster-worker",
+    moduleName := "quckoo-cluster-worker",
     baseDirectory in reStart := file("cluster/worker/target")
   )
   .dependsOn(clusterShared, testSupportJVM % Test)
@@ -292,16 +290,16 @@ lazy val clusterWorker = (project in file("cluster/worker"))
 // Test Support Utils ========================================
 
 lazy val testSupport = (crossProject in file("test-support"))
-  .settings(
-    name := "test-support",
-    moduleName := "quckoo-test-support"
-  )
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)
   .settings(Dependencies.testSupport: _*)
   .jsSettings(commonJsSettings: _*)
   .jvmSettings(Dependencies.testSupportJVM: _*)
+  .settings(
+    name := "test-support",
+    moduleName := "quckoo-test-support"
+  )
 
 lazy val testSupportJS = testSupport.js
 lazy val testSupportJVM = testSupport.jvm
@@ -314,27 +312,27 @@ lazy val examples = (project in file("examples"))
   .settings(noPublishSettings)
 
 lazy val exampleJobs = (project in file("examples/jobs"))
-  .settings(
-    name := "example-jobs",
-    moduleName := "quckoo-example-jobs"
-  )
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings: _*)
   .settings(publishSettings: _*)
   .settings(Dependencies.exampleJobs)
+  .settings(
+    name := "example-jobs",
+    moduleName := "quckoo-example-jobs"
+  )
   .dependsOn(coreJVM)
 
 lazy val exampleProducers = (project in file("examples/producers"))
   .enablePlugins(AutomateHeaderPlugin, JavaAppPackaging, DockerPlugin)
-  .settings(
-    name := "example-producers",
-    moduleName := "quckoo-example-producers"
-  )
   .settings(commonSettings: _*)
   .settings(publishSettings: _*)
   .settings(Revolver.settings: _*)
   .settings(Dependencies.exampleProducers)
   .settings(Packaging.exampleProducersSettings: _*)
+  .settings(
+    name := "example-producers",
+    moduleName := "quckoo-example-producers"
+  )
   .dependsOn(clientJVM, exampleJobs)
 
 // Command aliases ==================================================

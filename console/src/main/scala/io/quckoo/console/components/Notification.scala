@@ -99,10 +99,12 @@ final case class Notification private[components] (
 ) {
 
   def growl(): Unit = {
+    // $COVERAGE-OFF$ https://github.com/scoverage/scalac-scoverage-plugin/issues/176
     val settings = js.Dynamic.literal(
       "type"          -> AlertType(level),
       "allow_dismiss" -> props.closable
     )
+    // $COVERAGE-ON$
     jQuery.showNotification(props.message, settings)
     ()
   }
