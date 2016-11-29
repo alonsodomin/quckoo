@@ -52,7 +52,7 @@ class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) wi
     case DistributedPubSubMediator.UnsubscribeAck(_) => true
   }
 
-  val eventListener = TestProbe("eventListener")
+  val eventListener = TestProbe("persistentJobListener")
 
   override def beforeEach() = {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, eventListener.ref)
