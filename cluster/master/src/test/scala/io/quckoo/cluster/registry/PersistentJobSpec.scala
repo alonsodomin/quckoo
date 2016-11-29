@@ -69,7 +69,7 @@ class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) wi
     TestKit.shutdownActorSystem(system)
 
   "A persistent job" should {
-    val job = TestActorRef(PersistentJob.props.withDispatcher("akka.actor.default-dispatcher"))
+    val job = TestActorRef(PersistentJob.props)
 
     "return job accepted when receiving a create command" in {
       job ! PersistentJob.CreateJob(BarJobId, BarJobSpec)
