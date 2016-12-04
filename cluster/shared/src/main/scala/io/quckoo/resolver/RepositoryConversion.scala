@@ -70,7 +70,7 @@ private[resolver] object RepositoryConversion extends Logging {
 
   private def initializePatterns(resolver: AbstractPatternsBasedResolver,
                                  patterns: Patterns,
-                                 settings: IvySettings) {
+                                 settings: IvySettings) = {
     resolver.setM2compatible(patterns.mavenCompatible)
     patterns.artifactPatterns.foreach { p =>
       resolver.addArtifactPattern(settings substitute p)

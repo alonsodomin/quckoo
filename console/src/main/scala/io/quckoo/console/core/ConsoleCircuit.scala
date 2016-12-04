@@ -17,14 +17,13 @@
 package io.quckoo.console.core
 
 import diode._
-import diode.data.{AsyncAction, PotMap, Ready}
+import diode.data.{AsyncAction, PotMap}
 import diode.react.ReactConnector
 
 import io.quckoo.auth.Passport
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.client.http.dom._
 import io.quckoo.console.components.Notification
-import io.quckoo.fault._
 import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster._

@@ -19,8 +19,6 @@ package io.quckoo.client
 import io.quckoo.auth.Passport
 import io.quckoo.client.core.ProtocolSpecs
 
-import scalaz.\/
-
 /**
   * Created by alonsodomin on 04/09/2016.
   */

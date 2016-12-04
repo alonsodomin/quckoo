@@ -18,7 +18,6 @@ package io.quckoo.console.layout
 
 import diode.react.ModelProxy
 
-import io.quckoo.Info
 import io.quckoo.auth.Principal
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components._

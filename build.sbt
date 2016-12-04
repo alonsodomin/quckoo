@@ -24,7 +24,9 @@ lazy val commonSettings = Seq(
       "-unchecked",
       "-deprecation",
       "-Xlint",
+      "-Xfuture",
       "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
       "-Xfatal-warnings"
     ),
     resolvers ++= Seq(

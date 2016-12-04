@@ -19,10 +19,6 @@ package io.quckoo.validation
 import upickle.Js
 import upickle.default.{Reader => UReader, Writer => UWriter, _}
 
-import io.quckoo.serialization.json._
-
-import enumeratum.{Enum => EEnum}
-
 import scalaz._
 import Scalaz._
 

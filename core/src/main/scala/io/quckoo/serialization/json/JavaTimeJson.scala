@@ -19,8 +19,6 @@ package io.quckoo.serialization.json
 import upickle.Js
 import upickle.default.{Writer => UWriter, Reader => UReader, _}
 
-//import scala.language.implicitConversions
-
 import org.threeten.bp._
 import org.threeten.bp.format._
 
@@ -88,7 +86,7 @@ trait JavaTimeJson {
   }
 
   implicit def localTimeW: UWriter[LocalTime] = UWriter[LocalTime] { x =>
-    Js.Num(x.toNanoOfDay)
+    Js.Num(x.toNanoOfDay.toDouble)
   }
   implicit def localTimeR: UReader[LocalTime] = UReader[LocalTime] {
     case Js.Num(nanos) => LocalTime.ofNanoOfDay(nanos.toLong)

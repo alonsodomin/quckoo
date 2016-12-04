@@ -19,7 +19,7 @@ package io.quckoo.worker
 import akka.actor.{Actor, ActorLogging, Props}
 import io.quckoo.Task
 import io.quckoo.fault.{ExceptionThrown, Fault}
-import io.quckoo.resolver.{Artifact, Resolve}
+import io.quckoo.resolver.Artifact
 
 import scala.util.{Failure, Success, Try}
 

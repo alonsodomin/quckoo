@@ -63,7 +63,7 @@ private[http] object HttpDOMBackend extends HttpBackend {
 
     domReq.open(req.method.entryName, req.url)
     domReq.responseType = ResponseType
-    domReq.timeout = timeout
+    domReq.timeout = timeout.toDouble
     domReq.withCredentials = false
     req.headers.foreach(x => domReq.setRequestHeader(x._1, x._2))
 

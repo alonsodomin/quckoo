@@ -52,7 +52,6 @@ object IvyConfigSpec {
 }
 
 class IvyConfigSpec extends FlatSpec with Matchers with TryAssertions {
-  import IvyConfig._
   import IvyConfigSpec._
 
   "IvyConfig" should "correctly parse config attributes and repositories" in {

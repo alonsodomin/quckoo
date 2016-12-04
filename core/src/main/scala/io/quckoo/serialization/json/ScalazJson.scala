@@ -19,8 +19,6 @@ package io.quckoo.serialization.json
 import upickle.Js
 import upickle.default.{Writer => UWriter, Reader => UReader, _}
 
-import scala.language.implicitConversions
-
 import scalaz._
 
 /**

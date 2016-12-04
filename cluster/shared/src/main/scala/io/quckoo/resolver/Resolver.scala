@@ -42,13 +42,14 @@ class Resolver(resolve: Resolve) extends Actor with ActorLogging {
   import Resolver._
   import context.dispatcher
 
-  def receive = {
+  def receive: Receive = {
     case Validate(artifactId) =>
       log.debug("Validating artifact {}", artifactId)
       resolve(artifactId, download = false) map {
         case Success(artifact) => ArtifactResolved(artifact)
         case Failure(cause)    => ResolutionFailed(artifactId, cause)
       } pipeTo sender()
+      ()
 
     case Download(artifactId) =>
       log.debug("Downloading artifact {}", artifactId)
@@ -56,6 +57,7 @@ class Resolver(resolve: Resolve) extends Actor with ActorLogging {
         case Success(artifact) => ArtifactResolved(artifact)
         case Failure(cause)    => ResolutionFailed(artifactId, cause)
       } pipeTo sender()
+      ()
   }
 
 }

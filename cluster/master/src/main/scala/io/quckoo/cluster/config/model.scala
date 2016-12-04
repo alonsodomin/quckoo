@@ -27,8 +27,6 @@ import scala.util.Try
 final case class ClusterSettings(resolver: IvyConfig, taskQueue: TaskQueueSettings, http: HttpSettings)
 
 object ClusterSettings {
-  import IvyConfig._
-
   final val Namespace = "quckoo"
 
   def apply(config: Config): Try[ClusterSettings] =

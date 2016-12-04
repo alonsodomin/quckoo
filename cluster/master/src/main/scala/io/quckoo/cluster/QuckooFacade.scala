@@ -27,7 +27,6 @@ import akka.util.Timeout
 import io.quckoo.auth.Passport
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.core._
-import io.quckoo.cluster.pattern._
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.journal.QuckooProductionJournal
 import io.quckoo.cluster.registry.RegistryEventPublisher

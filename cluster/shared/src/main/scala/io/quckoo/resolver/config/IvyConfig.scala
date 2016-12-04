@@ -17,10 +17,8 @@
 package io.quckoo.resolver.config
 
 import java.io.File
-import java.nio.file.Paths
 
 import io.quckoo.resolver.{MavenRepository, Repository}
-import pureconfig._
 
 /**
   * Created by domingueza on 03/11/2016.

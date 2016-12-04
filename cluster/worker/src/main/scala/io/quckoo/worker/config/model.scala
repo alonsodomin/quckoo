@@ -39,8 +39,6 @@ final case class WorkerSettings(
 )
 
 object WorkerSettings {
-  import IvyConfig._
-
   final val Namespace = "quckoo"
 
   def apply(config: Config): Try[WorkerSettings] =

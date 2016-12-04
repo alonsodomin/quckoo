@@ -41,7 +41,7 @@ trait JavaTimeGenerators {
   val instantGen: Gen[Instant] = for {
     seconds <- Gen.chooseNum(-31557014167219200L, 31556889864403199L)
     nanos   <- Gen.chooseNum(0, 999999999)
-  } yield Instant.ofEpochSecond(seconds, nanos)
+  } yield Instant.ofEpochSecond(seconds, nanos.toLong)
 
   implicit lazy val arbitraryInstant = Arbitrary(instantGen)
 

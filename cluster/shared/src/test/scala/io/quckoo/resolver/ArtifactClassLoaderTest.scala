@@ -20,8 +20,6 @@ import java.net.URL
 
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
-import scala.util.{Success => Successful}
-
 /**
  * Created by aalonsodominguez on 25/07/15.
  */

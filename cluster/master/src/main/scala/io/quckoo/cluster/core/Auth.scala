@@ -16,7 +16,6 @@
 
 package io.quckoo.cluster.core
 
-import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.directives.Credentials
 
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}

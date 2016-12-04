@@ -24,14 +24,16 @@ import io.quckoo.client.core.StubClient
 import io.quckoo.fault._
 import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
-import io.quckoo.protocol.cluster.{MasterEvent, MasterReachable, MasterRemoved}
+import io.quckoo.protocol.cluster.{MasterEvent, MasterReachable}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 import io.quckoo.test.ImplicitClock
 import io.quckoo.util._
+
 import monix.execution.Scheduler
+
 import org.threeten.bp._
 import org.scalatest._
 
@@ -39,6 +41,7 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 import scala.util.matching.Regex
+
 import scalaz._
 import Scalaz._
 

@@ -19,7 +19,7 @@ package io.quckoo.client.core
 import io.quckoo.JobSpec
 import io.quckoo.fault._
 import io.quckoo.id.JobId
-import io.quckoo.protocol.registry.{JobDisabled, JobEnabled, RegisterJob}
+import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 
 import scalaz._
 

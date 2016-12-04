@@ -35,7 +35,8 @@ import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.serialization.json._
 
 import scala.concurrent.duration._
-import scalaz.{Failure => Failurez, Success => Successz, _}
+
+import scalaz._
 
 /**
   * Created by domingueza on 21/03/16.
@@ -61,10 +62,6 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
           extractTimeout(10 minutes) { implicit timeout =>
             entity(as[JobSpec]) { jobSpec =>
               extractExecutionContext { implicit ec =>
-                /*onSuccess(registerJob(jobSpec)) {
-                  case Successz(jobId) => complete(jobId)
-                  case Failurez(errors) => complete(BadRequest -> errors)
-                }*/
                 complete(registerJob(jobSpec))
               }
             }

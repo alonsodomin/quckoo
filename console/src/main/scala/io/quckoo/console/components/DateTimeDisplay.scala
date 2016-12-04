@@ -21,7 +21,6 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 
 import org.threeten.bp.ZonedDateTime
 import org.threeten.bp.format.{DateTimeFormatter, FormatStyle}
-import org.threeten.bp.temporal.Temporal
 
 /**
   * Created by alonsodomin on 04/07/2016.

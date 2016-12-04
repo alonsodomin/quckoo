@@ -53,12 +53,19 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
   var n            = 0
   var jobId: JobId = _
 
+  private[this] var scheduleTask: Option[Cancellable] = None
+
   override def preStart(): Unit =
-    scheduler.scheduleOnce(5.seconds, self, Tick)
+    scheduleTask = Some(scheduler.scheduleOnce(5.seconds, self, Tick))
 
   override def postRestart(reason: Throwable): Unit = ()
 
-  def receive = start
+  override def postStop(): Unit = {
+    scheduleTask.foreach(_.cancel())
+    scheduleTask = None
+  }
+
+  def receive: Receive = start
 
   def start: Receive = {
     case Tick =>
