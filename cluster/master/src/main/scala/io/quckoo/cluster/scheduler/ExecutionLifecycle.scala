@@ -78,7 +78,7 @@ object ExecutionLifecycle {
       outcome: Option[Outcome] = None
   ) {
 
-    private[scheduler] def <<=(out: Outcome): ExecutionState =
+    private[scheduler] def becomes(out: Outcome): ExecutionState =
       this.copy(outcome = Some(out))
 
   }
@@ -86,7 +86,7 @@ object ExecutionLifecycle {
   def props(planId: PlanId,
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
             maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
-            executionTimeout: Option[FiniteDuration] = None) =
+            executionTimeout: Option[FiniteDuration] = None): Props =
     Props(
       classOf[ExecutionLifecycle],
       planId,
@@ -216,17 +216,17 @@ class ExecutionLifecycle(
 
       case Completed(result) =>
         result match {
-          case Some(fault) => previous <<= Failure(fault)
-          case _           => previous <<= Success
+          case Some(fault) => previous becomes Failure(fault)
+          case _           => previous becomes Success
         }
 
       case Cancelled(reason) =>
         stateName match {
-          case Running => previous <<= Interrupted(reason)
-          case _       => previous <<= NeverRun(reason)
+          case Running => previous becomes Interrupted(reason)
+          case _       => previous becomes NeverRun(reason)
         }
 
-      case TimedOut => previous <<= NeverEnding
+      case TimedOut => previous becomes NeverEnding
       case _        => previous
     }
 

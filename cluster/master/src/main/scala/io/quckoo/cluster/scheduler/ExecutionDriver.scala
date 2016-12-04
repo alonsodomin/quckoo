@@ -93,8 +93,8 @@ object ExecutionDriver {
       completedTasks: Vector[TaskId]
   ) {
 
-    val jobId  = plan.jobId
-    val planId = plan.planId
+    val jobId: JobId  = plan.jobId
+    val planId: PlanId = plan.planId
 
     def fired: Boolean = {
       import plan._
@@ -153,7 +153,7 @@ object ExecutionDriver {
 
   }
 
-  def props(implicit clock: Clock) =
+  def props(implicit clock: Clock): Props =
     Props(classOf[ExecutionDriver], clock)
 
 }
@@ -175,7 +175,7 @@ class ExecutionDriver(implicit clock: Clock) extends PersistentActor with ActorL
   // Only used to hold the current state of the actor during recovery
   private[this] var stateDuringRecovery: Option[DriverState] = None
 
-  override def persistenceId = s"$ShardName-" + self.path.name
+  override def persistenceId: String = s"$ShardName-" + self.path.name
 
   override def preStart(): Unit = {
     log.debug("Execution driver starting with persistence ID: {}", persistenceId)

@@ -57,13 +57,13 @@ object Registry {
   sealed trait Signal
   case object Ready extends Signal
 
-  def props(settings: ClusterSettings, journal: QuckooJournal) = {
+  def props(settings: ClusterSettings, journal: QuckooJournal): Props = {
     val resolve = IvyResolve(settings.resolver)
     val props   = Resolver.props(resolve).withDispatcher("quckoo.resolver.dispatcher")
     Props(classOf[Registry], RegistrySettings(props), journal)
   }
 
-  def props(settings: RegistrySettings, journal: QuckooJournal) =
+  def props(settings: RegistrySettings, journal: QuckooJournal): Props =
     Props(classOf[Registry], settings, journal)
 
 }
@@ -96,7 +96,7 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
   }
 
-  def receive = initializing
+  def receive: Receive = initializing
 
   private def initializing: Receive = {
     case DistributedPubSubMediator.SubscribeAck(_) =>
@@ -139,8 +139,7 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
       }
 
     case msg: RegistryJobCommand =>
-      if (jobIds.contains(msg.jobId))
-        shardRegion forward msg
+      if (jobIds.contains(msg.jobId)) shardRegion forward msg
       else sender() ! JobNotFound(msg.jobId)
 
     case event: RegistryEvent =>
@@ -219,7 +218,7 @@ private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef,
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
   }
 
-  def receive = initializing
+  def receive: Receive = initializing
 
   def initializing: Receive = {
     case DistributedPubSubMediator.SubscribeAck(_) =>

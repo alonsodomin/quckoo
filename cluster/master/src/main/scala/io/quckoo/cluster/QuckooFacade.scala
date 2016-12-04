@@ -56,7 +56,8 @@ import Scalaz._
   */
 object QuckooFacade extends Logging {
 
-  final val DefaultTimeout = 2500 millis
+  final val DefaultTimeout: FiniteDuration = 2500 millis
+  final val DefaultBufferSize = 100
 
   def start(settings: ClusterSettings)(implicit system: ActorSystem, clock: Clock): Future[Unit] = {
     def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
@@ -81,6 +82,8 @@ object QuckooFacade extends Logging {
 final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Clock)
     extends HttpRouter with QuckooServer with Logging {
 
+  import QuckooFacade._
+
   implicit val materializer = ActorMaterializer()
 
   def cancelPlan(planId: PlanId)(
@@ -101,7 +104,7 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
       passport: Passport
   ): Future[Map[PlanId, ExecutionPlan]] = {
     val executionPlans = Source
-      .actorRef[(PlanId, ExecutionPlan)](100, OverflowStrategy.fail)
+      .actorRef[(PlanId, ExecutionPlan)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
       .mapMaterializedValue(upstream => core.tell(GetExecutionPlans, upstream))
 
     executionPlans.runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
@@ -131,7 +134,7 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
       passport: Passport
   ): Future[Map[TaskId, TaskExecution]] = {
     val tasks = Source
-      .actorRef[(TaskId, TaskExecution)](100, OverflowStrategy.fail)
+      .actorRef[(TaskId, TaskExecution)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
       .mapMaterializedValue(upstream => core.tell(GetTaskExecutions, upstream))
     tasks.runFold(Map.empty[TaskId, TaskExecution])((map, pair) => map + pair)
   }
@@ -238,7 +241,7 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
                 timeout: FiniteDuration,
                 passport: Passport): Future[Map[JobId, JobSpec]] = {
     Source
-      .actorRef[(JobId, JobSpec)](100, OverflowStrategy.fail)
+      .actorRef[(JobId, JobSpec)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
       .mapMaterializedValue { upstream =>
         core.tell(GetJobs, upstream)
       }

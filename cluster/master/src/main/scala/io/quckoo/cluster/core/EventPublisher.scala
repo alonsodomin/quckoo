@@ -68,10 +68,11 @@ abstract class EventPublisher[A](bufferSize: Int = EventPublisher.DefaultBufferS
     }
 
     val dispatchCount =
-      if (totalDemand <= Int.MaxValue)
+      if (totalDemand <= Int.MaxValue) {
         totalDemand.toInt
-      else
+      } else {
         Int.MaxValue
+      }
 
     dispatchBufferItems(dispatchCount)
     if (dispatchCount == Int.MaxValue) deliverEvents()

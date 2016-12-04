@@ -47,8 +47,8 @@ object QuckooGuardian {
 
   final val DefaultSessionTimeout: FiniteDuration = 30 minutes
 
-  def props(settings: ClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(
-      implicit clock: Clock) =
+  def props(settings: ClusterSettings, journal: QuckooJournal, boot: Promise[Unit])
+           (implicit clock: Clock): Props =
     Props(classOf[QuckooGuardian], settings, journal, boot, clock)
 
   case object Shutdown
@@ -107,7 +107,7 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Worker, self)
   }
 
-  def receive = starting()
+  def receive: Receive = starting()
 
   def starting(registryReady: Boolean = false, schedulerReady: Boolean = false): Receive = {
     def waitForReady: Receive = {

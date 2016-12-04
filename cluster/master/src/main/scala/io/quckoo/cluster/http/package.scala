@@ -56,6 +56,6 @@ package object http {
     } keepAlive (keepAlive, () => ServerSentEvent.heartbeat)
   }
 
-  def generateAuthToken = UUID.randomUUID().toString
+  def generateAuthToken: String = UUID.randomUUID().toString
 
 }

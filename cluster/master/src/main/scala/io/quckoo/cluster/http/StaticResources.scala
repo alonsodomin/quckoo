@@ -17,6 +17,7 @@
 package io.quckoo.cluster.http
 
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 
 import io.quckoo.Info
 import io.quckoo.console.html.index
@@ -29,7 +30,7 @@ trait StaticResources {
   private[this] final val AssetsPath = "assets"
   private[this] final val PublicDir  = "public/"
 
-  def staticResources =
+  def staticResources: Route =
     pathEndOrSingleSlash {
       get {
         complete(index(Info.version))
