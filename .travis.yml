@@ -20,7 +20,7 @@ before_install:
   - sudo mv phantomjs /usr/local/phantomjs/bin/phantomjs
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage validate
 
 after_success:
   - sbt coverageReport && sbt coverageAggregate
