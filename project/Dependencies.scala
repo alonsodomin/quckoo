@@ -47,7 +47,7 @@ object Dependencies {
 
     val testState = "2.1.1"
     val scalaCss  = "0.5.1"
-    val scalaTime = "2.0.0-M5"
+    val scalaTime = "2.0.0-M6"
 
     val diode = "1.1.0"
 
@@ -142,13 +142,13 @@ object Dependencies {
 
   lazy val core = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "com.lihaoyi"    %%% "upickle"            % version.upickle,
-      "com.beachape"   %%% "enumeratum"         % version.enumeratum,
-      "com.beachape"   %%% "enumeratum-upickle" % version.enumeratum,
-      "org.scalaz"     %%% "scalaz-core"        % version.scalaz,
-      "io.github.soc"  %%% "scala-java-time"    % version.scalaTime,
-      "org.scalatest"  %%% "scalatest"          % version.scalaTest  % Test,
-      "org.scalacheck" %%% "scalacheck"         % version.scalaCheck % Test,
+      "com.lihaoyi"       %%% "upickle"            % version.upickle,
+      "com.beachape"      %%% "enumeratum"         % version.enumeratum,
+      "com.beachape"      %%% "enumeratum-upickle" % version.enumeratum,
+      "org.scalaz"        %%% "scalaz-core"        % version.scalaz,
+      "io.github.cquiroz" %%% "scala-java-time"    % version.scalaTime,
+      "org.scalatest"     %%% "scalatest"          % version.scalaTest  % Test,
+      "org.scalacheck"    %%% "scalacheck"         % version.scalaCheck % Test,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
@@ -290,11 +290,11 @@ object Dependencies {
 
   lazy val testSupport = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "io.github.soc"  %%% "scala-java-time"           % version.scalaTime,
-      "org.scalatest"  %%% "scalatest"                 % version.scalaTest,
-      "org.scalacheck" %%% "scalacheck"                % version.scalaCheck,
-      "org.scalaz"     %%% "scalaz-scalacheck-binding" % version.scalaz,
-      "org.typelevel"  %%% "discipline"                % version.discipline
+      "io.github.cquiroz" %%% "scala-java-time"           % version.scalaTime,
+      "org.scalatest"     %%% "scalatest"                 % version.scalaTest,
+      "org.scalacheck"    %%% "scalacheck"                % version.scalaCheck,
+      "org.scalaz"        %%% "scalaz-scalacheck-binding" % version.scalaz,
+      "org.typelevel"     %%% "discipline"                % version.discipline
     )
   }
 
