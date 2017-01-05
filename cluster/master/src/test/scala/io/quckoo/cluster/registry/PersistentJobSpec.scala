@@ -40,7 +40,8 @@ object PersistentJobSpec {
 
 }
 
-class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) with ImplicitSender
+class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec"))
+    with ImplicitSender
     with WordSpecLike with BeforeAndAfterEach with BeforeAndAfterAll
     with Matchers {
 
@@ -60,16 +61,16 @@ class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec")) wi
 
   override def afterEach(): Unit = {
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, eventListener.ref)
-    /*if (eventListener.msgAvailable) {
+    if (eventListener.msgAvailable) {
       fail("There are additional messages in the listener queue.")
-    }*/
+    }
   }
 
   override def afterAll(): Unit =
     TestKit.shutdownActorSystem(system)
 
   "A persistent job" should {
-    val job = TestActorRef(PersistentJob.props)
+    val job = TestActorRef(PersistentJob.props.withDispatcher("akka.actor.default-dispatcher"))
 
     "return job accepted when receiving a create command" in {
       job ! PersistentJob.CreateJob(BarJobId, BarJobSpec)

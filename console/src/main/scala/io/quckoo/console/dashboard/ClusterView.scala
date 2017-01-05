@@ -67,7 +67,7 @@ object ClusterView {
     def mounted(props: Props) = {
       // We assume that if master node map is empty, then we haven't subscribed yet
       val unsubscribed = props.proxy().masterNodes.isEmpty
-      Callback.when(unsubscribed)(props.proxy.dispatch(GetClusterStatus))
+      Callback.when(unsubscribed)(props.proxy.dispatchCB(GetClusterStatus))
     }
 
     def render(props: Props) = {

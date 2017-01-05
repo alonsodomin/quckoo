@@ -36,7 +36,6 @@ lazy val commonSettings = Seq(
       Resolver.bintrayRepo("dnvriend", "maven"),
       Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
     ),
-    scalafmtConfig := Some(file(".scalafmt.conf")),
     parallelExecution in Test := false
   ) ++ Licensing.settings
 
@@ -341,6 +340,4 @@ lazy val exampleProducers = (project in file("examples/producers"))
 
 addCommandAlias("testJS",
                 ";coreJS/test;apiJS/test;clientJS/test;consoleApp/test")
-addCommandAlias(
-  "testJVM",
-  ";coreJVM/test;apiJVM/test;clientJVM/test;cluster/test;examples/test")
+addCommandAlias("validate", ";test;multi-jvm:test")

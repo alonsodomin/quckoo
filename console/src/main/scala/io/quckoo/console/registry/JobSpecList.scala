@@ -50,7 +50,7 @@ object JobSpecList {
 
     def mounted(props: Props) = {
       def dispatchJobLoading: Callback =
-        props.proxy.dispatch(LoadJobSpecs)
+        props.proxy.dispatchCB(LoadJobSpecs)
 
       Callback.when(props.proxy().size == 0)(dispatchJobLoading)
     }
@@ -69,10 +69,10 @@ object JobSpecList {
     }
 
     def enableJob(props: Props)(jobId: JobId): Callback =
-      props.proxy.dispatch(EnableJob(jobId))
+      props.proxy.dispatchCB(EnableJob(jobId))
 
     def disableJob(props: Props)(jobId: JobId): Callback =
-      props.proxy.dispatch(DisableJob(jobId))
+      props.proxy.dispatchCB(DisableJob(jobId))
 
     def rowActions(props: Props)(jobId: JobId, jobSpec: JobSpec) = {
       Seq(if (jobSpec.disabled) {

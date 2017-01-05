@@ -83,7 +83,7 @@ object Navigation {
     }
 
     def onLogoutClicked(e: ReactEventI): Callback =
-      e.preventDefaultCB >> $.props.flatMap(_.proxy.dispatch(Logout))
+      e.preventDefaultCB >> $.props.flatMap(_.proxy.dispatchCB(Logout))
 
     def render(props: Props): ReactElement = <.div(props.proxy().map { principal =>
       <.nav(^.`class` := "navbar navbar-default navbar-fixed-top",

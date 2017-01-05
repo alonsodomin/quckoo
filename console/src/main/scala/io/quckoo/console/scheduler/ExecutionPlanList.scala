@@ -62,10 +62,10 @@ object ExecutionPlanList {
       val model = props.proxy()
 
       def loadJobs: Callback =
-        Callback.when(model.jobSpecs.size == 0)(props.proxy.dispatch(LoadJobSpecs))
+        Callback.when(model.jobSpecs.size == 0)(props.proxy.dispatchCB(LoadJobSpecs))
 
       def loadPlans: Callback =
-        Callback.when(model.executionPlans.size == 0)(props.proxy.dispatch(LoadExecutionPlans))
+        Callback.when(model.executionPlans.size == 0)(props.proxy.dispatchCB(LoadExecutionPlans))
 
       loadJobs >> loadPlans
     }
@@ -86,7 +86,7 @@ object ExecutionPlanList {
       }
 
     def cancelPlan(props: Props)(planId: PlanId): Callback =
-      props.proxy.dispatch(CancelExecutionPlan(planId))
+      props.proxy.dispatchCB(CancelExecutionPlan(planId))
 
     def rowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
       if (plan.nextExecutionTime.isDefined) {
