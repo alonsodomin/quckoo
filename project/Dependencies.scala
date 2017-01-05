@@ -9,7 +9,7 @@ object Dependencies {
     // Logging -------
 
     val slf4s = "1.7.13"
-    val log4j = "2.6.2"
+    val log4j = "2.7"
 
     // Testing --------
 
@@ -18,38 +18,38 @@ object Dependencies {
     val scalaMock  = "3.3.0"
     val mockito    = "1.10.19"
     val mockserver = "3.10.4"
-    val discipline = "0.7.2"
+    val discipline = "0.7.3"
 
     // Akka ----------
 
     object akka {
-      val main = "2.4.14"
+      val main = "2.4.16"
       val kryo = "0.5.0"
 
       object http {
-        val main = "10.0.0"
+        val main = "10.0.1"
 
         // http extensions
         val json = "1.11.0"
-        val sse  = "2.0.0-M6"
+        val sse  = "2.0.0"
       }
 
       // persistence plugins
-      val cassandra = "0.21"
-      val inmemory  = "1.3.16"
+      val cassandra = "0.22"
+      val inmemory  = "1.3.18"
     }
 
     // ScalaJS -------
 
-    val scalaJsReact    = "0.11.2"
+    val scalaJsReact    = "0.11.3"
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.0"
 
-    val testState = "2.1.0"
-    val scalaCss  = "0.5.0"
+    val testState = "2.1.1"
+    val scalaCss  = "0.5.1"
     val scalaTime = "2.0.0-M5"
 
-    val diode = "1.0.0"
+    val diode = "1.1.0"
 
     val upickle   = "0.4.4"
     val scalatags = "0.6.2"
@@ -57,20 +57,21 @@ object Dependencies {
     // Other utils ---
 
     val scopt      = "3.5.0"
-    val slogging   = "0.5.1"
+    val slogging   = "0.5.2"
     val monocle    = "1.3.2"
-    val scalaz     = "7.2.7"
-    val monix      = "2.1.1"
-    val cron4s     = "0.2.0"
-    val enumeratum = "1.4.18"
-    val pureconfig = "0.3.3"
+    val scalaz     = "7.2.8"
+    val monix      = "2.1.2"
+    val cron4s     = "0.2.1"
+    val enumeratum = "1.5.6"
+    val pureconfig = "0.5.0"
 
     // JavaScript Libraries
 
-    val jquery = "1.11.1"
-    val bootstrap = "3.3.2"
+    val jquery           = "1.11.2"
+    val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs = "15.3.2"
+    val fontAwesome      = "4.7.0"
+    val reactJs          = "15.4.1"
   }
 
   // Common library definitions
@@ -118,7 +119,7 @@ object Dependencies {
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
 
-    val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.3"
+    val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.4"
     val pureconfig     = "com.github.melrief" %% "pureconfig" % version.pureconfig
 
     val scalaTest  = "org.scalatest"   %% "scalatest"              % version.scalaTest
@@ -270,11 +271,11 @@ object Dependencies {
       Akka.persistence.query, Akka.persistence.memory, scopt,
       authenticatJwt,
 
-      "com.tecsisa" %% "constructr-coordination-consul" % "0.3.0",
+      "com.tecsisa" %% "constructr-coordination-consul" % "0.5.2",
 
-      "com.vmunier"      %% "scalajs-scripts" % "1.0.0",
-      "org.webjars"       % "bootstrap-sass"  % "3.3.1",
-      "org.webjars"       % "font-awesome"    % "4.5.0",
+      "com.vmunier"      %% "scalajs-scripts" % "1.1.0",
+      "org.webjars"       % "bootstrap-sass"  % version.bootstrap,
+      "org.webjars"       % "font-awesome"    % version.fontAwesome,
       "org.webjars.bower" % "animatewithsass" % "3.2.2"
     )
   }

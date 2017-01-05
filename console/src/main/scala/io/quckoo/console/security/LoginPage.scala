@@ -52,7 +52,7 @@ object LoginPage {
   class LoginBackend($ : BackendScope[Props, Unit]) {
 
     def loginHandler(props: Props)(username: String, password: String): Callback =
-      props.proxy.dispatch(Login(username, password, props.referral))
+      props.proxy.dispatchCB(Login(username, password, props.referral))
 
     def render(props: Props) =
       <.div(

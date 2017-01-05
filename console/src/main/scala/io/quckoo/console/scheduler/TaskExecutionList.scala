@@ -41,7 +41,7 @@ object TaskExecutionList {
   class Backend($ : BackendScope[Props, Unit]) {
 
     def mounted(props: Props): Callback =
-      Callback.when(props.proxy().size == 0)(props.proxy.dispatch(LoadExecutions))
+      Callback.when(props.proxy().size == 0)(props.proxy.dispatchCB(LoadExecutions))
 
     def renderItem(taskId: TaskId, execution: TaskExecution, column: String): ReactNode =
       column match {

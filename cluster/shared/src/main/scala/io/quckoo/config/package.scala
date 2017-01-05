@@ -21,6 +21,8 @@ import java.nio.file.Paths
 
 import pureconfig.{CamelCase, ConfigConvert, ConfigFieldMapping, KebabCase}
 
+import scala.util.Try
+
 /**
   * Created by alonsodomin on 04/11/2016.
   */
@@ -30,6 +32,6 @@ package object config {
     ConfigFieldMapping.apply[A](CamelCase, KebabCase)
 
   implicit val createFileOnLoad: ConfigConvert[File] =
-    ConfigConvert.stringConvert(path => Paths.get(path).toAbsolutePath.toFile, _.getAbsolutePath)
+    ConfigConvert.stringConvert(path => Try(Paths.get(path)).map(_.toAbsolutePath.toFile), _.getAbsolutePath)
 
 }

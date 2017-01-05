@@ -48,7 +48,7 @@ object SchedulerPage {
 
     def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
-        scheduleJob.map(props.proxy.dispatch[ScheduleJob]).getOrElse(Callback.empty)
+        scheduleJob.map(props.proxy.dispatchCB[ScheduleJob]).getOrElse(Callback.empty)
 
       def updateState(): Callback =
         $.modState(_.copy(showForm = false))
