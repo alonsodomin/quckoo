@@ -17,6 +17,7 @@
 package io.quckoo.cluster.journal
 
 import akka.actor.ActorSystem
+import akka.persistence.query.{Offset, Sequence}
 import akka.persistence.inmemory.query.scaladsl.InMemoryReadJournal
 
 /**
@@ -26,5 +27,7 @@ class QuckooTestJournal(implicit val actorSystem: ActorSystem) extends QuckooJou
   type ReadRepr = InMemoryReadJournal
 
   protected val journalId = InMemoryReadJournal.Identifier
-}
 
+  def firstOffset: Offset = Sequence(0L)
+  
+}

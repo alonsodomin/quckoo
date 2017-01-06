@@ -17,6 +17,7 @@
 package io.quckoo.cluster.journal
 
 import akka.actor.ActorSystem
+import akka.persistence.query.{Offset, TimeBasedUUID}
 import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
 
 /**
@@ -26,4 +27,7 @@ class QuckooProductionJournal(implicit val actorSystem: ActorSystem) extends Quc
   type ReadRepr = CassandraReadJournal
 
   protected val journalId = CassandraReadJournal.Identifier
+
+  def firstOffset: Offset = TimeBasedUUID(read.firstOffset)
+
 }

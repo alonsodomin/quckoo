@@ -197,7 +197,7 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
 
   private def warmUp(): Unit = {
     journal.read
-      .currentEventsByTag(EventTag, Sequence(0))
+      .currentEventsByTag(EventTag, journal.firstOffset)
       .runWith(
         Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
   }
