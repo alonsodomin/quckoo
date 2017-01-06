@@ -228,8 +228,9 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   }
 
   private def warmUp(): Unit = {
-    val executionPlanEvents = journal.read.currentEventsByTag(tags.ExecutionPlan, Sequence(0))
-    val executionEvents     = journal.read.currentEventsByTag(tags.Task, Sequence(0))
+    val firstOffset = journal.firstOffset
+    val executionPlanEvents = journal.read.currentEventsByTag(tags.ExecutionPlan, firstOffset)
+    val executionEvents     = journal.read.currentEventsByTag(tags.Task, firstOffset)
 
     executionPlanEvents
       .concat(executionEvents)

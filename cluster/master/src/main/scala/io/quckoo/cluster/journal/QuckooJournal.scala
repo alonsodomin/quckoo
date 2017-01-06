@@ -17,7 +17,7 @@
 package io.quckoo.cluster.journal
 
 import akka.actor.ActorSystem
-import akka.persistence.query.PersistenceQuery
+import akka.persistence.query.{PersistenceQuery, Offset}
 
 /**
   * Created by alonsodomin on 23/12/2015.
@@ -30,5 +30,7 @@ trait QuckooJournal {
   protected val journalId: String
 
   lazy val read = PersistenceQuery(actorSystem).readJournalFor[ReadRepr](journalId)
+
+  def firstOffset: Offset
 
 }
