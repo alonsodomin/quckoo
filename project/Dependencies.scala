@@ -119,7 +119,7 @@ object Dependencies {
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
 
-    val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.4"
+    val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.3"
     val pureconfig     = "com.github.melrief" %% "pureconfig" % version.pureconfig
 
     val scalaTest  = "org.scalatest"   %% "scalatest"              % version.scalaTest
