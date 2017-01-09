@@ -43,23 +43,23 @@ final case class CliOptions(
   def toConfig: Config = {
     val valueMap = new JHashMap[String, Object]()
 
-    val (bindHost, bindPort) = bindAddress.map { addr =>
+    val (canonicalHost, canonicalPort) = bindAddress.map { addr =>
       val HostAndPort(h, p) = addr
       (h, p.toInt)
-    } getOrElse (DefaultTcpInterface -> port)
+    } getOrElse (DefaultUdpInterface -> port)
 
-    valueMap.put(AkkaRemoteNettyHost, bindHost)
-    valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))
+    valueMap.put(AkkaArteryCanonicalHost, canonicalHost)
+    valueMap.put(AkkaArteryCanonicalPort, Int.box(canonicalPort))
 
     if (bindAddress.isDefined) {
       val localAddress = InetAddress.getLocalHost.getHostAddress
-      valueMap.put(AkkaRemoteNettyBindHost, localAddress)
-      valueMap.put(AkkaRemoteNettyBindPort, Int.box(port))
+      valueMap.put(AkkaArteryBindHost, localAddress)
+      valueMap.put(AkkaArteryBindPort, Int.box(port))
     }
 
     if (masterNodes.nonEmpty) {
       valueMap.put(QuckooContactPoints, seqAsJavaList(masterNodes.map { node =>
-        s"akka.tcp://QuckooClusterSystem@$node"
+        s"akka://QuckooClusterSystem@$node"
       }))
     }
     ConfigFactory.parseMap(valueMap)

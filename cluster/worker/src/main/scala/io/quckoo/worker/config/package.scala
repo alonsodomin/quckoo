@@ -25,15 +25,14 @@ import scala.util.{Failure, Success}
   * Created by alonsodomin on 04/11/2016.
   */
 package object config {
-  final val DefaultPort = 5001
 
-  final val AkkaRemoteNettyHost     = "akka.remote.netty.tcp.hostname"
-  final val AkkaRemoteNettyPort     = "akka.remote.netty.tcp.port"
-  final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
-  final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
+  final val AkkaArteryCanonicalHost = "akka.remote.artery.canonical.hostname"
+  final val AkkaArteryCanonicalPort = "akka.remote.artery.canonical.port"
+  final val AkkaArteryBindHost = "akka.remote.artery.bind.hostname"
+  final val AkkaArteryBindPort = "akka.remote.artery.bind.port"
 
-  final val DefaultTcpInterface = "127.0.0.1"
-  final val DefaultTcpPort      = 5001
+  final val DefaultUdpInterface = "127.0.0.1"
+  final val DefaultUdpPort      = 50010
 
   final val ExecutorDispatcher = "quckoo.worker.dispatcher"
   final val ResolverDispatcher = "quckoo.resolver.dispatcher"

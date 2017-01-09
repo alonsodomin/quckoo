@@ -21,10 +21,10 @@ package io.quckoo.cluster
   */
 package object config {
 
-  final val AkkaRemoteNettyHost     = "akka.remote.netty.tcp.hostname"
-  final val AkkaRemoteNettyPort     = "akka.remote.netty.tcp.port"
-  final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
-  final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
+  final val AkkaArteryCanonicalHost = "akka.remote.artery.canonical.hostname"
+  final val AkkaArteryCanonicalPort = "akka.remote.artery.canonical.port"
+  final val AkkaArteryBindHost = "akka.remote.artery.bind.hostname"
+  final val AkkaArteryBindPort = "akka.remote.artery.bind.port"
 
   final val AkkaClusterSeedNodes = "akka.cluster.seed-nodes"
 
@@ -39,7 +39,7 @@ package object config {
   final val DefaultHttpInterface = "0.0.0.0"
   final val DefaultHttpPort      = 8095
 
-  final val DefaultTcpInterface = "127.0.0.1"
-  final val DefaultTcpPort      = 2551
+  final val DefaultUdpInterface = "127.0.0.1"
+  final val DefaultUdpPort      = 25520
 
 }

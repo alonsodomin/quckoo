@@ -71,14 +71,14 @@ object Packaging {
     packageName := "master",
     packageName in Universal := s"quckoo-master-${version.value}",
     executableScriptName := "master",
-    dockerExposedPorts := Seq(2551, 8095)
+    dockerExposedPorts := Seq(2551, 25520, 8095)
   )
 
   lazy val workerSettings = universalServerSettings ++ serverDockerSettings ++ Seq(
     packageName := "worker",
     packageName in Universal := s"quckoo-worker-${version.value}",
     executableScriptName := "worker",
-    dockerExposedPorts := Seq(5001)
+    dockerExposedPorts := Seq(50010)
   )
 
   lazy val exampleProducersSettings = universalSettings ++ baseDockerSettings ++ Seq(

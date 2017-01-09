@@ -31,7 +31,7 @@ import scala.collection.JavaConversions._
   */
 final case class CliOptions(
     bindAddress: Option[String] = None,
-    port: Int = DefaultTcpPort,
+    port: Int = DefaultUdpPort,
     httpBindAddress: Option[String] = None,
     httpPort: Option[Int] = None,
     seed: Boolean = false,
@@ -42,18 +42,18 @@ final case class CliOptions(
   def toConfig: Config = {
     val valueMap = new JHashMap[String, Object]()
 
-    val (bindHost, bindPort) = bindAddress.map { addr =>
+    val (canonicalHost, canonicalPort) = bindAddress.map { addr =>
       val HostAndPort(h, p) = addr
       (h, p.toInt)
-    } getOrElse (DefaultTcpInterface -> port)
+    } getOrElse (DefaultUdpInterface -> port)
 
-    valueMap.put(AkkaRemoteNettyHost, bindHost)
-    valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))
+    valueMap.put(AkkaArteryCanonicalHost, canonicalHost)
+    valueMap.put(AkkaArteryCanonicalPort, Int.box(canonicalPort))
 
     if (bindAddress.isDefined) {
       val localAddress = InetAddress.getLocalHost.getHostAddress
-      valueMap.put(AkkaRemoteNettyBindHost, localAddress)
-      valueMap.put(AkkaRemoteNettyBindPort, Int.box(port))
+      valueMap.put(AkkaArteryBindHost, localAddress)
+      valueMap.put(AkkaArteryBindPort, Int.box(port))
     }
 
     httpBindAddress.map { addr =>
@@ -67,11 +67,11 @@ final case class CliOptions(
 
     val clusterSeedNodes: List[String] = {
       val baseSeed = {
-        if (seed) List(s"akka.tcp://$SystemName@$bindHost:$bindPort")
+        if (seed) List(s"akka://$SystemName@$canonicalHost:$canonicalPort")
         else List.empty[String]
       }
 
-      baseSeed ::: seedNodes.map(node => s"akka.tcp://$SystemName@$node").toList
+      baseSeed ::: seedNodes.map(node => s"akka://$SystemName@$node").toList
     }
 
     valueMap.put(AkkaClusterSeedNodes, seqAsJavaList(clusterSeedNodes))

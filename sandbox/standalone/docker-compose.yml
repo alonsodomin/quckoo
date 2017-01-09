@@ -11,32 +11,32 @@ services:
     image: quckoo/master<localBuild>
     ports:
       - 8095:8095
-      - 2551:2551
+      - 25520:25520
     links:
       - cassandra
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
-    command: --seed --cs cassandra:9042 -b master1:2551
+    command: --seed --cs cassandra:9042 -b master1:25520
 
   master2:
     image: quckoo/master<localBuild>
     ports:
       - 8096:8095
-      - 2552:2551
+      - 25521:25520
     links:
       - cassandra
       - master1
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
-    command: --nodes master1:2551 --cs cassandra:9042 -b master2:2552
+    command: --nodes master1:25520 --cs cassandra:9042 -b master2:25521
 
   worker:
     image: quckoo/worker<localBuild>
     ports:
-      - 5001:5001
+      - 50010:50010
     links:
       - master1
       - master2
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
-    command: --master master1:2551,master2:2551 -b worker:5001
+    command: --master master1:25520,master2:25520 -b worker:50010
