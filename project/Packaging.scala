@@ -1,9 +1,7 @@
-import com.typesafe.sbt.SbtNativePackager.autoImport._
-import com.typesafe.sbt.packager.archetypes.JavaAppPackaging.autoImport._
+import com.typesafe.sbt.packager.Keys._
 import com.typesafe.sbt.packager.docker.{CmdLike, Cmd, ExecCmd}
-import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport._
-import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
-import com.typesafe.sbt.packager.universal.UniversalPlugin.autoImport._
+import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.Docker
+import com.typesafe.sbt.packager.universal.UniversalPlugin.autoImport.Universal
 
 import sbt._
 import Keys._

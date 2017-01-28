@@ -9,7 +9,7 @@ object Dependencies {
     // Logging -------
 
     val slf4s = "1.7.13"
-    val log4j = "2.7"
+    val log4j = "2.8"
 
     // Testing --------
 
@@ -27,10 +27,10 @@ object Dependencies {
       val kryo = "0.5.0"
 
       object http {
-        val main = "10.0.1"
+        val main = "10.0.3"
 
         // http extensions
-        val json = "1.11.0"
+        val json = "1.12.0"
         val sse  = "2.0.0"
       }
 
@@ -43,11 +43,11 @@ object Dependencies {
 
     val scalaJsReact    = "0.11.3"
     val scalaJsDom      = "0.9.1"
-    val scalaJsJQuery   = "0.9.0"
+    val scalaJsJQuery   = "0.9.1"
 
     val testState = "2.1.1"
     val scalaCss  = "0.5.1"
-    val scalaTime = "2.0.0-M6"
+    val scalaTime = "2.0.0-M7"
 
     val diode = "1.1.0"
 
@@ -58,20 +58,20 @@ object Dependencies {
 
     val scopt      = "3.5.0"
     val slogging   = "0.5.2"
-    val monocle    = "1.3.2"
+    val monocle    = "1.4.0"
     val scalaz     = "7.2.8"
-    val monix      = "2.1.2"
+    val monix      = "2.2.1"
     val cron4s     = "0.2.1"
     val enumeratum = "1.5.6"
-    val pureconfig = "0.5.0"
+    val pureconfig = "0.5.1"
 
     // JavaScript Libraries
 
-    val jquery           = "1.11.2"
+    val jquery           = "1.12.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
     val fontAwesome      = "4.7.0"
-    val reactJs          = "15.4.1"
+    val reactJs          = "15.4.2"
   }
 
   // Common library definitions
