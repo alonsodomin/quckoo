@@ -16,7 +16,6 @@
 
 package io.quckoo.serialization.kryo
 
-import akka.actor.Props
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.serializers.JavaSerializer
 import org.slf4s.Logging
@@ -29,7 +28,6 @@ class KryoInitializer extends Logging {
   def customize(kryo: Kryo): Unit = {
     log.debug("Initializing custom Kryo serializers...")
     TimeSerializers.addDefaultSerializers(kryo)
-    kryo.register(classOf[Props], new JavaSerializer)
   }
 
 }
