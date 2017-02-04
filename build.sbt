@@ -290,7 +290,7 @@ lazy val clusterWorker = (project in file("cluster/worker"))
 
 // Test Support Utils ========================================
 
-lazy val testSupport = (crossProject in file("test-support"))
+lazy val testSupport = (crossProject.crossType(CrossType.Pure) in file("test-support"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)

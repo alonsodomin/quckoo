@@ -15,7 +15,7 @@ object Dependencies {
 
     val scalaTest  = "3.0.1"
     val scalaCheck = "1.13.4"
-    val scalaMock  = "3.3.0"
+    val scalaMock  = "3.5.0"
     val mockito    = "1.10.19"
     val mockserver = "3.10.4"
     val discipline = "0.7.3"
@@ -36,7 +36,7 @@ object Dependencies {
 
       // persistence plugins
       val cassandra = "0.22"
-      val inmemory  = "1.3.18"
+      val inmemory  = "2.4.16.0"
     }
 
     // ScalaJS -------
@@ -122,10 +122,10 @@ object Dependencies {
     val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.3"
     val pureconfig     = "com.github.melrief" %% "pureconfig" % version.pureconfig
 
-    val scalaTest  = "org.scalatest"   %% "scalatest"              % version.scalaTest
-    val scalaMock  = "org.scalamock"   %% "scalamock-core"         % version.scalaMock
-    val mockito    = "org.mockito"      % "mockito-core"           % version.mockito
-    val mockserver = "org.mock-server"  % "mockserver-netty"       % version.mockserver excludeAll(
+    val scalaTest  = "org.scalatest"   %% "scalatest"                   % version.scalaTest
+    val scalaMock  = "org.scalamock"   %% "scalamock-scalatest-support" % version.scalaMock
+    val mockito    = "org.mockito"      % "mockito-core"                % version.mockito
+    val mockserver = "org.mock-server"  % "mockserver-netty"            % version.mockserver excludeAll(
       ExclusionRule(organization = "org.slf4j"),
       ExclusionRule(organization = "ch.qos.logback")
     )
