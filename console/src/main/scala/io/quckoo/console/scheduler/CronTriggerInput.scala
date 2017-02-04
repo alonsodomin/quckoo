@@ -30,22 +30,30 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object CronTriggerInput {
 
   private[this] val errorMessage =
-    ReactComponentB[(String, ParseError)]("CronTriggerInput.ErrorMessage").stateless.render_P {
-      case (input, error) =>
+    ReactComponentB[(String, InvalidCron)]("CronTriggerInput.ErrorMessage")
+      .stateless
+      .render_P { case (input, error) =>
+        def showError(error: InvalidCron) = error match {
+          case ParseFailed(msg, position) =>
+            <.div(
+              <.span(msg),
+              <.br,
+              Iterator.fill(position - 2)(NBSP).mkString + "^"
+            )
+
+          case ValidationError(fieldErrors) =>
+            <.ul(fieldErrors.map(err => <.li(err.field.toString(), err.msg)).list.toList)
+        }
+
         <.div(
           ^.id := "cronParseError",
           ^.color.red,
-          error.message,
-          <.br,
-          input,
-          <.br,
-          Iterator.fill(error.position.column - 2)(NBSP).mkString + "^")
-    } build
+          showError(error)
+        )
+      } build
 
   case class Props(value: Option[Trigger.Cron], onUpdate: Option[Trigger.Cron] => Callback)
-  case class State(inputExpr: Option[String], parseError: Option[ParseError] = None)
-
-  //implicit val propsReuse = Reusability.caseClass[Trigger.Cron]
+  case class State(inputExpr: Option[String], errorReason: Option[InvalidCron] = None)
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -53,8 +61,8 @@ object CronTriggerInput {
       import scalaz._
       import Scalaz._
 
-      def updateError(err: Option[ParseError]): Callback =
-        $.modState(_.copy(parseError = err)) >> $.props.flatMap(_.onUpdate(None))
+      def updateError(err: Option[InvalidCron]): Callback =
+        $.modState(_.copy(errorReason = err)) >> $.props.flatMap(_.onUpdate(None))
 
       def invokeCallback(trigger: Option[Trigger.Cron]): Callback =
         updateError(None) >> $.props.flatMap(_.onUpdate(trigger))
@@ -79,13 +87,13 @@ object CronTriggerInput {
           expressionInput(state.inputExpr, onUpdate _, ^.id := "cronTrigger")),
         <.div(
           ^.`class` := "col-sm-offset-2",
-          state.inputExpr.zip(state.parseError).map(p => errorMessage.withKey("cronError")(p))))
+          state.inputExpr.zip(state.errorReason).map(p => errorMessage.withKey("cronError")(p))))
     }
 
   }
 
   val component = ReactComponentB[Props]("CronTriggerInput")
-    .initialState_P(props => State(props.value.map(_.expr.toString())))
+    .initialState_P(props => State(props.value.map(_.expr.toString)))
     .renderBackend[Backend]
     .build
 

@@ -61,7 +61,7 @@ object Dependencies {
     val monocle    = "1.4.0"
     val scalaz     = "7.2.8"
     val monix      = "2.2.1"
-    val cron4s     = "0.2.1"
+    val cron4s     = "0.3.0"
     val enumeratum = "1.5.6"
     val pureconfig = "0.5.1"
 

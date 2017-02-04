@@ -16,8 +16,9 @@
 
 package io.quckoo
 
+import cron4s._
 import cron4s.expr.CronExpr
-import cron4s.japi.threetenbp._
+import cron4s.lib.threetenbp._
 
 import org.threeten.bp.{Clock, ZonedDateTime, Duration => JavaDuration}
 
