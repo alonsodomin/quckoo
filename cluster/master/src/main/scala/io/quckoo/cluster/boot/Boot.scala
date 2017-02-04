@@ -26,7 +26,7 @@ import io.quckoo.cluster.{QuckooFacade, SystemName}
 import io.quckoo.time.implicits.systemClock
 import io.quckoo.util._
 
-import org.slf4s.Logging
+import slogging._
 
 import scopt.OptionParser
 
@@ -38,7 +38,7 @@ import scalaz.std.scalaFuture._
 /**
   * Created by domingueza on 09/07/15.
   */
-object Boot extends Logging {
+object Boot extends StrictLogging {
 
   val parser = new OptionParser[CliOptions]("quckoo-master") {
     head("quckoo-master", Info.version)
@@ -75,13 +75,13 @@ object Boot extends Logging {
 
   def main(args: Array[String]): Unit = {
     parser.parse(args, CliOptions()).foreach { opts =>
-      log.info(s"Starting Quckoo Server ${Info.version}...\n" + Logo)
+      logger.info(s"Starting Quckoo Server ${Info.version}...\n" + Logo)
 
       val config = opts.toConfig.withFallback(ConfigFactory.load())
 
       implicit val system = ActorSystem(SystemName, config)
       sys.addShutdownHook {
-        log.info("Received kill signal, terminating...")
+        logger.info("Received kill signal, terminating...")
         system.terminate()
       }
 
@@ -91,7 +91,7 @@ object Boot extends Logging {
       import system.dispatcher
       (loadClusterConf andThen startCluster).run(config) onComplete {
         case Success(_) =>
-          log.info("Quckoo server initialized!")
+          logger.info("Quckoo server initialized!")
 
         case Failure(ex) =>
           ex.printStackTrace()

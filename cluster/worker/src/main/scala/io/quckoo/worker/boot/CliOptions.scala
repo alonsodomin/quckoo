@@ -23,7 +23,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 
 import io.quckoo.worker.config._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Created by aalonsodominguez on 03/10/2015.
@@ -58,9 +58,9 @@ final case class CliOptions(
     }
 
     if (masterNodes.nonEmpty) {
-      valueMap.put(QuckooContactPoints, seqAsJavaList(masterNodes.map { node =>
+      valueMap.put(QuckooContactPoints, masterNodes.map { node =>
         s"akka.tcp://QuckooClusterSystem@$node"
-      }))
+      }.asJava)
     }
     ConfigFactory.parseMap(valueMap)
   }

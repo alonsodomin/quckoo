@@ -17,16 +17,16 @@
 package io.quckoo.serialization.kryo
 
 import com.esotericsoftware.kryo.Kryo
-import com.esotericsoftware.kryo.serializers.JavaSerializer
-import org.slf4s.Logging
+
+import slogging._
 
 /**
   * Created by alonsodomin on 11/01/2017.
   */
-class KryoInitializer extends Logging {
+class KryoInitializer extends StrictLogging {
 
   def customize(kryo: Kryo): Unit = {
-    log.debug("Initializing custom Kryo serializers...")
+    logger.debug("Initializing custom Kryo serializers...")
     TimeSerializers.addDefaultSerializers(kryo)
   }
 

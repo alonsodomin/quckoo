@@ -6,7 +6,7 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 organization in ThisBuild := "io.quckoo"
 
-scalaVersion in ThisBuild := "2.11.8"
+scalaVersion in ThisBuild := "2.12.1"
 
 val sandbox = settingKey[String]("The name of the environment sandbox to use.")
 

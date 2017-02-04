@@ -18,12 +18,13 @@ package io.quckoo.resolver
 
 import org.apache.ivy.core.settings.IvySettings
 import org.apache.ivy.plugins.resolver._
-import org.slf4s.Logging
+
+import slogging._
 
 /**
   * Created by aalonsodominguez on 19/07/2015.
   */
-private[resolver] object RepositoryConversion extends Logging {
+private[resolver] object RepositoryConversion extends LazyLogging {
   type RepositoryConverter = PartialFunction[(Repository, IvySettings), DependencyResolver]
 
   def apply(repository: Repository, settings: IvySettings): DependencyResolver =
@@ -48,14 +49,14 @@ private[resolver] object RepositoryConversion extends Logging {
           resolver.setName(name)
           resolver.setRoot(root)
           resolver.setM2compatible(true)
-          log.info(s"Configured Maven repository $name at $url")
+          logger.info(s"Configured Maven repository $name at $url")
           resolver
 
         case repo: URLRepository =>
           val resolver = new URLResolver
           resolver.setName(repo.name)
           initializePatterns(resolver, repo.patterns, settings)
-          log.info(s"Configured URL repository ${repo.name}.")
+          logger.info(s"Configured URL repository ${repo.name}.")
           resolver
 
         case repo: FileRepository =>
@@ -63,7 +64,7 @@ private[resolver] object RepositoryConversion extends Logging {
           resolver.setName(repo.name)
           initializePatterns(resolver, repo.patterns, settings)
           resolver.setLocal(true)
-          log.info(s"Configured File repository ${repo.name}.")
+          logger.info(s"Configured File repository ${repo.name}.")
           resolver
       }
   }

@@ -20,15 +20,15 @@ import akka.persistence.journal.{Tagged, WriteEventAdapter}
 
 import io.quckoo.protocol.scheduler._
 
-import org.slf4s.Logging
+import slogging._
 
 /**
   * Created by alonsodomin on 13/03/2016.
   */
-class SchedulerTagEventAdapter extends WriteEventAdapter with Logging {
+class SchedulerTagEventAdapter extends WriteEventAdapter with StrictLogging {
   import SchedulerTagEventAdapter._
 
-  log.debug("Scheduler event adapter initialized.")
+  logger.debug("Scheduler event adapter initialized.")
 
   override def manifest(event: Any): String = ""
 

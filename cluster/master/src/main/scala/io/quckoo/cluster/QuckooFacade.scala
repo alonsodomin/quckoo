@@ -40,7 +40,7 @@ import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 
-import org.slf4s.Logging
+import slogging._
 
 import org.threeten.bp.Clock
 
@@ -53,7 +53,7 @@ import Scalaz._
 /**
   * Created by alonsodomin on 13/12/2015.
   */
-object QuckooFacade extends Logging {
+object QuckooFacade extends LazyLogging {
 
   final val DefaultTimeout: FiniteDuration = 2500 millis
   final val DefaultBufferSize = 100
@@ -65,7 +65,7 @@ object QuckooFacade extends Logging {
       Http()
         .bindAndHandle(facade.router, settings.http.bindInterface, settings.http.bindPort)
         .map(_ =>
-          log.info(s"HTTP server started on ${settings.http.bindInterface}:${settings.http.bindPort}"))
+          logger.info(s"HTTP server started on ${settings.http.bindInterface}:${settings.http.bindPort}"))
     }
 
     val promise  = Promise[Unit]()
@@ -79,7 +79,7 @@ object QuckooFacade extends Logging {
 }
 
 final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Clock)
-    extends HttpRouter with QuckooServer with Logging {
+    extends HttpRouter with QuckooServer with LazyLogging {
 
   import QuckooFacade._
 
@@ -227,7 +227,7 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
 
     EitherT(validatedJobSpec.map(_.disjunction)).flatMapF { validJobSpec =>
       implicit val to = Timeout(timeout)
-      log.info(s"Registering job spec: $validJobSpec")
+      logger.info(s"Registering job spec: $validJobSpec")
 
       (core ? RegisterJob(validJobSpec)) map {
         case JobAccepted(jobId, _) => jobId.right[Fault]

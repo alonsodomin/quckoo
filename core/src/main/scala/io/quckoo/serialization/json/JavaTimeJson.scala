@@ -100,7 +100,7 @@ trait JavaTimeJson {
   }
 
   implicit def periodW: UWriter[Period] = UWriter[Period] { x =>
-    Js.Str(x.toString())
+    Js.Str(x.toString)
   }
   implicit def periodR: UReader[Period] = UReader[Period] {
     case Js.Str(fmt) => Period.parse(fmt)

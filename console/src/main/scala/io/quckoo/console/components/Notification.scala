@@ -69,14 +69,17 @@ object Notification {
   }
   object PropsMagnet {
 
-    implicit def fromString(string: String): PropsMagnet =
-      () => Props(string)
+    implicit def fromString(string: String): PropsMagnet = new PropsMagnet {
+      def apply() = Props(string)
+    }
 
-    implicit def fromFault(fault: Fault): PropsMagnet =
-      () => Props(fault.toString, title = Some("Error"))
+    implicit def fromFault(fault: Fault): PropsMagnet = new PropsMagnet {
+      def apply() = Props(fault.toString, title = Some("Error"))
+    }
 
-    implicit def fromThrowable(throwable: Throwable): PropsMagnet =
-      () => Props(throwable.getMessage, title = Some(throwable.getClass.getSimpleName))
+    implicit def fromThrowable(throwable: Throwable): PropsMagnet = new PropsMagnet {
+      def apply() = Props(throwable.getMessage, title = Some(throwable.getClass.getSimpleName))
+    }
 
   }
 

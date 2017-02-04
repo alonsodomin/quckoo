@@ -23,7 +23,7 @@ import java.nio.file.Paths
 import com.typesafe.config.Config
 import io.quckoo.resolver.{MavenRepository, Repository}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Created by aalonsodominguez on 19/07/2015.
@@ -56,7 +56,7 @@ object IvyConfiguration {
     val resolutionDir = createPathIfNotExists(config.getString(ResolutionDir))
     val repositoryDir = createPathIfNotExists(config.getString(RepositoryDir))
 
-    val repositories = config.getConfigList(Repositories).map { repoConf =>
+    val repositories = config.getConfigList(Repositories).asScala.map { repoConf =>
       MavenRepository(repoConf.getString("name"), new URL(repoConf.getString("url")))
     }
 

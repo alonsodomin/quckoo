@@ -8,8 +8,8 @@ object Dependencies {
 
     // Logging -------
 
-    val slf4s = "1.7.13"
-    val log4j = "2.8"
+    val slogging = "0.5.2"
+    val log4j    = "2.8"
 
     // Testing --------
 
@@ -24,7 +24,9 @@ object Dependencies {
 
     object akka {
       val main = "2.4.16"
-      val kryo = "0.5.0"
+      val kryo = "0.5.2"
+
+      val constructr = "0.5.2"
 
       object http {
         val main = "10.0.3"
@@ -52,12 +54,11 @@ object Dependencies {
     val diode = "1.1.0"
 
     val upickle   = "0.4.4"
-    val scalatags = "0.6.2"
+    val scalatags = "0.6.3"
 
     // Other utils ---
 
     val scopt      = "3.5.0"
-    val slogging   = "0.5.2"
     val monocle    = "1.4.0"
     val scalaz     = "7.2.8"
     val monix      = "2.2.1"
@@ -108,6 +109,7 @@ object Dependencies {
       val testKit          = "com.typesafe.akka" %% "akka-testkit"            % version.akka.main % Test
 
       val kryoSerialization = "com.github.romix.akka" %% "akka-kryo-serialization" % version.akka.kryo
+      val constructr        = "com.tecsisa" %% "constructr-coordination-consul" % version.akka.constructr
     }
 
     object Log4j {
@@ -115,11 +117,11 @@ object Dependencies {
       val core      = "org.apache.logging.log4j"  % "log4j-core"       % version.log4j
       val slf4jImpl = "org.apache.logging.log4j"  % "log4j-slf4j-impl" % version.log4j % Runtime
     }
-    val slf4s = "org.slf4s" %% "slf4s-api" % version.slf4s
+    val slogging = "biz.enef" %% "slogging-slf4j" % version.slogging
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
 
-    val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.3"
+    val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.5"
     val pureconfig     = "com.github.melrief" %% "pureconfig" % version.pureconfig
 
     val scalaTest  = "org.scalatest"   %% "scalatest"                   % version.scalaTest
@@ -187,7 +189,7 @@ object Dependencies {
   lazy val clientJVM = Def.settings {
     import libs._
     libraryDependencies ++= Seq(
-      slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
+      Log4j.api, Log4j.core, Log4j.slf4jImpl, slogging,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
       Akka.kryoSerialization, Akka.http.main, Akka.http.sse,
       mockserver % Test
@@ -257,7 +259,7 @@ object Dependencies {
   lazy val clusterShared = Def.settings {
     import libs._
     libraryDependencies ++= Seq(
-      slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl,
+      Log4j.api, Log4j.core, Log4j.slf4jImpl, slogging,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
       Akka.kryoSerialization, ivy, scalaXml, pureconfig
     )
@@ -268,10 +270,8 @@ object Dependencies {
       Log4j.slf4jImpl,
       Akka.sharding, Akka.http.main, Akka.http.testkit, Akka.http.upickle, Akka.http.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
-      Akka.persistence.query, Akka.persistence.memory, scopt,
-      authenticatJwt,
-
-      "com.tecsisa" %% "constructr-coordination-consul" % "0.5.2",
+      Akka.persistence.query, Akka.persistence.memory, Akka.constructr,
+      scopt, authenticatJwt,
 
       "com.vmunier"      %% "scalajs-scripts" % "1.1.0",
       "org.webjars"       % "bootstrap-sass"  % version.bootstrap,
@@ -309,7 +309,7 @@ object Dependencies {
 
   lazy val exampleJobs = Def.settings {
     import libs._
-    libraryDependencies ++= Seq(slf4s, Log4j.api, Log4j.core, Log4j.slf4jImpl)
+    libraryDependencies ++= Seq(slogging, Log4j.api, Log4j.core, Log4j.slf4jImpl)
   }
   lazy val exampleProducers = Def.settings {
     import libs._
