@@ -194,7 +194,7 @@ object Dependencies {
       Akka.kryoSerialization, Akka.http.main, Akka.http.sse,
       mockserver % Test,
 
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0,5"
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.5"
     )
   }
 
