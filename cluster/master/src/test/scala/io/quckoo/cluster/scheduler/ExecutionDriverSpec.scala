@@ -138,7 +138,8 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
       expectTerminated(executionPlan)
     }
 
-    "should self-passivate if restarted again" in {
+    "self-passivate if restarted again" in {
+      // Using the same actor name here to force a re-encarnation
       val reencarnatedDriver = system.actorOf(executionDriverProps, driverName)
       watch(reencarnatedDriver)
 

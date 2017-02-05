@@ -22,7 +22,7 @@ import io.quckoo.util.Attempt
 /**
   * Created by alonsodomin on 20/10/2016.
   */
-class Base64Codec(scheme: Scheme) extends Codec[String, Array[Byte]] {
+final class Base64Codec(scheme: Scheme) extends Codec[String, Array[Byte]] {
 
   override def encode(a: String): Attempt[Array[Byte]] = {
     lazy val cleanS = a.reverse.dropWhile(_ == '=').reverse

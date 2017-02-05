@@ -29,7 +29,7 @@ object Dependencies {
       val constructr = "0.5.2"
 
       object http {
-        val main = "10.0.1"
+        val main = "10.0.3"
 
         // http extensions
         val json = "1.12.0"

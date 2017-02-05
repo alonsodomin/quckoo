@@ -19,6 +19,7 @@ package io.quckoo.client.http.dom
 import io.quckoo.client.core.Channel
 import io.quckoo.client.http.{HttpRequest, HttpResponse, _}
 import io.quckoo.serialization.DataBuffer
+
 import monix.reactive.{Observable, OverflowStrategy}
 
 import org.scalajs.dom.{XMLHttpRequest, Event => DOMEvent}
