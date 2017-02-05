@@ -175,8 +175,8 @@ object Dependencies {
 
   lazy val client = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "biz.enef"      %%% "slogging"  % version.slogging,
-      "org.scalatest" %%% "scalatest" % version.scalaTest % Test
+      "biz.enef"               %%% "slogging"                 % version.slogging,
+      "org.scalatest"          %%% "scalatest"                % version.scalaTest % Test
     )
   }
 
@@ -192,9 +192,8 @@ object Dependencies {
       Log4j.api, Log4j.core, Log4j.slf4jImpl, slogging,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
       Akka.kryoSerialization, Akka.http.main, Akka.http.sse,
-      mockserver % Test,
-
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.5"
+      mockserver % Test
+      //"com.typesafe" % "ssl-config-akka_2.12.0-RC2" % "0.2.1"
     )
   }
 
