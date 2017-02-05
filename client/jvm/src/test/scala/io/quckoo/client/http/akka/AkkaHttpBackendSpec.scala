@@ -28,7 +28,7 @@ import io.quckoo.serialization.json._
 import org.mockserver.model.{JsonBody, HttpRequest => MockHttpRequest, HttpResponse => MockHttpResponse}
 import org.mockserver.verify.VerificationTimes
 
-import org.scalatest.{Matchers, Ignore, fixture}
+import org.scalatest.{Matchers, fixture}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -36,7 +36,6 @@ import scala.concurrent.duration.Duration
 /**
   * Created by alonsodomin on 20/09/2016.
   */
-@Ignore
 class AkkaHttpBackendSpec extends fixture.FlatSpec with MockServer with Matchers {
   implicit val actorSystem = ActorSystem("AkkaHttpBackendSpec")
 

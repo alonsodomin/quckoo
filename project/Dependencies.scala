@@ -29,7 +29,7 @@ object Dependencies {
       val constructr = "0.5.2"
 
       object http {
-        val main = "10.0.3"
+        val main = "10.0.1"
 
         // http extensions
         val json = "1.12.0"
@@ -129,7 +129,8 @@ object Dependencies {
     val mockito    = "org.mockito"      % "mockito-core"                % version.mockito
     val mockserver = "org.mock-server"  % "mockserver-netty"            % version.mockserver excludeAll(
       ExclusionRule(organization = "org.slf4j"),
-      ExclusionRule(organization = "ch.qos.logback")
+      ExclusionRule(organization = "ch.qos.logback"),
+      ExclusionRule(organization = "com.twitter")
     )
   }
 
@@ -193,7 +194,6 @@ object Dependencies {
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
       Akka.kryoSerialization, Akka.http.main, Akka.http.sse,
       mockserver % Test
-      //"com.typesafe" % "ssl-config-akka_2.12.0-RC2" % "0.2.1"
     )
   }
 
