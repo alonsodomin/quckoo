@@ -121,7 +121,7 @@ object Dependencies {
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
 
-    val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.5"
+    val authenticatJwt = "com.jason-goodwin"  %% "authentikat-jwt" % "0.4.5"
     val pureconfig     = "com.github.melrief" %% "pureconfig" % version.pureconfig
 
     val scalaTest  = "org.scalatest"   %% "scalatest"                   % version.scalaTest
@@ -192,7 +192,9 @@ object Dependencies {
       Log4j.api, Log4j.core, Log4j.slf4jImpl, slogging,
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics, Akka.testKit,
       Akka.kryoSerialization, Akka.http.main, Akka.http.sse,
-      mockserver % Test
+      mockserver % Test,
+
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0,5"
     )
   }
 
