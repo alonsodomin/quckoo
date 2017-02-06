@@ -24,7 +24,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import io.quckoo.cluster.SystemName
 import io.quckoo.cluster.config._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Created by aalonsodominguez on 03/10/2015.
@@ -74,11 +74,11 @@ final case class CliOptions(
       baseSeed ::: seedNodes.map(node => s"akka.tcp://$SystemName@$node").toList
     }
 
-    valueMap.put(AkkaClusterSeedNodes, seqAsJavaList(clusterSeedNodes))
+    valueMap.put(AkkaClusterSeedNodes, clusterSeedNodes.asJava)
 
     if (cassandraSeedNodes.nonEmpty) {
-      valueMap.put(CassandraJournalContactPoints, seqAsJavaList(cassandraSeedNodes))
-      valueMap.put(CassandraSnapshotContactPoints, seqAsJavaList(cassandraSeedNodes))
+      valueMap.put(CassandraJournalContactPoints, cassandraSeedNodes.asJava)
+      valueMap.put(CassandraSnapshotContactPoints, cassandraSeedNodes.asJava)
     }
 
     ConfigFactory.parseMap(valueMap)

@@ -6,7 +6,7 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 organization in ThisBuild := "io.quckoo"
 
-scalaVersion in ThisBuild := "2.11.8"
+scalaVersion in ThisBuild := "2.12.1"
 
 val sandbox = settingKey[String]("The name of the environment sandbox to use.")
 
@@ -290,7 +290,7 @@ lazy val clusterWorker = (project in file("cluster/worker"))
 
 // Test Support Utils ========================================
 
-lazy val testSupport = (crossProject in file("test-support"))
+lazy val testSupport = (crossProject.crossType(CrossType.Pure) in file("test-support"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings: _*)
   .settings(noPublishSettings: _*)

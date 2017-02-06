@@ -8,7 +8,6 @@ addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.5.4")
-addSbtPlugin("com.tapad" % "sbt-docker-compose" % "1.0.12")
 
 // Web plugins
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.14")
@@ -20,6 +19,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.3.0")
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.8.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.2.0-M8")
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.3.11")
+addSbtPlugin("com.tapad" % "sbt-docker-compose" % "1.0.17")
 
 // Code generators
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.6.1")

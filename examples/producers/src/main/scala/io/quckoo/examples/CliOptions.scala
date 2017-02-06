@@ -18,7 +18,7 @@ package io.quckoo.examples
 
 import java.util.{HashMap => JHashMap, Map => JMap}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Created by aalonsodominguez on 04/10/2015.
@@ -34,9 +34,9 @@ case class CliOptions(clusterNodes: Seq[String] = Seq()) {
 
   def asJavaMap: JMap[String, Object] = {
     val map = new JHashMap[String, Object]()
-    map.put(QuckooContactPoints, seqAsJavaList(clusterNodes.map { node =>
+    map.put(QuckooContactPoints, clusterNodes.map { node =>
       s"akka.tcp://QuckooClusterSystem@$node"
-    }))
+    }.asJava)
     map
   }
 

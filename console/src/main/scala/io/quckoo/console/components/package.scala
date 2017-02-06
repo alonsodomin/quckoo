@@ -18,6 +18,8 @@ package io.quckoo.console
 
 import java.util.concurrent.TimeUnit
 
+import cron4s.expr.CronExpr
+
 import io.quckoo.Trigger
 import io.quckoo.id.ArtifactId
 
@@ -49,11 +51,13 @@ package object components {
   implicit val localDateTimeReuse  = Reusability.byRef[LocalDateTime]
   implicit val zonedDateTimeReuse  = Reusability.byRef[ZonedDateTime]
   implicit val artifactIdReuse     = Reusability.byRef[ArtifactId]
+  implicit val cronExprReuse       = Reusability.by[CronExpr, String](_.toString)
 
   implicit val immediateTriggerReuse = Reusability.byRef[Trigger.Immediate.type]
   implicit val afterTriggerReuse     = Reusability.caseClass[Trigger.After]
   implicit val everyTriggerReuse     = Reusability.caseClass[Trigger.Every]
   implicit val atTriggerReuse        = Reusability.caseClass[Trigger.At]
+  implicit val cronTriggerReuse      = Reusability.caseClass[Trigger.Cron]
 
   implicit def toReactNode(notification: Notification): ReactNode =
     notification.inline

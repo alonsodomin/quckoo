@@ -20,7 +20,7 @@ import java.net.{URL, URLClassLoader}
 import java.security.{AllPermission, CodeSource, Permission, PermissionCollection}
 import java.util
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Created by aalonsodominguez on 25/07/15.
@@ -29,12 +29,12 @@ object ArtifactClassLoader {
 
   private val allPermissions = new PermissionCollection {
 
-    private val allPermission = new AllPermission()
+    private val allPermission: Permission = new AllPermission()
 
     override def implies(permission: Permission): Boolean = true
 
     override def elements(): util.Enumeration[Permission] =
-      util.Collections.enumeration(List(allPermission))
+      util.Collections.enumeration(Seq(allPermission).asJavaCollection)
 
     override def add(permission: Permission): Unit = ()
   }

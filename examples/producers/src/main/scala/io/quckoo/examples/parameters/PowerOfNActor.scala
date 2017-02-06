@@ -16,6 +16,8 @@
 
 package io.quckoo.examples.parameters
 
+import java.util.concurrent.ThreadLocalRandom
+
 import akka.actor._
 
 import io.quckoo._
@@ -25,7 +27,6 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 
 import scala.concurrent.duration._
-import scala.concurrent.forkjoin.ThreadLocalRandom
 
 /**
   * Created by aalonsodominguez on 05/07/15.

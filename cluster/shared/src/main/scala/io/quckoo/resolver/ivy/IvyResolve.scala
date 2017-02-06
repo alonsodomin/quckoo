@@ -22,12 +22,14 @@ import io.quckoo.fault._
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver._
 import io.quckoo.resolver.config.IvyConfig
+
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor.{Configuration, DefaultDependencyDescriptor, DefaultModuleDescriptor, ModuleDescriptor}
 import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
 import org.apache.ivy.core.report.{ArtifactDownloadReport, ResolveReport}
 import org.apache.ivy.core.resolve.ResolveOptions
-import org.slf4s.Logging
+
+import slogging._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalaz._
@@ -51,7 +53,7 @@ object IvyResolve {
 
 }
 
-class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
+class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with LazyLogging {
 
   import IvyResolve._
   import Scalaz._
@@ -119,7 +121,7 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with Logging {
       .setOutputReport(false)
       .setConfs(Array(DefaultConfName))
 
-    log.debug(s"Resolving $moduleDescriptor")
+    logger.debug(s"Resolving $moduleDescriptor")
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
     (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)) { (_, r) =>

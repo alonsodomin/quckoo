@@ -21,12 +21,13 @@ import java.util.concurrent.Callable
 
 import io.quckoo.JobClass
 import io.quckoo.id.ArtifactId
-import org.slf4s.Logging
 
 import scala.util.Try
 
 import scalaz._
 import Scalaz._
+
+import slogging._
 
 /**
   * Created by aalonsodominguez on 17/07/15.
@@ -39,9 +40,10 @@ object Artifact {
 
 }
 
-final class Artifact private[resolver] (val artifactId: ArtifactId,
-                                        classLoader: ArtifactClassLoader)
-    extends Logging {
+final class Artifact private[resolver] (
+    val artifactId: ArtifactId,
+    classLoader: ArtifactClassLoader)
+  extends LazyLogging {
 
   logCreation()
 
@@ -51,7 +53,7 @@ final class Artifact private[resolver] (val artifactId: ArtifactId,
   def classpath: Seq[URL] = classLoader.getURLs
 
   def jobClass(className: String): Try[JobClass] = {
-    log.debug(s"Loading job class: $className")
+    logger.debug(s"Loading job class: $className")
     loadClass(className) map { _.asInstanceOf[JobClass] }
   }
 
@@ -59,7 +61,7 @@ final class Artifact private[resolver] (val artifactId: ArtifactId,
     jobClass(className).flatMap { jobClass =>
       Try(jobClass.newInstance()).map { job =>
         if (params.nonEmpty) {
-          log.info("Injecting parameters into job instance.")
+          logger.info("Injecting parameters into job instance.")
           jobClass.getDeclaredFields.filter(field => params.contains(field.getName)).foreach {
             field =>
               val paramValue = params(field.getName)
@@ -79,7 +81,7 @@ final class Artifact private[resolver] (val artifactId: ArtifactId,
 
   private def logCreation(): Unit = {
     val classpathStr = classpath.mkString(":")
-    log.debug(s"Job package created for artifact ${artifactId.shows} and classpath: $classpathStr")
+    logger.debug(s"Job package created for artifact ${artifactId.shows} and classpath: $classpathStr")
   }
 
 }

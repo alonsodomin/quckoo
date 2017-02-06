@@ -36,7 +36,7 @@ private[dom] class EventSourceSubscriber(url: String, eventType: String)
   val source = new EventSource(url)
 
   override def apply(subscriber: Subscriber.Sync[HttpServerSentEvent]): Cancelable = {
-    val cancelable = RefCountCancelable(source.close)
+    val cancelable = RefCountCancelable(() => source.close)
 
     source.onerror = (event: Event) => {
       logger.debug(s"Received 'error' event: $event")

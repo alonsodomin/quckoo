@@ -27,7 +27,7 @@ import io.quckoo.resolver.ivy.IvyResolve
 import io.quckoo.worker.config.{WorkerSettings, ResolverDispatcher, ExecutorDispatcher}
 import io.quckoo.worker.{JobExecutor, Worker, SystemName}
 
-import org.slf4s.Logging
+import slogging._
 
 import scopt.OptionParser
 
@@ -36,7 +36,7 @@ import scala.util.{Success, Failure}
 /**
   * Created by domingueza on 09/07/15.
   */
-object Boot extends App with Logging {
+object Boot extends App with StrictLogging {
 
   val parser = new OptionParser[CliOptions]("quckoo-worker") {
     head("quckoo-worker", Info.version)
@@ -58,7 +58,7 @@ object Boot extends App with Logging {
     opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
-    log.info(s"Starting Quckoo Worker ${Info.version}...\n" + Logo)
+    logger.info(s"Starting Quckoo Worker ${Info.version}...\n" + Logo)
 
     implicit val system = ActorSystem(SystemName, config)
     sys.addShutdownHook { system.terminate() }

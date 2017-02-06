@@ -17,6 +17,7 @@
 package io.quckoo.client
 
 import io.quckoo.util.Attempt
+
 import monix.reactive.Observable
 
 import scalaz._
