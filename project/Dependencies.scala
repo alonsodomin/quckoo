@@ -184,7 +184,8 @@ object Dependencies {
   lazy val clientJS = Def.settings(
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % version.scalaJsDom
-    )
+    ),
+    jsDependencies += RuntimeDOM
   )
 
   lazy val clientJVM = Def.settings {
