@@ -67,7 +67,7 @@ object HttpProtocolSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "latest")
   final val TestJobId = JobId(UUID.randomUUID())
-  final val TestJobSpec = JobSpec("foo",
+  final val TestJobSpec = JobSpec.jar("foo",
     artifactId = TestArtifactId,
     jobClass = "com.example.Job"
   )

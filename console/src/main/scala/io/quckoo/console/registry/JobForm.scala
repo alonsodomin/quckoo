@@ -16,7 +16,7 @@
 
 package io.quckoo.console.registry
 
-import io.quckoo.JobSpec
+import io.quckoo.{JobSpec, JarJobSpec}
 import io.quckoo.console.components._
 import io.quckoo.id.ArtifactId
 
@@ -82,7 +82,7 @@ object JobForm {
           name  <- state.spec.displayName
           art   <- state.spec.artifactId
           clazz <- state.spec.jobClass
-        } yield JobSpec(name, state.spec.description, art, clazz)
+        } yield JarJobSpec(name, state.spec.description, art, clazz)
       } else None
 
       props.handler(jobSpec)

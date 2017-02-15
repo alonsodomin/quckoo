@@ -45,7 +45,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
   def scheduler = context.system.scheduler
   def rnd       = ThreadLocalRandom.current
 
-  val jobSpec = JobSpec(
+  val jobSpec = JarJobSpec(
     displayName = "Power Of N",
     artifactId = ArtifactId("io.quckoo", "quckoo-example-jobs_2.11", "0.1.0-SNAPSHOT"),
     jobClass = classOf[PowerOfNJob].getName

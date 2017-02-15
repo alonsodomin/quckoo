@@ -46,12 +46,12 @@ import scalaz.syntax.validation._
   */
 object RegistryHttpRouterSpec {
 
-  final val TestJobSpec = JobSpec("TestJob",
+  final val TestJobSpec = JobSpec.jar("TestJob",
     Some("Description for TestJob"),
     ArtifactId("org.example", "bar", "1.0.0"),
     "org.example.JobClass"
   )
-  final val TestInvalidJobSpec = JobSpec("", None, ArtifactId("", "", ""), "")
+  final val TestInvalidJobSpec = JobSpec.jar("", None, ArtifactId("", "", ""), "")
 
   final val TestJobMap = Map(
     JobId(TestJobSpec) -> TestJobSpec

@@ -28,7 +28,47 @@ import scalaz.Show
   */
 object JobSpec {
 
-  val valid = {
+  val valid: Validator[JobSpec] = JarJobSpec.valid.dimap({
+    case jar: JarJobSpec => jar
+  }, _.map(_.asInstanceOf[JobSpec]))
+
+  def jar(
+    displayName: String,
+    description: Option[String] = None,
+    artifactId: ArtifactId,
+    jobClass: String,
+    disabled: Boolean = false
+  ) = JarJobSpec(displayName, description, artifactId, jobClass, disabled)
+
+  implicit val display: Show[JobSpec] = Show.showFromToString[JobSpec]
+
+}
+
+sealed trait JobSpec {
+  def displayName: String
+  def description: Option[String]
+  def artifactId: ArtifactId
+  def jobClass: String
+  def disabled: Boolean
+
+  def enable(): JobSpec
+  def disable(): JobSpec
+}
+
+@Lenses case class JarJobSpec(
+    displayName: String,
+    description: Option[String] = None,
+    artifactId: ArtifactId,
+    jobClass: String,
+    disabled: Boolean = false
+) extends JobSpec {
+  def enable() = copy(disabled = false)
+  def disable() = copy(disabled = true)
+}
+
+object JarJobSpec {
+
+  val valid: Validator[JarJobSpec] = {
     import Validators._
 
     val validDisplayName = nonEmpty[String].at("displayName")
@@ -40,17 +80,8 @@ object JobSpec {
       any[Option[String]],
       validArtifactId,
       validJobClass,
-      any[Boolean])(JobSpec.unapply, JobSpec.apply)
+      any[Boolean])(JarJobSpec.unapply, JarJobSpec.apply)
   }
 
-  implicit val display: Show[JobSpec] = Show.showFromToString[JobSpec]
-
+  implicit val display: Show[JarJobSpec] = Show.showFromToString[JarJobSpec]
 }
-
-@Lenses case class JobSpec(
-    displayName: String,
-    description: Option[String] = None,
-    artifactId: ArtifactId,
-    jobClass: String,
-    disabled: Boolean = false
-)

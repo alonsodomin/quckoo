@@ -35,7 +35,7 @@ import scala.concurrent.duration._
 object PersistentJobSpec {
 
   final val BarArtifactId = ArtifactId("com.example", "bar", "test")
-  final val BarJobSpec    = JobSpec("bar", Some("bar desc"), BarArtifactId, "com.example.bar.Job")
+  final val BarJobSpec    = JobSpec.jar("bar", Some("bar desc"), BarArtifactId, "com.example.bar.Job")
   final val BarJobId      = JobId(BarJobSpec)
 
 }

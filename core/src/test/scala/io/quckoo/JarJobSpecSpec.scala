@@ -27,7 +27,7 @@ import Scalaz._
 /**
   * Created by alonsodomin on 24/01/2016.
   */
-class JobSpecSpec extends FlatSpec with Matchers {
+class JarJobSpecSpec extends FlatSpec with Matchers {
   import Violation._
 
   "Validation for JobSpec parameters" should "not accept empty values" in {
@@ -39,7 +39,7 @@ class JobSpecSpec extends FlatSpec with Matchers {
       ) and
       PathViolation.at(Path("jobClass"), Empty)
 
-    JobSpec.valid.run(JobSpec("", None, ArtifactId("", "", ""), "")) shouldBe expectedError.failure[JobSpec]
+    JarJobSpec.valid.run(JarJobSpec("", None, ArtifactId("", "", ""), "")) shouldBe expectedError.failure[JobSpec]
   }
 
 }
