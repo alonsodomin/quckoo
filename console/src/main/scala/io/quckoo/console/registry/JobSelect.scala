@@ -31,7 +31,7 @@ object JobSelect {
                    value: Option[JobId],
                    onUpdate: Option[JobId] => Callback)
 
-  val JobOption = ReactComponentB[(JobId, JobSpec)]("JobOption").stateless.render_P {
+  private[this] val JobOption = ReactComponentB[(JobId, JobSpec)]("JobOption").stateless.render_P {
     case (jobId, spec) =>
       val desc = spec.description.map(text => s"| $text").getOrElse("")
       <.option(^.value := jobId.toString(), s"${spec.displayName} $desc")

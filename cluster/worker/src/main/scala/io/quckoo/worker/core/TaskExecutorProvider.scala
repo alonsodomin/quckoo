@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-package io.quckoo
+package io.quckoo.worker.core
 
-import io.quckoo.id._
+import akka.actor.{ActorRef, ActorRefFactory}
 
-import scalaz._
-import Scalaz._
+import io.quckoo.Task
 
 /**
-  * Created by aalonsodominguez on 05/07/15.
+  * Created by alonsodomin on 16/02/2017.
   */
-final case class Task(
-    id: TaskId,
-    jobPackage: JobPackage
-    //params: Map[String, AnyVal] = Map.empty,
-)
+trait TaskExecutorProvider {
 
-object Task {
-
-  implicit val showTask: Show[Task] = Show.showA[JobPackage].contramap(_.jobPackage)
+  def executorFor(context: WorkerContext, task: Task)(implicit actorRefFactory: ActorRefFactory): ActorRef
 
 }

@@ -16,9 +16,8 @@
 
 package io.quckoo.console.registry
 
-import io.quckoo.{JobSpec, JarJobSpec}
+import io.quckoo.{JobSpec, JobPackage}
 import io.quckoo.console.components._
-import io.quckoo.id.ArtifactId
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -43,15 +42,14 @@ object JobForm {
   @Lenses final case class EditableJobSpec(
     displayName: Option[String] = None,
     description: Option[String] = None,
-    artifactId: Option[ArtifactId] = None,
-    jobClass: Option[String] = None
+    jobPackage: Option[JobPackage] = None
   ) {
 
     def this(jobSpec: Option[JobSpec]) =
-      this(jobSpec.map(_.displayName), jobSpec.flatMap(_.description), jobSpec.map(_.artifactId), jobSpec.map(_.jobClass))
+      this(jobSpec.map(_.displayName), jobSpec.flatMap(_.description), jobSpec.map(_.jobPackage))
 
     def valid: Boolean =
-      displayName.nonEmpty && artifactId.nonEmpty && jobClass.nonEmpty
+      displayName.nonEmpty && jobPackage.nonEmpty
 
   }
 
@@ -61,8 +59,7 @@ object JobForm {
 
     val displayName = State.spec ^|-> EditableJobSpec.displayName
     val description = State.spec ^|-> EditableJobSpec.description
-    val artifact    = State.spec ^|-> EditableJobSpec.artifactId
-    val jobClass    = State.spec ^|-> EditableJobSpec.jobClass
+    val jobPackage  = State.spec ^|-> EditableJobSpec.jobPackage
 
     def submitForm(): Callback =
       $.modState(_.copy(cancelled = false))
@@ -73,16 +70,15 @@ object JobForm {
     def onDescriptionUpdate(value: Option[String]) =
       $.setStateL(description)(value)
 
-    def onJobClassUpdate(value: Option[String]) =
-      $.setStateL(jobClass)(value)
+    def onJobPackageUpdate(value: Option[JobPackage]) =
+      $.setStateL(jobPackage)(value)
 
     def formClosed(props: Props, state: State) = {
       val jobSpec: Option[JobSpec] = if (!state.cancelled) {
         for {
           name  <- state.spec.displayName
-          art   <- state.spec.artifactId
-          clazz <- state.spec.jobClass
-        } yield JarJobSpec(name, state.spec.description, art, clazz)
+          pckg  <- state.spec.jobPackage
+        } yield JobSpec(name, state.spec.description, pckg)
       } else None
 
       props.handler(jobSpec)
@@ -128,19 +124,7 @@ object JobForm {
               ^.placeholder := "Job's description"
             )
           ),
-          <.div(lnf.formGroup,
-            <.label("Artifact"),
-            ArtifactInput(state.spec.artifactId, $.setStateL(artifact)(_))
-          ),
-          <.div(lnf.formGroup,
-            <.label(^.`for` := "jobClass", "Job Class"),
-            jobClassInput(
-              state.spec.jobClass,
-              onJobClassUpdate _,
-              ^.id := "jobClass",
-              ^.placeholder := "Fully classified job class name"
-            )
-          )
+          JobPackageSelect(state.spec.jobPackage, onJobPackageUpdate)
         )
       )
     }

@@ -400,8 +400,7 @@ class ExecutionDriver(implicit clock: Clock) extends PersistentActor with ActorL
     else {
       def createTask = Task(
         UUID.randomUUID(),
-        state.jobSpec.artifactId,
-        state.jobSpec.jobClass
+        state.jobSpec.jobPackage
       )
       val task = state.plan.currentTask.getOrElse(createTask)
       state.plan.nextExecutionTime.map { when =>

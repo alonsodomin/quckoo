@@ -14,24 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo
+package io.quckoo.worker.core
 
-import io.quckoo.id._
-
-import scalaz._
-import Scalaz._
+import akka.actor.ActorRef
 
 /**
-  * Created by aalonsodominguez on 05/07/15.
+  * Created by alonsodomin on 16/02/2017.
   */
-final case class Task(
-    id: TaskId,
-    jobPackage: JobPackage
-    //params: Map[String, AnyVal] = Map.empty,
-)
+trait WorkerContext {
 
-object Task {
-
-  implicit val showTask: Show[Task] = Show.showA[JobPackage].contramap(_.jobPackage)
+  def resolver: ActorRef
 
 }

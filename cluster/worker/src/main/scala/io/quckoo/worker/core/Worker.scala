@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker
+package io.quckoo.worker.core
 
 import java.util.UUID
 
@@ -26,7 +26,6 @@ import io.quckoo.Task
 import io.quckoo.cluster.protocol._
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.TaskId
-import io.quckoo.resolver.Resolver
 
 import scala.concurrent.duration._
 
@@ -35,32 +34,32 @@ import scala.concurrent.duration._
   */
 object Worker {
 
-  final val DefaultRegisterFrequency = 10 seconds
-  final val DefaultQueueAckTimeout   = 5 seconds
+  final val DefaultRegisterFrequency : FiniteDuration = 10 seconds
+  final val DefaultQueueAckTimeout   : FiniteDuration = 5 seconds
 
   protected[worker] final val SchedulerPath = "/user/quckoo/scheduler"
 
   def props(clusterClient: ActorRef,
             resolverProps: Props,
-            jobExecutorProps: Props,
+            taskExecutorProvider: TaskExecutorProvider,
             registerInterval: FiniteDuration = DefaultRegisterFrequency,
             queueAckTimeout: FiniteDuration = DefaultQueueAckTimeout): Props =
-    Props(
-      classOf[Worker],
+    Props(new Worker(
       clusterClient,
       resolverProps,
-      jobExecutorProps,
+      taskExecutorProvider,
       registerInterval,
       queueAckTimeout
-    )
+    ))
 
 }
 
-class Worker(clusterClient: ActorRef,
-             resolverProps: Props,
-             jobExecutorProps: Props,
-             registerInterval: FiniteDuration,
-             queueAckTimeout: FiniteDuration)
+class Worker private (
+    clusterClient: ActorRef,
+    resolverProps: Props,
+    taskExecutorProvider: TaskExecutorProvider,
+    registerInterval: FiniteDuration,
+    queueAckTimeout: FiniteDuration)
     extends Actor with ActorLogging {
 
   import Worker._
@@ -75,8 +74,10 @@ class Worker(clusterClient: ActorRef,
     SendToAll(SchedulerPath, RegisterWorker(workerId))
   )
 
-  private val resolver    = context.watch(context.actorOf(resolverProps, "resolver"))
-  private val jobExecutor = context.watch(context.actorOf(jobExecutorProps, "executor"))
+  val workerContext = new WorkerContext {
+    val resolver: ActorRef = context.watch(context.actorOf(resolverProps, "resolver"))
+  }
+  private[this] var executor: Option[ActorRef] = None
 
   private var currentTaskId: Option[TaskId] = None
 
@@ -87,37 +88,33 @@ class Worker(clusterClient: ActorRef,
 
   override def postStop(): Unit = registerTask.cancel()
 
-  def receive = idle
+  def receive: Receive = idle
 
-  def idle: Receive = {
+  private[this] def idle: Receive = {
     case TaskReady =>
       log.info("Requesting task to master.")
-      sendToQueue(RequestTask(workerId))
+      sendToMaster(RequestTask(workerId))
 
     case task: Task =>
       log.info("Received task for execution {}", task.id)
       currentTaskId = Some(task.id)
-      resolver ! Resolver.Download(task.artifactId)
+      executor = Some(taskExecutorProvider.executorFor(workerContext, task))
+        .map(context.watch)
+      executor.foreach(_ ! TaskExecutor.Run)
       context.become(working(task))
   }
 
-  def working(task: Task): Receive = {
-    case Resolver.ArtifactResolved(artifact) =>
-      jobExecutor ! JobExecutor.Execute(task, artifact)
-
-    case Resolver.ResolutionFailed(_, cause) =>
-      sendToQueue(TaskFailed(workerId, task.id, cause))
-      context.setReceiveTimeout(Duration.Undefined)
-      context.become(idle)
-
-    case JobExecutor.Completed(result) =>
+  private[this] def working(task: Task): Receive = {
+    case TaskExecutor.Completed(result) =>
       log.info("Task execution has completed. Result {}.", result)
-      sendToQueue(TaskDone(workerId, task.id, result))
+      sendToMaster(TaskDone(workerId, task.id, result))
+      stopExecutor()
       context.setReceiveTimeout(queueAckTimeout)
       context.become(waitForTaskDoneAck(result))
 
-    case JobExecutor.Failed(reason) =>
-      sendToQueue(TaskFailed(workerId, task.id, reason))
+    case TaskExecutor.Failed(reason) =>
+      sendToMaster(TaskFailed(workerId, task.id, reason))
+      stopExecutor()
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 
@@ -125,9 +122,9 @@ class Worker(clusterClient: ActorRef,
       log.info("Yikes. The task queue has sent me another another task while I'm busy.")
   }
 
-  def waitForTaskDoneAck(result: Any): Receive = {
+  private[this] def waitForTaskDoneAck(result: Any): Receive = {
     case TaskDoneAck(id) if id == taskId =>
-      sendToQueue(RequestTask(workerId))
+      sendToMaster(RequestTask(workerId))
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 
@@ -135,29 +132,37 @@ class Worker(clusterClient: ActorRef,
       log.warning(
         "Didn't receive any ack from task queue in the last {}, retrying",
         queueAckTimeout)
-      sendToQueue(TaskDone(workerId, taskId, result))
+      sendToMaster(TaskDone(workerId, taskId, result))
       context.setReceiveTimeout(queueAckTimeout)
   }
 
-  private def sendToQueue(msg: Any): Unit = {
+  private[this] def sendToMaster(msg: Any): Unit =
     clusterClient ! SendToAll(SchedulerPath, msg)
+
+  private[this] def stopExecutor(): Unit = {
+    executor.map(context.unwatch).foreach(context.stop)
+    executor = None
   }
 
   override def supervisorStrategy = OneForOneStrategy() {
     case _: ActorInitializationException => Stop
     case _: DeathPactException           => Stop
     case cause: Exception =>
+      stopExecutor()
       currentTaskId.foreach { taskId =>
-        sendToQueue(TaskFailed(workerId, taskId, ExceptionThrown.from(cause)))
+        sendToMaster(TaskFailed(workerId, taskId, ExceptionThrown.from(cause)))
       }
       context.become(idle)
-      Restart
+      Stop
   }
 
   override def unhandled(message: Any): Unit = message match {
-    case Terminated(`jobExecutor`) => context.stop(self)
-    case TaskReady                 =>
-    case _                         => super.unhandled(message)
+    case Terminated(actorRef) if executor.contains(actorRef) =>
+      // Unexpected executor termination
+      context.stop(self)
+
+    case TaskReady =>
+    case _         => super.unhandled(message)
   }
 
 }

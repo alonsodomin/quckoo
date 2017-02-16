@@ -22,9 +22,9 @@ import java.util.concurrent.Callable
 import io.quckoo.JobClass
 import io.quckoo.id.ArtifactId
 
-import scala.util.Try
+import scala.util.{Success, Failure, Try}
 
-import scalaz._
+import scalaz.{Success => _, Failure => _, _}
 import Scalaz._
 
 import slogging._
@@ -53,24 +53,34 @@ final class Artifact private[resolver] (
   def classpath: Seq[URL] = classLoader.getURLs
 
   def jobClass(className: String): Try[JobClass] = {
-    logger.debug(s"Loading job class: $className")
+    logger.debug("Loading job class: {}", className)
     loadClass(className) map { _.asInstanceOf[JobClass] }
   }
 
-  def newJob(className: String, params: Map[String, Any]): Try[Callable[_]] =
-    jobClass(className).flatMap { jobClass =>
-      Try(jobClass.newInstance()).map { job =>
-        if (params.nonEmpty) {
-          logger.info("Injecting parameters into job instance.")
-          jobClass.getDeclaredFields.filter(field => params.contains(field.getName)).foreach {
-            field =>
-              val paramValue = params(field.getName)
-              field.set(job, paramValue)
+  def newJob(className: String, params: Map[String, Any]): Try[Callable[_]] = {
+    def injectParameters(clazz: JobClass, instance: Any): Try[Unit] = {
+      val injection = \/.fromTryCatchNonFatal(clazz.getDeclaredFields.toList).flatMap { list =>
+        list.filter(f => params.contains(f.getName)).map { field =>
+          \/.fromTryCatchNonFatal {
+            val value = params(field.getName)
+            logger.debug("Injecting value '{}' into job instance of class '{}'", value, className)
+            field.set(instance, value)
           }
-        }
-        job
+        } sequenceU
+      }
+
+      injection match {
+        case -\/(ex) => Failure(ex)
+        case \/-(_)  => Success(())
       }
     }
+
+    for {
+      clazz    <- jobClass(className)
+      instance <- Try(clazz.newInstance())
+      _        <- injectParameters(clazz, instance)
+    } yield instance
+  }
 
   override def equals(other: Any): Boolean = other match {
     case that: Artifact => artifactId == that.artifactId
