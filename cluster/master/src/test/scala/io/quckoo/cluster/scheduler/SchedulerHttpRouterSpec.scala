@@ -70,7 +70,8 @@ object SchedulerHttpRouterSpec {
   )
 
   final val TestTaskIds: Seq[TaskId] = List(UUID.randomUUID())
-  final val TestTask = Task(TestTaskIds.head, ArtifactId("com.example", "example", "latest"), "")
+  final val TestTask = Task(TestTaskIds.head, JobPackage.jar(
+    ArtifactId("com.example", "example", "latest"), ""))
   final val TestTaskMap = Map(
     TestTaskIds.head -> TaskExecution(
       TestPlanIds.head, TestTask, TaskExecution.Scheduled, None

@@ -20,18 +20,19 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import akka.testkit._
-import io.quckoo.Task
+
+import io.quckoo.{Task, JobPackage}
 import io.quckoo.cluster.protocol._
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.ArtifactId
 import io.quckoo.test.TestActorSystem
-import io.quckoo.fault.{Fault, Faults}
+import io.quckoo.fault.Fault
+
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent._
 import scala.concurrent.duration._
-import scalaz.NonEmptyList
 
 /**
  * Created by aalonsodominguez on 18/08/15.
@@ -54,7 +55,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
   override def afterAll(): Unit = TestKit.shutdownActorSystem(system)
 
   "A TaskQueue" should {
-    val task = Task(id = UUID.randomUUID(), artifactId = TestArtifactId, jobClass = TestJobClass)
+    val task = Task(id = UUID.randomUUID(), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
     val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "happyQueue")
     val workerId = UUID.randomUUID()
@@ -121,7 +122,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
     val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "willFailQueue")
 
     "notify an error in the execution when the worker fails" in {
-      val task = Task(id = UUID.randomUUID(), artifactId = TestArtifactId, jobClass = TestJobClass)
+      val task = Task(id = UUID.randomUUID(), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
       val failingWorkerId = UUID.randomUUID()
       val failingExec = TestProbe("failingExec")
@@ -145,7 +146,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
 
     "perform a timeout if the execution does notify it" in {
       val taskTimeout = 1 seconds
-      val task = Task(id = UUID.randomUUID(), artifactId = TestArtifactId, jobClass = TestJobClass)
+      val task = Task(id = UUID.randomUUID(), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
       val timingOutWorkerId = UUID.randomUUID()
       val timingOutExec = TestProbe("failingExec")
@@ -171,7 +172,7 @@ class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with Impli
     val taskQueue = TestActorRef(TaskQueue.props(100 millis), "willTimeoutQueue")
 
     "notify a timeout if the worker doesn't reply in between the task timeout" in {
-      val task = Task(id = UUID.randomUUID(), artifactId = TestArtifactId, jobClass = TestJobClass)
+      val task = Task(id = UUID.randomUUID(), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
       val timingOutWorkerId = UUID.randomUUID()
       val timingOutExec = TestProbe("failingExec")
