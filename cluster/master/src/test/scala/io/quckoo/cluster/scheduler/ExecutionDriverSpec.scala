@@ -28,7 +28,7 @@ import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.test.{ImplicitClock, TestActorSystem}
+import io.quckoo.testkit.{ImplicitClock, QuckooActorClusterSuite}
 
 import org.scalatest._
 
@@ -45,10 +45,8 @@ object ExecutionDriverSpec {
 
 }
 
-class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec"))
-    with ImplicitSender with ImplicitClock
-    with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers
-    with Inside {
+class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
+    with ImplicitSender with ImplicitClock with BeforeAndAfter with Inside {
 
   import ExecutionDriver._
   import ExecutionDriverSpec._
@@ -71,9 +69,6 @@ class ExecutionDriverSpec extends TestKit(TestActorSystem("ExecutionDriverSpec")
 
   def executionDriverProps: Props = ExecutionDriver.props.
     withDispatcher("akka.actor.default-dispatcher")
-
-  override protected def afterAll(): Unit =
-    TestKit.shutdownActorSystem(system)
 
   "An execution driver with a recurring trigger that eventually gets disabled" should  {
     val trigger = Trigger.Every(50 millis)

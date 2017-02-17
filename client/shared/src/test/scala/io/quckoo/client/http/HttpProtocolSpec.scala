@@ -29,7 +29,7 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
-import io.quckoo.test.ImplicitClock
+import io.quckoo.testkit.ImplicitClock
 import io.quckoo.util._
 
 import monix.execution.Scheduler

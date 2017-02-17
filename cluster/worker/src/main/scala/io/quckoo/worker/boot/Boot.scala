@@ -60,6 +60,8 @@ object Boot extends App with StrictLogging {
     opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
+    LoggerConfig.factory = SLF4JLoggerFactory()
+
     logger.info(s"Starting Quckoo Worker ${Info.version}...\n" + Logo)
 
     implicit val system = ActorSystem(SystemName, config)

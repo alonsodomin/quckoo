@@ -22,7 +22,7 @@ import com.typesafe.config.ConfigFactory
 
 import io.quckoo.config._
 import io.quckoo.resolver.MavenRepository
-import io.quckoo.test.TryAssertions
+import io.quckoo.testkit.TryAssertions
 
 import org.scalatest.{FlatSpec, Matchers}
 

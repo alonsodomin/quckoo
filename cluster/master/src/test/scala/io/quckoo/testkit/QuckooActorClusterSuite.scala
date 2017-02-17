@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
-package io.quckoo.test
+package io.quckoo.testkit
 
-import io.quckoo.Job
+import akka.cluster.Cluster
+
+import org.scalatest.Suite
 
 /**
- * Created by domingueza on 10/07/15.
- */
-class DummyJob extends Job {
-  override def execute(): Any = ???
+  * Created by alonsodomin on 17/02/2017.
+  */
+abstract class QuckooActorClusterSuite(name: String) extends QuckooActorSuite(name) {
+
+  override protected def beforeAll(): Unit = {
+    super.beforeAll()
+
+    val address = Cluster(system).selfAddress
+    Cluster(system).join(address)
+  }
+
 }

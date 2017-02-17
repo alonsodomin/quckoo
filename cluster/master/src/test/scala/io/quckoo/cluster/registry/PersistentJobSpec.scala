@@ -23,7 +23,7 @@ import io.quckoo._
 import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
-import io.quckoo.test.TestActorSystem
+import io.quckoo.testkit.QuckooActorClusterSuite
 
 import org.scalatest._
 
@@ -42,10 +42,8 @@ object PersistentJobSpec {
 
 }
 
-class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec"))
-    with ImplicitSender
-    with WordSpecLike with BeforeAndAfterEach with BeforeAndAfterAll
-    with Matchers {
+class PersistentJobSpec extends QuckooActorClusterSuite("PersistentJobSpec")
+    with ImplicitSender with BeforeAndAfterEach {
 
   import PersistentJobSpec._
 
@@ -67,9 +65,6 @@ class PersistentJobSpec extends TestKit(TestActorSystem("PersistentJobSpec"))
       fail("There are additional messages in the listener queue.")
     }
   }
-
-  override def afterAll(): Unit =
-    TestKit.shutdownActorSystem(system)
 
   "A persistent job" should {
     val job = TestActorRef(PersistentJob.props.withDispatcher("akka.actor.default-dispatcher"))

@@ -14,25 +14,13 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker.config
+package io.quckoo.testkit
 
-import com.typesafe.config.ConfigFactory
-
-import io.quckoo.testkit.TryAssertions
-
-import org.scalatest.{FlatSpec, Matchers}
+import io.quckoo.Job
 
 /**
-  * Created by alonsodomin on 04/11/2016.
-  */
-class WorkerSettingsSpec extends FlatSpec with Matchers with TryAssertions {
-
-  "WorkerSettings" should "load the default configuration settings" in {
-    val config = ConfigFactory.load()
-
-    ifSuccessful(WorkerSettings(config)) { settings =>
-      settings.worker.contactPoints should not be empty
-    }
-  }
-
+ * Created by domingueza on 10/07/15.
+ */
+class DummyJob extends Job {
+  override def execute(): Any = ???
 }

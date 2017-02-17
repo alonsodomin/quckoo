@@ -30,7 +30,7 @@ import io.quckoo.fault._
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo.test.{ImplicitClock, TestActorSystem}
+import io.quckoo.testkit.{ImplicitClock, QuckooActorClusterSuite}
 
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
@@ -50,9 +50,8 @@ object SchedulerSpec {
 
 }
 
-class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
-    with ImplicitSender with ImplicitClock with ScalaFutures
-    with WordSpecLike with BeforeAndAfter with BeforeAndAfterAll with Matchers {
+class SchedulerSpec extends QuckooActorClusterSuite("SchedulerSpec")
+    with ImplicitSender with ImplicitClock with ScalaFutures with BeforeAndAfter {
 
   import SchedulerSpec._
   import DistributedPubSubMediator._
@@ -79,9 +78,6 @@ class SchedulerSpec extends TestKit(TestActorSystem("SchedulerSpec"))
   }
 
   val readJournal = new QuckooTestJournal
-
-  override protected def afterAll(): Unit =
-    TestKit.shutdownActorSystem(system)
 
   "A scheduler" should {
 

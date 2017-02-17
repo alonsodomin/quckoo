@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-package io.quckoo.test
+package io.quckoo.testkit
 
-import akka.actor.{ActorRef, Props}
-import akka.stream.actor.{ActorSubscriber, OneByOneRequestStrategy, RequestStrategy}
+import org.scalactic.source
+import org.scalatest.{Assertions, Inside}
+
+import scala.util.{Failure, Success, Try}
 
 /**
-  * Created by domingueza on 12/07/2016.
+  * Created by alonsodomin on 04/11/2016.
   */
-object ForwardActorSubscriber {
+trait TryAssertions extends Inside { this: Assertions =>
 
-  def props(ref: ActorRef): Props = Props(classOf[ForwardActorSubscriber], ref)
-
-}
-
-class ForwardActorSubscriber(ref: ActorRef) extends ActorSubscriber {
-
-  override protected def requestStrategy: RequestStrategy = OneByOneRequestStrategy
-
-  override def receive: Receive = {
-    case msg => ref forward msg
+  def ifSuccessful[T, U](result: Try[T])(f: T => U)(implicit pos: source.Position): U = {
+    inside(result) {
+      case Success(value) => f(value)
+      case Failure(ex)    => fail(ex)
+    }
   }
 
 }

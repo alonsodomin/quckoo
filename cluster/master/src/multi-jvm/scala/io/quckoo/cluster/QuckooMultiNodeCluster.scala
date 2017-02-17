@@ -13,7 +13,7 @@ import io.quckoo.cluster.journal.QuckooTestJournal
 import io.quckoo.id.ArtifactId
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.client._
-import io.quckoo.test.ImplicitClock
+import io.quckoo.testkit.ImplicitClock
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Promise}

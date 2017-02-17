@@ -74,6 +74,8 @@ object Boot extends StrictLogging {
   }
 
   def main(args: Array[String]): Unit = {
+    LoggerConfig.factory = SLF4JLoggerFactory()
+
     parser.parse(args, CliOptions()).foreach { opts =>
       logger.info(s"Starting Quckoo Server ${Info.version}...\n" + Logo)
 

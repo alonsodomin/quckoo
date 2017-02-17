@@ -25,9 +25,9 @@ import io.quckoo.{TaskExecution, Task, JobPackage}
 import io.quckoo.cluster.scheduler.TaskQueue.EnqueueAck
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id._
-import io.quckoo.test.TestActorSystem
+import io.quckoo.testkit.QuckooActorClusterSuite
 
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import org.scalatest.WordSpecLike
 
 import scala.concurrent.duration._
 
@@ -41,16 +41,12 @@ object ExecutionLifecycleSpec {
 
 }
 
-class ExecutionLifecycleSpec extends TestKit(TestActorSystem("ExecutionLifecycleSpec"))
-    with ImplicitSender with DefaultTimeout with WordSpecLike
-    with BeforeAndAfterAll with Matchers {
+class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycleSpec")
+    with ImplicitSender with DefaultTimeout {
 
   import ExecutionLifecycle._
   import ExecutionLifecycleSpec._
   import TaskExecution._
-
-  override def afterAll(): Unit =
-    TestKit.shutdownActorSystem(system)
 
   // We need to use a multi-threaded dispatcher to be able to realiably test the FSM
   private def executionProps(planId: PlanId,

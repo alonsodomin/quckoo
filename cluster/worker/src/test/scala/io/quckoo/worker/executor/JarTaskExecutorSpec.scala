@@ -19,16 +19,15 @@ package io.quckoo.worker.executor
 import java.net.URL
 import java.util.UUID
 
-import akka.actor.ActorSystem
 import akka.testkit._
 
 import io.quckoo.fault.{ExceptionThrown, MissingDependencies, UnresolvedDependency}
 import io.quckoo.id.{ArtifactId, TaskId}
 import io.quckoo.resolver.{Artifact, Resolver}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
+import io.quckoo.testkit.QuckooActorSuite
 
 import org.scalamock.scalatest.MockFactory
-import org.scalatest._
 
 import scalaz.NonEmptyList
 
@@ -43,57 +42,56 @@ object JarTaskExecutorSpec {
 
 }
 
-class JarTaskExecutorSpec extends TestKit(ActorSystem("JobExecutorSpec")) with FlatSpecLike with Matchers
-  with BeforeAndAfterAll with ImplicitSender with DefaultTimeout with MockFactory {
+class JarTaskExecutorSpec extends QuckooActorSuite("JobExecutorSpec")
+  with ImplicitSender with DefaultTimeout with MockFactory {
 
   import JarTaskExecutorSpec._
 
-  override protected def afterAll(): Unit =
-    TestKit.shutdownActorSystem(system)
+  "A job executor" must {
 
-  "A job executor" must "fail if instantiation of the job failed" in {
-    val resolverProbe = TestProbe("resolverProbe")
-    val resolvedArtifact = Artifact(TestArtifactId, Seq(new URL("http://www.example.com")))
+    "fail if instantiation of the job failed" in {
+      val resolverProbe = TestProbe("resolverProbe")
+      val resolvedArtifact = Artifact(TestArtifactId, Seq(new URL("http://www.example.com")))
 
-    val workerContext = mock[WorkerContext]
-    val executor = TestActorRef(
-      JarTaskExecutor.props(workerContext, TestTaskId, TestArtifactId, TestJobClass),
-      "failing-executor"
-    )
+      val workerContext = mock[WorkerContext]
+      val executor = TestActorRef(
+        JarTaskExecutor.props(workerContext, TestTaskId, TestArtifactId, TestJobClass),
+        "failing-executor"
+      )
 
-    val expectedException = new ClassNotFoundException(TestJobClass)
+      val expectedException = new ClassNotFoundException(TestJobClass)
 
-    (workerContext.resolver _).expects().returning(resolverProbe.ref)
+      (workerContext.resolver _).expects().returning(resolverProbe.ref)
 
-    executor ! TaskExecutor.Run
+      executor ! TaskExecutor.Run
 
-    resolverProbe.expectMsg(Resolver.Download(TestArtifactId))
-    resolverProbe.reply(Resolver.ArtifactResolved(resolvedArtifact))
+      resolverProbe.expectMsg(Resolver.Download(TestArtifactId))
+      resolverProbe.reply(Resolver.ArtifactResolved(resolvedArtifact))
 
-    expectMsgType[TaskExecutor.Failed].error shouldBe ExceptionThrown.from(expectedException)
-  }
+      expectMsgType[TaskExecutor.Failed].error shouldBe ExceptionThrown.from(expectedException)
+    }
 
-  it must "reply with a failure message when can not resolve the artifact of a task" in {
-    val resolverProbe = TestProbe("resolverProbe")
-    val resolvedArtifact = Artifact(TestArtifactId, Seq(new URL("http://www.example.com")))
+    "reply with a failure message when can not resolve the artifact of a task" in {
+      val resolverProbe = TestProbe("resolverProbe")
 
-    val workerContext = mock[WorkerContext]
-    val executor = TestActorRef(
-      JarTaskExecutor.props(workerContext, TestTaskId, TestArtifactId, TestJobClass),
-      "non-resolving-executor"
-    )
+      val workerContext = mock[WorkerContext]
+      val executor = TestActorRef(
+        JarTaskExecutor.props(workerContext, TestTaskId, TestArtifactId, TestJobClass),
+        "non-resolving-executor"
+      )
 
-    val dependencyError = UnresolvedDependency(ArtifactId("com.example", "bar", "latest"))
-    val expectedFault = MissingDependencies(NonEmptyList(dependencyError))
+      val dependencyError = UnresolvedDependency(ArtifactId("com.example", "bar", "latest"))
+      val expectedFault = MissingDependencies(NonEmptyList(dependencyError))
 
-    (workerContext.resolver _).expects().returning(resolverProbe.ref)
+      (workerContext.resolver _).expects().returning(resolverProbe.ref)
 
-    executor ! TaskExecutor.Run
+      executor ! TaskExecutor.Run
 
-    resolverProbe.expectMsg(Resolver.Download(TestArtifactId))
-    resolverProbe.reply(Resolver.ResolutionFailed(TestArtifactId, expectedFault))
+      resolverProbe.expectMsg(Resolver.Download(TestArtifactId))
+      resolverProbe.reply(Resolver.ResolutionFailed(TestArtifactId, expectedFault))
 
-    expectMsgType[TaskExecutor.Failed].error shouldBe expectedFault
+      expectMsgType[TaskExecutor.Failed].error shouldBe expectedFault
+    }
   }
 
 }

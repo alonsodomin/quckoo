@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker.config
+package io.quckoo.testkit
 
-import com.typesafe.config.ConfigFactory
+import akka.actor.ActorSystem
+import akka.testkit.TestKit
 
-import io.quckoo.testkit.TryAssertions
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
-import org.scalatest.{FlatSpec, Matchers}
+import slogging._
 
 /**
-  * Created by alonsodomin on 04/11/2016.
+  * Created by alonsodomin on 17/02/2017.
   */
-class WorkerSettingsSpec extends FlatSpec with Matchers with TryAssertions {
+abstract class QuckooActorSuite(name: String) extends TestKit(ActorSystem(name))
+  with WordSpecLike with Matchers with BeforeAndAfterAll {
 
-  "WorkerSettings" should "load the default configuration settings" in {
-    val config = ConfigFactory.load()
-
-    ifSuccessful(WorkerSettings(config)) { settings =>
-      settings.worker.contactPoints should not be empty
-    }
+  override protected def beforeAll(): Unit = {
+    LoggerConfig.factory = SLF4JLoggerFactory()
+    LoggerConfig.level = LogLevel.DEBUG
   }
+
+  override protected def afterAll(): Unit =
+    TestKit.shutdownActorSystem(system)
 
 }

@@ -28,6 +28,7 @@ import io.quckoo.cluster.protocol._
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.ArtifactId
 import io.quckoo.resolver.Artifact
+import io.quckoo.testkit.QuckooActorSuite
 
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
@@ -52,16 +53,14 @@ object WorkerSpec {
 
 }
 
-class WorkerSpec extends TestKit(ActorSystem("WorkerSpec")) with ImplicitSender
-    with WordSpecLike with BeforeAndAfterAll with Matchers with ScalaFutures {
+class WorkerSpec extends QuckooActorSuite("WorkerSpec")
+    with ImplicitSender
+    with ScalaFutures {
 
   import WorkerSpec._
   import system.dispatcher
 
   val clusterClientProbe = TestProbe()
-
-  override def afterAll(): Unit =
-    TestKit.shutdownActorSystem(system)
 
   "A worker" should {
     val resolverProbe = TestProbe()

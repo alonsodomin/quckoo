@@ -31,7 +31,7 @@ import io.quckoo._
 import io.quckoo.auth.Passport
 import io.quckoo.fault._
 import io.quckoo.serialization.DataBuffer
-import io.quckoo.test.ImplicitClock
+import io.quckoo.testkit.ImplicitClock
 
 import org.scalatest.{Matchers, WordSpec}
 import org.threeten.bp.{Clock, Instant, ZoneId, ZonedDateTime}

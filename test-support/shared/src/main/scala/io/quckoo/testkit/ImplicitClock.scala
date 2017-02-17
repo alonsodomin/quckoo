@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-package io.quckoo.test
+package io.quckoo.testkit
 
-import akka.actor.ActorSystem
-import akka.cluster.Cluster
-import com.typesafe.config.ConfigFactory
+import org.threeten.bp._
 
 /**
- * Created by aalonsodominguez on 03/08/15.
- */
-object TestActorSystem {
+  * Created by domingueza on 27/08/15.
+  */
+trait ImplicitClock {
 
-  def apply(name: String): ActorSystem = {
-    val config = ConfigFactory.load("application")
-    val system = ActorSystem(name, config)
+  final val FixedInstant = Instant.ofEpochMilli(893273L)
+  final val ZoneUTC      = ZoneId.of("UTC")
 
-    val address = Cluster(system).selfAddress
-    Cluster(system).join(address)
+  implicit lazy val clock = Clock.fixed(FixedInstant, ZoneUTC)
 
-    system
-  }
+  def currentDateTime = ZonedDateTime.now(clock)
 
 }

@@ -18,7 +18,7 @@ package io.quckoo.serialization.json
 
 import io.quckoo.serialization._
 import io.quckoo.util._
-import io.quckoo.test.gen.JavaTimeGenerators
+import io.quckoo.testkit.gen.JavaTimeGenerators
 
 import org.scalacheck._
 import org.threeten.bp._

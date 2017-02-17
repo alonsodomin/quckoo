@@ -25,7 +25,7 @@ import io.quckoo.{Task, JobPackage}
 import io.quckoo.cluster.protocol._
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.ArtifactId
-import io.quckoo.test.TestActorSystem
+import io.quckoo.testkit.QuckooActorClusterSuite
 import io.quckoo.fault.Fault
 
 import org.scalatest.concurrent.ScalaFutures
@@ -45,14 +45,12 @@ object TaskQueueSpec {
 
 }
 
-class TaskQueueSpec extends TestKit(TestActorSystem("TaskQueueSpec")) with ImplicitSender
-    with WordSpecLike with BeforeAndAfterAll with Matchers with ScalaFutures {
+class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
+    with ImplicitSender with ScalaFutures {
 
   import TaskQueue._
   import TaskQueueSpec._
   import system.dispatcher
-
-  override def afterAll(): Unit = TestKit.shutdownActorSystem(system)
 
   "A TaskQueue" should {
     val task = Task(id = UUID.randomUUID(), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
