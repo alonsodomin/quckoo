@@ -198,7 +198,7 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
   }
 
   private[this] def becomeStarted(): Unit = {
-    log.debug("Cluster successfully started.")
+    log.debug("Master node successfully started.")
     boot.success(())
     unstashAll()
     context become started
