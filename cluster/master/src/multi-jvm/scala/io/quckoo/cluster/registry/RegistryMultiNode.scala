@@ -12,7 +12,7 @@ import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Artifact
 import io.quckoo.resolver.Resolver
-import io.quckoo.JobSpec
+import io.quckoo.{JobSpec, JobPackage}
 import io.quckoo.cluster.journal.QuckooTestJournal
 
 import scala.concurrent.duration._
@@ -33,10 +33,11 @@ class RegistryMultiNodeSpecMultiJvmProxy extends RegistryMultiNode
 object RegistryMultiNode {
 
   final val TestArtifactId = ArtifactId("io.quckoo", "example-jobs_2.11", "0.1.0")
-  final val TestJobSpec = JobSpec(
-    "Examples", artifactId = TestArtifactId,
+  final val TestJobPackage = JobPackage.jar(
+    artifactId = TestArtifactId,
     jobClass = "io.quckoo.examples.paramteters.PowerOfNJob"
   )
+  final val TestJobSpec = JobSpec("Examples", jobPackage = TestJobPackage)
 
 }
 
@@ -97,7 +98,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
         enterBarrier("fetch-invalid-job")
 
         val validateMsg = resolverProbe.expectMsgType[Resolver.Validate]
-        validateMsg.artifactId shouldBe TestJobSpec.artifactId
+        validateMsg.artifactId shouldBe TestJobPackage.artifactId
 
         val artifact = Artifact(validateMsg.artifactId, Seq())
         resolverProbe.reply(Resolver.ArtifactResolved(artifact))

@@ -62,7 +62,7 @@ object JobPackage {
     case jar: JarJobPackage => jar
   }, _.map(_.asInstanceOf[JobPackage]))
 
-  def jar(artifactId: ArtifactId, jobClass: String) =
+  def jar(artifactId: ArtifactId, jobClass: String): JarJobPackage =
     JarJobPackage(artifactId, jobClass)
 
   implicit val jobPackageShow: Show[JobPackage] = Show.shows {
