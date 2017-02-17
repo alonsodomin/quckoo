@@ -30,7 +30,7 @@ import scalaz.NonEmptyList
 object Table {
 
   type RowCallback[Id]             = Id => Callback
-  type RowCellRender[Id, Item]     = (Id, Item, String) => ReactNode
+  type RowCellRender[Id, Item]     = (Id, Item, Symbol) => ReactNode
   type RowActionsFactory[Id, Item] = (Id, Item) => Seq[RowAction[Id, Item]]
 
   type ItemSeq[Id, Item] = Traversable[(Id, Pot[Item])]
@@ -41,7 +41,7 @@ object Table {
 
   private[this] final case class RowProps[Id, Item](
       rowId: Id,
-      columns: List[String],
+      columns: List[Symbol],
       item: Pot[Item],
       render: RowCellRender[Id, Item],
       allowSelect: Boolean,
@@ -51,7 +51,7 @@ object Table {
   )
 
   private[this] val HeaderCell =
-    ReactComponentB[String]("HeaderCell").stateless.render_P(title => <.th(title)).build
+    ReactComponentB[Symbol]("HeaderCell").stateless.render_P(title => <.th(title.name)).build
 
   private[this] val BodyCell =
     ReactComponentB[ReactNode]("BodyCell").stateless.render_P(node => <.td(node)).build
@@ -125,7 +125,7 @@ object Table {
     } build
 
   final case class Props[Id, Item](
-      headers: List[String],
+      headers: List[Symbol],
       items: ItemSeq[Id, Item],
       render: RowCellRender[Id, Item],
       allowSelect: Boolean = false,
@@ -210,7 +210,7 @@ object Table {
       .renderBackend[Backend[Id, Item]]
       .build
 
-  def apply[Id, Item](headers: List[String],
+  def apply[Id, Item](headers: List[Symbol],
                       items: ItemSeq[Id, Item],
                       render: RowCellRender[Id, Item],
                       allowSelect: Boolean = false,

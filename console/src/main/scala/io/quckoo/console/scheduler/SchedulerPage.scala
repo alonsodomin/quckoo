@@ -74,8 +74,8 @@ object SchedulerPage {
             ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
         } else EmptyTag,
         TabPanel(
-          "Execution Plans" -> userScopeConnector(ExecutionPlanList(_)),
-          "Executions"      -> executionConnector(TaskExecutionList(_))
+          'Plans      -> userScopeConnector(ExecutionPlanList(_)),
+          'Executions -> executionConnector(TaskExecutionList(_))
         ))
     }
 

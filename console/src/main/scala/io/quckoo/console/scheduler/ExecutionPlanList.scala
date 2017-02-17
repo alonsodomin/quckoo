@@ -37,13 +37,13 @@ import Scalaz._
 object ExecutionPlanList {
 
   final val Columns = List(
-    "Job",
-    "Current task",
-    "Trigger",
-    "Last Scheduled",
-    "Last Execution",
-    "Last Outcome",
-    "Next Execution"
+    'Job,
+    'Current,
+    'Trigger,
+    'Scheduled,
+    'Execution,
+    'Outcome,
+    'Next
   )
 
   final val AllFilter: Table.Filter[PlanId, ExecutionPlan] =
@@ -71,18 +71,18 @@ object ExecutionPlanList {
     }
 
     def renderItem(
-        model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: String): ReactNode =
+        model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): ReactNode =
       column match {
-        case "Job" =>
+        case 'Job =>
           val jobSpec = model.jobSpecs.get(plan.jobId)
           jobSpec.render(_.displayName)
 
-        case "Current task"   => plan.currentTask.map(_.show).getOrElse(Cord.empty).toString()
-        case "Trigger"        => plan.trigger.toString()
-        case "Last Scheduled" => DateTimeDisplay(plan.lastScheduledTime)
-        case "Last Execution" => DateTimeDisplay(plan.lastExecutionTime)
-        case "Last Outcome"   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
-        case "Next Execution" => DateTimeDisplay(plan.nextExecutionTime)
+        case 'Current   => plan.currentTask.map(_.show).getOrElse(Cord.empty).toString()
+        case 'Trigger   => plan.trigger.toString()
+        case 'Scheduled => DateTimeDisplay(plan.lastScheduledTime)
+        case 'Execution => DateTimeDisplay(plan.lastExecutionTime)
+        case 'Outcome   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
+        case 'Next      => DateTimeDisplay(plan.nextExecutionTime)
       }
 
     def cancelPlan(props: Props)(planId: PlanId): Callback =
@@ -98,17 +98,17 @@ object ExecutionPlanList {
       } else Seq.empty
     }
 
-    def filterClicked(filterType: String): Callback = filterType match {
-      case "All"      => $.modState(_.copy(filter = AllFilter))
-      case "Active"   => $.modState(_.copy(filter = ActiveFilter))
-      case "Inactive" => $.modState(_.copy(filter = InactiveFilter))
+    def filterClicked(filterType: Symbol): Callback = filterType match {
+      case 'All      => $.modState(_.copy(filter = AllFilter))
+      case 'Active   => $.modState(_.copy(filter = ActiveFilter))
+      case 'Inactive => $.modState(_.copy(filter = InactiveFilter))
     }
 
     def render(props: Props, state: State) = {
       val model = props.proxy()
       NavBar(
         NavBar
-          .Props(List("All", "Active", "Inactive"), "All", filterClicked, style = NavStyle.pills),
+          .Props(List('All, 'Active, 'Inactive), 'All, filterClicked, style = NavStyle.pills),
         Table(
           Columns,
           model.executionPlans.seq,

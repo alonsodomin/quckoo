@@ -30,17 +30,17 @@ import japgolly.scalajs.react._
   */
 object NodeList {
 
-  final val Columns = List("ID", "Location", "Status")
+  final val Columns = List('ID, 'Location, 'Status)
 
   case class Props[N <: QuckooNode](proxy: ModelProxy[Map[NodeId, N]])
 
   class Backend[N <: QuckooNode]($ : BackendScope[Props[N], Unit]) {
 
-    def renderItem(props: Props[N])(nodeId: NodeId, node: N, column: String): ReactNode =
+    def renderItem(props: Props[N])(nodeId: NodeId, node: N, column: Symbol): ReactNode =
       column match {
-        case "ID"       => nodeId.toString
-        case "Location" => node.location.host
-        case "Status"   => node.status.toString
+        case 'ID       => nodeId.toString
+        case 'Location => node.location.host
+        case 'Status   => node.status.toString
       }
 
     def render(props: Props[N]) = {

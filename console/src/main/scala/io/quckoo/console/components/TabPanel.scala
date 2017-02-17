@@ -23,12 +23,12 @@ import japgolly.scalajs.react._
   */
 object TabPanel {
 
-  final case class Props(items: Map[String, ReactNode], initial: String)
-  final case class State(selected: Option[String] = None)
+  final case class Props(items: Map[Symbol, ReactNode], initial: Symbol)
+  final case class State(selected: Option[Symbol] = None)
 
   class Backend($ : BackendScope[Props, State]) {
 
-    def tabClicked(title: String): Callback =
+    def tabClicked(title: Symbol): Callback =
       $.modState(_.copy(selected = Some(title)))
 
     def render(props: Props, state: State) = {
@@ -44,7 +44,7 @@ object TabPanel {
   private[this] val component =
     ReactComponentB[Props]("TabPanel").initialState(State()).renderBackend[Backend].build
 
-  def apply(tabItems: (String, ReactNode)*) = {
+  def apply(tabItems: (Symbol, ReactNode)*) = {
     val initial = tabItems.head._1
     component(Props(tabItems.toMap, initial))
   }

@@ -33,9 +33,9 @@ class NavBarTest extends FunSuite {
   }
 
   def runPlan(plan: dsl.Plan): Report[String] = {
-    val items = Seq("First", "Last")
+    val items = Seq('First, 'Last)
 
-    ReactTestUtils.withRenderedIntoDocument(NavBar(NavBar.Props(items, "First", _ => Callback.empty))) { comp =>
+    ReactTestUtils.withRenderedIntoDocument(NavBar(NavBar.Props(items, 'First, _ => Callback.empty))) { comp =>
       def observe() = new NavBarObserver(comp.htmlDomZipper)
 
       val test = plan.
