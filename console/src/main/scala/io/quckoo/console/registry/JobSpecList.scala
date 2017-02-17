@@ -37,7 +37,7 @@ import scalaz.syntax.show._
   */
 object JobSpecList {
 
-  final val Columns = List("Name", "Description", "Package", "Status")
+  final val Columns = List('Name, 'Description, 'Package, 'Status)
 
   final val AllFilter: Table.Filter[JobId, JobSpec]      = (id, job) => true
   final val DisabledFilter: Table.Filter[JobId, JobSpec] = (id, job) => job.disabled
@@ -55,11 +55,11 @@ object JobSpecList {
       Callback.when(props.proxy().size == 0)(dispatchJobLoading)
     }
 
-    def renderItem(jobId: JobId, jobSpec: JobSpec, column: String): ReactNode = column match {
-      case "Name"        => jobSpec.displayName
-      case "Description" => jobSpec.description.getOrElse[String]("")
-      case "Package"     => jobSpec.jobPackage.toString
-      case "Status" =>
+    def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): ReactNode = column match {
+      case 'Name        => jobSpec.displayName
+      case 'Description => jobSpec.description.getOrElse[String]("")
+      case 'Package     => jobSpec.jobPackage.toString
+      case 'Status =>
         if (jobSpec.disabled) {
           <.span(^.color.red, "DISABLED")
         } else {
@@ -81,10 +81,10 @@ object JobSpecList {
       })
     }
 
-    def filterClicked(filterType: String): Callback = filterType match {
-      case "All"      => $.modState(_.copy(filter = AllFilter))
-      case "Enabled"  => $.modState(_.copy(filter = EnabledFilter))
-      case "Disabled" => $.modState(_.copy(filter = DisabledFilter))
+    def filterClicked(filterType: Symbol): Callback = filterType match {
+      case 'All      => $.modState(_.copy(filter = AllFilter))
+      case 'Enabled  => $.modState(_.copy(filter = EnabledFilter))
+      case 'Disabled => $.modState(_.copy(filter = DisabledFilter))
     }
 
     def render(p: Props, state: State) = {
@@ -92,7 +92,7 @@ object JobSpecList {
 
       NavBar(
         NavBar
-          .Props(List("All", "Enabled", "Disabled"), "All", filterClicked, style = NavStyle.pills),
+          .Props(List('All, 'Enabled, 'Disabled), 'All, filterClicked, style = NavStyle.pills),
         Table(
           Columns,
           model.seq,

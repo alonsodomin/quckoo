@@ -28,18 +28,18 @@ import scalacss.ScalaCssReact._
 object NavBar {
 
   private[this] final case class NavItemProps(
-      title: String,
+      title: Symbol,
       selected: Boolean,
-      onClick: String => Callback
+      onClick: Symbol => Callback
   )
 
   private[this] val NavItem = ReactComponentB[NavItemProps]("NavItem").stateless.render_P {
     case NavItemProps(title, selected, onClick) =>
       <.li(
-        ^.id := title,
+        ^.id := title.name,
         ^.role := "presentation",
         selected ?= (^.`class` := "active"),
-        <.a(^.onClick --> onClick(title), title))
+        <.a(^.onClick --> onClick(title), title.name))
   } build
 
   private[this] val NavBody = ReactComponentB[PropsChildren]("NavBody").stateless.render_P {
@@ -48,17 +48,17 @@ object NavBar {
   } build
 
   final case class Props(
-      items: Seq[String],
-      initial: String,
-      onClick: String => Callback,
+      items: Seq[Symbol],
+      initial: Symbol,
+      onClick: Symbol => Callback,
       style: NavStyle.Value = NavStyle.tabs,
       addStyles: Seq[StyleA] = Seq()
   )
-  final case class State(selected: Option[String] = None)
+  final case class State(selected: Option[Symbol] = None)
 
   class Backend($ : BackendScope[Props, State]) {
 
-    def tabClicked(props: Props)(title: String): Callback =
+    def tabClicked(props: Props)(title: Symbol): Callback =
       $.modState(_.copy(selected = Some(title))).flatMap(_ => props.onClick(title))
 
     def render(props: Props, state: State) = {
@@ -75,8 +75,10 @@ object NavBar {
 
   }
 
-  private[this] val component =
-    ReactComponentB[Props]("NavBar").initialState(State()).renderBackend[Backend].build
+  private[this] val component = ReactComponentB[Props]("NavBar")
+    .initialState(State())
+    .renderBackend[Backend]
+    .build
 
   def apply(props: Props, children: ReactNode*) =
     component(props, children: _*)
