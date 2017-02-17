@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-package io.quckoo
+package io.quckoo.worker.core
 
-import io.quckoo.id._
-
-import scalaz._
-import Scalaz._
+import akka.actor.{Actor, ActorLogging}
+import io.quckoo.fault.Fault
 
 /**
-  * Created by aalonsodominguez on 05/07/15.
+  * Created by alonsodomin on 16/02/2017.
   */
-final case class Task(
-    id: TaskId,
-    jobPackage: JobPackage
-    //params: Map[String, AnyVal] = Map.empty,
-)
+object TaskExecutor {
 
-object Task {
-
-  implicit val showTask: Show[Task] = Show.showA[JobPackage].contramap(_.jobPackage)
+  case object Run
+  sealed trait Response extends Product with Serializable
+  final case class Failed(error: Fault) extends Response
+  final case class Completed(result: Any) extends Response
 
 }
+
+trait TaskExecutor extends Actor with ActorLogging

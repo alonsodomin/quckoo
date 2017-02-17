@@ -37,7 +37,7 @@ object JobId {
     * @return a job ID
     */
   def apply(jobSpec: JobSpec): JobId = {
-    val plainId   = s"${jobSpec.artifactId.toString}!${jobSpec.jobClass}"
+    val plainId   = s"${jobSpec.jobPackage.hash}"
     val idAsBytes = plainId.getBytes(StandardCharsets.UTF_8)
     JobId(UUID.nameUUIDFromBytes(idAsBytes))
   }

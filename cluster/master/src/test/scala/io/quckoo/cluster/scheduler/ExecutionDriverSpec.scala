@@ -23,12 +23,12 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.testkit._
 
+import io.quckoo._
 import io.quckoo.cluster.topics
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.test.{ImplicitClock, TestActorSystem}
-import io.quckoo.{JobSpec, Task, TaskExecution, Trigger}
 
 import org.scalatest._
 
@@ -40,7 +40,7 @@ import scala.concurrent.duration._
 object ExecutionDriverSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec.jar("foo", Some("foo desc"), TestArtifactId, "com.example.Job")
+  final val TestJobSpec = JobSpec("foo", Some("foo desc"), JobPackage.jar(TestArtifactId, "com.example.Job"))
   final val TestJobId = JobId(TestJobSpec)
 
 }

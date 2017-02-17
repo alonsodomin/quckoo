@@ -22,66 +22,78 @@ import io.quckoo.validation._
 import monocle.macros.Lenses
 
 import scalaz.Show
+import scalaz.syntax.show._
 
 /**
   * Created by aalonsodominguez on 10/07/15.
   */
-object JobSpec {
-
-  val valid: Validator[JobSpec] = JarJobSpec.valid.dimap({
-    case jar: JarJobSpec => jar
-  }, _.map(_.asInstanceOf[JobSpec]))
-
-  def jar(
+@Lenses final case class JobSpec(
     displayName: String,
     description: Option[String] = None,
-    artifactId: ArtifactId,
-    jobClass: String,
+    jobPackage: JobPackage,
     disabled: Boolean = false
-  ) = JarJobSpec(displayName, description, artifactId, jobClass, disabled)
+)
+
+object JobSpec {
+
+  val valid: Validator[JobSpec] = {
+    import Validators._
+
+    val validDisplayName = nonEmpty[String].at("displayName")
+    val validDetails = JobPackage.valid.at("jobPackage")
+
+    caseClass4(validDisplayName,
+      any[Option[String]],
+      validDetails,
+      any[Boolean])(JobSpec.unapply, JobSpec.apply)
+  }
 
   implicit val display: Show[JobSpec] = Show.showFromToString[JobSpec]
 
 }
 
-sealed trait JobSpec {
-  def displayName: String
-  def description: Option[String]
-  def artifactId: ArtifactId
-  def jobClass: String
-  def disabled: Boolean
-
-  def enable(): JobSpec
-  def disable(): JobSpec
+sealed trait JobPackage {
+  def hash: String
 }
 
-@Lenses case class JarJobSpec(
-    displayName: String,
-    description: Option[String] = None,
-    artifactId: ArtifactId,
-    jobClass: String,
-    disabled: Boolean = false
-) extends JobSpec {
-  def enable() = copy(disabled = false)
-  def disable() = copy(disabled = true)
-}
+object JobPackage {
 
-object JarJobSpec {
+  val valid: Validator[JobPackage] = JarJobPackage.valid.dimap({
+    case jar: JarJobPackage => jar
+  }, _.map(_.asInstanceOf[JobPackage]))
 
-  val valid: Validator[JarJobSpec] = {
-    import Validators._
+  def jar(artifactId: ArtifactId, jobClass: String): JarJobPackage =
+    JarJobPackage(artifactId, jobClass)
 
-    val validDisplayName = nonEmpty[String].at("displayName")
-    val validArtifactId  = ArtifactId.valid.at("artifactId")
-    val validJobClass    = nonEmpty[String].at("jobClass")
-
-    caseClass5(
-      validDisplayName,
-      any[Option[String]],
-      validArtifactId,
-      validJobClass,
-      any[Boolean])(JarJobSpec.unapply, JarJobSpec.apply)
+  implicit val jobPackageShow: Show[JobPackage] = Show.shows {
+    case jar: JarJobPackage => Show[JarJobPackage].shows(jar)
   }
 
-  implicit val display: Show[JarJobSpec] = Show.showFromToString[JarJobSpec]
+}
+
+@Lenses final case class JarJobPackage(
+    artifactId: ArtifactId,
+    jobClass: String
+) extends JobPackage {
+
+  // TODO replace by a proper implementation
+  def hash: String = s"$artifactId!$jobClass"
+
+}
+
+object JarJobPackage {
+
+  implicit val jobPackageShow: Show[JarJobPackage] = Show.shows { pckg =>
+    s"${pckg.jobClass} @ ${pckg.artifactId.shows}"
+  }
+
+  val valid: Validator[JarJobPackage] = {
+    import Validators._
+
+    val validArtifactId = ArtifactId.valid.at("artifactId")
+    val validJobClass   = nonEmpty[String].at("jobClass")
+
+    caseClass2(validArtifactId, validJobClass)(JarJobPackage.unapply, JarJobPackage.apply)
+  }
+
 }

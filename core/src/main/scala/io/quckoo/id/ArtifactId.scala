@@ -40,16 +40,11 @@ object ArtifactId {
     caseClass3(validOrganization, validName, validVersion)(ArtifactId.unapply, ArtifactId.apply)
   }
 
-  implicit val instance = new Equal[ArtifactId] with Show[ArtifactId] {
-
-    override def equal(left: ArtifactId, right: ArtifactId): Boolean =
-      left.organization == right.organization &&
-        left.name == right.name &&
-        left.version == right.version
-
-    override def shows(aid: ArtifactId): String =
-      s"${aid.organization}$GroupSeparator${aid.name}$VersionSeparator${aid.version}"
+  implicit val artifactIdShow: Show[ArtifactId] = Show.shows { artifactId =>
+    s"${artifactId.organization}$GroupSeparator${artifactId.name}$VersionSeparator${artifactId.version}"
   }
+
+  implicit val artifactIdEq: Equal[ArtifactId] = Equal.equalA[ArtifactId]
 
 }
 

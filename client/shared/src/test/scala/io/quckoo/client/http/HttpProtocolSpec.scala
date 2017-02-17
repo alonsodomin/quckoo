@@ -67,10 +67,10 @@ object HttpProtocolSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "latest")
   final val TestJobId = JobId(UUID.randomUUID())
-  final val TestJobSpec = JobSpec.jar("foo",
+  final val TestJobSpec = JobSpec("foo", jobPackage = JobPackage.jar(
     artifactId = TestArtifactId,
     jobClass = "com.example.Job"
-  )
+  ))
 
   final val TestPlanId: PlanId = UUID.randomUUID()
   final val TestExecutionPlan = ExecutionPlan(
@@ -79,7 +79,7 @@ object HttpProtocolSpec {
 
   final val TestTaskId: TaskId = UUID.randomUUID()
   final val TestTaskExecution = TaskExecution(
-    TestPlanId, Task(TestTaskId, TestArtifactId, "com.example.Task"), TaskExecution.Complete
+    TestPlanId, Task(TestTaskId, TestJobSpec.jobPackage), TaskExecution.Complete
   )
 
   object HttpSuccess {

@@ -24,14 +24,16 @@ import com.typesafe.config.{Config, ConfigFactory}
 import io.quckoo.{Info, Logo}
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
-import io.quckoo.worker.config.{WorkerSettings, ResolverDispatcher, ExecutorDispatcher}
-import io.quckoo.worker.{JobExecutor, Worker, SystemName}
+import io.quckoo.worker.config.{ResolverDispatcher, WorkerSettings}
+import io.quckoo.worker.core.Worker
+import io.quckoo.worker.SystemName
+import io.quckoo.worker.executor.DefaultTaskExecutorProvider
 
 import slogging._
 
 import scopt.OptionParser
 
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 
 /**
   * Created by domingueza on 09/07/15.
@@ -83,9 +85,8 @@ object Boot extends App with StrictLogging {
 
     // TODO resolver should be re-implemented since there is not need to be an actor
     val resolverProps    = Resolver.props(ivyResolve).withDispatcher(ResolverDispatcher)
-    val jobExecutorProps = JobExecutor.props.withDispatcher(ExecutorDispatcher)
 
-    system.actorOf(Worker.props(clusterClient, resolverProps, jobExecutorProps), "worker")
+    system.actorOf(Worker.props(clusterClient, resolverProps, DefaultTaskExecutorProvider), "worker")
   }
 
   parser.parse(args, CliOptions()).foreach { opts =>

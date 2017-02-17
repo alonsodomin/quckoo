@@ -19,8 +19,7 @@ package io.quckoo.console
 import java.util.concurrent.TimeUnit
 
 import cron4s.expr.CronExpr
-
-import io.quckoo.Trigger
+import io.quckoo.{JarJobPackage, Trigger}
 import io.quckoo.id.ArtifactId
 
 import japgolly.scalajs.react.ReactNode
@@ -31,6 +30,7 @@ import org.scalajs.jquery.{JQuery, JQueryStatic}
 import org.threeten.bp.{LocalDate, LocalDateTime, LocalTime, ZonedDateTime}
 
 import scalacss.Defaults._
+
 import scala.concurrent.duration.FiniteDuration
 import scala.language.implicitConversions
 
@@ -50,7 +50,8 @@ package object components {
   implicit val localTimeReuse      = Reusability.byRef[LocalTime]
   implicit val localDateTimeReuse  = Reusability.byRef[LocalDateTime]
   implicit val zonedDateTimeReuse  = Reusability.byRef[ZonedDateTime]
-  implicit val artifactIdReuse     = Reusability.byRef[ArtifactId]
+  implicit val artifactIdReuse     = Reusability.caseClass[ArtifactId]
+  implicit val jarJobPackageReuse  = Reusability.caseClass[JarJobPackage]
   implicit val cronExprReuse       = Reusability.by[CronExpr, String](_.toString)
 
   implicit val immediateTriggerReuse = Reusability.byRef[Trigger.Immediate.type]

@@ -71,13 +71,13 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
       context.become(enabled(jobId, jobSpec))
 
     case JobEnabled(jobId) =>
-      stateDuringRecovery = stateDuringRecovery.map(_.enable())
+      stateDuringRecovery = stateDuringRecovery.map(_.copy(disabled = false))
       stateDuringRecovery.foreach { state =>
         context.become(enabled(jobId, state))
       }
 
     case JobDisabled(jobId) =>
-      stateDuringRecovery = stateDuringRecovery.map(_.disable())
+      stateDuringRecovery = stateDuringRecovery.map(_.copy(disabled = true))
       stateDuringRecovery.foreach { state =>
         context.become(disabled(jobId, state))
       }
@@ -111,7 +111,7 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
         persist(JobDisabled(jobId)) { event =>
           mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
           sender() ! event
-          context.become(disabled(jobId, spec.disable()))
+          context.become(disabled(jobId, spec.copy(disabled = true)))
         }
     }
 
@@ -127,7 +127,7 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
         persist(JobEnabled(jobId)) { event =>
           mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
           sender() ! event
-          context.become(enabled(jobId, spec.enable()))
+          context.become(enabled(jobId, spec.copy(disabled = false)))
         }
     }
 

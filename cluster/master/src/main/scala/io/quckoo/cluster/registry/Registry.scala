@@ -26,8 +26,7 @@ import akka.persistence.query.{EventEnvelope2, Sequence}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
-
-import io.quckoo.JobSpec
+import io.quckoo.{JarJobPackage, JobSpec}
 import io.quckoo.id.JobId
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
@@ -115,7 +114,10 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
     case RegisterJob(spec) =>
       handlerRefCount += 1
       val handler = context.actorOf(handlerProps(spec, sender()), s"handler-$handlerRefCount")
-      resolver.tell(Resolver.Validate(spec.artifactId), handler)
+      spec.jobPackage match {
+        case JarJobPackage(artifactId, _) =>
+          resolver.tell(Resolver.Validate(artifactId), handler)
+      }
 
     case GetJobs =>
       val origSender = sender()

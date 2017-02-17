@@ -34,7 +34,7 @@ import Scalaz._
   */
 object TaskExecutionList {
 
-  final val Columns = List("Task ID", "Artifact", "Job Class", "Status", "Outcome")
+  final val Columns = List("Task ID", "Task", "Status", "Outcome")
 
   final case class Props(proxy: ModelProxy[PotMap[TaskId, TaskExecution]])
 
@@ -46,8 +46,7 @@ object TaskExecutionList {
     def renderItem(taskId: TaskId, execution: TaskExecution, column: String): ReactNode =
       column match {
         case "Task ID"   => taskId.toString
-        case "Artifact"  => execution.task.artifactId.shows
-        case "Job Class" => execution.task.jobClass
+        case "Task"      => execution.task.shows
         case "Status"    => execution.status.toString
         case "Outcome"   => execution.outcome.map(_.toString).getOrElse[String]("")
       }

@@ -37,7 +37,7 @@ import scalaz.syntax.show._
   */
 object JobSpecList {
 
-  final val Columns = List("Name", "Description", "Artifact ID", "Job Class", "Status")
+  final val Columns = List("Name", "Description", "Package", "Status")
 
   final val AllFilter: Table.Filter[JobId, JobSpec]      = (id, job) => true
   final val DisabledFilter: Table.Filter[JobId, JobSpec] = (id, job) => job.disabled
@@ -58,8 +58,7 @@ object JobSpecList {
     def renderItem(jobId: JobId, jobSpec: JobSpec, column: String): ReactNode = column match {
       case "Name"        => jobSpec.displayName
       case "Description" => jobSpec.description.getOrElse[String]("")
-      case "Artifact ID" => jobSpec.artifactId.shows
-      case "Job Class"   => jobSpec.jobClass
+      case "Package"     => jobSpec.jobPackage.toString
       case "Status" =>
         if (jobSpec.disabled) {
           <.span(^.color.red, "DISABLED")

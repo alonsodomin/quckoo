@@ -24,7 +24,7 @@ import akka.stream.scaladsl.Source
 import akka.testkit._
 
 import io.quckoo.cluster.journal.QuckooTestJournal
-import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution, Trigger}
+import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution, Trigger, JobPackage}
 import io.quckoo.cluster.topics
 import io.quckoo.fault._
 import io.quckoo.id.{ArtifactId, JobId, PlanId}
@@ -43,7 +43,7 @@ import scala.concurrent.duration._
 object SchedulerSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec.jar("foo", Some("foo desc"), TestArtifactId, "com.example.Job")
+  final val TestJobSpec = JobSpec("foo", Some("foo desc"), JobPackage.jar(TestArtifactId, "com.example.Job"))
   final val TestJobId = JobId(TestJobSpec)
 
   final val TestTrigger = Trigger.After(10 seconds)
