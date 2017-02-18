@@ -74,6 +74,7 @@ object Dependencies {
     val bootstrapNotifiy = "3.1.3"
     val fontAwesome      = "4.7.0"
     val reactJs          = "15.4.2"
+    val sparkMD5         = "2.0.2"
   }
 
   // Common library definitions
@@ -160,6 +161,12 @@ object Dependencies {
 
       "com.github.alonsodomin.cron4s" %%% "cron4s-core" % version.cron4s
     )
+  }
+
+  // Utilities module ===========================
+
+  lazy val utilJS = Def.settings {
+    libraryDependencies ++= Seq("org.webjars.npm" % "spark-md5" % version.sparkMD5)
   }
 
   // API module ===============================

@@ -147,6 +147,8 @@ lazy val quckoo = (project in file("."))
     cluster,
     console,
     examples,
+    utilJS,
+    utilJVM,
     testSupportJS,
     testSupportJVM
   )
@@ -167,7 +169,7 @@ lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
     buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
     buildInfoObject := "Info"
   )
-  .dependsOn(testSupport % Test)
+  .dependsOn(util, testSupport % Test)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
@@ -288,7 +290,18 @@ lazy val clusterWorker = (project in file("cluster/worker"))
   )
   .dependsOn(clusterShared, testSupportJVM % Test)
 
-// Test Support Utils ========================================
+// Misc Utilities ===========================================
+
+lazy val util = (crossProject in file("util"))
+  .settings(commonSettings)
+  .jsSettings(Dependencies.utilJS)
+  .settings(moduleName := "quckoo-util")
+  .dependsOn(testSupport % Test)
+
+lazy val utilJS = util.js
+lazy val utilJVM = util.jvm
+
+// Test Support Utilities ===================================
 
 lazy val testSupport = (crossProject in file("test-support"))
   .enablePlugins(AutomateHeaderPlugin)

@@ -72,6 +72,12 @@ trait ValidatorSyntax {
     }
     def *[B](other: ValidatorK[F, B]): ValidatorK[F, (A, B)] = product(other)
 
+    def coproduct[B](other: ValidatorK[F, B]): ValidatorK[F, A \/ B] = Kleisli {
+      case -\/(a) => self.run(a).map(_.map(_.left[B]))
+      case \/-(b) => other.run(b).map(_.map(_.right[A]))
+    }
+    def <*>[B](other: ValidatorK[F, B]): ValidatorK[F, A \/ B] = coproduct(other)
+
     def at(label: String): ValidatorK[F, A] =
       self.map(_.leftMap(v => PathViolation.at(Path(label), v)))
   }

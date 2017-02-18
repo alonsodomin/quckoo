@@ -16,7 +16,7 @@
 
 package io.quckoo.console.registry
 
-import io.quckoo.{JobPackage, JarJobPackage}
+import io.quckoo.{JobPackage, JarJobPackage, ShellScriptPackage}
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
@@ -38,6 +38,7 @@ object JobPackageSelect {
   sealed abstract class PackageType(val value: Int, val name: String) extends IntEnumEntry
   object PackageType extends IntEnum[PackageType] {
     case object Jar extends PackageType(1, "Jar")
+    case object Shell extends PackageType(2, "Shell")
 
     val values = findValues
   }
@@ -56,6 +57,7 @@ object JobPackageSelect {
 
     def this(jobPackage: Option[JobPackage]) = this(jobPackage.map {
       case _: JarJobPackage => PackageType.Jar
+      case _: ShellScriptPackage => PackageType.Shell
     }, jobPackage)
 
   }
@@ -97,8 +99,9 @@ object JobPackageSelect {
             packageTypeOptions
           )
         ),
-        state.selected.map {
-          case PackageType.Jar => JarJobPackageInput(state.value.map(_.asInstanceOf[JarJobPackage]), onJobPackageUpdate)
+        state.selected.flatMap {
+          case PackageType.Jar => Some(JarJobPackageInput(state.value.map(_.asInstanceOf[JarJobPackage]), onJobPackageUpdate))
+          case _               => None
         }
       )
     }
