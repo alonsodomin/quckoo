@@ -19,7 +19,7 @@ package io.quckoo.console
 import java.util.concurrent.TimeUnit
 
 import cron4s.expr.CronExpr
-import io.quckoo.{JarJobPackage, Trigger}
+import io.quckoo.{JobPackage, JarJobPackage, ShellScriptPackage, Trigger}
 import io.quckoo.id.ArtifactId
 
 import japgolly.scalajs.react.ReactNode
@@ -44,21 +44,41 @@ package object components {
   final val NBSP = "\u00a0"
 
   // React's reusability instances for common types
-  implicit val timeUnitReuse       = Reusability.byRef[TimeUnit]
-  implicit val finiteDurationReuse = Reusability.byRef[FiniteDuration]
-  implicit val localDateReuse      = Reusability.byRef[LocalDate]
-  implicit val localTimeReuse      = Reusability.byRef[LocalTime]
-  implicit val localDateTimeReuse  = Reusability.byRef[LocalDateTime]
-  implicit val zonedDateTimeReuse  = Reusability.byRef[ZonedDateTime]
-  implicit val artifactIdReuse     = Reusability.caseClass[ArtifactId]
-  implicit val jarJobPackageReuse  = Reusability.caseClass[JarJobPackage]
-  implicit val cronExprReuse       = Reusability.by[CronExpr, String](_.toString)
+  implicit lazy val symbolReuse             = Reusability.by[Symbol, String](_.name)
+  implicit lazy val timeUnitReuse           = Reusability.byRef[TimeUnit]
+  implicit lazy val finiteDurationReuse     = Reusability.byRef[FiniteDuration]
+  implicit lazy val localDateReuse          = Reusability.byRef[LocalDate]
+  implicit lazy val localTimeReuse          = Reusability.byRef[LocalTime]
+  implicit lazy val localDateTimeReuse      = Reusability.byRef[LocalDateTime]
+  implicit lazy val zonedDateTimeReuse      = Reusability.byRef[ZonedDateTime]
+  implicit lazy val artifactIdReuse         = Reusability.caseClass[ArtifactId]
+  implicit lazy val cronExprReuse           = Reusability.by[CronExpr, String](_.toString)
 
-  implicit val immediateTriggerReuse = Reusability.byRef[Trigger.Immediate.type]
-  implicit val afterTriggerReuse     = Reusability.caseClass[Trigger.After]
-  implicit val everyTriggerReuse     = Reusability.caseClass[Trigger.Every]
-  implicit val atTriggerReuse        = Reusability.caseClass[Trigger.At]
-  implicit val cronTriggerReuse      = Reusability.caseClass[Trigger.Cron]
+  implicit lazy val jarJobPackageReuse: Reusability[JarJobPackage] =
+    Reusability.caseClass[JarJobPackage]
+  implicit lazy val shellScriptPackageReuse: Reusability[ShellScriptPackage] =
+    Reusability.caseClass[ShellScriptPackage]
+  implicit lazy val jobPackageReuse: Reusability[JobPackage] =
+    Reusability.either[JarJobPackage, ShellScriptPackage].contramap {
+      case jar: JarJobPackage        => Left(jar)
+      case shell: ShellScriptPackage => Right(shell)
+    }
+
+  implicit lazy val immediateTriggerReuse = Reusability.byRef[Trigger.Immediate.type]
+  implicit lazy val afterTriggerReuse     = Reusability.caseClass[Trigger.After]
+  implicit lazy val everyTriggerReuse     = Reusability.caseClass[Trigger.Every]
+  implicit lazy val atTriggerReuse        = Reusability.caseClass[Trigger.At]
+  implicit lazy val cronTriggerReuse      = Reusability.caseClass[Trigger.Cron]
+
+  implicit lazy val triggerReuse: Reusability[Trigger] =
+    Reusability.either[Trigger.Immediate.type, Either[Trigger.After, Either[Trigger.Every, Either[Trigger.At, Trigger.Cron]]]]
+      .contramap {
+        case Trigger.Immediate    => Left(Trigger.Immediate)
+        case after: Trigger.After => Right(Left(after))
+        case every: Trigger.Every => Right(Right(Left(every)))
+        case at: Trigger.At       => Right(Right(Right(Left(at))))
+        case cron: Trigger.Cron   => Right(Right(Right(Right(cron))))
+      }
 
   implicit def toReactNode(notification: Notification): ReactNode =
     notification.inline
