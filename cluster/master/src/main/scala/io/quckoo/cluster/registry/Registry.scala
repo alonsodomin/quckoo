@@ -120,7 +120,7 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
           resolver.tell(Resolver.Validate(artifactId), handler)
 
         case _ =>
-          sender() ! JobAccepted(JobId(spec), spec)
+          shardRegion.tell(PersistentJob.CreateJob(JobId(spec), spec), sender())
       }
 
     case GetJobs =>
