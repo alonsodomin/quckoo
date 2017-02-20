@@ -16,9 +16,15 @@
 
 package io.quckoo.worker.executor
 
+import java.nio.file.attribute.PosixFilePermission
+
 import akka.actor.Props
 
+import better.files._
+
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
+
+import scala.concurrent.duration.FiniteDuration
 
 object ShellTaskExecutor {
 
@@ -27,11 +33,20 @@ object ShellTaskExecutor {
 
 }
 
-class ShellTaskExecutor private (workerContext: WorkerContext, script: String) extends TaskExecutor {
+class ShellTaskExecutor private (
+    workerContext: WorkerContext, script: String
+  ) extends TaskExecutor {
 
   def receive: Receive = {
     case TaskExecutor.Run =>
       sender() ! TaskExecutor.Completed("Done")
+  }
+
+  private [this] def dumpScript() = {
+    val scriptFile = File.newTemporaryFile()
+    scriptFile.append(script)
+    scriptFile.addPermission(PosixFilePermission.OWNER_EXECUTE)
+    scriptFile
   }
 
 }

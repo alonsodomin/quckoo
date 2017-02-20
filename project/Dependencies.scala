@@ -59,13 +59,14 @@ object Dependencies {
 
     // Other utils ---
 
-    val scopt      = "3.5.0"
-    val monocle    = "1.4.0"
-    val scalaz     = "7.2.8"
-    val monix      = "2.2.1"
-    val cron4s     = "0.3.0"
-    val enumeratum = "1.5.6"
-    val pureconfig = "0.5.1"
+    val scopt       = "3.5.0"
+    val monocle     = "1.4.0"
+    val scalaz      = "7.2.8"
+    val monix       = "2.2.1"
+    val cron4s      = "0.3.0"
+    val enumeratum  = "1.5.6"
+    val pureconfig  = "0.5.1"
+    val betterfiles = "2.17.1"
 
     // JavaScript Libraries
 
@@ -137,6 +138,8 @@ object Dependencies {
       ExclusionRule(organization = "ch.qos.logback"),
       ExclusionRule(organization = "com.twitter")
     )
+
+    val betterfiles = "com.github.pathikrit" %% "better-files" % version.betterfiles
   }
 
   object compiler {
@@ -285,7 +288,7 @@ object Dependencies {
   }
   lazy val clusterWorker = Def.settings {
     import libs._
-    libraryDependencies += scopt
+    libraryDependencies ++= Seq(scopt, betterfiles)
   }
 
   // Support modules ================================

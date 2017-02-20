@@ -16,7 +16,7 @@
 
 package io.quckoo.cluster.registry
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, ReceiveTimeout, Stash, Status}
+import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
@@ -58,17 +58,26 @@ object Registry {
   case object Ready extends Signal
 
   def props(settings: ClusterSettings, journal: QuckooJournal): Props = {
-    val resolve = IvyResolve(settings.resolver)
-    val props   = Resolver.props(resolve).withDispatcher("quckoo.resolver.dispatcher")
-    Props(classOf[Registry], RegistrySettings(props), journal)
+    val resolve       = IvyResolve(settings.resolver)
+    val resolverProps = Resolver.props(resolve).withDispatcher("quckoo.resolver.dispatcher")
+    props(RegistrySettings(resolverProps), journal)
   }
 
   def props(settings: RegistrySettings, journal: QuckooJournal): Props =
-    Props(classOf[Registry], settings, journal)
+    Props(new Registry(settings, journal))
+
+  private[registry] def startShardRegion(system: ActorSystem): ActorRef =
+    ClusterSharding(system).start(
+      typeName = PersistentJob.ShardName,
+      entityProps = PersistentJob.props,
+      settings = ClusterShardingSettings(system).withRole("registry"),
+      extractEntityId = PersistentJob.idExtractor,
+      extractShardId = PersistentJob.shardResolver
+    )
 
 }
 
-class Registry(settings: RegistrySettings, journal: QuckooJournal)
+class Registry private (settings: RegistrySettings, journal: QuckooJournal)
     extends Actor with ActorLogging with Stash {
   import Registry._
 
@@ -82,7 +91,7 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
   private[this] val cluster     = Cluster(context.system)
   private[this] val mediator    = DistributedPubSub(context.system).mediator
   private[this] val resolver    = context.actorOf(settings.resolverProps, "resolver")
-  private[this] val shardRegion = startShardRegion
+  private[this] val shardRegion = startShardRegion(context.system)
 
   private[this] var jobIds = Set.empty[JobId]
 
@@ -180,26 +189,6 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
 
     case _ =>
   }
-
-  private def startShardRegion: ActorRef =
-    if (cluster.selfRoles.contains("registry")) {
-      log.info("Starting registry shards...")
-      ClusterSharding(context.system).start(
-        typeName = PersistentJob.ShardName,
-        entityProps = PersistentJob.props,
-        settings = ClusterShardingSettings(context.system).withRole("registry"),
-        extractEntityId = PersistentJob.idExtractor,
-        extractShardId = PersistentJob.shardResolver
-      )
-    } else {
-      log.info("Starting registry proxy...")
-      ClusterSharding(context.system).startProxy(
-        typeName = PersistentJob.ShardName,
-        role = None,
-        extractEntityId = PersistentJob.idExtractor,
-        extractShardId = PersistentJob.shardResolver
-      )
-    }
 
   private def warmUp(): Unit = {
     journal.read
