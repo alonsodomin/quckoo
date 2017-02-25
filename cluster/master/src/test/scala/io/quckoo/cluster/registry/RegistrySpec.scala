@@ -16,19 +16,26 @@
 
 package io.quckoo.cluster.registry
 
-import akka.testkit.{ImplicitSender, TestActors, TestActorRef, TestProbe}
+import akka.testkit.{ImplicitSender, TestActorRef, TestActors, TestProbe}
 
-import io.quckoo.{JobSpec, JobPackage, JarJobPackage, ShellScriptPackage}
+import io.quckoo.{JobPackage, JobSpec}
 import io.quckoo.cluster.journal.QuckooTestJournal
+import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
+import io.quckoo.resolver.{Artifact, Resolver}
 import io.quckoo.testkit.QuckooActorClusterSuite
 
 import scala.concurrent.duration._
 
 object RegistrySpec {
 
-  final val TestJobPackage = JobPackage.shell("echo \"hello\"")
-  final val TestJobSpec = JobSpec("Foo", jobPackage = TestJobPackage)
+  final val TestShellJobPackage = JobPackage.shell("echo \"hello\"")
+  final val TestShellJobSpec = JobSpec("Foo", jobPackage = TestShellJobPackage)
+
+  final val TestJarJobPackage = JobPackage.jar(ArtifactId(
+    "io.quckoo", "quckoo-example-jobs_2.11", "0.1.0"
+  ), "io.quckoo.examples.HelloWorldJob")
+  final val TestJarJobSpec = JobSpec("Bar", jobPackage = TestJarJobPackage)
 
 }
 
@@ -52,11 +59,22 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
     }
 
     "register shell script jobs" in {
-      registry ! RegisterJob(TestJobSpec)
+      registry ! RegisterJob(TestShellJobSpec)
 
       resolverProbe.expectNoMsg(500 millis)
 
-      //expectMsgType[JobAccepted]
+      val acceptedMsg = expectMsgType[JobAccepted]
+      acceptedMsg.jobId shouldBe JobId(TestShellJobSpec)
+    }
+
+    "register jar jobs" in {
+      registry ! RegisterJob(TestJarJobSpec)
+
+      resolverProbe.expectMsg(Resolver.Validate(TestJarJobPackage.artifactId))
+      resolverProbe.reply(Resolver.ArtifactResolved(Artifact(TestJarJobPackage.artifactId, List.empty)))
+
+      val acceptedMsg = expectMsgType[JobAccepted]
+      acceptedMsg.jobId shouldBe JobId(TestJarJobSpec)
     }
   }
 

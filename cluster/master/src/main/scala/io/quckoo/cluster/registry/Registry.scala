@@ -16,18 +16,20 @@
 
 package io.quckoo.cluster.registry
 
+import java.util.UUID
+
 import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.persistence.query.{EventEnvelope2, Sequence}
+import akka.persistence.query.EventEnvelope2
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
-import io.quckoo.{JarJobPackage, JobSpec}
+import io.quckoo.JobSpec
 import io.quckoo.id.JobId
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
@@ -95,8 +97,6 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
 
   private[this] var jobIds = Set.empty[JobId]
 
-  private[this] var handlerRefCount = 0L
-
   override def preStart(): Unit = {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
   }
@@ -122,17 +122,8 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
       context become warmingUp
 
     case RegisterJob(spec) =>
-      spec.jobPackage match {
-        case JarJobPackage(artifactId, _) =>
-          log.debug("Starting resolution for JAR package with artifact {}", artifactId)
-          handlerRefCount += 1
-          val handler = context.actorOf(handlerProps(spec, sender()), s"handler-$handlerRefCount")
-          resolver.tell(Resolver.Validate(artifactId), handler)
-
-        case _ =>
-          log.debug("Creating job for spec {}", spec)
-          shardRegion.tell(PersistentJob.CreateJob(JobId(spec), spec), sender())
-      }
+      val registrationProps = Registration.props(spec, shardRegion, resolver, sender())
+      context.actorOf(registrationProps, s"registration-${UUID.randomUUID()}")
 
     case GetJobs =>
       val origSender = sender()
@@ -197,66 +188,6 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
       .currentEventsByTag(EventTag, journal.firstOffset)
       .runWith(
         Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
-  }
-
-  private def handlerProps(jobSpec: JobSpec, replyTo: ActorRef): Props =
-    Props(classOf[RegistryResolutionHandler], jobSpec, shardRegion, replyTo)
-
-}
-
-private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef, replyTo: ActorRef)
-    extends Actor with ActorLogging with Stash {
-  import Resolver._
-
-  private[this] val mediator = DistributedPubSub(context.system).mediator
-  private val jobId          = JobId(jobSpec)
-
-  override def preStart(): Unit = {
-    mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
-  }
-
-  def receive: Receive = initializing
-
-  def initializing: Receive = {
-    case DistributedPubSubMediator.SubscribeAck(_) =>
-      unstashAll()
-      context become resolvingArtifact
-
-    case _ => stash()
-  }
-
-  def resolvingArtifact: Receive = {
-    case ArtifactResolved(artifact) =>
-      log.debug("Job artifact has been successfully resolved. artifactId={}", artifact.artifactId)
-      shardRegion ! PersistentJob.CreateJob(jobId, jobSpec)
-      context.setReceiveTimeout(10 seconds)
-      context become registeringJob
-
-    case ResolutionFailed(_, cause) =>
-      log.error("Couldn't validate the job artifact id. " + cause)
-      replyTo ! JobRejected(jobId, cause)
-      finish()
-  }
-
-  def registeringJob: Receive = {
-    case evt @ JobAccepted(`jobId`, _) =>
-      replyTo ! evt
-      finish()
-
-    case ReceiveTimeout =>
-      log.error("Timed out whilst storing the job details. jobId={}", jobId)
-      replyTo ! JobRejected(jobId, ExceptionThrown.from(new TimeoutException))
-      finish()
-  }
-
-  def stopping: Receive = {
-    case DistributedPubSubMediator.UnsubscribeAck(_) =>
-      context stop self
-  }
-
-  private[this] def finish(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
-    context become stopping
   }
 
 }
