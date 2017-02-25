@@ -124,11 +124,13 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
     case RegisterJob(spec) =>
       spec.jobPackage match {
         case JarJobPackage(artifactId, _) =>
+          log.debug("Starting resolution for JAR package with artifact {}", artifactId)
           handlerRefCount += 1
           val handler = context.actorOf(handlerProps(spec, sender()), s"handler-$handlerRefCount")
           resolver.tell(Resolver.Validate(artifactId), handler)
 
         case _ =>
+          log.debug("Creating job for spec {}", spec)
           shardRegion.tell(PersistentJob.CreateJob(JobId(spec), spec), sender())
       }
 

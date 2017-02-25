@@ -23,6 +23,8 @@ import io.quckoo.cluster.journal.QuckooTestJournal
 import io.quckoo.protocol.registry._
 import io.quckoo.testkit.QuckooActorClusterSuite
 
+import scala.concurrent.duration._
+
 object RegistrySpec {
 
   final val TestJobPackage = JobPackage.shell("echo \"hello\"")
@@ -52,7 +54,9 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
     "register shell script jobs" in {
       registry ! RegisterJob(TestJobSpec)
 
-      expectMsgType[JobAccepted]
+      resolverProbe.expectNoMsg(500 millis)
+
+      //expectMsgType[JobAccepted]
     }
   }
 

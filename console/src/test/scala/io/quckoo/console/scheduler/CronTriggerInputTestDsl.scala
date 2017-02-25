@@ -41,8 +41,6 @@ object CronTriggerInputTestDsl {
   def blankForm = dsl.test("Blank form")(_.obs.expressionInput.value.isEmpty)
 
   def onUpdate(value: Option[Trigger.Cron]) = Callback {
-    println("Setting trigger value: " + value)
-
     dsl.action("Update callback").update(_.state).updateState(_.copy(updatedTrigger = value))
   }
 
