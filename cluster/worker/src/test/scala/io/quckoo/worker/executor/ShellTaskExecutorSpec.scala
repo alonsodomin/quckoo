@@ -16,8 +16,36 @@
 
 package io.quckoo.worker.executor
 
-import io.quckoo.testkit.QuckooActorSuite
+import java.util.UUID
 
-class ShellTaskExecutorSpec extends QuckooActorSuite("ShellTaskExecutorSpec") {
+import akka.testkit._
+
+import io.quckoo.ShellScriptPackage
+import io.quckoo.id.TaskId
+import io.quckoo.testkit.QuckooActorSuite
+import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
+
+import org.scalamock.scalatest.MockFactory
+
+class ShellTaskExecutorSpec extends QuckooActorSuite("ShellTaskExecutorSpec")
+    with ImplicitSender with MockFactory {
+
+  "ShellTaskExecutor" should {
+    "run shell scripts and capture its standard output" in {
+      val expectedOut = "Hello World!"
+      val script = s"""echo "$expectedOut""""
+      val workerContext = mock[WorkerContext]
+
+      val taskId = UUID.randomUUID()
+      val scriptPackage = ShellScriptPackage(script)
+
+      val executor = TestActorRef(ShellTaskExecutor.props(workerContext, taskId, scriptPackage), "hello-bash")
+
+      executor ! TaskExecutor.Run
+
+      val completed = expectMsgType[TaskExecutor.Completed]
+      completed.result shouldBe s"$expectedOut\n"
+    }
+  }
 
 }

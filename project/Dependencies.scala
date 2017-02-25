@@ -59,6 +59,7 @@ object Dependencies {
 
     // Other utils ---
 
+    val arm         = "2.0"
     val scopt       = "3.5.0"
     val monocle     = "1.4.0"
     val scalaz      = "7.2.8"
@@ -67,6 +68,7 @@ object Dependencies {
     val enumeratum  = "1.5.6"
     val pureconfig  = "0.5.1"
     val betterfiles = "2.17.1"
+    val xml         = "1.0.6"
 
     // JavaScript Libraries
 
@@ -82,7 +84,8 @@ object Dependencies {
 
   object libs {
 
-    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
+    val scalaArm = "com.jsuereth"           %% "scala-arm" % version.arm
+    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % version.xml
 
     val ivy = "org.apache.ivy" % "ivy" % "2.4.0"
 
@@ -288,7 +291,7 @@ object Dependencies {
   }
   lazy val clusterWorker = Def.settings {
     import libs._
-    libraryDependencies ++= Seq(scopt, betterfiles)
+    libraryDependencies ++= Seq(scopt, scalaArm, betterfiles)
   }
 
   // Support modules ================================

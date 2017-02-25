@@ -19,14 +19,17 @@ package io.quckoo.worker.executor
 import java.nio.file.attribute.PosixFilePermission
 
 import akka.actor.Props
+import akka.pattern._
 
 import better.files._
 
 import io.quckoo.ShellScriptPackage
 import io.quckoo.id.TaskId
+import io.quckoo.fault.{ExceptionThrown, TaskExecutionFault}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 
 import scala.concurrent.duration.FiniteDuration
+import scala.util.{Success, Failure}
 
 object ShellTaskExecutor {
 
@@ -39,15 +42,30 @@ class ShellTaskExecutor private (
     workerContext: WorkerContext, taskId: TaskId, shellPackage: ShellScriptPackage
   ) extends TaskExecutor {
 
+  import TaskExecutor._
+
   def receive: Receive = {
     case TaskExecutor.Run =>
-      sender() ! TaskExecutor.Completed("Done")
+      import context.dispatcher
+      val scriptFile = generateScriptFile()
+      val runner = new ShellProcessRunner(scriptFile.path.toString())
+
+      runner.run.map { result =>
+        if (result.exitCode == 0) {
+          Completed(result.stdOut)
+        } else {
+          Failed(TaskExecutionFault(result.exitCode))
+        }
+      } recover {
+        case ex => Failed(ExceptionThrown.from(ex))
+      } pipeTo sender()
   }
 
-  private [this] def dumpScript() = {
+  private [this] def generateScriptFile() = {
     val scriptFile = File.newTemporaryFile()
     scriptFile.append(shellPackage.content)
     scriptFile.addPermission(PosixFilePermission.OWNER_EXECUTE)
+    //scriptFile.deleteOnExit()
     scriptFile
   }
 

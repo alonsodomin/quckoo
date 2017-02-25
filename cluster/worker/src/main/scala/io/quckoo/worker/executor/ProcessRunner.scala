@@ -16,11 +16,20 @@
 
 package io.quckoo.worker.executor
 
-import scala.concurrent.{ExecutionContext, Future}
+import java.io._
+
+import resource._
+
+import scala.concurrent._
+
+import scalaz._
+import Scalaz._
+
+import slogging._
 
 object ProcessRunner {
 
-  case class Result(exitCode: Int, stdOut: String, stdErr: String)
+  final case class Result(exitCode: Int, stdOut: String, stdErr: String)
 
 }
 
@@ -30,5 +39,53 @@ abstract class ProcessRunner {
   def run(implicit executionContext: ExecutionContext): Future[Result]
 
   def kill(): Unit
+
+}
+
+final class ShellProcessRunner(command: String) extends ProcessRunner with StrictLogging {
+  import ProcessRunner._
+
+  def run(implicit executionContext: ExecutionContext): Future[Result] = {
+    logger.info("Executing command: {}", command)
+
+    def readStream(stream: InputStream): Future[String] = Future {
+      blocking {
+        val managedOutput = for {
+          buffer <- managed(new StringWriter())
+          writer <- managed(new PrintWriter(buffer))
+          input  <- managed(new BufferedReader(new InputStreamReader(stream)))
+        } yield {
+          def read(): Unit = input.readLine() match {
+            case null => ()
+            case line =>
+              writer.println(line)
+              read()
+          }
+
+          read()
+          buffer.toString
+        }
+
+        managedOutput.acquireAndGet(identity)
+      }
+    }
+
+    val procBuilder = new ProcessBuilder(command)
+    val proc = procBuilder.start()
+
+    val stdOut = readStream(proc.getInputStream())
+    val stdErr = readStream(proc.getErrorStream())
+
+    val runAndWait = Future {
+      blocking { proc.waitFor() }
+    }
+
+    for {
+      exitCode   <- runAndWait
+      (out, err) <- (stdOut |@| stdErr)(_ -> _)
+    } yield Result(exitCode, out, err)
+  }
+
+  def kill(): Unit = ???
 
 }
