@@ -21,6 +21,7 @@ import java.util.UUID
 
 import akka.testkit._
 
+import io.quckoo.JarJobPackage
 import io.quckoo.fault.{ExceptionThrown, MissingDependencies, UnresolvedDependency}
 import io.quckoo.id.{ArtifactId, TaskId}
 import io.quckoo.resolver.{Artifact, Resolver}
@@ -55,7 +56,7 @@ class JarTaskExecutorSpec extends QuckooActorSuite("JobExecutorSpec")
 
       val workerContext = mock[WorkerContext]
       val executor = TestActorRef(
-        JarTaskExecutor.props(workerContext, TestTaskId, TestArtifactId, TestJobClass),
+        JarTaskExecutor.props(workerContext, TestTaskId, JarJobPackage(TestArtifactId, TestJobClass)),
         "failing-executor"
       )
 
@@ -76,7 +77,7 @@ class JarTaskExecutorSpec extends QuckooActorSuite("JobExecutorSpec")
 
       val workerContext = mock[WorkerContext]
       val executor = TestActorRef(
-        JarTaskExecutor.props(workerContext, TestTaskId, TestArtifactId, TestJobClass),
+        JarTaskExecutor.props(workerContext, TestTaskId, JarJobPackage(TestArtifactId, TestJobClass)),
         "non-resolving-executor"
       )
 

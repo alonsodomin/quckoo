@@ -20,6 +20,7 @@ import java.util.concurrent.Callable
 
 import akka.actor.{ActorRef, Props}
 
+import io.quckoo.JarJobPackage
 import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id.{ArtifactId, TaskId}
 import io.quckoo.resolver.Resolver
@@ -32,16 +33,15 @@ import scala.util.{Failure, Success, Try}
   */
 object JarTaskExecutor {
 
-  def props(workerContext: WorkerContext, taskId: TaskId, artifactId: ArtifactId, jobClass: String): Props =
-    Props(new JarTaskExecutor(workerContext, taskId, artifactId, jobClass))
+  def props(workerContext: WorkerContext, taskId: TaskId, jarPackage: JarJobPackage): Props =
+    Props(new JarTaskExecutor(workerContext, taskId, jarPackage))
 
 }
 
 class JarTaskExecutor private (
     workerContext: WorkerContext,
     taskId: TaskId,
-    artifactId: ArtifactId,
-    jobClass: String)
+    jarPackage: JarJobPackage)
   extends TaskExecutor {
 
   import TaskExecutor._
@@ -52,17 +52,17 @@ class JarTaskExecutor private (
   private[this] def ready: Receive = {
     case Run =>
       log.info("Starting execution of task '{}' using class '{}' from artifact {}.",
-        taskId, jobClass, artifactId
+        taskId, jarPackage.jobClass, jarPackage.artifactId
       )
-      resolver ! Resolver.Download(artifactId)
+      resolver ! Resolver.Download(jarPackage.artifactId)
       context.become(running(replyTo = sender()))
   }
 
   private[this] def running(replyTo: ActorRef): Receive = {
     case Resolver.ArtifactResolved(artifact) =>
-      log.debug("Received resolved artifact for id: {}", artifactId)
+      log.debug("Received resolved artifact for id: {}", jarPackage.artifactId)
       val result = for {
-        job    <- artifact.newJob(jobClass, Map.empty)
+        job    <- artifact.newJob(jarPackage.jobClass, Map.empty)
         invoke <- runJob(job)
       } yield invoke
 
@@ -82,13 +82,13 @@ class JarTaskExecutor private (
   }
 
   private def complete(replyTo: ActorRef, response: Response) = {
-    log.debug("Completing execution of task '{}' with re")
+    log.debug("Completing execution of task '{}' with response: {}", taskId, response)
     replyTo ! response
     context.become(completed(response))
   }
 
   private def runJob(callable: Callable[_]): Try[Any] = {
-    log.debug("Running class '{}'...", jobClass)
+    log.debug("Running class '{}'...", jarPackage.jobClass)
     Try(callable.call())
   }
 

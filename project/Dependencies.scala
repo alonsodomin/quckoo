@@ -24,7 +24,7 @@ object Dependencies {
     // Akka ----------
 
     object akka {
-      val main = "2.4.16"
+      val main = "2.4.17"
       val kryo = "0.5.2"
 
       val constructr = "0.5.2"

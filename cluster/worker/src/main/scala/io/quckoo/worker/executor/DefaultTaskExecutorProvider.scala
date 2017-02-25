@@ -29,12 +29,12 @@ object DefaultTaskExecutorProvider extends TaskExecutorProvider {
 
   override def executorFor(context: WorkerContext, task: Task)(implicit actorRefFactory: ActorRefFactory): ActorRef =
     task.jobPackage match {
-      case JarJobPackage(artifactId, jobClass) =>
-        val executorProps = configure(JarTaskExecutor.props(context, task.id, artifactId, jobClass))
+      case jar: JarJobPackage =>
+        val executorProps = configure(JarTaskExecutor.props(context, task.id, jar))
         actorRefFactory.actorOf(executorProps, "jar-executor")
 
-      case ShellScriptPackage(content) =>
-        val executorProps = configure(ShellTaskExecutor.props(context, content))
+      case shell: ShellScriptPackage =>
+        val executorProps = configure(ShellTaskExecutor.props(context, task.id, shell))
         actorRefFactory.actorOf(executorProps, "shell-executor")
     }
 

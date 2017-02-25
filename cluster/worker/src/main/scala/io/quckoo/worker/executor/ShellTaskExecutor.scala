@@ -22,19 +22,21 @@ import akka.actor.Props
 
 import better.files._
 
+import io.quckoo.ShellScriptPackage
+import io.quckoo.id.TaskId
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 
 import scala.concurrent.duration.FiniteDuration
 
 object ShellTaskExecutor {
 
-  def props(workerContext: WorkerContext, script: String): Props =
-    Props(new ShellTaskExecutor(workerContext, script))
+  def props(workerContext: WorkerContext, taskId: TaskId, shellPackage: ShellScriptPackage): Props =
+    Props(new ShellTaskExecutor(workerContext, taskId: TaskId, shellPackage))
 
 }
 
 class ShellTaskExecutor private (
-    workerContext: WorkerContext, script: String
+    workerContext: WorkerContext, taskId: TaskId, shellPackage: ShellScriptPackage
   ) extends TaskExecutor {
 
   def receive: Receive = {
@@ -44,7 +46,7 @@ class ShellTaskExecutor private (
 
   private [this] def dumpScript() = {
     val scriptFile = File.newTemporaryFile()
-    scriptFile.append(script)
+    scriptFile.append(shellPackage.content)
     scriptFile.addPermission(PosixFilePermission.OWNER_EXECUTE)
     scriptFile
   }
