@@ -68,14 +68,25 @@ object Registry {
   def props(settings: RegistrySettings, journal: QuckooJournal): Props =
     Props(new Registry(settings, journal))
 
-  private[registry] def startShardRegion(system: ActorSystem): ActorRef =
-    ClusterSharding(system).start(
-      typeName = PersistentJob.ShardName,
-      entityProps = PersistentJob.props,
-      settings = ClusterShardingSettings(system).withRole("registry"),
-      extractEntityId = PersistentJob.idExtractor,
-      extractShardId = PersistentJob.shardResolver
-    )
+  private[registry] def startShardRegion(system: ActorSystem): ActorRef = {
+    val cluster = Cluster(system)
+    if (cluster.getSelfRoles.contains("registry")) {
+      ClusterSharding(system).start(
+        typeName = PersistentJob.ShardName,
+        entityProps = PersistentJob.props,
+        settings = ClusterShardingSettings(system).withRole("registry"),
+        extractEntityId = PersistentJob.idExtractor,
+        extractShardId = PersistentJob.shardResolver
+      )
+    } else {
+      ClusterSharding(system).startProxy(
+        typeName = PersistentJob.ShardName,
+        role = Some("registry"),
+        extractEntityId = PersistentJob.idExtractor,
+        extractShardId = PersistentJob.shardResolver
+      )
+    }
+  }
 
 }
 
@@ -90,7 +101,6 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
     "registry"
   )
 
-  private[this] val cluster     = Cluster(context.system)
   private[this] val mediator    = DistributedPubSub(context.system).mediator
   private[this] val resolver    = context.actorOf(settings.resolverProps, "resolver")
   private[this] val shardRegion = startShardRegion(context.system)
