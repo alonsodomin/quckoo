@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets
 
 object MD5 {
 
+  // $COVERAGE-OFF$
   def checksum(input: String): String = {
     val md = MessageDigest.getInstance("MD5")
     md.update(input.getBytes(StandardCharsets.UTF_8))
@@ -16,5 +17,6 @@ object MD5 {
     }
     builder.toString
   }
+  // $COVERAGE-ON$
 
 }

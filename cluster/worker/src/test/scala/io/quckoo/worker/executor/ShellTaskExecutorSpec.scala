@@ -22,6 +22,7 @@ import akka.testkit._
 
 import io.quckoo.ShellScriptPackage
 import io.quckoo.id.TaskId
+import io.quckoo.fault.TaskExitCodeFault
 import io.quckoo.testkit.QuckooActorSuite
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 
@@ -45,6 +46,25 @@ class ShellTaskExecutorSpec extends QuckooActorSuite("ShellTaskExecutorSpec")
 
       val completed = expectMsgType[TaskExecutor.Completed]
       completed.result shouldBe s"$expectedOut\n"
+    }
+
+    "reply with a failure if script exit code is not 0" in {
+      val expectedExitCode = 123
+      val script = s"""
+      | #!/bin/bash
+      | exit $expectedExitCode
+      """.stripMargin
+
+      val workerContext = mock[WorkerContext]
+      val taskId = UUID.randomUUID()
+      val scriptPackage = ShellScriptPackage(script)
+
+      val executor = TestActorRef(ShellTaskExecutor.props(workerContext, taskId, scriptPackage), "bash-exitcode")
+
+      executor ! TaskExecutor.Run
+
+      val failedMsg = expectMsgType[TaskExecutor.Failed]
+      failedMsg.error shouldBe TaskExitCodeFault(expectedExitCode)
     }
   }
 

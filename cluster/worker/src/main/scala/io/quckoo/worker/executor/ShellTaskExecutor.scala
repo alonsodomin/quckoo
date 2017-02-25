@@ -25,7 +25,7 @@ import better.files._
 
 import io.quckoo.ShellScriptPackage
 import io.quckoo.id.TaskId
-import io.quckoo.fault.{ExceptionThrown, TaskExecutionFault}
+import io.quckoo.fault.{ExceptionThrown, TaskExitCodeFault}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 
 import scala.concurrent.duration.FiniteDuration
@@ -54,7 +54,7 @@ class ShellTaskExecutor private (
         if (result.exitCode == 0) {
           Completed(result.stdOut)
         } else {
-          Failed(TaskExecutionFault(result.exitCode))
+          Failed(TaskExitCodeFault(result.exitCode))
         }
       } recover {
         case ex => Failed(ExceptionThrown.from(ex))

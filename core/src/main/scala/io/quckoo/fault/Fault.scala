@@ -67,4 +67,4 @@ case class ValidationFault(violation: Violation) extends Fault
 
 // == Task Runtime Errors ==================
 
-case class TaskExecutionFault(exitCode: Int) extends Fault
+case class TaskExitCodeFault(exitCode: Int) extends Fault

@@ -38,11 +38,9 @@ abstract class ProcessRunner {
 
   def run(implicit executionContext: ExecutionContext): Future[Result]
 
-  def kill(): Unit
-
 }
 
-final class ShellProcessRunner(command: String) extends ProcessRunner with StrictLogging {
+final class ShellProcessRunner(command: String, args: String*) extends ProcessRunner with StrictLogging {
   import ProcessRunner._
 
   def run(implicit executionContext: ExecutionContext): Future[Result] = {
@@ -70,22 +68,26 @@ final class ShellProcessRunner(command: String) extends ProcessRunner with Stric
       }
     }
 
-    val procBuilder = new ProcessBuilder(command)
-    val proc = procBuilder.start()
+    def startProcess(builder: ProcessBuilder): Future[Process] =
+      Future(builder.start())
 
-    val stdOut = readStream(proc.getInputStream())
-    val stdErr = readStream(proc.getErrorStream())
-
-    val runAndWait = Future {
-      blocking { proc.waitFor() }
+    def captureOutput(proc: Process): Future[(String, String)] = {
+      val stdOut = readStream(proc.getInputStream())
+      val stdErr = readStream(proc.getErrorStream())
+      (stdOut |@| stdErr)(_ -> _)
     }
 
+    def waitForCompletion(proc: Process): Future[Int] =
+      Future { blocking { proc.waitFor() } }
+
+    val commandLine = command +: args
+    val procBuilder = new ProcessBuilder(commandLine: _*)
+
     for {
-      exitCode   <- runAndWait
-      (out, err) <- (stdOut |@| stdErr)(_ -> _)
+      proc       <- startProcess(procBuilder)
+      exitCode   <- waitForCompletion(proc)
+      (out, err) <- captureOutput(proc)
     } yield Result(exitCode, out, err)
   }
-
-  def kill(): Unit = ???
 
 }
