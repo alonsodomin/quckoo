@@ -1,7 +1,5 @@
 package io.quckoo.cluster.registry
 
-import java.util.UUID
-
 import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.{ImplicitSender, TestActors, TestProbe}
@@ -65,7 +63,7 @@ abstract class RegistryMultiNode extends MultiNodeSpec(RegistryNodesConfig)
 
         val registryRef = system.actorSelection(node(registry) / "user" / "registry")
 
-        val invalidJobId = JobId(UUID.randomUUID())
+        val invalidJobId = JobId("foo")
         registryRef ! GetJob(invalidJobId)
 
         val notFoundMsg = expectMsgType[JobNotFound](7 seconds)
