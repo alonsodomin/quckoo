@@ -4,13 +4,14 @@ import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.{ImplicitSender, TestActors, TestProbe}
 
+import io.quckoo.{JobSpec, JobPackage}
 import io.quckoo.fault._
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Artifact
 import io.quckoo.resolver.Resolver
-import io.quckoo.{JobSpec, JobPackage}
+import io.quckoo.cluster.QuckooRoles
 import io.quckoo.cluster.journal.QuckooTestJournal
 
 import scala.concurrent.duration._
@@ -19,8 +20,8 @@ import scala.concurrent.duration._
  * Created by domingueza on 28/08/15.
  */
 object RegistryNodesConfig extends MultiNodeConfig {
-  val registry = role("registry")
-  val proxy = role("proxy")
+  val registry = role(QuckooRoles.Registry)
+  val proxy = role("other")
 
   commonConfig(MultiNodeClusterSpec.clusterConfig)
 }

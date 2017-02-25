@@ -31,6 +31,7 @@ import akka.util.Timeout
 
 import io.quckoo.JobSpec
 import io.quckoo.id.JobId
+import io.quckoo.cluster.QuckooRoles
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.topics
@@ -70,18 +71,18 @@ object Registry {
 
   private[registry] def startShardRegion(system: ActorSystem): ActorRef = {
     val cluster = Cluster(system)
-    if (cluster.getSelfRoles.contains("registry")) {
+    if (cluster.getSelfRoles.contains(QuckooRoles.Registry)) {
       ClusterSharding(system).start(
         typeName = PersistentJob.ShardName,
         entityProps = PersistentJob.props,
-        settings = ClusterShardingSettings(system).withRole("registry"),
+        settings = ClusterShardingSettings(system).withRole(QuckooRoles.Registry),
         extractEntityId = PersistentJob.idExtractor,
         extractShardId = PersistentJob.shardResolver
       )
     } else {
       ClusterSharding(system).startProxy(
         typeName = PersistentJob.ShardName,
-        role = Some("registry"),
+        role = Some(QuckooRoles.Registry),
         extractEntityId = PersistentJob.idExtractor,
         extractShardId = PersistentJob.shardResolver
       )
