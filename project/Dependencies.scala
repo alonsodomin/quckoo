@@ -172,7 +172,12 @@ object Dependencies {
   // Utilities module ===========================
 
   lazy val utilJS = Def.settings {
-    libraryDependencies ++= Seq("org.webjars.npm" % "spark-md5" % version.sparkMD5)
+    jsDependencies ++= Seq(
+      "org.webjars.npm" % "spark-md5" % version.sparkMD5
+        /            "spark-md5.js"
+        minified     "spark-md5.min.js"
+        commonJSName "SparkMD5"
+    )
   }
 
   // API module ===============================

@@ -68,7 +68,7 @@ class AkkaHttpBackendSpec extends fixture.FlatSpec with MockServer with Matchers
     val transport = new HttpAkkaBackend("localhost", mockServer.getPort)
 
     val input = ArtifactId("com.example", "example", "latest")
-    val output = JobId(UUID.randomUUID())
+    val output = JobId("fooId")
 
     DataBuffer(input).flatMap(in => DataBuffer(output).map(out => (in, out))).foreach {
       case (in, out) =>

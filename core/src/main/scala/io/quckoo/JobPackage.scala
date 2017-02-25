@@ -30,7 +30,7 @@ import Scalaz._
   * Created by alonsodomin on 17/02/2017.
   */
 sealed trait JobPackage {
-  def hash: String
+  def checksum: String
 }
 
 object JobPackage {
@@ -61,7 +61,7 @@ object JobPackage {
 }
 
 @Lenses final case class ShellScriptPackage(content: String) extends JobPackage {
-  override def hash: String = MD5.checksum(content)
+  override def checksum: String = MD5.checksum(content)
 }
 object ShellScriptPackage {
 
@@ -82,7 +82,7 @@ object ShellScriptPackage {
   jobClass: String
 ) extends JobPackage {
 
-  def hash: String = MD5.checksum(s"$artifactId!$jobClass")
+  def checksum: String = MD5.checksum(s"$artifactId!$jobClass")
 
 }
 
