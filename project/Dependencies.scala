@@ -27,10 +27,10 @@ object Dependencies {
       val main = "2.4.17"
       val kryo = "0.5.2"
 
-      val constructr = "0.5.2"
+      val constructr = "0.6.0"
 
       object http {
-        val main = "10.0.3"
+        val main = "10.0.4"
 
         // http extensions
         val json = "1.12.0"
@@ -38,8 +38,8 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.22"
-      val inmemory  = "2.4.16.0"
+      val cassandra = "0.23"
+      val inmemory  = "2.4.17.3"
     }
 
     // ScalaJS -------
@@ -50,7 +50,7 @@ object Dependencies {
 
     val testState = "2.1.1"
     val scalaCss  = "0.5.1"
-    val scalaTime = "2.0.0-M7"
+    val scalaTime = "2.0.0-M8"
 
     val diode = "1.1.0"
 
@@ -62,10 +62,10 @@ object Dependencies {
     val arm         = "2.0"
     val scopt       = "3.5.0"
     val monocle     = "1.4.0"
-    val scalaz      = "7.2.8"
-    val monix       = "2.2.1"
-    val cron4s      = "0.3.0"
-    val enumeratum  = "1.5.6"
+    val scalaz      = "7.2.9"
+    val monix       = "2.2.2"
+    val cron4s      = "0.3.1"
+    val enumeratum  = "1.5.8"
     val pureconfig  = "0.5.1"
     val betterfiles = "2.17.1"
     val xml         = "1.0.6"
