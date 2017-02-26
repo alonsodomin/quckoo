@@ -24,7 +24,7 @@ import japgolly.scalajs.react.test._
   * Created by alonsodomin on 10/07/2016.
   */
 object LoginTestDsl {
-  import LoginFormTestExports._
+  import LoginTestExports._
   import ReactTestUtils._
 
   @Lenses

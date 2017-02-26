@@ -103,7 +103,7 @@ object FiniteDurationInput {
               ^.`class` := "form-control",
               state.unit.map(u => ^.value := u.toString()),
               ^.onChange ==> onUnitUpdate,
-              <.option("Select a time unit..."),
+              <.option(^.value := "", "Select a time unit..."),
               SupportedUnits.map {
                 case (u, text) =>
                   <.option(^.value := u.name(), text)

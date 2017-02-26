@@ -20,6 +20,7 @@ import akka.testkit.{ImplicitSender, TestActorRef, TestActors, TestProbe}
 
 import io.quckoo.{JobPackage, JobSpec}
 import io.quckoo.cluster.journal.QuckooTestJournal
+import io.quckoo.fault.JobNotFound
 import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.{Artifact, Resolver}
@@ -58,6 +59,14 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
       expectMsg(Registry.Ready)
     }
 
+    "return JobNotFound for non existent jobs" in {
+      val jobId = JobId("bar")
+
+      registry ! GetJob(jobId)
+
+      expectMsg(JobNotFound(jobId))
+    }
+
     "register shell script jobs" in {
       registry ! RegisterJob(TestShellJobSpec)
 
@@ -65,6 +74,12 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
 
       val acceptedMsg = expectMsgType[JobAccepted]
       acceptedMsg.jobId shouldBe JobId(TestShellJobSpec)
+    }
+
+    "return the job spec for the shell script" in {
+      registry ! GetJob(JobId(TestShellJobSpec))
+
+      expectMsg(TestShellJobSpec)
     }
 
     "register jar jobs" in {
@@ -75,6 +90,12 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
 
       val acceptedMsg = expectMsgType[JobAccepted]
       acceptedMsg.jobId shouldBe JobId(TestJarJobSpec)
+    }
+
+    "return the job spec for the jar" in {
+      registry ! GetJob(JobId(TestJarJobSpec))
+
+      expectMsg(TestJarJobSpec)
     }
   }
 

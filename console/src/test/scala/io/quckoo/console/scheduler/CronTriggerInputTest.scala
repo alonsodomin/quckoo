@@ -61,7 +61,7 @@ class CronTriggerInputTest extends FunSuite {
 
   test("input should perform validation of the cron expression") {
     val plan = Plan.action(
-      blankForm +>
+      blankInput +>
       setExpression("* * * * * *") +> emptyExpression.assert(false) +> hasError.assert.equal(false) >>
       setExpression("* *") +> emptyExpression.assert(false) +> hasError.assert.equal(true)
     )

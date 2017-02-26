@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.security
+package io.quckoo.console.components
 
-import io.quckoo.console.security.LoginTestExports._
-
-import org.scalajs.dom.html
+import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
+import teststate.domzipper.sizzle
 
 /**
-  * Created by alonsodomin on 10/07/2016.
+  * Created by alonsodomin on 26/02/2017.
   */
-class LoginObserver($: HtmlDomZipper) {
-
-  val usernameInput = $("#username").domAs[html.Input]
-  val passwordInput = $("#password").domAs[html.Input]
-  val submitButton  = $("button:contains('Sign in')").domAs[html.Button]
-
-  val emptyUsername = usernameInput.value.isEmpty
-  val emptyPassword = passwordInput.value.isEmpty
-  val canSubmit = !submitButton.disabled.getOrElse(false)
-
-}
+object FiniteDurationInputTestExports extends Exports
+  with ExtScalaJsReact
+  with ExtScalaz
+  with sizzle.Exports
