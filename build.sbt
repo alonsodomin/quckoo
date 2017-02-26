@@ -44,7 +44,7 @@ lazy val commonJsSettings = Seq(
   coverageExcludedFiles := ".*",
   persistLauncher in Test := false,
   scalaJSStage in Test := FastOptStage,
-  jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
+  jsEnv in Test := PhantomJSEnv().value
 )
 
 lazy val scoverageSettings = Seq(

@@ -29,7 +29,7 @@ import japgolly.scalajs.react.test._
   * Created by alonsodomin on 03/09/2016.
   */
 object CronTriggerInputTestDsl {
-  import CronTriggerInputState._
+  import CronTriggerInputTestExports._
 
   @Lenses
   case class State(inputExpr: String, updatedTrigger: Option[Trigger.Cron] = None) {

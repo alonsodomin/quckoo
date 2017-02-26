@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.scheduler
+package io.quckoo.console.components
+
+import TextAreaTestExports._
 
 import org.scalajs.dom.html
 
-import CronTriggerInputTestExports._
-
 /**
-  * Created by alonsodomin on 03/09/2016.
+  * Created by alonsodomin on 25/02/2017.
   */
-class CronTriggerInputObserver($: HtmlDomZipper) {
+class TextAreaObserver($: HtmlDomZipper) {
 
-  val expressionInput = $("#cronTrigger").domAs[html.Input]
-  val parseError = $.collect01("#cronParseError").
-    mapZippers(_.domAs[html.Div]).map(_.innerHTML)
+  val textArea = $("textarea").domAs[html.TextArea]
 
 }

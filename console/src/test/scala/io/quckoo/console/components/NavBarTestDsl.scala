@@ -24,15 +24,15 @@ import japgolly.scalajs.react.test._
   * Created by alonsodomin on 29/07/2016.
   */
 object NavBarTestDsl {
-  import NavBarTestState._
+  import NavBarTestExports._
   import ReactTestUtils._
 
   @Lenses
-  final case class State(currentItem: Option[String] = None)
+  final case class State(currentItem: Option[Symbol] = None)
 
   val dsl = Dsl[Unit, NavBarObserver, State]
 
-  def selectItem(item: String): dsl.Actions =
+  def selectItem(item: Symbol): dsl.Actions =
     dsl.action(s"Select nav item $item")(Simulate click _.obs.navItems(item)).
       updateState(State.currentItem.set(Some(item)))
 

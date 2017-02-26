@@ -50,8 +50,8 @@ object TextArea {
       <.textarea(^.`class` := "form-control",
         ^.onChange ==> onUpdate,
         ^.onBlur   ==> onUpdate,
-        props.attrs,
-        state.value
+        state.value.map(v => ^.value := v),
+        props.attrs
       )
     }
 

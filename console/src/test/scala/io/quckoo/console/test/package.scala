@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.security
+package io.quckoo.console
 
-import teststate.domzipper.sizzle
-import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
+import teststate.typeclass.Equal
 
 /**
-  * Created by alonsodomin on 10/07/2016.
+  * Created by alonsodomin on 26/02/2017.
   */
-object LoginFormTestState extends Exports
-  with ExtScalaJsReact
-  with ExtScalaz
-  with sizzle.Exports
+package object test {
+
+  implicit val symbolEq: Equal[Symbol] = Equal.by_==
+
+}

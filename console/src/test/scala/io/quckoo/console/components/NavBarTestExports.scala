@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.scheduler
+package io.quckoo.console.components
 
-import org.scalajs.dom.html
-
-import CronTriggerInputTestExports._
+import teststate.domzipper.sizzle
+import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
 
 /**
-  * Created by alonsodomin on 03/09/2016.
+  * Created by alonsodomin on 10/07/2016.
   */
-class CronTriggerInputObserver($: HtmlDomZipper) {
-
-  val expressionInput = $("#cronTrigger").domAs[html.Input]
-  val parseError = $.collect01("#cronParseError").
-    mapZippers(_.domAs[html.Div]).map(_.innerHTML)
-
-}
+object NavBarTestExports extends Exports
+  with ExtScalaJsReact
+  with ExtScalaz
+  with sizzle.Exports
