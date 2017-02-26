@@ -8,7 +8,8 @@ organization in ThisBuild := "io.quckoo"
 
 scalaVersion in ThisBuild := "2.12.1"
 
-val sandbox = settingKey[String]("The name of the environment sandbox to use.")
+lazy val sandbox  = settingKey[String]("The name of the environment sandbox to use.")
+lazy val botBuild = settingKey[Boolean]("Build by TravisCI instead of local dev environment")
 
 lazy val commonSettings = Seq(
     licenses += ("Apache-2.0", url(
@@ -36,7 +37,8 @@ lazy val commonSettings = Seq(
       Resolver.bintrayRepo("dnvriend", "maven"),
       Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
     ),
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    botBuild := scala.sys.env.get("TRAVIS").isDefined
   ) ++ Licensing.settings
 
 lazy val commonJsSettings = Seq(
@@ -44,7 +46,9 @@ lazy val commonJsSettings = Seq(
   coverageExcludedFiles := ".*",
   persistLauncher in Test := false,
   scalaJSStage in Test := FastOptStage,
-  jsEnv in Test := PhantomJSEnv().value
+  jsEnv in Test := PhantomJSEnv().value,
+  // batch mode decreases the amount of memory needed to compile scala.js code
+  scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(botBuild.value)
 )
 
 lazy val scoverageSettings = Seq(

@@ -23,12 +23,12 @@ import better.files._
 
 import org.scalatest._
 
-class ShellProcessRunnerSpec extends AsyncFlatSpec with Matchers {
+class ProcessRunnerSpec extends AsyncFlatSpec with Matchers {
 
-  "ShellProcessRunner" should "run shell scripts and capture its standard output" in {
+  "ProcessRunner" should "run shell scripts and capture its standard output" in {
     val expectedOut = "Hello World!"
 
-    val runner = new ShellProcessRunner("echo", expectedOut)
+    val runner = new ProcessRunner("echo", expectedOut)
     runner.run.map { result =>
       result.exitCode shouldBe 0
       result.stdOut shouldBe s"$expectedOut\n"
@@ -48,7 +48,7 @@ class ShellProcessRunnerSpec extends AsyncFlatSpec with Matchers {
     scriptFile.append(script)
     scriptFile.addPermission(PosixFilePermission.OWNER_EXECUTE)
 
-    val runner = new ShellProcessRunner(scriptFile.path.toString)
+    val runner = new ProcessRunner(scriptFile.path.toString)
     runner.run.map { result =>
       result.exitCode shouldBe 0
       result.stdOut shouldBe ""
@@ -67,21 +67,21 @@ class ShellProcessRunnerSpec extends AsyncFlatSpec with Matchers {
     scriptFile.append(script)
     scriptFile.addPermission(PosixFilePermission.OWNER_EXECUTE)
 
-    val runner = new ShellProcessRunner(scriptFile.path.toString)
+    val runner = new ProcessRunner(scriptFile.path.toString)
     runner.run.map { result =>
       result.exitCode shouldBe expectedExitCode
     }
   }
 
   it should "return exit code 127 when the script uses a non-existent command" in {
-    val runner = new ShellProcessRunner("bash", "foo")
+    val runner = new ProcessRunner("bash", "foo")
     runner.run.map { result =>
       result.exitCode shouldBe 127
     }
   }
 
   it should "fail with an IO Exception when attempting to run an invalid command" in {
-    val runner = new ShellProcessRunner("foo")
+    val runner = new ProcessRunner("foo")
     recoverToSucceededIf[IOException] {
       runner.run
     }

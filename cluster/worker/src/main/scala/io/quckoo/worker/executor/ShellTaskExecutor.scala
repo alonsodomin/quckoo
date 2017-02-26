@@ -48,7 +48,7 @@ class ShellTaskExecutor private (
     case TaskExecutor.Run =>
       import context.dispatcher
       val scriptFile = generateScriptFile()
-      val runner = new ShellProcessRunner(scriptFile.path.toString())
+      val runner = new ProcessRunner(scriptFile.path.toString)
 
       runner.run.map { result =>
         if (result.exitCode == 0) {

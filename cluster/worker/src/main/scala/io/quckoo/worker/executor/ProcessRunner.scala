@@ -33,14 +33,7 @@ object ProcessRunner {
 
 }
 
-abstract class ProcessRunner {
-  import ProcessRunner._
-
-  def run(implicit executionContext: ExecutionContext): Future[Result]
-
-}
-
-final class ShellProcessRunner(command: String, args: String*) extends ProcessRunner with StrictLogging {
+class ProcessRunner(command: String, args: String*) extends StrictLogging {
   import ProcessRunner._
 
   def run(implicit executionContext: ExecutionContext): Future[Result] = {
