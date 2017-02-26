@@ -66,7 +66,7 @@ object HttpProtocolSpec {
   implicit final val TestTimeout = 10 seconds
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "latest")
-  final val TestJobId = JobId(UUID.randomUUID())
+  final val TestJobId = JobId("fooId")
   final val TestJobSpec = JobSpec("foo", jobPackage = JobPackage.jar(
     artifactId = TestArtifactId,
     jobClass = "com.example.Job"

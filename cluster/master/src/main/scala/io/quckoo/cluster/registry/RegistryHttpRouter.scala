@@ -67,7 +67,7 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
             }
           }
         }
-      } ~ pathPrefix(JavaUUID) { jobId =>
+      } ~ pathPrefix(Segment) { jobId =>
         extractTimeout(DefaultTimeout) { implicit timeout =>
           pathEnd {
             get {

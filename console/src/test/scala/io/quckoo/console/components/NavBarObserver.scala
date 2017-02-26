@@ -16,7 +16,7 @@
 
 package io.quckoo.console.components
 
-import NavBarTestState._
+import NavBarTestExports._
 
 import org.scalajs.dom.html
 
@@ -28,9 +28,9 @@ class NavBarObserver($: HtmlDomZipper) {
   val navItems = $.collect0n("li[role=presentation]").
     mapZippers { z =>
       val anchor = z("a")
-      anchor.innerText -> anchor.domAs[html.Anchor]
+      Symbol(anchor.innerText) -> anchor.domAs[html.Anchor]
     } toMap
 
-  val activeNavItem = $.collect01("li.active").mapZippers(_("a").innerText)
+  val activeNavItem = $.collect01("li.active").mapZippers(zipper => Symbol(zipper("a").innerText))
 
 }

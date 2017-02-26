@@ -29,7 +29,7 @@ import japgolly.scalajs.react.test._
   * Created by alonsodomin on 03/09/2016.
   */
 object CronTriggerInputTestDsl {
-  import CronTriggerInputState._
+  import CronTriggerInputTestExports._
 
   @Lenses
   case class State(inputExpr: String, updatedTrigger: Option[Trigger.Cron] = None) {
@@ -38,11 +38,9 @@ object CronTriggerInputTestDsl {
 
   val dsl = Dsl[Unit, CronTriggerInputObserver, State]
 
-  def blankForm = dsl.test("Blank form")(_.obs.expressionInput.value.isEmpty)
+  def blankInput = dsl.test("Blank input")(_.obs.expressionInput.value.isEmpty)
 
   def onUpdate(value: Option[Trigger.Cron]) = Callback {
-    println("Setting trigger value: " + value)
-
     dsl.action("Update callback").update(_.state).updateState(_.copy(updatedTrigger = value))
   }
 

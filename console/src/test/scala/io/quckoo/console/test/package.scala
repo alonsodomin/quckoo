@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.scheduler
+package io.quckoo.console
 
-import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
-import teststate.domzipper.sizzle
+import teststate.typeclass.Equal
 
 /**
-  * Created by alonsodomin on 03/09/2016.
+  * Created by alonsodomin on 26/02/2017.
   */
-object CronTriggerInputState extends Exports
-  with ExtScalaJsReact
-  with ExtScalaz
-  with sizzle.Exports
+package object test {
+
+  implicit val symbolEq: Equal[Symbol] = Equal.by_==
+
+}

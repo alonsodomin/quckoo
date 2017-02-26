@@ -16,97 +16,37 @@
 
 package io.quckoo.console.registry
 
-import io.quckoo.{JobPackage, JarJobPackage}
+import io.quckoo.{JobPackage, JarJobPackage, ShellScriptPackage}
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
 
-import enumeratum.values._
-
-import scalacss.ScalaCssReact._
-
-/**
-  * Created by alonsodomin on 16/02/2017.
-  */
 object JobPackageSelect {
-  @inline private def lnf = lookAndFeel
 
-  type OnUpdate = Option[JobPackage] => Callback
+  final val Options = List('Jar, 'Shell)
 
-  sealed abstract class PackageType(val value: Int, val name: String) extends IntEnumEntry
-  object PackageType extends IntEnum[PackageType] {
-    case object Jar extends PackageType(1, "Jar")
+  type Constructor = CoproductSelect.Constructor[JobPackage]
+  type Selector    = CoproductSelect.Selector[JobPackage]
+  type OnUpdate    = CoproductSelect.OnUpdate[JobPackage]
 
-    val values = findValues
-  }
-  implicit val packageTypeReuse: Reusability[PackageType] = Reusability.by(_.value)
+  final case class Props(value: Option[JobPackage], onUpdate: OnUpdate)
 
-  private[this] val PackageTypeOption = ReactComponentB[PackageType]("PackageTypeOption")
-    .stateless.render_P { packageType =>
-      <.option(^.value := packageType.value.toString, packageType.name)
-    } build
+  class Backend($: BackendScope[Props, Unit]) {
 
-  private[this] def packageTypeOptions: Seq[ReactElement] =
-    PackageType.values.map(pckg => PackageTypeOption.withKey(pckg.value)(pckg))
-
-  case class Props(value: Option[JobPackage], onUpdate: OnUpdate)
-  case class State(selected: Option[PackageType], value: Option[JobPackage]) {
-
-    def this(jobPackage: Option[JobPackage]) = this(jobPackage.map {
-      case _: JarJobPackage => PackageType.Jar
-    }, jobPackage)
-
-  }
-
-  class Backend($: BackendScope[Props, State]) {
-
-    private[this] def propagateUpdate: Callback =
-      $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.value)))
-
-    def onSelectionUpdate(event: ReactEventI): Callback = {
-      def refreshSelection: CallbackTo[Option[PackageType]] = {
-        val newSelected = {
-          if (event.target.value.isEmpty) None
-          else Some(event.target.value.toInt)
-        }.flatMap(PackageType.withValueOpt)
-
-        $.modState(_.copy(selected = newSelected)).ret(newSelected)
-      }
-
-      def updatePackageDetails(packageType: Option[PackageType]): Callback = {
-        $.modState(_.copy(value = None), propagateUpdate)
-      }
-
-      refreshSelection >>= updatePackageDetails
+    def selectComponent: Selector = {
+      case 'Jar   => (value, update) => JarJobPackageInput(value.map(_.asInstanceOf[JarJobPackage]), update)
+      case 'Shell => (value, update) => ShellScriptPackageInput(value.map(_.asInstanceOf[ShellScriptPackage]), update)
     }
 
-    def onJobPackageUpdate(jobPackage: Option[JobPackage]): Callback =
-      $.modState(_.copy(value = jobPackage), propagateUpdate)
+    val selectInput = CoproductSelect[JobPackage]
 
-    def render(props: Props, state: State) = {
-      <.div(
-        <.div(lnf.formGroup,
-          <.label("Package Type"),
-          <.select(^.`class` := "form-control",
-            ^.id := "packageType",
-            state.selected.map(v => ^.value := v.value.toString),
-            ^.onChange ==> onSelectionUpdate,
-            <.option("Select a package type"),
-            packageTypeOptions
-          )
-        ),
-        state.selected.map {
-          case PackageType.Jar => JarJobPackageInput(state.value.map(_.asInstanceOf[JarJobPackage]), onJobPackageUpdate)
-        }
-      )
-    }
+    def render(props: Props) =
+      selectInput("Package Type", Options, selectComponent, props.value, props.onUpdate)
 
   }
 
-  val component = ReactComponentB[Props]("JobPackageSelect")
-    .initialState_P(props => new State(props.value))
+  val component = ReactComponentB[Props]("JobPackage")
+    .stateless
     .renderBackend[Backend]
     .build
 

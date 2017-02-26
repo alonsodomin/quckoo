@@ -25,7 +25,9 @@ import upickle.default.{Reader => UReader, Writer => UWriter, _}
   */
 package object json extends ScalazJson with JavaTimeJson with Cron4s {
 
-  implicit def JsonCodec[A: UReader: UWriter]: Codec[A, String] = new Codec[A, String] {
+  type JsonCodec[A] = Codec[A, String]
+
+  implicit def JsonCodecInstance[A: UReader: UWriter]: JsonCodec[A] = new JsonCodec[A] {
     def encode(a: A): Attempt[String] = Attempt(write[A](a))
 
     def decode(input: String): Attempt[A] = Attempt(read[A](input))

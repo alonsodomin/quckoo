@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.components
+package io.quckoo.console.security
 
 import teststate.domzipper.sizzle
 import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
@@ -22,7 +22,7 @@ import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
 /**
   * Created by alonsodomin on 10/07/2016.
   */
-object NavBarTestState extends Exports
+object LoginTestExports extends Exports
   with ExtScalaJsReact
   with ExtScalaz
   with sizzle.Exports

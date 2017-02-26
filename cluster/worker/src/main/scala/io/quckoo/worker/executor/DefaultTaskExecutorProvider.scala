@@ -16,9 +16,9 @@
 
 package io.quckoo.worker.executor
 
-import akka.actor.{ActorRef, ActorRefFactory}
+import akka.actor.{ActorRef, ActorRefFactory, Props}
 
-import io.quckoo.{JarJobPackage, Task}
+import io.quckoo.{JarJobPackage, ShellScriptPackage, Task}
 import io.quckoo.worker.config.ExecutorDispatcher
 import io.quckoo.worker.core.{TaskExecutorProvider, WorkerContext}
 
@@ -29,10 +29,16 @@ object DefaultTaskExecutorProvider extends TaskExecutorProvider {
 
   override def executorFor(context: WorkerContext, task: Task)(implicit actorRefFactory: ActorRefFactory): ActorRef =
     task.jobPackage match {
-      case JarJobPackage(artifactId, jobClass) =>
-        val executorProps = JarTaskExecutor.props(context, task.id, artifactId, jobClass)
-          .withDispatcher(ExecutorDispatcher)
+      case jar: JarJobPackage =>
+        val executorProps = configure(JarTaskExecutor.props(context, task.id, jar))
         actorRefFactory.actorOf(executorProps, "jar-executor")
+
+      case shell: ShellScriptPackage =>
+        val executorProps = configure(ShellTaskExecutor.props(context, task.id, shell))
+        actorRefFactory.actorOf(executorProps, "shell-executor")
     }
+
+  private[this] def configure(props: Props): Props =
+    props.withDispatcher(ExecutorDispatcher)
 
 }

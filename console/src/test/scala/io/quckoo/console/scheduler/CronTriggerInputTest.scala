@@ -26,7 +26,7 @@ import org.scalatest.FunSuite
   * Created by alonsodomin on 03/09/2016.
   */
 class CronTriggerInputTest extends FunSuite {
-  import CronTriggerInputState._
+  import CronTriggerInputTestExports._
   import CronTriggerInputTestDsl._
 
   implicit val triggerEq = _root_.scalaz.Equal.equalA[Trigger.Cron]
@@ -61,7 +61,7 @@ class CronTriggerInputTest extends FunSuite {
 
   test("input should perform validation of the cron expression") {
     val plan = Plan.action(
-      blankForm +>
+      blankInput +>
       setExpression("* * * * * *") +> emptyExpression.assert(false) +> hasError.assert.equal(false) >>
       setExpression("* *") +> emptyExpression.assert(false) +> hasError.assert.equal(true)
     )

@@ -24,7 +24,7 @@ object Dependencies {
     // Akka ----------
 
     object akka {
-      val main = "2.4.16"
+      val main = "2.4.17"
       val kryo = "0.5.2"
 
       val constructr = "0.5.2"
@@ -59,13 +59,16 @@ object Dependencies {
 
     // Other utils ---
 
-    val scopt      = "3.5.0"
-    val monocle    = "1.4.0"
-    val scalaz     = "7.2.8"
-    val monix      = "2.2.1"
-    val cron4s     = "0.3.0"
-    val enumeratum = "1.5.6"
-    val pureconfig = "0.5.1"
+    val arm         = "2.0"
+    val scopt       = "3.5.0"
+    val monocle     = "1.4.0"
+    val scalaz      = "7.2.8"
+    val monix       = "2.2.1"
+    val cron4s      = "0.3.0"
+    val enumeratum  = "1.5.6"
+    val pureconfig  = "0.5.1"
+    val betterfiles = "2.17.1"
+    val xml         = "1.0.6"
 
     // JavaScript Libraries
 
@@ -74,13 +77,15 @@ object Dependencies {
     val bootstrapNotifiy = "3.1.3"
     val fontAwesome      = "4.7.0"
     val reactJs          = "15.4.2"
+    val sparkMD5         = "2.0.2"
   }
 
   // Common library definitions
 
   object libs {
 
-    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.6"
+    val scalaArm = "com.jsuereth"           %% "scala-arm" % version.arm
+    val scalaXml = "org.scala-lang.modules" %% "scala-xml" % version.xml
 
     val ivy = "org.apache.ivy" % "ivy" % "2.4.0"
 
@@ -136,6 +141,8 @@ object Dependencies {
       ExclusionRule(organization = "ch.qos.logback"),
       ExclusionRule(organization = "com.twitter")
     )
+
+    val betterfiles = "com.github.pathikrit" %% "better-files" % version.betterfiles
   }
 
   object compiler {
@@ -159,6 +166,17 @@ object Dependencies {
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
 
       "com.github.alonsodomin.cron4s" %%% "cron4s-core" % version.cron4s
+    )
+  }
+
+  // Utilities module ===========================
+
+  lazy val utilJS = Def.settings {
+    jsDependencies ++= Seq(
+      "org.webjars.npm" % "spark-md5" % version.sparkMD5
+        /            "spark-md5.js"
+        minified     "spark-md5.min.js"
+        commonJSName "SparkMD5"
     )
   }
 
@@ -278,7 +296,7 @@ object Dependencies {
   }
   lazy val clusterWorker = Def.settings {
     import libs._
-    libraryDependencies += scopt
+    libraryDependencies ++= Seq(scopt, scalaArm, betterfiles)
   }
 
   // Support modules ================================

@@ -23,8 +23,8 @@ import scala.util.Success
  * Created by domingueza on 26/08/15.
  */
 object QuckooNodesConfig extends MultiNodeConfig {
-  val scheduler = role("scheduler")
-  val registry  = role("registry")
+  val scheduler = role(QuckooRoles.Scheduler)
+  val registry  = role(QuckooRoles.Registry)
 
   commonConfig(debugConfig(on = false))
 

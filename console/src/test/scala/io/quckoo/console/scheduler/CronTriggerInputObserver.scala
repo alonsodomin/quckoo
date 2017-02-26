@@ -18,7 +18,7 @@ package io.quckoo.console.scheduler
 
 import org.scalajs.dom.html
 
-import CronTriggerInputState._
+import CronTriggerInputTestExports._
 
 /**
   * Created by alonsodomin on 03/09/2016.

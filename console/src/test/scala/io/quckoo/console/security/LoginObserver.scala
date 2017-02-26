@@ -16,7 +16,7 @@
 
 package io.quckoo.console.security
 
-import io.quckoo.console.security.LoginFormTestState._
+import io.quckoo.console.security.LoginTestExports._
 
 import org.scalajs.dom.html
 

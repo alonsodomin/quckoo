@@ -16,18 +16,22 @@
 
 package io.quckoo.cluster.registry
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, ReceiveTimeout, Stash, Status}
+import java.util.UUID
+
+import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.persistence.query.{EventEnvelope2, Sequence}
+import akka.persistence.query.EventEnvelope2
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
-import io.quckoo.{JarJobPackage, JobSpec}
+
+import io.quckoo.JobSpec
 import io.quckoo.id.JobId
+import io.quckoo.cluster.QuckooRoles
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.topics
@@ -57,17 +61,37 @@ object Registry {
   case object Ready extends Signal
 
   def props(settings: ClusterSettings, journal: QuckooJournal): Props = {
-    val resolve = IvyResolve(settings.resolver)
-    val props   = Resolver.props(resolve).withDispatcher("quckoo.resolver.dispatcher")
-    Props(classOf[Registry], RegistrySettings(props), journal)
+    val resolve       = IvyResolve(settings.resolver)
+    val resolverProps = Resolver.props(resolve).withDispatcher("quckoo.resolver.dispatcher")
+    props(RegistrySettings(resolverProps), journal)
   }
 
   def props(settings: RegistrySettings, journal: QuckooJournal): Props =
-    Props(classOf[Registry], settings, journal)
+    Props(new Registry(settings, journal))
+
+  private[registry] def startShardRegion(system: ActorSystem): ActorRef = {
+    val cluster = Cluster(system)
+    if (cluster.getSelfRoles.contains(QuckooRoles.Registry)) {
+      ClusterSharding(system).start(
+        typeName = PersistentJob.ShardName,
+        entityProps = PersistentJob.props,
+        settings = ClusterShardingSettings(system).withRole(QuckooRoles.Registry),
+        extractEntityId = PersistentJob.idExtractor,
+        extractShardId = PersistentJob.shardResolver
+      )
+    } else {
+      ClusterSharding(system).startProxy(
+        typeName = PersistentJob.ShardName,
+        role = Some(QuckooRoles.Registry),
+        extractEntityId = PersistentJob.idExtractor,
+        extractShardId = PersistentJob.shardResolver
+      )
+    }
+  }
 
 }
 
-class Registry(settings: RegistrySettings, journal: QuckooJournal)
+class Registry private (settings: RegistrySettings, journal: QuckooJournal)
     extends Actor with ActorLogging with Stash {
   import Registry._
 
@@ -78,14 +102,11 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
     "registry"
   )
 
-  private[this] val cluster     = Cluster(context.system)
   private[this] val mediator    = DistributedPubSub(context.system).mediator
   private[this] val resolver    = context.actorOf(settings.resolverProps, "resolver")
-  private[this] val shardRegion = startShardRegion
+  private[this] val shardRegion = startShardRegion(context.system)
 
   private[this] var jobIds = Set.empty[JobId]
-
-  private[this] var handlerRefCount = 0L
 
   override def preStart(): Unit = {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
@@ -112,12 +133,8 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
       context become warmingUp
 
     case RegisterJob(spec) =>
-      handlerRefCount += 1
-      val handler = context.actorOf(handlerProps(spec, sender()), s"handler-$handlerRefCount")
-      spec.jobPackage match {
-        case JarJobPackage(artifactId, _) =>
-          resolver.tell(Resolver.Validate(artifactId), handler)
-      }
+      val registrationProps = Registration.props(spec, shardRegion, resolver, sender())
+      context.actorOf(registrationProps, s"registration-${UUID.randomUUID()}")
 
     case GetJobs =>
       val origSender = sender()
@@ -177,91 +194,11 @@ class Registry(settings: RegistrySettings, journal: QuckooJournal)
     case _ =>
   }
 
-  private def startShardRegion: ActorRef =
-    if (cluster.selfRoles.contains("registry")) {
-      log.info("Starting registry shards...")
-      ClusterSharding(context.system).start(
-        typeName = PersistentJob.ShardName,
-        entityProps = PersistentJob.props,
-        settings = ClusterShardingSettings(context.system).withRole("registry"),
-        extractEntityId = PersistentJob.idExtractor,
-        extractShardId = PersistentJob.shardResolver
-      )
-    } else {
-      log.info("Starting registry proxy...")
-      ClusterSharding(context.system).startProxy(
-        typeName = PersistentJob.ShardName,
-        role = None,
-        extractEntityId = PersistentJob.idExtractor,
-        extractShardId = PersistentJob.shardResolver
-      )
-    }
-
   private def warmUp(): Unit = {
     journal.read
       .currentEventsByTag(EventTag, journal.firstOffset)
       .runWith(
         Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
-  }
-
-  private def handlerProps(jobSpec: JobSpec, replyTo: ActorRef): Props =
-    Props(classOf[RegistryResolutionHandler], jobSpec, shardRegion, replyTo)
-
-}
-
-private class RegistryResolutionHandler(jobSpec: JobSpec, shardRegion: ActorRef, replyTo: ActorRef)
-    extends Actor with ActorLogging with Stash {
-  import Resolver._
-
-  private[this] val mediator = DistributedPubSub(context.system).mediator
-  private val jobId          = JobId(jobSpec)
-
-  override def preStart(): Unit = {
-    mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, self)
-  }
-
-  def receive: Receive = initializing
-
-  def initializing: Receive = {
-    case DistributedPubSubMediator.SubscribeAck(_) =>
-      unstashAll()
-      context become resolvingArtifact
-
-    case _ => stash()
-  }
-
-  def resolvingArtifact: Receive = {
-    case ArtifactResolved(artifact) =>
-      log.debug("Job artifact has been successfully resolved. artifactId={}", artifact.artifactId)
-      shardRegion ! PersistentJob.CreateJob(jobId, jobSpec)
-      context.setReceiveTimeout(10 seconds)
-      context become registeringJob
-
-    case ResolutionFailed(_, cause) =>
-      log.error("Couldn't validate the job artifact id. " + cause)
-      replyTo ! JobRejected(jobId, cause)
-      finish()
-  }
-
-  def registeringJob: Receive = {
-    case evt @ JobAccepted(`jobId`, _) =>
-      replyTo ! evt
-      finish()
-
-    case ReceiveTimeout =>
-      log.error("Timed out whilst storing the job details. jobId={}", jobId)
-      replyTo ! JobRejected(jobId, ExceptionThrown.from(new TimeoutException))
-      finish()
-  }
-
-  def stopping: Receive = {
-    case DistributedPubSubMediator.UnsubscribeAck(_) =>
-      context stop self
-  }
-
-  private[this] def finish(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
-    context become stopping
   }
 
 }

@@ -16,6 +16,8 @@
 
 package io.quckoo.console.components
 
+import io.quckoo.console.test._
+
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.test.ReactTestUtils
 
@@ -25,7 +27,7 @@ import org.scalatest.FunSuite
   * Created by alonsodomin on 29/07/2016.
   */
 class NavBarTest extends FunSuite {
-  import NavBarTestState._
+  import NavBarTestExports._
   import NavBarTestDsl._
 
   val invariants: dsl.Invariants = {
@@ -40,7 +42,7 @@ class NavBarTest extends FunSuite {
 
       val test = plan.
         addInvariants(invariants).
-        withInitialState(State(Some("First"))).
+        withInitialState(State(Some('First))).
         test(Observer watch observe())
 
       test.runU
@@ -49,8 +51,8 @@ class NavBarTest extends FunSuite {
 
   test("should switch between the different tabs") {
     val plan = Plan.action(
-      selectItem("Last") +> currentItem.assert.equal(Some("Last")) >>
-      selectItem("First") +> currentItem.assert.equal(Some("First"))
+      selectItem('Last) +> currentItem.assert.equal(Some('Last)) >>
+      selectItem('First) +> currentItem.assert.equal(Some('First))
     )
 
     runPlan(plan).assert()

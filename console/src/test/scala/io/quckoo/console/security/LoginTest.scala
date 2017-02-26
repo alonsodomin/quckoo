@@ -25,7 +25,7 @@ import org.scalatest.FunSuite
   * Created by alonsodomin on 11/07/2016.
   */
 class LoginTest extends FunSuite {
-  import LoginFormTestState._
+  import LoginTestExports._
   import LoginTestDsl._
 
   val invariants: dsl.Invariants = {

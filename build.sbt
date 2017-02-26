@@ -8,7 +8,8 @@ organization in ThisBuild := "io.quckoo"
 
 scalaVersion in ThisBuild := "2.12.1"
 
-val sandbox = settingKey[String]("The name of the environment sandbox to use.")
+lazy val sandbox  = settingKey[String]("The name of the environment sandbox to use.")
+lazy val botBuild = settingKey[Boolean]("Build by TravisCI instead of local dev environment")
 
 lazy val commonSettings = Seq(
     licenses += ("Apache-2.0", url(
@@ -36,7 +37,8 @@ lazy val commonSettings = Seq(
       Resolver.bintrayRepo("dnvriend", "maven"),
       Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
     ),
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    botBuild := scala.sys.env.get("TRAVIS").isDefined
   ) ++ Licensing.settings
 
 lazy val commonJsSettings = Seq(
@@ -44,7 +46,9 @@ lazy val commonJsSettings = Seq(
   coverageExcludedFiles := ".*",
   persistLauncher in Test := false,
   scalaJSStage in Test := FastOptStage,
-  jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value)
+  jsEnv in Test := PhantomJSEnv().value,
+  // batch mode decreases the amount of memory needed to compile scala.js code
+  scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(botBuild.value)
 )
 
 lazy val scoverageSettings = Seq(
@@ -147,6 +151,8 @@ lazy val quckoo = (project in file("."))
     cluster,
     console,
     examples,
+    utilJS,
+    utilJVM,
     testSupportJS,
     testSupportJVM
   )
@@ -167,7 +173,7 @@ lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
     buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
     buildInfoObject := "Info"
   )
-  .dependsOn(testSupport % Test)
+  .dependsOn(util, testSupport % Test)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
@@ -288,7 +294,18 @@ lazy val clusterWorker = (project in file("cluster/worker"))
   )
   .dependsOn(clusterShared, testSupportJVM % Test)
 
-// Test Support Utils ========================================
+// Misc Utilities ===========================================
+
+lazy val util = (crossProject in file("util"))
+  .settings(commonSettings)
+  .jsSettings(Dependencies.utilJS)
+  .settings(moduleName := "quckoo-util")
+  .dependsOn(testSupport % Test)
+
+lazy val utilJS = util.js
+lazy val utilJVM = util.jvm
+
+// Test Support Utilities ===================================
 
 lazy val testSupport = (crossProject in file("test-support"))
   .enablePlugins(AutomateHeaderPlugin)

@@ -58,7 +58,7 @@ object SchedulerHttpRouterSpec {
     new Passport(Map.empty, s"$header.$claims.$signature")
   }
 
-  final val TestJobId = JobId(UUID.randomUUID())
+  final val TestJobId = JobId("jobId")
   final val TestPlanIds = Set(UUID.randomUUID())
   final val TestPlanMap = Map(
     TestPlanIds.head -> ExecutionPlan(
@@ -164,7 +164,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
     }
 
     "return a 404 when scheduling a job that does not exist" in {
-      val scheduleMsg = ScheduleJob(JobId(UUID.randomUUID()))
+      val scheduleMsg = ScheduleJob(JobId("fooJobId"))
       Put(endpoint(s"/plans"), Some(scheduleMsg)) ~> entryPoint ~> check {
         status === NotFound
         responseAs[JobId] should be (scheduleMsg.jobId)

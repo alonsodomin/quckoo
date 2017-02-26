@@ -59,10 +59,9 @@ object Packaging {
       s"$linuxHomeLocation/resolver/cache",
       s"$linuxHomeLocation/resolver/local"
     ),
-    dockerCommands := withDumbInit(dockerCommands.value) ++ Seq(
+    dockerCommands ++= Seq(
       Cmd("ENV", "QUCKOO_HOME", linuxHomeLocation)
-    ),
-    dockerEntrypoint := Seq(dumbInitLocation, "--") ++ dockerEntrypoint.value
+    )
   )
 
   lazy val masterSettings = universalServerSettings ++ serverDockerSettings ++ Seq(

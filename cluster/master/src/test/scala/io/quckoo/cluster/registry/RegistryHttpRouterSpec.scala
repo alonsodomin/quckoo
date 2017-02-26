@@ -175,7 +175,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
     }
 
     "return 404 when enabling a job if it does not exist" in {
-      val id = UUID.randomUUID()
+      val id = "fooId"
       Post(endpoint(s"/jobs/$id/enable")) ~> entryPoint ~> check {
         responseAs[JobId] shouldBe JobId(id)
         status === NotFound
@@ -190,7 +190,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
     }
 
     "return 404 when disabling a job if it does not exist" in {
-      val id = UUID.randomUUID()
+      val id = "barId"
       Post(endpoint(s"/jobs/$id/disable")) ~> entryPoint ~> check {
         responseAs[JobId] shouldBe JobId(id)
         status === NotFound
