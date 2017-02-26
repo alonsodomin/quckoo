@@ -46,8 +46,10 @@ object ShellScriptPackageInput {
 
     def render(props: Props, state: State) = {
       <.div(lnf.formGroup,
-        <.label(^.`for` := "script_content", "Script"),
-        TextArea(state.content, onContentUpdate, ^.id := "script_content")
+        <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "script_content", "Script"),
+        <.div(^.`class` := "col-sm-10",
+          TextArea(state.content, onContentUpdate, ^.id := "script_content")
+        )
       )
     }
 

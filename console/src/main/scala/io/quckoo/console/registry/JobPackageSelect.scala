@@ -20,6 +20,7 @@ import io.quckoo.{JobPackage, JarJobPackage, ShellScriptPackage}
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.prefix_<^._
 
 object JobPackageSelect {
 
@@ -40,8 +41,11 @@ object JobPackageSelect {
 
     val selectInput = CoproductSelect[JobPackage]
 
-    def render(props: Props) =
-      selectInput("Package Type", Options, selectComponent, props.value, props.onUpdate)
+    def render(props: Props) = {
+      selectInput(Options, selectComponent, props.value, props.onUpdate,
+        ^.id := "packageType"
+      )(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "packageType", "Package Type"))
+    }
 
   }
 

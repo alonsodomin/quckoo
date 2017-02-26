@@ -20,6 +20,7 @@ import io.quckoo.Trigger
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.prefix_<^._
 
 object TriggerSelect {
 
@@ -46,8 +47,11 @@ object TriggerSelect {
 
     val selectInput = CoproductSelect[Trigger]
 
-    def render(props: Props) =
-      selectInput("Trigger", Options, selectComponent, props.value, Options.head, props.onUpdate)
+    def render(props: Props) = {
+      selectInput(Options, selectComponent, props.value, Options.head, props.onUpdate,
+        ^.id := "triggerType"
+      )(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "triggerType", "Trigger"))
+    }
 
   }
 

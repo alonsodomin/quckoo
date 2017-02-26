@@ -66,14 +66,18 @@ object JarJobPackageInput {
     def render(props: Props, state: State) = {
       <.div(
         <.div(lnf.formGroup,
-          <.label("Artifact"),
-          ArtifactInput(state.artifactId, onArtifactIdUpdate)
+          <.label(^.`class` := "col-sm-2 control-label", "Artifact"),
+          <.div(^.`class` := "col-sm-10",
+            ArtifactInput(state.artifactId, onArtifactIdUpdate)
+          )
         ),
         <.div(lnf.formGroup,
-          <.label(^.`for` := "jobClass", "Job Class"),
-          jobClassInput(state.jobClass,
-            onJobClassUpdate _,
-            ^.id := "jobClass"
+          <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobClass", "Job Class"),
+          <.div(^.`class` := "col-sm-10",
+            jobClassInput(state.jobClass,
+              onJobClassUpdate _,
+              ^.id := "jobClass"
+            )
           )
         )
       )

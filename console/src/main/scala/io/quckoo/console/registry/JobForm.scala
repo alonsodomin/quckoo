@@ -89,7 +89,7 @@ object JobForm {
     val jobClassInput    = Input[String]()
 
     def render(props: Props, state: State) = {
-      <.form(^.name := "jobDetails",
+      <.form(^.name := "jobDetails", ^.`class` := "form-horizontal",
         Modal(
           Modal.Props(
             header = hide => <.span(
@@ -107,21 +107,25 @@ object JobForm {
             closed = formClosed(props, state)
           ),
           <.div(lnf.formGroup,
-            <.label(^.`for` := "displayName", "Display Name"),
-            displayNameInput(
-              state.spec.displayName,
-              onDisplayNameUpdate _,
-              ^.id := "displayName",
-              ^.placeholder := "Job's name"
+            <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "displayName", "Display Name"),
+            <.div(^.`class` := "col-sm-10",
+              displayNameInput(
+                state.spec.displayName,
+                onDisplayNameUpdate _,
+                ^.id := "displayName",
+                ^.placeholder := "Job's name"
+              )
             )
           ),
           <.div(lnf.formGroup,
-            <.label(^.`for` := "description", "Description"),
-            descriptionInput(
-              state.spec.description,
-              onDescriptionUpdate _,
-              ^.id := "description",
-              ^.placeholder := "Job's description"
+            <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "description", "Description"),
+            <.div(^.`class` := "col-sm-10",
+              descriptionInput(
+                state.spec.description,
+                onDescriptionUpdate _,
+                ^.id := "description",
+                ^.placeholder := "Job's description"
+              )
             )
           ),
           JobPackageSelect(state.spec.jobPackage, onJobPackageUpdate)

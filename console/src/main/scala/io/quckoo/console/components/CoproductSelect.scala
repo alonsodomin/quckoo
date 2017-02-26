@@ -35,12 +35,12 @@ object CoproductSelect {
   type Selector[A]    = PartialFunction[Symbol, Constructor[A]]
 
   final case class Props[A](
-    label: String,
     options: List[Symbol],
     selector: Selector[A],
     value: Option[A],
     default: Option[Symbol],
-    onUpdate: OnUpdate[A]
+    onUpdate: OnUpdate[A],
+    attrs: Seq[TagMod]
   )
   final case class State[A: Reusability](
     selected: Option[Symbol] = None,
@@ -48,7 +48,7 @@ object CoproductSelect {
   )
 
   implicit def propsReuse[A: Reusability]: Reusability[Props[A]] =
-    Reusability.caseClassExcept[Props[A]]('selector, 'onUpdate)
+    Reusability.caseClassExcept[Props[A]]('selector, 'onUpdate, 'attrs)
   implicit def cacheReuse[A: Reusability]: Reusability[Map[Symbol, A]] =
     Reusability.map[Symbol, A]
   implicit def stateReuse[A: Reusability]: Reusability[State[A]] =
@@ -80,8 +80,8 @@ object CoproductSelect {
       }
     }
 
-    def render(props: Props[A], state: State[A]) = {
-      <.div(
+    def render(props: Props[A], children: PropsChildren, state: State[A]) = {
+      /*<.div(
         <.div(lnf.formGroup,
           <.label(props.label),
           <.select(^.`class` := "form-control",
@@ -91,6 +91,26 @@ object CoproductSelect {
               <.option("Choose one")
             } else EmptyTag,
             props.options.map(opt => ComponentOption.withKey(opt.name)(opt))
+          )
+        ),
+        state.selected.flatMap { selection =>
+          val ctor = props.selector.lift(selection)
+          ctor.map(_(state.cache.get(selection), onItemUpdate))
+        }
+      )*/
+      <.div(
+        <.div(lnf.formGroup,
+          children,
+          <.div(^.`class` := "col-sm-10",
+            <.select(lnf.formControl,
+              state.selected.orElse(props.default).map(v => ^.value := v.name),
+              ^.onChange ==> onSelectionUpdate(props),
+              props.attrs,
+              if (props.default.isEmpty) {
+                <.option("Choose one")
+              } else EmptyTag,
+              props.options.map(opt => ComponentOption.withKey(opt.name)(opt))
+            )
           )
         ),
         state.selected.flatMap { selection =>
@@ -115,9 +135,9 @@ class CoproductSelect[A: Reusability] private[components]() {
     .configure(Reusability.shouldComponentUpdate[Props[A], State[A], Backend[A], TopNode])
     .build
 
-  def apply(label: String, options: List[Symbol], selector: Selector[A], value: Option[A], default: Symbol, onUpdate: OnUpdate[A]) =
-    component(Props(label, options, selector, value, Some(default), onUpdate))
+  def apply(options: List[Symbol], selector: Selector[A], value: Option[A], default: Symbol, onUpdate: OnUpdate[A], attrs: TagMod*)(children: ReactNode*) =
+    component(Props(options, selector, value, Some(default), onUpdate, attrs), children: _*)
 
-  def apply(label: String, options: List[Symbol], selector: Selector[A], value: Option[A], onUpdate: OnUpdate[A]) =
-    component(Props(label, options, selector, value, None, onUpdate))
+  def apply(options: List[Symbol], selector: Selector[A], value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(children: ReactNode*) =
+    component(Props(options, selector, value, None, onUpdate, attrs), children: _*)
 }

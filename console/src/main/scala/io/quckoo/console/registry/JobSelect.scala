@@ -18,14 +18,18 @@ package io.quckoo.console.registry
 
 import io.quckoo.JobSpec
 import io.quckoo.id.JobId
+import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+
+import scalacss.ScalaCssReact._
 
 /**
   * Created by alonsodomin on 09/04/2016.
   */
 object JobSelect {
+  @inline private def lnf = lookAndFeel
 
   case class Props(jobs: Map[JobId, JobSpec],
                    value: Option[JobId],
@@ -49,14 +53,12 @@ object JobSelect {
     }
 
     def render(props: Props) = {
-      <.div(
-        ^.`class` := "form-group",
+      <.div(lnf.formGroup,
         <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobId", "Job"),
         <.div(
           ^.`class` := "col-sm-10",
-          <.select(
+          <.select(lnf.formControl,
             ^.id := "jobId",
-            ^.`class` := "form-control",
             props.value.map(id => ^.value := id.toString()),
             ^.onChange ==> onUpdate,
             <.option("Select a job"),
