@@ -1,5 +1,7 @@
 language: scala
 
+dist: trusty
+
 jdk:
   - oraclejdk8
 
@@ -20,10 +22,10 @@ before_install:
   - sudo mv phantomjs /usr/local/phantomjs/bin/phantomjs
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean coverage validate
+  - scripts/travis_build.sh
 
 after_success:
-  - sbt coverageReport && sbt coverageAggregate
+  - scripts/travis_coverage.sh
   - bash <(curl -s https://codecov.io/bash)
 
 branches:
