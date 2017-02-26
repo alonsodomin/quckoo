@@ -20,10 +20,10 @@ before_install:
   - sudo mv phantomjs /usr/local/phantomjs/bin/phantomjs
 
 script:
-  - scripts/travis-build.sh
+  - scripts/travis_build.sh
 
 after_success:
-  - scripts/travis-coverage.sh
+  - scripts/travis_coverage.sh
   - bash <(curl -s https://codecov.io/bash)
 
 branches:
