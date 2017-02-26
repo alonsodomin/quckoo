@@ -26,9 +26,8 @@ import io.quckoo.JobSpec
 object JobId {
 
   /**
-    * NOT SUPPORTED on ScalaJS!
-    *
-    * Generates the JobId related to a specific JobSpec
+    * Generates the JobId related to a specific JobSpec.
+    * JobSpecs with the same job package will generate the same JobId
     *
     * @param jobSpec a job specification
     * @return a job ID
