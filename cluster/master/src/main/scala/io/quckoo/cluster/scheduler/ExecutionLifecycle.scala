@@ -20,10 +20,8 @@ import akka.actor.{ActorSelection, Props}
 import akka.persistence.fsm.PersistentFSM.Normal
 import akka.persistence.fsm.{LoggingPersistentFSM, PersistentFSM}
 
-import io.quckoo.{Task, TaskExecution}
+import io.quckoo.{Fault, PlanId, Task, TaskExecution}
 import io.quckoo.cluster.scheduler.TaskQueue.EnqueueAck
-import io.quckoo.fault.Fault
-import io.quckoo.id.PlanId
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
@@ -87,12 +85,11 @@ object ExecutionLifecycle {
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
             maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
             executionTimeout: Option[FiniteDuration] = None): Props =
-    Props(
-      classOf[ExecutionLifecycle],
+    Props(new ExecutionLifecycle(
       planId,
       enqueueTimeout,
       maxEnqueueAttempts,
-      executionTimeout)
+      executionTimeout))
 
 }
 

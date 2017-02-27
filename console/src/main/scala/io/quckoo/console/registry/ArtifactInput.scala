@@ -16,7 +16,7 @@
 
 package io.quckoo.console.registry
 
-import io.quckoo.id.ArtifactId
+import io.quckoo.ArtifactId
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._

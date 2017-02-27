@@ -16,12 +16,10 @@
 
 package io.quckoo.client.http.akka
 
-import java.util.UUID
-
 import akka.actor.ActorSystem
 
+import io.quckoo.{ArtifactId, JobId}
 import io.quckoo.client.http.{HttpMethod, HttpRequest, MockServer}
-import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 

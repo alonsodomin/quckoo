@@ -16,8 +16,7 @@
 
 package io.quckoo.resolver
 
-import io.quckoo.fault.Fault
-import io.quckoo.id.ArtifactId
+import io.quckoo.{ArtifactId, Fault}
 
 import scala.concurrent.{ExecutionContext, Future}
 

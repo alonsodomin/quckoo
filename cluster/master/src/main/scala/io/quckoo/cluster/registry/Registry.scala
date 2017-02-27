@@ -29,13 +29,11 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
-import io.quckoo.JobSpec
-import io.quckoo.id.JobId
+import io.quckoo.{JobId, JobNotFound, JobSpec}
 import io.quckoo.cluster.QuckooRoles
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.topics
-import io.quckoo.fault._
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve

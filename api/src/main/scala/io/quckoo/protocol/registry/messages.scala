@@ -16,9 +16,7 @@
 
 package io.quckoo.protocol.registry
 
-import io.quckoo.JobSpec
-import io.quckoo.fault._
-import io.quckoo.id.JobId
+import io.quckoo.{Fault, JobId, JobSpec}
 import io.quckoo.protocol.{Command, Event}
 
 sealed trait RegistryCommand      extends Command

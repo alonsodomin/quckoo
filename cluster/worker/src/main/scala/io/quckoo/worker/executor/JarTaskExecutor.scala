@@ -20,9 +20,7 @@ import java.util.concurrent.Callable
 
 import akka.actor.{ActorRef, Props}
 
-import io.quckoo.JarJobPackage
-import io.quckoo.fault.ExceptionThrown
-import io.quckoo.id.{ArtifactId, TaskId}
+import io.quckoo.{ExceptionThrown, JarJobPackage, TaskId}
 import io.quckoo.resolver.Resolver
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 

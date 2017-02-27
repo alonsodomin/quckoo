@@ -35,7 +35,7 @@ object TaskQueueMonitor {
   case class QueueMetrics(pendingPerNode: Map[String, Int] = Map.empty,
                           inProgressPerNode: Map[String, Int] = Map.empty)
 
-  def props: Props = Props(classOf[TaskQueueMonitor])
+  def props: Props = Props(new TaskQueueMonitor)
 
 }
 
@@ -56,7 +56,7 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
     mediator ! DistributedPubSubMediator.Subscribe(topics.Master, self)
   }
 
-  override def receive = initialising
+  override def receive: Receive = initialising
 
   private def initialising: Receive = {
     case DistributedPubSubMediator.SubscribeAck(_) =>

@@ -19,7 +19,7 @@ package io.quckoo.console.dashboard
 import diode.data.Ready
 import diode.react.ModelProxy
 
-import io.quckoo.id.NodeId
+import io.quckoo.NodeId
 import io.quckoo.net.QuckooNode
 import io.quckoo.console.components.Table
 

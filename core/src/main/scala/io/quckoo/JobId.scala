@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package io.quckoo.id
+package io.quckoo
 
-import upickle.default.{Reader => JsonReader, Writer => JsonWriter, _}
+import upickle.default.{Reader => UReader, Writer => UWriter, _}
 
-import io.quckoo.JobSpec
+import scalaz.std.string._
+import scalaz.{Equal, Show}
 
 /**
   * Created by aalonsodominguez on 24/08/15.
   */
+final class JobId private (private val id: String) extends AnyVal {
+
+  override def toString: String = id
+
+}
+
 object JobId {
 
   /**
@@ -33,30 +40,22 @@ object JobId {
     * @return a job ID
     */
   @inline def apply(jobSpec: JobSpec): JobId =
-    JobId(jobSpec.jobPackage.checksum)
+    new JobId(jobSpec.jobPackage.checksum)
 
   @inline def apply(id: String) = new JobId(id)
 
   // Upickle encoders
 
-  implicit val jobIdW: JsonWriter[JobId] = JsonWriter[JobId] { jobId =>
-    implicitly[JsonWriter[String]].write(jobId.id)
+  implicit val jobIdW: UWriter[JobId] = UWriter[JobId] { jobId =>
+    implicitly[UWriter[String]].write(jobId.id)
   }
-  implicit val jobIdR: JsonReader[JobId] = JsonReader[JobId] {
-    implicitly[JsonReader[String]].read andThen JobId.apply
-  }
-
-}
-
-final class JobId private (private val id: String) extends Serializable {
-
-  override def equals(other: Any): Boolean = other match {
-    case that: JobId => this.id == that.id
-    case _           => false
+  implicit val jobIdR: UReader[JobId] = UReader[JobId] {
+    implicitly[UReader[String]].read andThen JobId.apply
   }
 
-  override def hashCode: Int = id.hashCode()
+  // Typeclass instances
 
-  override def toString = id
+  implicit val jobIdEq: Equal[JobId] = Equal.equalBy(_.id)
+  implicit val jobIdShow: Show[JobId] = Show.showFromToString
 
 }

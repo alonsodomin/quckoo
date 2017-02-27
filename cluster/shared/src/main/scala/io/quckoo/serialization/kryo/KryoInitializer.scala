@@ -28,6 +28,7 @@ class KryoInitializer extends StrictLogging {
   def customize(kryo: Kryo): Unit = {
     logger.debug("Initializing custom Kryo serializers...")
     TimeSerializers.addDefaultSerializers(kryo)
+    IdSerializers.addDefaultSerliazers(kryo)
   }
 
 }

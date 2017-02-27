@@ -16,12 +16,10 @@
 
 package io.quckoo.client
 
+import io.quckoo._
 import io.quckoo.api.{Cluster, Registry, Scheduler}
-import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.auth.{Credentials, Passport}
 import io.quckoo.client.core._
-import io.quckoo.fault._
-import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._

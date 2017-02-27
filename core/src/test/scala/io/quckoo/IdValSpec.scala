@@ -16,20 +16,29 @@
 
 package io.quckoo
 
-import scalaz._
-import Scalaz._
+import io.quckoo.serialization.json.JsonCodec
+import io.quckoo.util.Attempt
+
+import org.scalatest.{FlatSpec, Matchers}
+
+import scalaz.{Equal, Show}
 
 /**
-  * Created by aalonsodominguez on 05/07/15.
+  * Created by domingueza on 27/02/2017.
   */
-final case class Task(
-    id: TaskId,
-    jobPackage: JobPackage
-    //params: Map[String, AnyVal] = Map.empty,
-)
+abstract class IdValSpec[A : Equal : Show](name: String)(implicit jsonCodec: JsonCodec[A]) extends FlatSpec with Matchers {
 
-object Task {
+  def generateTestId(): A
 
-  implicit val showTask: Show[Task] = Show.showA[JobPackage].contramap(_.jobPackage)
+  name should "be JSON compatible" in {
+    val givenId = generateTestId()
+
+    jsonCodec.encode(givenId).flatMap(jsonCodec.decode) shouldBe Attempt.success(givenId)
+  }
+
+  it should "be equal to itself" in {
+    val givenId = generateTestId()
+    assert(givenId === givenId)
+  }
 
 }

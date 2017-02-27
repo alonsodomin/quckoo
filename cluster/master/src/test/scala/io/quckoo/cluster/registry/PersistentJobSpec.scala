@@ -21,7 +21,6 @@ import akka.testkit._
 
 import io.quckoo._
 import io.quckoo.cluster.topics
-import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.testkit.QuckooActorClusterSuite
 

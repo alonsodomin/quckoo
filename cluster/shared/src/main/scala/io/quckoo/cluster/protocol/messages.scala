@@ -16,8 +16,7 @@
 
 package io.quckoo.cluster.protocol
 
-import io.quckoo.fault._
-import io.quckoo.id._
+import io.quckoo.{Fault, NodeId, TaskId}
 
 // Messages from workers
 sealed trait WorkerMessage

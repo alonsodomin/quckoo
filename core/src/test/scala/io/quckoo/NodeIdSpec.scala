@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo.cluster
+package io.quckoo
 
-import io.quckoo.fault.Faults
+import java.util.UUID
+
+import io.quckoo.serialization.json._
 
 /**
-  * Created by aalonsodominguez on 17/08/15.
+  * Created by domingueza on 27/02/2017.
   */
-package object scheduler {
-
-  type TaskResult = Either[Faults, Any]
-
+class NodeIdSpec extends IdValSpec[NodeId]("NodeId") {
+  override def generateTestId(): NodeId = NodeId(UUID.randomUUID())
 }

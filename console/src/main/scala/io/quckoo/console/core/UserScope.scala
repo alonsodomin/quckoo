@@ -18,8 +18,7 @@ package io.quckoo.console.core
 
 import diode.data._
 
-import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
-import io.quckoo.id.{JobId, PlanId, TaskId}
+import io.quckoo._
 
 import monocle.macros.Lenses
 

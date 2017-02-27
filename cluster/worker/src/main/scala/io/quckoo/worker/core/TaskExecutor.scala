@@ -17,7 +17,8 @@
 package io.quckoo.worker.core
 
 import akka.actor.{Actor, ActorLogging}
-import io.quckoo.fault.Fault
+
+import io.quckoo.Fault
 
 /**
   * Created by alonsodomin on 16/02/2017.

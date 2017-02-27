@@ -7,10 +7,10 @@ import akka.testkit.ImplicitSender
 
 import com.typesafe.config.ConfigFactory
 
+import io.quckoo.ArtifactId
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.core.QuckooGuardian
 import io.quckoo.cluster.journal.QuckooTestJournal
-import io.quckoo.id.ArtifactId
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.client._
 import io.quckoo.testkit.ImplicitClock
@@ -44,7 +44,7 @@ class QuckooMultiNodeClusterSpecMultiJvmNode2 extends QuckooMultiNodeCluster
 object QuckooMultiNodeCluster {
 
   val GuardianName = "quckoo"
-  val TestArtifactId = ArtifactId("io.kairos", "example-jobs_2.11", "0.1.0-SNAPSHOT")
+  val TestArtifactId = ArtifactId("io.quckoo", "quckoo-example-jobs_2.11", "0.1.0")
 
 }
 

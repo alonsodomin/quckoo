@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.core
+package io.quckoo
 
-import diode.data.Fetch
+import java.util.UUID
 
-import io.quckoo.TaskId
+import io.quckoo.serialization.json._
 
 /**
-  * Created by alonsodomin on 28/05/2016.
+  * Created by domingueza on 27/02/2017.
   */
-object ExecutionFetcher extends Fetch[TaskId] {
+class TaskIdSpec extends IdValSpec[TaskId]("TaskId") {
 
-  override def fetch(key: TaskId): Unit =
-    ConsoleCircuit.dispatch(RefreshExecutions(Set(key)))
-
-  override def fetch(keys: Traversable[TaskId]): Unit =
-    ConsoleCircuit.dispatch(RefreshExecutions(keys.toSet))
+  override def generateTestId(): TaskId = TaskId(UUID.randomUUID())
 
 }

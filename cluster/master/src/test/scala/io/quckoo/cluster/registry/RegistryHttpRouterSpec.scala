@@ -24,13 +24,11 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
 
-import io.quckoo.fault._
+import io.quckoo._
 import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.auth.Passport
-import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.serialization.DataBuffer
-import io.quckoo.{JobPackage, JobSpec, serialization}
 
 import org.scalatest.{Matchers, WordSpec}
 

@@ -16,14 +16,15 @@
 
 package io.quckoo
 
-import scalaz._
+import java.util.UUID
+
+import io.quckoo.serialization.json._
 
 /**
-  * Created by alonsodomin on 10/03/2016.
+  * Created by domingueza on 27/02/2017.
   */
-package object fault {
+class PlanIdSpec extends IdValSpec[PlanId]("PlanId") {
 
-  type Faulty[+A] = Fault \/ A
-  type Faults     = NonEmptyList[Fault]
+  override def generateTestId(): PlanId = PlanId(UUID.randomUUID())
 
 }

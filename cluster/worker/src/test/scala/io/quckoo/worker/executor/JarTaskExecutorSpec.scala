@@ -21,9 +21,7 @@ import java.util.UUID
 
 import akka.testkit._
 
-import io.quckoo.JarJobPackage
-import io.quckoo.fault.{ExceptionThrown, MissingDependencies, UnresolvedDependency}
-import io.quckoo.id.{ArtifactId, TaskId}
+import io.quckoo._
 import io.quckoo.resolver.{Artifact, Resolver}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 import io.quckoo.testkit.QuckooActorSuite
@@ -37,7 +35,7 @@ import scalaz.NonEmptyList
  */
 object JarTaskExecutorSpec {
 
-  final val TestTaskId: TaskId = UUID.randomUUID()
+  final val TestTaskId: TaskId = TaskId(UUID.randomUUID())
   final val TestJobClass = "com.example.FooClass"
   final val TestArtifactId = ArtifactId("com.example", "test", "latest")
 

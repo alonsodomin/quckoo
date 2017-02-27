@@ -25,7 +25,6 @@ import akka.testkit._
 
 import io.quckoo._
 import io.quckoo.cluster.topics
-import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.testkit.{ImplicitClock, QuckooActorClusterSuite}
@@ -67,21 +66,22 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, eventListener.ref)
   }
 
-  def executionDriverProps: Props = ExecutionDriver.props.
-    withDispatcher("akka.actor.default-dispatcher")
+  def executionDriverProps(lifecycleFactory: ExecutionLifecycleFactory): Props =
+    ExecutionDriver.props(lifecycleFactory).withDispatcher("akka.actor.default-dispatcher")
 
   "An execution driver with a recurring trigger that eventually gets disabled" should  {
     val trigger = Trigger.Every(50 millis)
-    val executionProbe = TestProbe()
-    val executionProps = TestActors.forwardActorProps(executionProbe.ref)
+    val lifecycleProbe = TestProbe()
+    val lifecycleProps = TestActors.forwardActorProps(lifecycleProbe.ref)
+    val lifecycleFactory: ExecutionLifecycleFactory = (_: DriverState) => lifecycleProps
 
-    val planId = UUID.randomUUID()
+    val planId = PlanId(UUID.randomUUID())
     val driverName = "executionDriverWithRecurringTrigger"
-    val executionPlan = system.actorOf(executionDriverProps, driverName)
-    watch(executionPlan)
+    val executionDriver = system.actorOf(executionDriverProps(lifecycleFactory), driverName)
+    watch(executionDriver)
 
     "create an execution from a job specification" in {
-      executionPlan ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+      executionDriver ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId should be (TestJobId)
@@ -92,13 +92,13 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
       scheduledMsg.planId should be (planId)
 
       within(50 millis) {
-        executionProbe.expectMsgType[ExecutionLifecycle.Awake]
+        lifecycleProbe.expectMsgType[ExecutionLifecycle.Awake]
       }
     }
 
     "re-schedule an execution once it finishes" in {
       val successOutcome = TaskExecution.Success
-      executionProbe.reply(ExecutionLifecycle.Result(successOutcome))
+      lifecycleProbe.reply(ExecutionLifecycle.Result(successOutcome))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId shouldBe TestJobId
@@ -110,14 +110,14 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
       scheduledMsg.planId shouldBe planId
 
       within(100 millis) {
-        executionProbe.expectMsgType[ExecutionLifecycle.Awake]
+        lifecycleProbe.expectMsgType[ExecutionLifecycle.Awake]
       }
     }
 
     "not re-schedule an execution after the job is disabled" in {
       mediator ! DistributedPubSubMediator.Publish(topics.Registry, JobDisabled(TestJobId))
       // Complete the execution so the driver can come back to ready state
-      executionProbe.reply(ExecutionLifecycle.Result(TaskExecution.Success))
+      lifecycleProbe.reply(ExecutionLifecycle.Result(TaskExecution.Success))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId shouldBe TestJobId
@@ -127,18 +127,18 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
       finishedMsg.jobId shouldBe TestJobId
       finishedMsg.planId shouldBe planId
 
-      executionProbe.expectNoMsg()
+      lifecycleProbe.expectNoMsg()
 
-      executionPlan ! PoisonPill
-      expectTerminated(executionPlan)
+      executionDriver ! PoisonPill
+      expectTerminated(executionDriver)
     }
 
     "self-passivate if restarted again" in {
       // Using the same actor name here to force a re-encarnation
-      val reencarnatedDriver = system.actorOf(executionDriverProps, driverName)
+      val reencarnatedDriver = system.actorOf(executionDriverProps(lifecycleFactory), driverName)
       watch(reencarnatedDriver)
 
-      reencarnatedDriver ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+      reencarnatedDriver ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       eventListener.expectNoMsg()
       reencarnatedDriver ! PoisonPill
@@ -149,16 +149,17 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
 
   "An execution driver with a recurring trigger that eventually gets cancelled" should {
     val trigger = Trigger.Every(50 millis)
-    val executionProbe = TestProbe()
-    val executionProps = TestActors.forwardActorProps(executionProbe.ref)
+    val lifecycleProbe = TestProbe()
+    val lifecycleProps = TestActors.forwardActorProps(lifecycleProbe.ref)
+    val lifecycleFactory: ExecutionLifecycleFactory = (_: DriverState) => lifecycleProps
 
-    val planId = UUID.randomUUID()
+    val planId = PlanId(UUID.randomUUID())
     val driverName = "executionDriverWithRecurringTriggerAndCancellation"
-    val executionDriver = system.actorOf(executionDriverProps, driverName)
+    val executionDriver = system.actorOf(executionDriverProps(lifecycleFactory), driverName)
     watch(executionDriver)
 
     "create an execution from a job specification" in {
-      executionDriver ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+      executionDriver ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId should be (TestJobId)
@@ -169,17 +170,17 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
       scheduledMsg.planId should be (planId)
 
       within(50 millis) {
-        executionProbe.expectMsgType[ExecutionLifecycle.Awake]
+        lifecycleProbe.expectMsgType[ExecutionLifecycle.Awake]
       }
     }
 
     "instruct the execution to immediately stop when it's cancelled" in {
       executionDriver ! CancelExecutionPlan(planId)
 
-      val cancelMsg = executionProbe.expectMsgType[ExecutionLifecycle.Cancel]
+      val cancelMsg = lifecycleProbe.expectMsgType[ExecutionLifecycle.Cancel]
       cancelMsg.reason shouldBe TaskExecution.UserRequest
 
-      executionProbe.reply(ExecutionLifecycle.Result(TaskExecution.Interrupted(TaskExecution.UserRequest)))
+      lifecycleProbe.reply(ExecutionLifecycle.Result(TaskExecution.Interrupted(TaskExecution.UserRequest)))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId shouldBe TestJobId
@@ -189,7 +190,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
       finishedMsg.jobId shouldBe TestJobId
       finishedMsg.planId shouldBe planId
 
-      executionProbe.expectNoMsg()
+      lifecycleProbe.expectNoMsg()
 
       executionDriver ! PoisonPill
       expectTerminated(executionDriver)
@@ -197,10 +198,10 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
 
     "self-passivate if restarted again" in {
       // Using the same actor name here to force a re-encarnation
-      val reencarnatedDriver = system.actorOf(executionDriverProps, driverName)
+      val reencarnatedDriver = system.actorOf(executionDriverProps(lifecycleFactory), driverName)
       watch(reencarnatedDriver)
 
-      reencarnatedDriver ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+      reencarnatedDriver ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       eventListener.expectNoMsg()
       reencarnatedDriver ! PoisonPill
@@ -211,15 +212,16 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
 
   "An execution driver with non recurring trigger" should {
     val trigger = Trigger.Immediate
-    val executionProbe = TestProbe()
-    val executionProps = TestActors.forwardActorProps(executionProbe.ref)
+    val lifecycleProbe = TestProbe()
+    val lifecycleProps = TestActors.forwardActorProps(lifecycleProbe.ref)
+    val lifecycleFactory: ExecutionLifecycleFactory = (_: DriverState) => lifecycleProps
 
-    val planId = UUID.randomUUID()
-    val executionPlan = TestActorRef(executionDriverProps, self, "executionPlanWithOneShotTrigger")
+    val planId = PlanId(UUID.randomUUID())
+    val executionPlan = TestActorRef(executionDriverProps(lifecycleFactory), self, "executionPlanWithOneShotTrigger")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
-      executionPlan ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+      executionPlan ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId should be (TestJobId)
@@ -229,12 +231,12 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
       scheduledMsg.jobId should be (TestJobId)
       scheduledMsg.planId should be (planId)
 
-      executionProbe.expectMsgType[ExecutionLifecycle.Awake]
+      lifecycleProbe.expectMsgType[ExecutionLifecycle.Awake]
     }
 
     "terminate once the execution finishes" in {
       val successOutcome = TaskExecution.Success
-      executionProbe.send(executionPlan, ExecutionLifecycle.Result(successOutcome))
+      lifecycleProbe.send(executionPlan, ExecutionLifecycle.Result(successOutcome))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId should be (TestJobId)
@@ -245,7 +247,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
       finishedMsg.jobId should be (TestJobId)
       finishedMsg.planId should be (planId)
 
-      executionProbe.expectNoMsg()
+      lifecycleProbe.expectNoMsg()
       expectMsg(ShardRegion.Passivate(PoisonPill))
 
       executionPlan ! PoisonPill
@@ -255,18 +257,19 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
 
   "An execution driver that dies after firing the task" should {
     val trigger = Trigger.Immediate
-    val executionProbe = TestProbe()
-    val executionProps = TestActors.forwardActorProps(executionProbe.ref)
+    val lifecycleProbe = TestProbe()
+    val lifecycleProps = TestActors.forwardActorProps(lifecycleProbe.ref)
+    val lifecycleFactory: ExecutionLifecycleFactory = (_: DriverState) => lifecycleProps
 
-    val planId = UUID.randomUUID()
+    val planId = PlanId(UUID.randomUUID())
     val driverName = "executionDriverThatDiesAfterFire"
-    val executionPlan = system.actorOf(executionDriverProps, driverName)
+    val executionPlan = system.actorOf(executionDriverProps(lifecycleFactory), driverName)
     watch(executionPlan)
 
     var task: Task = null
 
     "create an execution from a job specification before dying" in {
-      executionPlan ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+      executionPlan ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId shouldBe TestJobId
@@ -276,8 +279,8 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
       scheduledMsg.jobId shouldBe TestJobId
       scheduledMsg.planId shouldBe planId
 
-      executionProbe.expectMsgType[ExecutionLifecycle.Awake]
-      executionProbe.reply(ExecutionLifecycle.Triggered(scheduledMsg.task))
+      lifecycleProbe.expectMsgType[ExecutionLifecycle.Awake]
+      lifecycleProbe.reply(ExecutionLifecycle.Triggered(scheduledMsg.task))
 
       val triggeredMsg = eventListener.expectMsgType[TaskTriggered]
       triggeredMsg.jobId shouldBe TestJobId
@@ -291,10 +294,10 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     }
 
     "restore the execution after re-encarnating" in {
-      val reencarnatedDriver = system.actorOf(executionDriverProps, driverName)
+      val reencarnatedDriver = system.actorOf(executionDriverProps(lifecycleFactory), driverName)
       watch(reencarnatedDriver)
 
-      executionProbe.send(reencarnatedDriver, ExecutionLifecycle.Triggered(task))
+      lifecycleProbe.send(reencarnatedDriver, ExecutionLifecycle.Triggered(task))
 
       val triggeredMsg = eventListener.expectMsgType[TaskTriggered]
       triggeredMsg.jobId shouldBe TestJobId
@@ -305,15 +308,16 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
 
   "An execution plan that never gets fired" should {
     val trigger = Trigger.At(currentDateTime.minusHours(1), graceTime = Some(5 seconds))
-    val executionProbe = TestProbe()
-    val executionProps = TestActors.forwardActorProps(executionProbe.ref)
+    val lifecycleProbe = TestProbe()
+    val lifecycleProps = TestActors.forwardActorProps(lifecycleProbe.ref)
+    val lifecycleFactory: ExecutionLifecycleFactory = (_: DriverState) => lifecycleProps
 
-    val planId = UUID.randomUUID()
-    val executionPlan = TestActorRef(executionDriverProps, self, "executionPlanThatNeverFires")
+    val planId = PlanId(UUID.randomUUID())
+    val executionPlan = TestActorRef(executionDriverProps(lifecycleFactory), self, "executionPlanThatNeverFires")
     watch(executionPlan)
 
     "create an execution from a job specification and terminate it right after" in {
-      executionPlan ! New(TestJobId, TestJobSpec, planId, trigger, executionProps)
+      executionPlan ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId should be (TestJobId)
@@ -323,7 +327,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
       finishedMsg.jobId should be (TestJobId)
       finishedMsg.planId should be (planId)
 
-      executionProbe.expectNoMsg()
+      lifecycleProbe.expectNoMsg()
       expectMsg(ShardRegion.Passivate(PoisonPill))
 
       executionPlan ! PoisonPill

@@ -16,10 +16,8 @@
 
 package io.quckoo.client.http
 
-import io.quckoo.{ExecutionPlan, TaskExecution}
+import io.quckoo._
 import io.quckoo.client.core._
-import io.quckoo.id._
-import io.quckoo.fault._
 import io.quckoo.protocol.scheduler.{ExecutionPlanCancelled, ExecutionPlanStarted, ScheduleJob}
 import io.quckoo.serialization.json._
 

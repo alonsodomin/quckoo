@@ -33,12 +33,12 @@ class SchedulerTagEventAdapter extends WriteEventAdapter with StrictLogging {
   override def manifest(event: Any): String = ""
 
   override def toJournal(event: Any): Any = event match {
-    case evt: ExecutionDriver.Created => Tagged(evt, Set(tags.ExecutionPlan))
-    case evt: ExecutionPlanStarted    => Tagged(evt, Set(tags.ExecutionPlan))
-    case evt: ExecutionPlanFinished   => Tagged(evt, Set(tags.ExecutionPlan))
-    case evt: TaskScheduled           => Tagged(evt, Set(tags.Task))
-    case evt: TaskTriggered           => Tagged(evt, Set(tags.Task))
-    case evt: TaskCompleted           => Tagged(evt, Set(tags.Task))
+    case evt: ExecutionDriver.Initialized => Tagged(evt, Set(tags.ExecutionPlan))
+    case evt: ExecutionPlanStarted        => Tagged(evt, Set(tags.ExecutionPlan))
+    case evt: ExecutionPlanFinished       => Tagged(evt, Set(tags.ExecutionPlan))
+    case evt: TaskScheduled               => Tagged(evt, Set(tags.Task))
+    case evt: TaskTriggered               => Tagged(evt, Set(tags.Task))
+    case evt: TaskCompleted               => Tagged(evt, Set(tags.Task))
 
     case _ => event
   }

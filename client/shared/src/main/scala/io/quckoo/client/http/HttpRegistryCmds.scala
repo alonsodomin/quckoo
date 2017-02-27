@@ -16,10 +16,8 @@
 
 package io.quckoo.client.http
 
-import io.quckoo.JobSpec
+import io.quckoo.{Fault, JobId, JobNotFound, JobSpec}
 import io.quckoo.client.core._
-import io.quckoo.fault._
-import io.quckoo.id.JobId
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.serialization.json._
 

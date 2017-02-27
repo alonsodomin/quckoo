@@ -20,20 +20,18 @@ import diode._
 import diode.data.{AsyncAction, PotMap}
 import diode.react.ReactConnector
 
+import io.quckoo._
 import io.quckoo.auth.Passport
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.client.http.dom._
 import io.quckoo.console.components.Notification
-import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
-import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 
 import org.threeten.bp.Clock
-
 import slogging.LazyLogging
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

@@ -28,15 +28,14 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
+import io.quckoo._
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
-import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.topics
-import io.quckoo.fault._
-import io.quckoo.id._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
+
 import org.threeten.bp.Clock
 
 import scala.concurrent._
@@ -72,7 +71,7 @@ object Scheduler {
   def props(settings: ClusterSettings, journal: QuckooJournal, registry: ActorRef)(
       implicit clock: Clock): Props = {
     val queueProps = TaskQueue.props(settings.taskQueue.maxWorkTimeout)
-    Props(classOf[Scheduler], journal, registry, queueProps, clock)
+    Props(new Scheduler(journal, registry, queueProps))
   }
 
 }
@@ -97,7 +96,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   private[this] val taskQueue = context.actorOf(queueProps, "queue")
   private[this] val shardRegion = ClusterSharding(context.system).start(
     ExecutionDriver.ShardName,
-    entityProps = ExecutionDriver.props,
+    entityProps = ExecutionDriver.props(ExecutionDriver.DefaultExecutionLifecycleFactory),
     settings = ClusterShardingSettings(context.system).withRememberEntities(true),
     extractEntityId = ExecutionDriver.idExtractor,
     extractShardId = ExecutionDriver.shardResolver
@@ -135,14 +134,14 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
       registry.tell(GetJob(cmd.jobId), handler)
 
     case cmd @ CreateExecutionDriver(_, config, _) =>
-      val planId = UUID.randomUUID()
+      val planId = PlanId(UUID.randomUUID())
       val props  = factoryProps(config.jobId, planId, cmd)
-      log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
+      log.debug("Found enabled job '{}'. Initializing a new execution plan for it.", config.jobId)
       context.actorOf(props, s"execution-driver-factory-$planId")
 
     case cancel: CancelExecutionPlan =>
-      log.debug("Starting execution driver termination process. planId={}", cancel.planId)
-      val props = terminatorProps(cancel)
+      log.debug("Starting execution driver termination process for plan '{}'.", cancel.planId)
+      val props = terminatorProps(cancel, sender())
       context.actorOf(props, s"execution-driver-terminator-${cancel.planId}")
 
     case get @ GetExecutionPlan(planId) =>
@@ -165,7 +164,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
         .mapAsync(2)(fetchPlanAsync)
         .runWith(Sink.actorRef(origSender, Status.Success(GetExecutionPlans)))
 
-    case get @ GetTaskExecution(taskId) =>
+    case GetTaskExecution(taskId) =>
       if (executions.contains(taskId)) {
         sender() ! executions(taskId)
       } else {
@@ -208,7 +207,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
 
   private def handleEvent(event: Any): Unit = event match {
     case ExecutionPlanStarted(_, planId, _) =>
-      log.debug("Indexing execution plan {}", planId)
+      log.debug("Indexing execution plan '{}'.", planId)
       planIds += planId
 
     case TaskScheduled(jobId, planId, task, _) =>
@@ -239,21 +238,20 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   }
 
   private[this] def jobFetcherProps(jobId: JobId,
-                                    requestor: ActorRef,
+                                    replyTo: ActorRef,
                                     config: ScheduleJob): Props =
-    Props(classOf[JobFetcher], jobId, requestor, config)
+    Props(new JobFetcher(jobId, replyTo, config))
 
   private[this] def factoryProps(jobId: JobId,
                                  planId: PlanId,
                                  createCmd: CreateExecutionDriver): Props =
-    Props(classOf[ExecutionDriverFactory], jobId, planId, createCmd, shardRegion)
+    Props(new ExecutionDriverFactory(jobId, planId, createCmd, shardRegion))
 
-  private[this] def terminatorProps(cancelCmd: CancelExecutionPlan): Props =
-    Props(
-      classOf[ExecutionDriverTerminator],
+  private[this] def terminatorProps(cancelCmd: CancelExecutionPlan, replyTo: ActorRef): Props =
+    Props(new ExecutionDriverTerminator(
       cancelCmd.planId,
-      StopExecutionDriver(cancelCmd, sender()),
-      shardRegion)
+      StopExecutionDriver(cancelCmd, replyTo),
+      shardRegion))
 
 }
 
@@ -270,24 +268,24 @@ private class JobFetcher(jobId: JobId, replyTo: ActorRef, config: ScheduleJob)
         // create execution plan
         context.parent ! CreateExecutionDriver(spec, config, replyTo)
       } else {
-        log.info("Found job {} in the registry but is not enabled.", jobId)
+        log.info("Found job '{}' in the registry but is not enabled.", jobId)
         replyTo ! JobNotEnabled(jobId)
       }
       context stop self
 
     case JobNotFound(`jobId`) =>
-      log.info("No enabled job with id {} could be retrieved.", jobId)
+      log.info("No enabled job with id '{}' could be retrieved.", jobId)
       replyTo ! JobNotFound(jobId)
       context stop self
 
     case ReceiveTimeout =>
-      log.error("Timed out while fetching job {} from the registry.", jobId)
+      log.error("Timed out while fetching job '{}' from the registry.", jobId)
       replyTo ! JobNotFound(jobId)
       context stop self
   }
 
   override def unhandled(message: Any): Unit = {
-    log.warning("Unexpected message {} received when fetching job {}.", message, jobId)
+    log.warning("Unexpected message {} received when fetching job '{}'.", message, jobId)
   }
 
 }
@@ -309,15 +307,11 @@ private class ExecutionDriverFactory(jobId: JobId,
     case DistributedPubSubMediator.SubscribeAck(_) =>
       import createCmd._
 
-      log.debug("Starting execution plan for job {}.", jobId)
-      val executionProps = ExecutionLifecycle.props(
-        planId,
-        executionTimeout = cmd.timeout
-      )
-      shardRegion ! ExecutionDriver.New(jobId, spec, planId, cmd.trigger, executionProps)
+      log.debug("Creating execution driver for job '{}' and plan '{}'.", jobId, planId)
+      shardRegion ! ExecutionDriver.Initialize(jobId, planId, spec, cmd.trigger, cmd.timeout)
 
     case response @ ExecutionPlanStarted(`jobId`, _, _) =>
-      log.info("Execution plan for job {} has been started.", jobId)
+      log.info("Execution plan '{}' for job '{}' has been started.", planId, jobId)
       createCmd.replyTo ! response
       mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
       context.become(shuttingDown)
@@ -343,18 +337,18 @@ private class ExecutionDriverTerminator(
   override def preStart(): Unit =
     mediator ! Subscribe(topics.Scheduler, self)
 
-  def receive = initializing
+  def receive: Receive = initializing
 
   def initializing: Receive = {
     case SubscribeAck(_) =>
-      log.debug("Stopping execution plan. planId={}", planId)
+      log.debug("Stopping execution plan '{}'.", planId)
       shardRegion ! killCmd.cmd
       context.become(waitingForTermination)
   }
 
   def waitingForTermination: Receive = {
     case response @ ExecutionPlanFinished(jobId, `planId`, dateTime) =>
-      log.debug("Execution plan has been stopped. planId={}", planId)
+      log.debug("Execution plan '{}' has been stopped.", planId)
       killCmd.replyTo ! ExecutionPlanCancelled(jobId, planId, dateTime)
       mediator ! Unsubscribe(topics.Scheduler, self)
       context.become(shuttingDown)

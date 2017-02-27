@@ -18,10 +18,8 @@ package io.quckoo.cluster.registry
 
 import akka.testkit.{ImplicitSender, TestActorRef, TestActors, TestProbe}
 
-import io.quckoo.{JobPackage, JobSpec}
+import io.quckoo._
 import io.quckoo.cluster.journal.QuckooTestJournal
-import io.quckoo.fault.JobNotFound
-import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.{Artifact, Resolver}
 import io.quckoo.testkit.QuckooActorClusterSuite

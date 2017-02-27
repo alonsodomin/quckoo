@@ -16,15 +16,24 @@
 
 package io.quckoo
 
-import java.util.UUID
+import io.quckoo.serialization.json._
 
 /**
-  * Created by alonsodomin on 14/03/2016.
+  * Created by alonsodomin on 26/02/2017.
   */
-package object id {
+class JobIdSpec extends IdValSpec[JobId]("JobId") {
 
-  type PlanId = UUID
-  type TaskId = UUID
-  type NodeId = UUID
+  override def generateTestId(): JobId = {
+    val jobSpec = JobSpec("Foo", jobPackage = JobPackage.shell("bar"))
+    JobId(jobSpec)
+  }
+
+  it should "be it's package checksum" in {
+    val givenJobSpec = JobSpec("Foo", jobPackage = JobPackage.shell("bar"))
+
+    val returnedJobId = JobId(givenJobSpec)
+
+    returnedJobId shouldBe JobId(givenJobSpec.jobPackage.checksum)
+  }
 
 }

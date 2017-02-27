@@ -24,12 +24,10 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
 
-import io.quckoo.api.{Scheduler => SchedulerApi}
-import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
-import io.quckoo.protocol.scheduler._
 import io.quckoo._
+import io.quckoo.api.{Scheduler => SchedulerApi}
+import io.quckoo.protocol.scheduler._
 import io.quckoo.auth.Passport
-import io.quckoo.fault._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.testkit.ImplicitClock
 
@@ -59,7 +57,7 @@ object SchedulerHttpRouterSpec {
   }
 
   final val TestJobId = JobId("jobId")
-  final val TestPlanIds = Set(UUID.randomUUID())
+  final val TestPlanIds = Set(PlanId(UUID.randomUUID()))
   final val TestPlanMap = Map(
     TestPlanIds.head -> ExecutionPlan(
       TestJobId,
@@ -69,7 +67,7 @@ object SchedulerHttpRouterSpec {
     )
   )
 
-  final val TestTaskIds: Seq[TaskId] = List(UUID.randomUUID())
+  final val TestTaskIds: Seq[TaskId] = List(TaskId(UUID.randomUUID()))
   final val TestTask = Task(TestTaskIds.head, JobPackage.jar(
     ArtifactId("com.example", "example", "latest"), ""))
   final val TestTaskMap = Map(

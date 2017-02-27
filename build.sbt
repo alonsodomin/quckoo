@@ -356,5 +356,5 @@ lazy val exampleProducers = (project in file("examples/producers"))
 // Command aliases ==================================================
 
 addCommandAlias("testJS",
-                ";coreJS/test;apiJS/test;clientJS/test;consoleApp/test")
-addCommandAlias("validate", ";test;multi-jvm:test")
+                ";coreJS/test;apiJS/test;clientJS/test;console/test")
+addCommandAlias("validate", ";test;clusterMaster/multi-jvm:test")

@@ -20,9 +20,7 @@ import java.util.UUID
 
 import akka.testkit._
 
-import io.quckoo.ShellScriptPackage
-import io.quckoo.id.TaskId
-import io.quckoo.fault.TaskExitCodeFault
+import io.quckoo.{ShellScriptPackage, TaskExitCodeFault, TaskId}
 import io.quckoo.testkit.QuckooActorSuite
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 
@@ -37,7 +35,7 @@ class ShellTaskExecutorSpec extends QuckooActorSuite("ShellTaskExecutorSpec")
       val script = s"""echo "$expectedOut""""
       val workerContext = mock[WorkerContext]
 
-      val taskId = UUID.randomUUID()
+      val taskId = TaskId(UUID.randomUUID())
       val scriptPackage = ShellScriptPackage(script)
 
       val executor = TestActorRef(ShellTaskExecutor.props(workerContext, taskId, scriptPackage), "hello-bash")
@@ -56,7 +54,7 @@ class ShellTaskExecutorSpec extends QuckooActorSuite("ShellTaskExecutorSpec")
       """.stripMargin
 
       val workerContext = mock[WorkerContext]
-      val taskId = UUID.randomUUID()
+      val taskId = TaskId(UUID.randomUUID())
       val scriptPackage = ShellScriptPackage(script)
 
       val executor = TestActorRef(ShellTaskExecutor.props(workerContext, taskId, scriptPackage), "bash-exitcode")

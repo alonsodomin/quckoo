@@ -17,7 +17,8 @@
 package io.quckoo.console.core
 
 import diode.data.Fetch
-import io.quckoo.id.PlanId
+
+import io.quckoo.PlanId
 
 /**
   * Created by alonsodomin on 14/03/2016.

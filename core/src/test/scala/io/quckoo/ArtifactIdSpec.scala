@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package io.quckoo.id
+package io.quckoo
 
 import io.quckoo.validation._
-
 import org.scalatest.{FlatSpec, Matchers}
 
+import scalaz.Scalaz._
 import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 24/01/2016.
