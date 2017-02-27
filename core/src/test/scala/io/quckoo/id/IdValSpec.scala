@@ -16,25 +16,22 @@
 
 package io.quckoo.id
 
-import io.quckoo.{JobPackage, JobSpec}
-import io.quckoo.serialization.json._
+import io.quckoo.serialization.json.JsonCodec
+import io.quckoo.util.Attempt
+
+import org.scalatest.{FlatSpec, Matchers}
 
 /**
-  * Created by alonsodomin on 26/02/2017.
+  * Created by domingueza on 27/02/2017.
   */
-class JobIdSpec extends IdValSpec[JobId]("JobId") {
+abstract class IdValSpec[A](name: String)(implicit jsonCodec: JsonCodec[A]) extends FlatSpec with Matchers {
 
-  override def generateTestId(): JobId = {
-    val jobSpec = JobSpec("Foo", jobPackage = JobPackage.shell("bar"))
-    JobId(jobSpec)
-  }
+  def generateTestId(): A
 
-  it should "be it's package checksum" in {
-    val givenJobSpec = JobSpec("Foo", jobPackage = JobPackage.shell("bar"))
+  name should "be JSON compatible" in {
+    val givenId = generateTestId()
 
-    val returnedJobId = JobId(givenJobSpec)
-
-    returnedJobId shouldBe JobId(givenJobSpec.jobPackage.checksum)
+    jsonCodec.encode(givenId).flatMap(jsonCodec.decode) shouldBe Attempt.success(givenId)
   }
 
 }

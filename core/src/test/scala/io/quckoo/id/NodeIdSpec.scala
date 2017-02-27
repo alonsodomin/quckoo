@@ -18,26 +18,11 @@ package io.quckoo.id
 
 import java.util.UUID
 
-import upickle.default.{Reader => UReader, Writer => UWriter, _}
+import io.quckoo.serialization.json._
 
 /**
-  * Created by alonsodomin on 27/02/2017.
+  * Created by domingueza on 27/02/2017.
   */
-final class PlanId private (private val uuid: UUID) extends AnyVal {
-  override def toString: String = uuid.toString
-}
-
-object PlanId {
-
-  @inline def apply(uuid: UUID): PlanId = new PlanId(uuid)
-  @inline def apply(value: String): PlanId = new PlanId(UUID.fromString(value))
-
-  implicit val jsonReader: UReader[PlanId] = UReader[PlanId] {
-    implicitly[UReader[String]].read andThen PlanId.apply
-  }
-
-  implicit val jsonWriter: UWriter[PlanId] = UWriter[PlanId] { planId =>
-    implicitly[UWriter[String]].write(planId.uuid.toString)
-  }
-
+class NodeIdSpec extends IdValSpec[NodeId]("NodeId") {
+  override def generateTestId(): NodeId = NodeId(UUID.randomUUID())
 }
