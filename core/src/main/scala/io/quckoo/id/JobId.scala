@@ -16,13 +16,22 @@
 
 package io.quckoo.id
 
-import upickle.default.{Reader => JsonReader, Writer => JsonWriter, _}
+import upickle.default.{Reader => UReader, Writer => UWriter, _}
 
 import io.quckoo.JobSpec
+
+import scalaz.{Equal, Show}
+import scalaz.std.string._
 
 /**
   * Created by aalonsodominguez on 24/08/15.
   */
+final class JobId private (private val id: String) extends AnyVal {
+
+  override def toString: String = id
+
+}
+
 object JobId {
 
   /**
@@ -39,17 +48,16 @@ object JobId {
 
   // Upickle encoders
 
-  implicit val jobIdW: JsonWriter[JobId] = JsonWriter[JobId] { jobId =>
-    implicitly[JsonWriter[String]].write(jobId.id)
+  implicit val jobIdW: UWriter[JobId] = UWriter[JobId] { jobId =>
+    implicitly[UWriter[String]].write(jobId.id)
   }
-  implicit val jobIdR: JsonReader[JobId] = JsonReader[JobId] {
-    implicitly[JsonReader[String]].read andThen JobId.apply
+  implicit val jobIdR: UReader[JobId] = UReader[JobId] {
+    implicitly[UReader[String]].read andThen JobId.apply
   }
 
-}
+  // Typeclass instances
 
-final class JobId private (private val id: String) extends AnyVal {
-
-  override def toString: String = id
+  implicit val jobIdEq: Equal[JobId] = Equal.equalBy(_.id)
+  implicit val jobIdShow: Show[JobId] = Show.showFromToString
 
 }

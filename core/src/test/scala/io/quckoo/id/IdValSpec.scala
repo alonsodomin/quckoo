@@ -21,10 +21,12 @@ import io.quckoo.util.Attempt
 
 import org.scalatest.{FlatSpec, Matchers}
 
+import scalaz.{Equal, Show}
+
 /**
   * Created by domingueza on 27/02/2017.
   */
-abstract class IdValSpec[A](name: String)(implicit jsonCodec: JsonCodec[A]) extends FlatSpec with Matchers {
+abstract class IdValSpec[A : Equal : Show](name: String)(implicit jsonCodec: JsonCodec[A]) extends FlatSpec with Matchers {
 
   def generateTestId(): A
 
@@ -32,6 +34,11 @@ abstract class IdValSpec[A](name: String)(implicit jsonCodec: JsonCodec[A]) exte
     val givenId = generateTestId()
 
     jsonCodec.encode(givenId).flatMap(jsonCodec.decode) shouldBe Attempt.success(givenId)
+  }
+
+  it should "be equal to itself" in {
+    val givenId = generateTestId()
+    assert(givenId === givenId)
   }
 
 }

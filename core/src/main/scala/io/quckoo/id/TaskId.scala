@@ -20,6 +20,8 @@ import java.util.UUID
 
 import upickle.default.{Reader => UReader, Writer => UWriter, _}
 
+import scalaz.{Equal, Show}
+
 /**
   * Created by alonsodomin on 27/02/2017.
   */
@@ -34,6 +36,8 @@ object TaskId {
   @inline def apply(uuid: UUID): TaskId = new TaskId(uuid)
   @inline def apply(value: String): TaskId = new TaskId(UUID.fromString(value))
 
+  // Upickle encoders
+
   implicit val upickleReader: UReader[TaskId] = UReader[TaskId] {
     implicitly[UReader[UUID]].read andThen TaskId.apply
   }
@@ -41,5 +45,10 @@ object TaskId {
   implicit val upickleWriter: UWriter[TaskId] = UWriter[TaskId] { taskId =>
     implicitly[UWriter[UUID]].write(taskId.uuid)
   }
+
+  // Typeclass instances
+
+  implicit val taskIdEq: Equal[TaskId] = Equal.equal((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
+  implicit val taskIdShow: Show[TaskId] = Show.showFromToString
 
 }

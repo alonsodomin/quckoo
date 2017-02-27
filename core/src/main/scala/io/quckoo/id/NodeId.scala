@@ -20,6 +20,8 @@ import java.util.UUID
 
 import upickle.default.{Reader => UReader, Writer => UWriter, _}
 
+import scalaz.{Equal, Show}
+
 /**
   * Created by alonsodomin on 27/02/2017.
   */
@@ -32,6 +34,8 @@ object NodeId {
   @inline def apply(uuid: UUID): NodeId = new NodeId(uuid)
   @inline def apply(value: String): NodeId = new NodeId(UUID.fromString(value))
 
+  // Upickle encoders
+
   implicit val upickleReader: UReader[NodeId] = UReader[NodeId] {
     implicitly[UReader[UUID]].read andThen NodeId.apply
   }
@@ -39,5 +43,10 @@ object NodeId {
   implicit val upickleWriter: UWriter[NodeId] = UWriter[NodeId] { nodeId =>
     implicitly[UWriter[UUID]].write(nodeId.uuid)
   }
+
+  // Typeclass instances
+
+  implicit val nodeIdEq: Equal[NodeId] = Equal.equal((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
+  implicit val nodeIdShow: Show[NodeId] = Show.showFromToString
 
 }

@@ -458,7 +458,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val urlPattern = uris.executionPlan.r
     inProtocol[HttpProtocol] ensuringRequest isGetExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
-      if (UUID.fromString(id) == TestPlanId) {
+      if (PlanId(UUID.fromString(id)) == TestPlanId) {
         HttpSuccess(DataBuffer(TestExecutionPlan))
       } else {
         HttpError(500, s"Invalid plan id $id")
@@ -474,7 +474,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val urlPattern = uris.executionPlan.r
     inProtocol[HttpProtocol] ensuringRequest isGetExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
-      if (UUID.fromString(id) == TestPlanId) {
+      if (PlanId(UUID.fromString(id)) == TestPlanId) {
         HttpError(404, s"Should have returned a None instance")
       } else {
         HttpError(500, s"Invalid plan id $id")
@@ -533,7 +533,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val urlPattern = uris.executionPlan.r
     inProtocol[HttpProtocol] ensuringRequest isCancelExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
-      if (UUID.fromString(id) == TestPlanId) {
+      if (PlanId(UUID.fromString(id)) == TestPlanId) {
         HttpSuccess(DataBuffer(ExecutionPlanCancelled(TestJobId, TestPlanId, currentDateTime)))
       } else {
         HttpError(500, s"Invalid plan id $id")
@@ -549,7 +549,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val urlPattern = uris.executionPlan.r
     inProtocol[HttpProtocol] ensuringRequest isCancelExecutionPlan replyWith { req =>
       val urlPattern(id) = req.url
-      if (UUID.fromString(id) == TestPlanId) {
+      if (PlanId(UUID.fromString(id)) == TestPlanId) {
         HttpError(404, entity = DataBuffer(TestPlanId))
       } else {
         HttpError(500, s"Invalid plan id $id")
@@ -592,7 +592,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val urlPattern = uris.execution.r
     inProtocol[HttpProtocol] ensuringRequest isGetExecution replyWith { req =>
       val urlPattern(id) = req.url
-      if (UUID.fromString(id) == TestTaskId) {
+      if (TaskId(UUID.fromString(id)) == TestTaskId) {
         HttpSuccess(DataBuffer(TestTaskExecution))
       } else {
         HttpError(500, s"Invalid task id $id")
@@ -608,7 +608,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val urlPattern = uris.execution.r
     inProtocol[HttpProtocol] ensuringRequest isGetExecution replyWith { req =>
       val urlPattern(id) = req.url
-      if (UUID.fromString(id) == TestTaskId) {
+      if (TaskId(UUID.fromString(id)) == TestTaskId) {
         HttpError(404, s"Should have returned a None instance")
       } else {
         HttpError(500, s"Invalid task id $id")
