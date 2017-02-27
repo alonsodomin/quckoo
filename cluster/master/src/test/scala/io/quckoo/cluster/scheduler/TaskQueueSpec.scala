@@ -24,12 +24,11 @@ import akka.testkit._
 import io.quckoo.{Task, JobPackage}
 import io.quckoo.cluster.protocol._
 import io.quckoo.fault.ExceptionThrown
-import io.quckoo.id.ArtifactId
+import io.quckoo.id.{ArtifactId, TaskId, NodeId}
 import io.quckoo.testkit.QuckooActorClusterSuite
 import io.quckoo.fault.Fault
 
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -53,10 +52,10 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
   import system.dispatcher
 
   "A TaskQueue" should {
-    val task = Task(id = UUID.randomUUID(), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
+    val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
     val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "happyQueue")
-    val workerId = UUID.randomUUID()
+    val workerId = NodeId(UUID.randomUUID())
     val executionProbe = TestProbe("happyExec")
     val workerProbe = TestProbe("happyWorker")
 
@@ -97,7 +96,7 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
     }
 
     "not dispatch work to another worker when there is no more pending" in {
-      val otherWorkerId = UUID.randomUUID()
+      val otherWorkerId = NodeId(UUID.randomUUID())
       val otherWorkerProbe = TestProbe("otherWorker")
       taskQueue.tell(RegisterWorker(otherWorkerId), otherWorkerProbe.ref)
 
@@ -120,9 +119,9 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
     val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "willFailQueue")
 
     "notify an error in the execution when the worker fails" in {
-      val task = Task(id = UUID.randomUUID(), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
+      val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
-      val failingWorkerId = UUID.randomUUID()
+      val failingWorkerId = NodeId(UUID.randomUUID())
       val failingExec = TestProbe("failingExec")
       val failingWorker = TestProbe("failingWorker")
 
@@ -144,9 +143,9 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
 
     "perform a timeout if the execution does notify it" in {
       val taskTimeout = 1 seconds
-      val task = Task(id = UUID.randomUUID(), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
+      val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
-      val timingOutWorkerId = UUID.randomUUID()
+      val timingOutWorkerId = NodeId(UUID.randomUUID())
       val timingOutExec = TestProbe("failingExec")
       val timingOutWorker = TestProbe("failingWorker")
 
@@ -170,9 +169,9 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
     val taskQueue = TestActorRef(TaskQueue.props(100 millis), "willTimeoutQueue")
 
     "notify a timeout if the worker doesn't reply in between the task timeout" in {
-      val task = Task(id = UUID.randomUUID(), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
+      val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
-      val timingOutWorkerId = UUID.randomUUID()
+      val timingOutWorkerId = NodeId(UUID.randomUUID())
       val timingOutExec = TestProbe("failingExec")
       val timingOutWorker = TestProbe("failingWorker")
 

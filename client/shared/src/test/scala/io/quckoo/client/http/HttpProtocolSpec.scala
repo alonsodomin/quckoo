@@ -22,7 +22,7 @@ import io.quckoo._
 import io.quckoo.auth.{InvalidCredentialsException, Passport}
 import io.quckoo.client.core.StubClient
 import io.quckoo.fault._
-import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
+import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId, NodeId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster.{MasterEvent, MasterReachable}
 import io.quckoo.protocol.registry._
@@ -72,12 +72,12 @@ object HttpProtocolSpec {
     jobClass = "com.example.Job"
   ))
 
-  final val TestPlanId: PlanId = UUID.randomUUID()
+  final val TestPlanId: PlanId = PlanId(UUID.randomUUID())
   final val TestExecutionPlan = ExecutionPlan(
     TestJobId, TestPlanId, Trigger.Immediate, ZonedDateTime.now(FixedClock)
   )
 
-  final val TestTaskId: TaskId = UUID.randomUUID()
+  final val TestTaskId: TaskId = TaskId(UUID.randomUUID())
   final val TestTaskExecution = TaskExecution(
     TestPlanId, Task(TestTaskId, TestJobSpec.jobPackage), TaskExecution.Complete
   )
@@ -137,7 +137,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   // -- Subscribe
 
   "subscribe" should "return an stream of events" in {
-    val givenEvents = List(MasterReachable(UUID.randomUUID()))
+    val givenEvents = List(MasterReachable(NodeId(UUID.randomUUID())))
 
     val httpEvents: Attempt[List[HttpServerSentEvent]] = EitherT(givenEvents.map(evt => DataBuffer(evt))).
       map(HttpServerSentEvent(_)).

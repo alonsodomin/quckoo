@@ -27,8 +27,6 @@ import io.quckoo.fault.ExceptionThrown
 import io.quckoo.id._
 import io.quckoo.testkit.QuckooActorClusterSuite
 
-import org.scalatest.WordSpecLike
-
 import scala.concurrent.duration._
 
 /**
@@ -57,7 +55,7 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
       withDispatcher("akka.actor.default-dispatcher")
 
   "An execution cancelled before enqueuing" should {
-    val planId = UUID.randomUUID()
+    val planId = PlanId(UUID.randomUUID())
 
     val enqueueTimeout = 2 seconds
     val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
@@ -78,8 +76,8 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
   }
 
   "An execution that fails to enqueue" should {
-    val planId = UUID.randomUUID()
-    val task = Task(id = UUID.randomUUID(), JobPackage.jar(TestArtifactId, TestJobClass))
+    val planId = PlanId(UUID.randomUUID())
+    val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
     val taskQueue = TestProbe("queue-1")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
@@ -126,8 +124,8 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
   }
 
   "An execution that is cancelled before starting" should {
-    val planId = UUID.randomUUID()
-    val task = Task(id = UUID.randomUUID(), JobPackage.jar(TestArtifactId, TestJobClass))
+    val planId = PlanId(UUID.randomUUID())
+    val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
     val taskQueue = TestProbe("queue-2")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
@@ -176,8 +174,8 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
   }
 
   "An execution in progress" should {
-    val planId = UUID.randomUUID()
-    val task = Task(id = UUID.randomUUID(), JobPackage.jar(TestArtifactId, TestJobClass))
+    val planId = PlanId(UUID.randomUUID())
+    val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
     val taskQueue = TestProbe("queue-3")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
@@ -229,8 +227,8 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
   }
 
   "An execution that times out while running" should {
-    val planId = UUID.randomUUID()
-    val task = Task(id = UUID.randomUUID(), JobPackage.jar(TestArtifactId, TestJobClass))
+    val planId = PlanId(UUID.randomUUID())
+    val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
     val taskQueue = TestProbe("queue-4")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
@@ -290,8 +288,8 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
   }
 
   "An execution that fails while running" should {
-    val planId = UUID.randomUUID()
-    val task = Task(id = UUID.randomUUID(), JobPackage.jar(TestArtifactId, TestJobClass))
+    val planId = PlanId(UUID.randomUUID())
+    val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
     val taskQueue = TestProbe("queue-5")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
@@ -345,8 +343,8 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
   }
 
   "An execution that completes successfully" should {
-    val planId = UUID.randomUUID()
-    val task = Task(id = UUID.randomUUID(), JobPackage.jar(TestArtifactId, TestJobClass))
+    val planId = PlanId(UUID.randomUUID())
+    val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
     val taskQueue = TestProbe("queue-6")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)

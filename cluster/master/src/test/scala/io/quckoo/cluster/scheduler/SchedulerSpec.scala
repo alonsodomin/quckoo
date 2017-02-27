@@ -172,7 +172,7 @@ class SchedulerSpec extends QuckooActorClusterSuite("SchedulerSpec")
     }
 
     "return execution plan not found when asked for a non-existent plan" in {
-      val randomPlanId = UUID.randomUUID()
+      val randomPlanId = PlanId(UUID.randomUUID())
 
       scheduler ! GetExecutionPlan(randomPlanId)
 

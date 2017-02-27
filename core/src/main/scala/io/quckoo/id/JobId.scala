@@ -33,7 +33,7 @@ object JobId {
     * @return a job ID
     */
   @inline def apply(jobSpec: JobSpec): JobId =
-    JobId(jobSpec.jobPackage.checksum)
+    new JobId(jobSpec.jobPackage.checksum)
 
   @inline def apply(id: String) = new JobId(id)
 
@@ -48,15 +48,8 @@ object JobId {
 
 }
 
-final class JobId private (private val id: String) extends Serializable {
+final class JobId private (private val id: String) extends AnyVal {
 
-  override def equals(other: Any): Boolean = other match {
-    case that: JobId => this.id == that.id
-    case _           => false
-  }
-
-  override def hashCode: Int = id.hashCode()
-
-  override def toString = id
+  override def toString: String = id
 
 }

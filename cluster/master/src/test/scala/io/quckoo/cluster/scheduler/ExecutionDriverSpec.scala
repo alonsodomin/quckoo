@@ -25,7 +25,7 @@ import akka.testkit._
 
 import io.quckoo._
 import io.quckoo.cluster.topics
-import io.quckoo.id.{ArtifactId, JobId}
+import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.testkit.{ImplicitClock, QuckooActorClusterSuite}
@@ -75,7 +75,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     val executionProbe = TestProbe()
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
-    val planId = UUID.randomUUID()
+    val planId = PlanId(UUID.randomUUID())
     val driverName = "executionDriverWithRecurringTrigger"
     val executionPlan = system.actorOf(executionDriverProps, driverName)
     watch(executionPlan)
@@ -152,7 +152,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     val executionProbe = TestProbe()
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
-    val planId = UUID.randomUUID()
+    val planId = PlanId(UUID.randomUUID())
     val driverName = "executionDriverWithRecurringTriggerAndCancellation"
     val executionDriver = system.actorOf(executionDriverProps, driverName)
     watch(executionDriver)
@@ -214,7 +214,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     val executionProbe = TestProbe()
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
-    val planId = UUID.randomUUID()
+    val planId = PlanId(UUID.randomUUID())
     val executionPlan = TestActorRef(executionDriverProps, self, "executionPlanWithOneShotTrigger")
     watch(executionPlan)
 
@@ -258,7 +258,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     val executionProbe = TestProbe()
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
-    val planId = UUID.randomUUID()
+    val planId = PlanId(UUID.randomUUID())
     val driverName = "executionDriverThatDiesAfterFire"
     val executionPlan = system.actorOf(executionDriverProps, driverName)
     watch(executionPlan)
@@ -308,7 +308,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     val executionProbe = TestProbe()
     val executionProps = TestActors.forwardActorProps(executionProbe.ref)
 
-    val planId = UUID.randomUUID()
+    val planId = PlanId(UUID.randomUUID())
     val executionPlan = TestActorRef(executionDriverProps, self, "executionPlanThatNeverFires")
     watch(executionPlan)
 

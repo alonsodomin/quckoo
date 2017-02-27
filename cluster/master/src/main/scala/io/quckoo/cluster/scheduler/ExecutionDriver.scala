@@ -154,7 +154,7 @@ object ExecutionDriver {
   }
 
   def props(implicit clock: Clock): Props =
-    Props(classOf[ExecutionDriver], clock)
+    Props(new ExecutionDriver)
 
 }
 
@@ -399,7 +399,7 @@ class ExecutionDriver(implicit clock: Clock) extends PersistentActor with ActorL
     if (state.plan.finished) FinishPlan
     else {
       def createTask = Task(
-        UUID.randomUUID(),
+        TaskId(UUID.randomUUID()),
         state.jobSpec.jobPackage
       )
       val task = state.plan.currentTask.getOrElse(createTask)

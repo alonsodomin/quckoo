@@ -37,7 +37,7 @@ import scalaz.NonEmptyList
  */
 object JarTaskExecutorSpec {
 
-  final val TestTaskId: TaskId = UUID.randomUUID()
+  final val TestTaskId: TaskId = TaskId(UUID.randomUUID())
   final val TestJobClass = "com.example.FooClass"
   final val TestArtifactId = ArtifactId("com.example", "test", "latest")
 

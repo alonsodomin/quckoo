@@ -25,7 +25,7 @@ import akka.cluster.client.ClusterClient.SendToAll
 import io.quckoo.Task
 import io.quckoo.cluster.protocol._
 import io.quckoo.fault.ExceptionThrown
-import io.quckoo.id.TaskId
+import io.quckoo.id.{TaskId, NodeId}
 
 import scala.concurrent.duration._
 
@@ -65,7 +65,7 @@ class Worker private (
   import Worker._
   import context.dispatcher
 
-  val workerId = UUID.randomUUID()
+  val workerId = NodeId(UUID.randomUUID())
 
   val registerTask = context.system.scheduler.schedule(
     0 seconds,

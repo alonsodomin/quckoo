@@ -72,7 +72,7 @@ object Scheduler {
   def props(settings: ClusterSettings, journal: QuckooJournal, registry: ActorRef)(
       implicit clock: Clock): Props = {
     val queueProps = TaskQueue.props(settings.taskQueue.maxWorkTimeout)
-    Props(classOf[Scheduler], journal, registry, queueProps, clock)
+    Props(new Scheduler(journal, registry, queueProps))
   }
 
 }
@@ -135,7 +135,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
       registry.tell(GetJob(cmd.jobId), handler)
 
     case cmd @ CreateExecutionDriver(_, config, _) =>
-      val planId = UUID.randomUUID()
+      val planId = PlanId(UUID.randomUUID())
       val props  = factoryProps(config.jobId, planId, cmd)
       log.debug("Found enabled job {}. Initializing a new execution plan for it.", config.jobId)
       context.actorOf(props, s"execution-driver-factory-$planId")
@@ -241,19 +241,18 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   private[this] def jobFetcherProps(jobId: JobId,
                                     requestor: ActorRef,
                                     config: ScheduleJob): Props =
-    Props(classOf[JobFetcher], jobId, requestor, config)
+    Props(new JobFetcher(jobId, requestor, config))
 
   private[this] def factoryProps(jobId: JobId,
                                  planId: PlanId,
                                  createCmd: CreateExecutionDriver): Props =
-    Props(classOf[ExecutionDriverFactory], jobId, planId, createCmd, shardRegion)
+    Props(new ExecutionDriverFactory(jobId, planId, createCmd, shardRegion))
 
   private[this] def terminatorProps(cancelCmd: CancelExecutionPlan): Props =
-    Props(
-      classOf[ExecutionDriverTerminator],
+    Props(new ExecutionDriverTerminator(
       cancelCmd.planId,
       StopExecutionDriver(cancelCmd, sender()),
-      shardRegion)
+      shardRegion))
 
 }
 

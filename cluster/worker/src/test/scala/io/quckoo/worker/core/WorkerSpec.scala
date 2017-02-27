@@ -19,21 +19,20 @@ package io.quckoo.worker.core
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{ActorRefFactory, ActorSystem}
+import akka.actor.ActorRefFactory
 import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
 
 import io.quckoo.{JobPackage, Task}
 import io.quckoo.cluster.protocol._
 import io.quckoo.fault.ExceptionThrown
-import io.quckoo.id.ArtifactId
+import io.quckoo.id.{ArtifactId, TaskId}
 import io.quckoo.resolver.Artifact
 import io.quckoo.testkit.QuckooActorSuite
 
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -49,7 +48,8 @@ object WorkerSpec {
   final val FooArtifactId = ArtifactId("com.example", "foo", "latest")
   final val FooArtifact = Artifact(FooArtifactId, Seq.empty)
 
-  final val TestTask = Task(UUID.randomUUID(), JobPackage.jar(FooArtifactId, FooJobClass))
+  final val TestTaskId = TaskId(UUID.randomUUID())
+  final val TestTask = Task(TestTaskId, JobPackage.jar(FooArtifactId, FooJobClass))
 
 }
 
@@ -103,7 +103,7 @@ class WorkerSpec extends QuckooActorSuite("WorkerSpec")
     }
 
     "reject subsequent tasks if it's busy" in {
-      val anotherTask = Task(UUID.randomUUID(), JobPackage.jar(FooArtifactId, FooJobClass))
+      val anotherTask = Task(TaskId(UUID.randomUUID()), JobPackage.jar(FooArtifactId, FooJobClass))
       worker ! anotherTask
 
       executorProbe.expectNoMsg(500 millis)
@@ -132,7 +132,7 @@ class WorkerSpec extends QuckooActorSuite("WorkerSpec")
 
     "ignore an ack from the master for a different task id" in {
       val taskId = TestTask.id
-      val anotherTaskId = UUID.randomUUID()
+      val anotherTaskId = TaskId(UUID.randomUUID())
 
       worker ! TaskDoneAck(anotherTaskId)
 

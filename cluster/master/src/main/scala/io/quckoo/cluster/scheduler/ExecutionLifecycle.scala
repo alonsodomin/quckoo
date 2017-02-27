@@ -87,12 +87,11 @@ object ExecutionLifecycle {
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
             maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
             executionTimeout: Option[FiniteDuration] = None): Props =
-    Props(
-      classOf[ExecutionLifecycle],
+    Props(new ExecutionLifecycle(
       planId,
       enqueueTimeout,
       maxEnqueueAttempts,
-      executionTimeout)
+      executionTimeout))
 
 }
 

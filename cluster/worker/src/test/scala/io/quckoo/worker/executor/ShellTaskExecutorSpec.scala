@@ -37,7 +37,7 @@ class ShellTaskExecutorSpec extends QuckooActorSuite("ShellTaskExecutorSpec")
       val script = s"""echo "$expectedOut""""
       val workerContext = mock[WorkerContext]
 
-      val taskId = UUID.randomUUID()
+      val taskId = TaskId(UUID.randomUUID())
       val scriptPackage = ShellScriptPackage(script)
 
       val executor = TestActorRef(ShellTaskExecutor.props(workerContext, taskId, scriptPackage), "hello-bash")
@@ -56,7 +56,7 @@ class ShellTaskExecutorSpec extends QuckooActorSuite("ShellTaskExecutorSpec")
       """.stripMargin
 
       val workerContext = mock[WorkerContext]
-      val taskId = UUID.randomUUID()
+      val taskId = TaskId(UUID.randomUUID())
       val scriptPackage = ShellScriptPackage(script)
 
       val executor = TestActorRef(ShellTaskExecutor.props(workerContext, taskId, scriptPackage), "bash-exitcode")

@@ -20,6 +20,7 @@ import java.util.UUID
 
 import akka.actor.{ActorRef, Address}
 import akka.cluster.{Cluster, Member, MemberStatus, UniqueAddress}
+
 import io.quckoo.id.NodeId
 import io.quckoo.net._
 
@@ -50,7 +51,7 @@ package object net {
 
     def toNodeId: NodeId = {
       val addressUrl = s"${uniqueAddress.address.toString}#${uniqueAddress.longUid}"
-      UUID.nameUUIDFromBytes(addressUrl.getBytes("UTF-8"))
+      NodeId(UUID.nameUUIDFromBytes(addressUrl.getBytes("UTF-8")))
     }
 
   }

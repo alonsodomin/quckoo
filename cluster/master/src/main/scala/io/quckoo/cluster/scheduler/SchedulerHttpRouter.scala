@@ -28,6 +28,7 @@ import de.heikoseeberger.akkasse.EventStreamMarshalling
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.auth.Passport
 import io.quckoo.fault._
+import io.quckoo.id.{PlanId, TaskId}
 import io.quckoo.cluster.http._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.json._
@@ -67,19 +68,19 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
               }
             }
           }
-        } ~ path(JavaUUID) { planId =>
+        } ~ path(JavaUUID) { planUUID =>
           get {
             extractExecutionContext { implicit ec =>
-              onSuccess(executionPlan(planId)) {
+              onSuccess(executionPlan(PlanId(planUUID))) {
                 case Some(plan) => complete(plan)
-                case _          => complete(NotFound -> planId)
+                case _          => complete(NotFound -> planUUID)
               }
             }
           } ~ delete {
             extractExecutionContext { implicit ec =>
-              onSuccess(cancelPlan(planId)) {
+              onSuccess(cancelPlan(PlanId(planUUID))) {
                 case \/-(res)                      => complete(res)
-                case -\/(ExecutionPlanNotFound(_)) => complete(NotFound -> planId)
+                case -\/(ExecutionPlanNotFound(_)) => complete(NotFound -> planUUID)
               }
             }
           }
@@ -91,12 +92,12 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
               complete(executions)
             }
           }
-        } ~ path(JavaUUID) { taskId =>
+        } ~ path(JavaUUID) { taskUUID =>
           get {
             extractExecutionContext { implicit ec =>
-              onSuccess(execution(taskId)) {
+              onSuccess(execution(TaskId(taskUUID))) {
                 case Some(task) => complete(task)
-                case _          => complete(NotFound -> taskId)
+                case _          => complete(NotFound -> taskUUID)
               }
             }
           }
