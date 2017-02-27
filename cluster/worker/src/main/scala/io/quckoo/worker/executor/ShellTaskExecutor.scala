@@ -23,13 +23,8 @@ import akka.pattern._
 
 import better.files._
 
-import io.quckoo.ShellScriptPackage
-import io.quckoo.id.TaskId
-import io.quckoo.fault.{ExceptionThrown, TaskExitCodeFault}
+import io.quckoo.{ExceptionThrown, ShellScriptPackage, TaskExitCodeFault, TaskId}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
-
-import scala.concurrent.duration.FiniteDuration
-import scala.util.{Success, Failure}
 
 object ShellTaskExecutor {
 

@@ -21,12 +21,9 @@ import java.util.concurrent.TimeUnit
 
 import akka.testkit._
 
-import io.quckoo.{Task, JobPackage}
+import io.quckoo._
 import io.quckoo.cluster.protocol._
-import io.quckoo.fault.ExceptionThrown
-import io.quckoo.id.{ArtifactId, TaskId, NodeId}
 import io.quckoo.testkit.QuckooActorClusterSuite
-import io.quckoo.fault.Fault
 
 import org.scalatest.concurrent.ScalaFutures
 

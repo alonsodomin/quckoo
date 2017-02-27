@@ -14,15 +14,26 @@
  * limitations under the License.
  */
 
-package io.quckoo.id
-
-import java.util.UUID
+package io.quckoo
 
 import io.quckoo.serialization.json._
 
 /**
-  * Created by domingueza on 27/02/2017.
+  * Created by alonsodomin on 26/02/2017.
   */
-class NodeIdSpec extends IdValSpec[NodeId]("NodeId") {
-  override def generateTestId(): NodeId = NodeId(UUID.randomUUID())
+class JobIdSpec extends IdValSpec[JobId]("JobId") {
+
+  override def generateTestId(): JobId = {
+    val jobSpec = JobSpec("Foo", jobPackage = JobPackage.shell("bar"))
+    JobId(jobSpec)
+  }
+
+  it should "be it's package checksum" in {
+    val givenJobSpec = JobSpec("Foo", jobPackage = JobPackage.shell("bar"))
+
+    val returnedJobId = JobId(givenJobSpec)
+
+    returnedJobId shouldBe JobId(givenJobSpec.jobPackage.checksum)
+  }
+
 }

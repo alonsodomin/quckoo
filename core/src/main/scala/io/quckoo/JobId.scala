@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package io.quckoo.id
+package io.quckoo
 
 import upickle.default.{Reader => UReader, Writer => UWriter, _}
 
-import io.quckoo.JobSpec
-
-import scalaz.{Equal, Show}
 import scalaz.std.string._
+import scalaz.{Equal, Show}
 
 /**
   * Created by aalonsodominguez on 24/08/15.

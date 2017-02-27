@@ -18,12 +18,12 @@ package io.quckoo.console.core
 
 import diode.{ActionProcessor, ActionResult, Dispatcher, Effect}
 
+import io.quckoo._
 import io.quckoo.console.components.Notification
-import io.quckoo.fault._
 
 import slogging.LazyLogging
 
-import scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 import scalaz._
 import Scalaz._

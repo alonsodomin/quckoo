@@ -16,7 +16,6 @@
 
 package io.quckoo
 
-import io.quckoo.id.ArtifactId
 import io.quckoo.validation._
 
 import org.scalatest.{FlatSpec, Matchers}

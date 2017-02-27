@@ -25,10 +25,9 @@ import akka.stream.ActorMaterializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
 
+import io.quckoo._
 import io.quckoo.api.{Scheduler => SchedulerApi}
 import io.quckoo.auth.Passport
-import io.quckoo.fault._
-import io.quckoo.id.{PlanId, TaskId}
 import io.quckoo.cluster.http._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.json._

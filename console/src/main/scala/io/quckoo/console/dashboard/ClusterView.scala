@@ -19,7 +19,7 @@ package io.quckoo.console.dashboard
 import diode.AnyAction._
 import diode.react.ModelProxy
 
-import io.quckoo.id.NodeId
+import io.quckoo.NodeId
 import io.quckoo.net.{NodeStatus, QuckooNode, QuckooState}
 import io.quckoo.protocol.cluster.GetClusterStatus
 

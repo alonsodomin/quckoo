@@ -17,7 +17,8 @@
 package io.quckoo.console.core
 
 import diode.data.Fetch
-import io.quckoo.id.TaskId
+
+import io.quckoo.TaskId
 
 /**
   * Created by alonsodomin on 28/05/2016.

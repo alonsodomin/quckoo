@@ -25,7 +25,6 @@ import akka.testkit._
 
 import io.quckoo._
 import io.quckoo.cluster.topics
-import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.testkit.{ImplicitClock, QuckooActorClusterSuite}

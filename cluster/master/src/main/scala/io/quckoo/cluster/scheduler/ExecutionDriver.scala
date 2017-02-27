@@ -23,12 +23,10 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 
+import io.quckoo._
 import io.quckoo.cluster.topics
-import io.quckoo.fault.{ExceptionThrown, Fault}
-import io.quckoo.id._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
-import io.quckoo._
 
 import org.threeten.bp.{Clock, ZonedDateTime, Duration => JavaDuration}
 

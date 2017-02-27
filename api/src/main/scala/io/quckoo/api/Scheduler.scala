@@ -17,9 +17,7 @@
 package io.quckoo.api
 
 import io.quckoo.auth.Passport
-import io.quckoo.{ExecutionPlan, TaskExecution}
-import io.quckoo.id.{PlanId, TaskId}
-import io.quckoo.fault._
+import io.quckoo._
 import io.quckoo.protocol.scheduler._
 
 import scala.concurrent.duration.FiniteDuration

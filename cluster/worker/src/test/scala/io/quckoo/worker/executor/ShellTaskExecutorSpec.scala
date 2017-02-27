@@ -20,9 +20,7 @@ import java.util.UUID
 
 import akka.testkit._
 
-import io.quckoo.ShellScriptPackage
-import io.quckoo.id.TaskId
-import io.quckoo.fault.TaskExitCodeFault
+import io.quckoo.{ShellScriptPackage, TaskExitCodeFault, TaskId}
 import io.quckoo.testkit.QuckooActorSuite
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 

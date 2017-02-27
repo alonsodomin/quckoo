@@ -16,8 +16,6 @@
 
 package io.quckoo
 
-import io.quckoo.id._
-
 import scalaz._
 import Scalaz._
 

@@ -19,8 +19,7 @@ package io.quckoo.resolver.ivy
 import java.io.File
 import java.net.URL
 
-import io.quckoo.fault._
-import io.quckoo.id.ArtifactId
+import io.quckoo._
 import io.quckoo.resolver.Artifact
 
 import org.apache.ivy.Ivy

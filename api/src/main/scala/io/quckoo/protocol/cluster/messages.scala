@@ -16,7 +16,7 @@
 
 package io.quckoo.protocol.cluster
 
-import io.quckoo.id.NodeId
+import io.quckoo.NodeId
 import io.quckoo.net.Location
 import io.quckoo.protocol.{Command, Event}
 

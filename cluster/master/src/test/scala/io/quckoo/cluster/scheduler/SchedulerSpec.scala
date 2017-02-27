@@ -23,11 +23,9 @@ import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.testkit._
 
+import io.quckoo._
 import io.quckoo.cluster.journal.QuckooTestJournal
-import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution, Trigger, JobPackage}
 import io.quckoo.cluster.topics
-import io.quckoo.fault._
-import io.quckoo.id.{ArtifactId, JobId, PlanId}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.testkit.{ImplicitClock, QuckooActorClusterSuite}

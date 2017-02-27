@@ -4,9 +4,7 @@ import akka.persistence.Persistence
 import akka.remote.testkit.{MultiNodeConfig, MultiNodeSpec}
 import akka.testkit.{ImplicitSender, TestActors, TestProbe}
 
-import io.quckoo.{JobSpec, JobPackage}
-import io.quckoo.fault._
-import io.quckoo.id.{ArtifactId, JobId}
+import io.quckoo._
 import io.quckoo.multijvm.MultiNodeClusterSpec
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Artifact

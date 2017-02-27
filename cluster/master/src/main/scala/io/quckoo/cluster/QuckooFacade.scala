@@ -24,6 +24,7 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrate
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 
+import io.quckoo._
 import io.quckoo.auth.Passport
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.core._
@@ -31,14 +32,11 @@ import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.journal.QuckooProductionJournal
 import io.quckoo.cluster.registry.RegistryEventPublisher
 import io.quckoo.cluster.scheduler.SchedulerEventPublisher
-import io.quckoo.fault._
-import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
-import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 
 import slogging._
 

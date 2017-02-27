@@ -19,13 +19,13 @@ package io.quckoo.resolver
 import akka.actor.ActorSystem
 import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit}
 
-import io.quckoo.fault.{Fault, MissingDependencies, UnresolvedDependency}
-import io.quckoo.id.ArtifactId
+import io.quckoo.{ArtifactId, Fault, MissingDependencies, UnresolvedDependency}
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent.{ExecutionContext, Future}
+
 import scalaz._
 
 /**

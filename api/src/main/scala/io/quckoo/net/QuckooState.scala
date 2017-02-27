@@ -16,7 +16,7 @@
 
 package io.quckoo.net
 
-import io.quckoo.id.NodeId
+import io.quckoo.NodeId
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker._
 

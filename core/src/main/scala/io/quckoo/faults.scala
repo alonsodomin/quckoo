@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package io.quckoo.fault
+package io.quckoo
 
-import io.quckoo.id._
 import io.quckoo.validation.Violation
 
 import scalaz.NonEmptyList

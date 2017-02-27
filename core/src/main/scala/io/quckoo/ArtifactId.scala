@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.quckoo.id
+package io.quckoo
 
 import io.quckoo.validation._
 
@@ -30,7 +30,7 @@ object ArtifactId {
   final val GroupSeparator: Char   = ':'
   final val VersionSeparator: Char = '#'
 
-  val valid = {
+  val valid: Validator[ArtifactId] = {
     import Validators._
 
     val validOrganization = nonEmpty[String].at("organization")

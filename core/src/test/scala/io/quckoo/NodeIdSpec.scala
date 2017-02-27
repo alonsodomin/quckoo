@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.quckoo.id
+package io.quckoo
 
 import java.util.UUID
 
@@ -23,8 +23,6 @@ import io.quckoo.serialization.json._
 /**
   * Created by domingueza on 27/02/2017.
   */
-class PlanIdSpec extends IdValSpec[PlanId]("PlanId") {
-
-  override def generateTestId(): PlanId = PlanId(UUID.randomUUID())
-
+class NodeIdSpec extends IdValSpec[NodeId]("NodeId") {
+  override def generateTestId(): NodeId = NodeId(UUID.randomUUID())
 }

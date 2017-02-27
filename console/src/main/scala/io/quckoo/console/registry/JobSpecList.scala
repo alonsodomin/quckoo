@@ -20,10 +20,9 @@ import diode.AnyAction._
 import diode.data.PotMap
 import diode.react.ModelProxy
 
-import io.quckoo.JobSpec
+import io.quckoo.{JobId, JobSpec}
 import io.quckoo.console.components._
 import io.quckoo.console.core.LoadJobSpecs
-import io.quckoo.id.JobId
 import io.quckoo.protocol.registry._
 
 import japgolly.scalajs.react._

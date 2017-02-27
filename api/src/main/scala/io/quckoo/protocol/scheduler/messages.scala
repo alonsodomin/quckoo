@@ -16,10 +16,8 @@
 
 package io.quckoo.protocol.scheduler
 
-import io.quckoo.{Task, TaskExecution, Trigger}
+import io.quckoo.{Fault, _}
 import io.quckoo.Trigger.Immediate
-import io.quckoo.fault.Fault
-import io.quckoo.id._
 import io.quckoo.protocol.{Command, Event}
 
 import monocle.macros.Lenses

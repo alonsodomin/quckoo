@@ -16,15 +16,12 @@
 
 package io.quckoo.api
 
-import io.quckoo.JobSpec
+import io.quckoo.{Fault, JobId, JobNotFound, JobSpec}
 import io.quckoo.auth.Passport
-import io.quckoo.fault._
-import io.quckoo.id.JobId
 import io.quckoo.protocol.registry._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
-
 import scalaz.{ValidationNel, \/}
 
 /**

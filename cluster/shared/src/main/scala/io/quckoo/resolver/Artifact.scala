@@ -19,12 +19,10 @@ package io.quckoo.resolver
 import java.net.URL
 import java.util.concurrent.Callable
 
-import io.quckoo.JobClass
-import io.quckoo.id.ArtifactId
+import io.quckoo.{ArtifactId, JobClass}
 
-import scala.util.{Success, Failure, Try}
-
-import scalaz.{Success => _, Failure => _, _}
+import scala.util.{Failure, Success, Try}
+import scalaz.{Failure => _, Success => _, _}
 import Scalaz._
 
 import slogging._

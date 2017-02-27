@@ -22,10 +22,8 @@ import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.cluster.client.ClusterClient.SendToAll
 
-import io.quckoo.Task
+import io.quckoo.{ExceptionThrown, NodeId, Task, TaskId}
 import io.quckoo.cluster.protocol._
-import io.quckoo.fault.ExceptionThrown
-import io.quckoo.id.{TaskId, NodeId}
 
 import scala.concurrent.duration._
 

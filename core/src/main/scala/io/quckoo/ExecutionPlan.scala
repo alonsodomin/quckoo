@@ -16,8 +16,6 @@
 
 package io.quckoo
 
-import io.quckoo.id._
-
 import monocle.macros.Lenses
 
 import org.threeten.bp.{Clock, ZonedDateTime}

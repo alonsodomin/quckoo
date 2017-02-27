@@ -16,12 +16,11 @@
 
 package io.quckoo
 
-import io.quckoo.id.ArtifactId
 import io.quckoo.md5.MD5
 import io.quckoo.validation._
 
 import monocle.Prism
-import monocle.macros.{Lenses, GenPrism}
+import monocle.macros.{GenPrism, Lenses}
 
 import scalaz._
 import Scalaz._

@@ -21,9 +21,8 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 
-import io.quckoo.JobSpec
+import io.quckoo.{JobId, JobSpec}
 import io.quckoo.cluster.topics
-import io.quckoo.id.JobId
 import io.quckoo.protocol.registry._
 
 /**

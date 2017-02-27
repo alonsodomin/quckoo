@@ -21,7 +21,7 @@ import java.util.UUID
 import akka.actor.{ActorRef, Address}
 import akka.cluster.{Cluster, Member, MemberStatus, UniqueAddress}
 
-import io.quckoo.id.NodeId
+import io.quckoo.NodeId
 import io.quckoo.net._
 
 /**

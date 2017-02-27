@@ -21,11 +21,10 @@ import akka.cluster.Cluster
 import akka.cluster.ddata._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
-import io.quckoo.Task
+import io.quckoo.{NodeId, Task, TaskId}
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.topics
 import io.quckoo.cluster.net._
-import io.quckoo.id.{NodeId, TaskId}
 import io.quckoo.protocol.worker._
 
 import scala.collection.immutable.Queue

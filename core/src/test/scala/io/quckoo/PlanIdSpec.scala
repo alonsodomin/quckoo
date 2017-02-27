@@ -14,31 +14,17 @@
  * limitations under the License.
  */
 
-package io.quckoo.id
+package io.quckoo
 
-import io.quckoo.serialization.json.JsonCodec
-import io.quckoo.util.Attempt
+import java.util.UUID
 
-import org.scalatest.{FlatSpec, Matchers}
-
-import scalaz.{Equal, Show}
+import io.quckoo.serialization.json._
 
 /**
   * Created by domingueza on 27/02/2017.
   */
-abstract class IdValSpec[A : Equal : Show](name: String)(implicit jsonCodec: JsonCodec[A]) extends FlatSpec with Matchers {
+class PlanIdSpec extends IdValSpec[PlanId]("PlanId") {
 
-  def generateTestId(): A
-
-  name should "be JSON compatible" in {
-    val givenId = generateTestId()
-
-    jsonCodec.encode(givenId).flatMap(jsonCodec.decode) shouldBe Attempt.success(givenId)
-  }
-
-  it should "be equal to itself" in {
-    val givenId = generateTestId()
-    assert(givenId === givenId)
-  }
+  override def generateTestId(): PlanId = PlanId(UUID.randomUUID())
 
 }

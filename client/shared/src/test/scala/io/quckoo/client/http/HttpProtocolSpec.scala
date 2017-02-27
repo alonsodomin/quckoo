@@ -21,8 +21,6 @@ import java.util.UUID
 import io.quckoo._
 import io.quckoo.auth.{InvalidCredentialsException, Passport}
 import io.quckoo.client.core.StubClient
-import io.quckoo.fault._
-import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId, NodeId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster.{MasterEvent, MasterReachable}
 import io.quckoo.protocol.registry._

@@ -19,10 +19,9 @@ package io.quckoo.console.scheduler
 import diode.data.PotMap
 import diode.react.ModelProxy
 
-import io.quckoo.TaskExecution
+import io.quckoo.{TaskExecution, TaskId}
 import io.quckoo.console.components._
 import io.quckoo.console.core.LoadExecutions
-import io.quckoo.id.TaskId
 
 import japgolly.scalajs.react._
 

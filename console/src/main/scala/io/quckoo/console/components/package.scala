@@ -19,8 +19,8 @@ package io.quckoo.console
 import java.util.concurrent.TimeUnit
 
 import cron4s.expr.CronExpr
-import io.quckoo.{JobPackage, JarJobPackage, ShellScriptPackage, Trigger}
-import io.quckoo.id.ArtifactId
+
+import io.quckoo._
 
 import japgolly.scalajs.react.ReactNode
 import japgolly.scalajs.react.extra.Reusability

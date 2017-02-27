@@ -16,7 +16,7 @@
 
 package io.quckoo.net
 
-import io.quckoo.id.NodeId
+import io.quckoo.NodeId
 
 /**
   * Created by alonsodomin on 03/04/2016.

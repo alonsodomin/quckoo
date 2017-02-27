@@ -21,10 +21,8 @@ import java.util.UUID
 import akka.actor.Props
 import akka.testkit._
 
-import io.quckoo.{TaskExecution, Task, JobPackage}
+import io.quckoo._
 import io.quckoo.cluster.scheduler.TaskQueue.EnqueueAck
-import io.quckoo.fault.ExceptionThrown
-import io.quckoo.id._
 import io.quckoo.testkit.QuckooActorClusterSuite
 
 import scala.concurrent.duration._

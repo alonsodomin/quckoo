@@ -19,11 +19,10 @@ package io.quckoo.console.scheduler
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 
-import io.quckoo.ExecutionPlan
+import io.quckoo.{ExecutionPlan, PlanId}
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
-import io.quckoo.id.PlanId
 import io.quckoo.protocol.scheduler.CancelExecutionPlan
 
 import japgolly.scalajs.react._

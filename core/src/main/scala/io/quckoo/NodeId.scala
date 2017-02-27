@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.quckoo.id
+package io.quckoo
 
 import java.util.UUID
 
@@ -25,28 +25,28 @@ import scalaz.{Equal, Show}
 /**
   * Created by alonsodomin on 27/02/2017.
   */
-final class PlanId private (private val uuid: UUID) extends AnyVal {
+final class NodeId private (private val uuid: UUID) extends AnyVal {
   override def toString: String = uuid.toString
 }
 
-object PlanId {
+object NodeId {
 
-  @inline def apply(uuid: UUID): PlanId = new PlanId(uuid)
-  @inline def apply(value: String): PlanId = new PlanId(UUID.fromString(value))
+  @inline def apply(uuid: UUID): NodeId = new NodeId(uuid)
+  @inline def apply(value: String): NodeId = new NodeId(UUID.fromString(value))
 
   // Upickle encoders
 
-  implicit val jsonReader: UReader[PlanId] = UReader[PlanId] {
-    implicitly[UReader[String]].read andThen PlanId.apply
+  implicit val upickleReader: UReader[NodeId] = UReader[NodeId] {
+    implicitly[UReader[UUID]].read andThen NodeId.apply
   }
 
-  implicit val jsonWriter: UWriter[PlanId] = UWriter[PlanId] { planId =>
-    implicitly[UWriter[String]].write(planId.uuid.toString)
+  implicit val upickleWriter: UWriter[NodeId] = UWriter[NodeId] { nodeId =>
+    implicitly[UWriter[UUID]].write(nodeId.uuid)
   }
 
   // Typeclass instances
 
-  implicit val planIdEq: Equal[PlanId] = Equal.equal((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
-  implicit val planIdShow: Show[PlanId] = Show.showFromToString
+  implicit val nodeIdEq: Equal[NodeId] = Equal.equal((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
+  implicit val nodeIdShow: Show[NodeId] = Show.showFromToString
 
 }

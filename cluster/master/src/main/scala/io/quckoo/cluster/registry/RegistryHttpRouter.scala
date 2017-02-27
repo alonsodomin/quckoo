@@ -25,11 +25,9 @@ import akka.stream.Materializer
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
 
-import io.quckoo.JobSpec
+import io.quckoo._
 import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.auth.Passport
-import io.quckoo.id.JobId
-import io.quckoo.fault._
 import io.quckoo.cluster.http.TimeoutDirectives
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.serialization.json._

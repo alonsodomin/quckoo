@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.quckoo.id
+package io.quckoo
 
 import java.util.UUID
 

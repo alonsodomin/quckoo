@@ -16,9 +16,7 @@
 
 package io.quckoo.client.core
 
-import io.quckoo.{ExecutionPlan, TaskExecution}
-import io.quckoo.id._
-import io.quckoo.fault._
+import io.quckoo._
 import io.quckoo.protocol.scheduler.{ExecutionPlanCancelled, ExecutionPlanStarted, ScheduleJob}
 
 import scalaz.\/

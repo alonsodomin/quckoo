@@ -16,14 +16,29 @@
 
 package io.quckoo
 
-import scalaz._
+import io.quckoo.serialization.json.JsonCodec
+import io.quckoo.util.Attempt
+
+import org.scalatest.{FlatSpec, Matchers}
+
+import scalaz.{Equal, Show}
 
 /**
-  * Created by alonsodomin on 10/03/2016.
+  * Created by domingueza on 27/02/2017.
   */
-package object fault {
+abstract class IdValSpec[A : Equal : Show](name: String)(implicit jsonCodec: JsonCodec[A]) extends FlatSpec with Matchers {
 
-  type Faulty[+A] = Fault \/ A
-  type Faults     = NonEmptyList[Fault]
+  def generateTestId(): A
+
+  name should "be JSON compatible" in {
+    val givenId = generateTestId()
+
+    jsonCodec.encode(givenId).flatMap(jsonCodec.decode) shouldBe Attempt.success(givenId)
+  }
+
+  it should "be equal to itself" in {
+    val givenId = generateTestId()
+    assert(givenId === givenId)
+  }
 
 }

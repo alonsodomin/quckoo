@@ -19,7 +19,7 @@ package io.quckoo.serialization.kryo
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 
-import io.quckoo.id.{JobId, NodeId, PlanId, TaskId}
+import io.quckoo.{JobId, NodeId, PlanId, TaskId}
 
 /**
   * Created by alonsodomin on 27/02/2017.

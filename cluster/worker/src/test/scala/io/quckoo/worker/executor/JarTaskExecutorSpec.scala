@@ -21,9 +21,7 @@ import java.util.UUID
 
 import akka.testkit._
 
-import io.quckoo.JarJobPackage
-import io.quckoo.fault.{ExceptionThrown, MissingDependencies, UnresolvedDependency}
-import io.quckoo.id.{ArtifactId, TaskId}
+import io.quckoo._
 import io.quckoo.resolver.{Artifact, Resolver}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 import io.quckoo.testkit.QuckooActorSuite

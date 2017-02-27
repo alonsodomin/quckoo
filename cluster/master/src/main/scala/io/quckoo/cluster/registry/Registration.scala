@@ -21,10 +21,8 @@ import java.util.concurrent.TimeoutException
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, ReceiveTimeout, Stash}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
-import io.quckoo.{JarJobPackage, JobSpec}
+import io.quckoo._
 import io.quckoo.cluster.topics
-import io.quckoo.fault.ExceptionThrown
-import io.quckoo.id.{ArtifactId, JobId}
 import io.quckoo.protocol.registry.{JobAccepted, JobRejected}
 import io.quckoo.resolver.Resolver
 

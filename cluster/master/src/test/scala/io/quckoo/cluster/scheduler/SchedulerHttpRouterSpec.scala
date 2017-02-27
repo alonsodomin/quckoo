@@ -24,12 +24,10 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
 
-import io.quckoo.api.{Scheduler => SchedulerApi}
-import io.quckoo.id.{ArtifactId, JobId, PlanId, TaskId}
-import io.quckoo.protocol.scheduler._
 import io.quckoo._
+import io.quckoo.api.{Scheduler => SchedulerApi}
+import io.quckoo.protocol.scheduler._
 import io.quckoo.auth.Passport
-import io.quckoo.fault._
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.testkit.ImplicitClock
 

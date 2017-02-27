@@ -22,15 +22,13 @@ import io.quckoo._
 import io.quckoo.auth.Passport
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
-import io.quckoo.fault.{Fault, Faults}
-import io.quckoo.id.{JobId, PlanId, TaskId}
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.{Command, Event}
 
 import scala.util.{Failure, Try}
-import scalaz.ValidationNel
+import scalaz.{NonEmptyList, ValidationNel}
 
-final case class Failed(fault: Faults) extends Event
+final case class Failed(fault: NonEmptyList[Fault]) extends Event
 
 final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None)
     extends Command

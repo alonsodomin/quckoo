@@ -18,13 +18,11 @@ package io.quckoo.console.core
 
 import diode.data.{Pot, Ready, Unavailable}
 
+import io.quckoo._
 import io.quckoo.auth.Passport
 import io.quckoo.client.http.HttpQuckooClient
-import io.quckoo.fault.Fault
-import io.quckoo.id._
 import io.quckoo.protocol.Event
 import io.quckoo.protocol.scheduler.ScheduleJob
-import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 
 import slogging.LoggerHolder
 

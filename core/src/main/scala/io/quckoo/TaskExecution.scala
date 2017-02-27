@@ -16,9 +16,6 @@
 
 package io.quckoo
 
-import io.quckoo.fault.Fault
-import io.quckoo.id.PlanId
-
 import monocle.macros.Lenses
 
 /**

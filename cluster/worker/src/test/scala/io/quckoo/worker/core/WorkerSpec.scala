@@ -23,10 +23,8 @@ import akka.actor.ActorRefFactory
 import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
 
-import io.quckoo.{JobPackage, Task}
+import io.quckoo._
 import io.quckoo.cluster.protocol._
-import io.quckoo.fault.ExceptionThrown
-import io.quckoo.id.{ArtifactId, TaskId}
 import io.quckoo.resolver.Artifact
 import io.quckoo.testkit.QuckooActorSuite
 

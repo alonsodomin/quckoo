@@ -18,8 +18,8 @@ package io.quckoo.resolver
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern._
-import io.quckoo.fault.Fault
-import io.quckoo.id.ArtifactId
+
+import io.quckoo.{ArtifactId, Fault}
 
 import scalaz._
 
