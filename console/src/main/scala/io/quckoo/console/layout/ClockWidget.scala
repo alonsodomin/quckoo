@@ -16,11 +16,13 @@
 
 package io.quckoo.console.layout
 
+import io.quckoo.console.components._
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.TimerSupport
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import org.threeten.bp.format.{DateTimeFormatter, FormatStyle}
+import org.threeten.bp.format.DateTimeFormatter
 import org.threeten.bp.{Clock, ZonedDateTime}
 
 import scala.concurrent.duration._
@@ -30,7 +32,9 @@ import scala.concurrent.duration._
   */
 object ClockWidget {
 
-  private[this] final val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+  private[this] final val Formatter = DateTimeFormatter.ofPattern(
+    "E, MMM d, HH:mm:ss z"
+  )
 
   final case class State(dateTime: ZonedDateTime)
 
@@ -43,7 +47,7 @@ object ClockWidget {
       $.modState(_.copy(dateTime = ZonedDateTime.now(clock)))
 
     def render(clock: Clock, state: State) = {
-      <.span(formatter.format(state.dateTime))
+      <.span(DateTimeDisplay(state.dateTime, Some(Formatter)))
     }
 
   }

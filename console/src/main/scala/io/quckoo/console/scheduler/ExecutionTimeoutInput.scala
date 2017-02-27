@@ -66,8 +66,10 @@ object ExecutionTimeoutInput {
 
   }
 
-  val component =
-    ReactComponentB[Props]("ExecutionTimeout").initialState(State()).renderBackend[Backend].build
+  val component = ReactComponentB[Props]("ExecutionTimeout")
+    .initialState(State())
+    .renderBackend[Backend]
+    .build
 
   def apply(value: Option[FiniteDuration], onUpdate: Option[FiniteDuration] => Callback) =
     component(Props(value, onUpdate))

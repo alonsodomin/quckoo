@@ -17,22 +17,19 @@
 package io.quckoo.console.scheduler
 
 import io.quckoo.Trigger
-import io.quckoo.time.implicits.systemClock
+import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import org.threeten.bp.format.{DateTimeFormatter, FormatStyle}
-import org.threeten.bp.ZonedDateTime
+import org.threeten.bp.{Clock, ZonedDateTime}
 
 /**
   * Created by alonsodomin on 09/04/2016.
   */
 object ExecutionPlanPreview {
 
-  private[this] final val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
-
-  case class Props(trigger: Trigger)
+  case class Props(trigger: Trigger, clock: Clock)
   case class State(maxRows: Int)
 
   class Backend($ : BackendScope[Props, State]) {
@@ -42,12 +39,12 @@ object ExecutionPlanPreview {
 
       def genNext(prev: ReferenceTime): (ReferenceTime, Boolean) = {
         props.trigger
-          .nextExecutionTime(prev)
+          .nextExecutionTime(prev)(props.clock)
           .map(next => (LastExecutionTime(next), true))
           .getOrElse((prev, false))
       }
 
-      val first  = genNext(ScheduledTime(ZonedDateTime.now(systemClock)))
+      val first  = genNext(ScheduledTime(ZonedDateTime.now(props.clock)))
       val stream = Stream.iterate(first) { case (prev, _) => genNext(prev) }
       stream.takeWhile { case (_, continue) => continue } map (_._1.when) take state.maxRows
     }
@@ -81,7 +78,7 @@ object ExecutionPlanPreview {
           ),
           <.tbody(
             generateTimeline(props, state).map { time =>
-              <.tr(<.td(formatter.format(time)))
+              <.tr(<.td(DateTimeDisplay(time)))
             }
           ))
       )
@@ -94,7 +91,7 @@ object ExecutionPlanPreview {
     .renderBackend[Backend]
     .build
 
-  def apply(trigger: Trigger) =
-    component(Props(trigger))
+  def apply(trigger: Trigger)(implicit clock: Clock) =
+    component(Props(trigger, clock))
 
 }

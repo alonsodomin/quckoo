@@ -21,12 +21,14 @@ import diode.react.ReactPot._
 
 import io.quckoo.ExecutionPlan
 import io.quckoo.console.components._
+import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
 import io.quckoo.id.PlanId
 import io.quckoo.protocol.scheduler.CancelExecutionPlan
-import io.quckoo.time.implicits.systemClock
 
 import japgolly.scalajs.react._
+
+import org.threeten.bp.ZonedDateTime
 
 import scalaz._
 import Scalaz._
@@ -71,7 +73,10 @@ object ExecutionPlanList {
     }
 
     def renderItem(
-        model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): ReactNode =
+        model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): ReactNode = {
+      def displayDateTime(dateTime: ZonedDateTime): ReactNode =
+        DateTimeDisplay(dateTime)
+
       column match {
         case 'Job =>
           val jobSpec = model.jobSpecs.get(plan.jobId)
@@ -79,11 +84,12 @@ object ExecutionPlanList {
 
         case 'Current   => plan.currentTask.map(_.show).getOrElse(Cord.empty).toString()
         case 'Trigger   => plan.trigger.toString()
-        case 'Scheduled => DateTimeDisplay(plan.lastScheduledTime)
-        case 'Execution => DateTimeDisplay(plan.lastExecutionTime)
+        case 'Scheduled => plan.lastScheduledTime.map(displayDateTime).orNull
+        case 'Execution => plan.lastExecutionTime.map(displayDateTime).orNull
         case 'Outcome   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
-        case 'Next      => DateTimeDisplay(plan.nextExecutionTime)
+        case 'Next      => plan.nextExecutionTime.map(displayDateTime).orNull
       }
+    }
 
     def cancelPlan(props: Props)(planId: PlanId): Callback =
       props.proxy.dispatchCB(CancelExecutionPlan(planId))

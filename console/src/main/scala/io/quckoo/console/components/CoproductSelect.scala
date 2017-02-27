@@ -33,6 +33,7 @@ object CoproductSelect {
   type OnUpdate[A]    = Option[A] => Callback
   type Constructor[A] = (Option[A], OnUpdate[A]) => ReactNode
   type Selector[A]    = PartialFunction[Symbol, Constructor[A]]
+  type ValueMapper[A] = PartialFunction[A, Symbol]
 
   final case class Props[A](
     options: List[Symbol],
@@ -81,23 +82,6 @@ object CoproductSelect {
     }
 
     def render(props: Props[A], children: PropsChildren, state: State[A]) = {
-      /*<.div(
-        <.div(lnf.formGroup,
-          <.label(props.label),
-          <.select(^.`class` := "form-control",
-            state.selected.orElse(props.default).map(v => ^.value := v.name),
-            ^.onChange ==> onSelectionUpdate(props),
-            if (props.default.isEmpty) {
-              <.option("Choose one")
-            } else EmptyTag,
-            props.options.map(opt => ComponentOption.withKey(opt.name)(opt))
-          )
-        ),
-        state.selected.flatMap { selection =>
-          val ctor = props.selector.lift(selection)
-          ctor.map(_(state.cache.get(selection), onItemUpdate))
-        }
-      )*/
       <.div(
         <.div(lnf.formGroup,
           children,
@@ -122,15 +106,25 @@ object CoproductSelect {
 
   }
 
-  def apply[A: Reusability] = new CoproductSelect[A]()
+  def apply[A: Reusability](mapper: ValueMapper[A]) = new CoproductSelect[A](mapper)
 
 }
 
-class CoproductSelect[A: Reusability] private[components]() {
+class CoproductSelect[A: Reusability] private[components](mapper: CoproductSelect.ValueMapper[A]) {
   import CoproductSelect._
 
-  private[components] val component = ReactComponentB[Props[A]]("ComponentSelect")
-    .initialState(State[A]())
+  private[components] val component = ReactComponentB[Props[A]]("CoproductSelect")
+    .initialState_P { props =>
+      val selectedSymbol = props.value.flatMap(mapper.lift)
+      val initialCache   = selectedSymbol.zip(props.value).map {
+        case (sym, value) => Map(sym -> value)
+      }.headOption.getOrElse(Map.empty)
+
+      State[A](
+        selected = selectedSymbol,
+        cache    = initialCache
+      )
+    }
     .renderBackend[Backend[A]]
     .configure(Reusability.shouldComponentUpdate[Props[A], State[A], Backend[A], TopNode])
     .build

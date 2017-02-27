@@ -45,7 +45,13 @@ object TriggerSelect {
         (value, callback) => CronTriggerInput(value.map(_.asInstanceOf[Trigger.Cron]), callback)
     }
 
-    val selectInput = CoproductSelect[Trigger]
+    val selectInput = CoproductSelect[Trigger] {
+      case Trigger.Immediate => 'Immediate
+      case _: Trigger.After  => 'After
+      case _: Trigger.Every  => 'Every
+      case _: Trigger.At     => 'At
+      case _: Trigger.Cron   => 'Cron
+    }
 
     def render(props: Props) = {
       selectInput(Options, selectComponent, props.value, Options.head, props.onUpdate,

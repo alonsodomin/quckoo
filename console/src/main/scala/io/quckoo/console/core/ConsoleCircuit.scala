@@ -32,6 +32,8 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
 import io.quckoo.{ExecutionPlan, JobSpec, TaskExecution}
 
+import org.threeten.bp.Clock
+
 import slogging.LazyLogging
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -43,6 +45,10 @@ import scalaz.{-\/, \/-}
 object ConsoleCircuit
     extends Circuit[ConsoleScope] with ReactConnector[ConsoleScope] with ConsoleOps
     with ConsoleSubscriptions with LazyLogging {
+
+  object Implicits {
+    implicit val consoleClock = Clock.systemDefaultZone
+  }
 
   private[this] implicit val client: HttpQuckooClient = HttpDOMQuckooClient
 

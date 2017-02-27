@@ -18,19 +18,23 @@ package io.quckoo.console.scheduler
 
 import io.quckoo.Trigger
 import io.quckoo.console.components._
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scala.concurrent.duration.FiniteDuration
 
+import scalacss.ScalaCssReact._
+
 /**
   * Created by alonsodomin on 08/04/2016.
   */
 object EveryTriggerInput {
+  @inline private def lnf = lookAndFeel
 
   case class Props(value: Option[Trigger.Every], onUpdate: Option[Trigger.Every] => Callback)
-  case class State(freq: Option[FiniteDuration], delay: Option[FiniteDuration]) {
+  case class State(freq: Option[FiniteDuration], delay: Option[FiniteDuration], delayEnabled: Boolean = false) {
 
     def this(trigger: Option[Trigger.Every]) =
       this(trigger.map(_.frequency), trigger.flatMap(_.startingIn))
@@ -60,20 +64,39 @@ object EveryTriggerInput {
     def onDelayUpdate(value: Option[FiniteDuration]): Callback =
       $.modState(_.copy(delay = value), propagateUpdate)
 
+    def onToggleDelay: Callback =
+      $.modState(st => st.copy(
+        delay        = if (st.delayEnabled) None else st.delay,
+        delayEnabled = !st.delayEnabled
+      ), propagateUpdate)
+
     def render(props: Props, state: State) = {
       <.div(
-        <.div(
-          ^.`class` := "form-group",
+        <.div(lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", "Frequency"),
           <.div(
             ^.`class` := "col-sm-10",
             FiniteDurationInput("everyTrigger_freq", state.freq, onFreqUpdate))),
-        <.div(
-          ^.`class` := "form-group",
+        <.div(lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", "Delay"),
-          <.div(
-            ^.`class` := "col-sm-10",
-            FiniteDurationInput("everyTrigger_delay", state.delay, onDelayUpdate)))
+          <.div(^.`class` := "col-sm-10",
+            <.div(^.`class` := "checkbox",
+              <.label(
+                <.input.checkbox(
+                  ^.id := "enableDelay",
+                  ^.onChange --> onToggleDelay,
+                  ^.value := state.delayEnabled
+                ),
+                "Enabled"
+              )
+            )
+          )
+        ),
+        if (state.delayEnabled) {
+          <.div(^.`class` := "col-sm-offset-2",
+            FiniteDurationInput("everyTrigger_delay", state.delay, onDelayUpdate)
+          )
+        } else EmptyTag
       )
     }
 

@@ -39,7 +39,10 @@ object JobPackageSelect {
       case 'Shell => (value, update) => ShellScriptPackageInput(value.map(_.asInstanceOf[ShellScriptPackage]), update)
     }
 
-    val selectInput = CoproductSelect[JobPackage]
+    val selectInput = CoproductSelect[JobPackage] {
+      case _: JarJobPackage      => 'Jar
+      case _: ShellScriptPackage => 'Shell
+    }
 
     def render(props: Props) = {
       selectInput(Options, selectComponent, props.value, props.onUpdate,

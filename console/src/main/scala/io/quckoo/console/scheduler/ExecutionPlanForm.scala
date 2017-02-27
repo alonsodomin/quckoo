@@ -22,6 +22,7 @@ import diode.react.ModelProxy
 
 import io.quckoo.{ExecutionPlan, JobSpec, Trigger}
 import io.quckoo.console.components._
+import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.core.LoadJobSpecs
 import io.quckoo.console.registry.JobSelect
 import io.quckoo.id.JobId
@@ -33,6 +34,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import monocle.macros.Lenses
 
 import scala.concurrent.duration.FiniteDuration
+
 import scalacss.ScalaCssReact._
 
 /**

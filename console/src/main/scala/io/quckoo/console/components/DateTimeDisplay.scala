@@ -20,27 +20,26 @@ import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import org.threeten.bp.ZonedDateTime
-import org.threeten.bp.format.{DateTimeFormatter, FormatStyle}
+import org.threeten.bp.format.DateTimeFormatter
 
 /**
   * Created by alonsodomin on 04/07/2016.
   */
 object DateTimeDisplay {
 
-  private[this] final val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL)
+  final val DefaultFormatter = DateTimeFormatter.ofPattern(
+    "MMM d, HH:mm:ss"
+  )
 
-  final case class Props(dateTime: Option[ZonedDateTime], useLocal: Boolean)
+  final case class Props(dateTime: ZonedDateTime, formatter: Option[DateTimeFormatter])
 
   private[this] val component = ReactComponentB[Props]("DateTimeDisplay").stateless.render_P {
     props =>
-      /*val dt: Option[Temporal] = {
-        if (props.useLocal) props.dateTime.map(_.toLocalDateTime)
-        else props.dateTime
-      }*/
-      <.span(props.dateTime.map(formatter.format))
+      val fmt = props.formatter.getOrElse(DefaultFormatter)
+      <.span(fmt.format(props.dateTime))
   } build
 
-  def apply(dateTime: Option[ZonedDateTime], useLocal: Boolean = true) =
-    component(Props(dateTime, useLocal))
+  def apply(dateTime: ZonedDateTime, formatter: Option[DateTimeFormatter] = None) =
+    component(Props(dateTime, formatter))
 
 }
