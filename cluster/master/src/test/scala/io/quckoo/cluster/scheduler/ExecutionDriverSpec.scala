@@ -115,7 +115,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     }
 
     "not re-schedule an execution after the job is disabled" in {
-      mediator ! DistributedPubSubMediator.Publish(TopicTag.Scheduler.name, JobDisabled(TestJobId))
+      mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name, JobDisabled(TestJobId))
       // Complete the execution so the driver can come back to ready state
       lifecycleProbe.reply(ExecutionLifecycle.Result(TaskExecution.Success))
 
