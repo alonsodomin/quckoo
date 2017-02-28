@@ -46,16 +46,6 @@ package object http {
     Marshaller.StringMarshaller.wrap(contentType)(_.toString)
   }
 
-  def asSSE[A: UWriter](
-      source: Source[A, _],
-      eventType: String,
-      keepAlive: FiniteDuration = 1 second
-  ): Source[ServerSentEvent, _] = {
-    source.map { event =>
-      ServerSentEvent(write[A](event), eventType)
-    } keepAlive (keepAlive, () => ServerSentEvent.heartbeat)
-  }
-
   def generateAuthToken: String = UUID.randomUUID().toString
 
 }

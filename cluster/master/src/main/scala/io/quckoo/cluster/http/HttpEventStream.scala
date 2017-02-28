@@ -18,7 +18,6 @@ package io.quckoo.cluster.http
 
 import upickle.default.{write, Writer => UWriter}
 
-import akka.NotUsed
 import akka.stream.scaladsl.Source
 
 import de.heikoseeberger.akkasse.ServerSentEvent
@@ -34,16 +33,17 @@ import scala.concurrent.duration._
   */
 trait HttpEventStream { this: QuckooServer =>
 
-  lazy val eventBus: Source[ServerSentEvent, _] = {
-    def convertSSE[A: UWriter: TopicTag](
-        source: Source[A, NotUsed]): Source[ServerSentEvent, NotUsed] =
-      source.map(evt => ServerSentEvent(write[A](evt), TopicTag[A].name))
+  private[this] def asSSE[A: UWriter](source: Source[A, _])(implicit topicTag: TopicTag[A]): Source[ServerSentEvent, _] =
+    source.map(event => ServerSentEvent(write[A](event), topicTag.name))
 
-    val merged = convertSSE(masterEvents)
-      .merge(convertSSE(workerEvents))
-      .merge(convertSSE(registryEvents))
-      .merge(convertSSE(schedulerEvents))
-    merged.keepAlive(1 second, () => ServerSentEvent.heartbeat)
+  def eventStream[A: UWriter](implicit topicTag: TopicTag[A]): Source[ServerSentEvent, _] = {
+    val stream = topicTag match {
+      case TopicTag.Master    => asSSE(masterEvents)
+      case TopicTag.Worker    => asSSE(workerEvents)
+      case TopicTag.Registry  => asSSE(registryEvents)
+      case TopicTag.Scheduler => asSSE(schedulerEvents)
+    }
+    stream.keepAlive(1 second, () => ServerSentEvent.heartbeat)
   }
 
 }

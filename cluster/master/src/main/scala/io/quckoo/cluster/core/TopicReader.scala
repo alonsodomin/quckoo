@@ -41,6 +41,7 @@ class TopicReader[A: ClassTag] private(topic: String) extends Actor with ActorLo
   import TopicReader._
 
   private val mediator = DistributedPubSub(context.system).mediator
+  log.debug("Preparing to read topic '{}'.", topic)
 
   override def preStart(): Unit =
     mediator ! Subscribe(topic, self)
@@ -52,18 +53,12 @@ class TopicReader[A: ClassTag] private(topic: String) extends Actor with ActorLo
 
   private def initializing(subscribed: Boolean = false, target: Option[ActorRef] = None): Receive = {
     case SubscribeAck(Subscribe(`topic`, _, `self`)) =>
-      def switchToRunning(targetRef: ActorRef): Receive = {
-        unstashAll()
-        running(targetRef)
-      }
-
       val nextBehaviour = target.map(switchToRunning)
         .getOrElse(initializing(subscribed = true))
       context.become(nextBehaviour)
 
     case Start if subscribed =>
-      unstashAll()
-      context.become(running(sender()))
+      context.become(switchToRunning(sender()))
 
     case Start =>
       context.become(initializing(target = Some(sender())))
@@ -73,6 +68,12 @@ class TopicReader[A: ClassTag] private(topic: String) extends Actor with ActorLo
 
   private def running(target: ActorRef): Receive = {
     case msg => target ! msg
+  }
+
+  private[this] def switchToRunning(targetRef: ActorRef): Receive = {
+    log.debug("Starting to publish events from topic '{}' into the stream.", topic)
+    unstashAll()
+    running(targetRef)
   }
 
 }

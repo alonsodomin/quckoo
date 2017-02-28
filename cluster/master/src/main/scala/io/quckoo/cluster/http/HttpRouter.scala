@@ -25,9 +25,15 @@ import akka.stream.ActorMaterializer
 
 import de.heikoseeberger.akkasse.EventStreamMarshalling
 
+import io.quckoo.api.TopicTag
 import io.quckoo.cluster.core.QuckooServer
 import io.quckoo.cluster.registry.RegistryHttpRouter
 import io.quckoo.cluster.scheduler.SchedulerHttpRouter
+import io.quckoo.protocol.cluster.MasterEvent
+import io.quckoo.protocol.registry.RegistryEvent
+import io.quckoo.protocol.scheduler.SchedulerEvent
+import io.quckoo.protocol.worker.WorkerEvent
+import io.quckoo.serialization.json._
 
 trait HttpRouter
     extends StaticResources with RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives
@@ -96,8 +102,20 @@ trait HttpRouter
           handleRejections(rejectionHandler(system.log)) {
             pathPrefix("api") {
               defineApi
-            } ~ path("events") {
-              complete(eventBus)
+            } ~ path("events" / Segment) {
+              case x if x == TopicTag.Master.name =>
+                complete(eventStream[MasterEvent])
+
+              case x if x == TopicTag.Worker.name =>
+                complete(eventStream[WorkerEvent])
+
+              case x if x == TopicTag.Registry.name =>
+                complete(eventStream[RegistryEvent])
+
+              case x if x == TopicTag.Scheduler.name =>
+                complete(eventStream[SchedulerEvent])
+
+              case _ => complete(NotFound)
             } ~ staticResources
           }
         }

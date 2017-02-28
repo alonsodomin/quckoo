@@ -16,6 +16,7 @@
 
 package io.quckoo.cluster.core
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
@@ -27,11 +28,12 @@ import io.quckoo.api.TopicTag
   */
 object Topic {
 
-  def source[A: TopicTag](implicit actorSystem: ActorSystem): Source[A, Unit] = {
+  def source[A: TopicTag](implicit actorSystem: ActorSystem): Source[A, NotUsed] = {
     val publisherRef = actorSystem.actorOf(TopicReader.props[A])
     Source.actorRef[A](50, OverflowStrategy.dropTail)
       .mapMaterializedValue { upstream =>
         publisherRef.tell(TopicReader.Start, upstream)
+        NotUsed
       }
   }
 

@@ -16,7 +16,7 @@
 
 package io.quckoo.client.http.dom
 
-import io.quckoo.client.http.HttpServerSentEvent
+import io.quckoo.client.http.{HttpServerSentEvent, topicURI}
 import io.quckoo.serialization.DataBuffer
 
 import monix.execution.Cancelable
@@ -30,12 +30,14 @@ import slogging.LazyLogging
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-private[dom] class EventSourceSubscriber(url: String, topicName: String)
+private[dom] class EventSourceSubscriber(topicName: String)
     extends (Subscriber.Sync[HttpServerSentEvent] => Cancelable) with LazyLogging {
 
-  logger.debug("Subscribing to topic '{}' using URL: {}", topicName, url)
+  val topicURL: String = topicURI(topicName)
 
-  val source = new EventSource(url)
+  logger.debug("Subscribing to topic '{}' using URL: {}", topicName, topicURL)
+
+  val source = new EventSource(topicURL)
 
   override def apply(subscriber: Subscriber.Sync[HttpServerSentEvent]): Cancelable = {
     val cancelable = RefCountCancelable { () =>
