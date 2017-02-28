@@ -21,7 +21,7 @@ import akka.cluster.Cluster
 import akka.cluster.ddata.{DistributedData, PNCounterMap, Replicator}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
-import io.quckoo.cluster.topics
+import io.quckoo.api.Topic
 import io.quckoo.protocol.cluster.MasterRemoved
 import io.quckoo.protocol.scheduler.TaskQueueUpdated
 
@@ -53,7 +53,7 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
   override def preStart(): Unit = {
     replicator ! Replicator.Subscribe(TaskQueue.PendingKey, self)
     replicator ! Replicator.Subscribe(TaskQueue.InProgressKey, self)
-    mediator ! DistributedPubSubMediator.Subscribe(topics.Master, self)
+    mediator ! DistributedPubSubMediator.Subscribe(Topic.Master.name, self)
   }
 
   override def receive: Receive = initialising
@@ -101,7 +101,7 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
     val totalPending    = currentMetrics.pendingPerNode.values.sum
     val totalInProgress = currentMetrics.inProgressPerNode.values.sum
     mediator ! DistributedPubSubMediator.Publish(
-      topics.Scheduler,
+      Topic.Master.name,
       TaskQueueUpdated(totalPending, totalInProgress)
     )
   }

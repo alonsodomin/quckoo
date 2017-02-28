@@ -29,10 +29,10 @@ import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
 import io.quckoo._
+import io.quckoo.api.Topic
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.protocol._
-import io.quckoo.cluster.topics
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 
@@ -106,11 +106,11 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   private[this] var executions = Map.empty[TaskId, TaskExecution]
 
   override def preStart(): Unit = {
-    mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, self)
+    mediator ! DistributedPubSubMediator.Subscribe(Topic.Scheduler.name, self)
   }
 
   override def postStop(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Scheduler.name, self)
   }
 
   override def receive: Receive = initializing
@@ -299,7 +299,7 @@ private class ExecutionDriverFactory(jobId: JobId,
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart(): Unit =
-    mediator ! DistributedPubSubMediator.Subscribe(topics.Scheduler, self)
+    mediator ! DistributedPubSubMediator.Subscribe(Topic.Scheduler.name, self)
 
   def receive: Receive = initializing
 
@@ -313,7 +313,7 @@ private class ExecutionDriverFactory(jobId: JobId,
     case response @ ExecutionPlanStarted(`jobId`, _, _) =>
       log.info("Execution plan '{}' for job '{}' has been started.", planId, jobId)
       createCmd.replyTo ! response
-      mediator ! DistributedPubSubMediator.Unsubscribe(topics.Scheduler, self)
+      mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Scheduler.name, self)
       context.become(shuttingDown)
   }
 
@@ -335,7 +335,7 @@ private class ExecutionDriverTerminator(
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart(): Unit =
-    mediator ! Subscribe(topics.Scheduler, self)
+    mediator ! Subscribe(Topic.Scheduler.name, self)
 
   def receive: Receive = initializing
 
@@ -350,7 +350,7 @@ private class ExecutionDriverTerminator(
     case response @ ExecutionPlanFinished(jobId, `planId`, dateTime) =>
       log.debug("Execution plan '{}' has been stopped.", planId)
       killCmd.replyTo ! ExecutionPlanCancelled(jobId, planId, dateTime)
-      mediator ! Unsubscribe(topics.Scheduler, self)
+      mediator ! Unsubscribe(Topic.Scheduler.name, self)
       context.become(shuttingDown)
   }
 
