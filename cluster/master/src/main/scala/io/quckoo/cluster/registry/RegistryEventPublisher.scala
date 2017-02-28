@@ -17,7 +17,8 @@
 package io.quckoo.cluster.registry
 
 import akka.actor.Props
-import io.quckoo.api.Topic
+
+import io.quckoo.api.TopicTag
 import io.quckoo.cluster.core.PubSubSubscribedEventPublisher
 import io.quckoo.protocol.registry.RegistryEvent
 
@@ -29,4 +30,4 @@ object RegistryEventPublisher {
   def props: Props = Props(classOf[RegistryEventPublisher])
 
 }
-class RegistryEventPublisher extends PubSubSubscribedEventPublisher[RegistryEvent](Topic.Registry.name)
+class RegistryEventPublisher extends PubSubSubscribedEventPublisher[RegistryEvent](TopicTag.Registry.name)

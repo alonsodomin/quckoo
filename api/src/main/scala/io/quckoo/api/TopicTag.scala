@@ -21,18 +21,21 @@ import io.quckoo.protocol.registry.RegistryEvent
 import io.quckoo.protocol.scheduler.SchedulerEvent
 import io.quckoo.protocol.worker.WorkerEvent
 
+import scala.reflect.ClassTag
+
 /**
   * Created by alonsodomin on 20/09/2016.
   */
-sealed abstract class Topic[A](val name: String)
+sealed abstract class TopicTag[A](val name: String)(implicit val eventType: ClassTag[A])
+  extends Product with Serializable
 
-object Topic {
+object TopicTag {
 
-  @inline def apply[A](implicit ev: Topic[A]): Topic[A] = ev
+  @inline def apply[A](implicit ev: TopicTag[A]): TopicTag[A] = ev
 
-  implicit case object Master    extends Topic[MasterEvent]("MASTER_EVENT")
-  implicit case object Worker    extends Topic[WorkerEvent]("WORKER_EVENT")
-  implicit case object Registry  extends Topic[RegistryEvent]("REGISTRY_EVENT")
-  implicit case object Scheduler extends Topic[SchedulerEvent]("SCHEDULER_EVENT")
+  implicit case object Master    extends TopicTag[MasterEvent]("MASTER_EVENT")
+  implicit case object Worker    extends TopicTag[WorkerEvent]("WORKER_EVENT")
+  implicit case object Registry  extends TopicTag[RegistryEvent]("REGISTRY_EVENT")
+  implicit case object Scheduler extends TopicTag[SchedulerEvent]("SCHEDULER_EVENT")
 
 }

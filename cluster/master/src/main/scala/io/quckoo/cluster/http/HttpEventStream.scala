@@ -23,7 +23,7 @@ import akka.stream.scaladsl.Source
 
 import de.heikoseeberger.akkasse.ServerSentEvent
 
-import io.quckoo.api.Topic
+import io.quckoo.api.TopicTag
 import io.quckoo.cluster.core.QuckooServer
 import io.quckoo.serialization.json._
 
@@ -35,9 +35,9 @@ import scala.concurrent.duration._
 trait HttpEventStream { this: QuckooServer =>
 
   lazy val eventBus: Source[ServerSentEvent, _] = {
-    def convertSSE[A: UWriter: Topic](
+    def convertSSE[A: UWriter: TopicTag](
         source: Source[A, NotUsed]): Source[ServerSentEvent, NotUsed] =
-      source.map(evt => ServerSentEvent(write[A](evt), Topic[A].name))
+      source.map(evt => ServerSentEvent(write[A](evt), TopicTag[A].name))
 
     val merged = convertSSE(masterEvents)
       .merge(convertSSE(workerEvents))

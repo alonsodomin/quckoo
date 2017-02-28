@@ -23,13 +23,13 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.pattern._
-import akka.persistence.query.{EventEnvelope2, Sequence}
+import akka.persistence.query.EventEnvelope2
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
 import io.quckoo._
-import io.quckoo.api.Topic
+import io.quckoo.api.TopicTag
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.protocol._
@@ -106,11 +106,11 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   private[this] var executions = Map.empty[TaskId, TaskExecution]
 
   override def preStart(): Unit = {
-    mediator ! DistributedPubSubMediator.Subscribe(Topic.Scheduler.name, self)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name, self)
   }
 
   override def postStop(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Scheduler.name, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name, self)
   }
 
   override def receive: Receive = initializing
@@ -299,7 +299,7 @@ private class ExecutionDriverFactory(jobId: JobId,
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart(): Unit =
-    mediator ! DistributedPubSubMediator.Subscribe(Topic.Scheduler.name, self)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name, self)
 
   def receive: Receive = initializing
 
@@ -313,7 +313,7 @@ private class ExecutionDriverFactory(jobId: JobId,
     case response @ ExecutionPlanStarted(`jobId`, _, _) =>
       log.info("Execution plan '{}' for job '{}' has been started.", planId, jobId)
       createCmd.replyTo ! response
-      mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Scheduler.name, self)
+      mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name, self)
       context.become(shuttingDown)
   }
 
@@ -335,7 +335,7 @@ private class ExecutionDriverTerminator(
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart(): Unit =
-    mediator ! Subscribe(Topic.Scheduler.name, self)
+    mediator ! Subscribe(TopicTag.Scheduler.name, self)
 
   def receive: Receive = initializing
 
@@ -350,7 +350,7 @@ private class ExecutionDriverTerminator(
     case response @ ExecutionPlanFinished(jobId, `planId`, dateTime) =>
       log.debug("Execution plan '{}' has been stopped.", planId)
       killCmd.replyTo ! ExecutionPlanCancelled(jobId, planId, dateTime)
-      mediator ! Unsubscribe(Topic.Scheduler.name, self)
+      mediator ! Unsubscribe(TopicTag.Scheduler.name, self)
       context.become(shuttingDown)
   }
 

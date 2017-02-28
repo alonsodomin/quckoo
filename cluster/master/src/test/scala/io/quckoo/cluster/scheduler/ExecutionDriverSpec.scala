@@ -24,7 +24,7 @@ import akka.cluster.sharding.ShardRegion
 import akka.testkit._
 
 import io.quckoo._
-import io.quckoo.api.Topic
+import io.quckoo.api.TopicTag
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.testkit.{ImplicitClock, QuckooActorClusterSuite}
@@ -59,11 +59,11 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
   val eventListener = TestProbe()
 
   before {
-    mediator ! DistributedPubSubMediator.Subscribe(Topic.Scheduler.name, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name, eventListener.ref)
   }
 
   after {
-    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Scheduler.name, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name, eventListener.ref)
   }
 
   def executionDriverProps(lifecycleFactory: ExecutionLifecycleFactory): Props =
@@ -115,7 +115,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     }
 
     "not re-schedule an execution after the job is disabled" in {
-      mediator ! DistributedPubSubMediator.Publish(Topic.Scheduler.name, JobDisabled(TestJobId))
+      mediator ! DistributedPubSubMediator.Publish(TopicTag.Scheduler.name, JobDisabled(TestJobId))
       // Complete the execution so the driver can come back to ready state
       lifecycleProbe.reply(ExecutionLifecycle.Result(TaskExecution.Success))
 

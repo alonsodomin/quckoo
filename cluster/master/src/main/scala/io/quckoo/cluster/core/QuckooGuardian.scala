@@ -22,7 +22,7 @@ import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
-import io.quckoo.api.Topic
+import io.quckoo.api.TopicTag
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.net._
@@ -95,16 +95,16 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
     context.system.eventStream.subscribe(self, classOf[Registry.Signal])
     context.system.eventStream.subscribe(self, classOf[Scheduler.Signal])
 
-    mediator ! DistributedPubSubMediator.Subscribe(Topic.Master.name, self)
-    mediator ! DistributedPubSubMediator.Subscribe(Topic.Worker.name, self)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Master.name, self)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Worker.name, self)
   }
 
   override def postStop(): Unit = {
     cluster.unsubscribe(self)
     context.system.eventStream.unsubscribe(self)
 
-    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Master.name, self)
-    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Worker.name, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Master.name, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Worker.name, self)
   }
 
   def receive: Receive = starting()
@@ -167,12 +167,12 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
         case MemberUp(member) =>
           val event = MasterJoined(member.nodeId, member.address.toLocation)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(Topic.Master.name, event)
+          mediator ! DistributedPubSubMediator.Publish(TopicTag.Master.name, event)
 
         case MemberRemoved(member, _) =>
           val event = MasterRemoved(member.nodeId)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(Topic.Master.name, event)
+          mediator ! DistributedPubSubMediator.Publish(TopicTag.Master.name, event)
 
         case _ =>
       }
@@ -182,12 +182,12 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
         case ReachableMember(member) =>
           val event = MasterReachable(member.nodeId)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(Topic.Master.name, event)
+          mediator ! DistributedPubSubMediator.Publish(TopicTag.Master.name, event)
 
         case UnreachableMember(member) =>
           val event = MasterUnreachable(member.nodeId)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(Topic.Master.name, event)
+          mediator ! DistributedPubSubMediator.Publish(TopicTag.Master.name, event)
       }
 
     case evt: WorkerEvent =>

@@ -24,7 +24,7 @@ import akka.stream.scaladsl.Source
 import akka.testkit._
 
 import io.quckoo._
-import io.quckoo.api.Topic
+import io.quckoo.api.TopicTag
 import io.quckoo.cluster.journal.QuckooTestJournal
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -67,12 +67,12 @@ class SchedulerSpec extends QuckooActorClusterSuite("SchedulerSpec")
   }
 
   before {
-    mediator ! DistributedPubSubMediator.Subscribe(Topic.Scheduler.name, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name, eventListener.ref)
     system.eventStream.subscribe(eventListener.ref, classOf[Scheduler.Signal])
   }
 
   after {
-    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Scheduler.name, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name, eventListener.ref)
   }
 
   val readJournal = new QuckooTestJournal

@@ -22,7 +22,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props, ReceiveTimeout, Stash}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
 import io.quckoo._
-import io.quckoo.api.Topic
+import io.quckoo.api.TopicTag
 import io.quckoo.protocol.registry.{JobAccepted, JobRejected}
 import io.quckoo.resolver.Resolver
 
@@ -50,7 +50,7 @@ abstract class Registration private[registry] (jobSpec: JobSpec, replyTo: ActorR
   val jobId = JobId(jobSpec)
 
   override def preStart(): Unit =
-    mediator ! DistributedPubSubMediator.Subscribe(Topic.Registry.name, self)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Registry.name, self)
 
   final def receive: Receive = initializing
 
@@ -81,7 +81,7 @@ abstract class Registration private[registry] (jobSpec: JobSpec, replyTo: ActorR
   }
 
   protected def finish(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Registry.name, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name, self)
     context become stopping
   }
 

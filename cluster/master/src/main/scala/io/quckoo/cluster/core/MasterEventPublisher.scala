@@ -18,7 +18,7 @@ package io.quckoo.cluster.core
 
 import akka.actor.Props
 
-import io.quckoo.api.Topic
+import io.quckoo.api.TopicTag
 import io.quckoo.protocol.cluster.MasterEvent
 
 /**
@@ -31,4 +31,4 @@ object MasterEventPublisher {
 
 }
 
-class MasterEventPublisher extends PubSubSubscribedEventPublisher[MasterEvent](Topic.Master.name)
+class MasterEventPublisher extends PubSubSubscribedEventPublisher[MasterEvent](TopicTag.Master.name)

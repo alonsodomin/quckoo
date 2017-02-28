@@ -16,33 +16,29 @@
 
 package io.quckoo.cluster.core
 
-import akka.NotUsed
-import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Stash}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.Source
+
+import io.quckoo.api.TopicTag
 
 import scala.reflect.ClassTag
 
 /**
   * Created by alonsodomin on 28/02/2017.
   */
+object TopicReader {
+  case object Start
 
-object PubSubEventPublisher {
-
-  def source[A: ClassTag](topic: String)(implicit actorSystem: ActorSystem): Source[A, NotUsed] = {
-    val publisherRef = actorSystem.actorOf(Props(new PubSubEventPublisher[A](topic)))
-    Source.actorRef[A](50, OverflowStrategy.dropTail)
-      .mapMaterializedValue { upstream =>
-
-      }
-    ???
+  def props[A](implicit topicTag: TopicTag[A]): Props = {
+    implicit val eventTag = topicTag.eventType
+    Props(new TopicReader[A](topicTag.name))
   }
 
 }
 
-class PubSubEventPublisher[A: ClassTag](topic: String) extends Actor with ActorLogging {
+class TopicReader[A: ClassTag] private(topic: String) extends Actor with ActorLogging with Stash {
   import DistributedPubSubMediator._
+  import TopicReader._
 
   private val mediator = DistributedPubSub(context.system).mediator
 
@@ -52,10 +48,31 @@ class PubSubEventPublisher[A: ClassTag](topic: String) extends Actor with ActorL
   override def postStop(): Unit =
     mediator ! Unsubscribe(topic, self)
 
-  override def receive: Receive = ???
+  override def receive: Receive = initializing()
 
-  private def initializing: Receive = {
+  private def initializing(subscribed: Boolean = false, target: Option[ActorRef] = None): Receive = {
     case SubscribeAck(Subscribe(`topic`, _, `self`)) =>
+      def switchToRunning(targetRef: ActorRef): Receive = {
+        unstashAll()
+        running(targetRef)
+      }
+
+      val nextBehaviour = target.map(switchToRunning)
+        .getOrElse(initializing(subscribed = true))
+      context.become(nextBehaviour)
+
+    case Start if subscribed =>
+      unstashAll()
+      context.become(running(sender()))
+
+    case Start =>
+      context.become(initializing(target = Some(sender())))
+
+    case _ => stash()
+  }
+
+  private def running(target: ActorRef): Receive = {
+    case msg => target ! msg
   }
 
 }

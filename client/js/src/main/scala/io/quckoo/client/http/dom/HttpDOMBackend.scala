@@ -39,7 +39,7 @@ private[http] object HttpDOMBackend extends HttpBackend {
 
   override def open[Ch <: Channel[HttpProtocol]](channel: Ch) =
     Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
-      val subscriber = new EventSourceSubscriber(EventsURI, channel.topic.name)
+      val subscriber = new EventSourceSubscriber(EventsURI, channel.topicTag.name)
       Observable.create(OverflowStrategy.DropOld(20))(subscriber)
     }
 

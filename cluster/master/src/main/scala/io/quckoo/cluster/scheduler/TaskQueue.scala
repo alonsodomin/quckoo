@@ -22,7 +22,7 @@ import akka.cluster.ddata._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
 import io.quckoo.{NodeId, Task, TaskId}
-import io.quckoo.api.Topic
+import io.quckoo.api.TopicTag
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.net._
 import io.quckoo.protocol.worker._
@@ -112,7 +112,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         val workerLocation = workerRef.location
         log.info("Worker registered. workerId={}, location={}", workerId, workerLocation)
         mediator ! DistributedPubSubMediator
-          .Publish(Topic.Worker.name, WorkerJoined(workerId, workerLocation))
+          .Publish(TopicTag.Worker.name, WorkerJoined(workerId, workerLocation))
         if (pendingTasks.nonEmpty) {
           sender ! TaskReady
         }
@@ -139,7 +139,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         case _ =>
       }
       workers -= workerId
-      mediator ! DistributedPubSubMediator.Publish(Topic.Worker.name, WorkerRemoved(workerId))
+      mediator ! DistributedPubSubMediator.Publish(TopicTag.Worker.name, WorkerRemoved(workerId))
 
     case RequestTask(workerId) if pendingTasks.nonEmpty =>
       workers.get(workerId) match {
@@ -233,7 +233,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         workers += (workerId -> state.copy(status = newStatus))
         val removeTask = createRemoveWorkerTask(workerId)
         workerRemoveTasks += (workerId -> removeTask)
-        mediator ! DistributedPubSubMediator.Publish(Topic.Worker.name, WorkerLost(workerId))
+        mediator ! DistributedPubSubMediator.Publish(TopicTag.Worker.name, WorkerLost(workerId))
       }
 
       workers.find {
@@ -289,7 +289,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       workers -= workerId
       inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
       inProgressTasks -= taskId
-      mediator ! DistributedPubSubMediator.Publish(Topic.Worker.name, WorkerRemoved(workerId))
+      mediator ! DistributedPubSubMediator.Publish(TopicTag.Worker.name, WorkerRemoved(workerId))
       replicator ! Replicator
         .Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)

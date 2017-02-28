@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-package io.quckoo.cluster.scheduler
+package io.quckoo.cluster.core
 
-import akka.actor.Props
+import akka.actor.ActorSystem
+import akka.stream.OverflowStrategy
+import akka.stream.scaladsl.Source
 
 import io.quckoo.api.TopicTag
-import io.quckoo.cluster.core.PubSubSubscribedEventPublisher
-import io.quckoo.protocol.scheduler.SchedulerEvent
 
 /**
-  * Created by alonsodomin on 11/07/2016.
+  * Created by domingueza on 28/02/2017.
   */
-object SchedulerEventPublisher {
+object Topic {
 
-  def props: Props = Props(classOf[SchedulerEventPublisher])
+  def source[A: TopicTag](implicit actorSystem: ActorSystem): Source[A, Unit] = {
+    val publisherRef = actorSystem.actorOf(TopicReader.props[A])
+    Source.actorRef[A](50, OverflowStrategy.dropTail)
+      .mapMaterializedValue { upstream =>
+        publisherRef.tell(TopicReader.Start, upstream)
+      }
+  }
 
 }
-
-class SchedulerEventPublisher
-    extends PubSubSubscribedEventPublisher[SchedulerEvent](TopicTag.Scheduler.name)

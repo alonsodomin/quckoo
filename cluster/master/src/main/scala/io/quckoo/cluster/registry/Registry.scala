@@ -30,7 +30,7 @@ import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
 import io.quckoo.{JobId, JobNotFound, JobSpec}
-import io.quckoo.api.Topic
+import io.quckoo.api.TopicTag
 import io.quckoo.cluster.QuckooRoles
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
@@ -107,11 +107,11 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
   private[this] var jobIds = Set.empty[JobId]
 
   override def preStart(): Unit = {
-    mediator ! DistributedPubSubMediator.Subscribe(Topic.Registry.name, self)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Registry.name, self)
   }
 
   override def postStop(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Registry.name, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name, self)
   }
 
   def receive: Receive = initializing
