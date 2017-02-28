@@ -28,7 +28,7 @@ sealed abstract class Topic[A](val name: String)
 
 object Topic {
 
-  @inline def apply[A](implicit ev: Topic[A]) = ev
+  @inline def apply[A](implicit ev: Topic[A]): Topic[A] = ev
 
   implicit case object Master    extends Topic[MasterEvent]("MASTER_EVENT")
   implicit case object Worker    extends Topic[WorkerEvent]("WORKER_EVENT")

@@ -81,7 +81,7 @@ abstract class Registration private[registry] (jobSpec: JobSpec, replyTo: ActorR
   }
 
   protected def finish(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Registry.name, self)
     context become stopping
   }
 
