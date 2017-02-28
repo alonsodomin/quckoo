@@ -19,13 +19,14 @@ package io.quckoo.cluster
 import java.util.UUID
 
 import upickle.default.{write, Writer => UWriter}
-
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.MediaType
 import akka.http.scaladsl.model.MediaTypes
 import akka.stream.scaladsl.Source
 
 import de.heikoseeberger.akkasse.ServerSentEvent
+
+import io.quckoo.api.TopicTag
 
 import play.twirl.api.{Html, Txt, Xml}
 
@@ -45,6 +46,10 @@ package object http {
   def twirlMarshaller[A](contentType: MediaType): ToEntityMarshaller[A] = {
     Marshaller.StringMarshaller.wrap(contentType)(_.toString)
   }
+
+  def asSSE[A: UWriter](source: Source[A, _])(implicit topicTag: TopicTag[A]): Source[ServerSentEvent, _] =
+    source.map(event => ServerSentEvent(write[A](event), topicTag.name))
+      .keepAlive(1 second, () => ServerSentEvent.heartbeat)
 
   def generateAuthToken: String = UUID.randomUUID().toString
 

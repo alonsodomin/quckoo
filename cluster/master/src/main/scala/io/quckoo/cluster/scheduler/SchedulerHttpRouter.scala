@@ -102,10 +102,13 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
           }
         }
       }
-    } /*~ path("events") {
+    }
+
+  def schedulerEvents(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+    path("scheduler") {
       get {
-        complete(asSSE(schedulerEvents, "scheduler"))
+        complete(asSSE(schedulerTopic))
       }
-    }*/
+    }
 
 }

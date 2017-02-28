@@ -122,7 +122,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   ): Future[Option[JobSpec]] =
     Future.successful(TestJobMap.get(jobId))
 
-  override def registryEvents: Source[RegistryEvent, NotUsed] = ???
+  override def registryTopic: Source[RegistryEvent, NotUsed] = ???
 
   private[this] def endpoint(target: String) = s"/api/registry$target"
 

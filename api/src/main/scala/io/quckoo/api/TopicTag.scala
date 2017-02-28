@@ -33,9 +33,9 @@ object TopicTag {
 
   @inline def apply[A](implicit ev: TopicTag[A]): TopicTag[A] = ev
 
-  implicit case object Master    extends TopicTag[MasterEvent]("MASTER_EVENT")
-  implicit case object Worker    extends TopicTag[WorkerEvent]("WORKER_EVENT")
-  implicit case object Registry  extends TopicTag[RegistryEvent]("REGISTRY_EVENT")
-  implicit case object Scheduler extends TopicTag[SchedulerEvent]("SCHEDULER_EVENT")
+  implicit case object Master    extends TopicTag[MasterEvent]("master")
+  implicit case object Worker    extends TopicTag[WorkerEvent]("worker")
+  implicit case object Registry  extends TopicTag[RegistryEvent]("registry")
+  implicit case object Scheduler extends TopicTag[SchedulerEvent]("scheduler")
 
 }

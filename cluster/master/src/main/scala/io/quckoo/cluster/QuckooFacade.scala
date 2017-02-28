@@ -158,13 +158,13 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
     }
   }
 
-  def schedulerEvents: Source[SchedulerEvent, NotUsed] =
+  def schedulerTopic: Source[SchedulerEvent, NotUsed] =
     Topic.source[SchedulerEvent]
 
-  def masterEvents: Source[MasterEvent, NotUsed] =
+  def masterTopic: Source[MasterEvent, NotUsed] =
     Topic.source[MasterEvent]
 
-  def workerEvents: Source[WorkerEvent, NotUsed] =
+  def workerTopic: Source[WorkerEvent, NotUsed] =
     Topic.source[WorkerEvent]
 
   def enableJob(jobId: JobId)(
@@ -239,7 +239,7 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
       }
   }
 
-  def registryEvents: Source[RegistryEvent, NotUsed] =
+  def registryTopic: Source[RegistryEvent, NotUsed] =
     Topic.source[RegistryEvent]
 
   def clusterState(implicit ec: ExecutionContext,
