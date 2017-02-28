@@ -17,8 +17,8 @@
 package io.quckoo.cluster.scheduler
 
 import akka.actor.Props
+import io.quckoo.api.Topic
 import io.quckoo.cluster.core.PubSubSubscribedEventPublisher
-import io.quckoo.cluster.topics
 import io.quckoo.protocol.scheduler.SchedulerEvent
 
 /**
@@ -31,4 +31,4 @@ object SchedulerEventPublisher {
 }
 
 class SchedulerEventPublisher
-    extends PubSubSubscribedEventPublisher[SchedulerEvent](topics.Scheduler)
+    extends PubSubSubscribedEventPublisher[SchedulerEvent](Topic.Scheduler.name)

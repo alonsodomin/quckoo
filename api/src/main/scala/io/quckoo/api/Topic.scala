@@ -24,14 +24,15 @@ import io.quckoo.protocol.worker.WorkerEvent
 /**
   * Created by alonsodomin on 20/09/2016.
   */
-sealed abstract class EventDef[A](val typeName: String)
+sealed abstract class Topic[A](val name: String)
 
-object EventDef {
+object Topic {
 
-  @inline def apply[A](implicit ev: EventDef[A]) = ev
+  @inline def apply[A](implicit ev: Topic[A]) = ev
 
-  implicit object MasterEventDef    extends EventDef[MasterEvent]("MASTER_EVENT")
-  implicit object WorkerEventDef    extends EventDef[WorkerEvent]("WORKER_EVENT")
-  implicit object RegistryEventDef  extends EventDef[RegistryEvent]("REGISTRY_EVENT")
-  implicit object SchedulerEventDef extends EventDef[SchedulerEvent]("SCHEDULER_EVENT")
+  implicit case object Master    extends Topic[MasterEvent]("MASTER_EVENT")
+  implicit case object Worker    extends Topic[WorkerEvent]("WORKER_EVENT")
+  implicit case object Registry  extends Topic[RegistryEvent]("REGISTRY_EVENT")
+  implicit case object Scheduler extends Topic[SchedulerEvent]("SCHEDULER_EVENT")
+
 }

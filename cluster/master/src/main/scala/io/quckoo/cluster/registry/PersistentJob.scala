@@ -22,7 +22,7 @@ import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 
 import io.quckoo.{JobId, JobSpec}
-import io.quckoo.cluster.topics
+import io.quckoo.api.Topic
 import io.quckoo.protocol.registry._
 
 /**
@@ -66,7 +66,7 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
   override def receiveRecover: Receive = {
     case JobAccepted(jobId, jobSpec) =>
       stateDuringRecovery = Some(jobSpec)
-      log.debug("Loading job {}...", jobId)
+      log.debug("Loading job '{}'...", jobId)
       context.become(enabled(jobId, jobSpec))
 
     case JobEnabled(jobId) =>
@@ -92,8 +92,8 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
   def initialising: Receive = {
     case CreateJob(jobId, jobSpec) =>
       persist(JobAccepted(jobId, jobSpec)) { event =>
-        log.info("Job {} has been successfully registered.", jobId)
-        mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
+        log.info("Job '{}' has been successfully registered.", jobId)
+        mediator ! DistributedPubSubMediator.Publish(Topic.Registry.name, event)
         unstashAll()
         context.become(enabled(jobId, jobSpec))
       }
@@ -108,7 +108,7 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
 
       case DisableJob(`jobId`) =>
         persist(JobDisabled(jobId)) { event =>
-          mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
+          mediator ! DistributedPubSubMediator.Publish(Topic.Registry.name, event)
           sender() ! event
           context.become(disabled(jobId, spec.copy(disabled = true)))
         }
@@ -124,7 +124,7 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
 
       case EnableJob(`jobId`) =>
         persist(JobEnabled(jobId)) { event =>
-          mediator ! DistributedPubSubMediator.Publish(topics.Registry, event)
+          mediator ! DistributedPubSubMediator.Publish(Topic.Registry.name, event)
           sender() ! event
           context.become(enabled(jobId, spec.copy(disabled = false)))
         }

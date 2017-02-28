@@ -22,12 +22,12 @@ import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
+import io.quckoo.api.Topic
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.net._
 import io.quckoo.cluster.registry.Registry
 import io.quckoo.cluster.scheduler.Scheduler
-import io.quckoo.cluster.topics
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.client._
 import io.quckoo.protocol.cluster._
@@ -95,16 +95,16 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
     context.system.eventStream.subscribe(self, classOf[Registry.Signal])
     context.system.eventStream.subscribe(self, classOf[Scheduler.Signal])
 
-    mediator ! DistributedPubSubMediator.Subscribe(topics.Master, self)
-    mediator ! DistributedPubSubMediator.Subscribe(topics.Worker, self)
+    mediator ! DistributedPubSubMediator.Subscribe(Topic.Master.name, self)
+    mediator ! DistributedPubSubMediator.Subscribe(Topic.Worker.name, self)
   }
 
   override def postStop(): Unit = {
     cluster.unsubscribe(self)
     context.system.eventStream.unsubscribe(self)
 
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Master, self)
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Worker, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Master.name, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(Topic.Worker.name, self)
   }
 
   def receive: Receive = starting()
@@ -149,13 +149,13 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
   private[this] def defaultActivity: Receive = {
     case Connect =>
       clients += sender()
-      log.info("Quckoo client connected to cluster node. clientAddress={}", sender().path.address)
+      log.info("Quckoo client connected to cluster node from address: {}", sender().path.address)
       sender() ! Connected
 
     case Disconnect =>
       clients -= sender()
       log.info(
-        "Quckoo client disconnected from cluster node. clientAddress={}",
+        "Quckoo client disconnected from cluster node from address: {}",
         sender().path.address)
       sender() ! Disconnected
 
@@ -167,12 +167,12 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
         case MemberUp(member) =>
           val event = MasterJoined(member.nodeId, member.address.toLocation)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
+          mediator ! DistributedPubSubMediator.Publish(Topic.Master.name, event)
 
         case MemberRemoved(member, _) =>
           val event = MasterRemoved(member.nodeId)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
+          mediator ! DistributedPubSubMediator.Publish(Topic.Master.name, event)
 
         case _ =>
       }
@@ -182,12 +182,12 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
         case ReachableMember(member) =>
           val event = MasterReachable(member.nodeId)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
+          mediator ! DistributedPubSubMediator.Publish(Topic.Master.name, event)
 
         case UnreachableMember(member) =>
           val event = MasterUnreachable(member.nodeId)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(topics.Master, event)
+          mediator ! DistributedPubSubMediator.Publish(Topic.Master.name, event)
       }
 
     case evt: WorkerEvent =>

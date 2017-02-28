@@ -30,16 +30,21 @@ import slogging.LazyLogging
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-private[dom] class EventSourceSubscriber(url: String, eventType: String)
+private[dom] class EventSourceSubscriber(url: String, topic: String)
     extends (Subscriber.Sync[HttpServerSentEvent] => Cancelable) with LazyLogging {
+
+  logger.debug("Subscribing to topic '{}' using URL: {}", topic, url)
 
   val source = new EventSource(url)
 
   override def apply(subscriber: Subscriber.Sync[HttpServerSentEvent]): Cancelable = {
-    val cancelable = RefCountCancelable(() => source.close)
+    val cancelable = RefCountCancelable { () =>
+      subscriber.onComplete()
+      source.close
+    }
 
     source.onerror = (event: Event) => {
-      logger.debug(s"Received 'error' event: $event")
+      logger.debug("Received 'error' event: {}", event)
       if (source.readyState == EventSource.CLOSED) {
         subscriber.onComplete()
       } else {
@@ -48,14 +53,12 @@ private[dom] class EventSourceSubscriber(url: String, eventType: String)
       source.close()
     }
 
-    source.addEventListener[MessageEvent](eventType, (message: MessageEvent) => {
+    source.addEventListener[MessageEvent](topic, (message: MessageEvent) => {
       val data = DataBuffer.fromString(message.data.toString)
       subscriber.onNext(HttpServerSentEvent(data))
     })
 
     cancelable
   }
-
-  def close(): Unit = source.close()
 
 }

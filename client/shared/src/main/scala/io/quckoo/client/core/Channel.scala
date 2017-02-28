@@ -16,7 +16,7 @@
 
 package io.quckoo.client.core
 
-import io.quckoo.api.EventDef
+import io.quckoo.api.Topic
 
 /**
   * Created by domingueza on 20/09/2016.
@@ -24,7 +24,7 @@ import io.quckoo.api.EventDef
 trait Channel[P <: Protocol] {
   type Event
 
-  val eventDef: EventDef[Event]
+  val topic: Topic[Event]
   val unmarshall: Unmarshall[P#EventType, Event]
 }
 

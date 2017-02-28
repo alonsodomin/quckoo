@@ -16,7 +16,7 @@
 
 package io.quckoo.client.http
 
-import io.quckoo.api.EventDef
+import io.quckoo.api.Topic
 import io.quckoo.client.core.{Channel, Channels, Unmarshall}
 import io.quckoo.serialization.Decoder
 
@@ -25,9 +25,9 @@ import io.quckoo.serialization.Decoder
   */
 trait SSEChannels extends Channels[HttpProtocol] {
 
-  override def createChannel[E: EventDef](implicit decoder: Decoder[String, E]) =
+  override def createChannel[E: Topic](implicit decoder: Decoder[String, E]) =
     new Channel.Aux[HttpProtocol, E] {
-      override val eventDef   = implicitly[EventDef[E]]
+      override val topic      = implicitly[Topic[E]]
       override val unmarshall = Unmarshall[HttpServerSentEvent, E](_.data.as[E])
     }
 
