@@ -19,7 +19,7 @@ package io.quckoo
 import java.io.File
 import java.nio.file.Paths
 
-import pureconfig.{CamelCase, ConfigConvert, ConfigFieldMapping, KebabCase}
+import pureconfig._
 
 import scala.util.Try
 
@@ -28,8 +28,7 @@ import scala.util.Try
   */
 package object config {
 
-  implicit def clusterFieldMapping[A]: ConfigFieldMapping[A] =
-    ConfigFieldMapping.apply[A](CamelCase, KebabCase)
+  implicit def hint[A]: ProductHint[A] = ProductHint(ConfigFieldMapping(CamelCase, KebabCase))
 
   implicit val createFileOnLoad: ConfigConvert[File] =
     ConfigConvert.stringConvert(path => Try(Paths.get(path)).map(_.toAbsolutePath.toFile), _.getAbsolutePath)
