@@ -16,7 +16,7 @@
 
 package io.quckoo.client.core
 
-import io.quckoo.api.EventDef
+import io.quckoo.api.TopicTag
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.registry.RegistryEvent
 import io.quckoo.protocol.scheduler.SchedulerEvent
@@ -33,6 +33,6 @@ trait Channels[P <: Protocol] {
   type RegistryChannel  = Channel.Aux[P, RegistryEvent]
   type SchedulerChannel = Channel.Aux[P, SchedulerEvent]
 
-  def createChannel[E: EventDef](implicit decoder: Decoder[String, E]): Channel.Aux[P, E]
+  def createChannel[E: TopicTag](implicit decoder: Decoder[String, E]): Channel.Aux[P, E]
 
 }

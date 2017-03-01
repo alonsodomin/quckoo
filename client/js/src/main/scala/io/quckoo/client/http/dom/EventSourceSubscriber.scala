@@ -16,7 +16,8 @@
 
 package io.quckoo.client.http.dom
 
-import io.quckoo.client.http.HttpServerSentEvent
+import io.quckoo.client.core.ChannelException
+import io.quckoo.client.http.{HttpServerSentEvent, topicURI}
 import io.quckoo.serialization.DataBuffer
 
 import monix.execution.Cancelable
@@ -25,37 +26,42 @@ import monix.reactive.observers.Subscriber
 
 import org.scalajs.dom.raw.{Event, EventSource, MessageEvent}
 
+import scala.scalajs.js.JSON
 import slogging.LazyLogging
 
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-private[dom] class EventSourceSubscriber(url: String, eventType: String)
+private[dom] class EventSourceSubscriber(topicName: String)
     extends (Subscriber.Sync[HttpServerSentEvent] => Cancelable) with LazyLogging {
 
-  val source = new EventSource(url)
+  val topicURL: String = topicURI(topicName)
+
+  logger.debug("Subscribing to topic '{}' using URL: {}", topicName, topicURL)
+
+  val source = new EventSource(topicURL)
 
   override def apply(subscriber: Subscriber.Sync[HttpServerSentEvent]): Cancelable = {
-    val cancelable = RefCountCancelable(() => source.close)
+    val cancelable = RefCountCancelable { () =>
+      subscriber.onComplete()
+      source.close
+    }
 
     source.onerror = (event: Event) => {
-      logger.debug(s"Received 'error' event: $event")
       if (source.readyState == EventSource.CLOSED) {
         subscriber.onComplete()
       } else {
-        subscriber.onError(new Exception(event.toString))
+        subscriber.onError(new ChannelException(topicName))
       }
       source.close()
     }
 
-    source.addEventListener[MessageEvent](eventType, (message: MessageEvent) => {
+    source.addEventListener[MessageEvent](topicName, (message: MessageEvent) => {
       val data = DataBuffer.fromString(message.data.toString)
       subscriber.onNext(HttpServerSentEvent(data))
     })
 
     cancelable
   }
-
-  def close(): Unit = source.close()
 
 }

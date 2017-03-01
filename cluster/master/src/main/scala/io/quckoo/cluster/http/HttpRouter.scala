@@ -28,10 +28,11 @@ import de.heikoseeberger.akkasse.EventStreamMarshalling
 import io.quckoo.cluster.core.QuckooServer
 import io.quckoo.cluster.registry.RegistryHttpRouter
 import io.quckoo.cluster.scheduler.SchedulerHttpRouter
+import io.quckoo.serialization.json._
 
 trait HttpRouter
     extends StaticResources with RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives
-    with EventStream with EventStreamMarshalling { this: QuckooServer =>
+    with EventStreamMarshalling { this: QuckooServer =>
 
   import StatusCodes._
   import TimeoutDirectives._
@@ -74,6 +75,19 @@ trait HttpRouter
       }
     }
 
+  private[this] def clusterEvents(implicit system: ActorSystem,
+                                  materializer: ActorMaterializer): Route = {
+    path("master") {
+      get {
+        complete(asSSE(masterTopic))
+      }
+    } ~ path("worker") {
+      get {
+        complete(asSSE(workerTopic))
+      }
+    }
+  }
+
   private[this] def exceptionHandler(log: LoggingAdapter) = ExceptionHandler {
     case exception =>
       extractUri { uri =>
@@ -96,8 +110,8 @@ trait HttpRouter
           handleRejections(rejectionHandler(system.log)) {
             pathPrefix("api") {
               defineApi
-            } ~ path("events") {
-              complete(eventBus)
+            } ~ pathPrefix("events") {
+              clusterEvents ~ registryEvents ~ schedulerEvents
             } ~ staticResources
           }
         }

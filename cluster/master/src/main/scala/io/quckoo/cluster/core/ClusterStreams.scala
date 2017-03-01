@@ -26,8 +26,8 @@ import io.quckoo.protocol.worker.WorkerEvent
   */
 trait ClusterStreams {
 
-  def masterEvents: Source[MasterEvent, NotUsed]
+  def masterTopic: Source[MasterEvent, NotUsed]
 
-  def workerEvents: Source[WorkerEvent, NotUsed]
+  def workerTopic: Source[WorkerEvent, NotUsed]
 
 }

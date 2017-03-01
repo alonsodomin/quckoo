@@ -26,6 +26,6 @@ import io.quckoo.protocol.scheduler.SchedulerEvent
   */
 trait SchedulerStreams {
 
-  def schedulerEvents: Source[SchedulerEvent, NotUsed]
+  def schedulerTopic: Source[SchedulerEvent, NotUsed]
 
 }

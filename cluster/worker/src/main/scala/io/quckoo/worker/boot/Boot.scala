@@ -38,7 +38,9 @@ import scala.util.{Failure, Success}
 /**
   * Created by domingueza on 09/07/15.
   */
-object Boot extends App with StrictLogging {
+object Boot extends App with LazyLogging {
+  LoggerConfig.factory = SLF4JLoggerFactory()
+  LoggerConfig.level = LogLevel.DEBUG
 
   val parser = new OptionParser[CliOptions]("quckoo-worker") {
     head("quckoo-worker", Info.version)
@@ -60,8 +62,6 @@ object Boot extends App with StrictLogging {
     opts.toConfig.withFallback(ConfigFactory.load())
 
   def start(config: Config): Unit = {
-    LoggerConfig.factory = SLF4JLoggerFactory()
-
     logger.info(s"Starting Quckoo Worker ${Info.version}...\n" + Logo)
 
     implicit val system = ActorSystem(SystemName, config)

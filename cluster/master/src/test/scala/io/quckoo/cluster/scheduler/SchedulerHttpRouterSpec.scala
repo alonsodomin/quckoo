@@ -131,7 +131,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
   ): Future[Option[TaskExecution]] =
     Future.successful(TestTaskMap.get(taskId))
 
-  override def schedulerEvents: Source[SchedulerEvent, NotUsed] = ???
+  override def schedulerTopic: Source[SchedulerEvent, NotUsed] = ???
 
   private[this] def endpoint(target: String) = s"/api/scheduler$target"
 

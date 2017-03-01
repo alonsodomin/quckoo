@@ -24,7 +24,7 @@ import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 
 import io.quckoo._
-import io.quckoo.cluster.topics
+import io.quckoo.api.TopicTag
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 
@@ -198,7 +198,7 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
 
   override def preStart(): Unit = {
     log.debug("Execution driver starting with persistence ID: {}", persistenceId)
-    mediator ! Subscribe(topics.Registry, self)
+    mediator ! Subscribe(TopicTag.Registry.name, self)
   }
 
   override def receiveRecover: Receive = {
@@ -232,7 +232,7 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
   private def activatePlan(state: DriverState): Unit = {
     log.info("Activating execution plan '{}'.", state.planId)
     persist(ExecutionPlanStarted(state.jobId, state.planId, ZonedDateTime.now(clock))) { event =>
-      mediator ! Publish(topics.Scheduler, event)
+      mediator ! Publish(TopicTag.Scheduler.name, event)
       performTransition(state)(scheduleOrFinish(state))
     }
   }
@@ -242,7 +242,7 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
     * the distributed pub/sub and an initial New command
     */
   private def initial(subscribed: Boolean = false, state: Option[DriverState] = None): Receive = {
-    case SubscribeAck(Subscribe(topic, _, `self`)) if topic == topics.Registry =>
+    case SubscribeAck(Subscribe(topic, _, `self`)) if topic == TopicTag.Registry.name =>
       if (state.isDefined) {
         activatePlan(state.get)
       } else {
@@ -309,7 +309,7 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
       persist(TaskScheduled(state.jobId, state.planId, task, ZonedDateTime.now(clock))) { event =>
         unstashAll()
 
-        mediator ! Publish(topics.Scheduler, event)
+        mediator ! Publish(TopicTag.Scheduler.name, event)
         context.become(runningExecution(state.updated(event), lifecycle, Some(trigger)))
       }
 
@@ -327,7 +327,7 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
       log.debug("Trigger for task '{}' has successfully fired.", task.id)
       persist(TaskTriggered(state.jobId, state.planId, task.id, ZonedDateTime.now(clock))) {
         event =>
-          mediator ! Publish(topics.Scheduler, event)
+          mediator ! Publish(TopicTag.Scheduler.name, event)
           context.become(runningExecution(state.updated(event), lifecycle, None))
       }
 
@@ -348,7 +348,7 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
           TaskCompleted(state.jobId, state.planId, task.id, ZonedDateTime.now(clock), outcome)) {
           event =>
             log.debug("Task '{}' finished with outcome: {}", task.id, outcome)
-            mediator ! Publish(topics.Scheduler, event)
+            mediator ! Publish(TopicTag.Scheduler.name, event)
 
             val newState = state.updated(event)
             context.unwatch(lifecycle)
@@ -371,21 +371,21 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
       log.info("Finishing execution plan '{}'.", state.planId)
       persist(ExecutionPlanFinished(state.jobId, state.planId, ZonedDateTime.now(clock))) {
         event =>
-          mediator ! Publish(topics.Scheduler, event)
-          mediator ! Unsubscribe(topics.Registry, self)
+          mediator ! Publish(TopicTag.Scheduler.name, event)
+          mediator ! Unsubscribe(TopicTag.Registry.name, self)
           context.become(shuttingDown(state.updated(event)))
       }
 
     case FinishPlan =>
-      mediator ! Unsubscribe(topics.Registry, self)
+      mediator ! Unsubscribe(TopicTag.Registry.name, self)
 
-    case UnsubscribeAck(Unsubscribe(topic, _, `self`)) if topic == topics.Registry =>
+    case UnsubscribeAck(Unsubscribe(topic, _, `self`)) if topic == TopicTag.Registry.name =>
       context.parent ! Passivate(stopMessage = PoisonPill)
 
     case GetExecutionPlan(_) =>
       sender() ! state.plan
 
-    case SubscribeAck(Subscribe(topic, _, `self`)) if topic == topics.Registry =>
+    case SubscribeAck(Subscribe(topic, _, `self`)) if topic == TopicTag.Registry.name =>
       // May happen when the driver was reloaded after a DB recovery but the plan has already been finished
 
     case msg: Any =>

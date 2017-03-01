@@ -25,6 +25,6 @@ import io.quckoo.protocol.registry.RegistryEvent
   */
 trait RegistryStreams {
 
-  def registryEvents: Source[RegistryEvent, NotUsed]
+  def registryTopic: Source[RegistryEvent, NotUsed]
 
 }

@@ -38,7 +38,7 @@ import scalaz.std.scalaFuture._
 /**
   * Created by domingueza on 09/07/15.
   */
-object Boot extends StrictLogging {
+object Boot extends LazyLogging {
 
   val parser = new OptionParser[CliOptions]("quckoo-master") {
     head("quckoo-master", Info.version)
@@ -75,6 +75,7 @@ object Boot extends StrictLogging {
 
   def main(args: Array[String]): Unit = {
     LoggerConfig.factory = SLF4JLoggerFactory()
+    LoggerConfig.level = LogLevel.DEBUG
 
     parser.parse(args, CliOptions()).foreach { opts =>
       logger.info(s"Starting Quckoo Server ${Info.version}...\n" + Logo)

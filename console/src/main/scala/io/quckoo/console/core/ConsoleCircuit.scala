@@ -133,7 +133,7 @@ object ConsoleCircuit
 
       case StartClusterSubscription =>
         withAuth { implicit passport =>
-          subscribeClusterState
+          openSubscriptionChannels
           noChange
         }
 

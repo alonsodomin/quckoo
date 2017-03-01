@@ -16,7 +16,7 @@
 
 package io.quckoo.client.core
 
-import io.quckoo.api.EventDef
+import io.quckoo.api.TopicTag
 import io.quckoo.serialization.Decoder
 import io.quckoo.util._
 
@@ -38,11 +38,11 @@ final class Driver[P <: Protocol] private (
     private[client] val specs: ProtocolSpecs[P]
 ) extends LazyLogging {
 
-  private[client] def channelFor[E: EventDef](implicit decoder: Decoder[String, E]) =
+  private[client] def channelFor[E: TopicTag](implicit decoder: Decoder[String, E]) =
     specs.createChannel[E]
 
   def openChannel[E](ch: Channel.Aux[P, E]): Kleisli[Observable, Unit, ch.Event] = {
-    logger.debug(s"Opening channel for event ${ch.eventDef.typeName}")
+    logger.debug("Opening channel for topic: {}", ch.topicTag.name)
     def decodeEvent = ch.unmarshall.transform(attempt2Observable)
     backend.open(ch) >=> decodeEvent
   }

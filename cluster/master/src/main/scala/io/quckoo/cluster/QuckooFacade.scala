@@ -30,8 +30,6 @@ import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.core._
 import io.quckoo.cluster.http.HttpRouter
 import io.quckoo.cluster.journal.QuckooProductionJournal
-import io.quckoo.cluster.registry.RegistryEventPublisher
-import io.quckoo.cluster.scheduler.SchedulerEventPublisher
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -160,20 +158,14 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
     }
   }
 
-  lazy val schedulerEvents: Source[SchedulerEvent, NotUsed] =
-    Source
-      .actorPublisher[SchedulerEvent](SchedulerEventPublisher.props)
-      .mapMaterializedValue(_ => NotUsed)
+  def schedulerTopic: Source[SchedulerEvent, NotUsed] =
+    Topic.source[SchedulerEvent]
 
-  lazy val masterEvents: Source[MasterEvent, NotUsed] =
-    Source
-      .actorPublisher[MasterEvent](MasterEventPublisher.props)
-      .mapMaterializedValue(_ => NotUsed)
+  def masterTopic: Source[MasterEvent, NotUsed] =
+    Topic.source[MasterEvent]
 
-  lazy val workerEvents: Source[WorkerEvent, NotUsed] =
-    Source
-      .actorPublisher[WorkerEvent](WorkerEventPublisher.props)
-      .mapMaterializedValue(_ => NotUsed)
+  def workerTopic: Source[WorkerEvent, NotUsed] =
+    Topic.source[WorkerEvent]
 
   def enableJob(jobId: JobId)(
       implicit ec: ExecutionContext,
@@ -247,10 +239,8 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
       }
   }
 
-  def registryEvents: Source[RegistryEvent, NotUsed] =
-    Source
-      .actorPublisher[RegistryEvent](RegistryEventPublisher.props)
-      .mapMaterializedValue(_ => NotUsed)
+  def registryTopic: Source[RegistryEvent, NotUsed] =
+    Topic.source[RegistryEvent]
 
   def clusterState(implicit ec: ExecutionContext,
                    timeout: FiniteDuration,

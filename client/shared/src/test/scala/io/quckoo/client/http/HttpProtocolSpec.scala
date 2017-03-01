@@ -137,9 +137,10 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   "subscribe" should "return an stream of events" in {
     val givenEvents = List(MasterReachable(NodeId(UUID.randomUUID())))
 
-    val httpEvents: Attempt[List[HttpServerSentEvent]] = EitherT(givenEvents.map(evt => DataBuffer(evt))).
-      map(HttpServerSentEvent(_)).
-      run.sequenceU
+    val httpEvents: Attempt[List[HttpServerSentEvent]] = EitherT(givenEvents.map(evt => DataBuffer(evt)))
+      .map(HttpServerSentEvent)
+      .run
+      .sequenceU
 
     attempt2Future(httpEvents).flatMap { events =>
       inProtocol[HttpProtocol] withEvents events usingClient { client =>

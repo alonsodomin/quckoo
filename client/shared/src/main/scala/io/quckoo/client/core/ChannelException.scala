@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-package io.quckoo.cluster
+package io.quckoo.client.core
 
 /**
-  * Created by alonsodomin on 24/03/2016.
+  * Created by alonsodomin on 28/02/2017.
   */
-object topics {
-  final val Master    = "master"
-  final val Registry  = "registry"
-  final val Scheduler = "scheduler"
-  final val Worker    = "worker"
-}
+class ChannelException(val topicName: String) extends Exception

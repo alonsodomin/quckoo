@@ -20,7 +20,7 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.testkit._
 
 import io.quckoo._
-import io.quckoo.cluster.topics
+import io.quckoo.api.TopicTag
 import io.quckoo.protocol.registry._
 import io.quckoo.testkit.QuckooActorClusterSuite
 
@@ -55,11 +55,11 @@ class PersistentJobSpec extends QuckooActorClusterSuite("PersistentJobSpec")
   val eventListener = TestProbe("persistentJobListener")
 
   override def beforeEach(): Unit = {
-    mediator ! DistributedPubSubMediator.Subscribe(topics.Registry, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Registry.name, eventListener.ref)
   }
 
   override def afterEach(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(topics.Registry, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name, eventListener.ref)
     if (eventListener.msgAvailable) {
       fail("There are additional messages in the listener queue.")
     }

@@ -65,7 +65,7 @@ private[http] final class HttpAkkaBackend(host: String, port: Int = 80)(
       val publisherSink = Sink.asPublisher[ServerSentEvent](fanout = true)
 
       val source = for {
-        response <- AkkaHttp().singleRequest(Get(s"http://$host:$port" + EventsURI))
+        response <- AkkaHttp().singleRequest(Get(s"http://$host:$port" + topicURI(channel.topicTag.name)))
         events   <- Unmarshal(response).to[Source[ServerSentEvent, NotUsed]]
       } yield events.runWith(publisherSink)
 

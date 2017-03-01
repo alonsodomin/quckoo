@@ -28,7 +28,7 @@ import de.heikoseeberger.akkasse.EventStreamMarshalling
 import io.quckoo._
 import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.auth.Passport
-import io.quckoo.cluster.http.TimeoutDirectives
+import io.quckoo.cluster.http._
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.serialization.json._
 
@@ -97,10 +97,13 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
           }
         }
       }
-    } /*~ path("events") {
+    }
+
+  def registryEvents(implicit system: ActorSystem, aterializer: Materializer): Route =
+    path("registry") {
       get {
-        complete(asSSE(registryEvents, "registry"))
+        complete(asSSE(registryTopic))
       }
-    }*/
+    }
 
 }

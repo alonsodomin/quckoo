@@ -47,6 +47,9 @@ package object http {
   final val AuthorizationHeader           = "Authorization"
   private[http] val JsonContentTypeHeader = "Content-Type" -> "application/json"
 
+  private[http] def topicURI(topicName: String): String =
+    EventsURI + "/" + topicName
+
   @inline private[http] def authHeader(passport: Passport): (String, String) =
     AuthorizationHeader -> s"Bearer ${passport.token}"
 
