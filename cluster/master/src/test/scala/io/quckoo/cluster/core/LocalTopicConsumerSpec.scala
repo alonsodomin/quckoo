@@ -16,32 +16,33 @@
 
 package io.quckoo.cluster.core
 
-import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import java.util.UUID
+
 import akka.testkit.{TestActorRef, TestProbe}
 
+import io.quckoo.NodeId
 import io.quckoo.api.TopicTag
-import io.quckoo.testkit.QuckooActorClusterSuite
+import io.quckoo.protocol.cluster.MasterUnreachable
+import io.quckoo.testkit.QuckooActorSuite
 
 /**
-  * Created by domingueza on 28/02/2017.
+  * Created by alonsodomin on 01/03/2017.
   */
-class TopicReaderSpec extends QuckooActorClusterSuite("TopicReaderSpec") {
+class LocalTopicConsumerSpec extends QuckooActorSuite("LocalTopicConsumerSpec") {
 
-  val mediator = DistributedPubSub(system).mediator
-
-  "TopicReader" should {
+  "LocalTopicConsumer" should {
     "emit events to its sender" in {
       val topicTag = TopicTag.Master
 
       val receiverProbe = TestProbe("receiver")
-      val reader = TestActorRef(TopicReader.props(topicTag))
+      val reader = TestActorRef(LocalTopicConsumer.props(topicTag))
 
-      val expectedMsg = "Foo"
+      val expectedMsg = MasterUnreachable(NodeId(UUID.randomUUID()))
 
       // Receiver instructs the reader to start, linking them together
-      receiverProbe.send(reader, TopicReader.Start)
+      receiverProbe.send(reader, TopicConsumer.Consume)
 
-      mediator ! DistributedPubSubMediator.Publish(topicTag.name, expectedMsg)
+      system.eventStream.publish(expectedMsg)
       receiverProbe.expectMsg(expectedMsg)
     }
   }

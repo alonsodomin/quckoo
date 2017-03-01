@@ -21,24 +21,58 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
 import io.quckoo.api.TopicTag
 
-import scala.reflect.ClassTag
-
 /**
-  * Created by alonsodomin on 28/02/2017.
+  * Created by alonsodomin on 01/03/2017.
   */
-object TopicReader {
-  case object Start
+object TopicConsumer {
+  case object Consume
+}
 
-  def props[A](implicit topicTag: TopicTag[A]): Props = {
-    implicit val eventTag = topicTag.eventType
-    Props(new TopicReader[A](topicTag.name))
+object LocalTopicConsumer {
+
+  def props[A](implicit topicTag: TopicTag[A]): Props =
+    Props(new LocalTopicConsumer(topicTag.name, Seq(topicTag.eventType.runtimeClass)))
+
+}
+
+class LocalTopicConsumer private (topicName: String, classes: Seq[Class[_]]) extends Actor with ActorLogging {
+  import TopicConsumer._
+
+  log.debug("Preparing to consume topic '{}'.", topicName)
+
+  override def preStart(): Unit = {
+    classes.foreach { clazz =>
+      context.system.eventStream.subscribe(self, clazz)
+    }
+  }
+
+  override def postStop(): Unit =
+    context.system.eventStream.unsubscribe(self)
+
+  override def receive: Receive = {
+    case Consume =>
+      log.debug("Starting to publish events from topic '{}' into the stream.", topicName)
+      context.become(sendTo(sender()))
+  }
+
+  private def sendTo(target: ActorRef): Receive = {
+    case msg => target ! msg
   }
 
 }
 
-class TopicReader[A: ClassTag] private(topic: String) extends Actor with ActorLogging with Stash {
+object PubSubTopicConsumer {
+
+  def props[A](implicit topicTag: TopicTag[A]): Props = {
+    implicit val eventTag = topicTag.eventType
+    Props(new PubSubTopicConsumer(topicTag.name))
+  }
+
+}
+
+class PubSubTopicConsumer private(topic: String) extends Actor with ActorLogging with Stash {
   import DistributedPubSubMediator._
-  import TopicReader._
+  import TopicConsumer._
 
   private val mediator = DistributedPubSub(context.system).mediator
   log.debug("Preparing to read topic '{}'.", topic)
@@ -57,10 +91,10 @@ class TopicReader[A: ClassTag] private(topic: String) extends Actor with ActorLo
         .getOrElse(initializing(subscribed = true))
       context.become(nextBehaviour)
 
-    case Start if subscribed =>
+    case Consume if subscribed =>
       context.become(switchToRunning(sender()))
 
-    case Start =>
+    case Consume =>
       context.become(initializing(target = Some(sender())))
 
     case _ => stash()

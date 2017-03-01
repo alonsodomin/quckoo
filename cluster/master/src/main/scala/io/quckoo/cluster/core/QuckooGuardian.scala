@@ -94,17 +94,12 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
 
     context.system.eventStream.subscribe(self, classOf[Registry.Signal])
     context.system.eventStream.subscribe(self, classOf[Scheduler.Signal])
-
-    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Master.name, self)
-    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Worker.name, self)
+    context.system.eventStream.subscribe(self, classOf[WorkerEvent])
   }
 
   override def postStop(): Unit = {
     cluster.unsubscribe(self)
     context.system.eventStream.unsubscribe(self)
-
-    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Master.name, self)
-    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Worker.name, self)
   }
 
   def receive: Receive = starting()
@@ -167,12 +162,12 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
         case MemberUp(member) =>
           val event = MasterJoined(member.nodeId, member.address.toLocation)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(TopicTag.Master.name, event)
+          context.system.eventStream.publish(event)
 
         case MemberRemoved(member, _) =>
           val event = MasterRemoved(member.nodeId)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(TopicTag.Master.name, event)
+          context.system.eventStream.publish(event)
 
         case _ =>
       }
@@ -182,12 +177,12 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
         case ReachableMember(member) =>
           val event = MasterReachable(member.nodeId)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(TopicTag.Master.name, event)
+          context.system.eventStream.publish(event)
 
         case UnreachableMember(member) =>
           val event = MasterUnreachable(member.nodeId)
           clusterState = clusterState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(TopicTag.Master.name, event)
+          context.system.eventStream.publish(event)
       }
 
     case evt: WorkerEvent =>

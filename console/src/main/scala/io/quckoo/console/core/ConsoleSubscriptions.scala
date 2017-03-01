@@ -16,6 +16,7 @@
 
 package io.quckoo.console.core
 
+import io.quckoo.client.core.ChannelException
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.protocol.cluster.MasterEvent
 import io.quckoo.protocol.scheduler.SchedulerEvent
@@ -25,16 +26,23 @@ import io.quckoo.serialization.json._
 
 import monix.execution.Scheduler.Implicits.global
 
+import slogging.LazyLogging
+
 /**
   * Created by alonsodomin on 04/04/2016.
   */
-private[core] trait ConsoleSubscriptions {
+private[core] trait ConsoleSubscriptions extends LazyLogging {
 
-  def subscribeClusterState(implicit client: HttpQuckooClient): Unit = {
-    client.channel[MasterEvent].subscribe(new SimpleEventSubscriber[MasterEvent])
-    client.channel[WorkerEvent].subscribe(new SimpleEventSubscriber[WorkerEvent])
-    client.channel[SchedulerEvent].subscribe(new SimpleEventSubscriber[SchedulerEvent])
-    client.channel[RegistryEvent].subscribe(new SimpleEventSubscriber[RegistryEvent])
+  val errorHandler: PartialFunction[Throwable, Unit] = {
+    case ex: ChannelException =>
+      logger.error("Topic '{}' has been unexpectedly closed.", ex.topicName)
+  }
+
+  def openSubscriptionChannels(implicit client: HttpQuckooClient): Unit = {
+    client.channel[MasterEvent].subscribe(new ActionSubscriber[MasterEvent](errorHandler))
+    client.channel[WorkerEvent].subscribe(new ActionSubscriber[WorkerEvent](errorHandler))
+    client.channel[SchedulerEvent].subscribe(new ActionSubscriber[SchedulerEvent](errorHandler))
+    client.channel[RegistryEvent].subscribe(new ActionSubscriber[RegistryEvent](errorHandler))
   }
 
 }

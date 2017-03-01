@@ -19,10 +19,8 @@ package io.quckoo.cluster.scheduler
 import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ddata._
-import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
 import io.quckoo.{NodeId, Task, TaskId}
-import io.quckoo.api.TopicTag
 import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.net._
 import io.quckoo.protocol.worker._
@@ -71,7 +69,6 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
   val replicationTimeout = 5 seconds
 
   implicit val cluster         = Cluster(context.system)
-  private[this] val mediator   = DistributedPubSub(context.system).mediator
   private[this] val replicator = DistributedData(context.system).replicator
 
   private[this] var workers           = Map.empty[NodeId, WorkerState]
@@ -110,9 +107,8 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         context.watch(workerRef)
 
         val workerLocation = workerRef.location
-        log.info("Worker registered. workerId={}, location={}", workerId, workerLocation)
-        mediator ! DistributedPubSubMediator
-          .Publish(TopicTag.Worker.name, WorkerJoined(workerId, workerLocation))
+        log.info("Worker '{}' registered at location: {}", workerId, workerLocation)
+        context.system.eventStream.publish(WorkerJoined(workerId, workerLocation))
         if (pendingTasks.nonEmpty) {
           sender ! TaskReady
         }
@@ -139,7 +135,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         case _ =>
       }
       workers -= workerId
-      mediator ! DistributedPubSubMediator.Publish(TopicTag.Worker.name, WorkerRemoved(workerId))
+      context.system.eventStream.publish(WorkerRemoved(workerId))
 
     case RequestTask(workerId) if pendingTasks.nonEmpty =>
       workers.get(workerId) match {
@@ -233,7 +229,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         workers += (workerId -> state.copy(status = newStatus))
         val removeTask = createRemoveWorkerTask(workerId)
         workerRemoveTasks += (workerId -> removeTask)
-        mediator ! DistributedPubSubMediator.Publish(TopicTag.Worker.name, WorkerLost(workerId))
+        context.system.eventStream.publish(WorkerLost(workerId))
       }
 
       workers.find {
@@ -289,7 +285,9 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       workers -= workerId
       inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
       inProgressTasks -= taskId
-      mediator ! DistributedPubSubMediator.Publish(TopicTag.Worker.name, WorkerRemoved(workerId))
+
+      context.system.eventStream.publish(WorkerRemoved(workerId))
+
       replicator ! Replicator
         .Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)

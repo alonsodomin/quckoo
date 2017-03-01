@@ -16,6 +16,7 @@
 
 package io.quckoo.client.http.dom
 
+import io.quckoo.client.core.ChannelException
 import io.quckoo.client.http.{HttpServerSentEvent, topicURI}
 import io.quckoo.serialization.DataBuffer
 
@@ -25,6 +26,7 @@ import monix.reactive.observers.Subscriber
 
 import org.scalajs.dom.raw.{Event, EventSource, MessageEvent}
 
+import scala.scalajs.js.JSON
 import slogging.LazyLogging
 
 /**
@@ -46,11 +48,10 @@ private[dom] class EventSourceSubscriber(topicName: String)
     }
 
     source.onerror = (event: Event) => {
-      logger.debug("Received 'error' event: {}", event)
       if (source.readyState == EventSource.CLOSED) {
         subscriber.onComplete()
       } else {
-        subscriber.onError(new Exception(event.toString))
+        subscriber.onError(new ChannelException(topicName))
       }
       source.close()
     }

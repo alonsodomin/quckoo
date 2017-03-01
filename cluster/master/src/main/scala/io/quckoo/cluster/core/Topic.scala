@@ -17,7 +17,7 @@
 package io.quckoo.cluster.core
 
 import akka.NotUsed
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Props}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
 
@@ -28,11 +28,21 @@ import io.quckoo.api.TopicTag
   */
 object Topic {
 
-  def source[A: TopicTag](implicit actorSystem: ActorSystem): Source[A, NotUsed] = {
-    val publisherRef = actorSystem.actorOf(TopicReader.props[A])
+  def source[A](implicit actorSystem: ActorSystem, topicTag: TopicTag[A]): Source[A, NotUsed] = {
+    def isLocal: Boolean = topicTag match {
+      case TopicTag.Registry | TopicTag.Scheduler => false
+      case _                                      => true
+    }
+
+    def consumerProps: Props = {
+      if (isLocal) LocalTopicConsumer.props[A]
+      else PubSubTopicConsumer.props[A]
+    }
+
+    val consumerRef = actorSystem.actorOf(consumerProps)
     Source.actorRef[A](50, OverflowStrategy.dropTail)
       .mapMaterializedValue { upstream =>
-        publisherRef.tell(TopicReader.Start, upstream)
+        consumerRef.tell(TopicConsumer.Consume, upstream)
         NotUsed
       }
   }
