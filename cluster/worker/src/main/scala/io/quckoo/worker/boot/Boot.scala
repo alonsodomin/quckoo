@@ -69,7 +69,9 @@ object Boot extends App with LazyLogging {
     WorkerSettings(config) match {
       case Right(settings) => doStart(settings)
       case Left(errors)    =>
-        logger.error("Error reading configuration. \n{}", describeConfigFailures(errors))
+        logger.error("Error reading configuration. \n{}",
+          describeConfigFailures(errors).mkString("\n")
+        )
     }
   }
 

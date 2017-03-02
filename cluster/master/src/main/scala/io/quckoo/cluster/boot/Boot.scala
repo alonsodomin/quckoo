@@ -89,7 +89,9 @@ object Boot extends LazyLogging {
       ClusterSettings(config) match {
         case Right(settings) => startCluster(settings)
         case Left(errors)    =>
-          logger.error("Could not load configuration due to following errors: \n{}", describeConfigFailures(errors))
+          logger.error("Could not load configuration due to following errors: \n{}",
+            describeConfigFailures(errors).mkString("\n")
+          )
       }
     }
   }
