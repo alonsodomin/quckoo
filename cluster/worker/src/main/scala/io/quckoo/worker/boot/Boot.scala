@@ -22,6 +22,7 @@ import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import io.quckoo.{Info, Logo}
+import io.quckoo.config._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
 import io.quckoo.worker.config.{ResolverDispatcher, WorkerSettings}
@@ -32,8 +33,6 @@ import io.quckoo.worker.executor.DefaultTaskExecutorProvider
 import slogging._
 
 import scopt.OptionParser
-
-import scala.util.{Failure, Success}
 
 /**
   * Created by domingueza on 09/07/15.
@@ -68,8 +67,11 @@ object Boot extends App with LazyLogging {
     sys.addShutdownHook { system.terminate() }
 
     WorkerSettings(config) match {
-      case Success(settings) => doStart(settings)
-      case Failure(ex)       => ex.printStackTrace() // FIXME
+      case Right(settings) => doStart(settings)
+      case Left(errors)    =>
+        logger.error("Error reading configuration. \n{}",
+          describeConfigFailures(errors).mkString("\n")
+        )
     }
   }
 

@@ -17,6 +17,7 @@
 package io.quckoo.worker
 
 import akka.actor.{AddressFromURIString, RootActorPath}
+
 import pureconfig._
 
 import scala.util.{Failure, Success}
@@ -40,7 +41,7 @@ package object config {
 
   final val HostAndPort = """(.+?):(\d+)""".r
 
-  implicit val contactPointConfig: ConfigConvert[ContactPoint] = ConfigConvert.fromNonEmptyString {
+  implicit val contactPointConfig: ConfigConvert[ContactPoint] = ConfigConvert.fromNonEmptyStringReaderTry {
     case AddressFromURIString(addr) => Success(new ContactPoint(RootActorPath(addr) / "system" / "receptionist"))
     case str                        => Failure(new IllegalArgumentException(s"Invalid contact point: $str"))
   }

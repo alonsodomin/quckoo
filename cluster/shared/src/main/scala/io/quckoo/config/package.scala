@@ -19,19 +19,63 @@ package io.quckoo
 import java.io.File
 import java.nio.file.Paths
 
-import pureconfig.{CamelCase, ConfigConvert, ConfigFieldMapping, KebabCase}
+import pureconfig._
+import pureconfig.error._
 
 import scala.util.Try
+import scalaz.NonEmptyList
 
 /**
   * Created by alonsodomin on 04/11/2016.
   */
 package object config {
 
-  implicit def clusterFieldMapping[A]: ConfigFieldMapping[A] =
-    ConfigFieldMapping.apply[A](CamelCase, KebabCase)
+  implicit def hint[A]: ProductHint[A] = ProductHint(ConfigFieldMapping(CamelCase, KebabCase))
 
-  implicit val createFileOnLoad: ConfigConvert[File] =
-    ConfigConvert.stringConvert(path => Try(Paths.get(path)).map(_.toAbsolutePath.toFile), _.getAbsolutePath)
+  implicit val fileConfigConvert: ConfigConvert[File] =
+    ConfigConvert.fromStringConvert(
+      ConfigConvert.tryF(p => Try(Paths.get(p)).map(_.toAbsolutePath.toFile)),
+      _.getAbsolutePath
+    )
+
+  def describeConfigFailures(configFailures: ConfigReaderFailures): List[String] = {
+    def describeLocation(location: Option[ConfigValueLocation]): String =
+      location.map(loc => s"${loc.description} :: ").getOrElse("")
+
+    def prependLocation(msg: String, location: Option[ConfigValueLocation]): String =
+      describeLocation(location) + msg
+
+    configFailures.toList.map {
+      case CannotConvertNull =>
+        s"Can not convert null value"
+
+      case CannotConvert(value, toTyp, because, location) =>
+        prependLocation(s"Can not convert value '$value' to type $toTyp because $because", location)
+
+      case CollidingKeys(key, existingValue, location) =>
+        prependLocation(s"Key '$key' collides in existing value: $existingValue", location)
+
+      case KeyNotFound(key, location) =>
+        prependLocation(s"Key '$key' not found", location)
+
+      case UnknownKey(key, location) =>
+        prependLocation(s"Unknow key '$key'", location)
+
+      case WrongType(found, expected, location) =>
+        prependLocation(s"Found type '$found' but expected type '$expected'", location)
+
+      case WrongTypeForKey(found, expected, key, location) =>
+        prependLocation(s"Found type '$found' for key '$key' but expected '$expected'", location)
+
+      case ThrowableFailure(ex, location) =>
+        prependLocation(s"Threw exception: ${ex.getMessage}", location)
+
+      case EmptyStringFound(typ, location) =>
+        prependLocation(s"Found empty string for type '$typ'", location)
+
+      case NoValidCoproductChoiceFound(value, location) =>
+        prependLocation(s"No valid coproduct choice found in value: $value", location)
+    }
+  }
 
 }

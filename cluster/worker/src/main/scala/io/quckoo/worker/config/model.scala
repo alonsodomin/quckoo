@@ -24,8 +24,7 @@ import io.quckoo.config._
 import io.quckoo.resolver.config.IvyConfig
 
 import pureconfig._
-
-import scala.util.Try
+import pureconfig.error.ConfigReaderFailures
 
 class ContactPoint(val actorPath: ActorPath) extends AnyVal
 
@@ -41,6 +40,6 @@ final case class WorkerSettings(
 object WorkerSettings {
   final val Namespace = "quckoo"
 
-  def apply(config: Config): Try[WorkerSettings] =
+  def apply(config: Config): Either[ConfigReaderFailures, WorkerSettings] =
     loadConfig[WorkerSettings](config, Namespace)
 }

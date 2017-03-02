@@ -21,19 +21,17 @@ import akka.actor._
 import com.typesafe.config.ConfigFactory
 
 import io.quckoo._
+import io.quckoo.config._
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.{QuckooFacade, SystemName}
 import io.quckoo.time.implicits.systemClock
-import io.quckoo.util._
 
 import slogging._
 
 import scopt.OptionParser
 
-import scala.util.{Failure, Success}
-
-import scalaz._
-import scalaz.std.scalaFuture._
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
   * Created by domingueza on 09/07/15.
@@ -85,22 +83,29 @@ object Boot extends LazyLogging {
       implicit val system = ActorSystem(SystemName, config)
       sys.addShutdownHook {
         logger.info("Received kill signal, terminating...")
-        system.terminate()
+        Await.ready(system.terminate(), 10 seconds)
       }
 
-      val loadClusterConf = Kleisli(ClusterSettings.apply).transform(try2Future)
-      val startCluster = Kleisli(QuckooFacade.start)
-
-      import system.dispatcher
-      (loadClusterConf andThen startCluster).run(config) onComplete {
-        case Success(_) =>
-          logger.info("Quckoo server initialized!")
-
-        case Failure(ex) =>
-          ex.printStackTrace()
-          system.terminate()
+      ClusterSettings(config) match {
+        case Right(settings) => startCluster(settings)
+        case Left(errors)    =>
+          logger.error("Could not load configuration due to following errors: \n{}",
+            describeConfigFailures(errors).mkString("\n")
+          )
       }
     }
+  }
+
+  def startCluster(settings: ClusterSettings)(implicit actorSystem: ActorSystem): Unit = {
+    import actorSystem.dispatcher
+
+    QuckooFacade.start(settings)
+      .map(_ => logger.info("Quckoo server initialized!"))
+      .recoverWith { case ex =>
+        logger.error("Error initializing Quckoo master node.", ex)
+        actorSystem.terminate()
+      }
+      .foreach(_ => logger.debug("Bootstrap process completed."))
   }
 
 }

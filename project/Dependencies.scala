@@ -47,6 +47,7 @@ object Dependencies {
     val scalaJsReact    = "0.11.3"
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.1"
+    val scalaJSScripts  = "1.1.0"
 
     val testState = "2.1.1"
     val scalaCss  = "0.5.1"
@@ -60,18 +61,20 @@ object Dependencies {
     // Other utils ---
 
     val arm         = "2.0"
+    val ivy         = "2.4.0"
     val scopt       = "3.5.0"
     val monocle     = "1.4.0"
     val scalaz      = "7.2.9"
     val monix       = "2.2.2"
     val cron4s      = "0.3.1"
     val enumeratum  = "1.5.8"
-    val pureconfig  = "0.5.1"
+    val pureconfig  = "0.6.0"
     val betterfiles = "2.17.1"
     val xml         = "1.0.6"
 
     // JavaScript Libraries
 
+    val animate          = "3.2.2"
     val jquery           = "1.12.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
@@ -87,7 +90,7 @@ object Dependencies {
     val scalaArm = "com.jsuereth"           %% "scala-arm" % version.arm
     val scalaXml = "org.scala-lang.modules" %% "scala-xml" % version.xml
 
-    val ivy = "org.apache.ivy" % "ivy" % "2.4.0"
+    val ivy = "org.apache.ivy" % "ivy" % version.ivy
 
     object Akka {
       val actor           = "com.typesafe.akka" %% "akka-actor"             % version.akka.main
@@ -288,10 +291,10 @@ object Dependencies {
       Akka.persistence.query, Akka.persistence.memory, Akka.constructr,
       scopt, authenticatJwt,
 
-      "com.vmunier"      %% "scalajs-scripts" % "1.1.0",
+      "com.vmunier"      %% "scalajs-scripts" % version.scalaJSScripts,
       "org.webjars"       % "bootstrap-sass"  % version.bootstrap,
       "org.webjars"       % "font-awesome"    % version.fontAwesome,
-      "org.webjars.bower" % "animatewithsass" % "3.2.2"
+      "org.webjars.bower" % "animatewithsass" % version.animate
     )
   }
   lazy val clusterWorker = Def.settings {

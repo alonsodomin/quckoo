@@ -17,19 +17,21 @@
 package io.quckoo.cluster.config
 
 import com.typesafe.config.Config
+
 import io.quckoo.config._
 import io.quckoo.resolver.config.IvyConfig
+
 import pureconfig._
+import pureconfig.error.ConfigReaderFailures
 
 import scala.concurrent.duration.FiniteDuration
-import scala.util.Try
 
 final case class ClusterSettings(resolver: IvyConfig, taskQueue: TaskQueueSettings, http: HttpSettings)
 
 object ClusterSettings {
   final val Namespace = "quckoo"
 
-  def apply(config: Config): Try[ClusterSettings] =
+  def apply(config: Config): Either[ConfigReaderFailures, ClusterSettings] =
     loadConfig[ClusterSettings](config, Namespace)
 
 }
