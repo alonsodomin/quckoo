@@ -20,6 +20,7 @@ import java.io.File
 import java.nio.file.Paths
 
 import pureconfig._
+import pureconfig.error.ConfigReaderFailures
 
 import scala.util.Try
 
@@ -30,7 +31,12 @@ package object config {
 
   implicit def hint[A]: ProductHint[A] = ProductHint(ConfigFieldMapping(CamelCase, KebabCase))
 
-  implicit val createFileOnLoad: ConfigConvert[File] =
-    ConfigConvert.stringConvert(path => Try(Paths.get(path)).map(_.toAbsolutePath.toFile), _.getAbsolutePath)
+  implicit val fileConfigConvert: ConfigConvert[File] =
+    ConfigConvert.fromStringConvert(
+      ConfigConvert.tryF(p => Try(Paths.get(p)).map(_.toAbsolutePath.toFile)),
+      _.getAbsolutePath
+    )
+
+  def describeConfigFailures(configFailures: ConfigReaderFailures): String = ???
 
 }
