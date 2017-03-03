@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.libs
+package io.quckoo.console.libs.codemirror
 
 import org.scalajs.dom.html.TextArea
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.|
 
 /**
   * Created by alonsodomin on 02/03/2017.
@@ -36,5 +36,9 @@ trait CodeMirror extends js.Object {
 
   def getValue(separator: js.UndefOr[String] = null): String = js.native
   def setValue(content: String): this.type = js.native
+
+  def setSize(width: Width, height: Height): this.type  = js.native
+
+  def on(`type`: String, handler: js.Function2[CodeMirror, js.Any, _]): this.type = js.native
 
 }

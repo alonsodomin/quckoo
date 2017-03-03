@@ -33,7 +33,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
  * Created by alonsodomin on 16/10/2015.
  */
 object Navigation {
-  import ConsoleRoute.DashboardRoute
+  import ConsoleRoute.Dashboard
 
   sealed trait NavigationMenu
   case class NavigationList(icon: Icon, name: String, items: List[NavigationMenu]) extends NavigationMenu
@@ -90,7 +90,7 @@ object Navigation {
         <.div(^.`class` := "container-fluid",
           <.div(^.`class` := "navbar-header",
             <.a(^.`class` := "navbar-brand",
-              ^.href := props.routerCtl.urlFor(DashboardRoute).value,
+              ^.href := props.routerCtl.urlFor(Dashboard).value,
               ^.onClick ==> navigationItemClicked(props.initial),
               Icons.home, "Quckoo"
             )

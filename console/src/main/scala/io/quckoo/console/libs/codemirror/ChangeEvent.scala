@@ -14,20 +14,24 @@
  * limitations under the License.
  */
 
-package io.quckoo.console
+package io.quckoo.console.libs.codemirror
 
-import enumeratum._
+import scala.scalajs.js
 
 /**
-  * Created by alonsodomin on 26/03/2016.
+  * Created by alonsodomin on 03/03/2017.
   */
-sealed trait ConsoleRoute extends EnumEntry with EnumEntry.Lowercase
-object ConsoleRoute extends Enum[ConsoleRoute] {
-  case object Root      extends ConsoleRoute
-  case object Dashboard extends ConsoleRoute
-  case object Login     extends ConsoleRoute
-  case object Registry  extends ConsoleRoute
-  case object Scheduler extends ConsoleRoute
+@js.native
+trait Position extends js.Object {
+  def ch: Int = js.native
+  def line: Int = js.native
+}
 
-  val values = findValues
+@js.native
+trait ChangeEvent extends js.Object {
+  def from: Position = js.native
+  def to: Position = js.native
+  def text: js.Array[String] = js.native
+  def removed: String = js.native
+  def origin: String = js.native
 }

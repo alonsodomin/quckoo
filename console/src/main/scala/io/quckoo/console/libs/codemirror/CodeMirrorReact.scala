@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-package io.quckoo.console
+package io.quckoo.console.libs.codemirror
 
-import enumeratum._
+import japgolly.scalajs.react.extra.Reusability
 
 /**
-  * Created by alonsodomin on 26/03/2016.
+  * Created by alonsodomin on 03/03/2017.
   */
-sealed trait ConsoleRoute extends EnumEntry with EnumEntry.Lowercase
-object ConsoleRoute extends Enum[ConsoleRoute] {
-  case object Root      extends ConsoleRoute
-  case object Dashboard extends ConsoleRoute
-  case object Login     extends ConsoleRoute
-  case object Registry  extends ConsoleRoute
-  case object Scheduler extends ConsoleRoute
-
-  val values = findValues
+object CodeMirrorReact {
+  implicit val lengthReuse: Reusability[Length] = Reusability.byRef
 }

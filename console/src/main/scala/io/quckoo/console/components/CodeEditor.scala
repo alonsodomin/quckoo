@@ -16,23 +16,65 @@
 
 package io.quckoo.console.components
 
-import io.quckoo.console.libs.CodeMirror
+import io.quckoo.console.libs.codemirror._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.vdom.ReactAttr
 import japgolly.scalajs.react.vdom.prefix_<^._
 
+import enumeratum._
+
 import org.scalajs.dom.html
+
 import scala.scalajs.js
 
 /**
   * Created by alonsodomin on 02/03/2017.
   */
 object CodeEditor {
+  import CodeMirrorReact._
+  import ReactAttr.NameAndValue
 
   type OnUpdate = Option[String] => Callback
 
-  case class Props(text: Option[String], onUpdate: OnUpdate, attrs: Seq[TagMod])
+  sealed trait Mode extends EnumEntry with EnumEntry.Lowercase
+  object Mode extends Enum[Mode] {
+    case object Shell extends Mode
+
+    val values = findValues
+  }
+  implicit val modeReuse: Reusability[Mode] = Reusability.byRef
+
+  sealed trait ThemeStyle extends EnumEntry with EnumEntry.Lowercase
+  object ThemeStyle extends Enum[ThemeStyle] {
+    case object Solarized extends ThemeStyle
+    case object Dark extends ThemeStyle
+    case object Light extends ThemeStyle
+
+    val values = findValues
+  }
+  implicit val themeStyleReuse: Reusability[ThemeStyle] = Reusability.byRef
+
+  case class Options(
+    mode: Option[Mode] = None,
+    lineNumbers: Boolean = false,
+    matchBrackets: Boolean = false,
+    theme: Set[ThemeStyle] = Set.empty
+  )
+  implicit val optionsReuse: Reusability[Options] = Reusability.caseClass[Options]
+
+  final val DefaultWidth: Width = "100%"
+  final val DefaultHeight: Height = 250
+
+  case class Props(
+    text: Option[String],
+    onUpdate: OnUpdate,
+    width: Width,
+    height: Height,
+    options: Option[Options],
+    attrs: Seq[TagMod]
+  )
   case class State(value: Option[String])
 
   implicit val propsReuse: Reusability[Props] = Reusability.caseClassExcept('onUpdate, 'attrs)
@@ -43,17 +85,30 @@ object CodeEditor {
     private[this] def propagateUpdate: Callback =
       $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.value)))
 
-    def mounted(state: State, codeMirror: CodeMirror) = {
+    private[this] def jsOptions(props: Props): Option[js.Dynamic] = {
+      props.options.map { opts =>
+        js.Dynamic.literal(
+          "mode" -> opts.mode.getOrElse(Mode.Shell).entryName,
+          "lineNumbers" -> opts.lineNumbers,
+          "matchBrackets" -> opts.matchBrackets,
+          "theme" -> opts.theme.map(_.entryName).mkString(" ")
+        )
+      }
+    }
+
+    protected[CodeEditor] def mounted(props: Props, state: State): Unit = {
+      val textArea = $.getDOMNode().asInstanceOf[html.TextArea]
+      val codeMirror = CodeMirror.fromTextArea(textArea, jsOptions(props).getOrElse(js.Dynamic.literal()))
+
+      codeMirror.setSize(props.width, props.height)
+      codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
+
       codeMirror.setValue(state.value.getOrElse(""))
     }
 
-    def onUpdate(evt: ReactEventI): Callback = {
-      val newValue = {
-        if (evt.target.value.isEmpty) None
-        else Some(evt.target.value)
-      }
-
-      $.modState(_.copy(value = newValue), propagateUpdate)
+    def onChange(codeMirror: CodeMirror, change: ChangeEvent): Unit = {
+      val editorValue = Option(codeMirror.getValue()).filterNot(_.isEmpty)
+      $.modState(_.copy(value = editorValue), propagateUpdate).runNow()
     }
 
     def render(props: Props, state: State) = {
@@ -65,18 +120,38 @@ object CodeEditor {
   val component = ReactComponentB[Props]("CodeEditor")
     .initialState_P(props => State(props.text))
     .renderBackend[Backend]
-    .componentDidMount($ => Callback {
-      val textArea = $.getDOMNode().asInstanceOf[html.TextArea]
-      val codeMirror = CodeMirror.fromTextArea(textArea, js.Dynamic.literal(
-        "mode" -> "shell",
-        "linenumbers" -> true,
-        "theme" -> "solarized light"
-      ))
-      $.backend.mounted($.state, codeMirror)
-    })
+    .componentDidMount($ => Callback { $.backend.mounted($.props, $.state) })
     .build
 
-  def apply(value: Option[String], onUpdate: OnUpdate, attrs: TagMod*) =
-    component(Props(value, onUpdate, attrs))
+  private[this] def extractWidthAndHeight(attrs: Seq[TagMod]): (Width, Height, Seq[TagMod]) = {
+    def hasName(nameValue: NameAndValue[_], names: Seq[String]): Boolean =
+      names.contains(nameValue.name)
+
+    val w = attrs.collect {
+      case nameValue: NameAndValue[_] if hasName(nameValue, Seq("width")) =>
+        nameValue.value.asInstanceOf[Width]
+    } headOption
+
+    val h = attrs.collect {
+      case nameValue: NameAndValue[_] if hasName(nameValue, Seq("height")) =>
+        nameValue.value.asInstanceOf[Width]
+    } headOption
+
+    val remainingAttrs = attrs.filter {
+      case nameValue: NameAndValue[_] if !hasName(nameValue, Seq("width", "height")) => true
+      case _ => false
+    }
+    (w.getOrElse(DefaultWidth), h.getOrElse(DefaultHeight), remainingAttrs)
+  }
+
+  def apply(value: Option[String], onUpdate: OnUpdate, attrs: TagMod*) = {
+    val (width, height, remaining) = extractWidthAndHeight(attrs)
+    component(Props(value, onUpdate, width, height, None, remaining))
+  }
+
+  def apply(value: Option[String], onUpdate: OnUpdate, options: Options, attrs: TagMod*) = {
+    val (width, height, remaining) = extractWidthAndHeight(attrs)
+    component(Props(value, onUpdate, width, height, Some(options), remaining))
+  }
 
 }

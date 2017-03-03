@@ -29,11 +29,15 @@ object ShellScriptPackageInput {
   @inline private def lnf = lookAndFeel
 
   final val DefaultScript =
-    """
-      |#!/bin/bash
+    """#!/bin/bash
       |
-      |echo "Hello World"
-    """.stripMargin
+      |echo "Hello World"""".stripMargin
+
+  final val EditorOptions = CodeEditor.Options(
+    mode = Some(CodeEditor.Mode.Shell),
+    lineNumbers = true,
+    theme = Set(CodeEditor.ThemeStyle.Solarized, CodeEditor.ThemeStyle.Light)
+  )
 
   type OnUpdate = Option[ShellScriptPackage] => Callback
 
@@ -55,8 +59,12 @@ object ShellScriptPackageInput {
       <.div(lnf.formGroup,
         <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "script_content", "Script"),
         <.div(^.`class` := "col-sm-10",
-          //TextArea(state.content, onContentUpdate, ^.id := "script_content")
-          CodeEditor(state.content, onContentUpdate, ^.id := "script_content")
+          CodeEditor(state.content,
+            onContentUpdate _,
+            EditorOptions,
+            ^.id := "script_content",
+            ^.height := 250
+          )
         )
       )
     }
