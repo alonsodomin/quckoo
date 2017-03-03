@@ -14,17 +14,27 @@
  * limitations under the License.
  */
 
-package io.quckoo.md5
+package io.quckoo.console.libs
+
+import org.scalajs.jquery.JQueryStatic
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 
+/**
+  * Created by alonsodomin on 28/03/2016.
+  */
 @js.native
-object SparkMD5 extends js.Object {
+trait BootstrapNotify extends JQueryStatic {
 
-  @js.native
-  class ArrayBuffer() extends js.Object {
-    def append(chunk: js.typedarray.ArrayBuffer): Unit = js.native
-    def end(raw: Boolean = false): String = js.native
-  }
-  
+  @JSName("notify")
+  def showNotification(content: String, options: js.Any = js.Dynamic.literal()): this.type =
+    js.native
+
+  @JSName("notifyDefaults")
+  def notificationDefaults(options: js.Any): BootstrapNotify = js.native
+
+  @JSName("notifyClose")
+  def closeNotification(id: String = "all"): BootstrapNotify = js.native
+
 }

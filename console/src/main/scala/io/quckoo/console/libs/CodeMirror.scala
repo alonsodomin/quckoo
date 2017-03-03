@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.components
+package io.quckoo.console.libs
 
-import org.scalajs.jquery.JQueryStatic
+import org.scalajs.dom.html.TextArea
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
-  * Created by alonsodomin on 28/03/2016.
+  * Created by alonsodomin on 02/03/2017.
   */
 @js.native
-trait BootstrapNotify extends JQueryStatic {
+object CodeMirror extends js.Object {
 
-  @JSName("notify")
-  def showNotification(content: String, options: js.Any = js.Dynamic.literal()): this.type =
-    js.native
+  def fromTextArea(textArea: TextArea, options: js.Any = js.Dynamic.literal()): CodeMirror = js.native
 
-  @JSName("notifyDefaults")
-  def notificationDefaults(options: js.Any): BootstrapNotify = js.native
+}
 
-  @JSName("notifyClose")
-  def closeNotification(id: String = "all"): BootstrapNotify = js.native
+@js.native
+trait CodeMirror extends js.Object {
+
+  def getValue(separator: js.UndefOr[String] = null): String = js.native
+  def setValue(content: String): this.type = js.native
 
 }

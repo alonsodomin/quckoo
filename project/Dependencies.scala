@@ -81,6 +81,7 @@ object Dependencies {
     val fontAwesome      = "4.7.0"
     val reactJs          = "15.4.2"
     val sparkMD5         = "2.0.2"
+    val codemirror       = "5.24.2"
   }
 
   // Common library definitions
@@ -240,6 +241,13 @@ object Dependencies {
       "com.github.japgolly.test-state" %%% "ext-scalaz"        % version.testState % Test
     ),
     jsDependencies ++= Seq(
+      // CodeMirror
+      "org.webjars" % "codemirror" % version.codemirror
+        / "lib/codemirror.js"
+        commonJSName "CodeMirror",
+      "org.webjars" % "codemirror" % version.codemirror
+        / "mode/shell/shell.js",
+
       // ReactJS
       "org.webjars.bower" % "react" % version.reactJs
         /        "react-with-addons.js"
@@ -294,6 +302,7 @@ object Dependencies {
       "com.vmunier"      %% "scalajs-scripts" % version.scalaJSScripts,
       "org.webjars"       % "bootstrap-sass"  % version.bootstrap,
       "org.webjars"       % "font-awesome"    % version.fontAwesome,
+      "org.webjars"       % "codemirror"      % version.codemirror,
       "org.webjars.bower" % "animatewithsass" % version.animate
     )
   }

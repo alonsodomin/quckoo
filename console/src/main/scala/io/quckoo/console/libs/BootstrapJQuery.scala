@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.quckoo.md5
+package io.quckoo.console.libs
+
+import org.scalajs.jquery.JQuery
 
 import scala.scalajs.js
 
+/**
+  * Created by alonsodomin on 20/02/2016.
+  */
 @js.native
-object SparkMD5 extends js.Object {
-
-  @js.native
-  class ArrayBuffer() extends js.Object {
-    def append(chunk: js.typedarray.ArrayBuffer): Unit = js.native
-    def end(raw: Boolean = false): String = js.native
-  }
-  
+trait BootstrapJQuery extends JQuery {
+  def modal(action: String): BootstrapJQuery  = js.native
+  def modal(options: js.Any): BootstrapJQuery = js.native
 }
