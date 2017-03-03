@@ -36,6 +36,7 @@ object ShellScriptPackageInput {
   final val EditorOptions = CodeEditor.Options(
     mode = Some(CodeEditor.Mode.Shell),
     lineNumbers = true,
+    matchBrackets = true,
     theme = Set(CodeEditor.ThemeStyle.Solarized, CodeEditor.ThemeStyle.Light)
   )
 

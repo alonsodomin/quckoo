@@ -123,25 +123,18 @@ object CodeEditor {
     .componentDidMount($ => Callback { $.backend.mounted($.props, $.state) })
     .build
 
-  private[this] def extractWidthAndHeight(attrs: Seq[TagMod]): (Width, Height, Seq[TagMod]) = {
-    def hasName(nameValue: NameAndValue[_], names: Seq[String]): Boolean =
-      names.contains(nameValue.name)
-
-    val w = attrs.collect {
-      case nameValue: NameAndValue[_] if hasName(nameValue, Seq("width")) =>
-        nameValue.value.asInstanceOf[Width]
-    } headOption
-
-    val h = attrs.collect {
-      case nameValue: NameAndValue[_] if hasName(nameValue, Seq("height")) =>
-        nameValue.value.asInstanceOf[Width]
-    } headOption
-
-    val remainingAttrs = attrs.filter {
-      case nameValue: NameAndValue[_] if !hasName(nameValue, Seq("width", "height")) => true
-      case _ => false
+  private[this] def extractWidthAndHeight(attrs: Seq[TagMod]): (Width, Height, List[TagMod]) = {
+    val initial: (Width, Height, List[TagMod]) = (DefaultWidth, DefaultHeight, List.empty[TagMod])
+    attrs.foldRight(initial) { case (attr, (w, h, acc)) =>
+      attr match {
+        case nv: NameAndValue[_] if nv.name == "width" =>
+          (nv.value.asInstanceOf[Width], h, acc)
+        case nv: NameAndValue[_] if nv.name == "height" =>
+          (w, nv.value.asInstanceOf[Height], acc)
+        case _ =>
+          (w, h, attr :: acc)
+      }
     }
-    (w.getOrElse(DefaultWidth), h.getOrElse(DefaultHeight), remainingAttrs)
   }
 
   def apply(value: Option[String], onUpdate: OnUpdate, attrs: TagMod*) = {
