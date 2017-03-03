@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package io.quckoo.console
+package io.quckoo.console.libs
 
-import enumeratum._
+import org.scalajs.jquery.JQuery
+
+import scala.scalajs.js
 
 /**
-  * Created by alonsodomin on 26/03/2016.
+  * Created by alonsodomin on 20/02/2016.
   */
-sealed trait ConsoleRoute extends EnumEntry with EnumEntry.Lowercase
-object ConsoleRoute extends Enum[ConsoleRoute] {
-  case object Root      extends ConsoleRoute
-  case object Dashboard extends ConsoleRoute
-  case object Login     extends ConsoleRoute
-  case object Registry  extends ConsoleRoute
-  case object Scheduler extends ConsoleRoute
-
-  val values = findValues
+@js.native
+trait BootstrapJQuery extends JQuery {
+  def modal(action: String): BootstrapJQuery  = js.native
+  def modal(options: js.Any): BootstrapJQuery = js.native
 }

@@ -16,8 +16,11 @@
 
 package io.quckoo.console.components
 
+import io.quckoo.console.libs._
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+
 import org.scalajs.jquery._
 
 import scala.scalajs.js

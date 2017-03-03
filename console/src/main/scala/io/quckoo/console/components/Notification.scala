@@ -18,6 +18,7 @@ package io.quckoo.console.components
 
 import io.quckoo.Fault
 import io.quckoo.console.components.Notification._
+import io.quckoo.console.libs._
 
 import japgolly.scalajs.react.ReactNode
 import japgolly.scalajs.react.vdom.prefix_<^._

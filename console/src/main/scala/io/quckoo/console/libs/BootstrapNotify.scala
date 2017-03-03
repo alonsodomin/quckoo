@@ -14,20 +14,27 @@
  * limitations under the License.
  */
 
-package io.quckoo.console
+package io.quckoo.console.libs
 
-import enumeratum._
+import org.scalajs.jquery.JQueryStatic
+
+import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 
 /**
-  * Created by alonsodomin on 26/03/2016.
+  * Created by alonsodomin on 28/03/2016.
   */
-sealed trait ConsoleRoute extends EnumEntry with EnumEntry.Lowercase
-object ConsoleRoute extends Enum[ConsoleRoute] {
-  case object Root      extends ConsoleRoute
-  case object Dashboard extends ConsoleRoute
-  case object Login     extends ConsoleRoute
-  case object Registry  extends ConsoleRoute
-  case object Scheduler extends ConsoleRoute
+@js.native
+trait BootstrapNotify extends JQueryStatic {
 
-  val values = findValues
+  @JSName("notify")
+  def showNotification(content: String, options: js.Any = js.Dynamic.literal()): this.type =
+    js.native
+
+  @JSName("notifyDefaults")
+  def notificationDefaults(options: js.Any): BootstrapNotify = js.native
+
+  @JSName("notifyClose")
+  def closeNotification(id: String = "all"): BootstrapNotify = js.native
+
 }

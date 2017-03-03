@@ -255,7 +255,7 @@ lazy val clusterShared = (project in file("cluster/shared"))
 lazy val clusterMaster = (project in file("cluster/master"))
   .enablePlugins(
     AutomateHeaderPlugin,
-    SbtSass,
+    SbtSassify,
     SbtTwirl,
     JavaServerAppPackaging,
     DockerPlugin
@@ -297,6 +297,7 @@ lazy val clusterWorker = (project in file("cluster/worker"))
 // Misc Utilities ===========================================
 
 lazy val util = (crossProject in file("util"))
+  .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .jsSettings(Dependencies.utilJS)
   .settings(moduleName := "quckoo-util")

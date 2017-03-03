@@ -52,8 +52,8 @@ object SiteMap {
       import dsl._
 
       (emptyRule
-        | staticRoute(root, RootRoute) ~> redirectToPage(DashboardRoute)(Redirect.Push)
-        | staticRoute("#login", LoginRoute) ~> render(loginPage(proxy)(None)))
+        | staticRoute(root, Root) ~> redirectToPage(Dashboard)(Redirect.Push)
+        | staticRoute("#login", Login) ~> render(loginPage(proxy)(None)))
     }
 
   private[this] def privatePages(proxy: ModelProxy[ConsoleScope]) =
@@ -69,9 +69,9 @@ object SiteMap {
         Some(render(loginPage(proxy)(Some(referral))))
 
       (emptyRule
-        | staticRoute("#home", DashboardRoute) ~> render(dashboardPage(proxy))
-        | staticRoute("#registry", RegistryRoute) ~> render(registryPage(proxy))
-        | staticRoute("#scheduler", SchedulerRoute) ~> render(schedulerPage(proxy)))
+        | staticRoute("#home", Dashboard) ~> render(dashboardPage(proxy))
+        | staticRoute("#registry", Registry) ~> render(registryPage(proxy))
+        | staticRoute("#scheduler", Scheduler) ~> render(schedulerPage(proxy)))
         .addCondition(isLoggedIn)(redirectToLogin)
     }
 
@@ -82,15 +82,15 @@ object SiteMap {
       (emptyRule
         | publicPages(proxy)
         | privatePages(proxy))
-        .notFound(redirectToPage(RootRoute)(Redirect.Replace))
+        .notFound(redirectToPage(Root)(Redirect.Replace))
         .renderWith(layout(proxy))
-        .verify(ConsoleRoute.all.head, ConsoleRoute.all.tail: _*)
+        .verify(ConsoleRoute.values.head, ConsoleRoute.values.tail: _*)
     }
 
   val mainMenu = List(
-    NavigationItem(Icons.dashboard, "Dashboard", DashboardRoute),
-    NavigationItem(Icons.book, "Registry", RegistryRoute),
-    NavigationItem(Icons.clockO, "Scheduler", SchedulerRoute)
+    NavigationItem(Icons.dashboard, "Dashboard", Dashboard),
+    NavigationItem(Icons.book, "Registry", Registry),
+    NavigationItem(Icons.clockO, "Scheduler", Scheduler)
   )
 
   def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute],

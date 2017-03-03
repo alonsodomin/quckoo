@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.components
+package io.quckoo.console
 
-import org.scalajs.jquery.JQuery
+import org.scalajs.jquery.{JQuery, JQueryStatic}
 
-import scala.scalajs.js
+import scala.language.implicitConversions
 
 /**
-  * Created by alonsodomin on 20/02/2016.
+  * Created by alonsodomin on 02/03/2017.
   */
-@js.native
-trait BootstrapJQuery extends JQuery {
-  def modal(action: String): BootstrapJQuery  = js.native
-  def modal(options: js.Any): BootstrapJQuery = js.native
+package object libs {
+
+  // JQuery plugins
+
+  implicit def toBootstrapJQuery(jq: JQuery): BootstrapJQuery =
+    jq.asInstanceOf[BootstrapJQuery]
+
+  implicit def jq2Notify(jq: JQueryStatic): BootstrapNotify =
+    jq.asInstanceOf[BootstrapNotify]
+
 }

@@ -25,8 +25,6 @@ import io.quckoo._
 import japgolly.scalajs.react.ReactNode
 import japgolly.scalajs.react.extra.Reusability
 
-import org.scalajs.jquery.{JQuery, JQueryStatic}
-
 import org.threeten.bp.{LocalDate, LocalDateTime, LocalTime, ZonedDateTime}
 
 import scalacss.Defaults._
@@ -82,13 +80,5 @@ package object components {
 
   implicit def toReactNode(notification: Notification): ReactNode =
     notification.inline
-
-  // JQuery plugins
-
-  implicit def toBootstrapJQuery(jq: JQuery): BootstrapJQuery =
-    jq.asInstanceOf[BootstrapJQuery]
-
-  implicit def jq2Notify(jq: JQueryStatic): BootstrapNotify =
-    jq.asInstanceOf[BootstrapNotify]
 
 }
