@@ -23,6 +23,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import org.scalajs.dom.html
+import scala.scalajs.js
 
 /**
   * Created by alonsodomin on 02/03/2017.
@@ -56,7 +57,7 @@ object CodeEditor {
     }
 
     def render(props: Props, state: State) = {
-      <.textarea(props.attrs)
+      <.textarea(^.`class` := "form-control", props.attrs)
     }
 
   }
@@ -66,7 +67,11 @@ object CodeEditor {
     .renderBackend[Backend]
     .componentDidMount($ => Callback {
       val textArea = $.getDOMNode().asInstanceOf[html.TextArea]
-      val codeMirror = CodeMirror.fromTextArea(textArea)
+      val codeMirror = CodeMirror.fromTextArea(textArea, js.Dynamic.literal(
+        "mode" -> "shell",
+        "linenumbers" -> true,
+        "theme" -> "solarized light"
+      ))
       $.backend.mounted($.state, codeMirror)
     })
     .build
