@@ -16,6 +16,8 @@
 
 package io.quckoo.console.components
 
+import io.quckoo.console.test.ConsoleTestExports
+
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.test._
 
@@ -23,7 +25,7 @@ import japgolly.scalajs.react.test._
   * Created by alonsodomin on 25/02/2017.
   */
 object TextAreaTestDsl {
-  import TextAreaTestExports._
+  import ConsoleTestExports._
 
   final case class TextAreaState(text: Option[String] = None)
 

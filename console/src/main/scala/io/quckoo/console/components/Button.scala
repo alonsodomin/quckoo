@@ -37,8 +37,7 @@ object Button {
   case class State(enabled: Boolean = true)
 
   val component = ReactComponentB[Props]("Button")
-    .initialState(State())
-    .renderPCS { (_, p, children, state) =>
+    .renderPC { (_, p, children) =>
       val buttonType = if (p.onClick.isEmpty) "submit" else "button"
       <.button(
         lookAndFeel.buttonOpt(p.style),

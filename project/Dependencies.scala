@@ -75,7 +75,7 @@ object Dependencies {
     // JavaScript Libraries
 
     val animate          = "3.2.2"
-    val jquery           = "1.12.4"
+    val jquery           = "2.2.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
     val fontAwesome      = "4.7.0"

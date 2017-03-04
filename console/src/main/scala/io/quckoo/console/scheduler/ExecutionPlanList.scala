@@ -47,10 +47,8 @@ object ExecutionPlanList {
     'Next
   )
 
-  final val AllFilter: Table.Filter[PlanId, ExecutionPlan] =
-    (id, plan) => true
   final val ActiveFilter: Table.Filter[PlanId, ExecutionPlan] =
-    (id, plan) => plan.nextExecutionTime.isDefined
+    (id, plan) => !plan.finished && plan.nextExecutionTime.isDefined
   final val InactiveFilter: Table.Filter[PlanId, ExecutionPlan] =
     (id, plan) => !ActiveFilter(id, plan)
 
@@ -94,7 +92,7 @@ object ExecutionPlanList {
       props.proxy.dispatchCB(CancelExecutionPlan(planId))
 
     def rowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
-      if (plan.nextExecutionTime.isDefined) {
+      if (!plan.finished && plan.nextExecutionTime.isDefined) {
         Seq(
           Table.RowAction[PlanId, ExecutionPlan](
             NonEmptyList(Icons.stop, "Cancel"),
@@ -104,7 +102,7 @@ object ExecutionPlanList {
     }
 
     def filterClicked(filterType: Symbol): Callback = filterType match {
-      case 'All      => $.modState(_.copy(filter = AllFilter))
+      case 'All      => $.modState(_.copy(filter = Table.NoFilter))
       case 'Active   => $.modState(_.copy(filter = ActiveFilter))
       case 'Inactive => $.modState(_.copy(filter = InactiveFilter))
     }
@@ -128,7 +126,7 @@ object ExecutionPlanList {
   }
 
   private[this] val component = ReactComponentB[Props]("ExecutionPlanList")
-    .initialState(State(filter = AllFilter))
+    .initialState(State(filter = Table.NoFilter))
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))
     .build

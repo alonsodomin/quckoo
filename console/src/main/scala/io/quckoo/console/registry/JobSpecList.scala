@@ -38,7 +38,6 @@ object JobSpecList {
 
   final val Columns = List('Name, 'Description, 'Package, 'Status)
 
-  final val AllFilter: Table.Filter[JobId, JobSpec]      = (id, job) => true
   final val DisabledFilter: Table.Filter[JobId, JobSpec] = (id, job) => job.disabled
   final val EnabledFilter: Table.Filter[JobId, JobSpec]  = !DisabledFilter(_, _)
 
@@ -81,7 +80,7 @@ object JobSpecList {
     }
 
     def filterClicked(filterType: Symbol): Callback = filterType match {
-      case 'All      => $.modState(_.copy(filter = AllFilter))
+      case 'All      => $.modState(_.copy(filter = Table.NoFilter))
       case 'Enabled  => $.modState(_.copy(filter = EnabledFilter))
       case 'Disabled => $.modState(_.copy(filter = DisabledFilter))
     }
@@ -105,7 +104,7 @@ object JobSpecList {
   }
 
   private[this] val component = ReactComponentB[Props]("JobSpecList")
-    .initialState(State(AllFilter))
+    .initialState(State(Table.NoFilter))
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))
     .build

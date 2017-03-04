@@ -19,6 +19,8 @@ package io.quckoo.console.components
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test.ReactTestUtils
 
+import io.quckoo.console.test.ConsoleTestExports
+
 import org.scalatest.FunSuite
 
 import scala.concurrent.duration._
@@ -27,7 +29,7 @@ import scala.concurrent.duration._
   * Created by alonsodomin on 26/02/2017.
   */
 class FiniteDurationInputTest extends FunSuite {
-  import FiniteDurationInputTestExports._
+  import ConsoleTestExports._
   import FiniteDurationInputTestDsl._
 
   val invariants: dsl.Invariants = {
@@ -56,6 +58,7 @@ class FiniteDurationInputTest extends FunSuite {
     val plan = Plan.action(
       currentLength.assert.equal(None) +>
       validUnitOffer +>
+      validationMsg.map(_.isDefined).assert.equal(false) +>
       setLength(324) >> currentLength.assert.equal(Some(324)) +>
       chooseUnit(MINUTES) >> selectedUnit.assert.equal(Some(MINUTES)) +>
       setLength(-1) >> validationMsg.map(_.isDefined).assert.equal(true) +>

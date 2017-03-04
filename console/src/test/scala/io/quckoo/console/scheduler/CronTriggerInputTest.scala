@@ -17,6 +17,7 @@
 package io.quckoo.console.scheduler
 
 import io.quckoo.Trigger
+import io.quckoo.console.test.ConsoleTestExports
 
 import japgolly.scalajs.react.test.ReactTestUtils
 
@@ -26,7 +27,7 @@ import org.scalatest.FunSuite
   * Created by alonsodomin on 03/09/2016.
   */
 class CronTriggerInputTest extends FunSuite {
-  import CronTriggerInputTestExports._
+  import ConsoleTestExports._
   import CronTriggerInputTestDsl._
 
   implicit val triggerEq = _root_.scalaz.Equal.equalA[Trigger.Cron]

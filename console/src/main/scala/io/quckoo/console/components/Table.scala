@@ -36,6 +36,7 @@ object Table {
   type ItemSeq[Id, Item] = Traversable[(Id, Pot[Item])]
 
   type Filter[Id, Item] = (Id, Item) => Boolean
+  def NoFilter[Id, Item]: Filter[Id, Item] = (_, _) => true
 
   final case class RowAction[Id, Item](children: NonEmptyList[ReactNode], execute: RowCallback[Id])
 

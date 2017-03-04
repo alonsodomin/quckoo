@@ -16,6 +16,8 @@
 
 package io.quckoo.console.security
 
+import io.quckoo.console.test.ConsoleTestExports
+
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.test.ReactTestUtils
 
@@ -25,7 +27,7 @@ import org.scalatest.FunSuite
   * Created by alonsodomin on 11/07/2016.
   */
 class LoginTest extends FunSuite {
-  import LoginTestExports._
+  import ConsoleTestExports._
   import LoginTestDsl._
 
   val invariants: dsl.Invariants = {

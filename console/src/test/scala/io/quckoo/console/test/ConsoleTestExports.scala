@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.scheduler
+package io.quckoo.console.test
 
 import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
 import teststate.domzipper.sizzle
 
 /**
-  * Created by alonsodomin on 03/09/2016.
+  * Created by alonsodomin on 04/03/2017.
   */
-object CronTriggerInputTestExports extends Exports
+object ConsoleTestExports extends Exports
   with ExtScalaJsReact
   with ExtScalaz
   with sizzle.Exports
