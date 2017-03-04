@@ -32,9 +32,11 @@ import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
 
 import org.threeten.bp.Clock
+
 import slogging.LazyLogging
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+
 import scalaz.{-\/, \/-}
 
 /**
@@ -60,7 +62,7 @@ object ConsoleCircuit
     scheduleHandler,
     executionPlanMapHandler,
     taskHandler,
-    notificationHandler
+    globalHandler
   )
 
   def zoomIntoPassport: ModelRW[ConsoleScope, Option[Passport]] =
@@ -93,10 +95,20 @@ object ConsoleCircuit
       model.copy(executions = tasks)
     }
 
-  val notificationHandler: HandlerFunction = (model, action) =>
+  val globalHandler: HandlerFunction = (model, action) =>
     action match {
       case Growl(notification) =>
         notification.growl()
+        None
+
+      case StartClusterSubscription =>
+        if (!model.subscribed) {
+          model.passport.map { implicit passport =>
+            logger.debug("Opening console subscription channels...")
+            openSubscriptionChannels
+            ActionResult.ModelUpdate(model.copy(subscribed = true))
+          }
+        }
         None
   }
 
@@ -130,12 +142,6 @@ object ConsoleCircuit
 
       case ClusterStateLoaded(state) =>
         updated(state, StartClusterSubscription)
-
-      case StartClusterSubscription =>
-        withAuth { implicit passport =>
-          openSubscriptionChannels
-          noChange
-        }
 
       case evt: MasterEvent =>
         val notification = evt match {

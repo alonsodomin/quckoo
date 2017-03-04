@@ -30,7 +30,8 @@ import monocle.macros.Lenses
     passport: Option[Passport],
     clusterState: QuckooState,
     userScope: UserScope,
-    lastLogin: Option[LocalDateTime]
+    lastLogin: Option[LocalDateTime],
+    subscribed: Boolean
 )
 
 object ConsoleScope {
@@ -40,7 +41,8 @@ object ConsoleScope {
       passport = None,
       clusterState = QuckooState(),
       userScope = UserScope.initial,
-      lastLogin = None
+      lastLogin = None,
+      subscribed = false
     )
 
 }

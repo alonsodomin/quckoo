@@ -20,14 +20,15 @@ import diode._
 
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
+import io.quckoo.protocol.cluster.GetClusterStatus
 
 import japgolly.scalajs.react.extra.router.RouterCtl
 
-import org.threeten.bp.{Clock, LocalDateTime}
+import org.threeten.bp.LocalDateTime
 
 import slogging.LazyLogging
 
-import scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
   * Created by alonsodomin on 26/03/2016.
@@ -37,8 +38,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
 
   import ConsoleRoute._
   import ActionResult._
-
-  val clock = Clock.systemUTC
+  import ConsoleCircuit.Implicits.consoleClock
 
   val authFailedNotification = Notification.danger("Username or password incorrect")
 
@@ -55,10 +55,11 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
         val destination = referral.getOrElse(Dashboard)
         val newModel = currentModel.copy(
           passport = Some(passport),
-          lastLogin = Some(LocalDateTime.now(clock))
+          lastLogin = Some(LocalDateTime.now(consoleClock))
         )
         logger.info("Successfully logged in! Redirecting to {}", destination.entryName)
-        ModelUpdateEffect(newModel, NavigateTo(destination))
+        val effects = Effects.seq(NavigateTo(destination), GetClusterStatus)
+        ModelUpdateEffect(newModel, effects)
 
       case LoggedOut =>
         logger.info("Successfully logged out.")
