@@ -354,4 +354,4 @@ lazy val exampleProducers = (project in file("examples/producers"))
 
 addCommandAlias("testJS",
                 ";coreJS/test;apiJS/test;clientJS/test;console/test")
-addCommandAlias("validate", ";test;clusterMaster/multi-jvm:test")
+addCommandAlias("validate", ";test;master/multi-jvm:test")
