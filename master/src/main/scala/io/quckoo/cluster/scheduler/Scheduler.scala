@@ -193,7 +193,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
       context become ready
 
     case WarmUp.Failed(ex) =>
-      log.error("Error during Scheduler warm up: {}", ex.getMessage)
+      log.error(ex, "Error during Scheduler warm up.")
       import context.dispatcher
       context.system.scheduler.scheduleOnce(2 seconds, () => warmUp())
       unstashAll()
@@ -347,7 +347,7 @@ private class ExecutionDriverTerminator(
   }
 
   def waitingForTermination: Receive = {
-    case response @ ExecutionPlanFinished(jobId, `planId`, dateTime) =>
+    case ExecutionPlanFinished(jobId, `planId`, dateTime) =>
       log.debug("Execution plan '{}' has been stopped.", planId)
       killCmd.replyTo ! ExecutionPlanCancelled(jobId, planId, dateTime)
       mediator ! Unsubscribe(TopicTag.Scheduler.name, self)

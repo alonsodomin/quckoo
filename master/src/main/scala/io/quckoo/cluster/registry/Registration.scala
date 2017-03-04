@@ -108,14 +108,14 @@ class JarRegistration private[registry] (
   }
 
   def resolvingArtifact: Receive = {
-    case ArtifactResolved(artifact) =>
-      log.debug("Job artifact has been successfully resolved. artifactId={}", artifact.artifactId)
+    case ArtifactResolved(_) =>
+      log.debug("Artifact {} for job '{}' has been successfully resolved.", artifactId, jobId)
       shardsGuardian ! PersistentJob.CreateJob(jobId, jobSpec)
       context.setReceiveTimeout(10 seconds)
       context become awaitAcceptance
 
     case ResolutionFailed(_, cause) =>
-      log.error("Couldn't validate the job artifact id. " + cause)
+      log.error("Couldn't validate the artifact {} for job '{}'. Reason: {}", artifactId, jobId, cause)
       replyTo ! JobRejected(jobId, cause)
       finish()
   }

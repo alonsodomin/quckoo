@@ -116,7 +116,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
     case RemoveWorker(workerId) if workers.contains(workerId) =>
       def killTask(taskId: TaskId): Unit = {
-        log.info("Killing task {}", taskId)
+        log.info("Killing task '{}'", taskId)
         // TODO define a better message to interrupt the execution
         inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
         inProgressTasks -= taskId
@@ -145,7 +145,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
             workers += (workerId        -> workerState.copy(status = Busy(task.id, timeout)))
             inProgressTasks += (task.id -> lifecycle)
 
-            log.info("Delivering execution to worker. taskId={}, workerId={}", task.id, workerId)
+            log.info("Delivering task '{}' to worker '{}'.", task.id, workerId)
             workerState.ref ! task
             lifecycle ! ExecutionLifecycle.Start
 
@@ -170,7 +170,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
           pendingTasks = dequeueTask
 
         case _ =>
-          log.info("Receiver a request for tasks from a busy Worker. workerId={}", workerId)
+          log.info("Receiver a request for tasks from worker '{}', which is in a busy state.", workerId)
       }
 
     case TaskDone(workerId, taskId, result) =>
@@ -178,7 +178,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         // Assume that previous Ack was lost so resend it again
         sender ! TaskDoneAck(taskId)
       } else {
-        log.info("Execution finished by worker. workerId={}, taskId={}", workerId, taskId)
+        log.info("Execution of task '{}' finished by worker '{}'.", workerId, taskId)
         changeWorkerToIdle(workerId, taskId)
         inProgressTasks(taskId) ! ExecutionLifecycle.Finish(None)
         inProgressTasks -= taskId
@@ -192,7 +192,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       }
 
     case TaskFailed(workerId, taskId, cause) if inProgressTasks.contains(taskId) =>
-      log.error("Worker failed executing given task. workerId={}, taskId={}", workerId, taskId)
+      log.error("Worker '{}' failed executing task '{}'.", workerId, taskId)
       changeWorkerToIdle(workerId, taskId)
       inProgressTasks(taskId) ! ExecutionLifecycle.Finish(Some(cause))
       inProgressTasks -= taskId
@@ -204,7 +204,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
     case Enqueue(task) =>
       // Enqueue messages will always come from inside the cluster so accept them all
-      log.debug("Enqueueing task {} before sending to workers.", task.id)
+      log.debug("Enqueueing task '{}' before sending to workers.", task.id)
       pendingTasks = pendingTasks.enqueue((task, sender()))
       replicator ! Replicator
         .Update(PendingKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {

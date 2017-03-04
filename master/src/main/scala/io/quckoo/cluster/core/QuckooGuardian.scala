@@ -144,13 +144,13 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
   private[this] def defaultActivity: Receive = {
     case Connect =>
       clients += sender()
-      log.info("Quckoo client connected to cluster node from address: {}", sender().path.address)
+      log.info("Quckoo client connected to master node from address: {}", sender().path.address)
       sender() ! Connected
 
     case Disconnect =>
       clients -= sender()
       log.info(
-        "Quckoo client disconnected from cluster node from address: {}",
+        "Quckoo client disconnected from master node from address: {}",
         sender().path.address)
       sender() ! Disconnected
 

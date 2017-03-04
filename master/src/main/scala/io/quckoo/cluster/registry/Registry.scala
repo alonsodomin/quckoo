@@ -175,7 +175,7 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
       context become ready
 
     case WarmUp.Failed(ex) =>
-      log.error("Error during Registry warm up: {}", ex.getMessage)
+      log.error(ex, "Error during Registry warm up.")
       import context.dispatcher
       context.system.scheduler.scheduleOnce(2 seconds, () => warmUp())
       unstashAll()
@@ -186,7 +186,7 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
 
   private def handleEvent(event: RegistryEvent): Unit = event match {
     case JobAccepted(jobId, _) =>
-      log.debug("Indexing job {}", jobId)
+      log.debug("Indexing job '{}'", jobId)
       jobIds += jobId
 
     case _ =>

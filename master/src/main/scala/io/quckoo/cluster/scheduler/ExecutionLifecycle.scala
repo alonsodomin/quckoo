@@ -115,7 +115,7 @@ class ExecutionLifecycle(
 
   when(Sleeping) {
     case Event(Awake(task, queue), _) =>
-      log.debug("Execution waking up. taskId={}", task.id)
+      log.debug("Execution for task '{}' waking up.", task.id)
       goto(Enqueuing) applying Awaken(task, planId, queue) forMax enqueueTimeout
 
     case Event(Cancel(reason), data) =>
@@ -128,7 +128,7 @@ class ExecutionLifecycle(
 
   when(Enqueuing) {
     case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
-      log.debug("Queue has accepted task {}.", taskId)
+      log.debug("Queue has accepted task '{}'.", taskId)
       goto(Waiting) applying Triggered(task)
 
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
@@ -137,24 +137,24 @@ class ExecutionLifecycle(
     case Event(StateTimeout, ExecutionState(_, Some(task), Some(queue), _)) =>
       enqueueAttempts += 1
       if (enqueueAttempts < maxEnqueueAttempts) {
-        log.debug("Task {} failed to be enqueued. Retrying...", task.id)
+        log.debug("Task '{}' failed to be enqueued. Retrying...", task.id)
         queue ! TaskQueue.Enqueue(task)
         stay forMax enqueueTimeout
       } else {
-        log.debug("Task {} failed to be enqueued after {} attempts.", task.id, enqueueAttempts)
+        log.debug("Task '{}' failed to be enqueued after {} attempts.", task.id, enqueueAttempts)
         stop applying Cancelled(FailedToEnqueue)
       }
   }
 
   when(Waiting) {
     case Event(Start, ExecutionState(_, Some(task), _, _)) =>
-      log.info("Execution of task {} starting", task.id)
+      log.info("Execution of task '{}' starting", task.id)
       val st = goto(Running) applying Started
       executionTimeout.map(duration => st forMax duration).getOrElse(st)
 
     case Event(Cancel(reason), data) =>
       log.debug(
-        "Cancelling execution of task {} upon request. Reason: {}",
+        "Cancelling execution of task '{}' upon request. Reason: {}",
         data.task.get.id,
         reason)
       stop applying Cancelled(reason)
@@ -176,14 +176,14 @@ class ExecutionLifecycle(
       stop applying Cancelled(reason)
 
     case Event(Finish(result), ExecutionState(_, Some(task), _, _)) =>
-      log.debug("Execution finishing. taskId={}", task.id)
+      log.debug("Execution for task '{}' finishing.", task.id)
       stop applying Completed(result)
 
     case Event(TimeOut, _) =>
       stop applying TimedOut
 
     case Event(StateTimeout, ExecutionState(_, Some(task), Some(queue), _)) =>
-      log.debug("Execution has timed out, notifying queue. taskId={}", task.id)
+      log.debug("Execution for task '{}' has timed out, notifying queue.", task.id)
       queue ! TaskQueue.TimeOut(task.id)
       stay
   }
@@ -201,13 +201,13 @@ class ExecutionLifecycle(
     event match {
       case Awaken(task, `planId`, queue) =>
         log.debug(
-          "Execution lifecycle for task {} is allocating a slot at the local queue.",
+          "Execution lifecycle for task '{}' is allocating a slot at the local queue.",
           task.id)
         queue ! TaskQueue.Enqueue(task)
         previous.copy(task = Some(task), queue = Some(queue))
 
       case event @ Triggered(task) =>
-        log.debug("Execution for task {} has been triggered.", task.id)
+        log.debug("Execution for task '{}' has been triggered.", task.id)
         context.parent ! event
         previous
 
