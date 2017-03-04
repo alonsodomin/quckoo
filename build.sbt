@@ -148,7 +148,9 @@ lazy val quckoo = (project in file("."))
     apiJVM,
     clientJS,
     clientJVM,
-    cluster,
+    shared,
+    master,
+    worker,
     console,
     examples,
     utilJS,
@@ -233,26 +235,20 @@ lazy val console = (project in file("console"))
   )
   .dependsOn(clientJS, testSupportJS % Test)
 
-// Cluster ==================================================
+// Server ==================================================
 
-lazy val cluster = (project in file("cluster"))
-  .settings(name := "quckoo-cluster")
-  .settings(noPublishSettings)
-  .settings(scoverageSettings)
-  .aggregate(clusterShared, clusterMaster, clusterWorker)
-
-lazy val clusterShared = (project in file("cluster/shared"))
+lazy val shared = (project in file("shared"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
+  .settings(scoverageSettings)
   .settings(publishSettings: _*)
   .settings(Dependencies.clusterShared)
   .settings(
-    name := "cluster-shared",
-    moduleName := "quckoo-cluster-shared"
+    moduleName := "quckoo-shared"
   )
   .dependsOn(apiJVM, testSupportJVM % Test)
 
-lazy val clusterMaster = (project in file("cluster/master"))
+lazy val master = (project in file("master"))
   .enablePlugins(
     AutomateHeaderPlugin,
     SbtSassify,
@@ -262,37 +258,37 @@ lazy val clusterMaster = (project in file("cluster/master"))
   )
   .configs(MultiJvm)
   .settings(commonSettings: _*)
+  .settings(scoverageSettings)
   .settings(publishSettings: _*)
   .settings(Revolver.settings: _*)
   .settings(Dependencies.clusterMaster)
   .settings(MultiNode.settings)
   .settings(Packaging.masterSettings: _*)
   .settings(
-    name := "cluster-master",
-    moduleName := "quckoo-cluster-master",
+    moduleName := "quckoo-master",
     scalaJSProjects := Seq(console),
-    baseDirectory in reStart := file("cluster/master/target"),
+    baseDirectory in reStart := file("master/target"),
     compile in Compile := ((compile in Compile) dependsOn scalaJSPipeline).value,
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
     pipelineStages in Assets := Seq(scalaJSPipeline),
     devCommands in scalaJSPipeline ++= Seq("test", "testQuick", "testOnly", "docker:publishLocal")
   )
-  .dependsOn(clusterShared, testSupportJVM % Test)
+  .dependsOn(shared, testSupportJVM % Test)
 
-lazy val clusterWorker = (project in file("cluster/worker"))
+lazy val worker = (project in file("worker"))
   .enablePlugins(AutomateHeaderPlugin, JavaServerAppPackaging, DockerPlugin)
   .settings(commonSettings: _*)
+  .settings(scoverageSettings)
   .settings(publishSettings: _*)
   .settings(Revolver.settings: _*)
   .settings(Dependencies.clusterWorker)
   .settings(Packaging.workerSettings: _*)
   .settings(
-    name := "cluster-worker",
-    moduleName := "quckoo-cluster-worker",
-    baseDirectory in reStart := file("cluster/worker/target")
+    moduleName := "quckoo-worker",
+    baseDirectory in reStart := file("worker/target")
   )
-  .dependsOn(clusterShared, testSupportJVM % Test)
+  .dependsOn(shared, testSupportJVM % Test)
 
 // Misc Utilities ===========================================
 
