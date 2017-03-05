@@ -86,7 +86,6 @@ object JobForm {
 
     val displayNameInput = Input[String]()
     val descriptionInput = Input[String]()
-    val jobClassInput    = Input[String]()
 
     def render(props: Props, state: State) = {
       <.form(^.name := "jobDetails", ^.`class` := "form-horizontal",
@@ -101,7 +100,7 @@ object JobForm {
               Button(Button.Props(
                 Some(submitForm() >> hide),
                 style = ContextStyle.primary,
-                disabled = !state.spec.valid
+                disabled = props.spec.isDefined || !state.spec.valid
               ), "Ok")
             ),
             closed = formClosed(props, state)
@@ -113,7 +112,8 @@ object JobForm {
                 state.spec.displayName,
                 onDisplayNameUpdate _,
                 ^.id := "displayName",
-                ^.placeholder := "Job's name"
+                ^.placeholder := "Job's name",
+                ^.readOnly := props.spec.isDefined
               )
             )
           ),
@@ -124,11 +124,12 @@ object JobForm {
                 state.spec.description,
                 onDescriptionUpdate _,
                 ^.id := "description",
-                ^.placeholder := "Job's description"
+                ^.placeholder := "Job's description",
+                ^.readOnly := props.spec.isDefined
               )
             )
           ),
-          JobPackageSelect(state.spec.jobPackage, onJobPackageUpdate)
+          JobPackageSelect(state.spec.jobPackage, onJobPackageUpdate, props.spec.isDefined)
         )
       )
     }

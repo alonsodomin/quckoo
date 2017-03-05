@@ -42,10 +42,10 @@ object ShellScriptPackageInput {
 
   type OnUpdate = Option[ShellScriptPackage] => Callback
 
-  case class Props(value: Option[ShellScriptPackage], onUpdate: OnUpdate)
+  case class Props(value: Option[ShellScriptPackage], readOnly: Boolean, onUpdate: OnUpdate)
   case class State(content: Option[String])
 
-  implicit val propsReuse: Reusability[Props] = Reusability.by(_.value)
+  implicit val propsReuse: Reusability[Props] = Reusability.caseClassExcept('onUpdate)
   implicit val stateReuse: Reusability[State] = Reusability.caseClass[State]
 
   class Backend($: BackendScope[Props, State]) {
@@ -57,12 +57,17 @@ object ShellScriptPackageInput {
       $.modState(_.copy(content = value), propagateChange)
 
     def render(props: Props, state: State) = {
+      def opts = {
+        if (props.readOnly) EditorOptions.copy(readOnly = "nocursor")
+        else EditorOptions
+      }
+
       <.div(lnf.formGroup,
         <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "script_content", "Script"),
         <.div(^.`class` := "col-sm-10",
           CodeEditor(state.content,
             onContentUpdate _,
-            EditorOptions,
+            opts,
             ^.id := "script_content",
             ^.height := 250
           )
@@ -78,7 +83,7 @@ object ShellScriptPackageInput {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[ShellScriptPackage], onUpdate: OnUpdate) =
-    component(Props(value, onUpdate))
+  def apply(value: Option[ShellScriptPackage], onUpdate: OnUpdate, readOnly: Boolean = false) =
+    component(Props(value, readOnly, onUpdate))
 
 }
