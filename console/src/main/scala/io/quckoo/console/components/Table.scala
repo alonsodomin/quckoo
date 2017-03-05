@@ -65,7 +65,7 @@ object Table {
 
   private[this] case class CheckboxCellProps(
       id: String,
-      selected: Boolean,
+      checked: Boolean,
       action: Callback,
       header: Boolean = false
   )
@@ -147,17 +147,28 @@ object Table {
       selected: Set[Id],
       style: Set[TableStyle.Value]
   )
-  final case class State[Id](selected: Set[Id], allSelected: Boolean = false)
+  final case class State[Id](selected: Set[Id])
 
   class Backend[Id, Item]($ : BackendScope[Props[Id, Item], State[Id]]) {
 
     private[this] def propagateSelection: Callback =
       $.props.flatMap(p => $.state.flatMap(s => p.onSelect.map(_(s.selected)).getOrElse(Callback.empty)))
 
+    def visibleItems(props: Props[Id, Item]): ItemSeq[Id, Item] =
+      props.filter map { f =>
+        props.items.filter {
+          case (id, Ready(item)) => f(id, item)
+          case _                 => true
+        }
+      } getOrElse props.items
+
+    def allSelected(props: Props[Id, Item], state: State[Id]): Boolean =
+      visibleItems(props).map(_._1).forall(state.selected.contains)
+
     def toggleSelectAll(props: Props[Id, Item]): Callback = {
       def updateState(state: State[Id]): State[Id] = {
-        if (state.allSelected) state.copy(selected = Set.empty[Id], allSelected = false)
-        else state.copy(allSelected = true)
+        if (allSelected(props, state)) state.copy(selected = Set.empty[Id])
+        else state.copy(selected = props.items.map(_._1).toSet)
       }
 
       $.modState(updateState, propagateSelection)
@@ -188,7 +199,7 @@ object Table {
             val selectAllCheckbox = CheckboxCell.withKey("select-all")(
               CheckboxCellProps(
                 "selectAll",
-                state.allSelected,
+                allSelected(props, state),
                 toggleSelectAll(props),
                 header = true)
             )
@@ -201,13 +212,6 @@ object Table {
         } else selectableColumns
       }
 
-      val items = props.filter map { f =>
-        props.items.filter {
-          case (id, Ready(item)) => f(id, item)
-          case _                 => true
-        }
-      } getOrElse props.items
-
       val userStyles = props.onRowClick
         .map(_ => props.style + TableStyle.hover)
         .getOrElse(props.style)
@@ -215,7 +219,7 @@ object Table {
         .toSeq
       val style = if (userStyles.isEmpty) Seq(lookAndFeel.table.base) else userStyles
 
-      <.table(style, <.thead(<.tr(headers)), <.tbody(items.map {
+      <.table(style, <.thead(<.tr(headers)), <.tbody(visibleItems(props).map {
         case (id, item) =>
           row[Id, Item].withKey(s"row-$id")(
             RowProps(
@@ -225,7 +229,7 @@ object Table {
               props.render,
               props.onRowClick,
               props.onSelect.isDefined,
-              state.selected.contains(id) || state.allSelected,
+              state.selected.contains(id),
               toggleSelectItem(props),
               props.actions)
           )
