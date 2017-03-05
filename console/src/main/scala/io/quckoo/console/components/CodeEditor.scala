@@ -99,7 +99,7 @@ object CodeEditor {
         "tabSize"       -> props.options.tabSize,
         "inputStyle"    -> "contenteditable",
         "autoRefresh"   -> props.options.autoRefresh,
-        "readOnly"      -> props.options.readOnly
+        "readOnly"      -> props.options.readOnly.asInstanceOf[js.Any]
       )
     }
 

@@ -78,7 +78,6 @@ object Dependencies {
     val jquery           = "2.2.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val fontAwesome      = "4.7.0"
     val reactJs          = "15.4.2"
     val sparkMD5         = "2.0.2"
     val codemirror       = "5.24.2"
@@ -313,8 +312,6 @@ object Dependencies {
       scopt, authenticatJwt,
 
       "com.vmunier"      %% "scalajs-scripts" % version.scalaJSScripts,
-      "org.webjars"       % "bootstrap-sass"  % version.bootstrap,
-      "org.webjars"       % "font-awesome"    % version.fontAwesome,
       "org.webjars"       % "codemirror"      % version.codemirror,
       "org.webjars.bower" % "animatewithsass" % version.animate
     )
