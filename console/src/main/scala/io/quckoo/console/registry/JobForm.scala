@@ -35,9 +35,9 @@ object JobForm {
   @inline
   private def lnf = lookAndFeel
 
-  type RegisterHandler = Option[JobSpec] => Callback
+  type Handler = Option[JobSpec] => Callback
 
-  final case class Props(spec: Option[JobSpec], handler: RegisterHandler)
+  final case class Props(handler: Handler)
 
   @Lenses final case class EditableJobSpec(
     displayName: Option[String] = None,
@@ -53,16 +53,20 @@ object JobForm {
 
   }
 
-  @Lenses final case class State(spec: EditableJobSpec, cancelled: Boolean = true)
+  @Lenses final case class State(
+      spec: EditableJobSpec,
+      visible: Boolean = false,
+      readOnly: Boolean = false,
+      cancelled: Boolean = true
+  )
 
-  class JobFormBackend($: BackendScope[Props, State]) {
+  class Backend($: BackendScope[Props, State]) {
 
     val displayName = State.spec ^|-> EditableJobSpec.displayName
     val description = State.spec ^|-> EditableJobSpec.description
     val jobPackage  = State.spec ^|-> EditableJobSpec.jobPackage
 
-    def submitForm(): Callback =
-      $.modState(_.copy(cancelled = false))
+    // Event handlers
 
     def onDisplayNameUpdate(value: Option[String]) =
       $.setStateL(displayName)(value)
@@ -73,7 +77,7 @@ object JobForm {
     def onJobPackageUpdate(value: Option[JobPackage]) =
       $.setStateL(jobPackage)(value)
 
-    def formClosed(props: Props, state: State) = {
+    def onModalClosed(props: Props, state: State) = {
       val jobSpec: Option[JobSpec] = if (!state.cancelled) {
         for {
           name  <- state.spec.displayName
@@ -81,66 +85,85 @@ object JobForm {
         } yield JobSpec(name, state.spec.description, pckg)
       } else None
 
-      props.handler(jobSpec)
+      $.modState(_.copy(visible = false)) >> props.handler(jobSpec)
     }
+
+    // Actions
+
+    def submitForm(): Callback =
+      $.modState(_.copy(visible = false, cancelled = false))
+
+    def editJob(jobSpec: Option[JobSpec]): Callback =
+      $.modState(_.copy(spec = new EditableJobSpec(jobSpec), visible = true, readOnly = jobSpec.isDefined))
+
+    // Rendering
 
     val displayNameInput = Input[String]()
     val descriptionInput = Input[String]()
 
     def render(props: Props, state: State) = {
       <.form(^.name := "jobDetails", ^.`class` := "form-horizontal",
-        Modal(
-          Modal.Props(
-            header = hide => <.span(
-              <.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close),
-              <.h4("Register Job")
+        if (state.visible) {
+          Modal(
+            Modal.Props(
+              header = hide => <.span(
+                <.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close),
+                <.h4("Register Job")
+              ),
+              footer = hide => <.span(
+                Button(Button.Props(
+                  Some(hide),
+                  style = ContextStyle.default
+                ), "Cancel"),
+                Button(Button.Props(
+                  Some(submitForm() >> hide),
+                  style = ContextStyle.primary,
+                  disabled = state.readOnly || !state.spec.valid
+                ), "Save")
+              ),
+              onClosed = onModalClosed(props, state)
             ),
-            footer = hide => <.span(
-              Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
-              Button(Button.Props(
-                Some(submitForm() >> hide),
-                style = ContextStyle.primary,
-                disabled = props.spec.isDefined || !state.spec.valid
-              ), "Ok")
+            <.div(lnf.formGroup,
+              <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "displayName", "Display Name"),
+              <.div(^.`class` := "col-sm-10",
+                displayNameInput(
+                  state.spec.displayName,
+                  onDisplayNameUpdate _,
+                  ^.id := "displayName",
+                  ^.placeholder := "Job's name",
+                  ^.readOnly := state.readOnly
+                )
+              )
             ),
-            closed = formClosed(props, state)
-          ),
-          <.div(lnf.formGroup,
-            <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "displayName", "Display Name"),
-            <.div(^.`class` := "col-sm-10",
-              displayNameInput(
-                state.spec.displayName,
-                onDisplayNameUpdate _,
-                ^.id := "displayName",
-                ^.placeholder := "Job's name",
-                ^.readOnly := props.spec.isDefined
+            <.div(lnf.formGroup,
+              <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "description", "Description"),
+              <.div(^.`class` := "col-sm-10",
+                descriptionInput(
+                  state.spec.description,
+                  onDescriptionUpdate _,
+                  ^.id := "description",
+                  ^.placeholder := "Job's description",
+                  ^.readOnly := state.readOnly
+                )
               )
-            )
-          ),
-          <.div(lnf.formGroup,
-            <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "description", "Description"),
-            <.div(^.`class` := "col-sm-10",
-              descriptionInput(
-                state.spec.description,
-                onDescriptionUpdate _,
-                ^.id := "description",
-                ^.placeholder := "Job's description",
-                ^.readOnly := props.spec.isDefined
-              )
-            )
-          ),
-          JobPackageSelect(state.spec.jobPackage, onJobPackageUpdate, props.spec.isDefined)
-        )
+            ),
+            JobPackageSelect(state.spec.jobPackage, onJobPackageUpdate, state.readOnly)
+          )
+        } else EmptyTag
       )
     }
 
   }
 
-  private[this] val component = ReactComponentB[Props]("JobForm").
-    initialState_P(p => State(new EditableJobSpec(p.spec))).
-    renderBackend[JobFormBackend].
+  private[registry] val component = ReactComponentB[Props]("JobForm").
+    initialState_P(p => State(new EditableJobSpec(None))).
+    renderBackend[Backend].
     build
 
-  def apply(spec: Option[JobSpec], handler: RegisterHandler) = component(Props(spec, handler))
+  def apply(handler: Handler) =
+    component(Props(handler))
+
+  def apply(handler: Handler, refName: String) =
+    component.withRef(refName)(Props(handler))
 
 }

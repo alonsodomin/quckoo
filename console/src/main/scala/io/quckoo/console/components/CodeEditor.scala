@@ -25,6 +25,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 
 import enumeratum._
 
+import org.scalajs.dom.Event
 import scala.scalajs.js
 
 /**
@@ -103,21 +104,32 @@ object CodeEditor {
       )
     }
 
-    protected[CodeEditor] def mounted(props: Props, state: State): Callback = Callback {
+    protected[CodeEditor] def initialize(props: Props, state: State): Callback = Callback {
       val codeMirror = CodeMirror($.getDOMNode(), jsOptions(props))
 
-      state.value.foreach(codeMirror.setValue)
+      codeMirror.setValue(props.text.getOrElse(""))
       codeMirror.setSize(props.width, props.height)
+
       codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
+      codeMirror.on("blur", (cm, event) => onBlur(cm, event.asInstanceOf[Event]))
 
       codeMirror.refresh()
       codeMirror.markClean()
     }
 
+    private[this] def valueUpdated(editorValue: Option[String]): Unit = {
+      $.modState(_.copy(value = editorValue), propagateUpdate).runNow()
+    }
+
+    def onBlur(codeMirror: CodeMirror, event: Event): Unit = {
+      val editorValue = Option(codeMirror.getValue()).filterNot(_.isEmpty)
+      valueUpdated(editorValue)
+    }
+
     def onChange(codeMirror: CodeMirror, change: ChangeEvent): Unit = {
       val editorValue = Option(codeMirror.getValue()).filterNot(_.isEmpty)
       if (!editorValue.contains(change.removed.mkString("\n")))
-        $.modState(_.copy(value = editorValue), propagateUpdate).runNow()
+        valueUpdated(editorValue)
     }
 
     def render(props: Props, state: State) =
@@ -128,7 +140,7 @@ object CodeEditor {
   val component = ReactComponentB[Props]("CodeEditor")
     .initialState_P(props => State(props.text))
     .renderBackend[Backend]
-    .componentDidMount($ => $.backend.mounted($.props, $.state))
+    .componentDidMount($ => $.backend.initialize($.props, $.state))
     .build
 
   private[this] def extractWidthAndHeight(attrs: Seq[TagMod]): (Width, Height, List[TagMod]) = {

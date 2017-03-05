@@ -41,34 +41,29 @@ object RegistryPage {
   }
 
   case class Props(proxy: ModelProxy[ConsoleScope])
-  case class State(
-    editingJob: Option[JobSpec] = None,
-    showForm: Boolean = false
-  )
 
-  class RegistryBackend($ : BackendScope[Props, State]) {
+  private val formRef = Ref.to(JobForm.component, "jobForm")
 
-    def editJob(spec: Option[JobSpec]): Callback =
-      $.modState(_.copy(editingJob = spec, showForm = true))
+  class RegistryBackend($ : BackendScope[Props, Unit]) {
+
+    def editJob(spec: Option[JobSpec]): Callback = {
+      formRef($).map(_.backend.editJob(spec)).getOrElse(Callback.empty)
+    }
 
     def jobEdited(spec: Option[JobSpec]): Callback = {
       def dispatchAction(props: Props): Callback =
         spec.map(RegisterJob).map(props.proxy.dispatchCB[RegisterJob]).getOrElse(Callback.empty)
 
-      def updateState(): Callback =
-        $.modState(_.copy(showForm = false))
-
-      updateState() >> ($.props >>= dispatchAction)
+      $.props >>= dispatchAction
     }
 
-    def render(props: Props, state: State) = {
+    def render(props: Props) = {
       val connector = props.proxy.connect(_.userScope.jobSpecs)
 
       <.div(
         Style.content,
         <.h2("Registry"),
-        if (state.showForm) JobForm(state.editingJob, jobEdited)
-        else EmptyTag,
+        JobForm(jobEdited, formRef.name),
         connector(JobSpecList(_,
           editJob(None),
           jobSpec => editJob(Some(jobSpec))
@@ -79,7 +74,7 @@ object RegistryPage {
   }
 
   private[this] val component = ReactComponentB[Props]("RegistryPage")
-    .initialState(State())
+    .stateless
     .renderBackend[RegistryBackend]
     .build
 

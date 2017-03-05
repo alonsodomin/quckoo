@@ -87,7 +87,7 @@ object CoproductSelect {
           children,
           <.div(^.`class` := "col-sm-10",
             <.select(lnf.formControl,
-              state.selected.orElse(props.default).map(v => ^.value := v.name),
+              ^.value := state.selected.orElse(props.default).map(_.name).getOrElse(""),
               ^.onChange ==> onSelectionUpdate(props),
               props.attrs,
               if (props.default.isEmpty) {
@@ -113,18 +113,20 @@ object CoproductSelect {
 class CoproductSelect[A: Reusability] private[components](mapper: CoproductSelect.ValueMapper[A]) {
   import CoproductSelect._
 
-  private[components] val component = ReactComponentB[Props[A]]("CoproductSelect")
-    .initialState_P { props =>
-      val selectedSymbol = props.value.flatMap(mapper.lift)
-      val initialCache   = selectedSymbol.zip(props.value).map {
-        case (sym, value) => Map(sym -> value)
-      }.headOption.getOrElse(Map.empty)
+  private def generateState(props: Props[A], cache: Map[Symbol, A] = Map.empty): State[A] = {
+    val selectedSymbol = props.value.flatMap(mapper.lift)
+    val rebuiltCache   = selectedSymbol.zip(props.value).map {
+      case (sym, value) => cache + (sym -> value)
+    }.headOption.getOrElse(cache)
 
-      State[A](
-        selected = selectedSymbol,
-        cache    = initialCache
-      )
-    }
+    State[A](
+      selected = selectedSymbol,
+      cache    = rebuiltCache
+    )
+  }
+
+  private[components] val component = ReactComponentB[Props[A]]("CoproductSelect")
+    .initialState_P(generateState(_))
     .renderBackend[Backend[A]]
     .configure(Reusability.shouldComponentUpdate[Props[A], State[A], Backend[A], TopNode])
     .build
