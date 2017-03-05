@@ -126,7 +126,7 @@ object ExecutionPlanForm {
               style = ContextStyle.primary), "Ok"
             )
           ),
-          closed = formClosed(props, state)
+          onClosed = formClosed(props, state)
         ),
         if (!state.showPreview) {
           <.div(

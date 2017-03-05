@@ -16,7 +16,7 @@
 
 package io.quckoo.console.components
 
-import TextAreaTestExports._
+import io.quckoo.console.test.ConsoleTestExports._
 
 import org.scalajs.dom.html
 

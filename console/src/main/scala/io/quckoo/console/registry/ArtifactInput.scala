@@ -28,7 +28,9 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object ArtifactInput {
 
-  case class Props(value: Option[ArtifactId], onUpdate: Option[ArtifactId] => Callback)
+  type OnUpdate = Option[ArtifactId] => Callback
+
+  case class Props(value: Option[ArtifactId], readOnly: Boolean, onUpdate: OnUpdate)
   case class State(organization: Option[String], name: Option[String], version: Option[String]) {
 
     def this(value: Option[ArtifactId]) =
@@ -75,7 +77,8 @@ object ArtifactInput {
               state.organization,
               onGroupUpdate _,
               ^.id := "artifactOrganization",
-              ^.placeholder := "Organization"
+              ^.placeholder := "Organization",
+              ^.readOnly := props.readOnly
             )),
           <.div(
             ^.`class` := "col-sm-4",
@@ -83,7 +86,8 @@ object ArtifactInput {
               state.name,
               onNameUpdate _,
               ^.id := "artifactName",
-              ^.placeholder := "Name"
+              ^.placeholder := "Name",
+              ^.readOnly := props.readOnly
             )),
           <.div(
             ^.`class` := "col-sm-4",
@@ -91,7 +95,8 @@ object ArtifactInput {
               state.version,
               onVersionUpdate _,
               ^.id := "artifactVerion",
-              ^.placeholder := "Version"
+              ^.placeholder := "Version",
+              ^.readOnly := props.readOnly
             ))))
     }
 
@@ -103,7 +108,7 @@ object ArtifactInput {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[ArtifactId], onUpdate: Option[ArtifactId] => Callback) =
-    component(Props(value, onUpdate))
+  def apply(value: Option[ArtifactId], onUpdate: OnUpdate, readOnly: Boolean = false) =
+    component(Props(value, readOnly, onUpdate))
 
 }

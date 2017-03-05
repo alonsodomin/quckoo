@@ -17,7 +17,7 @@
 package io.quckoo.console.registry
 
 import diode.AnyAction._
-import diode.data.PotMap
+import diode.data.{Pot, PotMap, Ready}
 import diode.react.ModelProxy
 
 import io.quckoo.{JobId, JobSpec}
@@ -30,20 +30,36 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scalaz._
 import scalaz.syntax.show._
+import scalaz.std.list._
+import scalaz.syntax.traverse._
+
 
 /**
   * Created by alonsodomin on 17/10/2015.
   */
 object JobSpecList {
+  import ScalazReact._
 
   final val Columns = List('Name, 'Description, 'Package, 'Status)
 
-  final val AllFilter: Table.Filter[JobId, JobSpec]      = (id, job) => true
-  final val DisabledFilter: Table.Filter[JobId, JobSpec] = (id, job) => job.disabled
+  final val DisabledFilter: Table.Filter[JobId, JobSpec] = (_, job) => job.disabled
   final val EnabledFilter: Table.Filter[JobId, JobSpec]  = !DisabledFilter(_, _)
 
-  final case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
-  final case class State(filter: Table.Filter[JobId, JobSpec])
+  final val Filters: Map[Symbol, Table.Filter[JobId, JobSpec]] = Map(
+    'Enabled  -> EnabledFilter,
+    'Disabled -> DisabledFilter
+  )
+
+  type OnCreate = Callback
+  type OnClick = JobSpec => Callback
+  type OnSelect = Set[JobId] => Callback
+
+  final case class Props(
+    proxy: ModelProxy[PotMap[JobId, JobSpec]],
+    onJobCreate: OnCreate,
+    onJobEdit: OnClick
+  )
+  final case class State(selectedFilter: Option[Symbol] = None, selectedJobs: Set[JobId] = Set.empty)
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -54,16 +70,46 @@ object JobSpecList {
       Callback.when(props.proxy().size == 0)(dispatchJobLoading)
     }
 
-    def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): ReactNode = column match {
-      case 'Name        => jobSpec.displayName
-      case 'Description => jobSpec.description.getOrElse[String]("")
-      case 'Package     => jobSpec.jobPackage.toString
-      case 'Status =>
-        if (jobSpec.disabled) {
-          <.span(^.color.red, "DISABLED")
-        } else {
-          <.span(^.color.green, "ENABLED")
-        }
+    def selectedJobs(props: Props, state: State): Map[JobId, Pot[JobSpec]] = {
+      val jobMap = props.proxy()
+      jobMap.get(state.selectedJobs)
+    }
+
+    // Actions
+
+    private[this] def performOnSelection(filter: (JobId, JobSpec) => Boolean)
+                                        (f: JobId => RegistryCommand): Callback = {
+      def collectIds: CallbackTo[Iterable[JobId]] = for {
+        props <- $.props
+        state <- $.state
+      } yield selectedJobs(props, state).collect {
+        case (id, Ready(spec)) if filter(id, spec) => id
+      }
+
+      def invokeCommand(jobIds: Iterable[JobId]): Callback = for {
+        proxy <- $.props.map(_.proxy)
+        _     <- jobIds.toList.map(id => proxy.dispatchCB(f(id))).sequence
+      } yield ()
+
+      collectIds >>= invokeCommand
+    }
+
+    def enableAll: Callback =
+      performOnSelection((_, spec) => spec.disabled)(EnableJob)
+    def enableAllDisabled(props: Props, state: State): Boolean = {
+      val disabledJobs = selectedJobs(props, state).collect {
+        case (_, Ready(spec)) if spec.disabled => spec
+      }
+      disabledJobs.isEmpty
+    }
+
+    def disableAll: Callback =
+      performOnSelection((_, spec) => !spec.disabled)(DisableJob)
+    def disableAllDisabled(props: Props, state: State): Boolean = {
+      val enabledJobs = selectedJobs(props, state).collect {
+        case (_, Ready(spec)) if !spec.disabled => spec
+      }
+      enabledJobs.isEmpty
     }
 
     def enableJob(props: Props)(jobId: JobId): Callback =
@@ -80,36 +126,85 @@ object JobSpecList {
       })
     }
 
-    def filterClicked(filterType: Symbol): Callback = filterType match {
-      case 'All      => $.modState(_.copy(filter = AllFilter))
-      case 'Enabled  => $.modState(_.copy(filter = EnabledFilter))
-      case 'Disabled => $.modState(_.copy(filter = DisabledFilter))
+    // Event handlers
+
+    def filterClicked(filterType: Symbol): Callback =
+      $.modState(_.copy(selectedFilter = Some(filterType)))
+
+    def jobClicked(jobId: JobId): Callback = {
+      def onJobClickedCB(jobSpec: JobSpec): Callback =
+        $.props.flatMap(_.onJobEdit(jobSpec))
+
+      def jobIsNotReady: Callback =
+        Callback.alert(s"Job '$jobId' is not ready yet.")
+
+      $.props.map(_.proxy()).flatMap(
+        _.get(jobId).headOption.map(onJobClickedCB).getOrElse(jobIsNotReady)
+      )
     }
 
-    def render(p: Props, state: State) = {
-      val model = p.proxy()
+    def jobSelected(selection: Set[JobId]): Callback =
+      $.modState(_.copy(selectedJobs = selection))
 
-      NavBar(
-        NavBar
-          .Props(List('All, 'Enabled, 'Disabled), 'All, filterClicked, style = NavStyle.pills),
-        Table(
-          Columns,
-          model.seq,
-          renderItem,
-          allowSelect = true,
-          actions = Some(rowActions(p)(_, _)),
-          filter = Some(state.filter))
+    // Render methods
+
+    private[this] def renderName(jobId: JobId, jobSpec: JobSpec): ReactNode =
+      <.a(^.onClick --> jobClicked(jobId), jobSpec.displayName)
+
+    def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): ReactNode = column match {
+      case 'Name        => renderName(jobId, jobSpec)
+      case 'Description => jobSpec.description.getOrElse[String]("")
+      case 'Package     => jobSpec.jobPackage.toString
+      case 'Status =>
+        if (jobSpec.disabled) {
+          <.span(^.color.red, "DISABLED")
+        } else {
+          <.span(^.color.green, "ENABLED")
+        }
+    }
+
+    def render(props: Props, state: State) = {
+      val model = props.proxy()
+
+      <.div(
+        ToolBar(
+          Button(Button.Props(Some(props.onJobCreate)), Icons.plusSquare, "New Job"),
+          Button(Button.Props(
+            Some(enableAll),
+            disabled = enableAllDisabled(props, state)
+          ), Icons.playCircle, "Enable All"),
+          Button(Button.Props(
+            Some(disableAll),
+            disabled = disableAllDisabled(props, state)
+          ), Icons.stopCircle, "Disable All")
+        ),
+        NavBar(
+          NavBar
+            .Props(List('All, 'Enabled, 'Disabled), 'All, filterClicked, style = NavStyle.pills),
+          Table(
+            Columns,
+            model.seq,
+            renderItem,
+            onSelect = Some(jobSelected _),
+            actions = Some(rowActions(props)(_, _)),
+            filter = state.selectedFilter.flatMap(Filters.get),
+            selected = state.selectedJobs,
+            style = Set(TableStyle.hover))
+        )
       )
     }
 
   }
 
   private[this] val component = ReactComponentB[Props]("JobSpecList")
-    .initialState(State(AllFilter))
+    .initialState(State())
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))
     .build
 
-  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]]) = component(Props(proxy))
+  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]],
+            onJobCreate: OnCreate,
+            onJobClick: OnClick) =
+    component(Props(proxy, onJobCreate, onJobClick))
 
 }

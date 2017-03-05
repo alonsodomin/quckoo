@@ -16,10 +16,16 @@
 
 package io.quckoo.console.components
 
-import teststate.domzipper.sizzle
-import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
+import japgolly.univeq.UnivEq
 
-object TextAreaTestExports extends Exports
-  with ExtScalaJsReact
-  with ExtScalaz
-  with sizzle.Exports
+import scalacss.internal.StyleLookup
+
+/**
+  * Created by alonsodomin on 04/03/2017.
+  */
+object TableStyle extends Enumeration {
+  val striped, bordered, condensed, hover = Value
+
+  implicit val univEq = UnivEq.force[Value]
+  implicit val lookup = StyleLookup.scalaMap[Value]
+}

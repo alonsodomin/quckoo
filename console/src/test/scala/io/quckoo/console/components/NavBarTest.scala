@@ -27,7 +27,7 @@ import org.scalatest.FunSuite
   * Created by alonsodomin on 29/07/2016.
   */
 class NavBarTest extends FunSuite {
-  import NavBarTestExports._
+  import ConsoleTestExports._
   import NavBarTestDsl._
 
   val invariants: dsl.Invariants = {

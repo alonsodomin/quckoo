@@ -19,6 +19,7 @@ package io.quckoo.console.scheduler
 import cron4s.Cron
 
 import io.quckoo.Trigger
+import io.quckoo.console.test.ConsoleTestExports
 
 import monocle.macros.Lenses
 
@@ -29,7 +30,7 @@ import japgolly.scalajs.react.test._
   * Created by alonsodomin on 03/09/2016.
   */
 object CronTriggerInputTestDsl {
-  import CronTriggerInputTestExports._
+  import ConsoleTestExports._
 
   @Lenses
   case class State(inputExpr: String, updatedTrigger: Option[Trigger.Cron] = None) {

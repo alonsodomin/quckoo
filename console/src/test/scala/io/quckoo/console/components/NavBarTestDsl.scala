@@ -16,6 +16,8 @@
 
 package io.quckoo.console.components
 
+import io.quckoo.console.test.ConsoleTestExports
+
 import monocle.macros.Lenses
 
 import japgolly.scalajs.react.test._
@@ -24,7 +26,7 @@ import japgolly.scalajs.react.test._
   * Created by alonsodomin on 29/07/2016.
   */
 object NavBarTestDsl {
-  import NavBarTestExports._
+  import ConsoleTestExports._
   import ReactTestUtils._
 
   @Lenses

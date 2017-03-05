@@ -59,6 +59,19 @@ class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
     def apply(navStyle: NavStyle.Value) = opt(navStyle)
   }
 
+  object table {
+    val domain = Domain.ofValues(TableStyle.bordered, TableStyle.condensed, TableStyle.hover, TableStyle.striped)
+
+    private val opt = from(domain, "table")
+    val base        = wrap("table")
+    val bordered    = opt(TableStyle.bordered)
+    val condensed   = opt(TableStyle.condensed)
+    val hover       = opt(TableStyle.hover)
+    val striped     = opt(TableStyle.striped)
+
+    def apply(tableStyle: TableStyle.Value) = opt(tableStyle)
+  }
+
   val alert = from(context, "alert")
   val close = wrap("close")
 

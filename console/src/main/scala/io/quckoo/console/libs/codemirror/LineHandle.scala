@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.scheduler
+package io.quckoo.console.libs.codemirror
 
-import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
-import teststate.domzipper.sizzle
+import scala.scalajs.js
 
 /**
-  * Created by alonsodomin on 03/09/2016.
+  * Created by alonsodomin on 04/03/2017.
   */
-object CronTriggerInputTestExports extends Exports
-  with ExtScalaJsReact
-  with ExtScalaz
-  with sizzle.Exports
+@js.native
+trait LineHandle extends js.Object {
+  def height: Int = js.native
+  def text: String = js.native
+}

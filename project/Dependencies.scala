@@ -75,10 +75,9 @@ object Dependencies {
     // JavaScript Libraries
 
     val animate          = "3.2.2"
-    val jquery           = "1.12.4"
+    val jquery           = "2.2.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val fontAwesome      = "4.7.0"
     val reactJs          = "15.4.2"
     val sparkMD5         = "2.0.2"
     val codemirror       = "5.24.2"
@@ -241,13 +240,6 @@ object Dependencies {
       "com.github.japgolly.test-state" %%% "ext-scalaz"        % version.testState % Test
     ),
     jsDependencies ++= Seq(
-      // CodeMirror
-      "org.webjars" % "codemirror" % version.codemirror
-        / "lib/codemirror.js"
-        commonJSName "CodeMirror",
-      "org.webjars" % "codemirror" % version.codemirror
-        / "mode/shell/shell.js",
-
       // ReactJS
       "org.webjars.bower" % "react" % version.reactJs
         /        "react-with-addons.js"
@@ -278,7 +270,27 @@ object Dependencies {
       "org.webjars" % "bootstrap-notify" % version.bootstrapNotifiy
         /         "bootstrap-notify.js"
         minified  "bootstrap-notify.min.js"
-        dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js")
+        dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js"),
+
+      // CodeMirror
+      "org.webjars" % "codemirror" % version.codemirror
+        /            "lib/codemirror.js"
+        commonJSName "CodeMirror",
+      "org.webjars" % "codemirror" % version.codemirror
+        /         "mode/shell/shell.js"
+        dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+        /         "mode/python/python.js"
+        dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+        /         "addon/display/autorefresh.js"
+        dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+        /         "addon/edit/closebrackets.js"
+        dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+        /         "addon/edit/matchbrackets.js"
+        dependsOn "lib/codemirror.js"
     )
   )
 
@@ -300,8 +312,6 @@ object Dependencies {
       scopt, authenticatJwt,
 
       "com.vmunier"      %% "scalajs-scripts" % version.scalaJSScripts,
-      "org.webjars"       % "bootstrap-sass"  % version.bootstrap,
-      "org.webjars"       % "font-awesome"    % version.fontAwesome,
       "org.webjars"       % "codemirror"      % version.codemirror,
       "org.webjars.bower" % "animatewithsass" % version.animate
     )

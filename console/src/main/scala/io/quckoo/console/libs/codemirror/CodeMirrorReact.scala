@@ -23,4 +23,5 @@ import japgolly.scalajs.react.extra.Reusability
   */
 object CodeMirrorReact {
   implicit val lengthReuse: Reusability[Length] = Reusability.byRef
+  implicit val readOnlyReuse: Reusability[ReadOnly] = Reusability.byRef
 }

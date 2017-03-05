@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.security
+package io.quckoo.console.test
 
-import teststate.domzipper.sizzle
 import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
+import teststate.domzipper.sizzle
 
 /**
-  * Created by alonsodomin on 10/07/2016.
+  * Created by alonsodomin on 04/03/2017.
   */
-object LoginTestExports extends Exports
+object ConsoleTestExports extends Exports
   with ExtScalaJsReact
   with ExtScalaz
   with sizzle.Exports

@@ -16,17 +16,19 @@
 
 package io.quckoo.console.components
 
-import org.scalatest.FunSuite
+import io.quckoo.console.test.ConsoleTestExports
 
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.test.ReactTestUtils
+
+import org.scalatest.FunSuite
 
 /**
   * Created by alonsodomin on 25/02/2017.
   */
 // TODO Ignored because Sizzle is failing to select the DOM element
 class TextAreaTestIgnore /** extends FunSuite **/ {
-  import TextAreaTestExports._
+  import ConsoleTestExports._
   import TextAreaTestDsl._
 
   val invariants: dsl.Invariants = {

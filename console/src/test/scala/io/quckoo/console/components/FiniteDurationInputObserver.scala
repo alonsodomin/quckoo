@@ -18,7 +18,7 @@ package io.quckoo.console.components
 
 import java.util.concurrent.TimeUnit
 
-import FiniteDurationInputTestExports._
+import io.quckoo.console.test.ConsoleTestExports._
 
 import org.scalajs.dom.html
 

@@ -19,9 +19,7 @@ package io.quckoo.console.registry
 import diode.react.ModelProxy
 
 import io.quckoo._
-import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleScope
-import io.quckoo.console.layout.GlobalStyles
 import io.quckoo.protocol.registry._
 
 import japgolly.scalajs.react._
@@ -43,44 +41,40 @@ object RegistryPage {
   }
 
   case class Props(proxy: ModelProxy[ConsoleScope])
-  case class State(
-      selectedJob: Option[JobSpec] = None,
-      showForm: Boolean = false
-  )
 
-  class RegistryBackend($ : BackendScope[Props, State]) {
+  private val formRef = Ref.to(JobForm.component, "jobForm")
 
-    def editJob(spec: Option[JobSpec]) =
-      $.modState(_.copy(selectedJob = spec, showForm = true))
+  class RegistryBackend($ : BackendScope[Props, Unit]) {
+
+    def editJob(spec: Option[JobSpec]): Callback = {
+      formRef($).map(_.backend.editJob(spec)).getOrElse(Callback.empty)
+    }
 
     def jobEdited(spec: Option[JobSpec]): Callback = {
       def dispatchAction(props: Props): Callback =
         spec.map(RegisterJob).map(props.proxy.dispatchCB[RegisterJob]).getOrElse(Callback.empty)
 
-      def updateState(): Callback =
-        $.modState(_.copy(showForm = false))
-
-      updateState() >> ($.props >>= dispatchAction)
+      $.props >>= dispatchAction
     }
 
-    def render(props: Props, state: State) = {
+    def render(props: Props) = {
       val connector = props.proxy.connect(_.userScope.jobSpecs)
 
       <.div(
         Style.content,
         <.h2("Registry"),
-        <.div(
-          GlobalStyles.pageToolbar,
-          Button(Button.Props(Some(editJob(None))), Icons.plusSquare, "New Job")),
-        if (state.showForm) JobForm(state.selectedJob, jobEdited)
-        else EmptyTag,
-        connector(JobSpecList(_)))
+        JobForm(jobEdited, formRef.name),
+        connector(JobSpecList(_,
+          editJob(None),
+          jobSpec => editJob(Some(jobSpec))
+        ))
+      )
     }
 
   }
 
   private[this] val component = ReactComponentB[Props]("RegistryPage")
-    .initialState(State())
+    .stateless
     .renderBackend[RegistryBackend]
     .build
 

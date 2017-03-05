@@ -16,13 +16,27 @@
 
 package io.quckoo.console.components
 
-import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
-import teststate.domzipper.sizzle
+import io.quckoo.console.layout.GlobalStyles
+
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.prefix_<^._
+
+import scalacss.Defaults._
+import scalacss.ScalaCssReact._
 
 /**
-  * Created by alonsodomin on 26/02/2017.
+  * Created by alonsodomin on 05/03/2017.
   */
-object FiniteDurationInputTestExports extends Exports
-  with ExtScalaJsReact
-  with ExtScalaz
-  with sizzle.Exports
+object ToolBar {
+
+  private[this] val component = ReactComponentB[Unit]("ToolBar")
+    .stateless
+    .render_C { children =>
+      <.div(GlobalStyles.pageToolbar, children)
+    }
+    .build
+
+  def apply(children: ReactNode*) =
+    component(children: _*)
+
+}

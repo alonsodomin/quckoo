@@ -33,19 +33,22 @@ object NavBar {
       onClick: Symbol => Callback
   )
 
-  private[this] val NavItem = ReactComponentB[NavItemProps]("NavItem").stateless.render_P {
-    case NavItemProps(title, selected, onClick) =>
-      <.li(
-        ^.id := title.name,
-        ^.role := "presentation",
-        selected ?= (^.`class` := "active"),
-        <.a(^.onClick --> onClick(title), title.name))
-  } build
+  private[this] val NavItem = ReactComponentB[NavItemProps]("NavItem")
+    .stateless
+    .render_P {
+      case NavItemProps(title, selected, onClick) =>
+        <.li(
+          ^.id := title.name,
+          ^.role := "presentation",
+          selected ?= (^.`class` := "active"),
+          <.a(^.onClick --> onClick(title), title.name))
+    }
+    .build
 
-  private[this] val NavBody = ReactComponentB[PropsChildren]("NavBody").stateless.render_P {
-    children =>
-      <.div(children)
-  } build
+  private[this] val NavBody = ReactComponentB[PropsChildren]("NavBody")
+    .stateless
+    .render_P { children => <.div(children) }
+    .build
 
   final case class Props(
       items: Seq[Symbol],

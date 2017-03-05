@@ -18,7 +18,11 @@ package io.quckoo.console.components
 
 import java.util.concurrent.TimeUnit
 
+import io.quckoo.console.test.ConsoleTestExports
+
 import japgolly.scalajs.react.test._
+
+import monocle.macros.Lenses
 
 import org.scalajs.dom.html
 
@@ -29,8 +33,9 @@ import scala.util.Try
   * Created by alonsodomin on 26/02/2017.
   */
 object FiniteDurationInputTestDsl {
-  import FiniteDurationInputTestExports._
+  import ConsoleTestExports._
 
+  @Lenses
   case class State(length: Option[Long] = None, unit: Option[TimeUnit] = None)
 
   val dsl = Dsl[Unit, FiniteDurationInputObserver, State]
@@ -52,15 +57,15 @@ object FiniteDurationInputTestDsl {
 
   def setLength(length: Long) =
     dsl.action(s"Set length: $length")(ChangeEventData(length.toString) simulate _.obs.lengthInput)
-      .updateState(_.copy(length = Some(length)))
+      .updateState(State.length.set(Some(length)))
 
   def clearLength() =
     dsl.action("Clear length")(ChangeEventData("") simulate _.obs.lengthInput)
-      .updateState(_.copy(length = None))
+      .updateState(State.length.set(None))
 
   def chooseUnit(unit: TimeUnit) =
     dsl.action(s"Choose unit: $unit")(ChangeEventData(unit.name()) simulate _.obs.unitSelect)
-      .updateState(_.copy(unit = Some(unit)))
+      .updateState(State.unit.set(Some(unit)))
 
   def validationMsg =
     dsl.focus("Validation Message").value(_.obs.validationBlock)
