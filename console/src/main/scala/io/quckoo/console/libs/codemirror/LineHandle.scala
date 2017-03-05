@@ -19,19 +19,10 @@ package io.quckoo.console.libs.codemirror
 import scala.scalajs.js
 
 /**
-  * Created by alonsodomin on 03/03/2017.
+  * Created by alonsodomin on 04/03/2017.
   */
 @js.native
-trait Position extends js.Object {
-  def ch: Int = js.native
-  def line: Int = js.native
-}
-
-@js.native
-trait ChangeEvent extends js.Object {
-  def from: Position = js.native
-  def to: Position = js.native
-  def text: js.Array[String] = js.native
-  def removed: js.Array[String] = js.native
-  def origin: String = js.native
+trait LineHandle extends js.Object {
+  def height: Int = js.native
+  def text: String = js.native
 }

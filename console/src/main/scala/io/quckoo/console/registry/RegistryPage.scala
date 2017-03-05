@@ -74,7 +74,7 @@ object RegistryPage {
           Button(Button.Props(Some(editJob(None))), Icons.plusSquare, "New Job")),
         if (state.showForm) JobForm(state.selectedJob, jobEdited)
         else EmptyTag,
-        connector(JobSpecList(_)))
+        connector(JobSpecList(_, jobSpec => editJob(Some(jobSpec)))))
     }
 
   }

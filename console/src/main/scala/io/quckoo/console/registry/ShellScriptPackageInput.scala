@@ -34,10 +34,10 @@ object ShellScriptPackageInput {
       |echo "Hello World"""".stripMargin
 
   final val EditorOptions = CodeEditor.Options(
-    mode = Some(CodeEditor.Mode.Shell),
-    lineNumbers = true,
+    mode          = CodeEditor.Mode.Shell,
+    lineNumbers   = true,
     matchBrackets = true,
-    theme = Set(CodeEditor.ThemeStyle.Solarized, CodeEditor.ThemeStyle.Light)
+    theme         = Set(CodeEditor.Theme.Solarized, CodeEditor.Theme.Light)
   )
 
   type OnUpdate = Option[ShellScriptPackage] => Callback

@@ -14,24 +14,18 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.libs.codemirror
+package io.quckoo.console.components
 
-import scala.scalajs.js
+import japgolly.univeq.UnivEq
+
+import scalacss.internal.StyleLookup
 
 /**
-  * Created by alonsodomin on 03/03/2017.
+  * Created by alonsodomin on 04/03/2017.
   */
-@js.native
-trait Position extends js.Object {
-  def ch: Int = js.native
-  def line: Int = js.native
-}
+object TableStyle extends Enumeration {
+  val striped, bordered, condensed, hover = Value
 
-@js.native
-trait ChangeEvent extends js.Object {
-  def from: Position = js.native
-  def to: Position = js.native
-  def text: js.Array[String] = js.native
-  def removed: js.Array[String] = js.native
-  def origin: String = js.native
+  implicit val univEq = UnivEq.force[Value]
+  implicit val lookup = StyleLookup.scalaMap[Value]
 }

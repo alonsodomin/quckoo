@@ -38,10 +38,10 @@ object JobSpecList {
 
   final val Columns = List('Name, 'Description, 'Package, 'Status)
 
-  final val DisabledFilter: Table.Filter[JobId, JobSpec] = (id, job) => job.disabled
+  final val DisabledFilter: Table.Filter[JobId, JobSpec] = (_, job) => job.disabled
   final val EnabledFilter: Table.Filter[JobId, JobSpec]  = !DisabledFilter(_, _)
 
-  final case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]])
+  final case class Props(proxy: ModelProxy[PotMap[JobId, JobSpec]], onJobClick: JobSpec => Callback)
   final case class State(filter: Table.Filter[JobId, JobSpec])
 
   class Backend($ : BackendScope[Props, State]) {
@@ -53,8 +53,11 @@ object JobSpecList {
       Callback.when(props.proxy().size == 0)(dispatchJobLoading)
     }
 
+    private[this] def renderName(jobId: JobId, jobSpec: JobSpec): ReactNode =
+      <.a(^.onClick --> jobClicked(jobId), jobSpec.displayName)
+
     def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): ReactNode = column match {
-      case 'Name        => jobSpec.displayName
+      case 'Name        => renderName(jobId, jobSpec)
       case 'Description => jobSpec.description.getOrElse[String]("")
       case 'Package     => jobSpec.jobPackage.toString
       case 'Status =>
@@ -79,6 +82,18 @@ object JobSpecList {
       })
     }
 
+    def jobClicked(jobId: JobId): Callback = {
+      def onJobClickedCB(jobSpec: JobSpec): Callback =
+        $.props.flatMap(_.onJobClick(jobSpec))
+
+      def jobIsNotReady: Callback =
+        Callback.alert(s"Job '$jobId' is not ready yet.")
+
+      $.props.map(_.proxy()).flatMap(
+        _.get(jobId).headOption.map(onJobClickedCB).getOrElse(jobIsNotReady)
+      )
+    }
+
     def filterClicked(filterType: Symbol): Callback = filterType match {
       case 'All      => $.modState(_.copy(filter = Table.NoFilter))
       case 'Enabled  => $.modState(_.copy(filter = EnabledFilter))
@@ -97,7 +112,8 @@ object JobSpecList {
           renderItem,
           allowSelect = true,
           actions = Some(rowActions(p)(_, _)),
-          filter = Some(state.filter))
+          filter = Some(state.filter),
+          style = Set(TableStyle.hover))
       )
     }
 
@@ -109,6 +125,7 @@ object JobSpecList {
     .componentDidMount($ => $.backend.mounted($.props))
     .build
 
-  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]]) = component(Props(proxy))
+  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]], onJobClick: JobSpec => Callback) =
+    component(Props(proxy, onJobClick))
 
 }

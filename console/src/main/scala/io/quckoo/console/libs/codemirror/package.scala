@@ -27,4 +27,6 @@ package object codemirror {
   type Width = Length
   type Height = Length
 
+  type ReadOnly = Boolean | String
+
 }

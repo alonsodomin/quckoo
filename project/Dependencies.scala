@@ -241,13 +241,6 @@ object Dependencies {
       "com.github.japgolly.test-state" %%% "ext-scalaz"        % version.testState % Test
     ),
     jsDependencies ++= Seq(
-      // CodeMirror
-      "org.webjars" % "codemirror" % version.codemirror
-        / "lib/codemirror.js"
-        commonJSName "CodeMirror",
-      "org.webjars" % "codemirror" % version.codemirror
-        / "mode/shell/shell.js",
-
       // ReactJS
       "org.webjars.bower" % "react" % version.reactJs
         /        "react-with-addons.js"
@@ -278,7 +271,27 @@ object Dependencies {
       "org.webjars" % "bootstrap-notify" % version.bootstrapNotifiy
         /         "bootstrap-notify.js"
         minified  "bootstrap-notify.min.js"
-        dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js")
+        dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js"),
+
+      // CodeMirror
+      "org.webjars" % "codemirror" % version.codemirror
+        /            "lib/codemirror.js"
+        commonJSName "CodeMirror",
+      "org.webjars" % "codemirror" % version.codemirror
+        /         "mode/shell/shell.js"
+        dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+        /         "mode/python/python.js"
+        dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+        /         "addon/display/autorefresh.js"
+        dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+        /         "addon/edit/closebrackets.js"
+        dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+        /         "addon/edit/matchbrackets.js"
+        dependsOn "lib/codemirror.js"
     )
   )
 

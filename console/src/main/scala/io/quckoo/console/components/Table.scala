@@ -22,6 +22,9 @@ import diode.react.ReactPot._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
+import scalacss.Defaults._
+import scalacss.ScalaCssReact._
+
 import scalaz.NonEmptyList
 
 /**
@@ -45,6 +48,7 @@ object Table {
       columns: List[Symbol],
       item: Pot[Item],
       render: RowCellRender[Id, Item],
+      onClick: Option[RowCallback[Id]],
       allowSelect: Boolean,
       selected: Boolean,
       toggleSelected: RowCallback[Id],
@@ -92,46 +96,53 @@ object Table {
 
   private[this] def row[Id, Item] =
     ReactComponentB[RowProps[Id, Item]]("Row").stateless.render_P { props =>
-      <.tr(props.selected ?= (^.`class` := "info"), props.item.renderFailed { ex =>
-        <.td(^.colSpan := props.columns.size, Notification.danger(ex))
-      }, props.item.renderPending { _ =>
-        <.td(^.colSpan := props.columns.size, "Loading ...")
-      }, props.item.render { item =>
-        val cells: List[ReactElement] = {
-          val columns = props.columns.map { column =>
-            BodyCell.withKey(s"$column-data-${props.rowId}")(
-              props.render(props.rowId, item, column)
-            )
+      <.tr(props.selected ?= (^.`class` := "info"),
+        props.onClick.map(callback => ^.onClick --> callback(props.rowId)),
+        props.item.renderFailed { ex =>
+          <.td(^.colSpan := props.columns.size, Notification.danger(ex))
+        },
+        props.item.renderPending { _ =>
+          <.td(^.colSpan := props.columns.size, "Loading ...")
+        },
+        props.item.render { item =>
+          val cells: List[ReactElement] = {
+            val columns = props.columns.map { column =>
+              BodyCell.withKey(s"$column-data-${props.rowId}")(
+                props.render(props.rowId, item, column)
+              )
+            }
+
+            if (props.allowSelect) {
+              val checkboxCell = CheckboxCell.withKey(s"select-${props.rowId}")(
+                CheckboxCellProps(
+                  s"select-item-${props.rowId}",
+                  props.selected,
+                  props.toggleSelected(props.rowId)
+                ))
+
+              checkboxCell :: columns
+            } else columns
           }
 
-          if (props.allowSelect) {
-            val checkboxCell = CheckboxCell.withKey(s"select-${props.rowId}")(
-              CheckboxCellProps(
-                s"select-item-${props.rowId}",
-                props.selected,
-                props.toggleSelected(props.rowId)
-              ))
-
-            checkboxCell :: columns
-          } else columns
+          val actions: Option[ReactElement] = props.actions.map { actions =>
+            actionsCell[Id, Item].withKey(s"actions-${props.rowId}")(
+              (props.rowId, item, actions)
+            )
+          }
+          actions.map(actCell => cells :+ actCell).getOrElse[List[ReactElement]](cells)
         }
-
-        val actions: Option[ReactElement] = props.actions.map { actions =>
-          actionsCell[Id, Item].withKey(s"actions-${props.rowId}")(
-            (props.rowId, item, actions)
-          )
-        }
-        actions.map(actCell => cells :+ actCell).getOrElse[List[ReactElement]](cells)
-      })
+      )
     } build
 
   final case class Props[Id, Item](
       headers: List[Symbol],
       items: ItemSeq[Id, Item],
       render: RowCellRender[Id, Item],
-      allowSelect: Boolean = false,
-      actions: Option[RowActionsFactory[Id, Item]] = None,
-      filter: Option[Filter[Id, Item]] = None
+      onRowClick: Option[RowCallback[Id]],
+      allowSelect: Boolean,
+      actions: Option[RowActionsFactory[Id, Item]],
+      filter: Option[Filter[Id, Item]],
+      style: Set[TableStyle.Value]
   )
   final case class State[Id](selected: Set[Id], allSelected: Boolean = false)
 
@@ -187,7 +198,14 @@ object Table {
         }
       } getOrElse props.items
 
-      <.table(^.`class` := "table table-striped", <.thead(<.tr(headers)), <.tbody(items.map {
+      val userStyles = props.onRowClick
+        .map(_ => props.style + TableStyle.hover)
+        .getOrElse(props.style)
+        .map(lookAndFeel.table.apply(_))
+        .toSeq
+      val style = if (userStyles.isEmpty) Seq(lookAndFeel.table.base) else userStyles
+
+      <.table(style, <.thead(<.tr(headers)), <.tbody(items.map {
         case (id, item) =>
           row[Id, Item].withKey(s"row-$id")(
             RowProps(
@@ -195,6 +213,7 @@ object Table {
               props.headers,
               item,
               props.render,
+              props.onRowClick,
               props.allowSelect,
               state.selected.contains(id) || state.allSelected,
               toggleSelectItem(props),
@@ -214,13 +233,15 @@ object Table {
   def apply[Id, Item](headers: List[Symbol],
                       items: ItemSeq[Id, Item],
                       render: RowCellRender[Id, Item],
+                      onRowClick: Option[RowCallback[Id]] = None,
                       allowSelect: Boolean = false,
                       actions: Option[RowActionsFactory[Id, Item]] = None,
                       filter: Option[Filter[Id, Item]] = None,
+                      style: Set[TableStyle.Value] = Set.empty,
                       key: Option[String] = None) = {
     val baseComp = component[Id, Item]
     val instance = key.map(k => baseComp.withKey(k)).getOrElse(baseComp)
-    instance.apply(Props(headers, items, render, allowSelect, actions, filter))
+    instance.apply(Props(headers, items, render, onRowClick, allowSelect, actions, filter, style))
   }
 
 }

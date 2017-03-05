@@ -20,12 +20,10 @@ import io.quckoo.console.libs.codemirror._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.ReactAttr
+import japgolly.scalajs.react.vdom.ReactStyle
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import enumeratum._
-
-import org.scalajs.dom.html
 
 import scala.scalajs.js
 
@@ -34,33 +32,39 @@ import scala.scalajs.js
   */
 object CodeEditor {
   import CodeMirrorReact._
-  import ReactAttr.NameAndValue
 
   type OnUpdate = Option[String] => Callback
 
   sealed trait Mode extends EnumEntry with EnumEntry.Lowercase
   object Mode extends Enum[Mode] {
+    case object Scala extends Mode
     case object Shell extends Mode
+    case object Python extends Mode
 
     val values = findValues
   }
   implicit val modeReuse: Reusability[Mode] = Reusability.byRef
 
-  sealed trait ThemeStyle extends EnumEntry with EnumEntry.Lowercase
-  object ThemeStyle extends Enum[ThemeStyle] {
-    case object Solarized extends ThemeStyle
-    case object Dark extends ThemeStyle
-    case object Light extends ThemeStyle
+  sealed trait Theme extends EnumEntry with EnumEntry.Lowercase
+  object Theme extends Enum[Theme] {
+    case object Monokai extends Theme
+    case object Solarized extends Theme
+    case object Dark extends Theme
+    case object Light extends Theme
 
     val values = findValues
   }
-  implicit val themeStyleReuse: Reusability[ThemeStyle] = Reusability.byRef
+  implicit val themeStyleReuse: Reusability[Theme] = Reusability.byRef
 
   case class Options(
-    mode: Option[Mode] = None,
+    mode: Mode = Mode.Scala,
     lineNumbers: Boolean = false,
+    lineSeparator: String = "\n",
     matchBrackets: Boolean = false,
-    theme: Set[ThemeStyle] = Set.empty
+    theme: Set[Theme] = Set.empty,
+    tabSize: Int = 2,
+    autoRefresh: Boolean = true,
+    readOnly: ReadOnly = false
   )
   implicit val optionsReuse: Reusability[Options] = Reusability.caseClass[Options]
 
@@ -72,7 +76,7 @@ object CodeEditor {
     onUpdate: OnUpdate,
     width: Width,
     height: Height,
-    options: Option[Options],
+    options: Options,
     attrs: Seq[TagMod]
   )
   case class State(value: Option[String])
@@ -85,45 +89,51 @@ object CodeEditor {
     private[this] def propagateUpdate: Callback =
       $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.value)))
 
-    private[this] def jsOptions(props: Props): Option[js.Dynamic] = {
-      props.options.map { opts =>
-        js.Dynamic.literal(
-          "mode" -> opts.mode.getOrElse(Mode.Shell).entryName,
-          "lineNumbers" -> opts.lineNumbers,
-          "matchBrackets" -> opts.matchBrackets,
-          "theme" -> opts.theme.map(_.entryName).mkString(" ")
-        )
-      }
+    private[this] def jsOptions(props: Props): js.Dynamic = {
+      js.Dynamic.literal(
+        "mode"          -> props.options.mode.entryName,
+        "lineNumbers"   -> props.options.lineNumbers,
+        "lineSeparator" -> props.options.lineSeparator,
+        "matchBrackets" -> props.options.matchBrackets,
+        "theme"         -> props.options.theme.map(_.entryName).mkString(" "),
+        "tabSize"       -> props.options.tabSize,
+        "inputStyle"    -> "contenteditable",
+        "autoRefresh"   -> props.options.autoRefresh,
+        "readOnly"      -> props.options.readOnly
+      )
     }
 
-    protected[CodeEditor] def mounted(props: Props, state: State): Unit = {
-      val textArea = $.getDOMNode().asInstanceOf[html.TextArea]
-      val codeMirror = CodeMirror.fromTextArea(textArea, jsOptions(props).getOrElse(js.Dynamic.literal()))
+    protected[CodeEditor] def mounted(props: Props, state: State): Callback = Callback {
+      val codeMirror = CodeMirror($.getDOMNode(), jsOptions(props))
 
+      state.value.foreach(codeMirror.setValue)
       codeMirror.setSize(props.width, props.height)
       codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
 
-      codeMirror.setValue(state.value.getOrElse(""))
+      codeMirror.refresh()
+      codeMirror.markClean()
     }
 
     def onChange(codeMirror: CodeMirror, change: ChangeEvent): Unit = {
       val editorValue = Option(codeMirror.getValue()).filterNot(_.isEmpty)
-      $.modState(_.copy(value = editorValue), propagateUpdate).runNow()
+      if (!editorValue.contains(change.removed.mkString("\n")))
+        $.modState(_.copy(value = editorValue), propagateUpdate).runNow()
     }
 
-    def render(props: Props, state: State) = {
-      <.textarea(^.`class` := "form-control", props.attrs)
-    }
+    def render(props: Props, state: State) =
+      <.div(props.attrs)
 
   }
 
   val component = ReactComponentB[Props]("CodeEditor")
     .initialState_P(props => State(props.text))
     .renderBackend[Backend]
-    .componentDidMount($ => Callback { $.backend.mounted($.props, $.state) })
+    .componentDidMount($ => $.backend.mounted($.props, $.state))
     .build
 
   private[this] def extractWidthAndHeight(attrs: Seq[TagMod]): (Width, Height, List[TagMod]) = {
+    import ReactStyle.NameAndValue
+
     val initial: (Width, Height, List[TagMod]) = (DefaultWidth, DefaultHeight, List.empty[TagMod])
     attrs.foldRight(initial) { case (attr, (w, h, acc)) =>
       attr match {
@@ -139,12 +149,12 @@ object CodeEditor {
 
   def apply(value: Option[String], onUpdate: OnUpdate, attrs: TagMod*) = {
     val (width, height, remaining) = extractWidthAndHeight(attrs)
-    component(Props(value, onUpdate, width, height, None, remaining))
+    component(Props(value, onUpdate, width, height, Options(), remaining))
   }
 
   def apply(value: Option[String], onUpdate: OnUpdate, options: Options, attrs: TagMod*) = {
     val (width, height, remaining) = extractWidthAndHeight(attrs)
-    component(Props(value, onUpdate, width, height, Some(options), remaining))
+    component(Props(value, onUpdate, width, height, options, remaining))
   }
 
 }
