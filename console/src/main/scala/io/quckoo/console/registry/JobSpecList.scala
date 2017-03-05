@@ -168,7 +168,10 @@ object JobSpecList {
 
       <.div(
         ToolBar(
-          Button(Button.Props(Some(props.onJobCreate)), Icons.plusSquare, "New Job"),
+          Button(Button.Props(
+            Some(props.onJobCreate),
+            style = ContextStyle.primary
+          ), Icons.plusSquare, "New Job"),
           Button(Button.Props(
             Some(enableAll),
             disabled = enableAllDisabled(props, state)

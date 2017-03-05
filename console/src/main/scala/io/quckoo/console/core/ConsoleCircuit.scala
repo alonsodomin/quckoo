@@ -141,7 +141,7 @@ object ConsoleCircuit
         }
 
       case ClusterStateLoaded(state) =>
-        updated(state, StartClusterSubscription)
+        updated(state)
 
       case evt: MasterEvent =>
         val notification = evt match {

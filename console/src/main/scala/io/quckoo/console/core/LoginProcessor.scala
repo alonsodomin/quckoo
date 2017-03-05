@@ -58,7 +58,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
           lastLogin = Some(LocalDateTime.now(consoleClock))
         )
         logger.info("Successfully logged in! Redirecting to {}", destination.entryName)
-        val effects = Effects.seq(NavigateTo(destination), GetClusterStatus)
+        val effects = Effects.seq(NavigateTo(destination), StartClusterSubscription)
         ModelUpdateEffect(newModel, effects)
 
       case LoggedOut =>

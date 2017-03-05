@@ -89,8 +89,10 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
   ): Future[Map[JobId, Pot[JobSpec]]] = {
     implicit val timeout = DefaultTimeout
     if (keys.isEmpty) {
+      logger.debug("Loading all jobs from the server...")
       client.fetchJobs.map(_.map { case (k, v) => (k, Ready(v)) })
     } else {
+      logger.debug("Loading job specs for keys: {}", keys.mkString(", "))
       Future.sequence(keys.map(loadJobSpec)).map(_.toMap)
     }
   }
