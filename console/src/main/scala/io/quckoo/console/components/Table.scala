@@ -32,6 +32,8 @@ import scalaz.NonEmptyList
   */
 object Table {
 
+  type OnSelect[Id] = Set[Id] => Callback
+
   type RowCallback[Id]             = Id => Callback
   type RowCellRender[Id, Item]     = (Id, Item, Symbol) => ReactNode
   type RowActionsFactory[Id, Item] = (Id, Item) => Seq[RowAction[Id, Item]]
@@ -139,24 +141,30 @@ object Table {
       items: ItemSeq[Id, Item],
       render: RowCellRender[Id, Item],
       onRowClick: Option[RowCallback[Id]],
-      allowSelect: Boolean,
+      onSelect: Option[OnSelect[Id]],
       actions: Option[RowActionsFactory[Id, Item]],
       filter: Option[Filter[Id, Item]],
+      selected: Set[Id],
       style: Set[TableStyle.Value]
   )
   final case class State[Id](selected: Set[Id], allSelected: Boolean = false)
 
   class Backend[Id, Item]($ : BackendScope[Props[Id, Item], State[Id]]) {
 
+    private[this] def propagateSelection: Callback =
+      $.props.flatMap(p => $.state.flatMap(s => p.onSelect.map(_(s.selected)).getOrElse(Callback.empty)))
+
     def toggleSelectAll(props: Props[Id, Item]): Callback = {
-      $.modState { state =>
+      def updateState(state: State[Id]): State[Id] = {
         if (state.allSelected) state.copy(selected = Set.empty[Id], allSelected = false)
         else state.copy(allSelected = true)
       }
+
+      $.modState(updateState, propagateSelection)
     }
 
     def toggleSelectItem(props: Props[Id, Item])(id: Id): Callback = {
-      $.modState { state =>
+      def updateState(state: State[Id]): State[Id] = {
         val newSet = {
           if (state.selected.contains(id))
             state.selected - id
@@ -164,6 +172,8 @@ object Table {
         }
         state.copy(selected = newSet)
       }
+
+      $.modState(updateState, propagateSelection)
     }
 
     def render(props: Props[Id, Item], state: State[Id]) = {
@@ -174,7 +184,7 @@ object Table {
         }
 
         val selectableColumns = {
-          if (props.allowSelect) {
+          if (props.onSelect.isDefined) {
             val selectAllCheckbox = CheckboxCell.withKey("select-all")(
               CheckboxCellProps(
                 "selectAll",
@@ -214,7 +224,7 @@ object Table {
               item,
               props.render,
               props.onRowClick,
-              props.allowSelect,
+              props.onSelect.isDefined,
               state.selected.contains(id) || state.allSelected,
               toggleSelectItem(props),
               props.actions)
@@ -226,7 +236,7 @@ object Table {
 
   private[components] def component[Id, Item] =
     ReactComponentB[Props[Id, Item]]("Table")
-      .initialState(State(Set.empty[Id]))
+      .initialState_P(props => State(props.selected))
       .renderBackend[Backend[Id, Item]]
       .build
 
@@ -234,14 +244,15 @@ object Table {
                       items: ItemSeq[Id, Item],
                       render: RowCellRender[Id, Item],
                       onRowClick: Option[RowCallback[Id]] = None,
-                      allowSelect: Boolean = false,
+                      onSelect: Option[OnSelect[Id]] = None,
                       actions: Option[RowActionsFactory[Id, Item]] = None,
                       filter: Option[Filter[Id, Item]] = None,
-                      style: Set[TableStyle.Value] = Set.empty,
+                      selected: Set[Id] = Set.empty[Id],
+                      style: Set[TableStyle.Value] = Set.empty[TableStyle.Value],
                       key: Option[String] = None) = {
     val baseComp = component[Id, Item]
     val instance = key.map(k => baseComp.withKey(k)).getOrElse(baseComp)
-    instance.apply(Props(headers, items, render, onRowClick, allowSelect, actions, filter, style))
+    instance.apply(Props(headers, items, render, onRowClick, onSelect, actions, filter, selected, style))
   }
 
 }

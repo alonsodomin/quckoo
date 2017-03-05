@@ -19,9 +19,7 @@ package io.quckoo.console.registry
 import diode.react.ModelProxy
 
 import io.quckoo._
-import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleScope
-import io.quckoo.console.layout.GlobalStyles
 import io.quckoo.protocol.registry._
 
 import japgolly.scalajs.react._
@@ -44,14 +42,14 @@ object RegistryPage {
 
   case class Props(proxy: ModelProxy[ConsoleScope])
   case class State(
-      selectedJob: Option[JobSpec] = None,
-      showForm: Boolean = false
+    editingJob: Option[JobSpec] = None,
+    showForm: Boolean = false
   )
 
   class RegistryBackend($ : BackendScope[Props, State]) {
 
-    def editJob(spec: Option[JobSpec]) =
-      $.modState(_.copy(selectedJob = spec, showForm = true))
+    def editJob(spec: Option[JobSpec]): Callback =
+      $.modState(_.copy(editingJob = spec, showForm = true))
 
     def jobEdited(spec: Option[JobSpec]): Callback = {
       def dispatchAction(props: Props): Callback =
@@ -69,12 +67,13 @@ object RegistryPage {
       <.div(
         Style.content,
         <.h2("Registry"),
-        <.div(
-          GlobalStyles.pageToolbar,
-          Button(Button.Props(Some(editJob(None))), Icons.plusSquare, "New Job")),
-        if (state.showForm) JobForm(state.selectedJob, jobEdited)
+        if (state.showForm) JobForm(state.editingJob, jobEdited)
         else EmptyTag,
-        connector(JobSpecList(_, jobSpec => editJob(Some(jobSpec)))))
+        connector(JobSpecList(_,
+          editJob(None),
+          jobSpec => editJob(Some(jobSpec))
+        ))
+      )
     }
 
   }

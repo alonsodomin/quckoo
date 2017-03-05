@@ -117,7 +117,6 @@ object ExecutionPlanList {
           model.executionPlans.seq,
           renderItem(model),
           key = Some("executionPlans"),
-          allowSelect = true,
           actions = Some(rowActions(props)(_, _)),
           filter = Some(state.filter))
       )
