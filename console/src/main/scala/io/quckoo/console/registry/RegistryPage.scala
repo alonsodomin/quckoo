@@ -40,14 +40,14 @@ object RegistryPage {
 
   }
 
-  case class Props(proxy: ModelProxy[ConsoleScope])
+  final case class Props(proxy: ModelProxy[ConsoleScope])
 
-  private val formRef = Ref.to(JobForm.component, "jobForm")
+  private lazy val formRef = Ref.to(JobForm.component, "jobForm")
 
-  class RegistryBackend($ : BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def editJob(spec: Option[JobSpec]): Callback = {
-      formRef($).map(_.backend.editJob(spec)).getOrElse(Callback.empty)
+      formRef($.refs).map(_.backend.editJob(spec)).getOrElse(Callback.empty)
     }
 
     def jobEdited(spec: Option[JobSpec]): Callback = {
@@ -75,7 +75,7 @@ object RegistryPage {
 
   private[this] val component = ReactComponentB[Props]("RegistryPage")
     .stateless
-    .renderBackend[RegistryBackend]
+    .renderBackend[Backend]
     .build
 
   def apply(proxy: ModelProxy[ConsoleScope]) = component(Props(proxy))

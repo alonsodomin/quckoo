@@ -26,6 +26,7 @@ import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
 import io.quckoo.protocol.scheduler.CancelExecutionPlan
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.prefix_<^._
 
 import org.threeten.bp.ZonedDateTime
 
@@ -52,8 +53,16 @@ object ExecutionPlanList {
   final val InactiveFilter: Table.Filter[PlanId, ExecutionPlan] =
     (id, plan) => !ActiveFilter(id, plan)
 
-  final case class Props(proxy: ModelProxy[UserScope])
-  final case class State(filter: Table.Filter[PlanId, ExecutionPlan])
+  final val Filters: Map[Symbol, Table.Filter[PlanId, ExecutionPlan]] = Map(
+    'Active   -> ActiveFilter,
+    'Inactive -> InactiveFilter
+  )
+
+  type OnCreate = Callback
+  type OnClick = ExecutionPlan => Callback
+
+  final case class Props(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick)
+  final case class State(selectedFilter: Option[Symbol] = None)
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -101,36 +110,41 @@ object ExecutionPlanList {
       } else Seq.empty
     }
 
-    def filterClicked(filterType: Symbol): Callback = filterType match {
-      case 'All      => $.modState(_.copy(filter = Table.NoFilter))
-      case 'Active   => $.modState(_.copy(filter = ActiveFilter))
-      case 'Inactive => $.modState(_.copy(filter = InactiveFilter))
-    }
+    def filterClicked(filterType: Symbol): Callback =
+      $.modState(_.copy(selectedFilter = Some(filterType)))
 
     def render(props: Props, state: State) = {
       val model = props.proxy()
-      NavBar(
-        NavBar
-          .Props(List('All, 'Active, 'Inactive), 'All, filterClicked, style = NavStyle.pills),
-        Table(
-          Columns,
-          model.executionPlans.seq,
-          renderItem(model),
-          key = Some("executionPlans"),
-          actions = Some(rowActions(props)(_, _)),
-          filter = Some(state.filter))
+      <.div(
+        ToolBar(
+          Button(Button.Props(
+            Some(props.onCreate),
+            style = ContextStyle.primary
+          ), Icons.plusSquare, "Execution Plan")
+        ),
+        NavBar(
+          NavBar
+            .Props(List('All, 'Active, 'Inactive), 'All, filterClicked, style = NavStyle.pills),
+          Table(
+            Columns,
+            model.executionPlans.seq,
+            renderItem(model),
+            key = Some("executionPlans"),
+            actions = Some(rowActions(props)(_, _)),
+            filter = state.selectedFilter.flatMap(Filters.get))
+        )
       )
     }
 
   }
 
   private[this] val component = ReactComponentB[Props]("ExecutionPlanList")
-    .initialState(State(filter = Table.NoFilter))
+    .initialState(State())
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))
     .build
 
-  def apply(proxy: ModelProxy[UserScope]) =
-    component.withKey("execution-plan-list")(Props(proxy))
+  def apply(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick) =
+    component.withKey("execution-plan-list")(Props(proxy, onCreate, onClick))
 
 }

@@ -155,13 +155,10 @@ object JobForm {
 
   }
 
-  private[registry] val component = ReactComponentB[Props]("JobForm").
-    initialState_P(p => State(new EditableJobSpec(None))).
-    renderBackend[Backend].
-    build
-
-  def apply(handler: Handler) =
-    component(Props(handler))
+  private[registry] val component = ReactComponentB[Props]("JobForm")
+    .initialState(State(new EditableJobSpec(None)))
+    .renderBackend[Backend]
+    .build
 
   def apply(handler: Handler, refName: String) =
     component.withRef(refName)(Props(handler))
