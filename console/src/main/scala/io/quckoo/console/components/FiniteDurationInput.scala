@@ -44,7 +44,8 @@ object FiniteDurationInput {
 
   case class Props(id: String,
                    value: Option[FiniteDuration],
-                   onUpdate: Option[FiniteDuration] => Callback)
+                   onUpdate: Option[FiniteDuration] => Callback,
+                   readOnly: Boolean = false)
   case class State(length: Option[Long], unit: Option[TimeUnit]) {
 
     def this(duration: Option[FiniteDuration]) =
@@ -80,14 +81,14 @@ object FiniteDurationInput {
       $.modState(_.copy(unit = value), propagateUpdate)
     }
 
-    val _lengthInput = Input[Long]()
-    val validateLength = {
+    private[this] val _lengthInput = Input[Long]
+    private[this] val LengthValidation = {
       import Scalaz._
       ValidatedInput[Long]((greaterThan(0L) or equalTo(0L)).callback)
     }
 
-    def lengthInput(id: String, state: State)(onUpdate: Option[Long] => Callback) =
-      _lengthInput(state.length, onUpdate, ^.id := s"${id}_length")
+    private[this] def lengthInput(props: Props, state: State)(onUpdate: Option[Long] => Callback) =
+      _lengthInput(state.length, onUpdate, ^.id := s"${props.id}_length", ^.readOnly := props.readOnly)
 
     def render(props: Props, state: State) = {
       val id = props.id
@@ -95,12 +96,14 @@ object FiniteDurationInput {
         ^.`class` := "container-fluid",
         <.div(
           ^.`class` := "row",
-          <.div(^.`class` := "col-sm-4", validateLength(onLengthUpdate _)(lengthInput(id, state))),
+          <.div(^.`class` := "col-sm-4", LengthValidation(onLengthUpdate _)(lengthInput(props, state))),
           <.div(
             ^.`class` := "col-sm-6",
             <.select(
               ^.id := s"${id}_unit",
               ^.`class` := "form-control",
+              ^.readOnly := props.readOnly,
+              ^.disabled := props.readOnly,
               state.unit.map(u => ^.value := u.toString()),
               ^.onChange ==> onUnitUpdate,
               <.option(^.value := "", "Select a time unit..."),
@@ -124,7 +127,8 @@ object FiniteDurationInput {
 
   def apply(id: String,
             value: Option[FiniteDuration],
-            onUpdate: Option[FiniteDuration] => Callback) =
-    component(Props(id, value, onUpdate))
+            onUpdate: Option[FiniteDuration] => Callback,
+            readOnly: Boolean = false) =
+    component(Props(id, value, onUpdate, readOnly))
 
 }

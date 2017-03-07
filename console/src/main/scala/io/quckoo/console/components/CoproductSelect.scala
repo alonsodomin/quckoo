@@ -110,14 +110,14 @@ object CoproductSelect {
 
 }
 
-class CoproductSelect[A: Reusability] private[components](mapper: CoproductSelect.ValueMapper[A]) {
+final class CoproductSelect[A: Reusability] private[components](mapper: CoproductSelect.ValueMapper[A]) {
   import CoproductSelect._
 
-  private def generateState(props: Props[A], cache: Map[Symbol, A] = Map.empty): State[A] = {
+  private def generateState(props: Props[A]): State[A] = {
     val selectedSymbol = props.value.flatMap(mapper.lift)
     val rebuiltCache   = selectedSymbol.zip(props.value).map {
-      case (sym, value) => cache + (sym -> value)
-    }.headOption.getOrElse(cache)
+      case (sym, value) => Map(sym -> value)
+    }.headOption.getOrElse(Map.empty[Symbol, A])
 
     State[A](
       selected = selectedSymbol,

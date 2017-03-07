@@ -24,5 +24,7 @@ import japgolly.scalajs.react.extra.Reusability
 final class Password(val value: String) extends AnyVal
 
 object Password {
+  def apply(value: String): Password = new Password(value)
+
   implicit val reusability: Reusability[Password] = Reusability.by(_.value)
 }

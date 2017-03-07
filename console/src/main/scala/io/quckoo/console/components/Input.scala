@@ -35,7 +35,7 @@ object Input {
     def to: A => String
   }
   object Converter {
-    abstract sealed class BaseConverter[A] extends Converter[A] {
+    private abstract sealed class BaseConverter[A] extends Converter[A] {
       override def to: A => String = _.toString
     }
 
@@ -46,7 +46,7 @@ object Input {
 
     implicit val password: Converter[Password] = new Converter[Password] {
       def to: Password => String   = _.value
-      def from: String => Password = new Password(_)
+      def from: String => Password = Password(_)
     }
 
     implicit val int: Converter[Int] = new BaseConverter[Int] {
@@ -55,6 +55,10 @@ object Input {
 
     implicit val long: Converter[Long] = new BaseConverter[Long] {
       override def from: String => Long = _.toLong
+    }
+
+    implicit val short: Converter[Short] = new BaseConverter[Short] {
+      override def from: String => Short = _.toShort
     }
 
     implicit val date: Converter[LocalDate] = new BaseConverter[LocalDate] {
@@ -74,6 +78,7 @@ object Input {
     implicit val password = new Type[Password]("password") {}
     implicit val int      = new Type[Int]("number")        {}
     implicit val long     = new Type[Long]("number")       {}
+    implicit val short    = new Type[Short]("number")      {}
     implicit val date     = new Type[LocalDate]("date")    {}
     implicit val time     = new Type[LocalTime]("time")    {}
   }
@@ -118,7 +123,7 @@ object Input {
 
   }
 
-  def apply[A: Reusability]() = new Input[A]
+  def apply[A: Reusability] = new Input[A]
 
 }
 

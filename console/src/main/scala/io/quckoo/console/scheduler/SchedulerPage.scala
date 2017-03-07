@@ -19,21 +19,23 @@ package io.quckoo.console.scheduler
 import diode.react.ModelProxy
 
 import io.quckoo.ExecutionPlan
-import io.quckoo.console.components.{Button, Icons, TabPanel}
+import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleScope
-import io.quckoo.console.layout.GlobalStyles
 import io.quckoo.protocol.scheduler.ScheduleJob
 
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
+
+import scalaz.OptionT
 
 /**
   * Created by alonsodomin on 17/10/2015.
   */
 object SchedulerPage {
+  import ScalazReact._
 
   object Style extends StyleSheet.Inline {
     import dsl._
@@ -41,49 +43,49 @@ object SchedulerPage {
     val content = style(addClassName("container"))
   }
 
-  case class Props(proxy: ModelProxy[ConsoleScope])
-  case class State(selectedSchedule: Option[ExecutionPlan] = None, showForm: Boolean = false)
+  final case class Props(proxy: ModelProxy[ConsoleScope])
 
-  class ExecutionsBackend($ : BackendScope[Props, State]) {
+  private lazy val executionPlanFormRef = Ref.to(ExecutionPlanForm.component, "ExecutionPlanForm")
+
+  class Backend($ : BackendScope[Props, Unit]) {
+
+    lazy val executionPlanForm: OptionT[CallbackTo, ExecutionPlanForm.Backend] =
+      OptionT(CallbackTo.lift(() => executionPlanFormRef($).toOption.map(_.backend)))
 
     def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
         scheduleJob.map(props.proxy.dispatchCB[ScheduleJob]).getOrElse(Callback.empty)
 
-      def updateState(): Callback =
-        $.modState(_.copy(showForm = false))
-
-      updateState() >> ($.props >>= dispatchAction)
+      $.props >>= dispatchAction
     }
 
-    def scheduleForm(schedule: Option[ExecutionPlan]) =
-      $.modState(_.copy(selectedSchedule = schedule, showForm = true))
+    def editPlan(plan: Option[ExecutionPlan]): Callback = {
+      executionPlanForm.flatMapF(_.editPlan(plan))
+        .getOrElseF(Callback.log("Reference {} points to nothing!", executionPlanFormRef.name))
+    }
 
-    def render(props: Props, state: State) = {
+    def render(props: Props) = {
       val userScopeConnector = props.proxy.connect(_.userScope)
       val executionConnector = props.proxy.connect(_.userScope.executions)
 
       <.div(
         Style.content,
         <.h2("Scheduler"),
-        <.div(
-          GlobalStyles.pageToolbar,
-          Button(Button.Props(Some(scheduleForm(None))), Icons.plusSquare, "Execution Plan")),
-        if (state.showForm) {
-          props.proxy.wrap(_.userScope.jobSpecs)(
-            ExecutionPlanForm(_, state.selectedSchedule, scheduleJob))
-        } else EmptyTag,
+        props.proxy.wrap(_.userScope.jobSpecs) { jobs =>
+          ExecutionPlanForm(jobs, scheduleJob, executionPlanFormRef.name)
+        },
         TabPanel(
-          'Plans      -> userScopeConnector(ExecutionPlanList(_)),
+          'Plans      -> userScopeConnector(ExecutionPlanList(_, editPlan(None), plan => editPlan(Some(plan)))),
           'Executions -> executionConnector(TaskExecutionList(_))
-        ))
+        )
+      )
     }
 
   }
 
   private[this] val component = ReactComponentB[Props]("ExecutionsPage")
-    .initialState(State())
-    .renderBackend[ExecutionsBackend]
+    .stateless
+    .renderBackend[Backend]
     .build
 
   def apply(proxy: ModelProxy[ConsoleScope]) = component(Props(proxy))

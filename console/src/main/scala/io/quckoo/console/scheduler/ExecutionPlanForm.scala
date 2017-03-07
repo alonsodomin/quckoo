@@ -28,6 +28,7 @@ import io.quckoo.console.registry.JobSelect
 import io.quckoo.protocol.scheduler.ScheduleJob
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import monocle.macros.Lenses
@@ -44,7 +45,7 @@ object ExecutionPlanForm {
   @inline
   private def lnf = lookAndFeel
 
-  type ScheduleHandler = Option[ScheduleJob] => Callback
+  type Handler = Option[ScheduleJob] => Callback
 
   @Lenses final case class EditableExecutionPlan(
     jobId: Option[JobId] = None,
@@ -61,13 +62,14 @@ object ExecutionPlanForm {
 
   final case class Props(
       proxy: ModelProxy[PotMap[JobId, JobSpec]],
-      plan: Option[ExecutionPlan],
-      handler: ScheduleHandler
+      handler: Handler
   )
   @Lenses final case class State(
       plan: EditableExecutionPlan,
       timeout: Option[FiniteDuration] = None,
       showPreview: Boolean = false,
+      visible: Boolean = false,
+      readOnly: Boolean = false,
       cancelled: Boolean = true
   )
 
@@ -77,8 +79,27 @@ object ExecutionPlanForm {
     val triggerLens = State.plan ^|-> EditableExecutionPlan.trigger
     val timeoutLens = State.timeout
 
-    def mounted(props: Props) =
+    private[ExecutionPlanForm] def initialize(props: Props) =
       Callback.when(props.proxy().size == 0)(props.proxy.dispatchCB(LoadJobSpecs))
+
+    // Event handlers
+
+    def onModalClosed(props: Props): Callback = {
+      def command(state: State): Option[ScheduleJob] = if (!state.cancelled) {
+        for {
+          jobId   <- state.plan.jobId
+          trigger <- state.plan.trigger
+        } yield ScheduleJob(jobId, trigger, state.timeout)
+      } else None
+
+      $.modState(_.copy(visible = false)) >> $.state.map(command) >>= props.handler
+    }
+
+    // Not supported yet
+    def onParamUpdate(name: String, value: String): Callback =
+      Callback.empty
+
+    // Actions
 
     def togglePreview(): Callback =
       $.modState(st => st.copy(showPreview = !st.showPreview))
@@ -86,16 +107,10 @@ object ExecutionPlanForm {
     def submitForm(): Callback =
       $.modState(_.copy(cancelled = false))
 
-    def formClosed(props: Props, state: State): Callback = {
-      def command: Option[ScheduleJob] = if (!state.cancelled) {
-        for {
-          jobId <- state.plan.jobId
-          trigger <- state.plan.trigger
-        } yield ScheduleJob(jobId, trigger, state.timeout)
-      } else None
+    def editPlan(plan: Option[ExecutionPlan]): Callback =
+      $.setState(State(new EditableExecutionPlan(plan), visible = true, readOnly = plan.isDefined))
 
-      props.handler(command)
-    }
+    // Rendering
 
     def jobSpecs(props: Props): Map[JobId, JobSpec] = {
       props.proxy().seq.flatMap {
@@ -104,52 +119,60 @@ object ExecutionPlanForm {
       } toMap
     }
 
-    // Not supported yet
-    def onParamUpdate(name: String, value: String): Callback =
-      Callback.empty
-
     def render(props: Props, state: State) = {
-      <.form(^.name := "executionPlanForm", ^.`class` := "form-horizontal", Modal(
-        Modal.Props(
-          header = hide => <.span(
-            <.button(^.tpe := "button", lnf.close, ^.onClick --> hide, Icons.close),
-            <.h4("Execution plan")
+      def formHeader(hide: Callback) = {
+        <.span(
+          <.button(^.tpe := "button", lnf.close, ^.onClick --> hide, Icons.close),
+          <.h4("Execution plan")
+        )
+      }
+
+      def formFooter(hide: Callback) = {
+        <.span(
+          Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
+          Button(Button.Props(Some(togglePreview()), style = ContextStyle.default,
+            disabled = jobIdLens.get(state).isEmpty || triggerLens.get(state).isEmpty),
+            if (state.showPreview) "Back" else "Preview"
           ),
-          footer = hide => <.span(
-            Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
-            Button(Button.Props(Some(togglePreview()), style = ContextStyle.default,
-              disabled = jobIdLens.get(state).isEmpty || triggerLens.get(state).isEmpty),
-              if (state.showPreview) "Back" else "Preview"
-            ),
-            Button(Button.Props(Some(submitForm() >> hide),
-              disabled = !state.plan.valid,
-              style = ContextStyle.primary), "Ok"
-            )
-          ),
-          onClosed = formClosed(props, state)
-        ),
-        if (!state.showPreview) {
-          <.div(
-            JobSelect(jobSpecs(props), jobIdLens.get(state), $.setStateL(jobIdLens)(_)),
-            TriggerSelect(triggerLens.get(state), $.setStateL(triggerLens)(_)),
-            ExecutionTimeoutInput(timeoutLens.get(state), $.setStateL(timeoutLens)(_))
-            //ExecutionParameterList(Map.empty, onParamUpdate)
+          Button(Button.Props(Some(submitForm() >> hide),
+            disabled = state.readOnly || !state.plan.valid,
+            style = ContextStyle.primary), "Save"
           )
-        } else {
-          triggerLens.get(state).map(ExecutionPlanPreview(_)).get
-        }
-      ))
+        )
+      }
+
+      <.form(^.name := "executionPlanForm", ^.`class` := "form-horizontal",
+        if (state.visible) {
+          Modal(
+            Modal.Props(
+              header = formHeader,
+              footer = formFooter,
+              onClosed = onModalClosed(props)
+            ),
+            if (!state.showPreview) {
+              <.div(
+                JobSelect(jobSpecs(props), jobIdLens.get(state), $.setStateL(jobIdLens)(_), readOnly = state.readOnly),
+                TriggerSelect(triggerLens.get(state), $.setStateL(triggerLens)(_), readOnly = state.readOnly),
+                ExecutionTimeoutInput(timeoutLens.get(state), $.setStateL(timeoutLens)(_), readOnly = state.readOnly)
+                //ExecutionParameterList(Map.empty, onParamUpdate)
+              )
+            } else {
+              triggerLens.get(state).map(ExecutionPlanPreview(_)).get
+            }
+          )
+        } else EmptyTag
+      )
     }
 
   }
 
-  val component = ReactComponentB[Props]("ExecutionPlanForm").
-    initialState_P(props => State(new EditableExecutionPlan(props.plan))).
-    renderBackend[Backend].
-    componentDidMount($ => $.backend.mounted($.props)).
-    build
+  val component = ReactComponentB[Props]("ExecutionPlanForm")
+    .initialState(State(EditableExecutionPlan(None)))
+    .renderBackend[Backend]
+    .componentDidMount($ => $.backend.initialize($.props))
+    .build
 
-  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]], plan: Option[ExecutionPlan], handler: ScheduleHandler) =
-    component(Props(proxy, plan, handler))
+  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]], handler: Handler, refName: String) =
+    component.withRef(refName)(Props(proxy, handler))
 
 }

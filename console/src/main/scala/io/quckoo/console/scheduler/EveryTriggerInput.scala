@@ -33,7 +33,7 @@ import scalacss.ScalaCssReact._
 object EveryTriggerInput {
   @inline private def lnf = lookAndFeel
 
-  case class Props(value: Option[Trigger.Every], onUpdate: Option[Trigger.Every] => Callback)
+  case class Props(value: Option[Trigger.Every], onUpdate: Option[Trigger.Every] => Callback, readOnly: Boolean)
   case class State(freq: Option[FiniteDuration], delay: Option[FiniteDuration], delayEnabled: Boolean = false) {
 
     def this(trigger: Option[Trigger.Every]) =
@@ -41,8 +41,8 @@ object EveryTriggerInput {
 
   }
 
-  implicit val propsReuse = Reusability.by[Props, Option[Trigger.Every]](_.value)
-  implicit val stateReuse = Reusability.caseClass[State]
+  implicit val propsReuse: Reusability[Props] = Reusability.caseClassExcept('onUpdate)
+  implicit val stateReuse: Reusability[State] = Reusability.caseClass
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -76,7 +76,7 @@ object EveryTriggerInput {
           <.label(^.`class` := "col-sm-2 control-label", "Frequency"),
           <.div(
             ^.`class` := "col-sm-10",
-            FiniteDurationInput("everyTrigger_freq", state.freq, onFreqUpdate))),
+            FiniteDurationInput("everyTrigger_freq", state.freq, onFreqUpdate, props.readOnly))),
         <.div(lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", "Delay"),
           <.div(^.`class` := "col-sm-10",
@@ -85,7 +85,9 @@ object EveryTriggerInput {
                 <.input.checkbox(
                   ^.id := "enableDelay",
                   ^.onChange --> onToggleDelay,
-                  ^.value := state.delayEnabled
+                  ^.value := state.delayEnabled,
+                  ^.readOnly := props.readOnly,
+                  ^.disabled := props.readOnly
                 ),
                 "Enabled"
               )
@@ -94,7 +96,7 @@ object EveryTriggerInput {
         ),
         if (state.delayEnabled) {
           <.div(^.`class` := "col-sm-offset-2",
-            FiniteDurationInput("everyTrigger_delay", state.delay, onDelayUpdate)
+            FiniteDurationInput("everyTrigger_delay", state.delay, onDelayUpdate, props.readOnly)
           )
         } else EmptyTag
       )
@@ -108,7 +110,7 @@ object EveryTriggerInput {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[Trigger.Every], onUpdate: Option[Trigger.Every] => Callback) =
-    component(Props(value, onUpdate))
+  def apply(value: Option[Trigger.Every], onUpdate: Option[Trigger.Every] => Callback, readOnly: Boolean = false) =
+    component(Props(value, onUpdate, readOnly))
 
 }

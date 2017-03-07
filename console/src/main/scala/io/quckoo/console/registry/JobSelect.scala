@@ -32,7 +32,8 @@ object JobSelect {
 
   case class Props(jobs: Map[JobId, JobSpec],
                    value: Option[JobId],
-                   onUpdate: Option[JobId] => Callback)
+                   onUpdate: Option[JobId] => Callback,
+                   readOnly: Boolean = false)
 
   private[this] val JobOption = ReactComponentB[(JobId, JobSpec)]("JobOption").stateless.render_P {
     case (jobId, spec) =>
@@ -60,6 +61,8 @@ object JobSelect {
             ^.id := "jobId",
             props.value.map(id => ^.value := id.toString()),
             ^.onChange ==> onUpdate,
+            ^.readOnly := props.readOnly,
+            ^.disabled := props.readOnly,
             <.option("Select a job"),
             props.jobs
               .filter(!_._2.disabled)
@@ -68,9 +71,14 @@ object JobSelect {
 
   }
 
-  val component = ReactComponentB[Props]("JobSelect").stateless.renderBackend[Backend].build
+  val Component = ReactComponentB[Props]("JobSelect")
+    .stateless
+    .renderBackend[Backend]
+    .build
 
-  def apply(jobs: Map[JobId, JobSpec], value: Option[JobId], onUpdate: Option[JobId] => Callback) =
-    component(Props(jobs, value, onUpdate))
+  def apply(jobs: Map[JobId, JobSpec],
+            value: Option[JobId],
+            onUpdate: Option[JobId] => Callback,
+            readOnly: Boolean = false) = Component(Props(jobs, value, onUpdate, readOnly))
 
 }

@@ -52,7 +52,6 @@ object JobSpecList {
 
   type OnCreate = Callback
   type OnClick = JobSpec => Callback
-  type OnSelect = Set[JobId] => Callback
 
   final case class Props(
     proxy: ModelProxy[PotMap[JobId, JobSpec]],
@@ -63,7 +62,7 @@ object JobSpecList {
 
   class Backend($ : BackendScope[Props, State]) {
 
-    def mounted(props: Props) = {
+    private[JobSpecList] def mounted(props: Props) = {
       def dispatchJobLoading: Callback =
         props.proxy.dispatchCB(LoadJobSpecs)
 
@@ -128,10 +127,10 @@ object JobSpecList {
 
     // Event handlers
 
-    def filterClicked(filterType: Symbol): Callback =
+    def onFilterClicked(filterType: Symbol): Callback =
       $.modState(_.copy(selectedFilter = Some(filterType)))
 
-    def jobClicked(jobId: JobId): Callback = {
+    def onJobClicked(jobId: JobId): Callback = {
       def onJobClickedCB(jobSpec: JobSpec): Callback =
         $.props.flatMap(_.onJobEdit(jobSpec))
 
@@ -143,13 +142,13 @@ object JobSpecList {
       )
     }
 
-    def jobSelected(selection: Set[JobId]): Callback =
+    def onJobSelected(selection: Set[JobId]): Callback =
       $.modState(_.copy(selectedJobs = selection))
 
     // Render methods
 
     private[this] def renderName(jobId: JobId, jobSpec: JobSpec): ReactNode =
-      <.a(^.onClick --> jobClicked(jobId), jobSpec.displayName)
+      <.a(^.onClick --> onJobClicked(jobId), jobSpec.displayName)
 
     def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): ReactNode = column match {
       case 'Name        => renderName(jobId, jobSpec)
@@ -183,12 +182,12 @@ object JobSpecList {
         ),
         NavBar(
           NavBar
-            .Props(List('All, 'Enabled, 'Disabled), 'All, filterClicked, style = NavStyle.pills),
+            .Props(List('All, 'Enabled, 'Disabled), 'All, onFilterClicked, style = NavStyle.pills),
           Table(
             Columns,
             model.seq,
             renderItem,
-            onSelect = Some(jobSelected _),
+            onSelect = Some(onJobSelected _),
             actions = Some(rowActions(props)(_, _)),
             filter = state.selectedFilter.flatMap(Filters.get),
             selected = state.selectedJobs,

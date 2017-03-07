@@ -28,7 +28,7 @@ import scala.concurrent.duration.FiniteDuration
   */
 object ExecutionTimeoutInput {
 
-  case class Props(value: Option[FiniteDuration], onUpdate: Option[FiniteDuration] => Callback)
+  case class Props(value: Option[FiniteDuration], onUpdate: Option[FiniteDuration] => Callback, readOnly: Boolean)
   case class State(enabled: Boolean = false)
 
   class Backend($ : BackendScope[Props, State]) {
@@ -52,14 +52,16 @@ object ExecutionTimeoutInput {
                 <.input.checkbox(
                   ^.id := "enableTimeout",
                   ^.value := state.enabled,
-                  ^.onChange --> onFlagUpdate
+                  ^.onChange --> onFlagUpdate,
+                  ^.readOnly := props.readOnly,
+                  ^.disabled := props.readOnly
                 ),
                 "Enabled"
               )))),
         if (state.enabled) {
           <.div(
             ^.`class` := "col-sm-offset-2",
-            FiniteDurationInput("timeout", props.value, onValueUpdate))
+            FiniteDurationInput("timeout", props.value, onValueUpdate, props.readOnly))
         } else EmptyTag
       )
     }
@@ -71,7 +73,7 @@ object ExecutionTimeoutInput {
     .renderBackend[Backend]
     .build
 
-  def apply(value: Option[FiniteDuration], onUpdate: Option[FiniteDuration] => Callback) =
-    component(Props(value, onUpdate))
+  def apply(value: Option[FiniteDuration], onUpdate: Option[FiniteDuration] => Callback, readOnly: Boolean = false) =
+    component(Props(value, onUpdate, readOnly))
 
 }

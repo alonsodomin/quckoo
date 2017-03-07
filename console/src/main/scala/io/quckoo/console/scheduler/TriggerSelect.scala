@@ -30,19 +30,19 @@ object TriggerSelect {
   type Selector    = CoproductSelect.Selector[Trigger]
   type OnUpdate    = CoproductSelect.OnUpdate[Trigger]
 
-  case class Props(value: Option[Trigger], onUpdate: OnUpdate)
+  case class Props(value: Option[Trigger], onUpdate: OnUpdate, readOnly: Boolean = false)
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    def selectComponent: Selector = {
+    def selectComponent(props: Props): Selector = {
       case 'After =>
-        (value, callback) => AfterTriggerInput(value.map(_.asInstanceOf[Trigger.After]), callback)
+        (value, callback) => AfterTriggerInput(value.map(_.asInstanceOf[Trigger.After]), callback, props.readOnly)
       case 'Every =>
-        (value, callback) => EveryTriggerInput(value.map(_.asInstanceOf[Trigger.Every]), callback)
+        (value, callback) => EveryTriggerInput(value.map(_.asInstanceOf[Trigger.Every]), callback, props.readOnly)
       case 'At =>
-        (value, callback) => AtTriggerInput(value.map(_.asInstanceOf[Trigger.At]), callback)
+        (value, callback) => AtTriggerInput(value.map(_.asInstanceOf[Trigger.At]), callback, props.readOnly)
       case 'Cron =>
-        (value, callback) => CronTriggerInput(value.map(_.asInstanceOf[Trigger.Cron]), callback)
+        (value, callback) => CronTriggerInput(value.map(_.asInstanceOf[Trigger.Cron]), callback, props.readOnly)
     }
 
     val selectInput = CoproductSelect[Trigger] {
@@ -54,8 +54,8 @@ object TriggerSelect {
     }
 
     def render(props: Props) = {
-      selectInput(Options, selectComponent, props.value, Options.head, props.onUpdate,
-        ^.id := "triggerType"
+      selectInput(Options, selectComponent(props), props.value, Options.head, props.onUpdate,
+        ^.id := "triggerType", ^.readOnly := props.readOnly, ^.disabled := props.readOnly
       )(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "triggerType", "Trigger"))
     }
 
@@ -66,7 +66,7 @@ object TriggerSelect {
     .renderBackend[Backend]
     .build
 
-  def apply(value: Option[Trigger], onUpdate: OnUpdate) =
-    component(Props(value, onUpdate))
+  def apply(value: Option[Trigger], onUpdate: OnUpdate, readOnly: Boolean = false) =
+    component(Props(value, onUpdate, readOnly))
 
 }

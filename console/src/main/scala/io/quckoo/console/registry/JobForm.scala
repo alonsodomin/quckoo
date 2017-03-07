@@ -16,7 +16,7 @@
 
 package io.quckoo.console.registry
 
-import io.quckoo.{JobSpec, JobPackage}
+import io.quckoo.{JobPackage, JobSpec}
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
@@ -68,38 +68,29 @@ object JobForm {
 
     // Event handlers
 
-    def onDisplayNameUpdate(value: Option[String]) =
-      $.setStateL(displayName)(value)
-
-    def onDescriptionUpdate(value: Option[String]) =
-      $.setStateL(description)(value)
-
-    def onJobPackageUpdate(value: Option[JobPackage]) =
-      $.setStateL(jobPackage)(value)
-
-    def onModalClosed(props: Props, state: State) = {
-      val jobSpec: Option[JobSpec] = if (!state.cancelled) {
+    def onModalClosed(props: Props): Callback = {
+      def jobSpec(state: State): Option[JobSpec] = if (!state.cancelled) {
         for {
           name  <- state.spec.displayName
           pckg  <- state.spec.jobPackage
         } yield JobSpec(name, state.spec.description, pckg)
       } else None
 
-      $.modState(_.copy(visible = false)) >> props.handler(jobSpec)
+      $.modState(_.copy(visible = false)) >> $.state.map(jobSpec) >>= props.handler
     }
 
     // Actions
 
     def submitForm(): Callback =
-      $.modState(_.copy(visible = false, cancelled = false))
+      $.modState(_.copy(cancelled = false))
 
     def editJob(jobSpec: Option[JobSpec]): Callback =
-      $.modState(_.copy(spec = new EditableJobSpec(jobSpec), visible = true, readOnly = jobSpec.isDefined))
+      $.setState(State(spec = new EditableJobSpec(jobSpec), visible = true, readOnly = jobSpec.isDefined))
 
     // Rendering
 
-    val displayNameInput = Input[String]()
-    val descriptionInput = Input[String]()
+    private[this] val DisplayNameInput = Input[String]
+    private[this] val DescriptionInput = Input[String]
 
     def render(props: Props, state: State) = {
       <.form(^.name := "jobDetails", ^.`class` := "form-horizontal",
@@ -121,14 +112,14 @@ object JobForm {
                   disabled = state.readOnly || !state.spec.valid
                 ), "Save")
               ),
-              onClosed = onModalClosed(props, state)
+              onClosed = onModalClosed(props)
             ),
             <.div(lnf.formGroup,
               <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "displayName", "Display Name"),
               <.div(^.`class` := "col-sm-10",
-                displayNameInput(
+                DisplayNameInput(
                   state.spec.displayName,
-                  onDisplayNameUpdate _,
+                  $.setStateL(displayName)(_),
                   ^.id := "displayName",
                   ^.placeholder := "Job's name",
                   ^.readOnly := state.readOnly
@@ -138,16 +129,16 @@ object JobForm {
             <.div(lnf.formGroup,
               <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "description", "Description"),
               <.div(^.`class` := "col-sm-10",
-                descriptionInput(
+                DescriptionInput(
                   state.spec.description,
-                  onDescriptionUpdate _,
+                  $.setStateL(description)(_),
                   ^.id := "description",
                   ^.placeholder := "Job's description",
                   ^.readOnly := state.readOnly
                 )
               )
             ),
-            JobPackageSelect(state.spec.jobPackage, onJobPackageUpdate, state.readOnly)
+            JobPackageSelect(state.spec.jobPackage, $.setStateL(jobPackage)(_), state.readOnly)
           )
         } else EmptyTag
       )
@@ -155,13 +146,10 @@ object JobForm {
 
   }
 
-  private[registry] val component = ReactComponentB[Props]("JobForm").
-    initialState_P(p => State(new EditableJobSpec(None))).
-    renderBackend[Backend].
-    build
-
-  def apply(handler: Handler) =
-    component(Props(handler))
+  private[registry] val component = ReactComponentB[Props]("JobForm")
+    .initialState(State(new EditableJobSpec(None)))
+    .renderBackend[Backend]
+    .build
 
   def apply(handler: Handler, refName: String) =
     component.withRef(refName)(Props(handler))

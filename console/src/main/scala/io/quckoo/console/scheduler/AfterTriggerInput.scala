@@ -30,7 +30,7 @@ import scala.concurrent.duration.FiniteDuration
   */
 object AfterTriggerInput {
 
-  case class Props(value: Option[Trigger.After], onUpdate: Option[Trigger.After] => Callback)
+  case class Props(value: Option[Trigger.After], onUpdate: Option[Trigger.After] => Callback, readOnly: Boolean)
   implicit val propsReuse = Reusability.by[Props, Option[Trigger.After]](_.value)
 
   class Backend($ : BackendScope[Props, Unit]) {
@@ -44,7 +44,7 @@ object AfterTriggerInput {
         <.label(^.`class` := "col-sm-2 control-label", "Delay"),
         <.div(
           ^.`class` := "col-sm-10",
-          FiniteDurationInput("afterTrigger", props.value.map(_.delay), onUpdate)))
+          FiniteDurationInput("afterTrigger", props.value.map(_.delay), onUpdate, props.readOnly)))
 
   }
 
@@ -53,7 +53,7 @@ object AfterTriggerInput {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[Trigger.After], onUpdate: Option[Trigger.After] => Callback) =
-    component(Props(value, onUpdate))
+  def apply(value: Option[Trigger.After], onUpdate: Option[Trigger.After] => Callback, readOnly: Boolean = false) =
+    component(Props(value, onUpdate, readOnly))
 
 }

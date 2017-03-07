@@ -92,7 +92,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       logger.debug("Loading all jobs from the server...")
       client.fetchJobs.map(_.map { case (k, v) => (k, Ready(v)) })
     } else {
-      logger.debug("Loading job specs for keys: {}", keys.mkString(", "))
+      logger.debug("Loading job specs for ids: {}", keys.mkString(", "))
       Future.sequence(keys.map(loadJobSpec)).map(_.toMap)
     }
   }
@@ -119,8 +119,10 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
   ): Future[Map[PlanId, Pot[ExecutionPlan]]] = {
     implicit val timeout = DefaultTimeout
     if (ids.isEmpty) {
+      logger.debug("Loading all execution plans from the server")
       client.executionPlans.map(_.map { case (k, v) => (k, Ready(v)) })
     } else {
+      logger.debug("Loading execution plans for ids: {}", ids.mkString(", "))
       Future.sequence(ids.map(loadPlan)).map(_.toMap)
     }
   }

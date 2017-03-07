@@ -40,6 +40,10 @@ lazy val commonSettings = Seq(
     botBuild := scala.sys.env.get("TRAVIS").isDefined
   ) ++ Licensing.settings
 
+lazy val commonJvmSettings = Seq(
+  fork in Test := true
+)
+
 lazy val commonJsSettings = Seq(
   coverageEnabled := false,
   coverageExcludedFiles := ".*",
@@ -167,6 +171,7 @@ lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
   .settings(publishSettings: _*)
   .settings(Dependencies.core: _*)
   .jsSettings(commonJsSettings: _*)
+  .jvmSettings(commonJvmSettings: _*)
   .settings(
     name := "core",
     moduleName := "quckoo-core",
@@ -188,6 +193,7 @@ lazy val api = (crossProject.crossType(CrossType.Pure) in file("api"))
   .settings(publishSettings: _*)
   .settings(Dependencies.api: _*)
   .jsSettings(commonJsSettings: _*)
+  .jvmSettings(commonJvmSettings: _*)
   .settings(
     name := "api",
     moduleName := "quckoo-api"
@@ -207,6 +213,7 @@ lazy val client = (crossProject in file("client"))
   .settings(Dependencies.client: _*)
   .jsSettings(commonJsSettings: _*)
   .jsSettings(Dependencies.clientJS: _*)
+  .jvmSettings(commonJvmSettings: _*)
   .jvmSettings(Dependencies.clientJVM: _*)
   .settings(
     name := "client",
@@ -239,6 +246,7 @@ lazy val console = (project in file("console"))
 lazy val shared = (project in file("shared"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
+  .settings(commonJvmSettings)
   .settings(scoverageSettings)
   .settings(publishSettings: _*)
   .settings(Dependencies.clusterShared)
@@ -256,13 +264,14 @@ lazy val master = (project in file("master"))
     DockerPlugin
   )
   .configs(MultiJvm)
-  .settings(commonSettings: _*)
+  .settings(commonSettings)
+  .settings(commonJvmSettings)
   .settings(scoverageSettings)
-  .settings(publishSettings: _*)
-  .settings(Revolver.settings: _*)
+  .settings(publishSettings)
+  .settings(Revolver.settings)
   .settings(Dependencies.clusterMaster)
   .settings(MultiNode.settings)
-  .settings(Packaging.masterSettings: _*)
+  .settings(Packaging.masterSettings)
   .settings(
     moduleName := "quckoo-master",
     scalaJSProjects := Seq(console),
@@ -278,6 +287,7 @@ lazy val master = (project in file("master"))
 lazy val worker = (project in file("worker"))
   .enablePlugins(AutomateHeaderPlugin, JavaServerAppPackaging, DockerPlugin)
   .settings(commonSettings: _*)
+  .settings(commonJvmSettings)
   .settings(scoverageSettings)
   .settings(publishSettings: _*)
   .settings(Revolver.settings: _*)
@@ -295,6 +305,7 @@ lazy val util = (crossProject in file("util"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .jsSettings(Dependencies.utilJS)
+  .jvmSettings(commonJvmSettings: _*)
   .settings(moduleName := "quckoo-util")
   .dependsOn(testSupport % Test)
 
@@ -309,6 +320,7 @@ lazy val testSupport = (crossProject in file("test-support"))
   .settings(noPublishSettings: _*)
   .settings(Dependencies.testSupport: _*)
   .jsSettings(commonJsSettings: _*)
+  .jvmSettings(commonJvmSettings: _*)
   .jvmSettings(Dependencies.testSupportJVM: _*)
   .settings(
     name := "test-support",
@@ -327,8 +339,9 @@ lazy val examples = (project in file("examples"))
 
 lazy val exampleJobs = (project in file("examples/jobs"))
   .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings: _*)
-  .settings(publishSettings: _*)
+  .settings(commonSettings)
+  .settings(commonJvmSettings)
+  .settings(publishSettings)
   .settings(Dependencies.exampleJobs)
   .settings(
     name := "example-jobs",
@@ -338,11 +351,12 @@ lazy val exampleJobs = (project in file("examples/jobs"))
 
 lazy val exampleProducers = (project in file("examples/producers"))
   .enablePlugins(AutomateHeaderPlugin, JavaAppPackaging, DockerPlugin)
-  .settings(commonSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(Revolver.settings: _*)
+  .settings(commonSettings)
+  .settings(commonJvmSettings)
+  .settings(publishSettings)
+  .settings(Revolver.settings)
   .settings(Dependencies.exampleProducers)
-  .settings(Packaging.exampleProducersSettings: _*)
+  .settings(Packaging.exampleProducersSettings)
   .settings(
     name := "example-producers",
     moduleName := "quckoo-example-producers"

@@ -95,11 +95,11 @@ object Modal {
     }
   }
 
-  val component = ReactComponentB[Props]("Modal")
+  val Component = ReactComponentB[Props]("Modal")
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
-  def apply()                                   = component
-  def apply(props: Props, children: ReactNode*) = component(props, children: _*)
+  def apply()                                   = Component
+  def apply(props: Props, children: ReactNode*) = Component(props, children: _*)
 }
