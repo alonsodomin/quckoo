@@ -16,7 +16,7 @@
 
 package io.quckoo.console.registry
 
-import io.quckoo.{JobSpec, JobPackage}
+import io.quckoo.{JobPackage, JobSpec}
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._

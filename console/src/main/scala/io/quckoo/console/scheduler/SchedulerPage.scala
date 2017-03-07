@@ -19,9 +19,8 @@ package io.quckoo.console.scheduler
 import diode.react.ModelProxy
 
 import io.quckoo.ExecutionPlan
-import io.quckoo.console.components.{Button, Icons, TabPanel}
+import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleScope
-import io.quckoo.console.layout.GlobalStyles
 import io.quckoo.protocol.scheduler.ScheduleJob
 
 import japgolly.scalajs.react._
@@ -43,7 +42,7 @@ object SchedulerPage {
 
   final case class Props(proxy: ModelProxy[ConsoleScope])
 
-  private lazy val executionPlanFormRef = Ref.to(ExecutionPlanForm.component, "executionPlanFormRef")
+  private lazy val executionPlanFormRef = Ref.to(ExecutionPlanForm.component, "ExecutionPlanForm")
 
   class Backend($ : BackendScope[Props, Unit]) {
 
@@ -54,9 +53,8 @@ object SchedulerPage {
       $.props >>= dispatchAction
     }
 
-    def editPlan(plan: Option[ExecutionPlan]): Callback = {
-      executionPlanFormRef($).map(_.backend.editPlan(plan))
-        .getOrElse(Callback.empty)
+    def editPlan(plan: Option[ExecutionPlan]): Callback = Callback {
+      executionPlanFormRef($).get.backend.editPlan(plan).runNow()
     }
 
     def render(props: Props) = {
@@ -72,7 +70,8 @@ object SchedulerPage {
         TabPanel(
           'Plans      -> userScopeConnector(ExecutionPlanList(_, editPlan(None), plan => editPlan(Some(plan)))),
           'Executions -> executionConnector(TaskExecutionList(_))
-        ))
+        )
+      )
     }
 
   }

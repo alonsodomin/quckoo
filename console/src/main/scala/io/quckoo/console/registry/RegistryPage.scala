@@ -46,8 +46,8 @@ object RegistryPage {
 
   class Backend($ : BackendScope[Props, Unit]) {
 
-    def editJob(spec: Option[JobSpec]): Callback = {
-      formRef($.refs).map(_.backend.editJob(spec)).getOrElse(Callback.empty)
+    def editJob(spec: Option[JobSpec]): Callback = Callback {
+      formRef($).get.backend.editJob(spec).runNow()
     }
 
     def jobEdited(spec: Option[JobSpec]): Callback = {
