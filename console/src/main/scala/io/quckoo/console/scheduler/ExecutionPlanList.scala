@@ -16,10 +16,11 @@
 
 package io.quckoo.console.scheduler
 
+import diode.data._
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 
-import io.quckoo.{ExecutionPlan, PlanId}
+import io.quckoo.{ExecutionPlan, JobId, JobSpec, PlanId}
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
@@ -31,12 +32,14 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import org.threeten.bp.ZonedDateTime
 
 import scalaz._
-import Scalaz._
+import scalaz.syntax.applicative.{^ => _, _}
+import scalaz.syntax.show._
 
 /**
   * Created by alonsodomin on 30/01/2016.
   */
 object ExecutionPlanList {
+  import ScalazReact._
 
   final val Columns = List(
     'Job,
@@ -66,7 +69,7 @@ object ExecutionPlanList {
 
   class Backend($ : BackendScope[Props, State]) {
 
-    def mounted(props: Props): Callback = {
+    private[ExecutionPlanList] def initialize(props: Props): Callback = {
       val model = props.proxy()
 
       def loadJobs: Callback =
@@ -75,43 +78,62 @@ object ExecutionPlanList {
       def loadPlans: Callback =
         Callback.when(model.executionPlans.size == 0)(props.proxy.dispatchCB(LoadExecutionPlans))
 
-      loadJobs >> loadPlans
+      loadJobs *> loadPlans
     }
 
-    def renderItem(
-        model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): ReactNode = {
-      def displayDateTime(dateTime: ZonedDateTime): ReactNode =
-        DateTimeDisplay(dateTime)
+    // Actions
 
-      column match {
-        case 'Job =>
-          val jobSpec = model.jobSpecs.get(plan.jobId)
-          jobSpec.render(_.displayName)
+    def cancelPlan(planId: PlanId): Callback =
+      $.props.flatMap(_.proxy.dispatchCB(CancelExecutionPlan(planId)))
 
-        case 'Current   => plan.currentTask.map(_.show).getOrElse(Cord.empty).toString()
-        case 'Trigger   => plan.trigger.toString()
-        case 'Scheduled => plan.lastScheduledTime.map(displayDateTime).orNull
-        case 'Execution => plan.lastExecutionTime.map(displayDateTime).orNull
-        case 'Outcome   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
-        case 'Next      => plan.nextExecutionTime.map(displayDateTime).orNull
+    // Event handlers
+
+    def onFilterClicked(filterType: Symbol): Callback =
+      $.modState(_.copy(selectedFilter = Some(filterType)))
+
+    def onPlanClicked(planId: PlanId): Callback = {
+      def planClickedCB(plan: ExecutionPlan): Callback =
+        $.props.flatMap(_.onClick(plan))
+
+      def planIsNotReady: Callback =
+        Callback.alert(s"Execution plan '$planId' is not ready yet.")
+
+      $.props.map(_.proxy()).flatMap {
+        _.executionPlans.get(planId).headOption.map(planClickedCB).getOrElse(planIsNotReady)
       }
     }
 
-    def cancelPlan(props: Props)(planId: PlanId): Callback =
-      props.proxy.dispatchCB(CancelExecutionPlan(planId))
+    // Rendering
 
-    def rowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
+    def renderItem(model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): ReactNode = {
+      def renderPlanName: ReactNode = {
+        val jobSpec = model.jobSpecs.get(plan.jobId)
+        <.a(^.onClick --> onPlanClicked(planId), jobSpec.render(_.displayName))
+      }
+
+      def renderDateTime(dateTime: ZonedDateTime): ReactNode =
+        DateTimeDisplay(dateTime)
+
+      column match {
+        case 'Job       => renderPlanName
+        case 'Current   => plan.currentTask.map(_.show).getOrElse(Cord.empty).toString()
+        case 'Trigger   => plan.trigger.toString()
+        case 'Scheduled => plan.lastScheduledTime.map(renderDateTime).orNull
+        case 'Execution => plan.lastExecutionTime.map(renderDateTime).orNull
+        case 'Outcome   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
+        case 'Next      => plan.nextExecutionTime.map(renderDateTime).orNull
+      }
+    }
+
+    def renderRowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
       if (!plan.finished && plan.nextExecutionTime.isDefined) {
         Seq(
           Table.RowAction[PlanId, ExecutionPlan](
             NonEmptyList(Icons.stop, "Cancel"),
-            cancelPlan(props))
+            cancelPlan)
         )
       } else Seq.empty
     }
-
-    def filterClicked(filterType: Symbol): Callback =
-      $.modState(_.copy(selectedFilter = Some(filterType)))
 
     def render(props: Props, state: State) = {
       val model = props.proxy()
@@ -124,13 +146,13 @@ object ExecutionPlanList {
         ),
         NavBar(
           NavBar
-            .Props(List('All, 'Active, 'Inactive), 'All, filterClicked, style = NavStyle.pills),
+            .Props(List('All, 'Active, 'Inactive), 'All, onFilterClicked, style = NavStyle.pills),
           Table(
             Columns,
             model.executionPlans.seq,
             renderItem(model),
             key = Some("executionPlans"),
-            actions = Some(rowActions(props)(_, _)),
+            actions = Some(renderRowActions(props)(_, _)),
             filter = state.selectedFilter.flatMap(Filters.get))
         )
       )
@@ -141,7 +163,7 @@ object ExecutionPlanList {
   private[this] val component = ReactComponentB[Props]("ExecutionPlanList")
     .initialState(State())
     .renderBackend[Backend]
-    .componentDidMount($ => $.backend.mounted($.props))
+    .componentDidMount($ => $.backend.initialize($.props))
     .build
 
   def apply(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick) =
