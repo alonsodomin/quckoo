@@ -29,10 +29,13 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
+import scalaz.OptionT
+
 /**
   * Created by alonsodomin on 17/10/2015.
   */
 object SchedulerPage {
+  import ScalazReact._
 
   object Style extends StyleSheet.Inline {
     import dsl._
@@ -46,6 +49,9 @@ object SchedulerPage {
 
   class Backend($ : BackendScope[Props, Unit]) {
 
+    def executionPlanForm: OptionT[CallbackTo, ExecutionPlanForm.Backend] =
+      OptionT(CallbackTo.lift(() => executionPlanFormRef($).toOption.map(_.backend)))
+
     def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
         scheduleJob.map(props.proxy.dispatchCB[ScheduleJob]).getOrElse(Callback.empty)
@@ -53,8 +59,8 @@ object SchedulerPage {
       $.props >>= dispatchAction
     }
 
-    def editPlan(plan: Option[ExecutionPlan]): Callback = Callback {
-      executionPlanFormRef($).get.backend.editPlan(plan).runNow()
+    def editPlan(plan: Option[ExecutionPlan]): Callback = {
+      executionPlanForm.flatMapF(_.editPlan(plan)).getOrElseF(Callback.empty)
     }
 
     def render(props: Props) = {
