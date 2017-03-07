@@ -45,7 +45,6 @@ object JarJobPackageInput {
   implicit val stateReuse: Reusability[State] = Reusability.caseClass[State]
 
   class Backend($: BackendScope[Props, State]) {
-    private[this] val jobClassInput = Input[String]()
 
     private[this] def propagateChange: Callback = {
       val jarPackage = for {
@@ -62,6 +61,8 @@ object JarJobPackageInput {
     def onJobClassUpdate(value: Option[String]): Callback =
       $.modState(_.copy(jobClass = value), propagateChange)
 
+    private[this] val JobClassInput = Input[String]
+
     def render(props: Props, state: State) = {
       <.div(
         <.div(lnf.formGroup,
@@ -73,7 +74,7 @@ object JarJobPackageInput {
         <.div(lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobClass", "Job Class"),
           <.div(^.`class` := "col-sm-10",
-            jobClassInput(state.jobClass,
+            JobClassInput(state.jobClass,
               onJobClassUpdate _,
               ^.id := "jobClass",
               ^.placeholder := "Job main class",

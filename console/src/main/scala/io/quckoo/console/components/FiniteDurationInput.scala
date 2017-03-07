@@ -81,8 +81,8 @@ object FiniteDurationInput {
       $.modState(_.copy(unit = value), propagateUpdate)
     }
 
-    private[this] val _lengthInput = Input[Long]()
-    private[this] val validateLength = {
+    private[this] val _lengthInput = Input[Long]
+    private[this] val LengthValidation = {
       import Scalaz._
       ValidatedInput[Long]((greaterThan(0L) or equalTo(0L)).callback)
     }
@@ -96,7 +96,7 @@ object FiniteDurationInput {
         ^.`class` := "container-fluid",
         <.div(
           ^.`class` := "row",
-          <.div(^.`class` := "col-sm-4", validateLength(onLengthUpdate _)(lengthInput(props, state))),
+          <.div(^.`class` := "col-sm-4", LengthValidation(onLengthUpdate _)(lengthInput(props, state))),
           <.div(
             ^.`class` := "col-sm-6",
             <.select(

@@ -89,8 +89,8 @@ object JobForm {
 
     // Rendering
 
-    val displayNameInput = Input[String]()
-    val descriptionInput = Input[String]()
+    private[this] val DisplayNameInput = Input[String]
+    private[this] val DescriptionInput = Input[String]
 
     def render(props: Props, state: State) = {
       <.form(^.name := "jobDetails", ^.`class` := "form-horizontal",
@@ -117,7 +117,7 @@ object JobForm {
             <.div(lnf.formGroup,
               <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "displayName", "Display Name"),
               <.div(^.`class` := "col-sm-10",
-                displayNameInput(
+                DisplayNameInput(
                   state.spec.displayName,
                   $.setStateL(displayName)(_),
                   ^.id := "displayName",
@@ -129,7 +129,7 @@ object JobForm {
             <.div(lnf.formGroup,
               <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "description", "Description"),
               <.div(^.`class` := "col-sm-10",
-                descriptionInput(
+                DescriptionInput(
                   state.spec.description,
                   $.setStateL(description)(_),
                   ^.id := "description",
