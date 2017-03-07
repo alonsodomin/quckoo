@@ -53,7 +53,8 @@ object RegistryPage {
       OptionT(CallbackTo.lift(() => formRef($).toOption.map(_.backend)))
 
     def editJob(spec: Option[JobSpec]): Callback = {
-      jobForm.flatMapF(_.editJob(spec)).getOrElseF(Callback.empty)
+      jobForm.flatMapF(_.editJob(spec))
+        .getOrElseF(Callback.log("Reference {} points to nothing!", formRef.name))
     }
 
     def jobEdited(spec: Option[JobSpec]): Callback = {

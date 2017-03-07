@@ -84,15 +84,15 @@ object ExecutionPlanForm {
 
     // Event handlers
 
-    def onModalClosed(props: Props, state: State): Callback = {
-      def command: Option[ScheduleJob] = if (!state.cancelled) {
+    def onModalClosed(props: Props): Callback = {
+      def command(state: State): Option[ScheduleJob] = if (!state.cancelled) {
         for {
-          jobId <- state.plan.jobId
+          jobId   <- state.plan.jobId
           trigger <- state.plan.trigger
         } yield ScheduleJob(jobId, trigger, state.timeout)
       } else None
 
-      $.modState(_.copy(visible = false)) >> props.handler(command)
+      $.state.map(command) >>= props.handler
     }
 
     // Not supported yet
@@ -147,7 +147,7 @@ object ExecutionPlanForm {
             Modal.Props(
               header = formHeader,
               footer = formFooter,
-              onClosed = onModalClosed(props, state)
+              onClosed = onModalClosed(props)
             ),
             if (!state.showPreview) {
               <.div(

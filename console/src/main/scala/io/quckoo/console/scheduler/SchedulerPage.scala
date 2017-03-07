@@ -60,7 +60,8 @@ object SchedulerPage {
     }
 
     def editPlan(plan: Option[ExecutionPlan]): Callback = {
-      executionPlanForm.flatMapF(_.editPlan(plan)).getOrElseF(Callback.empty)
+      executionPlanForm.flatMapF(_.editPlan(plan))
+        .getOrElseF(Callback.log("Reference {} points to nothing!", executionPlanFormRef.name))
     }
 
     def render(props: Props) = {

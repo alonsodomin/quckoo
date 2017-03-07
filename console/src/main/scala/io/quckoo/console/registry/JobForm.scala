@@ -68,24 +68,15 @@ object JobForm {
 
     // Event handlers
 
-    def onDisplayNameUpdate(value: Option[String]) =
-      $.setStateL(displayName)(value)
-
-    def onDescriptionUpdate(value: Option[String]) =
-      $.setStateL(description)(value)
-
-    def onJobPackageUpdate(value: Option[JobPackage]) =
-      $.setStateL(jobPackage)(value)
-
-    def onModalClosed(props: Props, state: State) = {
-      val jobSpec: Option[JobSpec] = if (!state.cancelled) {
+    def onModalClosed(props: Props) = {
+      def jobSpec(state: State): Option[JobSpec] = if (!state.cancelled) {
         for {
           name  <- state.spec.displayName
           pckg  <- state.spec.jobPackage
         } yield JobSpec(name, state.spec.description, pckg)
       } else None
 
-      $.modState(_.copy(visible = false)) >> props.handler(jobSpec)
+      $.state.map(jobSpec) >>= props.handler
     }
 
     // Actions
@@ -121,14 +112,14 @@ object JobForm {
                   disabled = state.readOnly || !state.spec.valid
                 ), "Save")
               ),
-              onClosed = onModalClosed(props, state)
+              onClosed = onModalClosed(props)
             ),
             <.div(lnf.formGroup,
               <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "displayName", "Display Name"),
               <.div(^.`class` := "col-sm-10",
                 displayNameInput(
                   state.spec.displayName,
-                  onDisplayNameUpdate _,
+                  $.setStateL(displayName)(_),
                   ^.id := "displayName",
                   ^.placeholder := "Job's name",
                   ^.readOnly := state.readOnly
@@ -140,14 +131,14 @@ object JobForm {
               <.div(^.`class` := "col-sm-10",
                 descriptionInput(
                   state.spec.description,
-                  onDescriptionUpdate _,
+                  $.setStateL(description)(_),
                   ^.id := "description",
                   ^.placeholder := "Job's description",
                   ^.readOnly := state.readOnly
                 )
               )
             ),
-            JobPackageSelect(state.spec.jobPackage, onJobPackageUpdate, state.readOnly)
+            JobPackageSelect(state.spec.jobPackage, $.setStateL(jobPackage)(_), state.readOnly)
           )
         } else EmptyTag
       )
