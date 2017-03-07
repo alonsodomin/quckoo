@@ -32,7 +32,9 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import org.threeten.bp.ZonedDateTime
 
 import scalaz._
+import scalaz.std.list._
 import scalaz.syntax.applicative.{^ => _, _}
+import scalaz.syntax.traverse._
 import scalaz.syntax.show._
 
 /**
@@ -65,7 +67,7 @@ object ExecutionPlanList {
   type OnClick = ExecutionPlan => Callback
 
   final case class Props(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick)
-  final case class State(selectedFilter: Option[Symbol] = None)
+  final case class State(selectedFilter: Option[Symbol] = None, selectedPlans: Set[PlanId] = Set.empty)
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -81,10 +83,31 @@ object ExecutionPlanList {
       loadJobs *> loadPlans
     }
 
+    def selectedPlans: CallbackTo[Map[PlanId, Pot[ExecutionPlan]]] = for {
+      plans     <- $.props.map(_.proxy().executionPlans)
+      selection <- $.state.map(_.selectedPlans)
+    } yield plans.get(selection)
+
     // Actions
+
+    private[this] def activePlansSelected: CallbackTo[Seq[PlanId]] = {
+      selectedPlans.map(_.toSeq.collect {
+        case (id, Ready(plan)) if !plan.finished => id
+      })
+    }
 
     def cancelPlan(planId: PlanId): Callback =
       $.props.flatMap(_.proxy.dispatchCB(CancelExecutionPlan(planId)))
+
+    def cancelAll: Callback = {
+      def invokeCommand(planIds: List[PlanId]): Callback = for {
+        proxy <- $.props.map(_.proxy)
+        _     <- planIds.map(id => proxy.dispatchCB(CancelExecutionPlan(id))).sequence
+      } yield ()
+
+      activePlansSelected.map(_.toList) >>= invokeCommand
+    }
+    def cancelAllDisabled: Boolean = activePlansSelected.map(_.isEmpty).runNow()
 
     // Event handlers
 
@@ -102,6 +125,9 @@ object ExecutionPlanList {
         _.executionPlans.get(planId).headOption.map(planClickedCB).getOrElse(planIsNotReady)
       }
     }
+
+    def onPlanSelected(selection: Set[PlanId]): Callback =
+      $.modState(_.copy(selectedPlans = selection))
 
     // Rendering
 
@@ -142,7 +168,11 @@ object ExecutionPlanList {
           Button(Button.Props(
             Some(props.onCreate),
             style = ContextStyle.primary
-          ), Icons.plusSquare, "Execution Plan")
+          ), Icons.plusSquare, "Execution Plan"),
+          Button(Button.Props(
+            Some(cancelAll),
+            disabled = cancelAllDisabled
+          ), Icons.stopCircle, "Cancel All")
         ),
         NavBar(
           NavBar
@@ -153,7 +183,10 @@ object ExecutionPlanList {
             renderItem(model),
             key = Some("executionPlans"),
             actions = Some(renderRowActions(props)(_, _)),
-            filter = state.selectedFilter.flatMap(Filters.get))
+            filter = state.selectedFilter.flatMap(Filters.get),
+            onSelect = Some(onPlanSelected(_)),
+            selected = state.selectedPlans
+          )
         )
       )
     }

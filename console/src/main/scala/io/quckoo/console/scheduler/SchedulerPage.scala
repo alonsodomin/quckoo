@@ -49,7 +49,7 @@ object SchedulerPage {
 
   class Backend($ : BackendScope[Props, Unit]) {
 
-    def executionPlanForm: OptionT[CallbackTo, ExecutionPlanForm.Backend] =
+    lazy val executionPlanForm: OptionT[CallbackTo, ExecutionPlanForm.Backend] =
       OptionT(CallbackTo.lift(() => executionPlanFormRef($).toOption.map(_.backend)))
 
     def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {

@@ -68,7 +68,7 @@ object JobForm {
 
     // Event handlers
 
-    def onModalClosed(props: Props) = {
+    def onModalClosed(props: Props): Callback = {
       def jobSpec(state: State): Option[JobSpec] = if (!state.cancelled) {
         for {
           name  <- state.spec.displayName
@@ -76,16 +76,16 @@ object JobForm {
         } yield JobSpec(name, state.spec.description, pckg)
       } else None
 
-      $.state.map(jobSpec) >>= props.handler
+      $.modState(_.copy(visible = false)) >> $.state.map(jobSpec) >>= props.handler
     }
 
     // Actions
 
     def submitForm(): Callback =
-      $.modState(_.copy(visible = false, cancelled = false))
+      $.modState(_.copy(cancelled = false))
 
     def editJob(jobSpec: Option[JobSpec]): Callback =
-      $.modState(_.copy(spec = new EditableJobSpec(jobSpec), visible = true, readOnly = jobSpec.isDefined))
+      $.setState(State(spec = new EditableJobSpec(jobSpec), visible = true, readOnly = jobSpec.isDefined))
 
     // Rendering
 

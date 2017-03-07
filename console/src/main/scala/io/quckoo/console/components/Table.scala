@@ -162,8 +162,10 @@ object Table {
         }
       } getOrElse props.items
 
-    def allSelected(props: Props[Id, Item], state: State[Id]): Boolean =
-      visibleItems(props).map(_._1).forall(state.selected.contains)
+    def allSelected(props: Props[Id, Item], state: State[Id]): Boolean = {
+      val items = visibleItems(props)
+      items.nonEmpty && items.map(_._1).forall(state.selected.contains)
+    }
 
     def toggleSelectAll(props: Props[Id, Item]): Callback = {
       def updateState(state: State[Id]): State[Id] = {

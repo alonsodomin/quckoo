@@ -49,7 +49,7 @@ object RegistryPage {
 
   class Backend($ : BackendScope[Props, Unit]) {
 
-    def jobForm: OptionT[CallbackTo, JobForm.Backend] =
+    lazy val jobForm: OptionT[CallbackTo, JobForm.Backend] =
       OptionT(CallbackTo.lift(() => formRef($).toOption.map(_.backend)))
 
     def editJob(spec: Option[JobSpec]): Callback = {

@@ -52,7 +52,6 @@ object JobSpecList {
 
   type OnCreate = Callback
   type OnClick = JobSpec => Callback
-  type OnSelect = Set[JobId] => Callback
 
   final case class Props(
     proxy: ModelProxy[PotMap[JobId, JobSpec]],

@@ -92,7 +92,7 @@ object ExecutionPlanForm {
         } yield ScheduleJob(jobId, trigger, state.timeout)
       } else None
 
-      $.state.map(command) >>= props.handler
+      $.modState(_.copy(visible = false)) >> $.state.map(command) >>= props.handler
     }
 
     // Not supported yet
@@ -105,10 +105,10 @@ object ExecutionPlanForm {
       $.modState(st => st.copy(showPreview = !st.showPreview))
 
     def submitForm(): Callback =
-      $.modState(_.copy(visible = false, cancelled = false))
+      $.modState(_.copy(cancelled = false))
 
     def editPlan(plan: Option[ExecutionPlan]): Callback =
-      $.modState(_.copy(plan = new EditableExecutionPlan(plan), visible = true, readOnly = plan.isDefined))
+      $.setState(State(new EditableExecutionPlan(plan), visible = true, readOnly = plan.isDefined))
 
     // Rendering
 
