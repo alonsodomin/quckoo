@@ -30,7 +30,7 @@ object JobPackageSelect {
   type Selector    = CoproductSelect.Selector[JobPackage]
   type OnUpdate    = CoproductSelect.OnUpdate[JobPackage]
 
-  final case class Props(value: Option[JobPackage], readOnly: Boolean, onUpdate: OnUpdate)
+  final case class Props(value: Option[JobPackage], onUpdate: OnUpdate, readOnly: Boolean = false)
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -41,14 +41,14 @@ object JobPackageSelect {
         ShellScriptPackageInput(value.map(_.asInstanceOf[ShellScriptPackage]), update, props.readOnly)
     }
 
-    val selectInput = CoproductSelect[JobPackage] {
+    private[this] val selectInput = CoproductSelect[JobPackage] {
       case _: JarJobPackage      => 'Jar
       case _: ShellScriptPackage => 'Shell
     }
 
     def render(props: Props) = {
       selectInput(Options, selectComponent(props), props.value, props.onUpdate,
-        ^.id := "packageType", ^.readOnly := props.readOnly
+        ^.id := "packageType", ^.readOnly := props.readOnly, ^.disabled := props.readOnly
       )(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "packageType", "Package Type"))
     }
 
@@ -60,6 +60,6 @@ object JobPackageSelect {
     .build
 
   def apply(value: Option[JobPackage], onUpdate: OnUpdate, readOnly: Boolean = false) =
-    component(Props(value, readOnly, onUpdate))
+    component(Props(value, onUpdate, readOnly))
 
 }

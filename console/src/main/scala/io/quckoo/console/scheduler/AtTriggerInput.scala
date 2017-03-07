@@ -30,11 +30,11 @@ import org.threeten.bp.{LocalDate, LocalDateTime, LocalTime, ZoneId}
   */
 object AtTriggerInput {
 
-  case class Props(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback)
+  case class Props(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback, readOnly: Boolean)
   case class State(date: Option[LocalDate], time: Option[LocalTime])
 
-  implicit val propsReuse = Reusability.by[Props, Option[Trigger.At]](_.value)
-  implicit val stateReuse = Reusability.caseClass[State]
+  implicit val propsReuse: Reusability[Props] = Reusability.caseClassExcept('onUpdate)
+  implicit val stateReuse: Reusability[State] = Reusability.caseClass
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -57,19 +57,19 @@ object AtTriggerInput {
     def onTimeUpdate(value: Option[LocalTime]): Callback =
       $.modState(_.copy(time = value), propagateUpdate)
 
-    val dateInput = Input[LocalDate]()
-    val timeInput = Input[LocalTime]()
+    private[this] val dateInput = Input[LocalDate]()
+    private[this] val timeInput = Input[LocalTime]()
 
     def render(props: Props, state: State) = {
       <.div(
         <.div(
           ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Date"),
-          <.div(^.`class` := "col-sm-10", dateInput(state.date, onDateUpdate _))),
+          <.div(^.`class` := "col-sm-10", dateInput(state.date, onDateUpdate _, ^.readOnly := props.readOnly))),
         <.div(
           ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Time"),
-          <.div(^.`class` := "col-sm-10", timeInput(state.time, onTimeUpdate _)))
+          <.div(^.`class` := "col-sm-10", timeInput(state.time, onTimeUpdate _, ^.readOnly := props.readOnly)))
       )
     }
 
@@ -81,7 +81,7 @@ object AtTriggerInput {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback) =
-    component(Props(value, onUpdate))
+  def apply(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback, readOnly: Boolean = false) =
+    component(Props(value, onUpdate, readOnly))
 
 }

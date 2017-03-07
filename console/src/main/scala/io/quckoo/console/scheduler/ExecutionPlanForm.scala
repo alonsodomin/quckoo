@@ -151,9 +151,9 @@ object ExecutionPlanForm {
             ),
             if (!state.showPreview) {
               <.div(
-                JobSelect(jobSpecs(props), jobIdLens.get(state), $.setStateL(jobIdLens)(_)),
-                TriggerSelect(triggerLens.get(state), $.setStateL(triggerLens)(_)),
-                ExecutionTimeoutInput(timeoutLens.get(state), $.setStateL(timeoutLens)(_))
+                JobSelect(jobSpecs(props), jobIdLens.get(state), $.setStateL(jobIdLens)(_), readOnly = state.readOnly),
+                TriggerSelect(triggerLens.get(state), $.setStateL(triggerLens)(_), readOnly = state.readOnly),
+                ExecutionTimeoutInput(timeoutLens.get(state), $.setStateL(timeoutLens)(_), readOnly = state.readOnly)
                 //ExecutionParameterList(Map.empty, onParamUpdate)
               )
             } else {
