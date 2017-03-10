@@ -18,6 +18,7 @@ package io.quckoo.cluster.core
 
 import java.util.UUID
 
+import akka.actor.PoisonPill
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.testkit.{TestActorRef, TestProbe}
 
@@ -38,15 +39,19 @@ class PubSubTopicConsumerSpec extends QuckooActorClusterSuite("PubSubTopicConsum
       val topicTag = TopicTag.Master
 
       val receiverProbe = TestProbe("receiver")
-      val reader = TestActorRef(PubSubTopicConsumer.props(topicTag))
+      val consumer = TestActorRef[PubSubTopicConsumer](PubSubTopicConsumer.props(topicTag))
 
       val expectedMsg = MasterRemoved(NodeId(UUID.randomUUID()))
 
       // Receiver instructs the reader to start, linking them together
-      receiverProbe.send(reader, TopicConsumer.Consume)
+      receiverProbe.send(consumer, TopicConsumer.Consume)
 
       mediator ! DistributedPubSubMediator.Publish(topicTag.name, expectedMsg)
       receiverProbe.expectMsg(expectedMsg)
+
+      watch(consumer)
+      consumer ! PoisonPill
+      expectTerminated(consumer)
     }
   }
 
