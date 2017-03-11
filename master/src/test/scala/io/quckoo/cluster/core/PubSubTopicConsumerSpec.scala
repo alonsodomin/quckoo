@@ -39,7 +39,9 @@ class PubSubTopicConsumerSpec extends QuckooActorClusterSuite("PubSubTopicConsum
       val topicTag = TopicTag.Master
 
       val receiverProbe = TestProbe("receiver")
-      val consumer = TestActorRef[PubSubTopicConsumer](PubSubTopicConsumer.props(topicTag))
+      val consumer = TestActorRef[PubSubTopicConsumer](
+        PubSubTopicConsumer.props(topicTag).withDispatcher("akka.actor.default-dispatcher")
+      )
 
       val expectedMsg = MasterRemoved(NodeId(UUID.randomUUID()))
 
