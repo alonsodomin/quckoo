@@ -8,6 +8,8 @@ organization in ThisBuild := "io.quckoo"
 
 scalaVersion in ThisBuild := "2.12.1"
 
+parallelExecution in ThisBuild := false
+
 lazy val sandbox  = settingKey[String]("The name of the environment sandbox to use.")
 lazy val botBuild = settingKey[Boolean]("Build by TravisCI instead of local dev environment")
 
@@ -36,12 +38,12 @@ lazy val commonSettings = Seq(
       Resolver.bintrayRepo("dnvriend", "maven"),
       Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
     ),
-    parallelExecution in Test := false,
+    parallelExecution := false,
     botBuild := scala.sys.env.get("TRAVIS").isDefined
   ) ++ Licensing.settings
 
 lazy val commonJvmSettings = Seq(
-  fork in Test := true
+  fork in Test := false
 )
 
 lazy val commonJsSettings = Seq(

@@ -75,9 +75,9 @@ object ExecutionPlanForm {
 
   class Backend($: BackendScope[Props, State]) {
 
-    val jobIdLens   = State.plan ^|-> EditableExecutionPlan.jobId
-    val triggerLens = State.plan ^|-> EditableExecutionPlan.trigger
-    val timeoutLens = State.timeout
+    val jobId   = State.plan ^|-> EditableExecutionPlan.jobId
+    val trigger = State.plan ^|-> EditableExecutionPlan.trigger
+    val timeout = State.timeout
 
     private[ExecutionPlanForm] def initialize(props: Props) =
       Callback.when(props.proxy().size == 0)(props.proxy.dispatchCB(LoadJobSpecs))
@@ -131,7 +131,7 @@ object ExecutionPlanForm {
         <.span(
           Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
           Button(Button.Props(Some(togglePreview()), style = ContextStyle.default,
-            disabled = jobIdLens.get(state).isEmpty || triggerLens.get(state).isEmpty),
+            disabled = jobId.get(state).isEmpty || trigger.get(state).isEmpty),
             if (state.showPreview) "Back" else "Preview"
           ),
           Button(Button.Props(Some(submitForm() >> hide),
@@ -151,13 +151,13 @@ object ExecutionPlanForm {
             ),
             if (!state.showPreview) {
               <.div(
-                JobSelect(jobSpecs(props), jobIdLens.get(state), $.setStateL(jobIdLens)(_), readOnly = state.readOnly),
-                TriggerSelect(triggerLens.get(state), $.setStateL(triggerLens)(_), readOnly = state.readOnly),
-                ExecutionTimeoutInput(timeoutLens.get(state), $.setStateL(timeoutLens)(_), readOnly = state.readOnly)
+                JobSelect(jobSpecs(props), jobId.get(state), $.setStateL(jobId)(_), readOnly = state.readOnly),
+                TriggerSelect(trigger.get(state), $.setStateL(trigger)(_), readOnly = state.readOnly),
+                ExecutionTimeoutInput(timeout.get(state), $.setStateL(timeout)(_), readOnly = state.readOnly)
                 //ExecutionParameterList(Map.empty, onParamUpdate)
               )
             } else {
-              triggerLens.get(state).map(ExecutionPlanPreview(_)).get
+              trigger.get(state).map(ExecutionPlanPreview(_)).get
             }
           )
         } else EmptyTag

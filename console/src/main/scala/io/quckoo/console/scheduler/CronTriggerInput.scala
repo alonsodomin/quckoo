@@ -68,7 +68,7 @@ object CronTriggerInput {
         updateError(None) >> $.props.flatMap(_.onUpdate(trigger))
 
       EitherT(value.map(Cron(_).disjunction))
-        .map(Trigger.Cron)
+        .map(Trigger.Cron(_))
         .cozip
         .fold(updateError, invokeCallback)
     }

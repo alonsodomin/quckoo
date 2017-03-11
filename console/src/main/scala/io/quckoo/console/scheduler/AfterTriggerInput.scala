@@ -36,7 +36,7 @@ object AfterTriggerInput {
   class Backend($ : BackendScope[Props, Unit]) {
 
     def onUpdate(value: Option[FiniteDuration]) =
-      $.props.flatMap(_.onUpdate(value.map(Trigger.After)))
+      $.props.flatMap(_.onUpdate(value.map(Trigger.After(_))))
 
     def render(props: Props): ReactElement =
       <.div(

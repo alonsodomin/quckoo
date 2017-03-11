@@ -48,6 +48,11 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
     system.eventStream.subscribe(self, classOf[Registry.Signal])
   }
 
+  override protected def afterAll(): Unit = {
+    system.eventStream.unsubscribe(self)
+    super.afterAll()
+  }
+
   "The registry" should {
     val resolverProbe = TestProbe("resolver1")
     val settings = RegistrySettings(TestActors.forwardActorProps(resolverProbe.ref))

@@ -18,6 +18,7 @@ package io.quckoo.cluster.core
 
 import java.util.UUID
 
+import akka.actor.PoisonPill
 import akka.testkit.{TestActorRef, TestProbe}
 
 import io.quckoo.NodeId
@@ -35,15 +36,19 @@ class LocalTopicConsumerSpec extends QuckooActorSuite("LocalTopicConsumerSpec") 
       val topicTag = TopicTag.Master
 
       val receiverProbe = TestProbe("receiver")
-      val reader = TestActorRef(LocalTopicConsumer.props(topicTag))
+      val consumer = TestActorRef(LocalTopicConsumer.props(topicTag))
 
       val expectedMsg = MasterUnreachable(NodeId(UUID.randomUUID()))
 
       // Receiver instructs the reader to start, linking them together
-      receiverProbe.send(reader, TopicConsumer.Consume)
+      receiverProbe.send(consumer, TopicConsumer.Consume)
 
       system.eventStream.publish(expectedMsg)
       receiverProbe.expectMsg(expectedMsg)
+
+      watch(consumer)
+      consumer ! PoisonPill
+      expectTerminated(consumer)
     }
   }
 
