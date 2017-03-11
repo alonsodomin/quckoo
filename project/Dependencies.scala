@@ -33,7 +33,7 @@ object Dependencies {
         val main = "10.0.4"
 
         // http extensions
-        val json = "1.12.0"
+        val json = "1.13.0"
         val sse  = "2.0.0"
       }
 
@@ -51,7 +51,7 @@ object Dependencies {
 
     val testState = "2.1.1"
     val scalaCss  = "0.5.1"
-    val scalaTime = "2.0.0-M8"
+    val scalaTime = "2.0.0-M9"
 
     val diode = "1.1.0"
 
@@ -65,7 +65,7 @@ object Dependencies {
     val scopt       = "3.5.0"
     val monocle     = "1.4.0"
     val scalaz      = "7.2.9"
-    val monix       = "2.2.2"
+    val monix       = "2.2.3"
     val cron4s      = "0.3.1"
     val enumeratum  = "1.5.8"
     val pureconfig  = "0.6.0"
