@@ -15,7 +15,7 @@ object Dependencies {
     // Testing --------
 
     val scalaTest  = "3.0.1"
-    val scalaCheck = "1.13.4"
+    val scalaCheck = "1.13.5"
     val scalaMock  = "3.5.0"
     val mockito    = "1.10.19"
     val mockserver = "3.10.4"
@@ -30,10 +30,10 @@ object Dependencies {
       val constructr = "0.6.0"
 
       object http {
-        val main = "10.0.4"
+        val main = "10.0.5"
 
         // http extensions
-        val json = "1.13.0"
+        val json = "1.14.0"
         val sse  = "2.0.0"
       }
 
@@ -64,10 +64,10 @@ object Dependencies {
     val ivy         = "2.4.0"
     val scopt       = "3.5.0"
     val monocle     = "1.4.0"
-    val scalaz      = "7.2.9"
+    val scalaz      = "7.2.10"
     val monix       = "2.2.3"
     val cron4s      = "0.3.1"
-    val enumeratum  = "1.5.8"
+    val enumeratum  = "1.5.9"
     val pureconfig  = "0.6.0"
     val betterfiles = "2.17.1"
     val xml         = "1.0.6"

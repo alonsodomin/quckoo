@@ -54,6 +54,10 @@ lazy val commonJsSettings = Seq(
   jsEnv in Test := PhantomJSEnv().value,
   // batch mode decreases the amount of memory needed to compile scala.js code
   scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(botBuild.value)
+  /*scalacOptions ++= Seq(
+    "-P:scalajs:suppressMissingJSGlobalDeprecations",
+    "-P:scalajs:suppressExportDeprecations"
+  )*/
 )
 
 lazy val scoverageSettings = Seq(
@@ -240,6 +244,7 @@ lazy val console = (project in file("console"))
     moduleName := "quckoo-console",
     requiresDOM := true,
     persistLauncher in Compile := true
+    //scalaJSUseMainModuleInitializer in Compile := true
   )
   .dependsOn(clientJS, testSupportJS % Test)
 
@@ -306,6 +311,7 @@ lazy val worker = (project in file("worker"))
 lazy val util = (crossProject in file("util"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
+  .jsSettings(commonJsSettings)
   .jsSettings(Dependencies.utilJS)
   .jvmSettings(commonJvmSettings: _*)
   .settings(moduleName := "quckoo-util")
