@@ -21,7 +21,7 @@ import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import org.threeten.bp.{LocalDate, LocalDateTime, LocalTime, ZoneId}
 
@@ -75,7 +75,7 @@ object AtTriggerInput {
 
   }
 
-  val component = ReactComponentB[Props]("AtTriggerInput")
+  val component = ScalaComponent.build[Props]("AtTriggerInput")
     .initialState_P(_ => State(None, None))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)

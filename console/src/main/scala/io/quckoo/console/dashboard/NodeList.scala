@@ -24,6 +24,7 @@ import io.quckoo.net.QuckooNode
 import io.quckoo.console.components.Table
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 04/04/2016.
@@ -36,7 +37,7 @@ object NodeList {
 
   class Backend[N <: QuckooNode]($ : BackendScope[Props[N], Unit]) {
 
-    def renderItem(props: Props[N])(nodeId: NodeId, node: N, column: Symbol): ReactNode =
+    def renderItem(props: Props[N])(nodeId: NodeId, node: N, column: Symbol): VdomNode =
       column match {
         case 'ID       => nodeId.toString
         case 'Location => node.location.host
@@ -53,7 +54,7 @@ object NodeList {
   }
 
   private[this] def component[N <: QuckooNode] =
-    ReactComponentB[Props[N]]("NodeList").stateless.renderBackend[Backend[N]].build
+    ScalaComponent.build[Props[N]]("NodeList").stateless.renderBackend[Backend[N]].build
 
   def apply[N <: QuckooNode](proxy: ModelProxy[Map[NodeId, N]]) = component(Props(proxy))
 

@@ -18,8 +18,9 @@ package io.quckoo.console.dashboard
 
 import diode.react.ModelProxy
 import io.quckoo.console.core.ConsoleScope
-import japgolly.scalajs.react.{BackendScope, ReactComponentB}
-import japgolly.scalajs.react.vdom.prefix_<^._
+
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
@@ -70,7 +71,7 @@ object DashboardView {
   }
 
   private[this] val component =
-    ReactComponentB[Props]("HomePage").stateless.renderBackend[Backend].build
+    ScalaComponent.build[Props]("HomePage").stateless.renderBackend[Backend].build
 
   def apply(proxy: ModelProxy[ConsoleScope]) = component(Props(proxy))
 

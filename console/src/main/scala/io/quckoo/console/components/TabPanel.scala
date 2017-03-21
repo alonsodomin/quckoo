@@ -17,13 +17,14 @@
 package io.quckoo.console.components
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 28/05/2016.
   */
 object TabPanel {
 
-  final case class Props(items: Map[Symbol, ReactNode], initial: Symbol)
+  final case class Props(items: Map[Symbol, VdomNode], initial: Symbol)
   final case class State(selected: Option[Symbol] = None)
 
   class Backend($ : BackendScope[Props, State]) {
@@ -33,18 +34,17 @@ object TabPanel {
 
     def render(props: Props, state: State) = {
       val currentTab = state.selected.getOrElse(props.initial)
-      NavBar(
-        NavBar.Props(props.items.keys.toSeq, props.initial, tabClicked),
-        props.items(currentTab)
+      NavBar(props.items.keys.toSeq, props.initial, tabClicked _)(
+        Seq(props.items(currentTab))
       )
     }
 
   }
 
   private[this] val component =
-    ReactComponentB[Props]("TabPanel").initialState(State()).renderBackend[Backend].build
+    ScalaComponent.build[Props]("TabPanel").initialState(State()).renderBackend[Backend].build
 
-  def apply(tabItems: (Symbol, ReactNode)*) = {
+  def apply(tabItems: (Symbol, VdomNode)*) = {
     val initial = tabItems.head._1
     component(Props(tabItems.toMap, initial))
   }

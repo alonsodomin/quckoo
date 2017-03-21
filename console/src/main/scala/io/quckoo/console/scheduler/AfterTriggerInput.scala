@@ -21,7 +21,7 @@ import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -38,7 +38,7 @@ object AfterTriggerInput {
     def onUpdate(value: Option[FiniteDuration]) =
       $.props.flatMap(_.onUpdate(value.map(Trigger.After(_))))
 
-    def render(props: Props): ReactElement =
+    def render(props: Props): VdomElement =
       <.div(
         ^.`class` := "form-group",
         <.label(^.`class` := "col-sm-2 control-label", "Delay"),
@@ -48,7 +48,7 @@ object AfterTriggerInput {
 
   }
 
-  val component = ReactComponentB[Props]("AfterTriggerInput").stateless
+  val component = ScalaComponent.build[Props]("AfterTriggerInput").stateless
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

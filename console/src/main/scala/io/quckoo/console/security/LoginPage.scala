@@ -22,8 +22,8 @@ import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components._
 import io.quckoo.console.core.{ConsoleScope, Login}
 
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
@@ -63,7 +63,7 @@ object LoginPage {
   }
 
   private[this] val component =
-    ReactComponentB[Props]("LoginPage").stateless.renderBackend[LoginBackend].build
+    ScalaComponent.build[Props]("LoginPage").stateless.renderBackend[LoginBackend].build
 
   def apply(proxy: ModelProxy[ConsoleScope], referral: Option[ConsoleRoute] = None) =
     component(Props(proxy, referral))

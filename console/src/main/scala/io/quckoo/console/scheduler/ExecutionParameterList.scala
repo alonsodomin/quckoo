@@ -19,7 +19,7 @@ package io.quckoo.console.scheduler
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import monocle.function.all._
 import monocle.macros.Lenses
@@ -43,10 +43,10 @@ object ExecutionParameterList {
       param.flatMap(p => $.props.flatMap(_.onUpdate(p)))
     }
 
-    def onParamNameUpdate(evt: ReactEventI): Callback =
+    def onParamNameUpdate(evt: ReactEventFromInput): Callback =
       $.modState(_.copy(name = evt.target.value), propagateChange)
 
-    def onParamValueUpdate(evt: ReactEventI): Callback =
+    def onParamValueUpdate(evt: ReactEventFromInput): Callback =
       $.modState(_.copy(value = evt.target.value), propagateChange)
 
     def render(props: ParamRowProps, state: ParamRowState) = {
@@ -73,7 +73,7 @@ object ExecutionParameterList {
 
   }
 
-  val ParamRow = ReactComponentB[ParamRowProps]("ParamRow")
+  val ParamRow = ScalaComponent.build[ParamRowProps]("ParamRow")
     .initialState_P(props => ParamRowState(props.value.name, props.value.value))
     .renderBackend[ParamRowBackend]
     .build
@@ -109,7 +109,7 @@ object ExecutionParameterList {
             Button(
               Button.Props(Some(addParam()), style = ContextStyle.default),
               Icons.plus.noPadding))),
-        if (state.params.isEmpty) EmptyTag
+        if (state.params.isEmpty) EmptyVdom
         else {
           <.div(
             <.div(
@@ -122,7 +122,7 @@ object ExecutionParameterList {
                   ^.`class` := "col-sm-offset-2",
                   ParamRow.withKey(idx)(
                     ParamRowProps(param, onParamUpdate(idx), deleteParam(idx))))
-            }
+            } toVdomArray
           )
         }
       )
@@ -130,7 +130,7 @@ object ExecutionParameterList {
 
   }
 
-  val component = ReactComponentB[Props]("ParameterList")
+  val component = ScalaComponent.build[Props]("ParameterList")
     .initialState_P(props => State(Vector.empty))
     .renderBackend[Backend]
     .build

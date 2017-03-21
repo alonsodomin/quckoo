@@ -27,7 +27,7 @@ import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by aalonsodominguez on 12/10/2015.
@@ -62,7 +62,7 @@ object SiteMap {
 
       implicit val redirectMethod = Redirect.Push
 
-      def isLoggedIn: CallbackB =
+      def isLoggedIn: CallbackTo[Boolean] =
         CallbackTo { proxy().passport.isDefined }
 
       def redirectToLogin(referral: ConsoleRoute) =
@@ -94,7 +94,7 @@ object SiteMap {
   )
 
   def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute],
-                                              res: Resolution[ConsoleRoute]): ReactElement = {
+                                              res: Resolution[ConsoleRoute]): VdomElement = {
     def navigation = proxy.wrap(_.passport.flatMap(_.principal)) { principal =>
       Navigation(mainMenu.head, mainMenu, ctrl, res.page, principal)
     }

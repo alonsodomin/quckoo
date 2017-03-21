@@ -24,7 +24,7 @@ import io.quckoo.console.core.ConsoleScope
 import io.quckoo.protocol.scheduler.ScheduleJob
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
@@ -45,12 +45,12 @@ object SchedulerPage {
 
   final case class Props(proxy: ModelProxy[ConsoleScope])
 
-  private lazy val executionPlanFormRef = Ref.to(ExecutionPlanForm.component, "ExecutionPlanForm")
+  //private lazy val executionPlanFormRef = Ref.to(ExecutionPlanForm.component, "ExecutionPlanForm")
 
   class Backend($ : BackendScope[Props, Unit]) {
 
-    lazy val executionPlanForm: OptionT[CallbackTo, ExecutionPlanForm.Backend] =
-      OptionT(CallbackTo.lift(() => executionPlanFormRef($).toOption.map(_.backend)))
+    // lazy val executionPlanForm: OptionT[CallbackTo, ExecutionPlanForm.Backend] =
+    //   OptionT(CallbackTo.lift(() => executionPlanFormRef($).toOption.map(_.backend)))
 
     def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
@@ -60,8 +60,9 @@ object SchedulerPage {
     }
 
     def editPlan(plan: Option[ExecutionPlan]): Callback = {
-      executionPlanForm.flatMapF(_.editPlan(plan))
-        .getOrElseF(Callback.log("Reference {} points to nothing!", executionPlanFormRef.name))
+      // executionPlanForm.flatMapF(_.editPlan(plan))
+      //   .getOrElseF(Callback.log("Reference {} points to nothing!", executionPlanFormRef.name))
+      Callback.empty
     }
 
     def render(props: Props) = {
@@ -72,7 +73,7 @@ object SchedulerPage {
         Style.content,
         <.h2("Scheduler"),
         props.proxy.wrap(_.userScope.jobSpecs) { jobs =>
-          ExecutionPlanForm(jobs, scheduleJob, executionPlanFormRef.name)
+          ExecutionPlanForm(jobs, scheduleJob)
         },
         TabPanel(
           'Plans      -> userScopeConnector(ExecutionPlanList(_, editPlan(None), plan => editPlan(Some(plan)))),
@@ -83,7 +84,7 @@ object SchedulerPage {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("ExecutionsPage")
+  private[this] val component = ScalaComponent.build[Props]("ExecutionsPage")
     .stateless
     .renderBackend[Backend]
     .build

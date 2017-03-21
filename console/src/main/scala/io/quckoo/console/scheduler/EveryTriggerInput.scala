@@ -21,7 +21,7 @@ import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -98,13 +98,13 @@ object EveryTriggerInput {
           <.div(^.`class` := "col-sm-offset-2",
             FiniteDurationInput("everyTrigger_delay", state.delay, onDelayUpdate, props.readOnly)
           )
-        } else EmptyTag
+        } else EmptyVdom
       )
     }
 
   }
 
-  val component = ReactComponentB[Props]("EveryTriggerInput")
+  val component = ScalaComponent.build[Props]("EveryTriggerInput")
     .initialState_P(props => new State(props.value))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)

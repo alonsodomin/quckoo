@@ -20,14 +20,14 @@ import io.quckoo.auth.Principal
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 20/02/2016.
   */
 object PrincipalWidget {
 
-  private[this] val component = ReactComponentB[Principal]("UserDisplay").render_P { user =>
+  private[this] val component = ScalaComponent.build[Principal]("UserDisplay").render_P { user =>
     <.span(Icons.user, user.id)
   } build
 

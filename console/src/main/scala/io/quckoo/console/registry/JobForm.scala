@@ -20,7 +20,7 @@ import io.quckoo.{JobPackage, JobSpec}
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import monocle.macros.Lenses
 
@@ -140,18 +140,18 @@ object JobForm {
             ),
             JobPackageSelect(state.spec.jobPackage, $.setStateL(jobPackage)(_), state.readOnly)
           )
-        } else EmptyTag
+        } else EmptyVdom
       )
     }
 
   }
 
-  private[registry] val component = ReactComponentB[Props]("JobForm")
+  private[registry] val component = ScalaComponent.build[Props]("JobForm")
     .initialState(State(new EditableJobSpec(None)))
     .renderBackend[Backend]
     .build
 
-  def apply(handler: Handler, refName: String) =
-    component.withRef(refName)(Props(handler))
+  def apply(handler: Handler) =
+    component(Props(handler))
 
 }

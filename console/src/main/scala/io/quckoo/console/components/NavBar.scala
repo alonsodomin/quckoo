@@ -17,7 +17,7 @@
 package io.quckoo.console.components
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
@@ -33,19 +33,19 @@ object NavBar {
       onClick: Symbol => Callback
   )
 
-  private[this] val NavItem = ReactComponentB[NavItemProps]("NavItem")
+  private[this] val NavItem = ScalaComponent.build[NavItemProps]("NavItem")
     .stateless
     .render_P {
       case NavItemProps(title, selected, onClick) =>
         <.li(
           ^.id := title.name,
           ^.role := "presentation",
-          selected ?= (^.`class` := "active"),
+          (^.`class` := "active").when(selected),
           <.a(^.onClick --> onClick(title), title.name))
     }
     .build
 
-  private[this] val NavBody = ReactComponentB[PropsChildren]("NavBody")
+  private[this] val NavBody = ScalaComponent.build[PropsChildren]("NavBody")
     .stateless
     .render_P { children => <.div(children) }
     .build
@@ -64,26 +64,34 @@ object NavBar {
     def tabClicked(props: Props)(title: Symbol): Callback =
       $.modState(_.copy(selected = Some(title))).flatMap(_ => props.onClick(title))
 
-    def render(props: Props, state: State) = {
+    def render(props: Props, children: PropsChildren, state: State) = {
       val currentTab = state.selected.getOrElse(props.initial)
       <.div(
-        <.ul(lookAndFeel.nav(props.style), props.addStyles, props.items.map { title =>
-          NavItem.withKey(s"nav-item-$title")(
+        <.ul(lookAndFeel.nav(props.style), props.addStyles.toTagMod, props.items.map { title =>
+          NavItem(
             NavItemProps(title, currentTab == title, tabClicked(props))
           )
-        }),
-        NavBody.withKey("nav-panel-body")($.propsChildren.runNow())
+        } toVdomArray),
+        NavBody(children)
       )
     }
 
   }
 
-  private[this] val component = ReactComponentB[Props]("NavBar")
+  private[this] val component = ScalaComponent.build[Props]("NavBar")
     .initialState(State())
-    .renderBackend[Backend]
+    .renderBackendWithChildren[Backend]
     .build
 
-  def apply(props: Props, children: ReactNode*) =
-    component(props, children: _*)
+  def apply(
+      items: Seq[Symbol],
+      initial: Symbol,
+      onClick: Symbol => Callback,
+      style: NavStyle.Value = NavStyle.tabs,
+      addStyles: Seq[StyleA] = Seq()
+    ) = component(Props(items, initial, onClick, style, addStyles)) _
+
+  def apply(props: Props, children: VdomNode*) =
+    component(props)(children: _*)
 
 }

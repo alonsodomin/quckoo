@@ -24,6 +24,7 @@ import io.quckoo.console.components._
 import io.quckoo.console.core.LoadExecutions
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalaz._
 import Scalaz._
@@ -42,7 +43,7 @@ object TaskExecutionList {
     def mounted(props: Props): Callback =
       Callback.when(props.proxy().size == 0)(props.proxy.dispatchCB(LoadExecutions))
 
-    def renderItem(taskId: TaskId, execution: TaskExecution, column: Symbol): ReactNode =
+    def renderItem(taskId: TaskId, execution: TaskExecution, column: Symbol): VdomNode =
       column match {
         case 'ID        => taskId.toString
         case 'Task      => execution.task.shows
@@ -57,12 +58,12 @@ object TaskExecutionList {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("TaskExecutionList").stateless
+  private[this] val component = ScalaComponent.build[Props]("TaskExecutionList").stateless
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))
     .build
 
   def apply(proxy: ModelProxy[PotMap[TaskId, TaskExecution]]) =
-    component.withKey("task-execution-list")(Props(proxy))
+    component(Props(proxy))
 
 }

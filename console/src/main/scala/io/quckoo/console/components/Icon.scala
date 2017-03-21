@@ -16,8 +16,7 @@
 
 package io.quckoo.console.components
 
-import japgolly.scalajs.react.ReactNode
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.collection.mutable
 import scala.language.implicitConversions
@@ -79,7 +78,7 @@ final case class Icon private[components] (name: String, state: IconState = Icon
 }
 
 object Icon {
-  implicit def icon2VDom(icon: Icon): ReactNode = {
-    <.span(^.classSet1M("fa", icon.classSet), icon.state.padding ?= (^.paddingRight := 5.px))
+  implicit def icon2VDom(icon: Icon): VdomNode = {
+    <.span(^.classSet1M("fa", icon.classSet), (^.paddingRight := 5.px).when(icon.state.padding))
   }
 }

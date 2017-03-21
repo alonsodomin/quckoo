@@ -17,7 +17,7 @@
 package io.quckoo.console.components
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
@@ -27,28 +27,34 @@ import scalacss.ScalaCssReact._
   */
 object Button {
 
-  case class Props(
+  final case class Props(
       onClick: Option[Callback] = None,
       disabled: Boolean = false,
       style: ContextStyle.Value = ContextStyle.default,
       addStyles: Seq[StyleA] = Seq()
   )
 
-  case class State(enabled: Boolean = true)
+  final case class State(enabled: Boolean = true)
 
-  val component = ReactComponentB[Props]("Button")
+  val component = ScalaComponent.build[Props]("Button")
     .renderPC { (_, p, children) =>
       val buttonType = if (p.onClick.isEmpty) "submit" else "button"
       <.button(
         lookAndFeel.buttonOpt(p.style),
-        p.addStyles,
+        p.addStyles.toTagMod,
         ^.tpe := buttonType,
-        p.onClick.map(handler => ^.onClick --> handler),
-        p.disabled ?= (^.disabled := true),
+        handler => ^.onClick -->? p.onClick,
+        (^.disabled := true).when(p.disabled),
         children)
     }
     .build
 
-  def apply()                                   = component
-  def apply(props: Props, children: ReactNode*) = component(props, children: _*)
+  def apply(onClick: Option[Callback] = None,
+      disabled: Boolean = false,
+      style: ContextStyle.Value = ContextStyle.default,
+      addStyles: Seq[StyleA] = Seq()
+    ) = component(Props(onClick, disabled, style, addStyles)) _
+
+  def apply(props: Props, children: VdomNode*) = component(props)(children: _*)
+
 }

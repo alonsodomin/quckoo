@@ -18,20 +18,20 @@ package io.quckoo.console.components
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.ScalaCssReact._
 
 object CoproductSelect {
   @inline private def lnf = lookAndFeel
 
-  private[this] val ComponentOption = ReactComponentB[Symbol]("ComponentOption")
+  private[this] val ComponentOption = ScalaComponent.build[Symbol]("ComponentOption")
     .stateless.render_P { sym =>
       <.option(^.value := sym.name, sym.name)
     } build
 
   type OnUpdate[A]    = Option[A] => Callback
-  type Constructor[A] = (Option[A], OnUpdate[A]) => ReactNode
+  type Constructor[A] = (Option[A], OnUpdate[A]) => VdomNode
   type Selector[A]    = PartialFunction[Symbol, Constructor[A]]
   type ValueMapper[A] = PartialFunction[A, Symbol]
 
@@ -60,7 +60,7 @@ object CoproductSelect {
     private[this] def propagateUpdate: Callback =
       $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.selected.flatMap(st.cache.get))))
 
-    def onSelectionUpdate(props: Props[A])(evt: ReactEventI): Callback = {
+    def onSelectionUpdate(props: Props[A])(evt: ReactEventFromInput): Callback = {
       val selectedSymbol: Option[Symbol] = {
         if (evt.target.value.isEmpty) None
         else Some(Symbol(evt.target.value))
@@ -89,18 +89,18 @@ object CoproductSelect {
             <.select(lnf.formControl,
               ^.value := state.selected.orElse(props.default).map(_.name).getOrElse(""),
               ^.onChange ==> onSelectionUpdate(props),
-              props.attrs,
+              props.attrs.toTagMod,
               if (props.default.isEmpty) {
                 <.option("Choose one")
-              } else EmptyTag,
-              props.options.map(opt => ComponentOption.withKey(opt.name)(opt))
+              } else EmptyVdom,
+              props.options.map(opt => ComponentOption(opt)).toVdomArray
             )
           )
         ),
         state.selected.flatMap { selection =>
           val ctor = props.selector.lift(selection)
           ctor.map(_(state.cache.get(selection), onItemUpdate))
-        }
+        } whenDefined
       )
     }
 
@@ -125,15 +125,15 @@ final class CoproductSelect[A: Reusability] private[components](mapper: Coproduc
     )
   }
 
-  private[components] val component = ReactComponentB[Props[A]]("CoproductSelect")
+  private[components] val component = ScalaComponent.build[Props[A]]("CoproductSelect")
     .initialState_P(generateState(_))
-    .renderBackend[Backend[A]]
-    .configure(Reusability.shouldComponentUpdate[Props[A], State[A], Backend[A], TopNode])
+    .renderBackendWithChildren[Backend[A]]
+    .configure(Reusability.shouldComponentUpdate[Props[A], Children.Varargs, State[A], Backend[A]])
     .build
 
-  def apply(options: List[Symbol], selector: Selector[A], value: Option[A], default: Symbol, onUpdate: OnUpdate[A], attrs: TagMod*)(children: ReactNode*) =
-    component(Props(options, selector, value, Some(default), onUpdate, attrs), children: _*)
+  def apply(options: List[Symbol], selector: Selector[A], value: Option[A], default: Symbol, onUpdate: OnUpdate[A], attrs: TagMod*) =
+    component(Props(options, selector, value, Some(default), onUpdate, attrs)) _
 
-  def apply(options: List[Symbol], selector: Selector[A], value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(children: ReactNode*) =
-    component(Props(options, selector, value, None, onUpdate, attrs), children: _*)
+  def apply(options: List[Symbol], selector: Selector[A], value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*) =
+    component(Props(options, selector, value, None, onUpdate, attrs)) _
 }

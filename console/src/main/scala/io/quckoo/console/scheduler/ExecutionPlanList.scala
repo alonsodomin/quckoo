@@ -27,7 +27,7 @@ import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
 import io.quckoo.protocol.scheduler.CancelExecutionPlan
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import org.threeten.bp.ZonedDateTime
 
@@ -131,13 +131,13 @@ object ExecutionPlanList {
 
     // Rendering
 
-    def renderItem(model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): ReactNode = {
-      def renderPlanName: ReactNode = {
+    def renderItem(model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): VdomNode = {
+      def renderPlanName: VdomNode = {
         val jobSpec = model.jobSpecs.get(plan.jobId)
         <.a(^.onClick --> onPlanClicked(planId), jobSpec.render(_.displayName))
       }
 
-      def renderDateTime(dateTime: ZonedDateTime): ReactNode =
+      def renderDateTime(dateTime: ZonedDateTime): VdomNode =
         DateTimeDisplay(dateTime)
 
       column match {
@@ -193,13 +193,13 @@ object ExecutionPlanList {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("ExecutionPlanList")
+  private[this] val component = ScalaComponent.build[Props]("ExecutionPlanList")
     .initialState(State())
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
   def apply(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick) =
-    component.withKey("execution-plan-list")(Props(proxy, onCreate, onClick))
+    component(Props(proxy, onCreate, onClick))
 
 }

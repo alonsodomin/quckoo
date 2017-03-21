@@ -18,7 +18,7 @@ package io.quckoo.console.components
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import org.threeten.bp.{LocalDate, LocalTime}
 
@@ -94,7 +94,7 @@ object Input {
 
   class Backend[A]($ : BackendScope[Props[A], Unit]) {
 
-    def onUpdate(props: Props[A])(evt: ReactEventI): Callback = {
+    def onUpdate(props: Props[A])(evt: ReactEventFromInput): Callback = {
       def convertNewValue: CallbackTo[Option[A]] = CallbackTo {
         if (evt.target.value.isEmpty) None
         else Some(props.converter.from(evt.target.value))
@@ -118,7 +118,8 @@ object Input {
         defaultValueAttr.getOrElse(valueAttr),
         ^.onChange ==> onUpdate(props),
         ^.onBlur ==> onUpdate(props),
-        props.attrs)
+        props.attrs.toTagMod
+      )
     }
 
   }
@@ -133,10 +134,10 @@ class Input[A: Reusability] private[components] () {
   implicit val propsReuse: Reusability[Props[A]] =
     Reusability.by[Props[A], (Option[A], Option[A])](p => (p.value, p.defaultValue))
 
-  private[components] val component = ReactComponentB[Props[A]]("Input")
+  private[components] val component = ScalaComponent.build[Props[A]]("Input")
     .stateless
     .renderBackend[Backend[A]]
-    .configure(Reusability.shouldComponentUpdate[Props[A], Unit, Backend[A], TopNode])
+    .configure(Reusability.shouldComponentUpdate[Props[A], Children.None, Unit, Backend[A]])
     .build
 
   def apply(value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A],

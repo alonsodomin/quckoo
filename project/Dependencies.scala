@@ -44,13 +44,14 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "0.11.3"
+    //val scalaJsReact    = "0.11.3"
+    val scalaJsReact    = "1.0.0-RC1"
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.1"
     val scalaJSScripts  = "1.1.0"
 
-    val testState = "2.1.1"
-    val scalaCss  = "0.5.1"
+    val testState = "2.1.2-RC1"
+    val scalaCss  = "0.5.3-RC1"
     val scalaTime = "2.0.0-M9"
 
     val diode = "1.1.0"

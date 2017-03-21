@@ -35,42 +35,42 @@ class InputTest extends FlatSpec with Matchers {
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.string.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
+      component.outerHtmlWithoutReactInternals() should be (initialHtml)
     }
 
     ComponentTester(Input[Password].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.password.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
+      component.outerHtmlWithoutReactInternals() should be (initialHtml)
     }
 
     ComponentTester(Input[Int].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.int.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
+      component.outerHtmlWithoutReactInternals() should be (initialHtml)
     }
 
     ComponentTester(Input[Long].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.long.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
+      component.outerHtmlWithoutReactInternals() should be (initialHtml)
     }
 
     ComponentTester(Input[LocalDate].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.date.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
+      component.outerHtmlWithoutReactInternals() should be (initialHtml)
     }
 
     ComponentTester(Input[LocalTime].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
       import tester._
 
       val initialHtml = s"""<input type="${Input.Type.time.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactDataAttr() should be (initialHtml)
+      component.outerHtmlWithoutReactInternals() should be (initialHtml)
     }
   }
 

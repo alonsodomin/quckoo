@@ -22,7 +22,7 @@ import io.quckoo.Trigger
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 02/09/2016.
@@ -30,7 +30,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object CronTriggerInput {
 
   private[this] val errorMessage =
-    ReactComponentB[(String, InvalidCron)]("CronTriggerInput.ErrorMessage")
+    ScalaComponent.build[(String, InvalidCron)]("CronTriggerInput.ErrorMessage")
       .stateless
       .render_P { case (input, error) =>
         def showError(error: InvalidCron) = error match {
@@ -42,7 +42,7 @@ object CronTriggerInput {
             )
 
           case ValidationError(fieldErrors) =>
-            <.ul(fieldErrors.map(err => <.li(err.field.toString(), err.msg)).list.toList)
+            <.ul(fieldErrors.map(err => <.li(err.field.toString(), err.msg)).list.toList.toVdomArray)
         }
 
         <.div(
@@ -87,12 +87,12 @@ object CronTriggerInput {
           ExpressionInput(state.inputExpr, onUpdate _, ^.id := "cronTrigger", ^.readOnly := props.readOnly)),
         <.div(
           ^.`class` := "col-sm-offset-2",
-          state.inputExpr.zip(state.errorReason).map(p => errorMessage.withKey("cronError")(p))))
+          state.inputExpr.zip(state.errorReason).map(p => errorMessage(p)).toVdomArray))
     }
 
   }
 
-  val component = ReactComponentB[Props]("CronTriggerInput")
+  val component = ScalaComponent.build[Props]("CronTriggerInput")
     .initialState_P(props => State(props.value.map(_.expr.toString)))
     .renderBackend[Backend]
     .build
