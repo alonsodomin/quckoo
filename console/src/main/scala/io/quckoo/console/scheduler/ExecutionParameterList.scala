@@ -73,7 +73,7 @@ object ExecutionParameterList {
 
   }
 
-  val ParamRow = ScalaComponent.build[ParamRowProps]("ParamRow")
+  val ParamRow = ScalaComponent.builder[ParamRowProps]("ParamRow")
     .initialState_P(props => ParamRowState(props.value.name, props.value.value))
     .renderBackend[ParamRowBackend]
     .build
@@ -130,7 +130,7 @@ object ExecutionParameterList {
 
   }
 
-  val component = ScalaComponent.build[Props]("ParameterList")
+  val component = ScalaComponent.builder[Props]("ParameterList")
     .initialState_P(props => State(Vector.empty))
     .renderBackend[Backend]
     .build

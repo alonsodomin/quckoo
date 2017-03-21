@@ -111,7 +111,7 @@ object Navigation {
 
   }
 
-  private[this] val component = ScalaComponent.build[Props]("Navigation").
+  private[this] val component = ScalaComponent.builder[Props]("Navigation").
     stateless.
     renderBackend[Backend].
     build

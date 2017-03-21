@@ -30,7 +30,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 object CronTriggerInput {
 
   private[this] val errorMessage =
-    ScalaComponent.build[(String, InvalidCron)]("CronTriggerInput.ErrorMessage")
+    ScalaComponent.builder[(String, InvalidCron)]("CronTriggerInput.ErrorMessage")
       .stateless
       .render_P { case (input, error) =>
         def showError(error: InvalidCron) = error match {
@@ -92,7 +92,7 @@ object CronTriggerInput {
 
   }
 
-  val component = ScalaComponent.build[Props]("CronTriggerInput")
+  val component = ScalaComponent.builder[Props]("CronTriggerInput")
     .initialState_P(props => State(props.value.map(_.expr.toString)))
     .renderBackend[Backend]
     .build

@@ -48,7 +48,7 @@ object AfterTriggerInput {
 
   }
 
-  val component = ScalaComponent.build[Props]("AfterTriggerInput").stateless
+  val component = ScalaComponent.builder[Props]("AfterTriggerInput").stateless
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

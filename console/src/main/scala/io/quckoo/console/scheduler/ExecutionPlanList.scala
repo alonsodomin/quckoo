@@ -193,7 +193,7 @@ object ExecutionPlanList {
 
   }
 
-  private[this] val component = ScalaComponent.build[Props]("ExecutionPlanList")
+  private[this] val component = ScalaComponent.builder[Props]("ExecutionPlanList")
     .initialState(State())
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props))

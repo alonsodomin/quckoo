@@ -58,10 +58,10 @@ object Table {
   )
 
   private[this] val HeaderCell =
-    ScalaComponent.build[Symbol]("HeaderCell").stateless.render_P(title => <.th(title.name)).build
+    ScalaComponent.builder[Symbol]("HeaderCell").stateless.render_P(title => <.th(title.name)).build
 
   private[this] val BodyCell =
-    ScalaComponent.build[VdomNode]("BodyCell").stateless.render_P(node => <.td(node)).build
+    ScalaComponent.builder[VdomNode]("BodyCell").stateless.render_P(node => <.td(node)).build
 
   private[this] case class CheckboxCellProps(
       id: String,
@@ -70,7 +70,7 @@ object Table {
       header: Boolean = false
   )
   private[this] val CheckboxCell =
-    ScalaComponent.build[CheckboxCellProps]("CheckboxCell").stateless.render_P {
+    ScalaComponent.builder[CheckboxCellProps]("CheckboxCell").stateless.render_P {
       case CheckboxCellProps(id, selected, action, header) =>
         val cb = <.input.checkbox(
           ^.id := id,
@@ -84,7 +84,7 @@ object Table {
 
   private[this] type ActionsCellProps[Id, Item] = (Id, Item, RowActionsFactory[Id, Item])
   private[this] def actionsCell[Id, Item] =
-    ScalaComponent.build[ActionsCellProps[Id, Item]]("ActionsCell").stateless.render_P {
+    ScalaComponent.builder[ActionsCellProps[Id, Item]]("ActionsCell").stateless.render_P {
       case (id, item, factory) =>
         <.td(
           factory(id, item).zipWithIndex.map {
@@ -97,7 +97,7 @@ object Table {
     } build
 
   private[this] def row[Id, Item] =
-    ScalaComponent.build[RowProps[Id, Item]]("Row").stateless.render_P { props =>
+    ScalaComponent.builder[RowProps[Id, Item]]("Row").stateless.render_P { props =>
       <.tr((^.`class` := "info").when(props.selected),
         props.onClick.map(callback => ^.onClick --> callback(props.rowId)).whenDefined,
         props.item.renderFailed { ex =>
@@ -242,7 +242,7 @@ object Table {
   }
 
   private[components] def component[Id, Item] =
-    ScalaComponent.build[Props[Id, Item]]("Table")
+    ScalaComponent.builder[Props[Id, Item]]("Table")
       .initialState_P(props => State(props.selected))
       .renderBackend[Backend[Id, Item]]
       .build

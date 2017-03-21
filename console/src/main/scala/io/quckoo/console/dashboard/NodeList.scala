@@ -54,7 +54,7 @@ object NodeList {
   }
 
   private[this] def component[N <: QuckooNode] =
-    ScalaComponent.build[Props[N]]("NodeList").stateless.renderBackend[Backend[N]].build
+    ScalaComponent.builder[Props[N]]("NodeList").stateless.renderBackend[Backend[N]].build
 
   def apply[N <: QuckooNode](proxy: ModelProxy[Map[NodeId, N]]) = component(Props(proxy))
 

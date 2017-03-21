@@ -146,7 +146,7 @@ object JobForm {
 
   }
 
-  private[registry] val component = ScalaComponent.build[Props]("JobForm")
+  private[registry] val component = ScalaComponent.builder[Props]("JobForm")
     .initialState(State(new EditableJobSpec(None)))
     .renderBackend[Backend]
     .build

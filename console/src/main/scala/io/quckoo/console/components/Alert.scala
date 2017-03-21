@@ -26,7 +26,7 @@ import scalacss.ScalaCssReact._
 object Alert {
   case class Props(style: ContextStyle.Value)
 
-  val component = ScalaComponent.build[Props]("Alert").renderPC { (_, p, c) =>
+  val component = ScalaComponent.builder[Props]("Alert").renderPC { (_, p, c) =>
     <.div(lookAndFeel.alert(p.style), ^.role := "alert", ^.padding := 5.px, c)
   } build
 

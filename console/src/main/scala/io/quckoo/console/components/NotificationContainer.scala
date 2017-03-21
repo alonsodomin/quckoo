@@ -26,7 +26,7 @@ object NotificationContainer {
 
   val dataNotify = VdomAttr("data-notify")
 
-  private[this] val component = ScalaComponent.build[Unit]("NotificationContainer").
+  private[this] val component = ScalaComponent.builder[Unit]("NotificationContainer").
     stateless.
     render($ =>
       <.div(dataNotify := "container", ^.`class` := "col-xs-11 col-sm-3 alert alert-{0}", ^.role := "alert",

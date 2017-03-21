@@ -68,7 +68,7 @@ object ExecutionTimeoutInput {
 
   }
 
-  val component = ScalaComponent.build[Props]("ExecutionTimeout")
+  val component = ScalaComponent.builder[Props]("ExecutionTimeout")
     .initialState(State())
     .renderBackend[Backend]
     .build

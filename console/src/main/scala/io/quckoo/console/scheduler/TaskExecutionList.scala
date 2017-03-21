@@ -58,7 +58,7 @@ object TaskExecutionList {
 
   }
 
-  private[this] val component = ScalaComponent.build[Props]("TaskExecutionList").stateless
+  private[this] val component = ScalaComponent.builder[Props]("TaskExecutionList").stateless
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))
     .build

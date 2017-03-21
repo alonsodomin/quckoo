@@ -166,7 +166,7 @@ object ExecutionPlanForm {
 
   }
 
-  val component = ScalaComponent.build[Props]("ExecutionPlanForm")
+  val component = ScalaComponent.builder[Props]("ExecutionPlanForm")
     .initialState(State(EditableExecutionPlan(None)))
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props))

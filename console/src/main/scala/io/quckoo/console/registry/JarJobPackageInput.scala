@@ -87,7 +87,7 @@ object JarJobPackageInput {
 
   }
 
-  val component = ScalaComponent.build[Props]("JarJobPackageInput")
+  val component = ScalaComponent.builder[Props]("JarJobPackageInput")
     .initialState_P(props => new State(props.value))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)

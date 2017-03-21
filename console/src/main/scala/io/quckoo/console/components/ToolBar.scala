@@ -29,7 +29,7 @@ import scalacss.ScalaCssReact._
   */
 object ToolBar {
 
-  private[this] val component = ScalaComponent.build[Unit]("ToolBar")
+  private[this] val component = ScalaComponent.builder[Unit]("ToolBar")
     .stateless
     .render_C { children =>
       <.div(GlobalStyles.pageToolbar, children)

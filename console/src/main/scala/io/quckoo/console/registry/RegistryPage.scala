@@ -81,7 +81,7 @@ object RegistryPage {
 
   }
 
-  private[this] val component = ScalaComponent.build[Props]("RegistryPage")
+  private[this] val component = ScalaComponent.builder[Props]("RegistryPage")
     .stateless
     .renderBackend[Backend]
     .build

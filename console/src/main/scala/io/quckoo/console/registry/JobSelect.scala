@@ -35,7 +35,7 @@ object JobSelect {
                    onUpdate: Option[JobId] => Callback,
                    readOnly: Boolean = false)
 
-  private[this] val JobOption = ScalaComponent.build[(JobId, JobSpec)]("JobOption").stateless.render_P {
+  private[this] val JobOption = ScalaComponent.builder[(JobId, JobSpec)]("JobOption").stateless.render_P {
     case (jobId, spec) =>
       val desc = spec.description.map(text => s"| $text").getOrElse("")
       <.option(^.value := jobId.toString(), s"${spec.displayName} $desc")
@@ -74,7 +74,7 @@ object JobSelect {
 
   }
 
-  val Component = ScalaComponent.build[Props]("JobSelect")
+  val Component = ScalaComponent.builder[Props]("JobSelect")
     .stateless
     .renderBackend[Backend]
     .build

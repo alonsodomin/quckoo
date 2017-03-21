@@ -84,7 +84,7 @@ object SchedulerPage {
 
   }
 
-  private[this] val component = ScalaComponent.build[Props]("ExecutionsPage")
+  private[this] val component = ScalaComponent.builder[Props]("ExecutionsPage")
     .stateless
     .renderBackend[Backend]
     .build

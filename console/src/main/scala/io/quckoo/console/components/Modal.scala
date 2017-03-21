@@ -104,7 +104,7 @@ object Modal {
     }
   }
 
-  val Component = ScalaComponent.build[Props]("Modal")
+  val Component = ScalaComponent.builder[Props]("Modal")
     .renderBackendWithChildren[Backend]
     .componentDidMount($ => $.backend.initialize($.props))
     .build

@@ -119,7 +119,7 @@ object FiniteDurationInput {
 
   }
 
-  val component = ScalaComponent.build[Props]("FiniteDurationInput")
+  val component = ScalaComponent.builder[Props]("FiniteDurationInput")
     .initialState_P(props => new State(props.value))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)

@@ -71,7 +71,7 @@ object DashboardView {
   }
 
   private[this] val component =
-    ScalaComponent.build[Props]("HomePage").stateless.renderBackend[Backend].build
+    ScalaComponent.builder[Props]("HomePage").stateless.renderBackend[Backend].build
 
   def apply(proxy: ModelProxy[ConsoleScope]) = component(Props(proxy))
 

@@ -198,7 +198,7 @@ object JobSpecList {
 
   }
 
-  private[this] val component = ScalaComponent.build[Props]("JobSpecList")
+  private[this] val component = ScalaComponent.builder[Props]("JobSpecList")
     .initialState(State())
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))

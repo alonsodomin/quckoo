@@ -131,7 +131,7 @@ object ClusterView {
 
   }
 
-  private[this] val component = ScalaComponent.build[Props]("ClusterView").
+  private[this] val component = ScalaComponent.builder[Props]("ClusterView").
     stateless.
     renderBackend[Backend].
     componentDidMount($ => $.backend.mounted($.props)).

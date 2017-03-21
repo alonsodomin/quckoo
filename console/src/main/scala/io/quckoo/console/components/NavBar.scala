@@ -33,7 +33,7 @@ object NavBar {
       onClick: Symbol => Callback
   )
 
-  private[this] val NavItem = ScalaComponent.build[NavItemProps]("NavItem")
+  private[this] val NavItem = ScalaComponent.builder[NavItemProps]("NavItem")
     .stateless
     .render_P {
       case NavItemProps(title, selected, onClick) =>
@@ -45,7 +45,7 @@ object NavBar {
     }
     .build
 
-  private[this] val NavBody = ScalaComponent.build[PropsChildren]("NavBody")
+  private[this] val NavBody = ScalaComponent.builder[PropsChildren]("NavBody")
     .stateless
     .render_P { children => <.div(children) }
     .build
@@ -78,7 +78,7 @@ object NavBar {
 
   }
 
-  private[this] val component = ScalaComponent.build[Props]("NavBar")
+  private[this] val component = ScalaComponent.builder[Props]("NavBar")
     .initialState(State())
     .renderBackendWithChildren[Backend]
     .build

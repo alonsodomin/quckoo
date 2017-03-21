@@ -74,7 +74,7 @@ object ValidatedInput {
 class ValidatedInput[A] private[components] (validator: ValidatorCallback[A]) {
   import ValidatedInput._
 
-  private[this] val component = ScalaComponent.build[Props[A]]("ValidatedInput")
+  private[this] val component = ScalaComponent.builder[Props[A]]("ValidatedInput")
     .initialState(State[A](ValidatedField()))
     .renderBackend[Backend[A]]
     .build

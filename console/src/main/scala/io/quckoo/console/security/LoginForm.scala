@@ -78,7 +78,7 @@ object LoginForm {
 
   }
 
-  private[this] val component = ScalaComponent.build[LoginHandler]("LoginForm")
+  private[this] val component = ScalaComponent.builder[LoginHandler]("LoginForm")
     .initialState(State(None, None))
     .renderBackend[LoginBackend]
     .build

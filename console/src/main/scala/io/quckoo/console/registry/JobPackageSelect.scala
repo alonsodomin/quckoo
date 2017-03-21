@@ -57,7 +57,7 @@ object JobPackageSelect {
 
   }
 
-  val component = ScalaComponent.build[Props]("JobPackage")
+  val component = ScalaComponent.builder[Props]("JobPackage")
     .stateless
     .renderBackend[Backend]
     .build

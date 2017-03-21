@@ -36,7 +36,7 @@ object Button {
 
   final case class State(enabled: Boolean = true)
 
-  val component = ScalaComponent.build[Props]("Button")
+  val component = ScalaComponent.builder[Props]("Button")
     .renderPC { (_, p, children) =>
       val buttonType = if (p.onClick.isEmpty) "submit" else "button"
       <.button(

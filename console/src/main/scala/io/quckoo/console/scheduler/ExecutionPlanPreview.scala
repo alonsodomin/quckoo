@@ -86,7 +86,7 @@ object ExecutionPlanPreview {
 
   }
 
-  val component = ScalaComponent.build[Props]("ExecutionPlanPreview")
+  val component = ScalaComponent.builder[Props]("ExecutionPlanPreview")
     .initialState(State(10))
     .renderBackend[Backend]
     .build

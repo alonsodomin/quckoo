@@ -64,7 +64,7 @@ object TriggerSelect {
 
   }
 
-  val component = ScalaComponent.build[Props]("TriggerSelect")
+  val component = ScalaComponent.builder[Props]("TriggerSelect")
     .stateless
     .renderBackend[Backend]
     .build

@@ -27,7 +27,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 object PrincipalWidget {
 
-  private[this] val component = ScalaComponent.build[Principal]("UserDisplay").render_P { user =>
+  private[this] val component = ScalaComponent.builder[Principal]("UserDisplay").render_P { user =>
     <.span(Icons.user, user.id)
   } build
 

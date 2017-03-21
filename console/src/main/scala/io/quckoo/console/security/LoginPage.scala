@@ -63,7 +63,7 @@ object LoginPage {
   }
 
   private[this] val component =
-    ScalaComponent.build[Props]("LoginPage").stateless.renderBackend[LoginBackend].build
+    ScalaComponent.builder[Props]("LoginPage").stateless.renderBackend[LoginBackend].build
 
   def apply(proxy: ModelProxy[ConsoleScope], referral: Option[ConsoleRoute] = None) =
     component(Props(proxy, referral))

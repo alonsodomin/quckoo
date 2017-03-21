@@ -42,7 +42,7 @@ object TabPanel {
   }
 
   private[this] val component =
-    ScalaComponent.build[Props]("TabPanel").initialState(State()).renderBackend[Backend].build
+    ScalaComponent.builder[Props]("TabPanel").initialState(State()).renderBackend[Backend].build
 
   def apply(tabItems: (Symbol, VdomNode)*) = {
     val initial = tabItems.head._1

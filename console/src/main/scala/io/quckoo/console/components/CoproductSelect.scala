@@ -25,7 +25,7 @@ import scalacss.ScalaCssReact._
 object CoproductSelect {
   @inline private def lnf = lookAndFeel
 
-  private[this] val ComponentOption = ScalaComponent.build[Symbol]("ComponentOption")
+  private[this] val ComponentOption = ScalaComponent.builder[Symbol]("ComponentOption")
     .stateless.render_P { sym =>
       <.option(^.value := sym.name, sym.name)
     } build
@@ -125,7 +125,7 @@ final class CoproductSelect[A: Reusability] private[components](mapper: Coproduc
     )
   }
 
-  private[components] val component = ScalaComponent.build[Props[A]]("CoproductSelect")
+  private[components] val component = ScalaComponent.builder[Props[A]]("CoproductSelect")
     .initialState_P(generateState(_))
     .renderBackendWithChildren[Backend[A]]
     .configure(Reusability.shouldComponentUpdate[Props[A], Children.Varargs, State[A], Backend[A]])
