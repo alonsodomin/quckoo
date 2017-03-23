@@ -54,7 +54,7 @@ object Dependencies {
     val scalaCss  = "0.5.3-RC1"
     val scalaTime = "2.0.0-M9"
 
-    val diode = "1.1.0"
+    val diode = "1.1.2-SNAPSHOT"
 
     val upickle   = "0.4.4"
     val scalatags = "0.6.3"
@@ -188,7 +188,7 @@ object Dependencies {
 
   lazy val api = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "me.chrons"      %%% "diode"           % version.diode,
+      "io.suzaku"      %%% "diode"           % version.diode,
       "io.monix"       %%% "monix-reactive"  % version.monix,
       "io.monix"       %%% "monix-scalaz-72" % version.monix
     )
@@ -223,7 +223,7 @@ object Dependencies {
     libraryDependencies ++= compiler.plugins ++ Seq(
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
-      "me.chrons"        %%% "diode-react"    % version.diode,
+      "io.suzaku"        %%% "diode-react"    % version.diode,
       "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
 
       "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,

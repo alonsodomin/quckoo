@@ -65,13 +65,16 @@ object DashboardView {
             <.div(
               <.h3("Worker nodes"),
               workerNodes(NodeList(_))
-            ))))
+            )
+          )
+        )
+      )
     }
 
   }
 
   private[this] val component =
-    ScalaComponent.builder[Props]("HomePage").stateless.renderBackend[Backend].build
+    ScalaComponent.builder[Props]("DashboardView").stateless.renderBackend[Backend].build
 
   def apply(proxy: ModelProxy[ConsoleScope]) = component(Props(proxy))
 

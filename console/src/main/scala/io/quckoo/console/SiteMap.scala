@@ -17,6 +17,7 @@
 package io.quckoo.console
 
 import diode.react.ModelProxy
+
 import io.quckoo.console.components._
 import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, ErrorProcessor, LoginProcessor}
 import io.quckoo.console.dashboard.DashboardView
@@ -25,6 +26,7 @@ import io.quckoo.console.layout.Navigation.NavigationItem
 import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._
