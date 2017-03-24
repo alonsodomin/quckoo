@@ -96,7 +96,7 @@ object FiniteDurationInput {
         ^.`class` := "container-fluid",
         <.div(
           ^.`class` := "row",
-          <.div(^.`class` := "col-sm-4", LengthValidation(onLengthUpdate _)(lengthInput(props, state))),
+          <.div(^.`class` := "col-sm-4", LengthValidation(onLengthUpdate)(lengthInput(props, state))),
           <.div(
             ^.`class` := "col-sm-6",
             <.select(
@@ -104,12 +104,12 @@ object FiniteDurationInput {
               ^.`class` := "form-control",
               ^.readOnly := props.readOnly,
               ^.disabled := props.readOnly,
-              state.unit.map(u => ^.value := u.toString()).whenDefined,
+              state.unit.map(u => ^.value := u.toString).whenDefined,
               ^.onChange ==> onUnitUpdate,
-              <.option(^.value := "", "Select a time unit..."),
+              <.option(^.key := s"${id}_none", ^.value := "", "Select a time unit..."),
               SupportedUnits.map {
                 case (u, text) =>
-                  <.option(^.value := u.name(), text)
+                  <.option(^.key := s"${id}_${u.name()}", ^.value := u.name(), text)
               } toVdomArray
             )
           )

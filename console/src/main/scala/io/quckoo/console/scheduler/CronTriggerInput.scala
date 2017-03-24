@@ -24,6 +24,9 @@ import io.quckoo.console.components._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
+import scalaz.std.option._
+import scalaz.syntax.applicative.{^ => _, _}
+
 /**
   * Created by alonsodomin on 02/09/2016.
   */
@@ -42,7 +45,9 @@ object CronTriggerInput {
             )
 
           case ValidationError(fieldErrors) =>
-            <.ul(fieldErrors.map(err => <.li(err.field.toString(), err.msg)).list.toList.toVdomArray)
+            <.ul(fieldErrors.list.toList.zipWithIndex.map { case (err, idx) =>
+              <.li(^.key := s"cron-err-$idx", err.field.toString(), err.msg)
+            }.toVdomArray)
         }
 
         <.div(
@@ -68,12 +73,12 @@ object CronTriggerInput {
         updateError(None) >> $.props.flatMap(_.onUpdate(trigger))
 
       EitherT(value.map(Cron(_).disjunction))
-        .map(Trigger.Cron(_))
+        .map(Trigger.Cron)
         .cozip
         .fold(updateError, invokeCallback)
     }
 
-    def onUpdate(value: Option[String]) =
+    def onUpdate(value: Option[String]): Callback =
       $.modState(_.copy(inputExpr = value)) >> doValidate(value)
 
     private[this] val ExpressionInput = Input[String]
@@ -87,7 +92,9 @@ object CronTriggerInput {
           ExpressionInput(state.inputExpr, onUpdate _, ^.id := "cronTrigger", ^.readOnly := props.readOnly)),
         <.div(
           ^.`class` := "col-sm-offset-2",
-          state.inputExpr.zip(state.errorReason).map(p => errorMessage(p)).toVdomArray))
+          (state.inputExpr |@| state.errorReason)((input, error) => errorMessage((input, error))).whenDefined
+        )
+      )
     }
 
   }

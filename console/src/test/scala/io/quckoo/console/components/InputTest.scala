@@ -31,46 +31,39 @@ class InputTest extends FlatSpec with Matchers {
   "An Input component" should "render an <input> properly typed" in {
     def onUpdate[A]: Input.OnUpdate[A] = _ => Callback.empty
 
-    ComponentTester(Input[String].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
-      import tester._
-
+    ReactTestUtils.withRenderedIntoDocument(Input[String].component(Input.Props(None, None, onUpdate, Seq.empty))) { comp =>
       val initialHtml = s"""<input type="${Input.Type.string.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactInternals() should be (initialHtml)
+      comp.outerHtmlScrubbed() shouldBe initialHtml
     }
 
-    ComponentTester(Input[Password].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
-      import tester._
+    ReactTestUtils.withRenderedIntoDocument(Input[String].component(Input.Props(None, None, onUpdate, Seq.empty))) { comp =>
+      val initialHtml = s"""<input type="${Input.Type.string.html}" value="" class="form-control">"""
+      comp.outerHtmlScrubbed() shouldBe initialHtml
+    }
 
+    ReactTestUtils.withRenderedIntoDocument(Input[Password].component(Input.Props(None, None, onUpdate, Seq.empty))) { comp =>
       val initialHtml = s"""<input type="${Input.Type.password.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactInternals() should be (initialHtml)
+      comp.outerHtmlScrubbed() shouldBe initialHtml
     }
 
-    ComponentTester(Input[Int].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
-      import tester._
-
+    ReactTestUtils.withRenderedIntoDocument(Input[Int].component(Input.Props(None, None, onUpdate, Seq.empty))) { comp =>
       val initialHtml = s"""<input type="${Input.Type.int.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactInternals() should be (initialHtml)
+      comp.outerHtmlScrubbed() shouldBe initialHtml
     }
 
-    ComponentTester(Input[Long].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
-      import tester._
-
+    ReactTestUtils.withRenderedIntoDocument(Input[Long].component(Input.Props(None, None, onUpdate, Seq.empty))) { comp =>
       val initialHtml = s"""<input type="${Input.Type.long.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactInternals() should be (initialHtml)
+      comp.outerHtmlScrubbed() shouldBe initialHtml
     }
 
-    ComponentTester(Input[LocalDate].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
-      import tester._
-
+    ReactTestUtils.withRenderedIntoDocument(Input[LocalDate].component(Input.Props(None, None, onUpdate, Seq.empty))) { comp =>
       val initialHtml = s"""<input type="${Input.Type.date.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactInternals() should be (initialHtml)
+      comp.outerHtmlScrubbed() shouldBe initialHtml
     }
 
-    ComponentTester(Input[LocalTime].component)(Input.Props(None, None, onUpdate, Seq.empty)) { tester =>
-      import tester._
-
+    ReactTestUtils.withRenderedIntoDocument(Input[LocalTime].component(Input.Props(None, None, onUpdate, Seq.empty))) { comp =>
       val initialHtml = s"""<input type="${Input.Type.time.html}" value="" class="form-control">"""
-      component.outerHtmlWithoutReactInternals() should be (initialHtml)
+      comp.outerHtmlScrubbed() shouldBe initialHtml
     }
   }
 
