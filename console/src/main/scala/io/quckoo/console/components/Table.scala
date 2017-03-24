@@ -89,9 +89,10 @@ object Table {
         <.td(
           factory(id, item).zipWithIndex.map {
             case (action, idx) =>
-              Button(Some(action.execute(id)))(
-                action.children.list.toList
-              )
+              val button = Button.component
+                .withKey(s"action-$id-$idx")
+                .withChildren(action.children.list.toList: _*)
+              button(Button.Props(Some(action.execute(id))))
           } toVdomArray
         )
     } build
@@ -109,13 +110,13 @@ object Table {
         props.item.render { item =>
           val cells = {
             val columns = props.columns.map { column =>
-              BodyCell(
+              BodyCell.withKey(s"$column-data-${props.rowId}")(
                 props.render(props.rowId, item, column)
               )
             }
 
             if (props.allowSelect) {
-              val checkboxCell = CheckboxCell(
+              val checkboxCell = CheckboxCell.withKey(s"select-${props.rowId}")(
                 CheckboxCellProps(
                   s"select-item-${props.rowId}",
                   props.selected,
@@ -127,7 +128,7 @@ object Table {
           }
 
           val actions = props.actions.map { actions =>
-            actionsCell[Id, Item](
+            actionsCell[Id, Item].withKey(s"actions-${props.rowId}")(
               (props.rowId, item, actions)
             )
           }
@@ -191,14 +192,14 @@ object Table {
 
     def render(props: Props[Id, Item], state: State[Id]) = {
       val headers: List[VdomElement] = {
-        val actionsHeader: VdomElement = <.th("Actions")
+        val actionsHeader: VdomElement = <.th(^.key := "table-actions", "Actions")
         val columns: List[VdomElement] = props.headers.map { title =>
-          HeaderCell(title).vdomElement
+          HeaderCell.withKey(s"$title-header")(title).vdomElement
         }
 
         val selectableColumns = {
           if (props.onSelect.isDefined) {
-            val selectAllCheckbox = CheckboxCell(
+            val selectAllCheckbox = CheckboxCell.withKey("select-all")(
               CheckboxCellProps(
                 "selectAll",
                 allSelected(props, state),

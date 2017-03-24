@@ -35,7 +35,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 object Navigation {
   import ConsoleRoute.Dashboard
 
-  sealed trait NavigationMenu
+  sealed trait NavigationMenu extends Serializable with Product
   case class NavigationList(icon: Icon, name: String, items: List[NavigationMenu]) extends NavigationMenu
   case class NavigationItem(icon: Icon, name: String, route: ConsoleRoute) extends NavigationMenu
   case object NavigationSeparator extends NavigationMenu
@@ -53,6 +53,7 @@ object Navigation {
     def renderNavMenu(menu: NavigationMenu, props: Props) = {
       def navItem(item: NavigationItem): VdomNode = {
         <.li(^.classSet("active" -> (props.current == item.route)),
+          ^.key := s"nav-time-${item.name}",
           <.a(^.href := props.routerCtl.urlFor(item.route).value,
             ^.onClick ==> navigationItemClicked(item), item.icon, item.name
           )
@@ -63,8 +64,9 @@ object Navigation {
 
       def navDropdown(list: NavigationList): VdomNode = {
         <.li(^.classSet("dropdown" -> true),
+          ^.key := s"nav-submenu-${list.name}",
           <.a(^.href := "#", ^.`class` := "dropdown-toggle", ^.role := "button",
-            /*^.aria.haspopup := true,*/ ^.aria.expanded := false,
+            ^.aria.hasPopup := true, ^.aria.expanded := false,
             list.icon, list.name, <.span(^.`class` := "caret")
           ),
           <.ul(^.`class` := "dropdown-menu",

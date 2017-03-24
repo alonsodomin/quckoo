@@ -68,7 +68,7 @@ object NavBar {
       val currentTab = state.selected.getOrElse(props.initial)
       <.div(
         <.ul(lookAndFeel.nav(props.style), props.addStyles.toTagMod, props.items.map { title =>
-          NavItem(
+          NavItem.withKey(s"nav-bar_nav-item_$title")(
             NavItemProps(title, currentTab == title, tabClicked(props))
           )
         } toVdomArray),
