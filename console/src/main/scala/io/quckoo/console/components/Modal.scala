@@ -63,8 +63,8 @@ object Modal {
         modal.on(name, null, null, handler)
 
       val actions = initJS
-        .map(registerListener("hidden.bs.modal", onHidden _))
-        .map(registerListener("shown.bs.modal", onShown _))
+        .map(registerListener("hidden.bs.modal", onHidden))
+        .map(registerListener("shown.bs.modal", onShown))
 
       actions.void
     }

@@ -43,7 +43,7 @@ object Button {
         lookAndFeel.buttonOpt(p.style),
         p.addStyles.toTagMod,
         ^.tpe := buttonType,
-        handler => ^.onClick -->? p.onClick,
+        ^.onClick -->? p.onClick,
         (^.disabled := true).when(p.disabled),
         children)
     }

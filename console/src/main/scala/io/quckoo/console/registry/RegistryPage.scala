@@ -28,13 +28,10 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
-import scalaz.OptionT
-
 /**
   * Created by alonsodomin on 17/10/2015.
   */
 object RegistryPage {
-  import ScalazReact._
 
   object Style extends StyleSheet.Inline {
     import dsl._
@@ -45,18 +42,12 @@ object RegistryPage {
 
   final case class Props(proxy: ModelProxy[ConsoleScope])
 
-  //private lazy val formRef = Ref.to(JobForm.component, "jobForm")
-
   class Backend($ : BackendScope[Props, Unit]) {
 
-    // lazy val jobForm: OptionT[CallbackTo, JobForm.Backend] =
-    //   OptionT(CallbackTo.lift(() => formRef($).toOption.map(_.backend)))
+    private val jobFormRef = ScalaComponent.mutableRefTo(JobForm.component)
 
-    def editJob(spec: Option[JobSpec]): Callback = {
-      // jobForm.flatMapF(_.editJob(spec))
-      //   .getOrElseF(Callback.log("Reference {} points to nothing!", formRef.name))
-      Callback.empty
-    }
+    def editJob(spec: Option[JobSpec]): Callback =
+      CallbackTo(jobFormRef).flatMap(_.value.backend.editJob(spec))
 
     def jobEdited(spec: Option[JobSpec]): Callback = {
       def dispatchAction(props: Props): Callback =
@@ -71,7 +62,7 @@ object RegistryPage {
       <.div(
         Style.content,
         <.h2("Registry"),
-        JobForm(jobEdited),
+        jobFormRef.component(JobForm.Props(jobEdited)),
         connector(JobSpecList(_,
           editJob(None),
           jobSpec => editJob(Some(jobSpec))

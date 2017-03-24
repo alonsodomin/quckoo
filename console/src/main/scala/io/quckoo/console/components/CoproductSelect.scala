@@ -91,9 +91,9 @@ object CoproductSelect {
               ^.onChange ==> onSelectionUpdate(props),
               props.attrs.toTagMod,
               if (props.default.isEmpty) {
-                <.option("Choose one")
+                <.option(^.key :="select-none", "Choose one")
               } else EmptyVdom,
-              props.options.map(opt => ComponentOption(opt)).toVdomArray
+              props.options.map(opt => ComponentOption.withKey(s"select-$opt")(opt)).toVdomArray
             )
           )
         ),
@@ -126,7 +126,7 @@ final class CoproductSelect[A: Reusability] private[components](mapper: Coproduc
   }
 
   private[components] val component = ScalaComponent.builder[Props[A]]("CoproductSelect")
-    .initialState_P(generateState(_))
+    .initialState_P(generateState)
     .renderBackendWithChildren[Backend[A]]
     .configure(Reusability.shouldComponentUpdate[Props[A], Children.Varargs, State[A], Backend[A]])
     .build
