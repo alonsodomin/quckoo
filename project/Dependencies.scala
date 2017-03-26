@@ -188,7 +188,7 @@ object Dependencies {
 
   lazy val api = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "io.suzaku"      %%% "diode"           % version.diode,
+      "io.suzaku"      %%% "diode"           % version.diode changing(),
       "io.monix"       %%% "monix-reactive"  % version.monix,
       "io.monix"       %%% "monix-scalaz-72" % version.monix
     )
@@ -223,7 +223,7 @@ object Dependencies {
     libraryDependencies ++= compiler.plugins ++ Seq(
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
-      "io.suzaku"        %%% "diode-react"    % version.diode,
+      "io.suzaku"        %%% "diode-react"    % version.diode changing(),
       "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
 
       "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,

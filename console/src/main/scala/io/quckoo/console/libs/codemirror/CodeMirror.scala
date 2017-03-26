@@ -73,7 +73,7 @@ trait CodeMirror extends js.Object {
 
   def refresh(): Unit = js.native
 
-  def on(`type`: String, handler: js.Function2[CodeMirror, js.Any, _]): this.type = js.native
+  def on(`type`: String, handler: js.Function2[CodeMirror, js.Any, _]): Unit = js.native
 
 }
 

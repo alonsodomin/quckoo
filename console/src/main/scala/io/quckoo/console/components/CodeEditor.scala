@@ -105,15 +105,16 @@ object CodeEditor {
 
     protected[CodeEditor] def initialize(props: Props, state: State): Callback = {
       $.getDOMNode.map(node => CodeMirror(node, jsOptions(props)))
-        .map(_.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent])))
-        .map(_.on("blur", (cm, event) => onBlur(cm, event.asInstanceOf[Event])))
-        .map { codeMirror =>
-          codeMirror.setValue(props.text.getOrElse(""))
-          codeMirror.setSize(props.width, props.height)
+          .map { codeMirror =>
+            codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
+            codeMirror.on("blur", (cm, event) => onBlur(cm, event.asInstanceOf[Event]))
 
-          codeMirror.refresh()
-          codeMirror.markClean()
-        }
+            codeMirror.setValue(props.text.getOrElse(""))
+            codeMirror.setSize(props.width, props.height)
+
+            codeMirror.refresh()
+            codeMirror.markClean()
+          }
     }
 
     private[this] def valueUpdated(editorValue: Option[String]): Unit = {
