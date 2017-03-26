@@ -69,7 +69,7 @@ object Dependencies {
     val cron4s      = "0.3.1"
     val enumeratum  = "1.5.9"
     val pureconfig  = "0.6.0"
-    val betterfiles = "2.17.1"
+    val betterfiles = "3.0.0"
     val xml         = "1.0.6"
 
     // JavaScript Libraries

@@ -65,8 +65,8 @@ class ProcessRunner(command: String, args: String*) extends StrictLogging {
       Future(builder.start())
 
     def captureOutput(proc: Process): Future[(String, String)] = {
-      val stdOut = readStream(proc.getInputStream())
-      val stdErr = readStream(proc.getErrorStream())
+      val stdOut = readStream(proc.getInputStream)
+      val stdErr = readStream(proc.getErrorStream)
       (stdOut |@| stdErr)(_ -> _)
     }
 

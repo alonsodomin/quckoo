@@ -42,26 +42,28 @@ class ShellTaskExecutor private (
   def receive: Receive = {
     case TaskExecutor.Run =>
       import context.dispatcher
-      val scriptFile = generateScriptFile()
-      val runner = new ProcessRunner(scriptFile.path.toString)
 
-      runner.run.map { result =>
-        if (result.exitCode == 0) {
-          Completed(result.stdOut)
-        } else {
-          Failed(TaskExitCodeFault(result.exitCode))
+      withRunner {
+        _.run.map { result =>
+          if (result.exitCode == 0) {
+            Completed(result.stdOut)
+          } else {
+            Failed(TaskExitCodeFault(result.exitCode))
+          }
+        } recover {
+          case ex => Failed(ExceptionThrown.from(ex))
         }
-      } recover {
-        case ex => Failed(ExceptionThrown.from(ex))
       } pipeTo sender()
   }
 
-  private [this] def generateScriptFile() = {
-    val scriptFile = File.newTemporaryFile()
-    scriptFile.append(shellPackage.content)
-    scriptFile.addPermission(PosixFilePermission.OWNER_EXECUTE)
-    //scriptFile.deleteOnExit()
-    scriptFile
+  private [this] def withRunner[R](f: ProcessRunner => R): R = {
+    File.usingTemporaryFile() { file =>
+      file.append(shellPackage.content)
+      file.addPermission(PosixFilePermission.OWNER_EXECUTE)
+
+      val runner = new ProcessRunner(file.path.toString)
+      f(runner)
+    }
   }
 
 }
