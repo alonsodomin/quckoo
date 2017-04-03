@@ -38,7 +38,7 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.23"
+      val cassandra = "0.24"
       val inmemory  = "2.4.17.3"
     }
 
@@ -67,8 +67,8 @@ object Dependencies {
     val scalaz      = "7.2.10"
     val monix       = "2.2.3"
     val cron4s      = "0.3.1"
-    val enumeratum  = "1.5.9"
-    val pureconfig  = "0.6.0"
+    val enumeratum  = "1.5.10"
+    val pureconfig  = "0.7.0"
     val betterfiles = "3.0.0"
     val xml         = "1.0.6"
 
@@ -133,8 +133,8 @@ object Dependencies {
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
 
-    val authenticatJwt = "com.jason-goodwin"  %% "authentikat-jwt" % "0.4.5"
-    val pureconfig     = "com.github.melrief" %% "pureconfig" % version.pureconfig
+    val authenticatJwt = "com.jason-goodwin"     %% "authentikat-jwt" % "0.4.5"
+    val pureconfig     = "com.github.pureconfig" %% "pureconfig" % version.pureconfig
 
     val scalaTest  = "org.scalatest"   %% "scalatest"                   % version.scalaTest
     val scalaMock  = "org.scalamock"   %% "scalamock-scalatest-support" % version.scalaMock

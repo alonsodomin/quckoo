@@ -17,14 +17,14 @@
 package io.quckoo.worker.config
 
 import akka.actor.ActorPath
-
 import com.typesafe.config.Config
 
 import io.quckoo.config._
 import io.quckoo.resolver.config.IvyConfig
 
 import pureconfig._
-import pureconfig.error.ConfigReaderFailures
+
+import scala.util.Try
 
 class ContactPoint(val actorPath: ActorPath) extends AnyVal
 
@@ -40,6 +40,6 @@ final case class WorkerSettings(
 object WorkerSettings {
   final val Namespace = "quckoo"
 
-  def apply(config: Config): Either[ConfigReaderFailures, WorkerSettings] =
-    loadConfig[WorkerSettings](config, Namespace)
+  def apply(config: Config): Try[WorkerSettings] =
+    Try(loadConfigOrThrow[WorkerSettings](config, Namespace))
 }

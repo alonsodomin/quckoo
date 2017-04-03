@@ -41,7 +41,7 @@ package object config {
 
   final val HostAndPort = """(.+?):(\d+)""".r
 
-  implicit val contactPointConfig: ConfigConvert[ContactPoint] = ConfigConvert.fromNonEmptyStringReaderTry {
+  implicit val contactPointConfig: ConfigReader[ContactPoint] = ConfigReader.fromNonEmptyStringTry {
     case AddressFromURIString(addr) => Success(new ContactPoint(RootActorPath(addr) / "system" / "receptionist"))
     case str                        => Failure(new IllegalArgumentException(s"Invalid contact point: $str"))
   }

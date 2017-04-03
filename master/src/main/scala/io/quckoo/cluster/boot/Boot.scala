@@ -86,13 +86,12 @@ object Boot extends LazyLogging {
         Await.ready(system.terminate(), 10 seconds)
       }
 
-      ClusterSettings(config) match {
-        case Right(settings) => startCluster(settings)
-        case Left(errors)    =>
-          logger.error("Could not load configuration due to following errors: \n{}",
-            describeConfigFailures(errors).mkString("\n")
-          )
-      }
+      ClusterSettings(config)
+        .map(startCluster)
+        .recover {
+          case ex =>
+            logger.error("Could not load configuration.", ex)
+        }
     }
   }
 

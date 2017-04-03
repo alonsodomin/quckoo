@@ -66,13 +66,12 @@ object Boot extends App with LazyLogging {
     implicit val system = ActorSystem(SystemName, config)
     sys.addShutdownHook { system.terminate() }
 
-    WorkerSettings(config) match {
-      case Right(settings) => doStart(settings)
-      case Left(errors)    =>
-        logger.error("Error reading configuration. \n{}",
-          describeConfigFailures(errors).mkString("\n")
-        )
-    }
+    WorkerSettings(config)
+      .map(doStart)
+      .recover {
+        case ex =>
+          logger.error("Could not load configuration.", ex)
+      }
   }
 
   private def doStart(settings: WorkerSettings)(implicit system: ActorSystem): Unit = {
