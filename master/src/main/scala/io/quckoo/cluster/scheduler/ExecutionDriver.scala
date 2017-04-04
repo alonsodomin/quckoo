@@ -28,10 +28,11 @@ import io.quckoo.api.TopicTag
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 
+import kamon.trace.Tracer
+
 import org.threeten.bp.{Clock, ZonedDateTime, Duration => JavaDuration}
 
 import scala.concurrent.duration._
-
 import scalaz.syntax.equal._
 
 /**
@@ -301,8 +302,10 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
       }
 
       // Instantiate a new execution lifecycle
-      val lifecycleProps = lifecycleFactory.executionLifecycleProps(state)
-      val lifecycle = context.watch(context.actorOf(lifecycleProps, task.id.toString))
+      val lifecycle = Tracer.withNewContext(s"execution-${task.id}") {
+        val lifecycleProps = lifecycleFactory.executionLifecycleProps(state)
+        context.watch(context.actorOf(lifecycleProps, task.id.toString))
+      }
 
       // Create a trigger to fire the task
       val trigger = createTrigger(task, state.planId, lifecycle, time)

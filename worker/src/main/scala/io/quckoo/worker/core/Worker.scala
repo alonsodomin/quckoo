@@ -25,6 +25,8 @@ import akka.cluster.client.ClusterClient.SendToAll
 import io.quckoo.{ExceptionThrown, NodeId, Task, TaskId}
 import io.quckoo.cluster.protocol._
 
+import kamon.trace.Tracer
+
 import scala.concurrent.duration._
 
 /**
@@ -65,14 +67,14 @@ class Worker private (
 
   val workerId = NodeId(UUID.randomUUID())
 
-  val registerTask = context.system.scheduler.schedule(
+  private[this] val registerTask = context.system.scheduler.schedule(
     0 seconds,
     registerInterval,
     clusterClient,
     SendToAll(SchedulerPath, RegisterWorker(workerId))
   )
 
-  val workerContext = new WorkerContext {
+  private[this] val workerContext = new WorkerContext {
     val resolver: ActorRef = context.watch(context.actorOf(resolverProps, "resolver"))
   }
   private[this] var executor: Option[ActorRef] = None
@@ -96,9 +98,11 @@ class Worker private (
     case task: Task =>
       log.info("Received task for execution {}", task.id)
       currentTaskId = Some(task.id)
-      executor = Some(taskExecutorProvider.executorFor(workerContext, task))
-        .map(context.watch)
-      executor.foreach(_ ! TaskExecutor.Run)
+      //Tracer.withNewContext(s"task-${task.id}") {
+        executor = Some(taskExecutorProvider.executorFor(workerContext, task))
+          .map(context.watch)
+        executor.foreach(_ ! TaskExecutor.Run)
+      //}
       context.become(working(task))
   }
 

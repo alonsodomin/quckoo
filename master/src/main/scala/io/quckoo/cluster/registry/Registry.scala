@@ -28,7 +28,6 @@ import akka.persistence.query.EventEnvelope2
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
-
 import io.quckoo.{JobId, JobNotFound, JobSpec}
 import io.quckoo.api.TopicTag
 import io.quckoo.cluster.QuckooRoles
@@ -37,6 +36,7 @@ import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
+import kamon.trace.Tracer
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -131,8 +131,11 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
       context become warmingUp
 
     case RegisterJob(spec) =>
-      val registrationProps = Registration.props(spec, shardRegion, resolver, sender())
-      context.actorOf(registrationProps, s"registration-${UUID.randomUUID()}")
+      val registrationTrackId = s"registration-${UUID.randomUUID()}"
+      Tracer.withNewContext(registrationTrackId) {
+        val registrationProps = Registration.props(spec, shardRegion, resolver, sender())
+        context.actorOf(registrationProps, registrationTrackId)
+      }
 
     case GetJobs =>
       val origSender = sender()
@@ -150,7 +153,9 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
 
     case get @ GetJob(jobId) =>
       if (jobIds.contains(jobId)) {
-        shardRegion forward get
+        Tracer.withNewContext(s"get-job-$jobId") {
+          shardRegion forward get
+        }
       } else {
         sender() ! JobNotFound(jobId)
       }
