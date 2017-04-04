@@ -18,7 +18,6 @@ package io.quckoo.worker.boot
 
 import akka.actor.ActorSystem
 import akka.cluster.client.{ClusterClient, ClusterClientSettings}
-
 import com.typesafe.config.{Config, ConfigFactory}
 
 import io.quckoo.{Info, Logo}
@@ -29,6 +28,8 @@ import io.quckoo.worker.config.{ResolverDispatcher, WorkerSettings}
 import io.quckoo.worker.core.Worker
 import io.quckoo.worker.SystemName
 import io.quckoo.worker.executor.DefaultTaskExecutorProvider
+
+import kamon.Kamon
 
 import slogging._
 
@@ -62,9 +63,13 @@ object Boot extends App with LazyLogging {
 
   def start(config: Config): Unit = {
     logger.info(s"Starting Quckoo Worker ${Info.version}...\n" + Logo)
+    Kamon.start()
 
     implicit val system = ActorSystem(SystemName, config)
-    sys.addShutdownHook { system.terminate() }
+    sys.addShutdownHook {
+      Kamon.shutdown()
+      system.terminate()
+    }
 
     WorkerSettings(config)
       .map(doStart)

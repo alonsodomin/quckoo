@@ -7,6 +7,12 @@ services:
       - 7000:7000
       - 9160:9160
 
+  graphite:
+    image: kamon/grafana_graphite
+    ports:
+      - 8080:80
+      - 8081:81
+
   master1:
     image: quckoo/master<localBuild>
     ports:
@@ -14,6 +20,7 @@ services:
       - 2551:2551
     links:
       - cassandra
+      - graphite
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
     command: --seed --cs cassandra:9042 -b master1:2551
@@ -25,6 +32,7 @@ services:
       - 2552:2551
     links:
       - cassandra
+      - graphite
       - master1
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
@@ -35,6 +43,7 @@ services:
     ports:
       - 5001:5001
     links:
+      - graphite
       - master1
       - master2
     volumes:

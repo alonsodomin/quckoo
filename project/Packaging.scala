@@ -10,6 +10,16 @@ object Packaging {
 
   private[this] val linuxHomeLocation = "/opt/quckoo"
 
+  private[this] val serverJvmParams = Seq(
+    "-Dconfig.file=${app_home}/../conf/application.conf",
+    "-Dlog4j.configurationFile=${app_home}/../conf/log4j2.xml",
+    "-Dcom.sun.management.jmxremote",
+    "-Dcom.sun.management.jmxremote.port=9010",
+    "-Dcom.sun.management.jmxremote.local.only=false",
+    "-Dcom.sun.management.jmxremote.authenticate=false",
+    "-Dcom.sun.management.jmxremote.ssl=false"
+  )
+
   private[this] lazy val universalSettings = Seq(
     bashScriptExtraDefines ++= Seq(
       """addJava "-Dlog4j.configurationFile=${app_home}/../conf/log4j2.xml""""
@@ -17,10 +27,7 @@ object Packaging {
   )
 
   private[this] lazy val universalServerSettings = Seq(
-    bashScriptExtraDefines ++= Seq(
-      """addJava "-Dconfig.file=${app_home}/../conf/application.conf"""",
-      """addJava "-Dlog4j.configurationFile=${app_home}/../conf/log4j2.xml""""
-    )
+    bashScriptExtraDefines ++= serverJvmParams.map(p => s"""addJava "$p"""")
   )
 
   private[this] lazy val baseDockerSettings = Seq(
@@ -47,14 +54,14 @@ object Packaging {
     packageName := "master",
     packageName in Universal := s"quckoo-master-${version.value}",
     executableScriptName := "master",
-    dockerExposedPorts := Seq(2551, 8095)
+    dockerExposedPorts := Seq(2551, 8095, 9010)
   )
 
   lazy val workerSettings = universalServerSettings ++ serverDockerSettings ++ Seq(
     packageName := "worker",
     packageName in Universal := s"quckoo-worker-${version.value}",
     executableScriptName := "worker",
-    dockerExposedPorts := Seq(5001)
+    dockerExposedPorts := Seq(5001, 9010)
   )
 
   lazy val exampleProducersSettings = universalSettings ++ baseDockerSettings ++ Seq(

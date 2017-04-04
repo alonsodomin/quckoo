@@ -42,6 +42,10 @@ object Dependencies {
       val inmemory  = "2.4.17.3"
     }
 
+    // Monitoring ----
+
+    val kamon = "0.6.6"
+
     // ScalaJS -------
 
     val scalaJsReact    = "0.11.3"
@@ -127,6 +131,14 @@ object Dependencies {
       val slf4jImpl = "org.apache.logging.log4j"  % "log4j-slf4j-impl" % version.log4j
 
       val All = Seq(api, core, slf4jImpl)
+    }
+
+    object Kamon {
+      val core       = "io.kamon" %% "kamon-core"            % version.kamon
+      val akka       = "io.kamon" %% "kamon-akka-remote-2.4" % version.kamon
+      val scala      = "io.kamon" %% "kamon-scala"           % version.kamon
+      val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon
+      val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon
     }
 
     val slogging_slf4j = "biz.enef" %% "slogging-slf4j" % version.slogging
@@ -300,7 +312,8 @@ object Dependencies {
     import libs._
     libraryDependencies ++= Log4j.All ++ Seq(
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
-      Akka.kryoSerialization, ivy, scalaXml, pureconfig, slogging_slf4j
+      Akka.kryoSerialization, ivy, scalaXml, pureconfig, slogging_slf4j,
+      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd
     )
   }
   lazy val clusterMaster = Def.settings {
