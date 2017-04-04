@@ -273,8 +273,7 @@ lazy val master = (project in file("master"))
     AutomateHeaderPlugin,
     SbtSassify,
     SbtTwirl,
-    JavaServerAppPackaging,
-    DockerPlugin
+    QuckooServerPackager
   )
   .configs(MultiJvm)
   .settings(commonSettings)
@@ -285,7 +284,6 @@ lazy val master = (project in file("master"))
   .settings(instrumentationSettings)
   .settings(Dependencies.clusterMaster)
   .settings(MultiNode.settings)
-  .settings(Packaging.masterSettings)
   .settings(
     moduleName := "quckoo-master",
     scalaJSProjects := Seq(console),
@@ -294,23 +292,24 @@ lazy val master = (project in file("master"))
     WebKeys.packagePrefix in Assets := "public/",
     managedClasspath in Runtime += (packageBin in Assets).value,
     pipelineStages in Assets := Seq(scalaJSPipeline),
-    devCommands in scalaJSPipeline ++= Seq("test", "testQuick", "testOnly", "docker:publishLocal")
+    devCommands in scalaJSPipeline ++= Seq("test", "testQuick", "testOnly", "docker:publishLocal"),
+    dockerExposedPorts := Seq(2551, 8095, 9010)
   )
   .dependsOn(shared, testSupportJVM % Test)
 
 lazy val worker = (project in file("worker"))
-  .enablePlugins(AutomateHeaderPlugin, JavaServerAppPackaging, DockerPlugin)
-  .settings(commonSettings: _*)
+  .enablePlugins(AutomateHeaderPlugin, QuckooServerPackager)
+  .settings(commonSettings)
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
-  .settings(publishSettings: _*)
+  .settings(publishSettings)
   .settings(Revolver.settings: _*)
   .settings(instrumentationSettings)
   .settings(Dependencies.clusterWorker)
-  .settings(Packaging.workerSettings: _*)
   .settings(
     moduleName := "quckoo-worker",
-    baseDirectory in reStart := file("worker/target")
+    baseDirectory in reStart := file("worker/target"),
+    dockerExposedPorts := Seq(5001, 9010)
   )
   .dependsOn(shared, testSupportJVM % Test)
 
@@ -366,13 +365,12 @@ lazy val exampleJobs = (project in file("examples/jobs"))
   .dependsOn(coreJVM)
 
 lazy val exampleProducers = (project in file("examples/producers"))
-  .enablePlugins(AutomateHeaderPlugin, JavaAppPackaging, DockerPlugin)
+  .enablePlugins(AutomateHeaderPlugin, QuckooAppPackager)
   .settings(commonSettings)
   .settings(commonJvmSettings)
   .settings(publishSettings)
   .settings(Revolver.settings)
   .settings(Dependencies.exampleProducers)
-  .settings(Packaging.exampleProducersSettings)
   .settings(
     name := "example-producers",
     moduleName := "quckoo-example-producers"

@@ -2,6 +2,7 @@ version: '2'
 services:
   cassandra:
     image: cassandra
+    hostname: cassandra
     ports:
       - 9042:9042
       - 7000:7000
@@ -9,12 +10,14 @@ services:
 
   graphite:
     image: kamon/grafana_graphite
+    hostname: graphite
     ports:
       - 8080:80
       - 8081:81
 
   master1:
     image: quckoo/master<localBuild>
+    hostname: "master-01"
     ports:
       - 8095:8095
       - 2551:2551
@@ -27,6 +30,7 @@ services:
 
   master2:
     image: quckoo/master<localBuild>
+    hostname: "master-02"
     ports:
       - 8096:8095
       - 2552:2551
@@ -40,6 +44,7 @@ services:
 
   worker:
     image: quckoo/worker<localBuild>
+    hostname: "worker"
     ports:
       - 5001:5001
     links:

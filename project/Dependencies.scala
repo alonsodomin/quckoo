@@ -136,6 +136,7 @@ object Dependencies {
     object Kamon {
       val core       = "io.kamon" %% "kamon-core"            % version.kamon
       val akka       = "io.kamon" %% "kamon-akka-remote-2.4" % version.kamon
+      val http       = "io.kamon" %% "kamon-akka-http"       % version.kamon
       val scala      = "io.kamon" %% "kamon-scala"           % version.kamon
       val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon
       val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon
@@ -313,7 +314,7 @@ object Dependencies {
     libraryDependencies ++= Log4j.All ++ Seq(
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryoSerialization, ivy, scalaXml, pureconfig, slogging_slf4j,
-      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd
+      Kamon.core, Kamon.akka, Kamon.scala, Kamon.statsd
     )
   }
   lazy val clusterMaster = Def.settings {
@@ -322,7 +323,7 @@ object Dependencies {
       Akka.sharding, Akka.http.main, Akka.http.upickle, Akka.http.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
       Akka.persistence.query, Akka.persistence.memory, Akka.constructr,
-      scopt, authenticatJwt,
+      Kamon.http, scopt, authenticatJwt,
 
       "com.vmunier"      %% "scalajs-scripts" % version.scalaJSScripts,
       "org.webjars"       % "codemirror"      % version.codemirror,
