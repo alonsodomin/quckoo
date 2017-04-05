@@ -314,7 +314,7 @@ object Dependencies {
     libraryDependencies ++= Log4j.All ++ Seq(
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryoSerialization, ivy, scalaXml, pureconfig, slogging_slf4j,
-      Kamon.core, Kamon.akka, Kamon.scala, Kamon.statsd
+      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd
     )
   }
   lazy val clusterMaster = Def.settings {

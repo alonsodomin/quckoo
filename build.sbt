@@ -38,7 +38,6 @@ lazy val commonSettings = Seq(
       Resolver.bintrayRepo("dnvriend", "maven"),
       Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
     ),
-    parallelExecution := false,
     botBuild := scala.sys.env.get("TRAVIS").isDefined
   ) ++ Licensing.settings
 
@@ -271,8 +270,7 @@ lazy val shared = (project in file("shared"))
 lazy val master = (project in file("master"))
   .enablePlugins(
     AutomateHeaderPlugin,
-    SbtSassify,
-    SbtTwirl,
+    QuckooWebServer,
     QuckooServerPackager
   )
   .configs(MultiJvm)
@@ -280,35 +278,24 @@ lazy val master = (project in file("master"))
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
   .settings(publishSettings)
-  .settings(Revolver.settings)
-  .settings(instrumentationSettings)
   .settings(Dependencies.clusterMaster)
   .settings(MultiNode.settings)
   .settings(
     moduleName := "quckoo-master",
     scalaJSProjects := Seq(console),
-    baseDirectory in reStart := file("master/target"),
-    compile in Compile := ((compile in Compile) dependsOn scalaJSPipeline).value,
-    WebKeys.packagePrefix in Assets := "public/",
-    managedClasspath in Runtime += (packageBin in Assets).value,
-    pipelineStages in Assets := Seq(scalaJSPipeline),
-    devCommands in scalaJSPipeline ++= Seq("test", "testQuick", "testOnly", "docker:publishLocal"),
-    dockerExposedPorts := Seq(2551, 8095, 9010)
+    dockerExposedPorts := Seq(2551, 8095)
   )
   .dependsOn(shared, testSupportJVM % Test)
 
 lazy val worker = (project in file("worker"))
-  .enablePlugins(AutomateHeaderPlugin, QuckooServerPackager)
+  .enablePlugins(AutomateHeaderPlugin, QuckooServer, QuckooServerPackager)
   .settings(commonSettings)
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
   .settings(publishSettings)
-  .settings(Revolver.settings: _*)
-  .settings(instrumentationSettings)
   .settings(Dependencies.clusterWorker)
   .settings(
     moduleName := "quckoo-worker",
-    baseDirectory in reStart := file("worker/target"),
     dockerExposedPorts := Seq(5001, 9010)
   )
   .dependsOn(shared, testSupportJVM % Test)

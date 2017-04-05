@@ -28,6 +28,7 @@ import akka.persistence.query.EventEnvelope2
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
+
 import io.quckoo.{JobId, JobNotFound, JobSpec}
 import io.quckoo.api.TopicTag
 import io.quckoo.cluster.QuckooRoles
@@ -36,6 +37,7 @@ import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolve
+
 import kamon.trace.Tracer
 
 import scala.concurrent._

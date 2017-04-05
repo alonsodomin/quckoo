@@ -25,6 +25,9 @@ import io.quckoo.cluster.protocol._
 import io.quckoo.cluster.net._
 import io.quckoo.protocol.worker._
 
+import kamon.Kamon
+import kamon.metric.instrument.MinMaxCounter
+
 import scala.collection.immutable.Queue
 import scala.concurrent.duration._
 
@@ -76,6 +79,11 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
   private[this] var inProgressTasks   = Map.empty[TaskId, ActorRef]
   private[this] var workerRemoveTasks = Map.empty[NodeId, Cancellable]
 
+  private[this] val pendingCounter: MinMaxCounter =
+    Kamon.metrics.minMaxCounter("pending-tasks")
+  private[this] val inProgressCounter: MinMaxCounter =
+    Kamon.metrics.minMaxCounter("inprogress-tasks")
+
   private[this] val cleanupTask = createCleanUpTask()
 
   override def postStop(): Unit = cleanupTask.cancel()
@@ -120,6 +128,8 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         // TODO define a better message to interrupt the execution
         inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
         inProgressTasks -= taskId
+        inProgressCounter.decrement()
+
         replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
         }
@@ -144,6 +154,9 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
             val timeout = Deadline.now + maxWorkTimeout
             workers += (workerId        -> workerState.copy(status = Busy(task.id, timeout)))
             inProgressTasks += (task.id -> lifecycle)
+
+            pendingCounter.decrement()
+            inProgressCounter.increment()
 
             log.info("Delivering task '{}' to worker '{}'.", task.id, workerId)
             workerState.ref ! task
@@ -182,6 +195,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         changeWorkerToIdle(workerId, taskId)
         inProgressTasks(taskId) ! ExecutionLifecycle.Finish(None)
         inProgressTasks -= taskId
+        inProgressCounter.decrement()
 
         sender ! TaskDoneAck(taskId)
         replicator ! Replicator
@@ -196,6 +210,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       changeWorkerToIdle(workerId, taskId)
       inProgressTasks(taskId) ! ExecutionLifecycle.Finish(Some(cause))
       inProgressTasks -= taskId
+      inProgressCounter.decrement()
       replicator ! Replicator
         .Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
@@ -206,6 +221,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       // Enqueue messages will always come from inside the cluster so accept them all
       log.debug("Enqueueing task '{}' before sending to workers.", task.id)
       pendingTasks = pendingTasks.enqueue((task, sender()))
+      pendingCounter.increment()
       replicator ! Replicator
         .Update(PendingKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
           _.increment(cluster.selfUniqueAddress.toNodeId.toString)
@@ -285,6 +301,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       workers -= workerId
       inProgressTasks(taskId) ! ExecutionLifecycle.TimeOut
       inProgressTasks -= taskId
+      inProgressCounter.decrement()
 
       context.system.eventStream.publish(WorkerRemoved(workerId))
 
