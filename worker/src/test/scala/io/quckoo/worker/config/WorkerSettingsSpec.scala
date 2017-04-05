@@ -18,18 +18,22 @@ package io.quckoo.worker.config
 
 import com.typesafe.config.ConfigFactory
 
-import org.scalatest.{EitherValues, FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Inside, Matchers}
+
+import scala.util.Success
 
 /**
   * Created by alonsodomin on 04/11/2016.
   */
-class WorkerSettingsSpec extends FlatSpec with Matchers with EitherValues {
+class WorkerSettingsSpec extends FlatSpec with Matchers with Inside {
 
   "WorkerSettings" should "load the default configuration settings" in {
     val config = ConfigFactory.load()
 
     val returnedSettings = WorkerSettings(config)
-    returnedSettings.right.value.worker.contactPoints should not be empty
+    inside(returnedSettings) {
+      case Success(settings) => settings.worker.contactPoints should not be empty
+    }
   }
 
 }

@@ -17,10 +17,10 @@
 package io.quckoo.cluster.config
 
 import com.typesafe.config.ConfigFactory
-
-import org.scalatest.{EitherValues, FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.concurrent.duration._
+import scala.util.Success
 
 /**
   * Created by alonsodomin on 04/11/2016.
@@ -38,18 +38,19 @@ object ClusterSettingsSpec {
 
 }
 
-class ClusterSettingsSpec extends FlatSpec with Matchers with EitherValues {
+class ClusterSettingsSpec extends FlatSpec with Matchers with Inside {
   import ClusterSettingsSpec._
 
   "ClusterConfig" should "be able to load default configuration" in {
     val config = ConfigFactory.load()
     val clusterConfigAttempt = ClusterSettings(config)
 
-    val clusterConf = clusterConfigAttempt.right.value
-
-    clusterConf.taskQueue.maxWorkTimeout shouldBe taskQueue.DefaultMaxWorkTimeout
-    clusterConf.http.bindInterface shouldBe http.DefaultInterface
-    clusterConf.http.bindPort shouldBe http.DefaultPort
+    inside(clusterConfigAttempt) {
+      case Success(clusterConf) =>
+        clusterConf.taskQueue.maxWorkTimeout shouldBe taskQueue.DefaultMaxWorkTimeout
+        clusterConf.http.bindInterface shouldBe http.DefaultInterface
+        clusterConf.http.bindPort shouldBe http.DefaultPort
+    }
   }
 
 }
