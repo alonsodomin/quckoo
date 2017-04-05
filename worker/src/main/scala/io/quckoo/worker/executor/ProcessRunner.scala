@@ -20,6 +20,8 @@ import java.io._
 
 import resource._
 
+import kamon.trace.Tracer
+
 import scala.concurrent._
 
 import scalaz._
@@ -37,8 +39,6 @@ class ProcessRunner(command: String, args: String*) extends StrictLogging {
   import ProcessRunner._
 
   def run(implicit executionContext: ExecutionContext): Future[Result] = {
-    logger.info("Executing command: {}", command)
-
     def readStream(stream: InputStream): Future[String] = Future {
       blocking {
         val managedOutput = for {
@@ -61,26 +61,24 @@ class ProcessRunner(command: String, args: String*) extends StrictLogging {
       }
     }
 
-    def startProcess(builder: ProcessBuilder): Future[Process] =
+    def startProcess(builder: ProcessBuilder): Future[Process] = {
+      logger.info("Executing command: {}", command)
       Future(builder.start())
-
-    def captureOutput(proc: Process): Future[(String, String)] = {
-      val stdOut = readStream(proc.getInputStream)
-      val stdErr = readStream(proc.getErrorStream)
-      (stdOut |@| stdErr)(_ -> _)
     }
 
-    def waitForCompletion(proc: Process): Future[Int] =
-      Future { blocking { proc.waitFor() } }
+    def captureResult(proc: Process): Future[Result] = {
+      def exitCode = Future { blocking { proc.waitFor() } }
+      def stdOut = readStream(proc.getInputStream)
+      def stdErr = readStream(proc.getErrorStream)
+      (exitCode |@| stdOut |@| stdErr)(Result)
+    }
 
     val commandLine = command +: args
     val procBuilder = new ProcessBuilder(commandLine: _*)
 
-    for {
-      proc       <- startProcess(procBuilder)
-      exitCode   <- waitForCompletion(proc)
-      (out, err) <- captureOutput(proc)
-    } yield Result(exitCode, out, err)
+    Tracer.withNewContext(s"process-$command") {
+      startProcess(procBuilder) >>= captureResult
+    }
   }
 
 }

@@ -6,6 +6,8 @@
     </Console>
   </Appenders>
   <Loggers>
+    <Logger name="io.quckoo" level="debug" />
+
     <Root level="info">
       <AppenderRef ref="Console"/>
     </Root>

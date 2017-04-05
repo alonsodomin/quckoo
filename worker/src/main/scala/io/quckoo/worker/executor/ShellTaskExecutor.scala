@@ -75,16 +75,18 @@ class ShellTaskExecutor private (
 
     def runIt(file: File): Future[R] = {
       def runScript: Future[R] = {
+        log.debug("Running file: {}", file)
         val runner = new ProcessRunner(file.path.toString)
         f(runner)
       }
 
       def deleteScript: Future[Unit] = Future {
+        log.debug("Deleting script")
         file.delete(true)
         ()
       }
 
-      runScript <* deleteScript
+      runScript.flatMap(r => deleteScript.map(_ => r))
     }
 
     generateScript >>= runIt
