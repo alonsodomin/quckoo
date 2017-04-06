@@ -8,8 +8,8 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
  */
 trait ScalaTestMultiNodeSpec extends MultiNodeSpecCallbacks with WordSpecLike with BeforeAndAfterAll with Matchers {
 
-   override def beforeAll() = multiNodeSpecBeforeAll()
+   override protected def beforeAll(): Unit = multiNodeSpecBeforeAll()
 
-   override def afterAll() = multiNodeSpecAfterAll()
+   override protected def afterAll(): Unit = multiNodeSpecAfterAll()
 
  }

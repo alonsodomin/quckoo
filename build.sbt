@@ -260,7 +260,7 @@ lazy val shared = (project in file("shared"))
   .settings(commonSettings)
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
-  .settings(publishSettings: _*)
+  .settings(publishSettings)
   .settings(Dependencies.clusterShared)
   .settings(
     moduleName := "quckoo-shared"
@@ -271,15 +271,14 @@ lazy val master = (project in file("master"))
   .enablePlugins(
     AutomateHeaderPlugin,
     QuckooWebServer,
-    QuckooServerPackager
+    QuckooServerPackager,
+    QuckooMultiJvmTesting
   )
-  .configs(MultiJvm)
   .settings(commonSettings)
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
   .settings(publishSettings)
   .settings(Dependencies.clusterMaster)
-  .settings(MultiNode.settings)
   .settings(
     moduleName := "quckoo-master",
     scalaJSProjects := Seq(console),
@@ -288,7 +287,7 @@ lazy val master = (project in file("master"))
   .dependsOn(shared, testSupportJVM % Test)
 
 lazy val worker = (project in file("worker"))
-  .enablePlugins(AutomateHeaderPlugin, QuckooServer, QuckooServerPackager)
+  .enablePlugins(AutomateHeaderPlugin, QuckooApp, QuckooServerPackager)
   .settings(commonSettings)
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
@@ -307,7 +306,7 @@ lazy val util = (crossProject in file("util"))
   .settings(commonSettings)
   .jsSettings(commonJsSettings)
   .jsSettings(Dependencies.utilJS)
-  .jvmSettings(commonJvmSettings: _*)
+  .jvmSettings(commonJvmSettings)
   .settings(moduleName := "quckoo-util")
   .dependsOn(testSupport % Test)
 

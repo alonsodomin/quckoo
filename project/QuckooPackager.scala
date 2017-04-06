@@ -8,19 +8,25 @@ import com.typesafe.sbt.packager.archetypes.{JavaAppPackaging, JavaServerAppPack
 import com.typesafe.sbt.packager.docker.Cmd
 import com.typesafe.sbt.packager.docker.DockerPlugin
 
+trait QuckooPackagerKeys {
+  val extraJvmParams = settingKey[Seq[String]]("Extra JVM parameters")
+}
+object QuckooPackagerKeys extends QuckooPackagerKeys
+
 abstract class QuckooPackager extends AutoPlugin {
 
   protected val linuxHomeLocation = "/opt/quckoo"
 
   override def requires: Plugins = DockerPlugin
 
-  val defaultJvmParams = Seq(
+  protected val defaultJvmParams = Seq(
     "-Dconfig.file=${app_home}/../conf/application.conf",
     "-Dlog4j.configurationFile=${app_home}/../conf/log4j2.xml"
   )
 
   protected lazy val defaultPackagingSettings: Seq[Def.Setting[_]] = Seq(
-    bashScriptExtraDefines ++= defaultJvmParams.map(p => s"""addJava "$p""""),
+    QuckooPackagerKeys.extraJvmParams := defaultJvmParams,
+    bashScriptExtraDefines ++= QuckooPackagerKeys.extraJvmParams.value.map(p => s"""addJava "$p""""),
     maintainer in Docker := "A. Alonso Dominguez",
     dockerRepository := Some("quckoo"),
     dockerUpdateLatest := true,
@@ -40,7 +46,7 @@ abstract class QuckooPackager extends AutoPlugin {
 
 object QuckooAppPackager extends QuckooPackager {
 
-  object autoImport { }
+  val autoImport = QuckooPackagerKeys
 
   override def requires: Plugins = super.requires && JavaAppPackaging
 
@@ -49,28 +55,26 @@ object QuckooAppPackager extends QuckooPackager {
 }
 
 object QuckooServerPackager extends QuckooPackager {
+  import QuckooAppKeys._
 
-  object autoImport {
-    val aspectjWeaver = taskKey[File]("Aspectj Weaver jar file")
-  }
+  val autoImport = QuckooPackagerKeys
   import autoImport._
 
-  override def requires: Plugins = super.requires && JavaServerAppPackaging
+  override def requires: Plugins = super.requires && JavaServerAppPackaging && QuckooApp
 
   override lazy val projectSettings = defaultPackagingSettings ++ Seq(
-    aspectjWeaver := findAspectjWeaver(update.value),
-    mappings in Universal += aspectjWeaver.value -> "bin/aspectjweaver.jar",
-    bashScriptExtraDefines += """addJava "-javaagent:${app_home}/aspectjweaver.jar"""",
+    mappings in Universal ++= Seq(
+      aspectjWeaver.value -> "bin/aspectjweaver.jar",
+      sigarLoader.value   -> "bin/sigar-loader.jar"
+    ),
+    extraJvmParams := defaultJvmParams ++ Seq(
+      "-javaagent:${app_home}/aspectjweaver.jar",
+      "-javaagent:${app_home}/sigar-loader.jar"
+    ),
     dockerExposedVolumes ++= Seq(
       s"$linuxHomeLocation/resolver/cache",
       s"$linuxHomeLocation/resolver/local"
     )
   )
-
-  private[this] val aspectjWeaverFilter: DependencyFilter =
-    configurationFilter(Aspectj.name) && artifactFilter(name = "aspectjweaver", `type` = "jar")
-
-  private[this] def findAspectjWeaver(report: UpdateReport) =
-    report.matching(aspectjWeaverFilter).head
 
 }

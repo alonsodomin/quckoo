@@ -1,0 +1,30 @@
+import sbt._
+import sbt.Keys._
+
+import com.typesafe.sbt.SbtMultiJvm
+import com.typesafe.sbt.SbtMultiJvm.autoImport._
+
+import de.heikoseeberger.sbtheader.HeaderPlugin
+
+import QuckooAppKeys._
+
+object QuckooMultiJvmTesting extends AutoPlugin {
+
+  override def requires: Plugins = QuckooServerPackager && SbtMultiJvm && HeaderPlugin
+
+  override def projectConfigurations: Seq[Configuration] = Seq(MultiJvm)
+
+  override def projectSettings: Seq[Def.Setting[_]] = Seq(
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-multi-node-testkit"  % Dependencies.version.akka.main,
+      "org.scoverage"     %% "scalac-scoverage-runtime" % "1.3.0"
+    ).map(_ % MultiJvm),
+    parallelExecution in Test := false,
+    jvmOptions in MultiJvm := Seq(
+      "-Xmx512M",
+      s"-javaagent:${sigarLoader.value.getAbsolutePath}",
+      s"-Dkamon.sigar.folder=${baseDirectory.value / "target" / "native"}"
+    )
+  ) ++ HeaderPlugin.settingsFor(MultiJvm)
+
+}
