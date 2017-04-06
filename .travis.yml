@@ -22,7 +22,8 @@ env:
 
 before_install:
   - gem install compass
-  - sudo npm install -g phantomjs-prebuilt
+  - nvm install node
+  - npm install -g phantomjs-prebuilt
 #  - wget https://s3.amazonaws.com/travis-phantomjs/phantomjs-2.0.0-ubuntu-12.04.tar.bz2
 #  - tar -xjf phantomjs-2.0.0-ubuntu-12.04.tar.bz2
 #  - sudo rm -rf /usr/local/phantomjs/bin/phantomjs
