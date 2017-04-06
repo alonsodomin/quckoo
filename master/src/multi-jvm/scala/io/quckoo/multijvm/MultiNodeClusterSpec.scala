@@ -33,8 +33,6 @@ trait MultiNodeClusterSpec extends ScalaTestMultiNodeSpec { self: MultiNodeSpec 
 
   def roleName(addr: Address): Option[RoleName] = roles.find(address(_) == addr)
 
-  override protected def atStartup(): Unit = self.atStartup()
-
   /**
    * Lookup the Address for the role.
    *

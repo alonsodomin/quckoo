@@ -57,13 +57,13 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
   implicit val materializer = ActorMaterializer()
   val journal = new QuckooTestJournal
 
+  Persistence(system)
+
   "A Quckoo cluster" must {
     val Success(settings) = ClusterSettings(system.settings.config)
 
     "send connect commands from one node to the other one" in {
       awaitClusterUp(registry, scheduler)
-
-      Persistence(system)
 
       runOn(registry) {
         val bootPromise = Promise[Unit]
