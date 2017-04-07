@@ -37,7 +37,8 @@ object QuckooApp extends AutoPlugin {
     aspectjVersion in Aspectj := "1.8.10",
     sourceLevel in Aspectj := "1.8",
     javaOptions in reStart ++= (AspectjKeys.weaverOptions in Aspectj).value ++ (sigarLoaderOptions in Test).value,
-    javaOptions in Test ++= (sigarLoaderOptions in Test).value
+    javaOptions in Test ++= (sigarLoaderOptions in Test).value,
+    parallelExecution in Test := false
   )
 
   override def projectSettings: Seq[Def.Setting[_]] = defaultServerSettings

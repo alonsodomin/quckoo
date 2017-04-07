@@ -19,7 +19,7 @@ object QuckooMultiJvmTesting extends AutoPlugin {
       "com.typesafe.akka" %% "akka-multi-node-testkit"  % Dependencies.version.akka.main,
       "org.scoverage"     %% "scalac-scoverage-runtime" % "1.3.0"
     ).map(_ % MultiJvm),
-    parallelExecution in Test := false,
+    parallelExecution in MultiJvm := false,
     jvmOptions in MultiJvm := (sigarLoaderOptions in Test).value :+ "-Xmx512M"
   ) ++ HeaderPlugin.settingsFor(MultiJvm)
 

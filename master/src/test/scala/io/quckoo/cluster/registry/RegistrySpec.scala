@@ -16,6 +16,7 @@
 
 package io.quckoo.cluster.registry
 
+import akka.persistence.Persistence
 import akka.testkit.{ImplicitSender, TestActorRef, TestActors, TestProbe}
 
 import io.quckoo._
@@ -42,6 +43,7 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
   import RegistrySpec._
 
   val journal = new QuckooTestJournal
+  Persistence(system)
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
@@ -59,7 +61,7 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
     val registry = TestActorRef(Registry.props(settings, journal))
 
     "complete warm up process" in {
-      expectMsg(Registry.Ready)
+      expectMsg(5 seconds, Registry.Ready)
     }
 
     "return JobNotFound for non existent jobs" in {
