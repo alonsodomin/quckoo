@@ -32,12 +32,12 @@ object QuckooApp extends AutoPlugin {
     aspectjWeaver := findAspectjWeaver(update.value),
     sigarLoader := findSigarLoader(update.value),
     sigarLoaderOptions := Seq(s"-javaagent:${sigarLoader.value.getAbsolutePath}"),
+    sigarLoaderOptions in Test := sigarLoaderOptions.value :+ s"-Dkamon.sigar.folder=${baseDirectory.value / "target" / "native"}",
     baseDirectory in reStart := baseDirectory.value / "target",
     aspectjVersion in Aspectj := "1.8.10",
     sourceLevel in Aspectj := "1.8",
-    javaOptions in reStart ++= (AspectjKeys.weaverOptions in Aspectj).value ++ sigarLoaderOptions.value,
-    javaOptions in Test ++= sigarLoaderOptions.value :+
-      s"-Dkamon.sigar.folder=${baseDirectory.value / "target" / "native"}"
+    javaOptions in reStart ++= (AspectjKeys.weaverOptions in Aspectj).value ++ (sigarLoaderOptions in Test).value,
+    javaOptions in Test ++= (sigarLoaderOptions in Test).value
   )
 
   override def projectSettings: Seq[Def.Setting[_]] = defaultServerSettings

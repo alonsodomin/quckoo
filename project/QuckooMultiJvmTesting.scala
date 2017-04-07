@@ -10,7 +10,7 @@ import QuckooAppKeys._
 
 object QuckooMultiJvmTesting extends AutoPlugin {
 
-  override def requires: Plugins = QuckooServerPackager && SbtMultiJvm && HeaderPlugin
+  override def requires: Plugins = QuckooApp && SbtMultiJvm && HeaderPlugin
 
   override def projectConfigurations: Seq[Configuration] = Seq(MultiJvm)
 
@@ -20,7 +20,7 @@ object QuckooMultiJvmTesting extends AutoPlugin {
       "org.scoverage"     %% "scalac-scoverage-runtime" % "1.3.0"
     ).map(_ % MultiJvm),
     parallelExecution in Test := false,
-    jvmOptions in MultiJvm := Seq("-Xmx512M")
+    jvmOptions in MultiJvm := (sigarLoaderOptions in Test).value :+ "-Xmx512M"
   ) ++ HeaderPlugin.settingsFor(MultiJvm)
 
 }
