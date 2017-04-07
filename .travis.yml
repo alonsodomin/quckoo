@@ -15,6 +15,7 @@ cache:
     - $HOME/.sbt/boot/scala*
     - $HOME/.sbt/launchers
     - $HOME/.ivy2/cache
+    - $HOME/.nvm
 
 env:
   - TRAVIS_NODE_VERSION="4"
@@ -25,10 +26,11 @@ before_install:
   - npm install -g phantomjs-prebuilt
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean coverage validate
+  #- sbt ++$TRAVIS_SCALA_VERSION clean coverage validate
+  - scripts/travis-build.sh
 
 after_success:
-  - sbt coverageReport && sbt coverageAggregate
+  #- sbt coverageReport && sbt coverageAggregate
   - bash <(curl -s https://codecov.io/bash)
 
 branches:
