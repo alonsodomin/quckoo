@@ -6,6 +6,6 @@ test_cmd="$sbt_cmd clean coverage test"
 validate_cmd="$sbt_cmd coverage master/multi-jvm:test"
 coverage_cmd="$sbt_cmd coverageReport && $sbt_cmd coverageAggregate"
 
-build_cmd="$test_cmd && $validate_cmd && $coverage_cmd"
+build_cmd="$test_cmd && $coverage_cmd"
 
 eval $build_cmd
