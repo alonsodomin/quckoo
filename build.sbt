@@ -1,6 +1,9 @@
-import com.typesafe.sbt.pgp.PgpKeys
-import sbt.Keys._
 import sbt._
+import sbt.Keys._
+
+import com.typesafe.sbt.pgp.PgpKeys
+
+import QuckooAppKeys.sigarLoaderOptions
 
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
@@ -42,7 +45,7 @@ lazy val commonSettings = Seq(
   ) ++ Licensing.settings
 
 lazy val commonJvmSettings = Seq(
-  fork in Test := false
+  fork in Test := true
 )
 
 lazy val commonJsSettings = Seq(
@@ -162,10 +165,10 @@ lazy val quckoo = (project in file("."))
     apiJVM,
     clientJS,
     clientJVM,
+    console,
     shared,
     master,
     worker,
-    console,
     examples,
     utilJS,
     utilJVM,

@@ -35,7 +35,9 @@ object QuckooApp extends AutoPlugin {
     baseDirectory in reStart := baseDirectory.value / "target",
     aspectjVersion in Aspectj := "1.8.10",
     sourceLevel in Aspectj := "1.8",
-    javaOptions in reStart ++= (AspectjKeys.weaverOptions in Aspectj).value ++ sigarLoaderOptions.value
+    javaOptions in reStart ++= (AspectjKeys.weaverOptions in Aspectj).value ++ sigarLoaderOptions.value,
+    javaOptions in Test ++= sigarLoaderOptions.value :+
+      s"-Dkamon.sigar.folder=${baseDirectory.value / "target" / "native"}"
   )
 
   override def projectSettings: Seq[Def.Setting[_]] = defaultServerSettings

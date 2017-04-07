@@ -20,11 +20,7 @@ object QuckooMultiJvmTesting extends AutoPlugin {
       "org.scoverage"     %% "scalac-scoverage-runtime" % "1.3.0"
     ).map(_ % MultiJvm),
     parallelExecution in Test := false,
-    jvmOptions in MultiJvm := Seq(
-      "-Xmx512M",
-      s"-javaagent:${sigarLoader.value.getAbsolutePath}",
-      s"-Dkamon.sigar.folder=${baseDirectory.value / "target" / "native"}"
-    )
+    jvmOptions in MultiJvm := Seq("-Xmx512M")
   ) ++ HeaderPlugin.settingsFor(MultiJvm)
 
 }
