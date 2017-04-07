@@ -17,6 +17,7 @@ import io.quckoo.testkit.ImplicitClock
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Promise}
+import scala.util.Success
 
 /**
  * Created by domingueza on 26/08/15.
@@ -56,13 +57,13 @@ abstract class QuckooMultiNodeCluster extends MultiNodeSpec(QuckooNodesConfig) w
   implicit val materializer = ActorMaterializer()
   val journal = new QuckooTestJournal
 
+  Persistence(system)
+
   "A Quckoo cluster" must {
-    val Right(settings) = ClusterSettings(system.settings.config)
+    val Success(settings) = ClusterSettings(system.settings.config)
 
     "send connect commands from one node to the other one" in {
       awaitClusterUp(registry, scheduler)
-
-      Persistence(system)
 
       runOn(registry) {
         val bootPromise = Promise[Unit]

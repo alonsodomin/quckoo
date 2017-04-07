@@ -18,7 +18,6 @@ package io.quckoo.cluster.core
 
 import java.util.UUID
 
-import akka.actor.PoisonPill
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.testkit.{TestActorRef, TestProbe}
 
@@ -27,6 +26,8 @@ import io.quckoo.api.TopicTag
 import io.quckoo.protocol.cluster.MasterRemoved
 import io.quckoo.testkit.QuckooActorClusterSuite
 
+import scala.concurrent.duration._
+
 /**
   * Created by domingueza on 28/02/2017.
   */
@@ -34,14 +35,14 @@ class PubSubTopicConsumerSpec extends QuckooActorClusterSuite("PubSubTopicConsum
 
   val mediator = DistributedPubSub(system).mediator
 
+  val topicTag = TopicTag.Master
+  val consumer = TestActorRef[PubSubTopicConsumer](
+    PubSubTopicConsumer.props(topicTag).withDispatcher("akka.actor.default-dispatcher")
+  )
+
   "PubSubTopicConsumer" should {
     "emit events to its sender" in {
-      val topicTag = TopicTag.Master
-
       val receiverProbe = TestProbe("receiver")
-      val consumer = TestActorRef[PubSubTopicConsumer](
-        PubSubTopicConsumer.props(topicTag).withDispatcher("akka.actor.default-dispatcher")
-      )
 
       val expectedMsg = MasterRemoved(NodeId(UUID.randomUUID()))
 
@@ -49,11 +50,7 @@ class PubSubTopicConsumerSpec extends QuckooActorClusterSuite("PubSubTopicConsum
       receiverProbe.send(consumer, TopicConsumer.Consume)
 
       mediator ! DistributedPubSubMediator.Publish(topicTag.name, expectedMsg)
-      receiverProbe.expectMsg(expectedMsg)
-
-      watch(consumer)
-      consumer ! PoisonPill
-      expectTerminated(consumer)
+      receiverProbe.expectMsg(5 seconds, expectedMsg)
     }
   }
 

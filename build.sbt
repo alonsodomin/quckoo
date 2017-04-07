@@ -1,6 +1,9 @@
-import com.typesafe.sbt.pgp.PgpKeys
-import sbt.Keys._
 import sbt._
+import sbt.Keys._
+
+import com.typesafe.sbt.pgp.PgpKeys
+
+import QuckooAppKeys.sigarLoaderOptions
 
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
@@ -38,12 +41,11 @@ lazy val commonSettings = Seq(
       Resolver.bintrayRepo("dnvriend", "maven"),
       Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
     ),
-    parallelExecution := false,
     botBuild := scala.sys.env.get("TRAVIS").isDefined
   ) ++ Licensing.settings
 
 lazy val commonJvmSettings = Seq(
-  fork in Test := false
+  fork in Test := true
 )
 
 lazy val commonJsSettings = Seq(
@@ -63,6 +65,12 @@ lazy val commonJsSettings = Seq(
 lazy val scoverageSettings = Seq(
   coverageHighlighting := true,
   coverageExcludedPackages := "io\\.quckoo\\.console\\.html\\..*"
+)
+
+lazy val instrumentationSettings = aspectjSettings ++ Seq(
+  AspectjKeys.aspectjVersion in Aspectj := "1.8.10",
+  AspectjKeys.sourceLevel in Aspectj := "1.8",
+  javaOptions in reStart ++= (AspectjKeys.weaverOptions in Aspectj).value
 )
 
 lazy val noPublishSettings = Seq(
@@ -157,10 +165,10 @@ lazy val quckoo = (project in file("."))
     apiJVM,
     clientJS,
     clientJVM,
+    console,
     shared,
     master,
     worker,
-    console,
     examples,
     utilJS,
     utilJVM,
@@ -255,7 +263,7 @@ lazy val shared = (project in file("shared"))
   .settings(commonSettings)
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
-  .settings(publishSettings: _*)
+  .settings(publishSettings)
   .settings(Dependencies.clusterShared)
   .settings(
     moduleName := "quckoo-shared"
@@ -265,44 +273,32 @@ lazy val shared = (project in file("shared"))
 lazy val master = (project in file("master"))
   .enablePlugins(
     AutomateHeaderPlugin,
-    SbtSassify,
-    SbtTwirl,
-    JavaServerAppPackaging,
-    DockerPlugin
+    QuckooWebServer,
+    QuckooServerPackager,
+    QuckooMultiJvmTesting
   )
-  .configs(MultiJvm)
   .settings(commonSettings)
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
   .settings(publishSettings)
-  .settings(Revolver.settings)
   .settings(Dependencies.clusterMaster)
-  .settings(MultiNode.settings)
-  .settings(Packaging.masterSettings)
   .settings(
     moduleName := "quckoo-master",
     scalaJSProjects := Seq(console),
-    baseDirectory in reStart := file("master/target"),
-    compile in Compile := ((compile in Compile) dependsOn scalaJSPipeline).value,
-    WebKeys.packagePrefix in Assets := "public/",
-    managedClasspath in Runtime += (packageBin in Assets).value,
-    pipelineStages in Assets := Seq(scalaJSPipeline),
-    devCommands in scalaJSPipeline ++= Seq("test", "testQuick", "testOnly", "docker:publishLocal")
+    dockerExposedPorts := Seq(2551, 8095)
   )
   .dependsOn(shared, testSupportJVM % Test)
 
 lazy val worker = (project in file("worker"))
-  .enablePlugins(AutomateHeaderPlugin, JavaServerAppPackaging, DockerPlugin)
-  .settings(commonSettings: _*)
+  .enablePlugins(AutomateHeaderPlugin, QuckooApp, QuckooServerPackager)
+  .settings(commonSettings)
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
-  .settings(publishSettings: _*)
-  .settings(Revolver.settings: _*)
+  .settings(publishSettings)
   .settings(Dependencies.clusterWorker)
-  .settings(Packaging.workerSettings: _*)
   .settings(
     moduleName := "quckoo-worker",
-    baseDirectory in reStart := file("worker/target")
+    dockerExposedPorts := Seq(5001, 9010)
   )
   .dependsOn(shared, testSupportJVM % Test)
 
@@ -313,7 +309,7 @@ lazy val util = (crossProject in file("util"))
   .settings(commonSettings)
   .jsSettings(commonJsSettings)
   .jsSettings(Dependencies.utilJS)
-  .jvmSettings(commonJvmSettings: _*)
+  .jvmSettings(commonJvmSettings)
   .settings(moduleName := "quckoo-util")
   .dependsOn(testSupport % Test)
 
@@ -358,13 +354,12 @@ lazy val exampleJobs = (project in file("examples/jobs"))
   .dependsOn(coreJVM)
 
 lazy val exampleProducers = (project in file("examples/producers"))
-  .enablePlugins(AutomateHeaderPlugin, JavaAppPackaging, DockerPlugin)
+  .enablePlugins(AutomateHeaderPlugin, QuckooAppPackager)
   .settings(commonSettings)
   .settings(commonJvmSettings)
   .settings(publishSettings)
   .settings(Revolver.settings)
   .settings(Dependencies.exampleProducers)
-  .settings(Packaging.exampleProducersSettings)
   .settings(
     name := "example-producers",
     moduleName := "quckoo-example-producers"

@@ -29,6 +29,13 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock
     command: consul://consul_agent:8500
 
+  graphite:
+    image: kamon/grafana_graphite
+    hostname: graphite
+    ports:
+      - 8080:80
+      - 8081:81
+
   cassandra:
     image: cassandra
     hostname: cassandra
@@ -46,6 +53,7 @@ services:
     depends_on:
       - "consul_server"
       - "consul_agent"
+      - "graphite"
     links:
       - cassandra
     volumes:
@@ -61,6 +69,7 @@ services:
     depends_on:
       - "consul_server"
       - "consul_agent"
+      - "graphite"
     links:
       - cassandra
     volumes:
@@ -72,6 +81,7 @@ services:
     depends_on:
       - "master1"
       - "master2"
+      - "graphite"
     ports:
       - "5001:5001"
     volumes:
@@ -83,6 +93,7 @@ services:
     depends_on:
       - "master1"
       - "master2"
+      - "graphite"
     ports:
       - "5002:5001"
     volumes:

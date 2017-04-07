@@ -36,6 +36,8 @@ import io.quckoo.cluster.protocol._
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 
+import kamon.trace.Tracer
+
 import org.threeten.bp.Clock
 
 import scala.concurrent._
@@ -130,8 +132,10 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
       context become warmingUp
 
     case cmd: ScheduleJob =>
-      val handler = context.actorOf(jobFetcherProps(cmd.jobId, sender(), cmd))
-      registry.tell(GetJob(cmd.jobId), handler)
+      Tracer.withNewContext(s"schedule-${cmd.jobId}") {
+        val handler = context.actorOf(jobFetcherProps(cmd.jobId, sender(), cmd))
+        registry.tell(GetJob(cmd.jobId), handler)
+      }
 
     case cmd @ CreateExecutionDriver(_, config, _) =>
       val planId = PlanId(UUID.randomUUID())
@@ -141,12 +145,16 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
 
     case cancel: CancelExecutionPlan =>
       log.debug("Starting execution driver termination process for plan '{}'.", cancel.planId)
-      val props = terminatorProps(cancel, sender())
-      context.actorOf(props, s"execution-driver-terminator-${cancel.planId}")
+      Tracer.withNewContext(s"cancel-${cancel.planId}") {
+        val props = terminatorProps(cancel, sender())
+        context.actorOf(props, s"execution-driver-terminator-${cancel.planId}")
+      }
 
     case get @ GetExecutionPlan(planId) =>
       if (planIds.contains(planId)) {
-        shardRegion forward get
+        Tracer.withNewContext(s"get-plan-$planId") {
+          shardRegion forward get
+        }
       } else {
         sender() ! ExecutionPlanNotFound(planId)
       }
@@ -175,7 +183,9 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
       Source(executions).runWith(Sink.actorRef(sender(), Status.Success(GetTaskExecutions)))
 
     case msg: WorkerMessage =>
-      taskQueue forward msg
+      Tracer.withNewContext(s"worker-${msg.workerId}") {
+        taskQueue forward msg
+      }
 
     case event: SchedulerEvent =>
       handleEvent(event)

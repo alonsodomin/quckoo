@@ -26,6 +26,11 @@ import better.files._
 import io.quckoo.{ExceptionThrown, ShellScriptPackage, TaskExitCodeFault, TaskId}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 
+import scala.concurrent.Future
+
+import scalaz._
+import Scalaz._
+
 object ShellTaskExecutor {
 
   def props(workerContext: WorkerContext, taskId: TaskId, shellPackage: ShellScriptPackage): Props =
@@ -56,14 +61,35 @@ class ShellTaskExecutor private (
       } pipeTo sender()
   }
 
-  private [this] def withRunner[R](f: ProcessRunner => R): R = {
-    File.usingTemporaryFile() { file =>
-      file.append(shellPackage.content)
-      file.addPermission(PosixFilePermission.OWNER_EXECUTE)
+  private [this] def withRunner[R](f: ProcessRunner => Future[R]): Future[R] = {
+    import context.dispatcher
 
-      val runner = new ProcessRunner(file.path.toString)
-      f(runner)
+    def generateScript = {
+      Future {
+        val tempFile = File.newTemporaryFile()
+        tempFile.append(shellPackage.content)
+        tempFile.addPermission(PosixFilePermission.OWNER_EXECUTE)
+        tempFile
+      }
     }
+
+    def runIt(file: File): Future[R] = {
+      def runScript: Future[R] = {
+        log.debug("Running file: {}", file)
+        val runner = new ProcessRunner(file.path.toString)
+        f(runner)
+      }
+
+      def deleteScript: Future[Unit] = Future {
+        log.debug("Deleting script")
+        file.delete(true)
+        ()
+      }
+
+      runScript.flatMap(r => deleteScript.map(_ => r))
+    }
+
+    generateScript >>= runIt
   }
 
 }

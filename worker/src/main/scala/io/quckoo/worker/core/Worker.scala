@@ -25,6 +25,9 @@ import akka.cluster.client.ClusterClient.SendToAll
 import io.quckoo.{ExceptionThrown, NodeId, Task, TaskId}
 import io.quckoo.cluster.protocol._
 
+import kamon.Kamon
+import kamon.metric.instrument.Counter
+
 import scala.concurrent.duration._
 
 /**
@@ -65,19 +68,24 @@ class Worker private (
 
   val workerId = NodeId(UUID.randomUUID())
 
-  val registerTask = context.system.scheduler.schedule(
+  private[this] val registerTask = context.system.scheduler.schedule(
     0 seconds,
     registerInterval,
     clusterClient,
     SendToAll(SchedulerPath, RegisterWorker(workerId))
   )
 
-  val workerContext = new WorkerContext {
+  private[this] val workerContext = new WorkerContext {
     val resolver: ActorRef = context.watch(context.actorOf(resolverProps, "resolver"))
   }
   private[this] var executor: Option[ActorRef] = None
 
-  private var currentTaskId: Option[TaskId] = None
+  private[this] var currentTaskId: Option[TaskId] = None
+
+  private[this] val successfulTasksCounter: Counter =
+    Kamon.metrics.counter("successful-tasks")
+  private[this] val failedTasksCounter: Counter =
+    Kamon.metrics.counter("failed-tasks")
 
   def taskId: TaskId = currentTaskId match {
     case Some(id) => id
@@ -96,9 +104,11 @@ class Worker private (
     case task: Task =>
       log.info("Received task for execution {}", task.id)
       currentTaskId = Some(task.id)
-      executor = Some(taskExecutorProvider.executorFor(workerContext, task))
-        .map(context.watch)
-      executor.foreach(_ ! TaskExecutor.Run)
+      //Tracer.withNewContext(s"task-${task.id}") {
+        executor = Some(taskExecutorProvider.executorFor(workerContext, task))
+          .map(context.watch)
+        executor.foreach(_ ! TaskExecutor.Run)
+      //}
       context.become(working(task))
   }
 
@@ -107,12 +117,14 @@ class Worker private (
       log.info("Task execution has completed. Result {}.", result)
       sendToMaster(TaskDone(workerId, task.id, result))
       stopExecutor()
+      successfulTasksCounter.increment()
       context.setReceiveTimeout(queueAckTimeout)
       context.become(waitForTaskDoneAck(result))
 
     case TaskExecutor.Failed(reason) =>
       sendToMaster(TaskFailed(workerId, task.id, reason))
       stopExecutor()
+      failedTasksCounter.increment()
       context.setReceiveTimeout(Duration.Undefined)
       context.become(idle)
 

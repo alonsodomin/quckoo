@@ -1,5 +1,8 @@
 language: scala
 
+dist: trusty
+sudo: required
+
 jdk:
   - oraclejdk8
 
@@ -8,22 +11,24 @@ scala:
 
 cache:
   directories:
-    - $HOME/.m2
-    - $HOME/.sbt
-    - $HOME/.ivy2
+    - $HOME/.sbt/0.13/dependency
+    - $HOME/.sbt/boot/scala*
+    - $HOME/.sbt/launchers
+    - $HOME/.ivy2/cache
+    - $HOME/.nvm
+
+env:
+  - TRAVIS_NODE_VERSION="4"
 
 before_install:
   - gem install compass
-  - wget https://s3.amazonaws.com/travis-phantomjs/phantomjs-2.0.0-ubuntu-12.04.tar.bz2
-  - tar -xjf phantomjs-2.0.0-ubuntu-12.04.tar.bz2
-  - sudo rm -rf /usr/local/phantomjs/bin/phantomjs
-  - sudo mv phantomjs /usr/local/phantomjs/bin/phantomjs
+  - nvm install node
+  - npm install -g phantomjs-prebuilt
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean coverage validate
+  - scripts/travis-build.sh
 
 after_success:
-  - sbt coverageReport && sbt coverageAggregate
   - bash <(curl -s https://codecov.io/bash)
 
 branches:

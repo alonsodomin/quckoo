@@ -19,7 +19,9 @@ package io.quckoo.cluster.protocol
 import io.quckoo.{Fault, NodeId, TaskId}
 
 // Messages from workers
-sealed trait WorkerMessage
+sealed trait WorkerMessage {
+  def workerId: NodeId
+}
 final case class RegisterWorker(workerId: NodeId)                           extends WorkerMessage
 final case class RemoveWorker(workerId: NodeId)                             extends WorkerMessage
 final case class RequestTask(workerId: NodeId)                              extends WorkerMessage
