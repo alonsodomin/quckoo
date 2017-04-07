@@ -58,7 +58,7 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
   "The registry" should {
     val resolverProbe = TestProbe("resolver1")
     val settings = RegistrySettings(TestActors.forwardActorProps(resolverProbe.ref))
-    val registry = TestActorRef(Registry.props(settings, journal))
+    val registry = TestActorRef(Registry.props(settings, journal).withDispatcher("akka.actor.default-dispatcher"))
 
     "complete warm up process" in {
       expectMsg(5 seconds, Registry.Ready)
