@@ -10,7 +10,7 @@ object Dependencies {
     // Logging -------
 
     val slogging = "0.5.2"
-    val log4j    = "2.8.1"
+    val log4j    = "2.8.2"
 
     // Testing --------
 
@@ -38,7 +38,7 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.24"
+      val cassandra = "0.25"
       val inmemory  = "2.4.17.3"
     }
 
@@ -70,7 +70,7 @@ object Dependencies {
     val monocle     = "1.4.0"
     val scalaz      = "7.2.10"
     val monix       = "2.2.3"
-    val cron4s      = "0.3.1"
+    val cron4s      = "0.3.2"
     val enumeratum  = "1.5.10"
     val pureconfig  = "0.7.0"
     val betterfiles = "3.0.0"
@@ -181,7 +181,7 @@ object Dependencies {
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
 
-      "com.github.alonsodomin.cron4s" %%% "cron4s-core" % version.cron4s
+      "com.github.alonsodomin.cron4s" %%% "cron4s" % version.cron4s
     )
   }
 
