@@ -16,9 +16,9 @@
 
 package io.quckoo
 
-import io.quckoo.validation.Violation
+import cats.data.NonEmptyList
 
-import scalaz.NonEmptyList
+import io.quckoo.validation.Violation
 
 /**
   * Created by alonsodomin on 28/12/2015.

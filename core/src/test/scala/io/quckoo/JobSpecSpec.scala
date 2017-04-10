@@ -16,12 +16,11 @@
 
 package io.quckoo
 
+import cats.implicits._
+
 import io.quckoo.validation._
 
 import org.scalatest.{FlatSpec, Matchers}
-
-import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 24/01/2016.
@@ -39,7 +38,7 @@ class JobSpecSpec extends FlatSpec with Matchers {
       )
 
     val jobSpec = JobSpec("", None, JobPackage.jar(ArtifactId("", "", ""), ""))
-    JobSpec.valid.run(jobSpec) shouldBe expectedError.failure[JobSpec]
+    JobSpec.valid.run(jobSpec) shouldBe expectedError.invalid[JobSpec]
   }
 
 }

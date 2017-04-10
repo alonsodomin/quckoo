@@ -16,11 +16,11 @@
 
 package io.quckoo
 
+import cats._
+
 import io.quckoo.validation._
 
 import monocle.macros.Lenses
-
-import scalaz._
 
 /**
   * Created by aalonsodominguez on 15/07/15.
@@ -40,11 +40,11 @@ object ArtifactId {
     caseClass3(validOrganization, validName, validVersion)(ArtifactId.unapply, ArtifactId.apply)
   }
 
-  implicit val artifactIdShow: Show[ArtifactId] = Show.shows { artifactId =>
+  implicit val artifactIdShow: Show[ArtifactId] = Show.show { artifactId =>
     s"${artifactId.organization}$GroupSeparator${artifactId.name}$VersionSeparator${artifactId.version}"
   }
 
-  implicit val artifactIdEq: Equal[ArtifactId] = Equal.equalA[ArtifactId]
+  implicit val artifactIdEq: Eq[ArtifactId] = Eq.fromUniversalEquals[ArtifactId]
 
 }
 

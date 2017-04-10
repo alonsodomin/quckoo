@@ -16,8 +16,7 @@
 
 package io.quckoo.validation
 
-import scalaz._
-import Scalaz._
+import cats.{Applicative, Id}
 
 import Violation.Undefined
 

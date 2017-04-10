@@ -16,31 +16,28 @@
 
 package io.quckoo.serialization.json
 
+import cats.implicits._
+
 import cron4s._
 import cron4s.expr._
 
-import upickle.Js
-import upickle.default.{Reader => UReader, Writer => UWriter}
-
-import scalaz._
-import Scalaz._
+import io.circe.{Encoder, Decoder, DecodingFailure}
 
 /**
   * Created by alonsodomin on 03/09/2016.
   */
 trait Cron4s {
 
-  implicit def cronExprW: UWriter[CronExpr] = UWriter[CronExpr] { expr =>
-    Js.Str(expr.toString)
-  }
+  implicit val cronExprEncoder: Encoder[CronExpr] =
+    Encoder[String].contramap(_.toString)
 
-  implicit def cronExprR: UReader[CronExpr] = UReader[CronExpr] {
-    def extractExpr: PartialFunction[Js.Value, String] = {
-      case Js.Str(expr) => expr
+  implicit val cronExprDecoder: Decoder[CronExpr] = Decoder.instance { c =>
+    c.as[String] match {
+      case Right(expr) => Cron(expr).leftMap(_ => DecodingFailure("Cron", c.history))
+      case l @ Left(_) => l.asInstanceOf[Decoder.Result[CronExpr]]
     }
-    def parseExpr(input: String): Option[CronExpr] = Cron(input).disjunction.toOption
-
-    Function.unlift(extractExpr.lift.andThen(_.flatMap(parseExpr)))
   }
 
 }
+
+object cron extends Cron4s

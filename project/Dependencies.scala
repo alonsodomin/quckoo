@@ -1,7 +1,7 @@
-import Dependencies.libs.Log4j
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import sbt._
 import Keys._
+
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object Dependencies {
 
@@ -65,15 +65,18 @@ object Dependencies {
     // Other utils ---
 
     val arm         = "2.0"
-    val ivy         = "2.4.0"
-    val scopt       = "3.5.0"
-    val monocle     = "1.4.0"
-    val scalaz      = "7.2.10"
-    val monix       = "2.2.3"
+    val betterfiles = "3.0.0"
+    val cats        = "0.9.0"
+    val circe       = "0.7.0"
     val cron4s      = "0.3.2"
     val enumeratum  = "1.5.10"
+    val ivy         = "2.4.0"
+    val monix       = "2.2.3"
+    val monocle     = "1.4.0"
     val pureconfig  = "0.7.0"
-    val betterfiles = "3.0.0"
+    val scalaz      = "7.2.10"
+    val scopt       = "3.5.0"
+    val shims       = "1.0-b0e5152"
     val xml         = "1.0.6"
 
     // JavaScript Libraries
@@ -107,6 +110,7 @@ object Dependencies {
       object http {
         val main    = "com.typesafe.akka" %% "akka-http"         % version.akka.http.main
         val testkit = "com.typesafe.akka" %% "akka-http-testkit" % version.akka.http.main
+        val circe   = "de.heikoseeberger" %% "akka-http-circe"   % version.akka.http.json
         val upickle = "de.heikoseeberger" %% "akka-http-upickle" % version.akka.http.json
         val sse     = "de.heikoseeberger" %% "akka-sse"          % version.akka.http.sse
       }
@@ -172,10 +176,14 @@ object Dependencies {
 
   lazy val core = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
+      "org.typelevel"     %%% "cats"               % version.cats,
+      "io.circe"          %%% "circe-parser"       % version.circe,
+      "io.circe"          %%% "circe-generic"      % version.circe,
+      "io.circe"          %%% "circe-optics"       % version.circe,
       "com.lihaoyi"       %%% "upickle"            % version.upickle,
       "com.beachape"      %%% "enumeratum"         % version.enumeratum,
-      "com.beachape"      %%% "enumeratum-upickle" % version.enumeratum,
-      "org.scalaz"        %%% "scalaz-core"        % version.scalaz,
+      "com.beachape"      %%% "enumeratum-circe"   % version.enumeratum,
+      //"com.codecommit"    %%% "shims-core"         % version.shims,
       "io.github.cquiroz" %%% "scala-java-time"    % version.scalaTime,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
@@ -183,6 +191,14 @@ object Dependencies {
 
       "com.github.alonsodomin.cron4s" %%% "cron4s" % version.cron4s
     )
+  }
+
+  lazy val coreJS = Def.settings {
+    libraryDependencies += "io.circe" %%% "circe-scalajs" % version.circe
+  }
+
+  lazy val coreJVM = Def.settings {
+    libraryDependencies += "io.circe" %% "circe-java8" % version.circe
   }
 
   // Utilities module ===========================
@@ -320,7 +336,7 @@ object Dependencies {
   lazy val clusterMaster = Def.settings {
     import libs._
     libraryDependencies ++= Seq(
-      Akka.sharding, Akka.http.main, Akka.http.upickle, Akka.http.sse,
+      Akka.sharding, Akka.http.main, Akka.http.upickle, Akka.http.circe, Akka.http.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
       Akka.persistence.query, Akka.persistence.memory, Akka.constructr,
       Kamon.http, scopt, authenticatJwt,
@@ -342,7 +358,7 @@ object Dependencies {
       "io.github.cquiroz" %%% "scala-java-time"           % version.scalaTime,
       "org.scalatest"     %%% "scalatest"                 % version.scalaTest,
       "org.scalacheck"    %%% "scalacheck"                % version.scalaCheck,
-      "org.scalaz"        %%% "scalaz-scalacheck-binding" % version.scalaz,
+      "org.typelevel"     %%% "cats-laws"                 % version.cats,
       "org.typelevel"     %%% "discipline"                % version.discipline,
       "biz.enef"          %%% "slogging"                  % version.slogging
     )

@@ -16,11 +16,11 @@
 
 package io.quckoo.validation
 
-import upickle.Js
-import upickle.default.{Reader => UReader, Writer => UWriter, _}
+import cats._
+import cats.implicits._
 
-import scalaz._
-import Scalaz._
+import io.circe.{Decoder, Encoder, Json}
+import io.circe.generic.semiauto._
 
 sealed trait Violation
 
@@ -38,33 +38,33 @@ object Violation {
 
   case class Reject(value: String) extends Violation
 
-  val violationConjEquality: Equal[And] = Equal.equal { (a, b) =>
+  val violationConjEquality: Eq[And] = Eq.instance { (a, b) =>
     (a.left === b.left && a.right === b.right) || (a.left === b.right && a.right === b.left)
   }
-  val violationDisjEquality: Equal[Or] = Equal.equal { (a, b) =>
+  val violationDisjEquality: Eq[Or] = Eq.instance { (a, b) =>
     (a.left === b.left && a.right === b.right) || (a.left === b.right && a.right === b.left)
   }
 
-  implicit val violationEq: Equal[Violation] = Equal.equal {
+  implicit val violationEq: Eq[Violation] = Eq.instance {
     case (left @ And(And(aLeft, bLeft), cLeft), right @ And(aRight, And(bRight, cRight))) =>
-      violationConjEquality.equal(left, And(And(aRight, bRight), cRight)) &&
-      violationConjEquality.equal(And(aLeft, And(bLeft, cLeft)), right)
+      violationConjEquality.eqv(left, And(And(aRight, bRight), cRight)) &&
+      violationConjEquality.eqv(And(aLeft, And(bLeft, cLeft)), right)
 
     case (left @ Or(Or(aLeft, bLeft), cLeft), right @ Or(aRight, Or(bRight, cRight))) =>
-      violationDisjEquality.equal(left, Or(Or(aRight, bRight), cRight)) ||
-      violationDisjEquality.equal(Or(aLeft, Or(bLeft, cLeft)), right)
+      violationDisjEquality.eqv(left, Or(Or(aRight, bRight), cRight)) ||
+      violationDisjEquality.eqv(Or(aLeft, Or(bLeft, cLeft)), right)
 
     case (left @ And(_, _), right @ And(_, _)) =>
-      violationConjEquality.equal(left, right)
+      violationConjEquality.eqv(left, right)
     case (left @ Or(_, _), right @ Or(_, _)) =>
-      violationDisjEquality.equal(left, right)
+      violationDisjEquality.eqv(left, right)
 
     case (left, right) => left == right
   }
 
-  implicit def display: Show[Violation] = Show.shows {
-    case And(left, right) => s"${left.shows} and ${right.shows}"
-    case Or(left, right)  => s"${left.shows} or ${right.shows}"
+  implicit def violationShow: Show[Violation] = Show.show {
+    case And(left, right) => s"${left.show} and ${right.show}"
+    case Or(left, right)  => s"${left.show} or ${right.show}"
 
     case EqualTo(expected, actual)     => s"$actual != $expected"
     case GreaterThan(expected, actual) => s"$actual < $expected"
@@ -76,7 +76,16 @@ object Violation {
 
     case Reject(value) => s"not $value"
 
-    case p: PathViolation => p.shows
+    case p: PathViolation => p.show
+  }
+
+  implicit def violationEncoder: Encoder[Violation] = Encoder.instance {
+    case p: PathViolation => PathViolation.jsonEncoder.apply(p)
+    case v                => deriveEncoder[Violation].apply(v)
+  }
+
+  implicit def violationDecoder: Decoder[Violation] = Decoder.instance {
+    cursor => PathViolation.jsonDecoder.or(deriveDecoder[Violation]).apply(cursor)
   }
 
   implicit class ViolationSyntax(val self: Violation) extends AnyVal {
@@ -91,15 +100,13 @@ object Violation {
   }
 
   object conjunction {
-    implicit val violationConjSemigroup: Semigroup[Violation] = new Semigroup[Violation] {
-      def append(left: Violation, right: => Violation): Violation = left and right
-    }
+    implicit val violationConjSemigroup: Semigroup[Violation] =
+      (left: Violation, right: Violation) => left and right
   }
 
   object disjunction {
-    implicit val violationDisjSemigroup: Semigroup[Violation] = new Semigroup[Violation] {
-      def append(left: Violation, right: => Violation): Violation = left or right
-    }
+    implicit val violationDisjSemigroup: Semigroup[Violation] =
+      (left: Violation, right: Violation) => left or right
   }
 
 }
@@ -121,36 +128,22 @@ object PathViolation {
     case _ => PathViolation(path, violation)
   }
 
-  implicit val pathViolationShow: Show[PathViolation] = Show.shows { value =>
-    val violationsDesc = value.violation.shows
-    s"expected $violationsDesc at ${value.path.shows}"
+  implicit val pathViolationShow: Show[PathViolation] = Show.show { value =>
+    val violationsDesc = value.violation.show
+    s"expected $violationsDesc at ${value.path.show}"
   }
 
-  implicit def jsonWriter: UWriter[PathViolation] = UWriter[PathViolation] { pv =>
-    Js.Obj(
-      "path"      -> Path.pathJsonWriter.write(pv.path),
-      "violation" -> implicitly[UWriter[Violation]].write(pv.violation),
-      "$type"     -> Js.Str(classOf[PathViolation].getName)
+  implicit def jsonEncoder: Encoder[PathViolation] = Encoder.instance { pv =>
+    Json.obj(
+      "path"      -> Path.pathJsonEncoder.apply(pv.path),
+      "violation" -> Encoder[Violation].apply(pv.violation)
     )
   }
 
-  implicit def jsonReader: UReader[PathViolation] = UReader[PathViolation] {
-    val pathReader       = Kleisli(Path.pathJsonReader.read.lift)
-    val violationsReader = Kleisli(implicitly[UReader[Violation]].read.lift)
-
-    val prod = Kleisli[Option, (Js.Value, Js.Value), PathViolation] {
-      case (path, violation) =>
-        (pathReader.run(path) |@| violationsReader.run(violation))((p, v) => PathViolation(p, v))
+  implicit def jsonDecoder: Decoder[PathViolation] = Decoder.instance { cursor =>
+    (cursor.downField("path").as[Path] |@| cursor.downField("violation").as[Violation]).map { (path, violation) =>
+      PathViolation(path, violation)
     }
-
-    val extractFieldMap: PartialFunction[Js.Value, Map[String, Js.Value]] = {
-      case obj: Js.Obj => obj.value.toMap
-    }
-    val extractJsValues = Kleisli(extractFieldMap.lift).flatMapK { fields =>
-      (fields.get("path") |@| fields.get("violation"))(_ -> _)
-    }
-
-    Function.unlift(prod.compose(extractJsValues).run)
   }
 
 }

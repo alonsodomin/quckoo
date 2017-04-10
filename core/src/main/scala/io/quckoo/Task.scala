@@ -16,8 +16,8 @@
 
 package io.quckoo
 
-import scalaz._
-import Scalaz._
+import cats.Show
+import cats.syntax.contravariant._
 
 /**
   * Created by aalonsodominguez on 05/07/15.
@@ -30,6 +30,6 @@ final case class Task(
 
 object Task {
 
-  implicit val showTask: Show[Task] = Show.showA[JobPackage].contramap(_.jobPackage)
+  implicit val showTask: Show[Task] = Show[JobPackage].contramap(_.jobPackage)
 
 }

@@ -30,9 +30,10 @@ lazy val commonSettings = Seq(
       "-deprecation",
       "-Xlint",
       "-Xfuture",
+      "-Xfatal-warnings",
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen",
-      "-Xfatal-warnings"
+      "-Ypartial-unification"
     ),
     resolvers ++= Seq(
       Opts.resolver.mavenLocalFile,
@@ -180,12 +181,6 @@ lazy val quckoo = (project in file("."))
 
 lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
   .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
-  .settings(commonSettings: _*)
-  .settings(scoverageSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(Dependencies.core: _*)
-  .jsSettings(commonJsSettings: _*)
-  .jvmSettings(commonJvmSettings: _*)
   .settings(
     name := "core",
     moduleName := "quckoo-core",
@@ -193,6 +188,14 @@ lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
     buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
     buildInfoObject := "Info"
   )
+  .settings(commonSettings: _*)
+  .settings(scoverageSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Dependencies.core: _*)
+  .jsSettings(commonJsSettings: _*)
+  .jsSettings(Dependencies.coreJS: _*)
+  .jvmSettings(commonJvmSettings: _*)
+  .jvmSettings(Dependencies.coreJVM: _*)
   .dependsOn(util, testSupport % Test)
 
 lazy val coreJS = core.js

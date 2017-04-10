@@ -36,14 +36,6 @@ object JavaTimeJsonSpec extends Properties("JavaTimeJson") with JavaTimeGenerato
     checkEncoding(instant)
   }
 
-  property("ZoneId") = forAll { (zoneId: ZoneId) =>
-    checkEncoding(zoneId)
-  }
-
-  property("ZoneOffset") = forAll { (zoneOffset: ZoneOffset) =>
-    checkEncoding(zoneOffset)
-  }
-
   property("Duration") = forAll { (duration: Duration) =>
     checkEncoding(duration)
   }

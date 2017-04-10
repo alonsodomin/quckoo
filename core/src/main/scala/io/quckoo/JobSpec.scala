@@ -16,11 +16,11 @@
 
 package io.quckoo
 
+import cats.Show
+
 import io.quckoo.validation._
 
 import monocle.macros.Lenses
-
-import scalaz.Show
 
 /**
   * Created by aalonsodominguez on 10/07/15.
@@ -46,6 +46,6 @@ object JobSpec {
       any[Boolean])(JobSpec.unapply, JobSpec.apply)
   }
 
-  implicit val display: Show[JobSpec] = Show.showFromToString[JobSpec]
+  implicit val display: Show[JobSpec] = Show.fromToString[JobSpec]
 
 }

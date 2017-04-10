@@ -39,7 +39,7 @@ class DataBufferSpec extends FlatSpec with EitherValues with Matchers {
 
   "A DataBuffer (non empty)" should "deserialize to the original serialized object" in {
     val data = Some(10)
-    val returnedBackNForth = DataBuffer(data).flatMap(_.as[Option[Int]]).toEither
+    val returnedBackNForth = DataBuffer(data).flatMap(_.as[Option[Int]])
 
     returnedBackNForth.right.value shouldBe data
   }
@@ -67,7 +67,6 @@ class DataBufferSpec extends FlatSpec with EitherValues with Matchers {
       val result = Base64Codec.decode("foo".getBytes(charset))
         .flatMap(DataBuffer.fromBase64)
         .map(_.asString(charset))
-        .toEither
 
       result.right.value shouldBe "foo"
     }
@@ -79,7 +78,6 @@ class DataBufferSpec extends FlatSpec with EitherValues with Matchers {
       val result = DataBuffer.fromString("banana", charset)
         .toBase64
         .flatMap(Base64Codec.encode)
-        .toEither
 
       val expected = "banana".getBytes(charset)
       result.right.value shouldBe expected

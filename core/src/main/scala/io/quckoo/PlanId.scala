@@ -18,9 +18,8 @@ package io.quckoo
 
 import java.util.UUID
 
-import upickle.default.{Reader => UReader, Writer => UWriter, _}
-
-import scalaz.{Equal, Show}
+import cats.{Eq, Show}
+import io.circe.{Encoder, Decoder}
 
 /**
   * Created by alonsodomin on 27/02/2017.
@@ -34,19 +33,17 @@ object PlanId {
   @inline def apply(uuid: UUID): PlanId = new PlanId(uuid)
   @inline def apply(value: String): PlanId = new PlanId(UUID.fromString(value))
 
-  // Upickle encoders
+  // Circe encoding/decoding
 
-  implicit val jsonReader: UReader[PlanId] = UReader[PlanId] {
-    implicitly[UReader[String]].read andThen PlanId.apply
-  }
+  implicit val circeEncoder: Encoder[PlanId] =
+    Encoder[UUID].contramap(_.uuid)
 
-  implicit val jsonWriter: UWriter[PlanId] = UWriter[PlanId] { planId =>
-    implicitly[UWriter[String]].write(planId.uuid.toString)
-  }
+  implicit val circeDecoder: Decoder[PlanId] =
+    Decoder[UUID].map(apply)
 
   // Typeclass instances
 
-  implicit val planIdEq: Equal[PlanId] = Equal.equal((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
-  implicit val planIdShow: Show[PlanId] = Show.showFromToString
+  implicit val planIdEq: Eq[PlanId] = Eq.instance((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
+  implicit val planIdShow: Show[PlanId] = Show.fromToString
 
 }

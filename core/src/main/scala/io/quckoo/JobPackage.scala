@@ -16,14 +16,15 @@
 
 package io.quckoo
 
+import cats._
+import cats.data.Validated
+import cats.implicits._
+
 import io.quckoo.md5.MD5
 import io.quckoo.validation._
 
 import monocle.Prism
 import monocle.macros.{GenPrism, Lenses}
-
-import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 17/02/2017.
@@ -35,11 +36,11 @@ sealed trait JobPackage {
 object JobPackage {
 
   val valid: Validator[JobPackage] = {
-    (ShellScriptPackage.valid <*> JarJobPackage.valid).dimap(
+    (ShellScriptPackage.valid <*> JarJobPackage.valid).dimap[JobPackage, Validated[Violation, JobPackage]](
       {
-        case shell: ShellScriptPackage => shell.left[JarJobPackage]
-        case jar: JarJobPackage        => jar.right[ShellScriptPackage]
-      },
+        case shell: ShellScriptPackage => Left(shell)
+        case jar: JarJobPackage        => Right(jar)
+      })(
       _.map(_.fold(_.asInstanceOf[JobPackage], _.asInstanceOf[JobPackage]))
     )
   }
@@ -52,9 +53,9 @@ object JobPackage {
   val asJar: Prism[JobPackage, JarJobPackage] = GenPrism[JobPackage, JarJobPackage]
   val asShell: Prism[JobPackage, ShellScriptPackage] = GenPrism[JobPackage, ShellScriptPackage]
 
-  implicit val jobPackageShow: Show[JobPackage] = Show.shows {
-    case jar: JarJobPackage        => jar.shows
-    case shell: ShellScriptPackage => shell.shows
+  implicit val jobPackageShow: Show[JobPackage] = Show.show {
+    case jar: JarJobPackage        => jar.show
+    case shell: ShellScriptPackage => shell.show
   }
 
 }
@@ -65,7 +66,7 @@ object JobPackage {
 object ShellScriptPackage {
 
   implicit val shellScriptPackageShow: Show[ShellScriptPackage] =
-    Show.showFromToString
+    Show.fromToString
 
   val valid: Validator[ShellScriptPackage] = {
     import Validators._
@@ -87,8 +88,8 @@ object ShellScriptPackage {
 
 object JarJobPackage {
 
-  implicit val jobPackageShow: Show[JarJobPackage] = Show.shows { pckg =>
-    s"${pckg.jobClass} @ ${pckg.artifactId.shows}"
+  implicit val jobPackageShow: Show[JarJobPackage] = Show.show { pckg =>
+    s"${pckg.jobClass} @ ${pckg.artifactId.show}"
   }
 
   val valid: Validator[JarJobPackage] = {

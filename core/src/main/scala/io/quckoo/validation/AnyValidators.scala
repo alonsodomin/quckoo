@@ -16,8 +16,7 @@
 
 package io.quckoo.validation
 
-import scalaz._
-import Scalaz._
+import cats.{Applicative, Eq, Id, Show}
 
 /**
   * Created by alonsodomin on 23/10/2016.
@@ -31,18 +30,18 @@ trait AnyValidators {
   def memberOfK[F[_]: Applicative, A](set: Set[A])(implicit show: Show[A]): ValidatorK[F, A] =
     Validator[F, A](
       a => Applicative[F].pure(set.contains(a)),
-      a => Violation.MemberOf(set.map(show.shows), show.shows(a))
+      a => Violation.MemberOf(set.map(show.show), show.show(a))
     )
 
   def memberOf[A: Show](set: Set[A]): Validator[A] =
     memberOfK[Id, A](set)
 
-  def equalToK[F[_]: Applicative, A](value: A)(implicit eq: Equal[A],
+  def equalToK[F[_]: Applicative, A](value: A)(implicit eq: Eq[A],
                                                show: Show[A]): ValidatorK[F, A] =
     Validator(
-      a => Applicative[F].pure(eq.equal(value, a)),
-      a => Violation.EqualTo(show.shows(value), show.shows(a)))
+      a => Applicative[F].pure(eq.eqv(value, a)),
+      a => Violation.EqualTo(show.show(value), show.show(a)))
 
-  def equalTo[A: Equal: Show](value: A): Validator[A] = equalToK[Id, A](value)
+  def equalTo[A: Eq: Show](value: A): Validator[A] = equalToK[Id, A](value)
 
 }

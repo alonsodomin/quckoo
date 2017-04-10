@@ -16,10 +16,11 @@
 
 package io.quckoo.validation
 
-import io.quckoo.util.IsTraversable
-import org.scalacheck._
+import cats._
 
-import scalaz._
+import io.quckoo.util.IsTraversable
+
+import org.scalacheck._
 
 /**
   * Created by alonsodomin on 06/11/2016.

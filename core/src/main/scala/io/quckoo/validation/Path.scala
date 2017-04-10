@@ -16,10 +16,9 @@
 
 package io.quckoo.validation
 
-import upickle.Js
-import upickle.default.{Reader => UReader, Writer => UWriter}
+import cats.{Monoid, Show}
 
-import scalaz.{Monoid, Show}
+import io.circe.{Encoder, Decoder}
 
 /**
   * Created by alonsodomin on 23/10/2016.
@@ -56,26 +55,22 @@ object Path {
   def unapply(path: String): Option[Path] =
     parse(path, s"\\$DefaultSeparator")
 
-  def show(sep: String): Show[Path] = Show.shows(_.elements.mkString(sep))
+  def show(sep: String): Show[Path] = Show.show(_.elements.mkString(sep))
 
   implicit val pathMonoid = new Monoid[Path] {
-    def zero: Path = empty
+    def empty: Path = Path.empty
 
-    def append(f1: Path, f2: => Path): Path = f1 ++ f2
+    def combine(f1: Path, f2: Path): Path = f1 ++ f2
   }
 
   implicit val pathShow: Show[Path] = show(DefaultSeparator)
 
-  implicit val pathJsonWriter: UWriter[Path] = UWriter[Path] { p =>
-    Js.Str(pathShow.shows(p))
-  }
+  implicit val pathJsonEncoder: Encoder[Path] =
+    Encoder[String].contramap(pathShow.show)
 
-  implicit val pathJsonReader: UReader[Path] = UReader[Path] {
-    val extract: PartialFunction[Js.Value, String] = {
-      case Js.Str(str) => str
+  implicit val pathJsonDecoder: Decoder[Path] =
+    Decoder[String].emap { str =>
+      parse(str, DefaultSeparator).map(Right(_)).getOrElse(Left(s"Invalid path: $str"))
     }
-
-    Function.unlift(extract.lift.andThen(_.flatMap(unapply)))
-  }
 
 }

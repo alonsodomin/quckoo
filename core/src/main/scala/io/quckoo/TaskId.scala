@@ -18,9 +18,8 @@ package io.quckoo
 
 import java.util.UUID
 
-import upickle.default.{Reader => UReader, Writer => UWriter, _}
-
-import scalaz.{Equal, Show}
+import cats.{Eq, Show}
+import io.circe.{Encoder, Decoder}
 
 /**
   * Created by alonsodomin on 27/02/2017.
@@ -36,19 +35,17 @@ object TaskId {
   @inline def apply(uuid: UUID): TaskId = new TaskId(uuid)
   @inline def apply(value: String): TaskId = new TaskId(UUID.fromString(value))
 
-  // Upickle encoders
+  // Circe encoding/decoding
 
-  implicit val upickleReader: UReader[TaskId] = UReader[TaskId] {
-    implicitly[UReader[UUID]].read andThen TaskId.apply
-  }
+  implicit val circeEncoder: Encoder[TaskId] =
+    Encoder[UUID].contramap(_.uuid)
 
-  implicit val upickleWriter: UWriter[TaskId] = UWriter[TaskId] { taskId =>
-    implicitly[UWriter[UUID]].write(taskId.uuid)
-  }
+  implicit val circeDecoder: Decoder[TaskId] =
+    Decoder[UUID].map(apply)
 
   // Typeclass instances
 
-  implicit val taskIdEq: Equal[TaskId] = Equal.equal((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
-  implicit val taskIdShow: Show[TaskId] = Show.showFromToString
+  implicit val taskIdEq: Eq[TaskId] = Eq.instance((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
+  implicit val taskIdShow: Show[TaskId] = Show.fromToString
 
 }
