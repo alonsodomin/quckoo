@@ -36,10 +36,10 @@ object PlanId {
   // Circe encoding/decoding
 
   implicit val circeEncoder: Encoder[PlanId] =
-    Encoder[UUID].contramap(_.uuid)
+    Encoder[String].contramap(_.uuid.toString)
 
   implicit val circeDecoder: Decoder[PlanId] =
-    Decoder[UUID].map(apply)
+    Decoder[String].map(apply)
 
   // Typeclass instances
 

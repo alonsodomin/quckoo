@@ -24,7 +24,7 @@ import org.threeten.bp.format._
 /**
   * Created by alonsodomin on 11/08/2016.
   */
-trait Time {
+trait TimeJson {
   import DateTimeFormatter._
 
   implicit final val decodeInstant: Decoder[Instant] =
@@ -146,4 +146,4 @@ trait Time {
 
 }
 
-object time extends Time
+object time extends TimeJson

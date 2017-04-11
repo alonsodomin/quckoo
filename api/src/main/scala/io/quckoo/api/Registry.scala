@@ -16,13 +16,14 @@
 
 package io.quckoo.api
 
+import cats.data.ValidatedNel
+
 import io.quckoo.{Fault, JobId, JobNotFound, JobSpec}
 import io.quckoo.auth.Passport
 import io.quckoo.protocol.registry._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
-import scalaz.{ValidationNel, \/}
 
 /**
   * Created by alonsodomin on 13/12/2015.
@@ -33,13 +34,13 @@ trait Registry {
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[JobNotFound \/ JobEnabled]
+  ): Future[Either[JobNotFound, JobEnabled]]
 
   def disableJob(jobId: JobId)(
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[JobNotFound \/ JobDisabled]
+  ): Future[Either[JobNotFound, JobDisabled]]
 
   def fetchJob(jobId: JobId)(
       implicit ec: ExecutionContext,
@@ -51,7 +52,7 @@ trait Registry {
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[ValidationNel[Fault, JobId]]
+  ): Future[ValidatedNel[Fault, JobId]]
 
   def fetchJobs(
       implicit ec: ExecutionContext,

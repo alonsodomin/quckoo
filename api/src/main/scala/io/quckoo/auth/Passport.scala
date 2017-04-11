@@ -16,12 +16,12 @@
 
 package io.quckoo.auth
 
+import cats.{Eq, Show}
+import cats.implicits._
+
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 import io.quckoo.util.Attempt
-
-import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 05/09/2016.
@@ -33,8 +33,8 @@ object Passport {
   def apply(token: String): Attempt[Passport] = {
     val tokenParts: Attempt[Array[String]] = {
       val parts = token.split('.')
-      if (parts.length == 3) parts.right[InvalidPassportException]
-      else InvalidPassportException(token).left[Array[String]]
+      if (parts.length == 3) Right(parts)
+      else Left(InvalidPassport(token))
     }
 
     def decodePart(part: Int): Attempt[DataBuffer] =
@@ -45,7 +45,9 @@ object Passport {
     parseClaims.map(claims => new Passport(claims, token))
   }
 
-  implicit val instance = Equal.equalA[Passport]
+  implicit val passportEq: Eq[Passport] = Eq.fromUniversalEquals[Passport]
+
+  implicit val passportShow: Show[Passport] = Show.fromToString
 
 }
 

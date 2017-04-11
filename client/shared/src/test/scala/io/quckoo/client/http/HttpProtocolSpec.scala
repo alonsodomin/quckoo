@@ -19,7 +19,7 @@ package io.quckoo.client.http
 import java.util.UUID
 
 import io.quckoo._
-import io.quckoo.auth.{InvalidCredentialsException, Passport}
+import io.quckoo.auth.{InvalidCredentials, Passport}
 import io.quckoo.client.core.StubClient
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster.{MasterEvent, MasterReachable}
@@ -178,7 +178,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpError(401, "TEST AUTH ERROR")
     } usingClient { client =>
-      recoverToSucceededIf[InvalidCredentialsException.type](client.authenticate("foo", "bar"))
+      recoverToSucceededIf[InvalidCredentials.type](client.authenticate("foo", "bar"))
     }
   }
 
@@ -214,7 +214,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isRefreshPassport replyWith { _ =>
       HttpError(401, "TEST AUTH ERROR")
     } usingClient { client =>
-      recoverToSucceededIf[InvalidCredentialsException.type](client.refreshPassport)
+      recoverToSucceededIf[InvalidCredentials.type](client.refreshPassport)
     }
   }
 

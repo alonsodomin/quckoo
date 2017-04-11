@@ -22,7 +22,6 @@ import io.quckoo.protocol.scheduler._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
-import scalaz.\/
 
 /**
   * Created by alonsodomin on 13/03/2016.
@@ -33,7 +32,7 @@ trait Scheduler {
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[ExecutionPlanNotFound \/ ExecutionPlanCancelled]
+  ): Future[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]]
 
   def executionPlan(planId: PlanId)(
       implicit ec: ExecutionContext,
@@ -63,6 +62,6 @@ trait Scheduler {
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[Fault \/ ExecutionPlanStarted]
+  ): Future[Either[Fault, ExecutionPlanStarted]]
 
 }

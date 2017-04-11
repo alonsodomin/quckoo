@@ -36,10 +36,10 @@ object NodeId {
   // Circe encoding/decoding
 
   implicit val circeEncoder: Encoder[NodeId] =
-    Encoder[UUID].contramap(_.uuid)
+    Encoder[String].contramap(_.uuid.toString)
 
   implicit val circeDecoder: Decoder[NodeId] =
-    Decoder[UUID].map(apply)
+    Decoder[String].map(apply)
 
   // Typeclass instances
 

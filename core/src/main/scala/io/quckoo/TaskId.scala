@@ -38,10 +38,10 @@ object TaskId {
   // Circe encoding/decoding
 
   implicit val circeEncoder: Encoder[TaskId] =
-    Encoder[UUID].contramap(_.uuid)
+    Encoder[String].contramap(_.uuid.toString)
 
   implicit val circeDecoder: Decoder[TaskId] =
-    Decoder[UUID].map(apply)
+    Decoder[String].map(apply)
 
   // Typeclass instances
 

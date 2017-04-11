@@ -17,6 +17,7 @@
 package io.quckoo.auth
 
 /**
-  * Created by alonsodomin on 16/09/2016.
+  * Created by alonsodomin on 15/09/2016.
   */
-case object InvalidCredentialsException extends Exception("Invalid credentials")
+final case class InvalidPassport(token: String)
+    extends Exception(s"Token '$token' is not valid.")

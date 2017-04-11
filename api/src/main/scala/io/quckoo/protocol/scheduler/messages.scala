@@ -16,7 +16,7 @@
 
 package io.quckoo.protocol.scheduler
 
-import io.quckoo.{Fault, _}
+import io.quckoo._
 import io.quckoo.Trigger.Immediate
 import io.quckoo.protocol.{Command, Event}
 
