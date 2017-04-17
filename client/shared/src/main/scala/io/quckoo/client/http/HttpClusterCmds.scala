@@ -16,6 +16,8 @@
 
 package io.quckoo.client.http
 
+import io.circe.generic.auto._
+
 import io.quckoo.client.core._
 import io.quckoo.net.QuckooState
 import io.quckoo.serialization.json._

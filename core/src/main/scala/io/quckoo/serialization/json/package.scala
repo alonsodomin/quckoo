@@ -31,6 +31,12 @@ package object json extends TimeJson with Cron4s {
   type JsonEncoder[A] = Encoder[A, String]
   type JsonDecoder[A] = Decoder[String, A]
 
+  implicit def JsonEncoderInstance[A: CirceEncoder]: Encoder[A, String] =
+    (a: A) => Attempt(a.asJson.noSpaces)
+
+  implicit def JsonDecoderInstance[A: CirceDecoder]: Decoder[String, A] =
+    (input: String) => parse(input).flatMap(_.as[A])
+
   implicit def JsonCodecInstance[A: CirceDecoder: CirceEncoder]: JsonCodec[A] = new JsonCodec[A] {
     def encode(a: A): Attempt[String] = Attempt(a.asJson.noSpaces)
 

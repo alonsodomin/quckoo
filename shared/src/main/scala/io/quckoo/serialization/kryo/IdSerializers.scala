@@ -16,9 +16,10 @@
 
 package io.quckoo.serialization.kryo
 
+import java.util.UUID
+
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.esotericsoftware.kryo.{Kryo, Serializer}
-
 import io.quckoo.{JobId, NodeId, PlanId, TaskId}
 
 /**
@@ -50,7 +51,7 @@ object IdSerializers {
       output.writeString(`object`.toString)
 
     override def read(kryo: Kryo, input: Input, `type`: Class[PlanId]): PlanId =
-      PlanId(input.readString())
+      PlanId(UUID.fromString(input.readString()))
   }
 
   private object TaskIdSerializer extends Serializer[TaskId] {
@@ -60,7 +61,7 @@ object IdSerializers {
       output.writeString(`object`.toString)
 
     override def read(kryo: Kryo, input: Input, `type`: Class[TaskId]): TaskId =
-      TaskId(input.readString())
+      TaskId(UUID.fromString(input.readString()))
 
   }
 
@@ -71,7 +72,7 @@ object IdSerializers {
       output.writeString(`object`.toString)
 
     override def read(kryo: Kryo, input: Input, `type`: Class[NodeId]): NodeId =
-      NodeId(input.readString())
+      NodeId(UUID.fromString(input.readString()))
 
   }
 

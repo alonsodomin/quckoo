@@ -16,11 +16,11 @@
 
 package io.quckoo
 
+import java.time.{Clock, ZonedDateTime, Duration => JavaDuration}
+
 import cron4s._
 import cron4s.expr.CronExpr
-import cron4s.lib.threetenbp._
-
-import org.threeten.bp.{Clock, ZonedDateTime, Duration => JavaDuration}
+import cron4s.lib.javatime._
 
 import scala.concurrent.duration._
 
@@ -80,7 +80,7 @@ object Trigger {
               val now  = ZonedDateTime.now(clock)
               val diff = JavaDuration.between(now, when)
               if (diff.abs.toMillis <= margin.toMillis) Some(now)
-              else if (now < when) Some(when)
+              else if (now isBefore when) Some(when)
               else None
             }
           } else Some(when)

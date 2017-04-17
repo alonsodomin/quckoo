@@ -55,7 +55,7 @@ object Dependencies {
 
     val testState = "2.1.1"
     val scalaCss  = "0.5.1"
-    val scalaTime = "2.0.0-M9"
+    val scalaTime = "2.0.0-M10"
 
     val diode = "1.1.0"
 
@@ -67,8 +67,8 @@ object Dependencies {
     val arm         = "2.0"
     val betterfiles = "3.0.0"
     val cats        = "0.9.0"
-    val circe       = "0.7.0"
-    val cron4s      = "0.3.2"
+    val circe       = "0.7.1"
+    val cron4s      = "0.4.0"
     val enumeratum  = "1.5.10"
     val ivy         = "2.4.0"
     val monix       = "2.2.3"
@@ -184,21 +184,23 @@ object Dependencies {
       "com.beachape"      %%% "enumeratum"         % version.enumeratum,
       "com.beachape"      %%% "enumeratum-circe"   % version.enumeratum,
       //"com.codecommit"    %%% "shims-core"         % version.shims,
-      "io.github.cquiroz" %%% "scala-java-time"    % version.scalaTime,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
 
-      "com.github.alonsodomin.cron4s" %%% "cron4s" % version.cron4s
+      "com.github.alonsodomin.cron4s" %%% "cron4s-core" % version.cron4s
     )
   }
 
   lazy val coreJS = Def.settings {
-    libraryDependencies += "io.circe" %%% "circe-scalajs" % version.circe
+    libraryDependencies ++= Seq(
+      "io.circe"          %%% "circe-scalajs"   % version.circe,
+      "io.github.cquiroz" %%% "scala-java-time" % version.scalaTime
+    )
   }
 
   lazy val coreJVM = Def.settings {
-    libraryDependencies += "io.circe" %% "circe-java8" % version.circe
+    libraryDependencies ++= Seq() //"io.circe" %% "circe-java8" % version.circe
   }
 
   // Utilities module ===========================
@@ -216,9 +218,9 @@ object Dependencies {
 
   lazy val api = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "me.chrons"      %%% "diode"           % version.diode,
-      "io.monix"       %%% "monix-reactive"  % version.monix,
-      "io.monix"       %%% "monix-scalaz-72" % version.monix
+      "me.chrons"      %%% "diode"          % version.diode,
+      "io.monix"       %%% "monix-reactive" % version.monix,
+      "io.monix"       %%% "monix-cats"     % version.monix
     )
   )
 

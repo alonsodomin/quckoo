@@ -16,7 +16,7 @@
 
 package io.quckoo.time
 
-import org.threeten.bp.Clock
+import java.time.Clock
 
 /**
   * Created by alonsodomin on 11/08/2016.

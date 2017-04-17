@@ -16,6 +16,8 @@
 
 package io.quckoo.client.http.dom
 
+import cats.data.Kleisli
+
 import io.quckoo.client.core.Channel
 import io.quckoo.client.http.{HttpRequest, HttpResponse, _}
 import io.quckoo.serialization.DataBuffer
@@ -27,8 +29,6 @@ import org.scalajs.dom.ext.Ajax.InputData
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
-
-import scalaz.Kleisli
 
 /**
   * Created by alonsodomin on 09/09/2016.

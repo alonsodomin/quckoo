@@ -16,12 +16,15 @@
 
 package io.quckoo.net
 
+import enumeratum._
+
 /**
   * Created by alonsodomin on 03/04/2016.
   */
-sealed trait NodeStatus
-
-object NodeStatus {
+sealed trait NodeStatus extends EnumEntry
+object NodeStatus extends Enum[NodeStatus] with CirceEnum[NodeStatus] {
   case object Active      extends NodeStatus
   case object Unreachable extends NodeStatus
+
+  val values = findValues
 }

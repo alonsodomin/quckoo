@@ -16,19 +16,19 @@
 
 package io.quckoo.protocol.scheduler
 
+import java.time.ZonedDateTime
+
 import io.quckoo._
 import io.quckoo.Trigger.Immediate
 import io.quckoo.protocol.{Command, Event}
 
 import monocle.macros.Lenses
 
-import org.threeten.bp.ZonedDateTime
-
 import scala.concurrent.duration.FiniteDuration
 
 sealed trait SchedulerCommand extends Command
 sealed trait SchedulerEvent   extends Event
-sealed trait ExecutionEvent extends SchedulerEvent {
+sealed trait ExecutionEvent   extends SchedulerEvent {
   val dateTime: ZonedDateTime
 }
 

@@ -16,10 +16,10 @@
 
 package io.quckoo.client.core
 
+import cats.data.ValidatedNel
+
 import io.quckoo.{Fault, JobId, JobNotFound, JobSpec}
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
-
-import scalaz._
 
 /**
   * Created by alonsodomin on 19/09/2016.
@@ -27,11 +27,11 @@ import scalaz._
 trait RegistryCmds[P <: Protocol] {
   import CmdMarshalling.Auth
 
-  type RegisterJobCmd = Auth[P, JobSpec, ValidationNel[Fault, JobId]]
+  type RegisterJobCmd = Auth[P, JobSpec, ValidatedNel[Fault, JobId]]
   type GetJobCmd      = Auth[P, JobId, Option[JobSpec]]
-  type GetJobsCmd     = Auth[P, Unit, Map[JobId, JobSpec]]
-  type EnableJobCmd   = Auth[P, JobId, JobNotFound \/ JobEnabled]
-  type DisableJobCmd  = Auth[P, JobId, JobNotFound \/ JobDisabled]
+  type GetJobsCmd     = Auth[P, Unit, Seq[(JobId, JobSpec)]]
+  type EnableJobCmd   = Auth[P, JobId, Either[JobNotFound, JobEnabled]]
+  type DisableJobCmd  = Auth[P, JobId, Either[JobNotFound, JobDisabled]]
 
   implicit def registerJobCmd: RegisterJobCmd
   implicit def getJobCmd: GetJobCmd

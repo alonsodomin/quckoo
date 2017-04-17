@@ -186,7 +186,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpError(500, "TEST AUTH ERROR")
     } usingClient { client =>
-      recoverToSucceededIf[HttpErrorException](client.authenticate("foo", "bar"))
+      recoverToSucceededIf[HttpError](client.authenticate("foo", "bar"))
     }
   }
 
@@ -222,7 +222,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isRefreshPassport replyWith { _ =>
       HttpError(500, "TEST AUTH ERROR")
     } usingClient { client =>
-      recoverToSucceededIf[HttpErrorException](client.refreshPassport)
+      recoverToSucceededIf[HttpError](client.refreshPassport)
     }
   }
 
@@ -246,7 +246,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isLogout replyWith {
       _ => HttpError(500, "TEST AUTH ERROR")
     } usingClient { client =>
-      recoverToSucceededIf[HttpErrorException](client.signOut)
+      recoverToSucceededIf[HttpError](client.signOut)
     }
   }
 

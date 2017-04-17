@@ -16,11 +16,12 @@
 
 package io.quckoo.client
 
+import cats.~>
+import cats.data.Kleisli
+
 import io.quckoo.util.Attempt
 
 import monix.reactive.Observable
-
-import scalaz._
 
 /**
   * Created by alonsodomin on 10/09/2016.
@@ -43,8 +44,8 @@ package object core {
 
   final val attempt2Observable = new (Attempt ~> Observable) {
     override def apply[A](fa: Attempt[A]): Observable[A] = fa match {
-      case \/-(value) => Observable.eval(value)
-      case -\/(ex)    => Observable.raiseError(ex)
+      case Right(value) => Observable.eval(value)
+      case Left(ex)    => Observable.raiseError(ex)
     }
   }
 

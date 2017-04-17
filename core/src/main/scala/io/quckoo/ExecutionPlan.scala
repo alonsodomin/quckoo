@@ -16,9 +16,9 @@
 
 package io.quckoo
 
-import monocle.macros.Lenses
+import java.time.{Clock, ZonedDateTime}
 
-import org.threeten.bp.{Clock, ZonedDateTime}
+import monocle.macros.Lenses
 
 /**
   * Created by alonsodomin on 14/03/2016.

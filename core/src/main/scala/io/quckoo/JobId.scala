@@ -19,7 +19,7 @@ package io.quckoo
 import cats.{Eq, Show}
 import cats.instances.string._
 
-import io.circe.{Encoder, Decoder}
+import io.circe.{Encoder, Decoder, KeyDecoder, KeyEncoder}
 
 /**
   * Created by aalonsodominguez on 24/08/15.
@@ -51,6 +51,10 @@ object JobId {
 
   implicit val jobIdDecoder: Decoder[JobId] =
     Decoder[String].map(apply)
+
+  implicit val jobIdKeyEncoder: KeyEncoder[JobId] = KeyEncoder.instance(_.id)
+
+  implicit val jobIdKeyDecoder: KeyDecoder[JobId] = KeyDecoder.instance(id => Some(apply(id)))
 
   // Typeclass instances
 

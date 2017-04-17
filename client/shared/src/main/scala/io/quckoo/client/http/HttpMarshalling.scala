@@ -16,6 +16,12 @@
 
 package io.quckoo.client.http
 
+import cats.data.{Kleisli, Validated}
+import cats.instances.either._
+import cats.syntax.validated._
+
+import io.circe.Decoder._
+
 import io.quckoo.api.RequestTimeoutHeader
 import io.quckoo.auth.Passport
 import io.quckoo.client.core._
@@ -25,10 +31,6 @@ import io.quckoo.util._
 
 import scala.concurrent.duration.Duration
 import scala.collection.mutable
-
-import scalaz.{Kleisli, \/, Validation}
-import scalaz.syntax.either._
-import scalaz.syntax.validation._
 
 /**
   * Created by alonsodomin on 19/09/2016.
@@ -83,7 +85,7 @@ trait HttpMarshalling {
       implicit decoder: Decoder[String, O#Rslt]
   ): Unmarshall[HttpResponse, O#Rslt] = Unmarshall { res =>
     if (res.isFailure && res.entity.isEmpty) {
-      Attempt.fail(HttpErrorException(res.statusLine))
+      Attempt.fail(HttpError(res.statusLine))
     } else res.entity.as[O#Rslt](decoder)
   }
 
@@ -97,17 +99,17 @@ trait HttpMarshalling {
   protected def unmarshalEither[E, A](
       implicit errDecode: Decoder[String, E],
       succDecode: Decoder[String, A]
-  ): Unmarshall[HttpResponse, E \/ A] = Unmarshall { res =>
-    if (res.isFailure) res.entity.as[E].map(_.left[A])
-    else res.entity.as[A].map(_.right[E])
+  ): Unmarshall[HttpResponse, Either[E, A]] = Unmarshall { res =>
+    if (res.isFailure) res.entity.as[E].map(Left(_))
+    else res.entity.as[A].map(Right(_))
   }
 
   protected def unmarshalValidation[E, A](
       implicit errDecode: Decoder[String, E],
       succDecode: Decoder[String, A]
-  ): Unmarshall[HttpResponse, Validation[E, A]] = Unmarshall { res =>
-    if (res.isFailure) res.entity.as[E].map(_.failure[A])
-    else res.entity.as[A].map(_.success[E])
+  ): Unmarshall[HttpResponse, Validated[E, A]] = Unmarshall { res =>
+    if (res.isFailure) res.entity.as[E].map(_.invalid[A])
+    else res.entity.as[A].map(_.valid[E])
   }
 
 }

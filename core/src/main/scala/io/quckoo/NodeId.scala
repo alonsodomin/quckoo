@@ -19,7 +19,10 @@ package io.quckoo
 import java.util.UUID
 
 import cats.{Eq, Show}
-import io.circe.{Encoder, Decoder}
+
+import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
+
+import scala.util.Try
 
 /**
   * Created by alonsodomin on 27/02/2017.
@@ -31,15 +34,20 @@ final class NodeId private (private val uuid: UUID) extends AnyVal {
 object NodeId {
 
   @inline def apply(uuid: UUID): NodeId = new NodeId(uuid)
-  @inline def apply(value: String): NodeId = new NodeId(UUID.fromString(value))
 
   // Circe encoding/decoding
 
-  implicit val circeEncoder: Encoder[NodeId] =
-    Encoder[String].contramap(_.uuid.toString)
+  implicit val circeNodeIdEncoder: Encoder[NodeId] =
+    Encoder[UUID].contramap(_.uuid)
 
-  implicit val circeDecoder: Decoder[NodeId] =
-    Decoder[String].map(apply)
+  implicit val circeNodeIdDecoder: Decoder[NodeId] =
+    Decoder[UUID].map(apply)
+
+  implicit val circeNodeIdKeyEncoder: KeyEncoder[NodeId] =
+    KeyEncoder.instance(_.uuid.toString)
+
+  implicit val circeNodeIdKeyDecoder: KeyDecoder[NodeId] =
+    KeyDecoder.instance(id => Try(UUID.fromString(id)).map(apply).toOption)
 
   // Typeclass instances
 

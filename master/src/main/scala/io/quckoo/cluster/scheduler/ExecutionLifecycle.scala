@@ -43,7 +43,7 @@ object ExecutionLifecycle {
   final case class Awake(task: Task, queue: ActorSelection) extends Command
   case object Start                                         extends Command
   final case class Finish(fault: Option[Fault])             extends Command
-  final case class Cancel(reason: UncompletedReason)        extends Command
+  final case class Cancel(reason: Reason)        extends Command
   case object TimeOut                                       extends Command
   case object Get                                           extends Command
 
@@ -63,7 +63,7 @@ object ExecutionLifecycle {
 
   sealed trait ExecutionEvent
   final case class Awaken(task: Task, planId: PlanId, queue: ActorSelection) extends ExecutionEvent
-  final case class Cancelled(reason: UncompletedReason)                      extends ExecutionEvent
+  final case class Cancelled(reason: Reason)                      extends ExecutionEvent
   final case class Triggered(task: Task)                                     extends ExecutionEvent
   case object Started                                                        extends ExecutionEvent
   final case class Completed(fault: Option[Fault])                           extends ExecutionEvent

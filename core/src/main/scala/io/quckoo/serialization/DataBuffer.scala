@@ -19,10 +19,10 @@ package io.quckoo.serialization
 import java.nio.ByteBuffer
 import java.nio.charset.{Charset, StandardCharsets}
 
+import cats.Monoid
+
 import io.quckoo.serialization.base64._
 import io.quckoo.util.Attempt
-
-import scalaz._
 
 /**
   * Created by alonsodomin on 15/09/2016.
@@ -90,8 +90,8 @@ object DataBuffer {
     Base64Codec.encode(str).map(apply)
 
   implicit val dataBufferInstance = new Monoid[DataBuffer] {
-    override def append(f1: DataBuffer, f2: => DataBuffer): DataBuffer = f1 + f2
-    override def zero: DataBuffer                                      = Empty
+    def combine(f1: DataBuffer, f2: DataBuffer): DataBuffer = f1 + f2
+    def empty: DataBuffer                                   = Empty
   }
 
 }

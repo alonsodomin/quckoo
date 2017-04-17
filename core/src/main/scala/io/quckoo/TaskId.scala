@@ -19,7 +19,10 @@ package io.quckoo
 import java.util.UUID
 
 import cats.{Eq, Show}
-import io.circe.{Encoder, Decoder}
+
+import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
+
+import scala.util.Try
 
 /**
   * Created by alonsodomin on 27/02/2017.
@@ -33,15 +36,20 @@ final class TaskId private (private val uuid: UUID) extends AnyVal {
 object TaskId {
 
   @inline def apply(uuid: UUID): TaskId = new TaskId(uuid)
-  @inline def apply(value: String): TaskId = new TaskId(UUID.fromString(value))
 
   // Circe encoding/decoding
 
-  implicit val circeEncoder: Encoder[TaskId] =
-    Encoder[String].contramap(_.uuid.toString)
+  implicit val circeTaskIdEncoder: Encoder[TaskId] =
+    Encoder[UUID].contramap(_.uuid)
 
-  implicit val circeDecoder: Decoder[TaskId] =
-    Decoder[String].map(apply)
+  implicit val circeTaskIdDecoder: Decoder[TaskId] =
+    Decoder[UUID].map(apply)
+
+  implicit val circeTaskIdKeyEncoder: KeyEncoder[TaskId] =
+    KeyEncoder.instance(_.uuid.toString)
+
+  implicit val circeTaskIdKeyDecoder: KeyDecoder[TaskId] =
+    KeyDecoder.instance(id => Try(UUID.fromString(id)).map(apply).toOption)
 
   // Typeclass instances
 

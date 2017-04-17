@@ -33,7 +33,7 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
       else
         Attempt.fail {
           if (res.statusCode == 401) InvalidCredentials
-          else HttpErrorException(res.statusLine)
+          else HttpError(res.statusLine)
         }
     }
 
@@ -83,7 +83,7 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
 
     override val unmarshall = Unmarshall[HttpResponse, Unit] { res =>
       if (res.isSuccess) Attempt.unit
-      else Attempt.fail(HttpErrorException(res.statusLine))
+      else Attempt.fail(HttpError(res.statusLine))
     }
   }
 }

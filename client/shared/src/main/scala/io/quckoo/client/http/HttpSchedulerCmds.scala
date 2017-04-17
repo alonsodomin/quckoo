@@ -16,12 +16,15 @@
 
 package io.quckoo.client.http
 
+import cats.instances.either._
+import cats.syntax.either._
+
+import io.circe.generic.auto._
+
 import io.quckoo._
 import io.quckoo.client.core._
 import io.quckoo.protocol.scheduler.{ExecutionPlanCancelled, ExecutionPlanStarted, ScheduleJob}
 import io.quckoo.serialization.json._
-
-import scalaz.\/
 
 /**
   * Created by alonsodomin on 19/09/2016.
@@ -35,7 +38,7 @@ trait HttpSchedulerCmds extends HttpMarshalling with SchedulerCmds[HttpProtocol]
     s"$TaskExecutionsURI/${cmd.payload}"
 
   implicit lazy val scheduleJobCmd: ScheduleJobCmd =
-    new Auth[HttpProtocol, ScheduleJob, JobNotFound \/ ExecutionPlanStarted] {
+    new Auth[HttpProtocol, ScheduleJob, Either[JobNotFound, ExecutionPlanStarted]] {
       override val marshall =
         marshallToJson[ScheduleJobCmd](HttpMethod.Put, _ => ExecutionPlansURI)
       override val unmarshall =
@@ -43,7 +46,7 @@ trait HttpSchedulerCmds extends HttpMarshalling with SchedulerCmds[HttpProtocol]
     }
 
   implicit lazy val getPlansCmd: GetPlansCmd =
-    new Auth[HttpProtocol, Unit, Map[PlanId, ExecutionPlan]] {
+    new Auth[HttpProtocol, Unit, Seq[(PlanId, ExecutionPlan)]] {
       override val marshall   = marshallEmpty[GetPlansCmd](HttpMethod.Get, _ => ExecutionPlansURI)
       override val unmarshall = unmarshallFromJson[GetPlansCmd]
     }
@@ -55,7 +58,7 @@ trait HttpSchedulerCmds extends HttpMarshalling with SchedulerCmds[HttpProtocol]
     }
 
   implicit lazy val getExecutionsCmd: GetExecutionsCmd =
-    new Auth[HttpProtocol, Unit, Map[TaskId, TaskExecution]] {
+    new Auth[HttpProtocol, Unit, Seq[(TaskId, TaskExecution)]] {
       override val marshall =
         marshallEmpty[GetExecutionsCmd](HttpMethod.Get, _ => TaskExecutionsURI)
       override val unmarshall = unmarshallFromJson[GetExecutionsCmd]
@@ -68,7 +71,7 @@ trait HttpSchedulerCmds extends HttpMarshalling with SchedulerCmds[HttpProtocol]
     }
 
   implicit lazy val cancelPlanCmd: CancelPlanCmd =
-    new Auth[HttpProtocol, PlanId, ExecutionPlanNotFound \/ ExecutionPlanCancelled] {
+    new Auth[HttpProtocol, PlanId, Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] {
       override val marshall = marshallEmpty[CancelPlanCmd](HttpMethod.Delete, planUrl)
       override val unmarshall =
         unmarshalEither[PlanId, ExecutionPlanCancelled].map(_.leftMap(ExecutionPlanNotFound))

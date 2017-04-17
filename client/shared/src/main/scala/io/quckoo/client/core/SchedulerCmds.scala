@@ -19,20 +19,18 @@ package io.quckoo.client.core
 import io.quckoo._
 import io.quckoo.protocol.scheduler.{ExecutionPlanCancelled, ExecutionPlanStarted, ScheduleJob}
 
-import scalaz.\/
-
 /**
   * Created by alonsodomin on 19/09/2016.
   */
 trait SchedulerCmds[P <: Protocol] {
   import CmdMarshalling.Auth
 
-  type ScheduleJobCmd   = Auth[P, ScheduleJob, JobNotFound \/ ExecutionPlanStarted]
-  type GetPlansCmd      = Auth[P, Unit, Map[PlanId, ExecutionPlan]]
+  type ScheduleJobCmd   = Auth[P, ScheduleJob, Either[JobNotFound, ExecutionPlanStarted]]
+  type GetPlansCmd      = Auth[P, Unit, Seq[(PlanId, ExecutionPlan)]]
   type GetPlanCmd       = Auth[P, PlanId, Option[ExecutionPlan]]
-  type GetExecutionsCmd = Auth[P, Unit, Map[TaskId, TaskExecution]]
+  type GetExecutionsCmd = Auth[P, Unit, Seq[(TaskId, TaskExecution)]]
   type GetExecutionCmd  = Auth[P, TaskId, Option[TaskExecution]]
-  type CancelPlanCmd    = Auth[P, PlanId, ExecutionPlanNotFound \/ ExecutionPlanCancelled]
+  type CancelPlanCmd    = Auth[P, PlanId, Either[ExecutionPlanNotFound, ExecutionPlanCancelled]]
 
   implicit def scheduleJobCmd: ScheduleJobCmd
   implicit def getPlansCmd: GetPlansCmd

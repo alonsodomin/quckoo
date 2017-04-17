@@ -44,13 +44,13 @@ trait Scheduler {
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[Map[PlanId, ExecutionPlan]]
+  ): Future[Seq[(PlanId, ExecutionPlan)]]
 
   def executions(
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[Map[TaskId, TaskExecution]]
+  ): Future[Seq[(TaskId, TaskExecution)]]
 
   def execution(taskId: TaskId)(
       implicit ec: ExecutionContext,

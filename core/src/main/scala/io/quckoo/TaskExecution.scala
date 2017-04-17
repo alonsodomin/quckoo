@@ -29,20 +29,28 @@ import monocle.macros.Lenses
 )
 
 object TaskExecution {
-  sealed trait Status
-  case object Scheduled  extends Status
-  case object Enqueued   extends Status
-  case object InProgress extends Status
-  case object Complete   extends Status
 
-  sealed trait UncompletedReason
-  case object UserRequest     extends UncompletedReason
-  case object FailedToEnqueue extends UncompletedReason
+  sealed trait Status extends Product with Serializable
+  object Status {
+    case object Scheduled  extends Status
+    case object Enqueued   extends Status
+    case object InProgress extends Status
+    case object Complete   extends Status
+  }
 
-  sealed trait Outcome
-  case object Success                                     extends Outcome
-  final case class Failure(cause: Fault)                  extends Outcome
-  final case class Interrupted(reason: UncompletedReason) extends Outcome
-  final case class NeverRun(reason: UncompletedReason)    extends Outcome
-  case object NeverEnding                                 extends Outcome
+  sealed trait Reason extends Product with Serializable
+  object Reason {
+    case object UserRequest     extends Reason
+    case object FailedToEnqueue extends Reason
+  }
+
+  sealed trait Outcome extends Product with Serializable
+  object Outcome {
+    case object Success                          extends Outcome
+    final case class Failure(cause: Fault)       extends Outcome
+    final case class Interrupted(reason: Reason) extends Outcome
+    final case class NeverRun(reason: Reason)    extends Outcome
+    case object NeverEnding                      extends Outcome
+  }
+
 }
