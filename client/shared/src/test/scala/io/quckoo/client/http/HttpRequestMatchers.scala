@@ -26,8 +26,6 @@ import org.scalatest.matchers.{MatchResult, Matcher}
 import scala.concurrent.duration.FiniteDuration
 import scala.util.matching.Regex
 
-import scalaz.\/-
-
 /**
   * Created by alonsodomin on 17/09/2016.
   */
@@ -67,7 +65,7 @@ trait HttpRequestMatchers extends Matchers {
   val isJsonRequest: Matcher[HttpRequest] = hasHeader("Content-Type", "application/json")
 
   def hasAuth(username: String, password: String): Matcher[HttpRequest] = {
-    val \/-(creds) = DataBuffer.fromString(s"$username:$password").toBase64
+    val Right(creds) = DataBuffer.fromString(s"$username:$password").toBase64
     hasHeader(AuthorizationHeader, s"Basic $creds")
   }
 

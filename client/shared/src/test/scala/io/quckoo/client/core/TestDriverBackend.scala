@@ -16,11 +16,11 @@
 
 package io.quckoo.client.core
 
+import cats.data.Kleisli
+
 import io.quckoo.util._
 
 import monix.reactive.Observable
-
-import scalaz.Kleisli
 
 /**
   * Created by alonsodomin on 17/09/2016.
