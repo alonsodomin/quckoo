@@ -16,12 +16,13 @@
 
 package io.quckoo.serialization.json
 
+import java.time._
+
 import io.quckoo.serialization._
 import io.quckoo.util._
 import io.quckoo.testkit.gen.JavaTimeGenerators
 
 import org.scalacheck._
-import org.threeten.bp._
 
 /**
   * Created by alonsodomin on 05/11/2016.

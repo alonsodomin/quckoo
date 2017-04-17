@@ -16,11 +16,11 @@
 
 package io.quckoo
 
+import java.time._
+
 import cron4s._
 
 import io.quckoo.Trigger.{LastExecutionTime, ScheduledTime, Cron => CronTrigger}
-
-import org.threeten.bp._
 
 import org.scalatest.{FlatSpec, Matchers}
 

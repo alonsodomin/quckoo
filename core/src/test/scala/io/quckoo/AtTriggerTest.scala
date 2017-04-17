@@ -16,11 +16,11 @@
 
 package io.quckoo
 
+import java.time.{Clock, Instant, ZoneId, ZonedDateTime, Duration => JavaDuration}
+
 import io.quckoo.Trigger.{At, LastExecutionTime, ScheduledTime}
 
 import org.scalatest.{Matchers, WordSpec}
-
-import org.threeten.bp.{Clock, Instant, ZoneId, ZonedDateTime, Duration => JavaDuration}
 
 import scala.concurrent.duration._
 
