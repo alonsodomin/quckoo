@@ -16,10 +16,14 @@
 
 package io.quckoo.console.scheduler
 
-import cron4s._
+import cats.data.EitherT
+import cats.instances.option._
+
+import cron4s.{Error => CronError, _}
 
 import io.quckoo.Trigger
 import io.quckoo.console.components._
+import io.quckoo.util._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -30,19 +34,20 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object CronTriggerInput {
 
   private[this] val errorMessage =
-    ReactComponentB[(String, InvalidCron)]("CronTriggerInput.ErrorMessage")
+    ReactComponentB[(String, CronError)]("CronTriggerInput.ErrorMessage")
       .stateless
       .render_P { case (input, error) =>
-        def showError(error: InvalidCron) = error match {
-          case ParseFailed(msg, position) =>
+        def showError(error: CronError) = error match {
+          case ParseFailed(expected, found, position) =>
             <.div(
-              <.span(msg),
+              <.span(s"Expected $expected but found $found"),
               <.br,
               Iterator.fill(position - 2)(NBSP).mkString + "^"
             )
 
-          case ValidationError(fieldErrors) =>
-            <.ul(fieldErrors.map(err => <.li(err.field.toString(), err.msg)).list.toList)
+          case InvalidCron(errors) =>
+            val fieldErrors = errors.toList.collect { case x: InvalidField => x }
+            <.ul(fieldErrors.map(err => <.li(err.field.toString(), err.msg)).toList)
         }
 
         <.div(
@@ -53,21 +58,19 @@ object CronTriggerInput {
       } build
 
   case class Props(value: Option[Trigger.Cron], onUpdate: Option[Trigger.Cron] => Callback, readOnly: Boolean)
-  case class State(inputExpr: Option[String], errorReason: Option[InvalidCron] = None)
+  case class State(inputExpr: Option[String], errorReason: Option[CronError] = None)
 
   class Backend($ : BackendScope[Props, State]) {
 
     private[this] def doValidate(value: Option[String]) = {
-      import scalaz._
-      import Scalaz._
 
-      def updateError(err: Option[InvalidCron]): Callback =
+      def updateError(err: Option[CronError]): Callback =
         $.modState(_.copy(errorReason = err)) >> $.props.flatMap(_.onUpdate(None))
 
       def invokeCallback(trigger: Option[Trigger.Cron]): Callback =
         updateError(None) >> $.props.flatMap(_.onUpdate(trigger))
 
-      EitherT(value.map(Cron(_).disjunction))
+      EitherT(value.map(Cron(_)))
         .map(Trigger.Cron(_))
         .cozip
         .fold(updateError, invokeCallback)

@@ -16,6 +16,8 @@
 
 package io.quckoo.console.components
 
+import cats.data.NonEmptyList
+
 import diode.data.{Pot, Ready}
 import diode.react.ReactPot._
 
@@ -24,8 +26,6 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-
-import scalaz.NonEmptyList
 
 /**
   * Created by alonsodomin on 02/07/2016.
@@ -91,7 +91,7 @@ object Table {
             case (action, idx) =>
               Button().withKey(s"action-$id-$idx")(
                 Button.Props(Some(action.execute(id))),
-                action.children.list.toList: _*)
+                action.children.toList: _*)
           }
         )
     } build

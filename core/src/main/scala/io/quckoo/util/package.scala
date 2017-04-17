@@ -17,7 +17,7 @@
 package io.quckoo
 
 import cats._
-import cats.data.Validated
+import cats.data.{EitherT, Validated}
 import cats.implicits._
 
 import scala.concurrent.Future
@@ -70,6 +70,11 @@ package object util {
         case (Invalid(e1), Invalid(e2)) => Invalid(es.combine(e1, e2))
       }
     }
+  }
+
+  implicit class RichOptionEitherT[E, A](val self: EitherT[Option, E, A]) extends AnyVal {
+    def cozip: Either[Option[E], Option[A]] =
+      self.value.fold(none[E].asLeft[Option[A]])(_.bimap(Some(_), Some(_)))
   }
 
 }

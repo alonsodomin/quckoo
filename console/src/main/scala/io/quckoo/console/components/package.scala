@@ -17,6 +17,7 @@
 package io.quckoo.console
 
 import java.util.concurrent.TimeUnit
+import java.time.{LocalDate, LocalDateTime, LocalTime, ZonedDateTime}
 
 import cron4s.expr.CronExpr
 
@@ -24,8 +25,6 @@ import io.quckoo._
 
 import japgolly.scalajs.react.ReactNode
 import japgolly.scalajs.react.extra.Reusability
-
-import org.threeten.bp.{LocalDate, LocalDateTime, LocalTime, ZonedDateTime}
 
 import scalacss.Defaults._
 

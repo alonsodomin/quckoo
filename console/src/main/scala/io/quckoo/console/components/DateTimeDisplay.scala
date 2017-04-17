@@ -16,11 +16,11 @@
 
 package io.quckoo.console.components
 
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.vdom.prefix_<^._
-
-import org.threeten.bp.ZonedDateTime
-import org.threeten.bp.format.DateTimeFormatter
 
 /**
   * Created by alonsodomin on 04/07/2016.

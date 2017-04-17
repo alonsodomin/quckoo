@@ -18,6 +18,8 @@ package io.quckoo.console.components
 
 import java.util.concurrent.TimeUnit
 
+import cats.instances.all._
+
 import io.quckoo.validation.Validators._
 import io.quckoo.console.validation._
 
@@ -26,8 +28,6 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 import scala.concurrent.duration._
-
-import scalaz._
 
 /**
   * Created by alonsodomin on 08/04/2016.
@@ -82,10 +82,7 @@ object FiniteDurationInput {
     }
 
     private[this] val _lengthInput = Input[Long]
-    private[this] val LengthValidation = {
-      import Scalaz._
-      ValidatedInput[Long]((greaterThan(0L) or equalTo(0L)).callback)
-    }
+    private[this] val LengthValidation = ValidatedInput[Long]((greaterThan(0L) or equalTo(0L)).callback)
 
     private[this] def lengthInput(props: Props, state: State)(onUpdate: Option[Long] => Callback) =
       _lengthInput(state.length, onUpdate, ^.id := s"${props.id}_length", ^.readOnly := props.readOnly)

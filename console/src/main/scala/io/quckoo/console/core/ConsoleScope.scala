@@ -16,10 +16,10 @@
 
 package io.quckoo.console.core
 
+import java.time.LocalDateTime
+
 import io.quckoo.auth.Passport
 import io.quckoo.net.QuckooState
-
-import org.threeten.bp._
 
 import monocle.macros.Lenses
 

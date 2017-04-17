@@ -16,14 +16,14 @@
 
 package io.quckoo.console.scheduler
 
+import java.time.{LocalDate, LocalDateTime, LocalTime, ZoneId}
+
 import io.quckoo.Trigger
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
-
-import org.threeten.bp.{LocalDate, LocalDateTime, LocalTime, ZoneId}
 
 /**
   * Created by alonsodomin on 08/04/2016.

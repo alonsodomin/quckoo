@@ -16,6 +16,8 @@
 
 package io.quckoo
 
+import cats.Show
+
 import monocle.macros.Lenses
 
 /**
@@ -38,11 +40,15 @@ object TaskExecution {
     case object Complete   extends Status
   }
 
+  implicit val statusShow: Show[Status] = Show.fromToString
+
   sealed trait Reason extends Product with Serializable
   object Reason {
     case object UserRequest     extends Reason
     case object FailedToEnqueue extends Reason
   }
+
+  implicit val reasonShow: Show[Reason] = Show.fromToString
 
   sealed trait Outcome extends Product with Serializable
   object Outcome {
@@ -52,5 +58,7 @@ object TaskExecution {
     final case class NeverRun(reason: Reason)    extends Outcome
     case object NeverEnding                      extends Outcome
   }
+
+  implicit val outcomeShow: Show[Outcome] = Show.fromToString
 
 }

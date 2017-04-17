@@ -16,13 +16,13 @@
 
 package io.quckoo.console.scheduler
 
+import java.time.{Clock, ZonedDateTime}
+
 import io.quckoo.Trigger
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-
-import org.threeten.bp.{Clock, ZonedDateTime}
 
 /**
   * Created by alonsodomin on 09/04/2016.
@@ -41,7 +41,7 @@ object ExecutionPlanPreview {
         props.trigger
           .nextExecutionTime(prev)(props.clock)
           .map(next => (LastExecutionTime(next), true))
-          .getOrElse((prev, false))
+          .getOrElse(prev -> false)
       }
 
       val first  = genNext(ScheduledTime(ZonedDateTime.now(props.clock)))

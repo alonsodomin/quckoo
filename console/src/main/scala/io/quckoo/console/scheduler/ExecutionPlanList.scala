@@ -16,6 +16,12 @@
 
 package io.quckoo.console.scheduler
 
+import cats.data.NonEmptyList
+import cats.instances.list._
+import cats.syntax.applicative._
+import cats.syntax.traverse._
+import cats.syntax.show._
+
 import diode.data._
 import diode.react.ModelProxy
 import diode.react.ReactPot._
@@ -29,13 +35,13 @@ import io.quckoo.protocol.scheduler.CancelExecutionPlan
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
-import org.threeten.bp.ZonedDateTime
+import java.time.ZonedDateTime
 
-import scalaz._
+/*import scalaz._
 import scalaz.std.list._
 import scalaz.syntax.applicative.{^ => _, _}
 import scalaz.syntax.traverse._
-import scalaz.syntax.show._
+import scalaz.syntax.show._*/
 
 /**
   * Created by alonsodomin on 30/01/2016.
@@ -142,11 +148,11 @@ object ExecutionPlanList {
 
       column match {
         case 'Job       => renderPlanName
-        case 'Current   => plan.currentTask.map(_.show).getOrElse(Cord.empty).toString()
+        case 'Current   => plan.currentTask.map(_.show).getOrElse("")
         case 'Trigger   => plan.trigger.toString()
         case 'Scheduled => plan.lastScheduledTime.map(renderDateTime).orNull
         case 'Execution => plan.lastExecutionTime.map(renderDateTime).orNull
-        case 'Outcome   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
+        case 'Outcome   => plan.lastOutcome.map(_.show).getOrElse[String]("")
         case 'Next      => plan.nextExecutionTime.map(renderDateTime).orNull
       }
     }
@@ -155,7 +161,7 @@ object ExecutionPlanList {
       if (!plan.finished && plan.nextExecutionTime.isDefined) {
         Seq(
           Table.RowAction[PlanId, ExecutionPlan](
-            NonEmptyList(Icons.stop, "Cancel"),
+            NonEmptyList.of(Icons.stop, "Cancel"),
             cancelPlan)
         )
       } else Seq.empty

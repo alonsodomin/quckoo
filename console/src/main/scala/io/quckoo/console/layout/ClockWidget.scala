@@ -16,14 +16,14 @@
 
 package io.quckoo.console.layout
 
+import java.time.{Clock, ZonedDateTime}
+import java.time.format.DateTimeFormatter
+
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.TimerSupport
 import japgolly.scalajs.react.vdom.prefix_<^._
-
-import org.threeten.bp.format.DateTimeFormatter
-import org.threeten.bp.{Clock, ZonedDateTime}
 
 import scala.concurrent.duration._
 

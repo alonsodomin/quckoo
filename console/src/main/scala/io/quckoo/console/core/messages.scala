@@ -16,6 +16,8 @@
 
 package io.quckoo.console.core
 
+import cats.data.{NonEmptyList, ValidatedNel}
+
 import diode.data.{AsyncAction, Pot, PotState}
 
 import io.quckoo._
@@ -26,7 +28,6 @@ import io.quckoo.net.QuckooState
 import io.quckoo.protocol.{Command, Event}
 
 import scala.util.{Failure, Try}
-import scalaz.{NonEmptyList, ValidationNel}
 
 final case class Failed(fault: NonEmptyList[Fault]) extends Event
 
@@ -58,7 +59,7 @@ final case class RefreshJobSpecs(
 
 }
 
-final case class RegisterJobResult(jobId: ValidationNel[Fault, JobId]) extends Event
+final case class RegisterJobResult(jobId: ValidatedNel[Fault, JobId]) extends Event
 
 case object LoadExecutionPlans                                                extends Command
 final case class ExecutionPlansLoaded(plans: Map[PlanId, Pot[ExecutionPlan]]) extends Event

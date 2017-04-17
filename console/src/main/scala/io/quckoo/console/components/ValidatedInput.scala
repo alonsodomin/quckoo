@@ -16,13 +16,14 @@
 
 package io.quckoo.console.components
 
+import cats.data.Validated._
+import cats.instances.option._
+import cats.syntax.show._
+
 import io.quckoo.console.validation._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-
-import scalaz.{Success, Failure}
-import scalaz.syntax.show._
 
 object ValidatedInput {
   type OnUpdate[A] = Option[A] => Callback
@@ -39,8 +40,8 @@ object ValidatedInput {
     def onUpdate(props: Props[A])(newValue: Option[A]): Callback = {
       val validate = newValue.map { value =>
         props.validator.run(value).map {
-          case Success(_)         => ValidatedField[A](Some(value))
-          case Failure(violation) => ValidatedField[A](Some(value), Some(violation))
+          case Valid(_)           => ValidatedField[A](Some(value))
+          case Invalid(violation) => ValidatedField[A](Some(value), Some(violation))
         }
       } getOrElse CallbackTo(ValidatedField[A](None))
 
@@ -61,7 +62,7 @@ object ValidatedInput {
         props.label.map(labelText => <.label(^.`class` := "control-label", labelText)),
         props.component(onUpdate(props)),
         state.fieldState.violation.map { violation =>
-          <.span(^.`class` := "help-block", violation.shows)
+          <.span(^.`class` := "help-block", violation.show)
         })
     }
   }

@@ -16,6 +16,8 @@
 
 package io.quckoo.console.scheduler
 
+import cats.syntax.show._
+
 import diode.data.PotMap
 import diode.react.ModelProxy
 
@@ -24,9 +26,6 @@ import io.quckoo.console.components._
 import io.quckoo.console.core.LoadExecutions
 
 import japgolly.scalajs.react._
-
-import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 15/05/2016.
@@ -44,9 +43,9 @@ object TaskExecutionList {
 
     def renderItem(taskId: TaskId, execution: TaskExecution, column: Symbol): ReactNode =
       column match {
-        case 'ID        => taskId.toString
-        case 'Task      => execution.task.shows
-        case 'Status    => execution.status.toString
+        case 'ID        => taskId.show
+        case 'Task      => execution.task.show
+        case 'Status    => execution.status.show
         case 'Outcome   => execution.outcome.map(_.toString).getOrElse[String]("")
       }
 

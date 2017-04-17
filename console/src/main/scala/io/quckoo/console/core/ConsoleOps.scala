@@ -16,6 +16,9 @@
 
 package io.quckoo.console.core
 
+import cats.data.{EitherT, NonEmptyList}
+import cats.instances.future._
+
 import diode.data.{Pot, Ready, Unavailable}
 
 import io.quckoo._
@@ -29,9 +32,6 @@ import slogging.LoggerHolder
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-
-import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 25/03/2016.
@@ -90,7 +90,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
     implicit val timeout = DefaultTimeout
     if (keys.isEmpty) {
       logger.debug("Loading all jobs from the server...")
-      client.fetchJobs.map(_.map { case (k, v) => (k, Ready(v)) })
+      client.fetchJobs.map(_.map { case (k, v) => (k, Ready(v)) }.toMap)
     } else {
       logger.debug("Loading job specs for ids: {}", keys.mkString(", "))
       Future.sequence(keys.map(loadJobSpec)).map(_.toMap)
@@ -120,7 +120,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
     implicit val timeout = DefaultTimeout
     if (ids.isEmpty) {
       logger.debug("Loading all execution plans from the server")
-      client.executionPlans.map(_.map { case (k, v) => (k, Ready(v)) })
+      client.executionPlans.map(_.map { case (k, v) => (k, Ready(v)) }.toMap)
     } else {
       logger.debug("Loading execution plans for ids: {}", ids.mkString(", "))
       Future.sequence(ids.map(loadPlan)).map(_.toMap)
@@ -144,7 +144,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
   ): Future[Map[TaskId, Pot[TaskExecution]]] = {
     implicit val timeout = DefaultTimeout
     if (ids.isEmpty) {
-      client.executions.map(_.map { case (k, v) => (k, Ready(v)) })
+      client.executions.map(_.map { case (k, v) => (k, Ready(v)) }.toMap)
     } else {
       Future.sequence(ids.map(loadTask)).map(_.toMap)
     }
@@ -161,7 +161,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
     }
   }
 
-  private[this] def foldIntoEvent[A <: Event](f: => Future[Fault \/ A]): Future[Event] =
-    EitherT(f).leftMap(fault => Failed(NonEmptyList[Fault](fault))).fold(identity, identity)
+  private[this] def foldIntoEvent[A <: Event](f: => Future[Either[Fault, A]]): Future[Event] =
+    EitherT(f).leftMap(fault => Failed(NonEmptyList.of[Fault](fault))).fold(identity, identity)
 
 }
