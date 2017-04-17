@@ -23,7 +23,7 @@ import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.TimerSupport
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.concurrent.duration._
 
@@ -52,7 +52,7 @@ object ClockWidget {
 
   }
 
-  private[this] val component = ReactComponentB[Clock]("Clock")
+  private[this] val component = ScalaComponent.builder[Clock]("Clock")
     .initialState_P(clock => State(ZonedDateTime.now(clock)))
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))

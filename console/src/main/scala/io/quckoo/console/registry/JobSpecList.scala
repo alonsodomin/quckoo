@@ -26,7 +26,7 @@ import io.quckoo.console.core.LoadJobSpecs
 import io.quckoo.protocol.registry._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalaz._
 import scalaz.syntax.show._
@@ -147,10 +147,10 @@ object JobSpecList {
 
     // Render methods
 
-    private[this] def renderName(jobId: JobId, jobSpec: JobSpec): ReactNode =
+    private[this] def renderName(jobId: JobId, jobSpec: JobSpec): VdomNode =
       <.a(^.onClick --> onJobClicked(jobId), jobSpec.displayName)
 
-    def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): ReactNode = column match {
+    def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): VdomNode = column match {
       case 'Name        => renderName(jobId, jobSpec)
       case 'Description => jobSpec.description.getOrElse[String]("")
       case 'Package     => jobSpec.jobPackage.toString
@@ -198,7 +198,7 @@ object JobSpecList {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("JobSpecList")
+  private[this] val component = ScalaComponent.builder[Props]("JobSpecList")
     .initialState(State())
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))

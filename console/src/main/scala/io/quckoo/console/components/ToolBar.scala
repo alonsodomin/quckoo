@@ -19,7 +19,7 @@ package io.quckoo.console.components
 import io.quckoo.console.layout.GlobalStyles
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
@@ -29,14 +29,14 @@ import scalacss.ScalaCssReact._
   */
 object ToolBar {
 
-  private[this] val component = ReactComponentB[Unit]("ToolBar")
+  private[this] val component = ScalaComponent.builder[Unit]("ToolBar")
     .stateless
     .render_C { children =>
       <.div(GlobalStyles.pageToolbar, children)
     }
     .build
 
-  def apply(children: ReactNode*) =
+  def apply(children: VdomNode*) =
     component(children: _*)
 
 }

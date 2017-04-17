@@ -29,7 +29,7 @@ import io.quckoo.protocol.scheduler.ScheduleJob
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import monocle.macros.Lenses
 
@@ -160,19 +160,19 @@ object ExecutionPlanForm {
               trigger.get(state).map(ExecutionPlanPreview(_)).get
             }
           )
-        } else EmptyTag
+        } else EmptyVdom
       )
     }
 
   }
 
-  val component = ReactComponentB[Props]("ExecutionPlanForm")
+  val component = ScalaComponent.builder[Props]("ExecutionPlanForm")
     .initialState(State(EditableExecutionPlan(None)))
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
-  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]], handler: Handler, refName: String) =
-    component.withRef(refName)(Props(proxy, handler))
+  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]], handler: Handler) =
+    component(Props(proxy, handler))
 
 }

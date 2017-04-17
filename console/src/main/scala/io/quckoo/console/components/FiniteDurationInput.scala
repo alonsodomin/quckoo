@@ -25,7 +25,7 @@ import io.quckoo.console.validation._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.concurrent.duration._
 
@@ -73,7 +73,7 @@ object FiniteDurationInput {
     def onLengthUpdate(value: Option[Long]): Callback =
       $.modState(_.copy(length = value), propagateUpdate)
 
-    def onUnitUpdate(evt: ReactEventI): Callback = {
+    def onUnitUpdate(evt: ReactEventFromInput): Callback = {
       val value = {
         if (evt.target.value.isEmpty) None
         else Some(TimeUnit.valueOf(evt.target.value))
@@ -93,7 +93,7 @@ object FiniteDurationInput {
         ^.`class` := "container-fluid",
         <.div(
           ^.`class` := "row",
-          <.div(^.`class` := "col-sm-4", LengthValidation(onLengthUpdate _)(lengthInput(props, state))),
+          <.div(^.`class` := "col-sm-4", LengthValidation(onLengthUpdate)(lengthInput(props, state))),
           <.div(
             ^.`class` := "col-sm-6",
             <.select(
@@ -101,13 +101,13 @@ object FiniteDurationInput {
               ^.`class` := "form-control",
               ^.readOnly := props.readOnly,
               ^.disabled := props.readOnly,
-              state.unit.map(u => ^.value := u.toString()),
+              state.unit.map(u => ^.value := u.toString).whenDefined,
               ^.onChange ==> onUnitUpdate,
-              <.option(^.value := "", "Select a time unit..."),
+              <.option(^.key := s"${id}_none", ^.value := "", "Select a time unit..."),
               SupportedUnits.map {
                 case (u, text) =>
-                  <.option(^.value := u.name(), text)
-              }
+                  <.option(^.key := s"${id}_${u.name()}", ^.value := u.name(), text)
+              } toVdomArray
             )
           )
         )
@@ -116,7 +116,7 @@ object FiniteDurationInput {
 
   }
 
-  val component = ReactComponentB[Props]("FiniteDurationInput")
+  val component = ScalaComponent.builder[Props]("FiniteDurationInput")
     .initialState_P(props => new State(props.value))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)

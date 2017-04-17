@@ -19,7 +19,7 @@ package io.quckoo.console.scheduler
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -62,13 +62,13 @@ object ExecutionTimeoutInput {
           <.div(
             ^.`class` := "col-sm-offset-2",
             FiniteDurationInput("timeout", props.value, onValueUpdate, props.readOnly))
-        } else EmptyTag
+        } else EmptyVdom
       )
     }
 
   }
 
-  val component = ReactComponentB[Props]("ExecutionTimeout")
+  val component = ScalaComponent.builder[Props]("ExecutionTimeout")
     .initialState(State())
     .renderBackend[Backend]
     .build

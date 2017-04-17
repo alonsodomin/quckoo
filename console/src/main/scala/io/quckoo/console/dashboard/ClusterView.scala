@@ -23,8 +23,8 @@ import io.quckoo.NodeId
 import io.quckoo.net.{NodeStatus, QuckooNode, QuckooState}
 import io.quckoo.protocol.cluster.GetClusterStatus
 
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
@@ -131,7 +131,7 @@ object ClusterView {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("ClusterView").
+  private[this] val component = ScalaComponent.builder[Props]("ClusterView").
     stateless.
     renderBackend[Backend].
     componentDidMount($ => $.backend.mounted($.props)).

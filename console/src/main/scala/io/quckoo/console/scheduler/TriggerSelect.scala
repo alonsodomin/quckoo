@@ -20,7 +20,7 @@ import io.quckoo.Trigger
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 object TriggerSelect {
 
@@ -54,14 +54,17 @@ object TriggerSelect {
     }
 
     def render(props: Props) = {
-      selectInput(Options, selectComponent(props), props.value, Options.head, props.onUpdate,
+      selectInput(
+        Options, selectComponent(props), props.value, Options.head, props.onUpdate,
         ^.id := "triggerType", ^.readOnly := props.readOnly, ^.disabled := props.readOnly
-      )(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "triggerType", "Trigger"))
+      )(
+        Seq(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "triggerType", "Trigger"))
+      )
     }
 
   }
 
-  val component = ReactComponentB[Props]("TriggerSelect")
+  val component = ScalaComponent.builder[Props]("TriggerSelect")
     .stateless
     .renderBackend[Backend]
     .build

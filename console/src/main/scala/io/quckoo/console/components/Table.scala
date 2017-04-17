@@ -22,7 +22,7 @@ import diode.data.{Pot, Ready}
 import diode.react.ReactPot._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
@@ -35,7 +35,7 @@ object Table {
   type OnSelect[Id] = Set[Id] => Callback
 
   type RowCallback[Id]             = Id => Callback
-  type RowCellRender[Id, Item]     = (Id, Item, Symbol) => ReactNode
+  type RowCellRender[Id, Item]     = (Id, Item, Symbol) => VdomNode
   type RowActionsFactory[Id, Item] = (Id, Item) => Seq[RowAction[Id, Item]]
 
   type ItemSeq[Id, Item] = Traversable[(Id, Pot[Item])]
@@ -43,7 +43,7 @@ object Table {
   type Filter[Id, Item] = (Id, Item) => Boolean
   def NoFilter[Id, Item]: Filter[Id, Item] = (_, _) => true
 
-  final case class RowAction[Id, Item](children: NonEmptyList[ReactNode], execute: RowCallback[Id])
+  final case class RowAction[Id, Item](children: NonEmptyList[VdomNode], execute: RowCallback[Id])
 
   private[this] final case class RowProps[Id, Item](
       rowId: Id,
@@ -58,10 +58,10 @@ object Table {
   )
 
   private[this] val HeaderCell =
-    ReactComponentB[Symbol]("HeaderCell").stateless.render_P(title => <.th(title.name)).build
+    ScalaComponent.builder[Symbol]("HeaderCell").stateless.render_P(title => <.th(title.name)).build
 
   private[this] val BodyCell =
-    ReactComponentB[ReactNode]("BodyCell").stateless.render_P(node => <.td(node)).build
+    ScalaComponent.builder[VdomNode]("BodyCell").stateless.render_P(node => <.td(node)).build
 
   private[this] case class CheckboxCellProps(
       id: String,
@@ -70,7 +70,7 @@ object Table {
       header: Boolean = false
   )
   private[this] val CheckboxCell =
-    ReactComponentB[CheckboxCellProps]("CheckboxCell").stateless.render_P {
+    ScalaComponent.builder[CheckboxCellProps]("CheckboxCell").stateless.render_P {
       case CheckboxCellProps(id, selected, action, header) =>
         val cb = <.input.checkbox(
           ^.id := id,
@@ -84,22 +84,23 @@ object Table {
 
   private[this] type ActionsCellProps[Id, Item] = (Id, Item, RowActionsFactory[Id, Item])
   private[this] def actionsCell[Id, Item] =
-    ReactComponentB[ActionsCellProps[Id, Item]]("ActionsCell").stateless.render_P {
+    ScalaComponent.builder[ActionsCellProps[Id, Item]]("ActionsCell").stateless.render_P {
       case (id, item, factory) =>
         <.td(
           factory(id, item).zipWithIndex.map {
             case (action, idx) =>
-              Button().withKey(s"action-$id-$idx")(
-                Button.Props(Some(action.execute(id))),
-                action.children.toList: _*)
-          }
+              val button = Button.component
+                .withKey(s"action-$id-$idx")
+                .withChildren(action.children.toList: _*)
+              button(Button.Props(Some(action.execute(id))))
+          } toVdomArray
         )
     } build
 
   private[this] def row[Id, Item] =
-    ReactComponentB[RowProps[Id, Item]]("Row").stateless.render_P { props =>
-      <.tr(props.selected ?= (^.`class` := "info"),
-        props.onClick.map(callback => ^.onClick --> callback(props.rowId)),
+    ScalaComponent.builder[RowProps[Id, Item]]("Row").stateless.render_P { props =>
+      <.tr((^.`class` := "info").when(props.selected),
+        props.onClick.map(callback => ^.onClick --> callback(props.rowId)).whenDefined,
         props.item.renderFailed { ex =>
           <.td(^.colSpan := props.columns.size, Notification.danger(ex))
         },
@@ -107,7 +108,7 @@ object Table {
           <.td(^.colSpan := props.columns.size, "Loading ...")
         },
         props.item.render { item =>
-          val cells: List[ReactElement] = {
+          val cells = {
             val columns = props.columns.map { column =>
               BodyCell.withKey(s"$column-data-${props.rowId}")(
                 props.render(props.rowId, item, column)
@@ -126,12 +127,12 @@ object Table {
             } else columns
           }
 
-          val actions: Option[ReactElement] = props.actions.map { actions =>
+          val actions = props.actions.map { actions =>
             actionsCell[Id, Item].withKey(s"actions-${props.rowId}")(
               (props.rowId, item, actions)
             )
           }
-          actions.map(actCell => cells :+ actCell).getOrElse[List[ReactElement]](cells)
+          actions.map(actCell => cells :+ actCell).getOrElse(cells).toVdomArray
         }
       )
     } build
@@ -190,10 +191,10 @@ object Table {
     }
 
     def render(props: Props[Id, Item], state: State[Id]) = {
-      val headers: List[ReactElement] = {
-        val actionsHeader: ReactElement = <.th("Actions")
-        val columns = props.headers.map { title =>
-          HeaderCell.withKey(s"$title-header")(title)
+      val headers: List[VdomElement] = {
+        val actionsHeader: VdomElement = <.th(^.key := "table-actions", "Actions")
+        val columns: List[VdomElement] = props.headers.map { title =>
+          HeaderCell.withKey(s"$title-header")(title).vdomElement
         }
 
         val selectableColumns = {
@@ -203,8 +204,9 @@ object Table {
                 "selectAll",
                 allSelected(props, state),
                 toggleSelectAll(props),
-                header = true)
-            )
+                header = true
+              )
+            ).vdomElement
             selectAllCheckbox :: columns
           } else columns
         }
@@ -221,7 +223,7 @@ object Table {
         .toSeq
       val style = if (userStyles.isEmpty) Seq(lookAndFeel.table.base) else userStyles
 
-      <.table(style, <.thead(<.tr(headers)), <.tbody(visibleItems(props).map {
+      <.table(style.toTagMod, <.thead(<.tr(headers.toVdomArray)), <.tbody(visibleItems(props).map {
         case (id, item) =>
           row[Id, Item].withKey(s"row-$id")(
             RowProps(
@@ -235,13 +237,13 @@ object Table {
               toggleSelectItem(props),
               props.actions)
           )
-      }))
+      } toVdomArray))
     }
 
   }
 
   private[components] def component[Id, Item] =
-    ReactComponentB[Props[Id, Item]]("Table")
+    ScalaComponent.builder[Props[Id, Item]]("Table")
       .initialState_P(props => State(props.selected))
       .renderBackend[Backend[Id, Item]]
       .build
@@ -256,9 +258,7 @@ object Table {
                       selected: Set[Id] = Set.empty[Id],
                       style: Set[TableStyle.Value] = Set.empty[TableStyle.Value],
                       key: Option[String] = None) = {
-    val baseComp = component[Id, Item]
-    val instance = key.map(k => baseComp.withKey(k)).getOrElse(baseComp)
-    instance.apply(Props(headers, items, render, onRowClick, onSelect, actions, filter, selected, style))
+    component[Id, Item](Props(headers, items, render, onRowClick, onSelect, actions, filter, selected, style))
   }
 
 }

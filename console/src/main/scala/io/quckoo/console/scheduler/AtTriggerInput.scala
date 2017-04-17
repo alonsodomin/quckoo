@@ -23,7 +23,7 @@ import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 08/04/2016.
@@ -75,7 +75,7 @@ object AtTriggerInput {
 
   }
 
-  val component = ReactComponentB[Props]("AtTriggerInput")
+  val component = ScalaComponent.builder[Props]("AtTriggerInput")
     .initialState_P(_ => State(None, None))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)

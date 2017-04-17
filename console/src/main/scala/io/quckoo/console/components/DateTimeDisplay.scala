@@ -19,8 +19,8 @@ package io.quckoo.console.components
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-import japgolly.scalajs.react.ReactComponentB
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.ScalaComponent
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 04/07/2016.
@@ -33,7 +33,7 @@ object DateTimeDisplay {
 
   final case class Props(dateTime: ZonedDateTime, formatter: Option[DateTimeFormatter])
 
-  private[this] val component = ReactComponentB[Props]("DateTimeDisplay").stateless.render_P {
+  private[this] val component = ScalaComponent.builder[Props]("DateTimeDisplay").stateless.render_P {
     props =>
       val fmt = props.formatter.getOrElse(DefaultFormatter)
       <.span(fmt.format(props.dateTime))

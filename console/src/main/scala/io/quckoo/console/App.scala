@@ -24,6 +24,9 @@ import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
 
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.Implicits._
+
 import org.scalajs.dom
 import slogging._
 
@@ -59,6 +62,6 @@ object App extends JSApp with LazyLogging {
     logger.info(s"Starting Quckoo Console ${Info.version}...\n" + Logo)
 
     val container = dom.document.getElementById("viewport")
-    ConsoleCircuit.wrap(identity(_))(p => SiteMap(p)).render(container)
+    ConsoleCircuit.wrap(identity(_))(p => SiteMap(p)).renderIntoDOM(container)
   }
 }

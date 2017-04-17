@@ -46,7 +46,7 @@ object CronTriggerInputTestDsl {
   }
 
   def setExpression(value: String): dsl.Actions =
-    dsl.action(s"Set expression: $value")(ChangeEventData(value) simulate _.obs.expressionInput).
+    dsl.action(s"Set expression: $value")(SimEvent.Change(value) simulate _.obs.expressionInput).
       updateState(_.copy(inputExpr = value))
 
   def emptyExpression = dsl.focus("Expression").value(_.obs.expressionInput.value.isEmpty)

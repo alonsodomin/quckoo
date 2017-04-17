@@ -26,7 +26,7 @@ import io.quckoo.console.components._
 import io.quckoo.util._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 02/09/2016.
@@ -34,7 +34,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object CronTriggerInput {
 
   private[this] val errorMessage =
-    ReactComponentB[(String, CronError)]("CronTriggerInput.ErrorMessage")
+    ScalaComponent.builder[(String, CronError)]("CronTriggerInput.ErrorMessage")
       .stateless
       .render_P { case (input, error) =>
         def showError(error: CronError) = error match {
@@ -45,9 +45,10 @@ object CronTriggerInput {
               Iterator.fill(position - 2)(NBSP).mkString + "^"
             )
 
-          case InvalidCron(errors) =>
-            val fieldErrors = errors.toList.collect { case x: InvalidField => x }
-            <.ul(fieldErrors.map(err => <.li(err.field.toString(), err.msg)).toList)
+          case ValidationError(fieldErrors) =>
+            <.ul(fieldErrors.toList.zipWithIndex.map { case (err, idx) =>
+              <.li(^.key := s"cron-err-$idx", err.field.toString(), err.msg)
+            }.toVdomArray)
         }
 
         <.div(
@@ -76,7 +77,7 @@ object CronTriggerInput {
         .fold(updateError, invokeCallback)
     }
 
-    def onUpdate(value: Option[String]) =
+    def onUpdate(value: Option[String]): Callback =
       $.modState(_.copy(inputExpr = value)) >> doValidate(value)
 
     private[this] val ExpressionInput = Input[String]
@@ -90,12 +91,14 @@ object CronTriggerInput {
           ExpressionInput(state.inputExpr, onUpdate _, ^.id := "cronTrigger", ^.readOnly := props.readOnly)),
         <.div(
           ^.`class` := "col-sm-offset-2",
-          state.inputExpr.zip(state.errorReason).map(p => errorMessage.withKey("cronError")(p))))
+          (state.inputExpr |@| state.errorReason).map((input, error) => errorMessage((input, error))).whenDefined
+        )
+      )
     }
 
   }
 
-  val component = ReactComponentB[Props]("CronTriggerInput")
+  val component = ScalaComponent.builder[Props]("CronTriggerInput")
     .initialState_P(props => State(props.value.map(_.expr.toString)))
     .renderBackend[Backend]
     .build

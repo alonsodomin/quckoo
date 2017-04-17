@@ -36,7 +36,7 @@ object TextAreaTestDsl {
   def emptyText = dsl.focus("Text").value(_.obs.textArea.value.isEmpty)
 
   def setText(text: String): dsl.Actions =
-    dsl.action(s"Set text: $text")(ChangeEventData(text) simulate _.obs.textArea)
+    dsl.action(s"Set text: $text")(SimEvent.Change(text) simulate _.obs.textArea)
       .updateState(_.copy(Some(text)))
 
   def onUpdate(value: Option[String]): Callback = Callback {

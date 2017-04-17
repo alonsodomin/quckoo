@@ -20,7 +20,7 @@ import io.quckoo.{JobPackage, JarJobPackage, ShellScriptPackage}
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 object JobPackageSelect {
 
@@ -47,14 +47,17 @@ object JobPackageSelect {
     }
 
     def render(props: Props) = {
-      selectInput(Options, selectComponent(props), props.value, props.onUpdate,
+      selectInput(
+        Options, selectComponent(props), props.value, props.onUpdate,
         ^.id := "packageType", ^.readOnly := props.readOnly, ^.disabled := props.readOnly
-      )(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "packageType", "Package Type"))
+      )(
+        Seq(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "packageType", "Package Type"))
+      )
     }
 
   }
 
-  val component = ReactComponentB[Props]("JobPackage")
+  val component = ScalaComponent.builder[Props]("JobPackage")
     .stateless
     .renderBackend[Backend]
     .build

@@ -18,7 +18,7 @@ package io.quckoo.console.components
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.ScalaCssReact._
 
@@ -37,7 +37,7 @@ object TextArea {
     private[this] def propagateUpdate: Callback =
       $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.value)))
 
-    def onUpdate(evt: ReactEventI): Callback = {
+    def onUpdate(evt: ReactEventFromInput): Callback = {
       val newValue = {
         if (evt.target.value.isEmpty) None
         else Some(evt.target.value)
@@ -50,14 +50,14 @@ object TextArea {
       <.textarea(^.`class` := "form-control",
         ^.onChange ==> onUpdate,
         ^.onBlur   ==> onUpdate,
-        state.value.map(v => ^.value := v),
-        props.attrs
+        state.value.map(v => ^.value := v).whenDefined,
+        props.attrs.toTagMod
       )
     }
 
   }
 
-  val component = ReactComponentB[Props]("TextArea")
+  val component = ScalaComponent.builder[Props]("TextArea")
     .initialState_P(props => State(props.text))
     .renderBackend[Backend]
     .build

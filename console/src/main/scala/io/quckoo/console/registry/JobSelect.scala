@@ -20,7 +20,7 @@ import io.quckoo.{JobId, JobSpec}
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.ScalaCssReact._
 
@@ -35,7 +35,7 @@ object JobSelect {
                    onUpdate: Option[JobId] => Callback,
                    readOnly: Boolean = false)
 
-  private[this] val JobOption = ReactComponentB[(JobId, JobSpec)]("JobOption").stateless.render_P {
+  private[this] val JobOption = ScalaComponent.builder[(JobId, JobSpec)]("JobOption").stateless.render_P {
     case (jobId, spec) =>
       val desc = spec.description.map(text => s"| $text").getOrElse("")
       <.option(^.value := jobId.toString(), s"${spec.displayName} $desc")
@@ -43,7 +43,7 @@ object JobSelect {
 
   class Backend($ : BackendScope[Props, Unit]) {
 
-    def onUpdate(evt: ReactEventI): Callback = {
+    def onUpdate(evt: ReactEventFromInput): Callback = {
       val newValue = {
         if (evt.target.value.isEmpty) None
         else Some(JobId(evt.target.value))
@@ -59,19 +59,22 @@ object JobSelect {
           ^.`class` := "col-sm-10",
           <.select(lnf.formControl,
             ^.id := "jobId",
-            props.value.map(id => ^.value := id.toString()),
+            props.value.map(id => ^.value := id.toString()).whenDefined,
             ^.onChange ==> onUpdate,
             ^.readOnly := props.readOnly,
             ^.disabled := props.readOnly,
             <.option("Select a job"),
             props.jobs
               .filter(!_._2.disabled)
-              .map(jobPair => JobOption.withKey(jobPair._1.toString)(jobPair)))))
+              .map(jobPair => JobOption(jobPair)).toVdomArray
+          )
+        )
+      )
     }
 
   }
 
-  val Component = ReactComponentB[Props]("JobSelect")
+  val Component = ScalaComponent.builder[Props]("JobSelect")
     .stateless
     .renderBackend[Backend]
     .build

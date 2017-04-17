@@ -23,13 +23,13 @@ import cats.syntax.show._
 import io.quckoo.console.validation._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 object ValidatedInput {
   type OnUpdate[A] = Option[A] => Callback
 
   final case class Props[A](
-      component: OnUpdate[A] => ReactNode,
+      component: OnUpdate[A] => VdomNode,
       onUpdate: OnUpdate[A],
       validator: ValidatorCallback[A],
       label: Option[String]
@@ -59,11 +59,12 @@ object ValidatedInput {
           "has-success" -> state.fieldState.valid,
           "has-error"   -> state.fieldState.invalid
         ),
-        props.label.map(labelText => <.label(^.`class` := "control-label", labelText)),
+        props.label.map(labelText => <.label(^.`class` := "control-label", labelText)).whenDefined,
         props.component(onUpdate(props)),
         state.fieldState.violation.map { violation =>
           <.span(^.`class` := "help-block", violation.show)
-        })
+        } whenDefined
+      )
     }
   }
 
@@ -74,13 +75,13 @@ object ValidatedInput {
 class ValidatedInput[A] private[components] (validator: ValidatorCallback[A]) {
   import ValidatedInput._
 
-  private[this] val component = ReactComponentB[Props[A]]("ValidatedInput")
+  private[this] val component = ScalaComponent.builder[Props[A]]("ValidatedInput")
     .initialState(State[A](ValidatedField()))
     .renderBackend[Backend[A]]
     .build
 
   def apply(onUpdate: OnUpdate[A], label: Option[String] = None)(
-      factory: OnUpdate[A] => ReactNode) =
+      factory: OnUpdate[A] => VdomNode) =
     component(Props(factory, onUpdate, validator, label))
 
 }

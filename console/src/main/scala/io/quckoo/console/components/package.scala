@@ -23,7 +23,7 @@ import cron4s.expr.CronExpr
 
 import io.quckoo._
 
-import japgolly.scalajs.react.ReactNode
+import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.extra.Reusability
 
 import scalacss.Defaults._
@@ -77,7 +77,7 @@ package object components {
         case cron: Trigger.Cron   => Right(Right(Right(Right(cron))))
       }
 
-  implicit def toReactNode(notification: Notification): ReactNode =
+  implicit def toReactNode(notification: Notification): VdomNode =
     notification.inline
 
 }
