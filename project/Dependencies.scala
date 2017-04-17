@@ -259,6 +259,7 @@ object Dependencies {
 
       "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "extra"        % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-cats"     % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "ext-monocle"  % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "test"         % version.scalaJsReact % Test,

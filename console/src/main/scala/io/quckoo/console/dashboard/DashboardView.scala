@@ -17,6 +17,7 @@
 package io.quckoo.console.dashboard
 
 import diode.react.ModelProxy
+
 import io.quckoo.console.core.ConsoleScope
 
 import japgolly.scalajs.react._

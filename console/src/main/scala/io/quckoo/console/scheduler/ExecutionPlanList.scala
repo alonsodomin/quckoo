@@ -37,17 +37,11 @@ import japgolly.scalajs.react.vdom.html_<^._
 
 import java.time.ZonedDateTime
 
-/*import scalaz._
-import scalaz.std.list._
-import scalaz.syntax.applicative.{^ => _, _}
-import scalaz.syntax.traverse._
-import scalaz.syntax.show._*/
-
 /**
   * Created by alonsodomin on 30/01/2016.
   */
 object ExecutionPlanList {
-  import ScalazReact._
+  import CatsReact._
 
   final val Columns = List(
     'Job,
@@ -148,7 +142,7 @@ object ExecutionPlanList {
 
       column match {
         case 'Job       => renderPlanName
-        case 'Current   => plan.currentTask.map(_.show).getOrElse("")
+        case 'Current   => plan.currentTask.map(_.show).getOrElse[String]("")
         case 'Trigger   => plan.trigger.toString()
         case 'Scheduled => plan.lastScheduledTime.map(renderDateTime).orNull
         case 'Execution => plan.lastExecutionTime.map(renderDateTime).orNull

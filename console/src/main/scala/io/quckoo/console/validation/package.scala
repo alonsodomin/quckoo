@@ -19,7 +19,7 @@ package io.quckoo.console
 import io.quckoo.validation._
 
 import japgolly.scalajs.react.CallbackTo
-import japgolly.scalajs.react.ScalazReact._
+import japgolly.scalajs.react.CatsReact._
 
 /**
   * Created by alonsodomin on 21/02/2016.

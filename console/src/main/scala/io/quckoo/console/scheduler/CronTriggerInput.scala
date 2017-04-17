@@ -18,6 +18,7 @@ package io.quckoo.console.scheduler
 
 import cats.data.EitherT
 import cats.instances.option._
+import cats.syntax.cartesian._
 
 import cron4s.{Error => CronError, _}
 
@@ -45,9 +46,12 @@ object CronTriggerInput {
               Iterator.fill(position - 2)(NBSP).mkString + "^"
             )
 
-          case ValidationError(fieldErrors) =>
-            <.ul(fieldErrors.toList.zipWithIndex.map { case (err, idx) =>
-              <.li(^.key := s"cron-err-$idx", err.field.toString(), err.msg)
+          case InvalidCron(errors) =>
+            <.ul(errors.toList.zipWithIndex.map { case (err, idx) =>
+              <.li(^.key := s"cron-err-$idx", err match {
+                case InvalidField(field, msg)     => s"$field: $msg"
+                case InvalidFieldCombination(msg) => msg
+              })
             }.toVdomArray)
         }
 

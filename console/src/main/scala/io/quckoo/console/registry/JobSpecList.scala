@@ -16,6 +16,11 @@
 
 package io.quckoo.console.registry
 
+import cats.data.NonEmptyList
+import cats.instances.list._
+import cats.syntax.traverse._
+import cats.syntax.show._
+
 import diode.AnyAction._
 import diode.data.{Pot, PotMap, Ready}
 import diode.react.ModelProxy
@@ -28,17 +33,11 @@ import io.quckoo.protocol.registry._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scalaz._
-import scalaz.syntax.show._
-import scalaz.std.list._
-import scalaz.syntax.traverse._
-
-
 /**
   * Created by alonsodomin on 17/10/2015.
   */
 object JobSpecList {
-  import ScalazReact._
+  import CatsReact._
 
   final val Columns = List('Name, 'Description, 'Package, 'Status)
 
@@ -119,9 +118,9 @@ object JobSpecList {
 
     def rowActions(props: Props)(jobId: JobId, jobSpec: JobSpec) = {
       Seq(if (jobSpec.disabled) {
-        Table.RowAction[JobId, JobSpec](NonEmptyList(Icons.play, "Enable"), enableJob(props))
+        Table.RowAction[JobId, JobSpec](NonEmptyList.of(Icons.play, "Enable"), enableJob(props))
       } else {
-        Table.RowAction[JobId, JobSpec](NonEmptyList(Icons.stop, "Disable"), disableJob(props))
+        Table.RowAction[JobId, JobSpec](NonEmptyList.of(Icons.stop, "Disable"), disableJob(props))
       })
     }
 
