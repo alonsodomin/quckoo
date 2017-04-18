@@ -17,12 +17,19 @@
 package io.quckoo.cluster.scheduler
 
 import java.util.UUID
+import java.time.{Clock, Instant, ZoneId, ZonedDateTime}
 
 import akka.NotUsed
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
+
+import cats.syntax.either._
+
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
+
+import io.circe.generic.auto._
 
 import io.quckoo._
 import io.quckoo.api.{Scheduler => SchedulerApi}
@@ -32,13 +39,9 @@ import io.quckoo.serialization.DataBuffer
 import io.quckoo.testkit.ImplicitClock
 
 import org.scalatest.{Matchers, WordSpec}
-import org.threeten.bp.{Clock, Instant, ZoneId, ZonedDateTime}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-
-import scalaz._
-import scalaz.syntax.either._
 
 /**
   * Created by domingueza on 21/03/16.
@@ -72,7 +75,7 @@ object SchedulerHttpRouterSpec {
     ArtifactId("com.example", "example", "latest"), ""))
   final val TestTaskMap = Map(
     TestTaskIds.head -> TaskExecution(
-      TestPlanIds.head, TestTask, TaskExecution.Scheduled, None
+      TestPlanIds.head, TestTask, TaskExecution.Status.Scheduled, None
     )
   )
 
@@ -83,7 +86,8 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
   import SchedulerHttpRouterSpec._
   import StatusCodes._
-    import serialization.json._
+  import serialization.json._
+  import ErrorAccumulatingCirceSupport._
 
   val entryPoint = pathPrefix("api" / "scheduler") {
     schedulerApi
@@ -92,10 +96,10 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
   override def cancelPlan(planId: PlanId)(
     implicit
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
-  ): Future[ExecutionPlanNotFound \/ ExecutionPlanCancelled] = Future.successful {
+  ): Future[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] = Future.successful {
     TestPlanMap.get(planId).
-      map(plan => ExecutionPlanCancelled(plan.jobId, planId, ZonedDateTime.now(clock)).right[ExecutionPlanNotFound]).
-      getOrElse(ExecutionPlanNotFound(planId).left[ExecutionPlanCancelled])
+      map(plan => ExecutionPlanCancelled(plan.jobId, planId, ZonedDateTime.now(clock)).asRight[ExecutionPlanNotFound]).
+      getOrElse(ExecutionPlanNotFound(planId).asLeft[ExecutionPlanCancelled])
   }
 
   override def executionPlan(planId: PlanId)(
@@ -107,23 +111,23 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
   override def scheduleJob(schedule: ScheduleJob)(
     implicit
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
-  ): Future[JobNotFound \/ ExecutionPlanStarted] = Future.successful {
+  ): Future[Either[JobNotFound, ExecutionPlanStarted]] = Future.successful {
     TestPlanMap.values.find(_.jobId == schedule.jobId).
-      map(plan => ExecutionPlanStarted(schedule.jobId, plan.planId, ZonedDateTime.now(clock)).right[JobNotFound]).
-      getOrElse(JobNotFound(schedule.jobId).left[ExecutionPlanStarted])
+      map(plan => ExecutionPlanStarted(schedule.jobId, plan.planId, ZonedDateTime.now(clock)).asRight[JobNotFound]).
+      getOrElse(JobNotFound(schedule.jobId).asLeft[ExecutionPlanStarted])
   }
 
   override def executionPlans(
     implicit
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
-  ): Future[Map[PlanId, ExecutionPlan]] =
-    Future.successful(TestPlanMap)
+  ): Future[Seq[(PlanId, ExecutionPlan)]] =
+    Future.successful(TestPlanMap.toSeq)
 
   override def executions(
     implicit
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
-  ): Future[Map[TaskId, TaskExecution]] =
-    Future.successful(TestTaskMap)
+  ): Future[Seq[(TaskId, TaskExecution)]] =
+    Future.successful(TestTaskMap.toSeq)
 
   override def execution(taskId: TaskId)(
     implicit

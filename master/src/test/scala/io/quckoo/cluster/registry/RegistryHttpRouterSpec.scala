@@ -24,6 +24,14 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
 
+import cats.data.ValidatedNel
+import cats.syntax.either._
+import cats.syntax.validated._
+
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
+
+import io.circe.generic.auto._
+
 import io.quckoo._
 import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.auth.Passport
@@ -34,10 +42,6 @@ import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-
-import scalaz._
-import scalaz.syntax.either._
-import scalaz.syntax.validation._
 
 /**
   * Created by domingueza on 21/03/16.
@@ -73,6 +77,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   import RegistryHttpRouterSpec._
   import StatusCodes._
   import serialization.json._
+  import ErrorAccumulatingCirceSupport._
 
   val entryPoint = pathPrefix("api" / "registry") {
     registryApi
@@ -81,10 +86,10 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   override def enableJob(jobId: JobId)(
     implicit
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
-  ): Future[JobNotFound \/ JobEnabled] = {
+  ): Future[Either[JobNotFound, JobEnabled]] = {
     val response = {
-      if (TestJobMap.contains(jobId)) JobEnabled(jobId).right[JobNotFound]
-      else JobNotFound(jobId).left[JobEnabled]
+      if (TestJobMap.contains(jobId)) JobEnabled(jobId).asRight[JobNotFound]
+      else JobNotFound(jobId).asLeft[JobEnabled]
     }
     Future.successful(response)
   }
@@ -92,10 +97,10 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   override def disableJob(jobId: JobId)(
     implicit
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
-  ): Future[JobNotFound \/ JobDisabled] = {
+  ): Future[Either[JobNotFound, JobDisabled]] = {
     val response = {
-      if (TestJobMap.contains(jobId)) JobDisabled(jobId).right[JobNotFound]
-      else JobNotFound(jobId).left[JobDisabled]
+      if (TestJobMap.contains(jobId)) JobDisabled(jobId).asRight[JobNotFound]
+      else JobNotFound(jobId).asLeft[JobDisabled]
     }
     Future.successful(response)
   }
@@ -103,18 +108,18 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   override def registerJob(jobSpec: JobSpec)(
     implicit
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
-  ): Future[ValidationNel[Fault, JobId]] = Future.successful {
+  ): Future[ValidatedNel[Fault, JobId]] = Future.successful {
     JobSpec.valid.run(jobSpec)
       .map(JobId(_))
       .leftMap(vs => ValidationFault(vs).asInstanceOf[Fault])
-      .toValidationNel
+      .toValidatedNel
   }
 
   override def fetchJobs(
     implicit
     ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
-  ): Future[Map[JobId, JobSpec]] =
-    Future.successful(TestJobMap)
+  ): Future[Seq[(JobId, JobSpec)]] =
+    Future.successful(TestJobMap.toSeq)
 
   override def fetchJob(jobId: JobId)(
     implicit
@@ -136,7 +141,7 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
 
     "return a JobId if the job spec is valid" in {
       Put(endpoint("/jobs"), Some(TestJobSpec)) ~> entryPoint ~> check {
-        responseAs[ValidationNel[Fault, JobId]] shouldBe JobId(TestJobSpec).successNel[Fault]
+        responseAs[ValidatedNel[Fault, JobId]] shouldBe JobId(TestJobSpec).validNel[Fault]
       }
     }
 
@@ -144,11 +149,11 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
       val expectedResponse = JobSpec.valid.run(TestInvalidJobSpec)
         .map(JobId(_))
         .leftMap(vs => ValidationFault(vs).asInstanceOf[Fault])
-        .toValidationNel
+        .toValidatedNel
 
       Put(endpoint("/jobs"), Some(TestInvalidJobSpec)) ~> entryPoint ~> check {
         status === BadRequest
-        responseAs[ValidationNel[Fault, JobId]] shouldBe expectedResponse
+        responseAs[ValidatedNel[Fault, JobId]] shouldBe expectedResponse
       }
     }
 

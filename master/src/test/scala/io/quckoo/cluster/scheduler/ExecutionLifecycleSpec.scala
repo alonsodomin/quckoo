@@ -64,10 +64,10 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
     "terminate when receiving the Cancel signal" in {
       lifecycle.underlyingActor.stateName shouldBe Sleeping
 
-      lifecycle ! Cancel(UserRequest)
+      lifecycle ! Cancel(Reason.UserRequest)
 
       val resultMsg = expectMsgType[Result]
-      resultMsg.outcome shouldBe NeverRun(UserRequest)
+      resultMsg.outcome shouldBe Outcome.NeverRun(Reason.UserRequest)
 
       expectTerminated(lifecycle)
     }
@@ -114,7 +114,7 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
         expectMsgType[Result]
       }
       resultMsg.outcome should matchPattern {
-        case NeverRun(_) =>
+        case Outcome.NeverRun(_) =>
       }
 
       expectTerminated(lifecycle)
@@ -161,11 +161,11 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
     }
 
     "terminate when requested to be cancelled" in {
-      lifecycle ! Cancel(UserRequest)
+      lifecycle ! Cancel(Reason.UserRequest)
 
       within(2 seconds) {
         val resultMsg = expectMsgType[Result]
-        resultMsg.outcome should be (NeverRun(UserRequest))
+        resultMsg.outcome should be (Outcome.NeverRun(Reason.UserRequest))
       }
       expectTerminated(lifecycle)
     }
@@ -214,11 +214,11 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
     }
 
     "send Interrupted as result when requested to Cancel" in {
-      lifecycle ! Cancel(UserRequest)
+      lifecycle ! Cancel(Reason.UserRequest)
 
       within(2 seconds) {
         val resultMsg = expectMsgType[Result]
-        resultMsg.outcome should be (Interrupted(UserRequest))
+        resultMsg.outcome should be (Outcome.Interrupted(Reason.UserRequest))
       }
       expectTerminated(lifecycle)
     }
@@ -280,7 +280,7 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
       val resultMsg = within(1 second) {
         expectMsgType[Result]
       }
-      resultMsg.outcome shouldBe NeverEnding
+      resultMsg.outcome shouldBe Outcome.NeverEnding
       expectTerminated(lifecycle)
     }
   }
@@ -335,7 +335,7 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
         expectMsgType[Result]
       }
 
-      resultMsg.outcome shouldBe TaskExecution.Failure(fault)
+      resultMsg.outcome shouldBe TaskExecution.Outcome.Failure(fault)
       expectTerminated(lifecycle)
     }
   }
@@ -388,7 +388,7 @@ class ExecutionLifecycleSpec extends QuckooActorClusterSuite("ExecutionLifecycle
         expectMsgType[Result]
       }
 
-      resultMsg.outcome shouldBe TaskExecution.Success
+      resultMsg.outcome shouldBe TaskExecution.Outcome.Success
       expectTerminated(lifecycle)
     }
   }

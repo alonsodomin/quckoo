@@ -142,7 +142,7 @@ class SchedulerSpec extends QuckooActorClusterSuite("SchedulerSpec")
         val completedMsg = eventListener.expectMsgType[TaskCompleted]
         completedMsg.jobId shouldBe TestJobId
         completedMsg.planId shouldBe planId
-        completedMsg.outcome shouldBe TaskExecution.NeverRun(TaskExecution.UserRequest)
+        completedMsg.outcome shouldBe TaskExecution.Outcome.NeverRun(TaskExecution.Reason.UserRequest)
 
         val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
         finishedMsg.planId shouldBe planId
@@ -162,9 +162,11 @@ class SchedulerSpec extends QuckooActorClusterSuite("SchedulerSpec")
       whenReady(executionPlans) { plans =>
         val planId = testPlanId.get
 
+        val expectedOutcome = Some(TaskExecution.Outcome.NeverRun(TaskExecution.Reason.UserRequest))
+
         plans should contain key planId
         plans(planId) should matchPattern {
-          case ExecutionPlan(`TestJobId`, `planId`, _, _, _, Some(TaskExecution.NeverRun(TaskExecution.UserRequest)), _, _, _, _) =>
+          case ExecutionPlan(`TestJobId`, `planId`, _, _, _, `expectedOutcome`, _, _, _, _) =>
         }
       }
     }
