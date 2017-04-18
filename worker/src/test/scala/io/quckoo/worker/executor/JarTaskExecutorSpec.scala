@@ -21,14 +21,14 @@ import java.util.UUID
 
 import akka.testkit._
 
+import cats.data.NonEmptyList
+
 import io.quckoo._
 import io.quckoo.resolver.{Artifact, Resolver}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 import io.quckoo.testkit.QuckooActorSuite
 
 import org.scalamock.scalatest.MockFactory
-
-import scalaz.NonEmptyList
 
 /**
  * Created by aalonsodominguez on 04/08/15.
@@ -80,7 +80,7 @@ class JarTaskExecutorSpec extends QuckooActorSuite("JobExecutorSpec")
       )
 
       val dependencyError = UnresolvedDependency(ArtifactId("com.example", "bar", "latest"))
-      val expectedFault = MissingDependencies(NonEmptyList(dependencyError))
+      val expectedFault = MissingDependencies(NonEmptyList.of(dependencyError))
 
       (workerContext.resolver _).expects().returning(resolverProbe.ref)
 
