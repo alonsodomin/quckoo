@@ -23,7 +23,10 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
 import akka.stream.ActorMaterializer
 
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
+
+import io.circe.generic.auto._
 
 import io.quckoo.cluster.core.QuckooServer
 import io.quckoo.cluster.registry.RegistryHttpRouter
@@ -36,6 +39,7 @@ trait HttpRouter
 
   import StatusCodes._
   import TimeoutDirectives._
+  import ErrorAccumulatingCirceSupport._
 
   private[this] def defineApi(implicit system: ActorSystem,
                               materializer: ActorMaterializer): Route =

@@ -17,11 +17,14 @@
 package io.quckoo.cluster.scheduler
 
 import java.util.UUID
+import java.time.{Clock, ZonedDateTime, Duration => JavaDuration}
 
 import akka.actor._
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted}
+
+import cats.syntax.eq._
 
 import io.quckoo._
 import io.quckoo.api.TopicTag
@@ -30,10 +33,7 @@ import io.quckoo.protocol.scheduler._
 
 import kamon.trace.Tracer
 
-import org.threeten.bp.{Clock, ZonedDateTime, Duration => JavaDuration}
-
 import scala.concurrent.duration._
-import scalaz.syntax.equal._
 
 /**
   * Created by aalonsodominguez on 16/08/15.
@@ -342,7 +342,7 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
         log.debug("Cancelling trigger for execution plan '{}'.", state.planId)
         trigger.foreach(_.cancel())
       }
-      lifecycle ! ExecutionLifecycle.Cancel(TaskExecution.UserRequest)
+      lifecycle ! ExecutionLifecycle.Cancel(TaskExecution.Reason.UserRequest)
       context.become(runningExecution(state, context.unwatch(lifecycle)))
 
     case ExecutionLifecycle.Result(outcome) =>
@@ -438,10 +438,10 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
                           outcome: TaskExecution.Outcome): InternalCmd = {
     if (state.plan.trigger.isRecurring) {
       outcome match {
-        case TaskExecution.Success =>
+        case TaskExecution.Outcome.Success =>
           scheduleOrFinish(state)
 
-        case TaskExecution.Failure(cause) =>
+        case TaskExecution.Outcome.Failure(cause) =>
           if (shouldRetry(cause)) {
             // TODO improve retry process
             scheduleOrFinish(state)
