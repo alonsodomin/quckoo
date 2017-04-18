@@ -37,7 +37,6 @@ import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 import scalacss.internal.mutable.GlobalRegistry
 
-@JSExport
 object App extends JSApp with LazyLogging {
 
   def inlineStyles() = {

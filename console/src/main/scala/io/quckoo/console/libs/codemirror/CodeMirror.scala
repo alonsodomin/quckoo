@@ -21,11 +21,13 @@ import org.scalajs.dom.html.TextArea
 
 import scala.scalajs.js
 import scala.scalajs.js.|
+import scala.scalajs.js.annotation._
 
 /**
   * Created by alonsodomin on 02/03/2017.
   */
 @js.native
+@JSGlobal
 object CodeMirror extends js.Object {
 
   def apply(element: Element, options: js.Any = js.Dynamic.literal()): CodeMirror = js.native

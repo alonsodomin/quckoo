@@ -5,12 +5,12 @@ logLevel := Level.Warn
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "1.6.0")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.0")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.4")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.5.4")
 
 // Web plugins
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.14")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.15")
 addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.3")
 addSbtPlugin("org.irundaia.sbt" % "sbt-sassify" % "1.4.8")
 addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.3.0")
