@@ -3,8 +3,6 @@ import sbt.Keys._
 
 import com.typesafe.sbt.pgp.PgpKeys
 
-import QuckooAppKeys.sigarLoaderOptions
-
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 organization in ThisBuild := "io.quckoo"
@@ -52,15 +50,10 @@ lazy val commonJvmSettings = Seq(
 lazy val commonJsSettings = Seq(
   coverageEnabled := false,
   coverageExcludedFiles := ".*",
-  persistLauncher in Test := false,
   scalaJSStage in Test := FastOptStage,
   jsEnv in Test := PhantomJSEnv().value,
   // batch mode decreases the amount of memory needed to compile scala.js code
   scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(botBuild.value)
-  /*scalacOptions ++= Seq(
-    "-P:scalajs:suppressMissingJSGlobalDeprecations",
-    "-P:scalajs:suppressExportDeprecations"
-  )*/
 )
 
 lazy val scoverageSettings = Seq(
@@ -254,8 +247,7 @@ lazy val console = (project in file("console"))
     name := "console",
     moduleName := "quckoo-console",
     requiresDOM := true,
-    persistLauncher in Compile := true
-    //scalaJSUseMainModuleInitializer in Compile := true
+    scalaJSUseMainModuleInitializer in Compile := true
   )
   .dependsOn(clientJS, testSupportJS % Test)
 

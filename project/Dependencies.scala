@@ -14,7 +14,7 @@ object Dependencies {
 
     // Testing --------
 
-    val scalaTest  = "3.0.1"
+    val scalaTest  = "3.0.2"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.5.0"
     val mockito    = "1.10.19"
@@ -38,7 +38,7 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.25"
+      val cassandra = "0.25.1"
       val inmemory  = "2.4.17.3"
     }
 
@@ -55,27 +55,23 @@ object Dependencies {
     val scalaJSScripts  = "1.1.0"
 
     val testState = "2.1.2-RC1"
-    val scalaCss  = "0.5.3-RC1"
-    val scalaTime = "2.0.0-M10"
-
-    val diode = "1.1.2-SNAPSHOT"
-
-    val upickle   = "0.4.4"
-    val scalatags = "0.6.3"
 
     // Other utils ---
 
     val arm         = "2.0"
     val betterfiles = "3.0.0"
+    val diode       = "1.1.2-SNAPSHOT"
     val cats        = "0.9.0"
     val circe       = "0.7.1"
     val cron4s      = "0.4.0"
     val enumeratum  = "1.5.10"
     val ivy         = "2.4.0"
-    val monix       = "2.2.3"
+    val monix       = "2.2.4"
     val monocle     = "1.4.0"
     val pureconfig  = "0.7.0"
-    val scalaz      = "7.2.10"
+    val scalaCss    = "0.5.3-RC1"
+    val scalaTime   = "2.0.0-M10"
+    val scalatags   = "0.6.3"
     val scopt       = "3.5.0"
     val shims       = "1.0-b0e5152"
     val xml         = "1.0.6"
@@ -86,7 +82,7 @@ object Dependencies {
     val jquery           = "2.2.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs          = "15.4.2"
+    val reactJs          = "15.5.4"
     val sparkMD5         = "2.0.2"
     val codemirror       = "5.24.2"
   }
@@ -112,7 +108,6 @@ object Dependencies {
         val main    = "com.typesafe.akka" %% "akka-http"         % version.akka.http.main
         val testkit = "com.typesafe.akka" %% "akka-http-testkit" % version.akka.http.main
         val circe   = "de.heikoseeberger" %% "akka-http-circe"   % version.akka.http.json
-        val upickle = "de.heikoseeberger" %% "akka-http-upickle" % version.akka.http.json
         val sse     = "de.heikoseeberger" %% "akka-sse"          % version.akka.http.sse
       }
 
@@ -181,7 +176,6 @@ object Dependencies {
       "io.circe"          %%% "circe-parser"       % version.circe,
       "io.circe"          %%% "circe-generic"      % version.circe,
       "io.circe"          %%% "circe-optics"       % version.circe,
-      "com.lihaoyi"       %%% "upickle"            % version.upickle,
       "com.beachape"      %%% "enumeratum"         % version.enumeratum,
       "com.beachape"      %%% "enumeratum-circe"   % version.enumeratum,
       //"com.codecommit"    %%% "shims-core"         % version.shims,
@@ -219,9 +213,9 @@ object Dependencies {
 
   lazy val api = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "io.suzaku"      %%% "diode"          % version.diode changing(),
-      "io.monix"       %%% "monix-reactive" % version.monix,
-      "io.monix"       %%% "monix-cats"     % version.monix
+      "io.suzaku" %%% "diode"          % version.diode changing(),
+      "io.monix"  %%% "monix-reactive" % version.monix,
+      "io.monix"  %%% "monix-cats"     % version.monix
     )
   )
 
@@ -260,7 +254,7 @@ object Dependencies {
       "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "extra"        % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "ext-cats"     % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % version.scalaJsReact,
+      //"com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "ext-monocle"  % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "test"         % version.scalaJsReact % Test,
       "com.github.japgolly.scalacss"      %%% "core"         % version.scalaCss,
@@ -340,7 +334,7 @@ object Dependencies {
   lazy val clusterMaster = Def.settings {
     import libs._
     libraryDependencies ++= Seq(
-      Akka.sharding, Akka.http.main, Akka.http.upickle, Akka.http.circe, Akka.http.sse,
+      Akka.sharding, Akka.http.main, Akka.http.circe, Akka.http.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
       Akka.persistence.query, Akka.persistence.memory, Akka.constructr,
       Kamon.http, scopt, authenticatJwt,
