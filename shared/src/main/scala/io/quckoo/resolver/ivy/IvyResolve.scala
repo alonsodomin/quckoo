@@ -18,6 +18,9 @@ package io.quckoo.resolver.ivy
 
 import java.net.URL
 
+import cats.data._
+import cats.implicits._
+
 import io.quckoo._
 import io.quckoo.resolver._
 import io.quckoo.resolver.config.IvyConfig
@@ -31,7 +34,6 @@ import org.apache.ivy.core.resolve.ResolveOptions
 import slogging._
 
 import scala.concurrent.{ExecutionContext, Future}
-import scalaz._
 
 /**
   * Created by aalonsodominguez on 17/07/15.
@@ -53,32 +55,29 @@ object IvyResolve {
 }
 
 class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with LazyLogging {
-
   import IvyResolve._
-  import Scalaz._
 
   def apply(artifactId: ArtifactId, download: Boolean)(
-      implicit ec: ExecutionContext): Future[Validation[Fault, Artifact]] = Future {
+      implicit ec: ExecutionContext): Future[Validated[Fault, Artifact]] = Future {
 
     def unresolvedDependencies(
-        report: ResolveReport): ValidationNel[DependencyFault, ResolveReport] = {
-      val validations: List[Validation[DependencyFault, ResolveReport]] =
+        report: ResolveReport): ValidatedNel[DependencyFault, ResolveReport] = {
+      val validations: List[Validated[DependencyFault, ResolveReport]] =
         report.getUnresolvedDependencies
           .map(_.getId)
           .map { moduleId =>
             val unresolvedId =
               ArtifactId(moduleId.getOrganisation, moduleId.getName, moduleId.getRevision)
-            UnresolvedDependency(unresolvedId).failure[ResolveReport]
+            UnresolvedDependency(unresolvedId).invalid[ResolveReport]
         } toList
 
-      validations.foldLeft(report.successNel[DependencyFault])((acc, v) =>
-        (acc |@| v.toValidationNel) { (_, r) =>
-          r
-      })
+      validations.foldLeft(report.validNel[DependencyFault])((acc, v) =>
+        (acc |@| v.toValidatedNel).map((_, r) => r)
+      )
     }
 
-    def downloadFailed(report: ResolveReport): ValidationNel[DependencyFault, ResolveReport] = {
-      val validations: List[Validation[DependencyFault, ResolveReport]] =
+    def downloadFailed(report: ResolveReport): ValidatedNel[DependencyFault, ResolveReport] = {
+      val validations: List[Validated[DependencyFault, ResolveReport]] =
         report.getFailedArtifactsReports.map { artifactReport =>
           val moduleRevisionId = artifactReport.getArtifact.getModuleRevisionId
           val artifactId = ArtifactId(
@@ -92,13 +91,12 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with LazyLogging {
               DownloadFailed.Other(artifactReport.getDownloadDetails)
             }
           }
-          DownloadFailed(artifactId, reason).failure[ResolveReport]
+          DownloadFailed(artifactId, reason).invalid[ResolveReport]
         } toList
 
-      validations.foldLeft(report.successNel[DependencyFault])((acc, v) =>
-        (acc |@| v.toValidationNel) { (_, r) =>
-          r
-      })
+      validations.foldLeft(report.validNel[DependencyFault])((acc, v) =>
+        (acc |@| v.toValidatedNel).map((_, r) => r)
+      )
     }
 
     def artifactLocations(artifactReports: Seq[ArtifactDownloadReport]): Seq[URL] = {
@@ -123,7 +121,7 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with LazyLogging {
     logger.debug(s"Resolving $moduleDescriptor")
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
-    (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)) { (_, r) =>
+    (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)).map { (_, r) =>
       Artifact(artifactId, artifactLocations(r.getAllArtifactsReports))
     } leftMap MissingDependencies
   }

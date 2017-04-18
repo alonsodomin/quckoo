@@ -18,7 +18,7 @@ package io.quckoo.serialization.kryo;
 
 import static com.esotericsoftware.kryo.util.Util.*;
 
-import org.threeten.bp.*;
+import java.time.*;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;

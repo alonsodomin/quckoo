@@ -16,11 +16,11 @@
 
 package io.quckoo.resolver
 
+import cats.data.Validated
+
 import io.quckoo.{ArtifactId, Fault}
 
 import scala.concurrent.{ExecutionContext, Future}
-
-import scalaz._
 
 /**
   * Created by alonsodomin on 23/01/2016.
@@ -28,6 +28,6 @@ import scalaz._
 trait Resolve {
 
   def apply(artifactId: ArtifactId, download: Boolean)(
-      implicit ec: ExecutionContext): Future[Validation[Fault, Artifact]]
+      implicit ec: ExecutionContext): Future[Validated[Fault, Artifact]]
 
 }

@@ -16,12 +16,12 @@
 
 package io.quckoo.resolver
 
+import cats.data.Validated._
+
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern._
 
 import io.quckoo.{ArtifactId, Fault}
-
-import scalaz._
 
 /**
   * Created by alonsodomin on 11/04/2016.
@@ -46,16 +46,16 @@ class Resolver(resolve: Resolve) extends Actor with ActorLogging {
     case Validate(artifactId) =>
       log.debug("Validating artifact {}", artifactId)
       resolve(artifactId, download = false) map {
-        case Success(artifact) => ArtifactResolved(artifact)
-        case Failure(cause)    => ResolutionFailed(artifactId, cause)
+        case Valid(artifact) => ArtifactResolved(artifact)
+        case Invalid(cause)  => ResolutionFailed(artifactId, cause)
       } pipeTo sender()
       ()
 
     case Download(artifactId) =>
       log.debug("Downloading artifact {}", artifactId)
       resolve(artifactId, download = true) map {
-        case Success(artifact) => ArtifactResolved(artifact)
-        case Failure(cause)    => ResolutionFailed(artifactId, cause)
+        case Valid(artifact) => ArtifactResolved(artifact)
+        case Invalid(cause)  => ResolutionFailed(artifactId, cause)
       } pipeTo sender()
       ()
   }

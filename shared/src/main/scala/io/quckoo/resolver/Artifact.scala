@@ -19,11 +19,11 @@ package io.quckoo.resolver
 import java.net.URL
 import java.util.concurrent.Callable
 
+import cats.implicits._
+
 import io.quckoo.{ArtifactId, JobClass}
 
 import scala.util.{Failure, Success, Try}
-import scalaz.{Failure => _, Success => _, _}
-import Scalaz._
 
 import slogging._
 
@@ -57,9 +57,9 @@ final class Artifact private[resolver] (
 
   def newJob(className: String, params: Map[String, Any]): Try[Callable[_]] = {
     def injectParameters(clazz: JobClass, instance: Any): Try[Unit] = {
-      val injection = \/.fromTryCatchNonFatal(clazz.getDeclaredFields.toList).flatMap { list =>
+      val injection = Either.catchNonFatal(clazz.getDeclaredFields.toList).flatMap { list =>
         list.filter(f => params.contains(f.getName)).map { field =>
-          \/.fromTryCatchNonFatal {
+          Either.catchNonFatal {
             val value = params(field.getName)
             logger.debug("Injecting value '{}' into job instance of class '{}'", value, className)
             field.set(instance, value)
@@ -68,8 +68,8 @@ final class Artifact private[resolver] (
       }
 
       injection match {
-        case -\/(ex) => Failure(ex)
-        case \/-(_)  => Success(())
+        case Left(ex) => Failure(ex)
+        case Right(_) => Success(())
       }
     }
 
@@ -89,7 +89,7 @@ final class Artifact private[resolver] (
 
   private def logCreation(): Unit = {
     val classpathStr = classpath.mkString(":")
-    logger.debug(s"Job package created for artifact ${artifactId.shows} and classpath: $classpathStr")
+    logger.debug(s"Job package created for artifact ${artifactId.show} and classpath: $classpathStr")
   }
 
 }

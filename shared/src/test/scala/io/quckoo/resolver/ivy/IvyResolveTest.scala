@@ -19,6 +19,9 @@ package io.quckoo.resolver.ivy
 import java.io.File
 import java.net.URL
 
+import cats.data.NonEmptyList
+import cats.implicits._
+
 import io.quckoo._
 import io.quckoo.resolver.Artifact
 
@@ -37,7 +40,6 @@ import org.scalatest.time.SpanSugar
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 
 import scala.concurrent.ExecutionContext
-import scalaz._
 
 /**
   * Created by alonsodomin on 23/01/2016.
@@ -89,10 +91,9 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
     when(failedDownloadArtifact.getModuleRevisionId).thenReturn(failedDownloadModuleId)
 
     And("the expected result as accumulation of errors")
-    import Scalaz._
-    val expectedResult = MissingDependencies(NonEmptyList(
+    val expectedResult = MissingDependencies(NonEmptyList.of(
       expectedUnresolvedDependency, expectedDownloadFailed
-    )).failure[Artifact]
+    )).invalid[Artifact]
 
     When("Attempting to resolve the artifact")
     whenReady(ivyResolve(TestArtifactId, download = false), Timeout(5 seconds)) { result =>
@@ -153,10 +154,8 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
 
     When("attempting to download the artifacts")
     whenReady(ivyResolve(TestArtifactId, download = true), Timeout(2 seconds)) { result =>
-      import Scalaz._
-
       Then("the returned validation should contain the expected artifact")
-      result should be (expectedArtifact.successNel[Fault])
+      result should be (expectedArtifact.validNel[Fault])
 
       verify(mockIvy).resolve(any(classOf[ModuleDescriptor]), any(classOf[ResolveOptions]))
       verify(mockReport).getUnresolvedDependencies
