@@ -16,7 +16,7 @@
 
 package io.quckoo.cluster.protocol
 
-import io.quckoo.{Fault, NodeId, TaskId}
+import io.quckoo.{QuckooError, NodeId, TaskId}
 
 // Messages from workers
 sealed trait WorkerMessage {
@@ -26,7 +26,7 @@ final case class RegisterWorker(workerId: NodeId)                           exte
 final case class RemoveWorker(workerId: NodeId)                             extends WorkerMessage
 final case class RequestTask(workerId: NodeId)                              extends WorkerMessage
 final case class TaskDone(workerId: NodeId, taskId: TaskId, result: Any)    extends WorkerMessage
-final case class TaskFailed(workerId: NodeId, taskId: TaskId, cause: Fault) extends WorkerMessage
+final case class TaskFailed(workerId: NodeId, taskId: TaskId, cause: QuckooError) extends WorkerMessage
 
 // Messages to workers
 sealed trait MasterMessage

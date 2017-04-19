@@ -455,7 +455,7 @@ class ExecutionDriver(lifecycleFactory: ExecutionDriver.ExecutionLifecycleFactor
     } else FinishPlan
   }
 
-  private def shouldRetry(cause: Fault): Boolean = cause match {
+  private def shouldRetry(cause: QuckooError): Boolean = cause match {
     case ex: ExceptionThrown => false
     case _                   => true
   }

@@ -132,7 +132,7 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
       failingWorker.expectMsg(task)
       failingExec.expectMsg(ExecutionLifecycle.Start)
 
-      val cause: Fault = ExceptionThrown.from(new Exception("TEST EXCEPTION"))
+      val cause: QuckooError = ExceptionThrown.from(new Exception("TEST EXCEPTION"))
       taskQueue.tell(TaskFailed(failingWorkerId, task.id, cause), failingWorker.ref)
 
       failingExec.expectMsgType[ExecutionLifecycle.Finish].fault should be(Some(cause))

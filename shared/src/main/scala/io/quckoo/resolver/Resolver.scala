@@ -21,7 +21,7 @@ import cats.data.Validated._
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern._
 
-import io.quckoo.{ArtifactId, Fault}
+import io.quckoo.{ArtifactId, QuckooError}
 
 /**
   * Created by alonsodomin on 11/04/2016.
@@ -31,7 +31,7 @@ object Resolver {
   final case class Validate(artifactId: ArtifactId)
   final case class Download(artifactId: ArtifactId)
   final case class ArtifactResolved(artifact: Artifact)
-  final case class ResolutionFailed(artifactId: ArtifactId, cause: Fault)
+  final case class ResolutionFailed(artifactId: ArtifactId, cause: QuckooError)
 
   def props(resolve: Resolve): Props =
     Props(classOf[Resolver], resolve)

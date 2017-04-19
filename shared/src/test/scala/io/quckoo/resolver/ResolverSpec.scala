@@ -22,7 +22,7 @@ import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit}
 import cats.data.{NonEmptyList, Validated}
 import cats.implicits._
 
-import io.quckoo.{ArtifactId, Fault, MissingDependencies, UnresolvedDependency}
+import io.quckoo.{ArtifactId, QuckooError, MissingDependencies, UnresolvedDependency}
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -58,7 +58,7 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with WordSpecLik
     "return a failed resolution if there are unresolved dependencies" in {
       val unresolvedDependency = UnresolvedDependency(BarArtifactId)
       val expectedFault = MissingDependencies(NonEmptyList.of(unresolvedDependency))
-      val expectedValidation: Validated[Fault, Artifact] =
+      val expectedValidation: Validated[QuckooError, Artifact] =
         expectedFault.invalid[Artifact]
 
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
@@ -73,7 +73,7 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with WordSpecLik
     "return a resolved artifact if resolution succeeds" in {
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
         expects(FooArtifactId, false, *).
-        returning(Future.successful(FooArtifact.valid[Fault]))
+        returning(Future.successful(FooArtifact.valid[QuckooError]))
 
       resolver ! Resolver.Validate(FooArtifactId)
 
@@ -87,7 +87,7 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with WordSpecLik
     "return a failed resolution if there are unresolved dependencies" in {
       val unresolvedDependency = UnresolvedDependency(BarArtifactId)
       val expectedFault = MissingDependencies(NonEmptyList.of(unresolvedDependency))
-      val expectedValidation: Validated[Fault, Artifact] =
+      val expectedValidation: Validated[QuckooError, Artifact] =
         expectedFault.invalid[Artifact]
 
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
@@ -102,7 +102,7 @@ class ResolverSpec extends TestKit(ActorSystem("ResolverSpec")) with WordSpecLik
     "return a resolved artifact if resolution succeeds" in {
       (mockResolve.apply(_: ArtifactId, _: Boolean)(_: ExecutionContext)).
         expects(FooArtifactId, true, *).
-        returning(Future.successful(FooArtifact.valid[Fault]))
+        returning(Future.successful(FooArtifact.valid[QuckooError]))
 
       resolver ! Resolver.Download(FooArtifactId)
 

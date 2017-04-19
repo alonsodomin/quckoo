@@ -58,11 +58,11 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with LazyLogging {
   import IvyResolve._
 
   def apply(artifactId: ArtifactId, download: Boolean)(
-      implicit ec: ExecutionContext): Future[Validated[Fault, Artifact]] = Future {
+      implicit ec: ExecutionContext): Future[Validated[QuckooError, Artifact]] = Future {
 
     def unresolvedDependencies(
-        report: ResolveReport): ValidatedNel[DependencyFault, ResolveReport] = {
-      val validations: List[Validated[DependencyFault, ResolveReport]] =
+        report: ResolveReport): ValidatedNel[DependencyError, ResolveReport] = {
+      val validations: List[Validated[DependencyError, ResolveReport]] =
         report.getUnresolvedDependencies
           .map(_.getId)
           .map { moduleId =>
@@ -71,13 +71,13 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with LazyLogging {
             UnresolvedDependency(unresolvedId).invalid[ResolveReport]
         } toList
 
-      validations.foldLeft(report.validNel[DependencyFault])((acc, v) =>
+      validations.foldLeft(report.validNel[DependencyError])((acc, v) =>
         (acc |@| v.toValidatedNel).map((_, r) => r)
       )
     }
 
-    def downloadFailed(report: ResolveReport): ValidatedNel[DependencyFault, ResolveReport] = {
-      val validations: List[Validated[DependencyFault, ResolveReport]] =
+    def downloadFailed(report: ResolveReport): ValidatedNel[DependencyError, ResolveReport] = {
+      val validations: List[Validated[DependencyError, ResolveReport]] =
         report.getFailedArtifactsReports.map { artifactReport =>
           val moduleRevisionId = artifactReport.getArtifact.getModuleRevisionId
           val artifactId = ArtifactId(
@@ -94,7 +94,7 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with LazyLogging {
           DownloadFailed(artifactId, reason).invalid[ResolveReport]
         } toList
 
-      validations.foldLeft(report.validNel[DependencyFault])((acc, v) =>
+      validations.foldLeft(report.validNel[DependencyError])((acc, v) =>
         (acc |@| v.toValidatedNel).map((_, r) => r)
       )
     }

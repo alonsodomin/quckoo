@@ -20,7 +20,7 @@ import akka.actor.{ActorSelection, Props}
 import akka.persistence.fsm.PersistentFSM.Normal
 import akka.persistence.fsm.{LoggingPersistentFSM, PersistentFSM}
 
-import io.quckoo.{Fault, PlanId, Task, TaskExecution}
+import io.quckoo.{QuckooError, PlanId, Task, TaskExecution}
 import io.quckoo.cluster.scheduler.TaskQueue.EnqueueAck
 
 import kamon.trace.Tracer
@@ -42,7 +42,7 @@ object ExecutionLifecycle {
   sealed trait Command
   final case class Awake(task: Task, queue: ActorSelection) extends Command
   case object Start                                         extends Command
-  final case class Finish(fault: Option[Fault])             extends Command
+  final case class Finish(fault: Option[QuckooError])             extends Command
   final case class Cancel(reason: Reason)        extends Command
   case object TimeOut                                       extends Command
   case object Get                                           extends Command
@@ -66,7 +66,7 @@ object ExecutionLifecycle {
   final case class Cancelled(reason: Reason)                      extends ExecutionEvent
   final case class Triggered(task: Task)                                     extends ExecutionEvent
   case object Started                                                        extends ExecutionEvent
-  final case class Completed(fault: Option[Fault])                           extends ExecutionEvent
+  final case class Completed(fault: Option[QuckooError])                           extends ExecutionEvent
   case object TimedOut                                                       extends ExecutionEvent
 
   final case class Result(outcome: Outcome)

@@ -155,7 +155,7 @@ class IvyResolveTest extends FlatSpec with GivenWhenThen with Matchers with Scal
     When("attempting to download the artifacts")
     whenReady(ivyResolve(TestArtifactId, download = true), Timeout(2 seconds)) { result =>
       Then("the returned validation should contain the expected artifact")
-      result should be (expectedArtifact.validNel[Fault])
+      result should be (expectedArtifact.validNel[QuckooError])
 
       verify(mockIvy).resolve(any(classOf[ModuleDescriptor]), any(classOf[ResolveOptions]))
       verify(mockReport).getUnresolvedDependencies

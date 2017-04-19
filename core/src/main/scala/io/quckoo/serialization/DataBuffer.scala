@@ -45,8 +45,10 @@ final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal
     new DataBuffer(newBuffer)
   }
 
-  def as[A](implicit decoder: Decoder[String, A]): Attempt[A] =
+  def as[A](implicit decoder: Decoder[String, A]): Attempt[A] = {
+    println(s"Decoding: ${asString()}")
     decoder.decode(asString())
+  }
 
   def asString(charset: Charset = StandardCharsets.UTF_8): String = {
     val content = charset.decode(buffer).toString

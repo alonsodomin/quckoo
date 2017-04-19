@@ -18,7 +18,7 @@ package io.quckoo.client.core
 
 import cats.data.ValidatedNel
 
-import io.quckoo.{Fault, JobId, JobNotFound, JobSpec}
+import io.quckoo.{QuckooError, JobId, JobNotFound, JobSpec}
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 
 /**
@@ -27,9 +27,9 @@ import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 trait RegistryCmds[P <: Protocol] {
   import CmdMarshalling.Auth
 
-  type RegisterJobCmd = Auth[P, JobSpec, ValidatedNel[Fault, JobId]]
+  type RegisterJobCmd = Auth[P, JobSpec, ValidatedNel[QuckooError, JobId]]
   type GetJobCmd      = Auth[P, JobId, Option[JobSpec]]
-  type GetJobsCmd     = Auth[P, Unit, Seq[(JobId, JobSpec)]]
+  type GetJobsCmd     = Auth[P, Unit, List[(JobId, JobSpec)]]
   type EnableJobCmd   = Auth[P, JobId, Either[JobNotFound, JobEnabled]]
   type DisableJobCmd  = Auth[P, JobId, Either[JobNotFound, JobDisabled]]
 

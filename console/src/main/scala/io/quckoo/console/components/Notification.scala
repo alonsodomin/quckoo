@@ -16,7 +16,7 @@
 
 package io.quckoo.console.components
 
-import io.quckoo.Fault
+import io.quckoo.QuckooError
 import io.quckoo.console.components.Notification._
 import io.quckoo.console.libs._
 
@@ -74,7 +74,7 @@ object Notification {
       def apply() = Props(string)
     }
 
-    implicit def fromFault(fault: Fault): PropsMagnet = new PropsMagnet {
+    implicit def fromFault(fault: QuckooError): PropsMagnet = new PropsMagnet {
       def apply() = Props(fault.toString, title = Some("Error"))
     }
 

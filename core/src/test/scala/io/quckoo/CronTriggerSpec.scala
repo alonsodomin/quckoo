@@ -34,7 +34,7 @@ class CronTriggerSpec extends FlatSpec with Matchers {
   implicit val clock = Clock.fixed(instant, zoneUTC)
 
   "cron triggers" should "always be recurring" in {
-    val Right(cronExpr) = Cron("* * * * * *")
+    val Right(cronExpr) = Cron("* * * * * ?")
     val trigger = CronTrigger(cronExpr)
 
     trigger.isRecurring shouldBe true
@@ -42,7 +42,7 @@ class CronTriggerSpec extends FlatSpec with Matchers {
 
   it should "return the next zoned date time to the scheduled time" in {
     val scheduledTime = ScheduledTime(LocalDateTime.of(2016, 1, 1, 0, 0, 0).atZone(zoneUTC))
-    val Right(cronExpr) = Cron("0 0 * * * *")
+    val Right(cronExpr) = Cron("0 0 * * * ?")
     val trigger = CronTrigger(cronExpr)
 
     val returnedTime = trigger.nextExecutionTime(scheduledTime)
@@ -52,7 +52,7 @@ class CronTriggerSpec extends FlatSpec with Matchers {
 
   it should "return the next zoned date time to the last execution time" in {
     val lastExecutionTime = LastExecutionTime(LocalDateTime.of(2016, 4, 2, 0, 0, 0).atZone(zoneUTC))
-    val Right(cronExpr) = Cron("0 0 */2 * * *")
+    val Right(cronExpr) = Cron("0 0 */2 * * ?")
     val trigger = CronTrigger(cronExpr)
 
     val returnedTime = trigger.nextExecutionTime(lastExecutionTime)

@@ -24,7 +24,7 @@ import cats.syntax.either._
 //import io.circe.Decoder._
 import io.circe.generic.auto._
 
-import io.quckoo.{Fault, JobId, JobNotFound, JobSpec}
+import io.quckoo.{QuckooError, JobId, JobNotFound, JobSpec}
 import io.quckoo.client.core._
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.serialization.json._
@@ -41,7 +41,7 @@ trait HttpRegistryCmds extends HttpMarshalling with RegistryCmds[HttpProtocol] {
     s"$JobsURI/${cmd.payload}" + suffix.map(str => s"/$str").getOrElse("")
 
   implicit lazy val registerJobCmd: RegisterJobCmd =
-    new Auth[HttpProtocol, JobSpec, ValidatedNel[Fault, JobId]] {
+    new Auth[HttpProtocol, JobSpec, ValidatedNel[QuckooError, JobId]] {
       override val marshall   = marshallToJson[RegisterJobCmd](HttpMethod.Put, _ => JobsURI)
       override val unmarshall = unmarshallFromJson[RegisterJobCmd]
     }
@@ -51,7 +51,7 @@ trait HttpRegistryCmds extends HttpMarshalling with RegistryCmds[HttpProtocol] {
     override val unmarshall = unmarshalOption[JobSpec]
   }
 
-  implicit lazy val getJobsCmd: GetJobsCmd = new Auth[HttpProtocol, Unit, Seq[(JobId, JobSpec)]] {
+  implicit lazy val getJobsCmd: GetJobsCmd = new Auth[HttpProtocol, Unit, List[(JobId, JobSpec)]] {
     override val marshall   = marshallEmpty[GetJobsCmd](HttpMethod.Get, _ => JobsURI)
     override val unmarshall = unmarshallFromJson[GetJobsCmd]
   }

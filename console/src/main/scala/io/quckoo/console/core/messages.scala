@@ -29,7 +29,7 @@ import io.quckoo.protocol.{Command, Event}
 
 import scala.util.{Failure, Try}
 
-final case class Failed(fault: NonEmptyList[Fault]) extends Event
+final case class Failed(fault: NonEmptyList[QuckooError]) extends Event
 
 final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None)
     extends Command
@@ -59,7 +59,7 @@ final case class RefreshJobSpecs(
 
 }
 
-final case class RegisterJobResult(jobId: ValidatedNel[Fault, JobId]) extends Event
+final case class RegisterJobResult(jobId: ValidatedNel[QuckooError, JobId]) extends Event
 
 case object LoadExecutionPlans                                                extends Command
 final case class ExecutionPlansLoaded(plans: Map[PlanId, Pot[ExecutionPlan]]) extends Event

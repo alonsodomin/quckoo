@@ -148,7 +148,7 @@ trait TimeJson {
   }
 
   implicit def durationEncoder: Encoder[Duration] = Encoder.instance { duration =>
-    Json.fromString(duration.toString())
+    Json.fromString(duration.toString)
   }
   implicit def durationDecoder: Decoder[Duration] = Decoder.instance { c =>
     c.as[String] match {

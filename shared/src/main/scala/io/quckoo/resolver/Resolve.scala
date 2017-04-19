@@ -18,7 +18,7 @@ package io.quckoo.resolver
 
 import cats.data.Validated
 
-import io.quckoo.{ArtifactId, Fault}
+import io.quckoo.{ArtifactId, QuckooError}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,6 +28,6 @@ import scala.concurrent.{ExecutionContext, Future}
 trait Resolve {
 
   def apply(artifactId: ArtifactId, download: Boolean)(
-      implicit ec: ExecutionContext): Future[Validated[Fault, Artifact]]
+      implicit ec: ExecutionContext): Future[Validated[QuckooError, Artifact]]
 
 }

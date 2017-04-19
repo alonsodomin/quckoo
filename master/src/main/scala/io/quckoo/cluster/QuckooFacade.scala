@@ -150,11 +150,11 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[Either[Fault, ExecutionPlanStarted]] = {
+  ): Future[Either[QuckooError, ExecutionPlanStarted]] = {
     implicit val to = Timeout(timeout)
     (core ? schedule) map {
-      case fault: Fault                  => fault.asLeft[ExecutionPlanStarted]
-      case started: ExecutionPlanStarted => started.asRight[Fault]
+      case fault: QuckooError                  => fault.asLeft[ExecutionPlanStarted]
+      case started: ExecutionPlanStarted => started.asRight[QuckooError]
     }
   }
 
@@ -207,17 +207,17 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[ValidatedNel[Fault, JobId]] = {
+  ): Future[ValidatedNel[QuckooError, JobId]] = {
     val validatedJobSpec = JobSpec.valid.async
       .run(jobSpec)
-      .map(_.leftMap(ValidationFault).leftMap(_.asInstanceOf[Fault]))
+      .map(_.leftMap(ValidationFault).leftMap(_.asInstanceOf[QuckooError]))
 
     EitherT(validatedJobSpec.map(_.toEither)).flatMapF { validJobSpec =>
       implicit val to = Timeout(timeout)
       logger.info(s"Registering job spec: $validJobSpec")
 
       (core ? RegisterJob(validJobSpec)) map {
-        case JobAccepted(jobId, _) => jobId.asRight[Fault]
+        case JobAccepted(jobId, _) => jobId.asRight[QuckooError]
         case JobRejected(_, error) => error.asLeft[JobId]
       }
     }.value.map(_.toValidatedNel)
@@ -225,14 +225,14 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Cl
 
   def fetchJobs(implicit ec: ExecutionContext,
                 timeout: FiniteDuration,
-                passport: Passport): Future[Seq[(JobId, JobSpec)]] = {
+                passport: Passport): Future[List[(JobId, JobSpec)]] = {
     Source
       .actorRef[(JobId, JobSpec)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
       .mapMaterializedValue { upstream =>
         core.tell(GetJobs, upstream)
       }
       .runFold(Map.empty[JobId, JobSpec])((map, pair) => map + pair)
-      .map(_.toSeq)
+      .map(_.toList)
   }
 
   def registryTopic: Source[RegistryEvent, NotUsed] =

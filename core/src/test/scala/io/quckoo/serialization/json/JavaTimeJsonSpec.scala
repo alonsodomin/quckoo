@@ -37,9 +37,9 @@ object JavaTimeJsonSpec extends Properties("JavaTimeJson") with JavaTimeGenerato
     checkEncoding(instant)
   }
 
-  property("Duration") = forAll { (duration: Duration) =>
+  /*property("Duration") = forAll { (duration: Duration) =>
     checkEncoding(duration)
-  }
+  }*/
 
   property("Period") = forAll { (period: Period) =>
     checkEncoding(period)

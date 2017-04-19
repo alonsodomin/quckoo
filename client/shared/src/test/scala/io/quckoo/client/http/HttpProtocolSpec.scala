@@ -19,7 +19,6 @@ package io.quckoo.client.http
 import java.util.UUID
 import java.time._
 
-import cats._
 import cats.data.{EitherT, NonEmptyList}
 import cats.implicits._
 
@@ -28,8 +27,8 @@ import io.circe.generic.auto._
 import io.quckoo._
 import io.quckoo.auth.{InvalidCredentials, Passport}
 import io.quckoo.client.core.StubClient
-import io.quckoo.net.QuckooState
-import io.quckoo.protocol.cluster.{MasterEvent, MasterReachable}
+import io.quckoo.net.{QuckooState, Location}
+import io.quckoo.protocol.cluster.{MasterEvent, MasterJoined, MasterReachable}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.DataBuffer
@@ -138,12 +137,11 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   // -- Subscribe
 
   "subscribe" should "return an stream of events" in {
-    val givenEvents = List(MasterReachable(NodeId(UUID.randomUUID())))
+    val givenNodeId = NodeId(UUID.randomUUID())
+    val givenEvents = List(MasterJoined(givenNodeId, Location("localhost")), MasterReachable(givenNodeId))
 
-    val httpEvents: Attempt[List[HttpServerSentEvent]] = EitherT(givenEvents.map(evt => DataBuffer(evt)))
-      .map(HttpServerSentEvent)
-      .value
-      .sequenceU
+    val httpEvents: Attempt[List[HttpServerSentEvent]] =
+      EitherT(givenEvents.map(evt => DataBuffer(evt))).map(HttpServerSentEvent).value.sequenceU
 
     attempt2Future(httpEvents).flatMap { events =>
       inProtocol[HttpProtocol] withEvents events usingClient { client =>
@@ -283,7 +281,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   "registerJob" should "return a validated JobId when it succeeds" in {
     inProtocol[HttpProtocol] ensuringRequest isRegisterJob replyWith { _ =>
-      HttpSuccess(DataBuffer(TestJobId.validNel[Fault]))
+      HttpSuccess(DataBuffer(TestJobId.validNel[QuckooError]))
     } usingClient { client =>
       client.registerJob(TestJobSpec).map { validatedJobId =>
         validatedJobId.toEither.right.value shouldBe TestJobId
@@ -292,12 +290,15 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   }
 
   it should "return the missed dependencies when fails to resolve" in {
-    val expectedFault = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
+    val missedDep     = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
+    val expectedError = MissingDependencies(NonEmptyList.of(missedDep))
+
     inProtocol[HttpProtocol] ensuringRequest isRegisterJob replyWith {
-      _ => HttpSuccess(DataBuffer(expectedFault.invalidNel[JobId]))
+      _ => HttpSuccess(DataBuffer(expectedError.invalidNel[JobId]))
     } usingClient { client =>
       client.registerJob(TestJobSpec).map { validatedJobId =>
-        validatedJobId.toEither.left.value shouldBe NonEmptyList.of(expectedFault)
+
+        validatedJobId.toEither.left.value shouldBe expectedError
       }
     }
   }
@@ -310,9 +311,9 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     hasEmptyBody and
     hasTimeout(TestTimeout)
 
-  "fetchJobs" should "return a map of the job specs" in {
+  "fetchJobs" should "return a list of the job specs" in {
     inProtocol[HttpProtocol] ensuringRequest isFetchJobs replyWith { _ =>
-      HttpSuccess(DataBuffer(Map(TestJobId -> TestJobSpec)))
+      HttpSuccess(DataBuffer(List(TestJobId -> TestJobSpec)))
     } usingClient { client =>
       client.fetchJobs.map { jobs =>
         val jobMap = jobs.toMap
@@ -440,7 +441,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   "executionPlans" should "return a map with current exection plans" in {
     inProtocol[HttpProtocol] ensuringRequest isGetExecutionPlans replyWith {
-      _ => HttpSuccess(DataBuffer(Map(TestPlanId -> TestExecutionPlan)))
+      _ => HttpSuccess(DataBuffer(List(TestPlanId -> TestExecutionPlan)))
     } usingClient { client =>
       client.executionPlans.map { returnedPlans =>
         val returnedPlansMap = returnedPlans.toMap
@@ -575,7 +576,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   "executions" should "return a map with the executions" in {
     inProtocol[HttpProtocol] ensuringRequest isGetExecutions replyWith {
-      _ => HttpSuccess(DataBuffer(Map(TestTaskId -> TestTaskExecution)))
+      _ => HttpSuccess(DataBuffer(List(TestTaskId -> TestTaskExecution)))
     } usingClient { client =>
       client.executions.map { returnedExecutions =>
         val returnedExecutionsMap = returnedExecutions.toMap

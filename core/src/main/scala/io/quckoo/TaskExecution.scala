@@ -53,7 +53,7 @@ object TaskExecution {
   sealed trait Outcome extends Product with Serializable
   object Outcome {
     case object Success                          extends Outcome
-    final case class Failure(cause: Fault)       extends Outcome
+    final case class Failure(cause: QuckooError)       extends Outcome
     final case class Interrupted(reason: Reason) extends Outcome
     final case class NeverRun(reason: Reason)    extends Outcome
     case object NeverEnding                      extends Outcome

@@ -54,7 +54,7 @@ final case class TaskCompleted(jobId: JobId,
                                outcome: TaskExecution.Outcome)
     extends ExecutionEvent
 
-final case class JobFailedToSchedule(jobId: JobId, cause: Fault) extends SchedulerEvent
+final case class JobFailedToSchedule(jobId: JobId, cause: QuckooError) extends SchedulerEvent
 
 final case class ExecutionPlanStarted(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime)
     extends ExecutionEvent

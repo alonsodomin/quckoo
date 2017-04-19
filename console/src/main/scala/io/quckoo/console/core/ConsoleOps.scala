@@ -161,7 +161,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
     }
   }
 
-  private[this] def foldIntoEvent[A <: Event](f: => Future[Either[Fault, A]]): Future[Event] =
-    EitherT(f).leftMap(fault => Failed(NonEmptyList.of[Fault](fault))).fold(identity, identity)
+  private[this] def foldIntoEvent[A <: Event](f: => Future[Either[QuckooError, A]]): Future[Event] =
+    EitherT(f).leftMap(fault => Failed(NonEmptyList.of[QuckooError](fault))).fold(identity, identity)
 
 }

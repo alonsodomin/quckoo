@@ -45,7 +45,7 @@ package object core {
   final val attempt2Observable = new (Attempt ~> Observable) {
     override def apply[A](fa: Attempt[A]): Observable[A] = fa match {
       case Right(value) => Observable.eval(value)
-      case Left(ex)    => Observable.raiseError(ex)
+      case Left(ex)     => Observable.raiseError(ex)
     }
   }
 

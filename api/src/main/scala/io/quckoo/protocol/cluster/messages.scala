@@ -22,7 +22,7 @@ import io.quckoo.protocol.{Command, Event}
 
 case object GetClusterStatus extends Command
 
-sealed trait MasterEvent extends Event
+sealed trait MasterEvent extends Event with Product with Serializable
 
 final case class MasterJoined(nodeId: NodeId, location: Location) extends MasterEvent
 final case class MasterReachable(nodeId: NodeId) extends MasterEvent

@@ -18,7 +18,7 @@ package io.quckoo.api
 
 import cats.data.ValidatedNel
 
-import io.quckoo.{Fault, JobId, JobNotFound, JobSpec}
+import io.quckoo.{QuckooError, JobId, JobNotFound, JobSpec}
 import io.quckoo.auth.Passport
 import io.quckoo.protocol.registry._
 
@@ -52,12 +52,12 @@ trait Registry {
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[ValidatedNel[Fault, JobId]]
+  ): Future[ValidatedNel[QuckooError, JobId]]
 
   def fetchJobs(
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[Seq[(JobId, JobSpec)]]
+  ): Future[List[(JobId, JobSpec)]]
 
 }

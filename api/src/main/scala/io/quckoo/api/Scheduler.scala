@@ -62,6 +62,6 @@ trait Scheduler {
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[Either[Fault, ExecutionPlanStarted]]
+  ): Future[Either[QuckooError, ExecutionPlanStarted]]
 
 }

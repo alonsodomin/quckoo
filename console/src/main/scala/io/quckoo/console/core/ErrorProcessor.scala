@@ -54,7 +54,7 @@ class ErrorProcessor extends ActionProcessor[ConsoleScope] with LazyLogging {
     }
   }
 
-  private[this] def generateNotification: PartialFunction[Fault, Notification] = {
+  private[this] def generateNotification: PartialFunction[QuckooError, Notification] = {
     case JobNotFound(jobId) =>
       Notification.danger(s"Job not found: $jobId")
 
