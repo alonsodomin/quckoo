@@ -19,7 +19,7 @@ package io.quckoo.client.http
 import java.util.UUID
 import java.time._
 
-import cats.data.{EitherT, NonEmptyList}
+import cats.data.{EitherT, NonEmptyList, Validated}
 import cats.implicits._
 
 import io.circe.generic.auto._
@@ -290,15 +290,14 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   }
 
   it should "return the missed dependencies when fails to resolve" in {
-    val missedDep     = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
-    val expectedError = MissingDependencies(NonEmptyList.of(missedDep))
+    val missedDep                  = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
+    val expectedError: QuckooError = MissingDependencies(NonEmptyList.of(missedDep))
 
     inProtocol[HttpProtocol] ensuringRequest isRegisterJob replyWith {
       _ => HttpSuccess(DataBuffer(expectedError.invalidNel[JobId]))
     } usingClient { client =>
       client.registerJob(TestJobSpec).map { validatedJobId =>
-
-        validatedJobId.toEither.left.value shouldBe expectedError
+        validatedJobId shouldBe Validated.Invalid(NonEmptyList.of(expectedError))
       }
     }
   }
