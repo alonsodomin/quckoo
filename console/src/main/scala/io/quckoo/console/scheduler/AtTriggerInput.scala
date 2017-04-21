@@ -76,7 +76,7 @@ object AtTriggerInput {
   }
 
   val component = ScalaComponent.builder[Props]("AtTriggerInput")
-    .initialState_P(_ => State(None, None))
+    .initialStateFromProps(_ => State(None, None))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

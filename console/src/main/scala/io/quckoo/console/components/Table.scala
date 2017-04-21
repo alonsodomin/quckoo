@@ -244,7 +244,7 @@ object Table {
 
   private[components] def component[Id, Item] =
     ScalaComponent.builder[Props[Id, Item]]("Table")
-      .initialState_P(props => State(props.selected))
+      .initialStateFromProps(props => State(props.selected))
       .renderBackend[Backend[Id, Item]]
       .build
 

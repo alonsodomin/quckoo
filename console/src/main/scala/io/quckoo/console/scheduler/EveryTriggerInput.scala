@@ -105,7 +105,7 @@ object EveryTriggerInput {
   }
 
   val component = ScalaComponent.builder[Props]("EveryTriggerInput")
-    .initialState_P(props => new State(props.value))
+    .initialStateFromProps(props => new State(props.value))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

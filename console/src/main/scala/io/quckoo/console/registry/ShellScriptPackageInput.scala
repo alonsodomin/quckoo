@@ -78,7 +78,7 @@ object ShellScriptPackageInput {
   }
 
   val component = ScalaComponent.builder[Props]("ShellScriptPackageInput")
-    .initialState_P(props => State(props.value.map(_.content).orElse(Some(DefaultScript))))
+    .initialStateFromProps(props => State(props.value.map(_.content).orElse(Some(DefaultScript))))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

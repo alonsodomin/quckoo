@@ -14,7 +14,7 @@ object Dependencies {
 
     // Testing --------
 
-    val scalaTest  = "3.0.2"
+    val scalaTest  = "3.0.3"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.5.0"
     val mockito    = "1.10.19"
@@ -27,7 +27,7 @@ object Dependencies {
       val main = "2.4.17"
       val kryo = "0.5.2"
 
-      val constructr = "0.6.0"
+      val constructr = "0.7.0"
 
       object http {
         val main = "10.0.5"
@@ -49,7 +49,7 @@ object Dependencies {
     // ScalaJS -------
 
     //val scalaJsReact    = "0.11.3"
-    val scalaJsReact    = "1.0.0-RC2"
+    val scalaJsReact    = "1.0.0-RC3"
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.1"
     val scalaJSScripts  = "1.1.0"
@@ -71,7 +71,7 @@ object Dependencies {
     val pureconfig  = "0.7.0"
     val scalaCss    = "0.5.3-RC1"
     val scalaTime   = "2.0.0-M10"
-    val scalatags   = "0.6.3"
+    val scalatags   = "0.6.5"
     val scopt       = "3.5.0"
     val shims       = "1.0-b0e5152"
     val xml         = "1.0.6"
@@ -264,7 +264,8 @@ object Dependencies {
       "com.github.japgolly.test-state" %%% "dom-zipper"        % version.testState % Test,
       "com.github.japgolly.test-state" %%% "dom-zipper-sizzle" % version.testState % Test,
       "com.github.japgolly.test-state" %%% "ext-scalajs-react" % version.testState % Test,
-      "com.github.japgolly.test-state" %%% "ext-scalaz"        % version.testState % Test
+      "com.github.japgolly.test-state" %%% "ext-cats"          % version.testState % Test
+      //"com.github.japgolly.test-state" %%% "ext-scalaz"        % version.testState % Test
     ),
     jsDependencies ++= Seq(
       // ReactJS

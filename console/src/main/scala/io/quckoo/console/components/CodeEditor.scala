@@ -138,7 +138,7 @@ object CodeEditor {
   }
 
   val component = ScalaComponent.builder[Props]("CodeEditor")
-    .initialState_P(props => State(props.text))
+    .initialStateFromProps(props => State(props.text))
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props, $.state))
     .build

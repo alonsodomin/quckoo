@@ -58,7 +58,7 @@ object TextArea {
   }
 
   val component = ScalaComponent.builder[Props]("TextArea")
-    .initialState_P(props => State(props.text))
+    .initialStateFromProps(props => State(props.text))
     .renderBackend[Backend]
     .build
 

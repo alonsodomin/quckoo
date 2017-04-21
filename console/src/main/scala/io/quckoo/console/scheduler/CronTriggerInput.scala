@@ -103,7 +103,7 @@ object CronTriggerInput {
   }
 
   val component = ScalaComponent.builder[Props]("CronTriggerInput")
-    .initialState_P(props => State(props.value.map(_.expr.toString)))
+    .initialStateFromProps(props => State(props.value.map(_.expr.toString)))
     .renderBackend[Backend]
     .build
 

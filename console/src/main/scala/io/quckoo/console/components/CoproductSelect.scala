@@ -126,7 +126,7 @@ final class CoproductSelect[A: Reusability] private[components](mapper: Coproduc
   }
 
   private[components] val component = ScalaComponent.builder[Props[A]]("CoproductSelect")
-    .initialState_P(generateState)
+    .initialStateFromProps(generateState)
     .renderBackendWithChildren[Backend[A]]
     .configure(Reusability.shouldComponentUpdate[Props[A], Children.Varargs, State[A], Backend[A]])
     .build
