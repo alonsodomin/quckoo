@@ -133,14 +133,14 @@ object PathViolation {
     s"expected $violationsDesc at ${value.path.show}"
   }
 
-  implicit def jsonEncoder: Encoder[PathViolation] = Encoder.instance { pv =>
+  implicit val jsonEncoder: Encoder[PathViolation] = Encoder.instance { pv =>
     Json.obj(
       "path"      -> Path.pathJsonEncoder.apply(pv.path),
       "violation" -> Encoder[Violation].apply(pv.violation)
     )
   }
 
-  implicit def jsonDecoder: Decoder[PathViolation] = Decoder.instance { cursor =>
+  implicit val jsonDecoder: Decoder[PathViolation] = Decoder.instance { cursor =>
     (cursor.downField("path").as[Path] |@| cursor.downField("violation").as[Violation]).map { (path, violation) =>
       PathViolation(path, violation)
     }

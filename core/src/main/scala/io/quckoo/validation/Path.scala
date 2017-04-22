@@ -70,7 +70,7 @@ object Path {
 
   implicit val pathJsonDecoder: Decoder[Path] =
     Decoder[String].emap { str =>
-      parse(str, DefaultSeparator).map(Right(_)).getOrElse(Left(s"Invalid path: $str"))
+      parse(str, s"\\$DefaultSeparator").map(Right(_)).getOrElse(Left(s"Invalid path: $str"))
     }
 
 }
