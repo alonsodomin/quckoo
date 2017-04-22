@@ -141,9 +141,9 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
   "The Scheduler API" should {
 
-    "reply with a map of execution plans" in {
+    "reply with a sequence of execution plans with their ids" in {
       Get(endpoint("/plans")) ~> entryPoint ~> check {
-        responseAs[Map[PlanId, ExecutionPlan]] should be (TestPlanMap)
+        responseAs[Seq[(PlanId, ExecutionPlan)]] shouldBe TestPlanMap.toSeq
       }
     }
 
@@ -183,9 +183,9 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
       }
     }
 
-    "reply with a list of task ids" in {
+    "reply with a sequence of tasks and their ids" in {
       Get(endpoint("/executions")) ~> entryPoint ~> check {
-        responseAs[Map[TaskId, TaskExecution]] shouldBe TestTaskMap
+        responseAs[Seq[(TaskId, TaskExecution)]] shouldBe TestTaskMap.toSeq
       }
     }
 

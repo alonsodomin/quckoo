@@ -29,7 +29,7 @@ trait RegistryCmds[P <: Protocol] {
 
   type RegisterJobCmd = Auth[P, JobSpec, ValidatedNel[QuckooError, JobId]]
   type GetJobCmd      = Auth[P, JobId, Option[JobSpec]]
-  type GetJobsCmd     = Auth[P, Unit, List[(JobId, JobSpec)]]
+  type GetJobsCmd     = Auth[P, Unit, Seq[(JobId, JobSpec)]]
   type EnableJobCmd   = Auth[P, JobId, Either[JobNotFound, JobEnabled]]
   type DisableJobCmd  = Auth[P, JobId, Either[JobNotFound, JobDisabled]]
 

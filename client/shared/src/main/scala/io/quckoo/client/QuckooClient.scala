@@ -109,7 +109,7 @@ final class QuckooClient[P <: Protocol] private[client] (driver: Driver[P])
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[List[(JobId, JobSpec)]] = {
+  ): Future[Seq[(JobId, JobSpec)]] = {
     val cmd = AuthCmd((), timeout, passport)
     driver.invoke[GetJobsCmd].run(cmd)
   }

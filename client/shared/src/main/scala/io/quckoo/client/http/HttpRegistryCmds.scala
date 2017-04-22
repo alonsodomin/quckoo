@@ -51,7 +51,7 @@ trait HttpRegistryCmds extends HttpMarshalling with RegistryCmds[HttpProtocol] {
     override val unmarshall = unmarshalOption[JobSpec]
   }
 
-  implicit lazy val getJobsCmd: GetJobsCmd = new Auth[HttpProtocol, Unit, List[(JobId, JobSpec)]] {
+  implicit lazy val getJobsCmd: GetJobsCmd = new Auth[HttpProtocol, Unit, Seq[(JobId, JobSpec)]] {
     override val marshall   = marshallEmpty[GetJobsCmd](HttpMethod.Get, _ => JobsURI)
     override val unmarshall = unmarshallFromJson[GetJobsCmd]
   }

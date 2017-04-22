@@ -133,9 +133,9 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
 
   "The Registry API" should {
 
-    "return a map of jobs" in {
+    "return a sequence of jobs and their ids" in {
       Get(endpoint("/jobs")) ~> entryPoint ~> check {
-        responseAs[Map[JobId, JobSpec]] shouldBe TestJobMap
+        responseAs[Seq[(JobId, JobSpec)]] shouldBe TestJobMap.toSeq
       }
     }
 

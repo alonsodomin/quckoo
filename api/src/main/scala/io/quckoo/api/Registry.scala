@@ -58,6 +58,6 @@ trait Registry {
       implicit ec: ExecutionContext,
       timeout: FiniteDuration,
       passport: Passport
-  ): Future[List[(JobId, JobSpec)]]
+  ): Future[Seq[(JobId, JobSpec)]]
 
 }
