@@ -16,7 +16,7 @@
 
 package io.quckoo.console.test
 
-import teststate.{Exports, ExtScalaJsReact, ExtScalaz}
+import teststate.{Exports, ExtScalaJsReact, ExtCats}
 import teststate.domzipper.sizzle
 
 /**
@@ -24,5 +24,5 @@ import teststate.domzipper.sizzle
   */
 object ConsoleTestExports extends Exports
   with ExtScalaJsReact
-  with ExtScalaz
+  with ExtCats
   with sizzle.Exports
