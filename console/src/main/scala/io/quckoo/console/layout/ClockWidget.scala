@@ -36,18 +36,21 @@ object ClockWidget {
     "E, MMM d, HH:mm:ss z"
   )
 
-  final case class State(dateTime: ZonedDateTime)
+  final case class State(current: ZonedDateTime)
 
   class Backend($ : BackendScope[Clock, State]) extends TimerSupport {
 
-    protected[ClockWidget] def mounted(clock: Clock) =
-      setInterval(tick(clock), 1 second)
+    protected[ClockWidget] def mounted: Callback =
+      setInterval(tick(), 1 second)
 
-    def tick(clock: Clock): Callback =
-      $.modState(_.copy(dateTime = ZonedDateTime.now(clock)))
+    def tick(): Callback =
+      Callback.log("tick") >> $.props >>= updateCurrent
+
+    def updateCurrent(clock: Clock): Callback =
+      $.modState(_.copy(current = ZonedDateTime.now(clock)))
 
     def render(clock: Clock, state: State) = {
-      <.span(DateTimeDisplay(state.dateTime, Some(Formatter)))
+      <.span(DateTimeDisplay(state.current, Some(Formatter)))
     }
 
   }
@@ -55,7 +58,7 @@ object ClockWidget {
   private[this] val component = ScalaComponent.builder[Clock]("Clock")
     .initialStateFromProps(clock => State(ZonedDateTime.now(clock)))
     .renderBackend[Backend]
-    .componentDidMount($ => $.backend.mounted($.props))
+    .componentDidMount(_.backend.mounted)
     .configure(TimerSupport.install)
     .build
 

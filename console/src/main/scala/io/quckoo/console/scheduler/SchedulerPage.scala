@@ -29,13 +29,10 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
-import scalaz.OptionT
-
 /**
   * Created by alonsodomin on 17/10/2015.
   */
 object SchedulerPage {
-  import ScalazReact._
 
   object Style extends StyleSheet.Inline {
     import dsl._
@@ -45,12 +42,9 @@ object SchedulerPage {
 
   final case class Props(proxy: ModelProxy[ConsoleScope])
 
-  //private lazy val executionPlanFormRef = Ref.to(ExecutionPlanForm.component, "ExecutionPlanForm")
-
   class Backend($ : BackendScope[Props, Unit]) {
 
-    // lazy val executionPlanForm: OptionT[CallbackTo, ExecutionPlanForm.Backend] =
-    //   OptionT(CallbackTo.lift(() => executionPlanFormRef($).toOption.map(_.backend)))
+    private val executionPlanFormRef = ScalaComponent.mutableRefTo(ExecutionPlanForm.component)
 
     def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
@@ -60,9 +54,7 @@ object SchedulerPage {
     }
 
     def editPlan(plan: Option[ExecutionPlan]): Callback = {
-      // executionPlanForm.flatMapF(_.editPlan(plan))
-      //   .getOrElseF(Callback.log("Reference {} points to nothing!", executionPlanFormRef.name))
-      Callback.empty
+      CallbackTo(executionPlanFormRef).flatMap(_.value.backend.editPlan(plan))
     }
 
     def render(props: Props) = {

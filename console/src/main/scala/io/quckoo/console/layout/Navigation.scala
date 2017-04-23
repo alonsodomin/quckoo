@@ -102,14 +102,14 @@ object Navigation {
               props.menu.map(item => renderNavMenu(item, props)).toVdomArray
             ),
             <.ul(^.`class` := "nav navbar-nav navbar-right",
-              <.li(^.`class` := "navbar-text", ClockWidget.apply),
+              //<.li(^.`class` := "navbar-text", ClockWidget.apply),
               <.li(^.`class` := "navbar-text", PrincipalWidget(principal)),
               <.li(<.a(^.href := "#", ^.onClick ==> onLogoutClicked, Icons.signOut, "Logout"))
             )
           )
         )
       )
-    } getOrElse EmptyVdom)
+    }.whenDefined)
 
   }
 
