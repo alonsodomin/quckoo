@@ -178,7 +178,6 @@ object Dependencies {
       "io.circe"          %%% "circe-optics"       % version.circe,
       "com.beachape"      %%% "enumeratum"         % version.enumeratum,
       "com.beachape"      %%% "enumeratum-circe"   % version.enumeratum,
-      //"com.codecommit"    %%% "shims-core"         % version.shims,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
@@ -254,7 +253,6 @@ object Dependencies {
       "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "extra"        % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "ext-cats"     % version.scalaJsReact,
-      //"com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "ext-monocle"  % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "test"         % version.scalaJsReact % Test,
       "com.github.japgolly.scalacss"      %%% "core"         % version.scalaCss,
@@ -265,7 +263,6 @@ object Dependencies {
       "com.github.japgolly.test-state" %%% "dom-zipper-sizzle" % version.testState % Test,
       "com.github.japgolly.test-state" %%% "ext-scalajs-react" % version.testState % Test,
       "com.github.japgolly.test-state" %%% "ext-cats"          % version.testState % Test
-      //"com.github.japgolly.test-state" %%% "ext-scalaz"        % version.testState % Test
     ),
     jsDependencies ++= Seq(
       // ReactJS
@@ -283,9 +280,6 @@ object Dependencies {
         minified  "react-dom-server.min.js"
         dependsOn "react-dom.js"
         commonJSName "ReactDOMServer",
-      "org.webjars.bower" % "react" % version.reactJs % Test
-        /            "react-with-addons.js"
-        commonJSName "React",
 
       // JQuery & Bootstrap
       "org.webjars" % "jquery"    % version.jquery
