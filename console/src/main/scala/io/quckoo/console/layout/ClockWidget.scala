@@ -33,7 +33,7 @@ import scala.concurrent.duration._
 object ClockWidget {
 
   private[this] final val Formatter = DateTimeFormatter.ofPattern(
-    "E, MMM d, HH:mm:ss z"
+    "E, MMM d, HH:mm:ss"
   )
 
   final case class State(current: ZonedDateTime)
@@ -44,13 +44,13 @@ object ClockWidget {
       setInterval(tick(), 1 second)
 
     def tick(): Callback =
-      Callback.log("tick") >> $.props >>= updateCurrent
+      $.props >>= updateCurrent
 
     def updateCurrent(clock: Clock): Callback =
       $.modState(_.copy(current = ZonedDateTime.now(clock)))
 
     def render(clock: Clock, state: State) = {
-      <.span(DateTimeDisplay(state.current, Some(Formatter)))
+      <.span(DateTimeDisplay(state.current.toLocalDateTime, Some(Formatter)))
     }
 
   }

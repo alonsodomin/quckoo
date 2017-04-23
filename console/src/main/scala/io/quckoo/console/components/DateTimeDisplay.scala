@@ -16,8 +16,8 @@
 
 package io.quckoo.console.components
 
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
 
 import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.vdom.html_<^._
@@ -31,7 +31,7 @@ object DateTimeDisplay {
     "MMM d, HH:mm:ss"
   )
 
-  final case class Props(dateTime: ZonedDateTime, formatter: Option[DateTimeFormatter])
+  final case class Props(dateTime: TemporalAccessor, formatter: Option[DateTimeFormatter])
 
   private[this] val component = ScalaComponent.builder[Props]("DateTimeDisplay").stateless.render_P {
     props =>
@@ -39,7 +39,7 @@ object DateTimeDisplay {
       <.span(fmt.format(props.dateTime))
   } build
 
-  def apply(dateTime: ZonedDateTime, formatter: Option[DateTimeFormatter] = None) =
+  def apply(dateTime: TemporalAccessor, formatter: Option[DateTimeFormatter] = None) =
     component(Props(dateTime, formatter))
 
 }
