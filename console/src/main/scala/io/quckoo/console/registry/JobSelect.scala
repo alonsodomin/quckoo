@@ -66,7 +66,7 @@ object JobSelect {
             <.option("Select a job"),
             props.jobs
               .filter(!_._2.disabled)
-              .map(jobPair => JobOption(jobPair)).toVdomArray
+              .toVdomArray(jobPair => JobOption.withKey(jobPair._1.toString)(jobPair))
           )
         )
       )

@@ -77,8 +77,8 @@ object ExecutionPlanPreview {
             <.tr(<.th("Expected Executions"))
           ),
           <.tbody(
-            generateTimeline(props, state).toVdomArray { time =>
-              <.tr(<.td(DateTimeDisplay(time)))
+            generateTimeline(props, state).zipWithIndex.toVdomArray { case (time, idx) =>
+              <.tr(^.key := s"executionplan_timeline_$idx", <.td(DateTimeDisplay(time)))
             }
           ))
       )

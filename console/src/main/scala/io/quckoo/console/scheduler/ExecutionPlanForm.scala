@@ -114,8 +114,8 @@ object ExecutionPlanForm {
 
     def jobSpecs(props: Props): Map[JobId, JobSpec] = {
       props.proxy().seq.flatMap {
-        case (jobId, Ready(spec)) => Seq(jobId -> spec)
-        case _                    => Seq()
+        case (id, Ready(spec)) => Seq(id -> spec)
+        case _                 => Seq()
       } toMap
     }
 

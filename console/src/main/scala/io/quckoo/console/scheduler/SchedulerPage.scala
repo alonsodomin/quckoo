@@ -65,7 +65,7 @@ object SchedulerPage {
         Style.content,
         <.h2("Scheduler"),
         props.proxy.wrap(_.userScope.jobSpecs) { jobs =>
-          ExecutionPlanForm(jobs, scheduleJob)
+          executionPlanFormRef.component(ExecutionPlanForm.Props(jobs, scheduleJob))
         },
         TabPanel(
           'Plans      -> userScopeConnector(ExecutionPlanList(_, editPlan(None), plan => editPlan(Some(plan)))),
