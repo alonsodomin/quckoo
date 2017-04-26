@@ -20,20 +20,20 @@ import diode.AnyAction._
 import diode.react.ModelProxy
 
 import io.quckoo.NodeId
+import io.quckoo.console.layout.CssSettings
 import io.quckoo.net.{NodeStatus, QuckooNode, QuckooState}
 import io.quckoo.protocol.cluster.GetClusterStatus
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import scalacss.StyleSheet
 
 /**
   * Created by alonsodomin on 13/12/2015.
   */
 object ClusterView {
+  import CssSettings._
 
   object Style extends StyleSheet.Inline {
     import dsl._

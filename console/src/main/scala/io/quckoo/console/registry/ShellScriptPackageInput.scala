@@ -18,6 +18,7 @@ package io.quckoo.console.registry
 
 import io.quckoo.ShellScriptPackage
 import io.quckoo.console.components._
+import io.quckoo.console.layout.lookAndFeel
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._

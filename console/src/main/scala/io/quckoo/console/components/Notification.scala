@@ -18,11 +18,10 @@ package io.quckoo.console.components
 
 import io.quckoo.QuckooError
 import io.quckoo.console.components.Notification._
+import io.quckoo.console.layout.ContextStyle
 import io.quckoo.console.libs._
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-
 import org.scalajs.jquery.jQuery
 
 import scala.scalajs.js

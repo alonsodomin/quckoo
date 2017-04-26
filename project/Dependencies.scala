@@ -48,13 +48,11 @@ object Dependencies {
 
     // ScalaJS -------
 
-    //val scalaJsReact    = "0.11.3"
-    val scalaJsReact    = "1.0.0-RC3"
+    val scalaJsReact    = "1.0.0"
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.1"
     val scalaJSScripts  = "1.1.0"
-
-    val testState = "2.1.2-RC1"
+    val testState       = "2.1.2"
 
     // Other utils ---
 
@@ -69,7 +67,7 @@ object Dependencies {
     val monix       = "2.2.4"
     val monocle     = "1.4.0"
     val pureconfig  = "0.7.0"
-    val scalaCss    = "0.5.3-RC1"
+    val scalaCss    = "0.5.3"
     val scalaTime   = "2.0.0-M10"
     val scalatags   = "0.6.5"
     val scopt       = "3.5.0"

@@ -21,16 +21,18 @@ import cats.data.NonEmptyList
 import diode.data.{Pot, Ready}
 import diode.react.ReactPot._
 
+import io.quckoo.console.layout.{CssSettings, lookAndFeel}
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
 /**
   * Created by alonsodomin on 02/07/2016.
   */
 object Table {
+  import CssSettings._
 
   type OnSelect[Id] = Set[Id] => Callback
 

@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.components
+package io.quckoo.console.layout
 
-import scalacss.Defaults._
+import io.quckoo.console.components.{NavStyle, TableStyle}
+
 import scalacss.StyleSheet.Register
 import scalacss.internal.StyleLookup
+
+import CssSettings._
 
 /**
   * Created by alonsodomin on 20/02/2016.
   */
-class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
+final class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
   import ContextStyle._
   import dsl._
 
@@ -31,8 +34,7 @@ class LookAndFeel(implicit r: Register) extends StyleSheet.Inline()(r) {
   val context = Domain.ofValues(success, info, warning, danger)
 
   def from[A](domain: Domain[A], base: String)(implicit lookup: StyleLookup[A]) = styleF(domain) {
-    opt =>
-      styleS(addClassNames(base, s"$base-$opt"))
+    opt => styleS(addClassNames(base, s"$base-$opt"))
   }
 
   def wrap(classNames: String*) = style(addClassNames(classNames: _*))

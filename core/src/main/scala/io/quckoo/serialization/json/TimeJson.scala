@@ -34,105 +34,40 @@ trait TimeJson {
 
   implicit final val decodeInstant: Decoder[Instant] =
     Decoder.instance { c =>
-      c.as[String] match {
-        case Right(s) => try Right(Instant.parse(s)) catch {
+      c.as[Long] match {
+        case Right(s) => try Right(Instant.ofEpochMilli(s)) catch {
           case _: DateTimeParseException => Left(DecodingFailure("Instant", c.history))
         }
         case l @ Left(_) => l.asInstanceOf[Decoder.Result[Instant]]
       }
     }
 
-  implicit final val encodeInstant: Encoder[Instant] = Encoder.instance(time => Json.fromString(time.toString))
-
-  final def decodeLocalDateTime(formatter: DateTimeFormatter): Decoder[LocalDateTime] =
-    Decoder.instance { c =>
-      c.as[String] match {
-        case Right(s) => try Right(LocalDateTime.parse(s, formatter)) catch {
-          case _: DateTimeParseException => Left(DecodingFailure("LocalDateTime", c.history))
-        }
-        case l @ Left(_) => l.asInstanceOf[Decoder.Result[LocalDateTime]]
-      }
-    }
-
-  final def encodeLocalDateTime(formatter: DateTimeFormatter): Encoder[LocalDateTime] =
-    Encoder.instance(time => Json.fromString(time.format(formatter)))
+  implicit final val encodeInstant: Encoder[Instant] = Encoder.instance(time => Json.fromLong(time.toEpochMilli))
 
   implicit final val decodeLocalDateTimeDefault: Decoder[LocalDateTime] =
-    decodeLocalDateTime(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    Decoder[Instant].map(time => LocalDateTime.ofInstant(time, ZoneOffset.UTC))
   implicit final val encodeLocalDateTimeDefault: Encoder[LocalDateTime] =
-    encodeLocalDateTime(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-
-  final def decodeZonedDateTime(formatter: DateTimeFormatter): Decoder[ZonedDateTime] =
-    Decoder.instance { c =>
-      c.as[String] match {
-        case Right(s) => try Right(ZonedDateTime.parse(s, formatter)) catch {
-          case _: DateTimeParseException => Left(DecodingFailure("ZonedDateTime", c.history))
-        }
-        case l @ Left(_) => l.asInstanceOf[Decoder.Result[ZonedDateTime]]
-      }
-    }
-
-  final def encodeZonedDateTime(formatter: DateTimeFormatter): Encoder[ZonedDateTime] =
-    Encoder.instance(time => Json.fromString(time.format(formatter)))
+    Encoder[Instant].contramap(_.toInstant(ZoneOffset.UTC))
 
   implicit final val decodeZonedDateTimeDefault: Decoder[ZonedDateTime] =
-    decodeZonedDateTime(DateTimeFormatter.ISO_ZONED_DATE_TIME)
+    Decoder[Instant].map(time => ZonedDateTime.ofInstant(time, ZoneOffset.UTC))
   implicit final val encodeZonedDateTimeDefault: Encoder[ZonedDateTime] =
-    encodeZonedDateTime(DateTimeFormatter.ISO_ZONED_DATE_TIME)
-
-  final def decodeOffsetDateTime(formatter: DateTimeFormatter): Decoder[OffsetDateTime] =
-    Decoder.instance { c =>
-      c.as[String] match {
-        case Right(s) => try Right(OffsetDateTime.parse(s, formatter)) catch {
-          case _: DateTimeParseException => Left(DecodingFailure("OffsetDateTime", c.history))
-        }
-        case l @ Left(_) => l.asInstanceOf[Decoder.Result[OffsetDateTime]]
-      }
-    }
-
-  final def encodeOffsetDateTime(formatter: DateTimeFormatter): Encoder[OffsetDateTime] =
-    Encoder.instance(time => Json.fromString(time.format(formatter)))
+    Encoder[Instant].contramap(_.withZoneSameInstant(ZoneOffset.UTC).toInstant)
 
   implicit final val decodeOffsetDateTimeDefault: Decoder[OffsetDateTime] =
-    decodeOffsetDateTime(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+    Decoder[Instant].map(time => OffsetDateTime.ofInstant(time, ZoneOffset.UTC))
   implicit final val encodeOffsetDateTimeDefault: Encoder[OffsetDateTime] =
-    encodeOffsetDateTime(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-
-  final def decodeLocalDate(formatter: DateTimeFormatter): Decoder[LocalDate] =
-    Decoder.instance { c =>
-      c.as[String] match {
-        case Right(s) => try Right(LocalDate.parse(s, formatter)) catch {
-          case _: DateTimeParseException => Left(DecodingFailure("LocalDate", c.history))
-        }
-        case l @ Left(_) => l.asInstanceOf[Decoder.Result[LocalDate]]
-      }
-    }
-
-  final def encodeLocalDate(formatter: DateTimeFormatter): Encoder[LocalDate] =
-    Encoder.instance(time => Json.fromString(time.format(formatter)))
+    Encoder[Instant].contramap(_.atZoneSameInstant(ZoneOffset.UTC).toInstant)
 
   implicit final val decodeLocalDateDefault: Decoder[LocalDate] =
-    decodeLocalDate(DateTimeFormatter.ISO_LOCAL_DATE)
+    Decoder[Long].map(LocalDate.ofEpochDay)
   implicit final val encodeLocalDateDefault: Encoder[LocalDate] =
-    encodeLocalDate(DateTimeFormatter.ISO_LOCAL_DATE)
-
-  final def decodeLocalTime(formatter: DateTimeFormatter): Decoder[LocalTime] =
-    Decoder.instance { c =>
-      c.as[String] match {
-        case Right(s) => try Right(LocalTime.parse(s, formatter)) catch {
-          case _: DateTimeParseException => Left(DecodingFailure("LocalTime", c.history))
-        }
-        case l @ Left(_) => l.asInstanceOf[Decoder.Result[LocalTime]]
-      }
-    }
-
-  final def encodeLocalTime(formatter: DateTimeFormatter): Encoder[LocalTime] =
-    Encoder.instance(time => Json.fromString(time.format(formatter)))
+    Encoder[Long].contramap(_.toEpochDay)
 
   implicit final val decodeLocalTimeDefault: Decoder[LocalTime] =
-    decodeLocalTime(DateTimeFormatter.ISO_LOCAL_TIME)
+    Decoder[Long].map(LocalTime.ofNanoOfDay)
   implicit final val encodeLocalTimeDefault: Encoder[LocalTime] =
-    encodeLocalTime(DateTimeFormatter.ISO_LOCAL_TIME)
+    Encoder[Long].contramap(_.toNanoOfDay)
 
   implicit final val decodePeriod: Decoder[Period] = Decoder.instance { c =>
     c.as[String] match {

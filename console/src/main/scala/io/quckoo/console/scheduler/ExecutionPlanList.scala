@@ -16,26 +16,24 @@
 
 package io.quckoo.console.scheduler
 
+import java.time.{Clock, ZonedDateTime}
+
 import cats.data.NonEmptyList
 import cats.instances.list._
 import cats.syntax.applicative._
 import cats.syntax.traverse._
 import cats.syntax.show._
-
 import diode.data._
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-
 import io.quckoo.{ExecutionPlan, JobId, JobSpec, PlanId}
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
+import io.quckoo.console.layout.ContextStyle
 import io.quckoo.protocol.scheduler.CancelExecutionPlan
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-
-import java.time.ZonedDateTime
 
 /**
   * Created by alonsodomin on 30/01/2016.
@@ -137,8 +135,8 @@ object ExecutionPlanList {
         <.a(^.onClick --> onPlanClicked(planId), jobSpec.render(_.displayName))
       }
 
-      def renderDateTime(dateTime: ZonedDateTime): VdomNode =
-        DateTimeDisplay(dateTime)
+      def renderDateTime(dateTime: ZonedDateTime)(implicit clock: Clock): VdomNode =
+        DateTimeDisplay(dateTime.withZoneSameInstant(clock.getZone).toLocalDateTime)
 
       column match {
         case 'Job       => renderPlanName

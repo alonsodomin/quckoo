@@ -17,10 +17,9 @@
 package io.quckoo.console.security
 
 import io.quckoo.console.components._
-
+import io.quckoo.console.layout.ContextStyle
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-
 import monocle.macros.Lenses
 
 /**

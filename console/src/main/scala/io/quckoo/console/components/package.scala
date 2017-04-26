@@ -22,11 +22,10 @@ import java.time.{LocalDate, LocalDateTime, LocalTime, ZonedDateTime}
 import cron4s.expr.CronExpr
 
 import io.quckoo._
+import io.quckoo.console.layout.CssSettings._
 
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.extra.Reusability
-
-import scalacss.Defaults._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.language.implicitConversions
@@ -35,7 +34,6 @@ import scala.language.implicitConversions
   * Created by alonsodomin on 20/02/2016.
   */
 package object components {
-  val lookAndFeel = new LookAndFeel
 
   // Unicode character for non-breaking-space in HTML
   final val NBSP = "\u00a0"

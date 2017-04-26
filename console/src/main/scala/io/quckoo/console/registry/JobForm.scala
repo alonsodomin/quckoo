@@ -18,6 +18,7 @@ package io.quckoo.console.registry
 
 import io.quckoo.{JobPackage, JobSpec}
 import io.quckoo.console.components._
+import io.quckoo.console.layout.{ContextStyle, lookAndFeel}
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -32,8 +33,7 @@ import scalacss.ScalaCssReact._
 object JobForm {
   import MonocleReact._
 
-  @inline
-  private def lnf = lookAndFeel
+  @inline private def lnf = lookAndFeel
 
   type Handler = Option[JobSpec] => Callback
 

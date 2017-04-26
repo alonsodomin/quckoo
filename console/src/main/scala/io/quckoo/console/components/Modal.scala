@@ -16,6 +16,7 @@
 
 package io.quckoo.console.components
 
+import io.quckoo.console.layout.lookAndFeel
 import io.quckoo.console.libs._
 
 import japgolly.scalajs.react._

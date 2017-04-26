@@ -18,6 +18,7 @@ package io.quckoo.console.registry
 
 import io.quckoo.{JobId, JobSpec}
 import io.quckoo.console.components._
+import io.quckoo.console.layout.lookAndFeel
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

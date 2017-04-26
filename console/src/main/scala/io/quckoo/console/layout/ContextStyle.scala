@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.components
+package io.quckoo.console.layout
 
 import japgolly.univeq.UnivEq
 

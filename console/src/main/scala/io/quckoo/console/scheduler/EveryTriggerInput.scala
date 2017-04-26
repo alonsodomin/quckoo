@@ -18,6 +18,7 @@ package io.quckoo.console.scheduler
 
 import io.quckoo.Trigger
 import io.quckoo.console.components._
+import io.quckoo.console.layout.lookAndFeel
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._

@@ -20,16 +20,14 @@ import cats.data.NonEmptyList
 import cats.instances.list._
 import cats.syntax.traverse._
 import cats.syntax.show._
-
 import diode.AnyAction._
 import diode.data.{Pot, PotMap, Ready}
 import diode.react.ModelProxy
-
 import io.quckoo.{JobId, JobSpec}
 import io.quckoo.console.components._
 import io.quckoo.console.core.LoadJobSpecs
+import io.quckoo.console.layout.ContextStyle
 import io.quckoo.protocol.registry._
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 

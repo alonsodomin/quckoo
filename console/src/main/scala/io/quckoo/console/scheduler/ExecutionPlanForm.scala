@@ -24,6 +24,7 @@ import io.quckoo.{ExecutionPlan, JobId, JobSpec, Trigger}
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.core.LoadJobSpecs
+import io.quckoo.console.layout.{ContextStyle, lookAndFeel}
 import io.quckoo.console.registry.JobSelect
 import io.quckoo.protocol.scheduler.ScheduleJob
 
@@ -42,8 +43,7 @@ import scalacss.ScalaCssReact._
 object ExecutionPlanForm {
   import MonocleReact._
 
-  @inline
-  private def lnf = lookAndFeel
+  @inline private def lnf = lookAndFeel
 
   type Handler = Option[ScheduleJob] => Callback
 

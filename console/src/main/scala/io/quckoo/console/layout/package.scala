@@ -14,26 +14,16 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.components
+package io.quckoo.console
 
-import io.quckoo.console.layout.{ContextStyle, lookAndFeel}
-import io.quckoo.console.layout.CssSettings._
-
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
-
-import scalacss.ScalaCssReact._
+import scalacss.devOrProdDefaults
 
 /**
-  * Created by alonsodomin on 20/02/2016.
+  * Created by alonsodomin on 26/04/2017.
   */
-object Alert {
-  case class Props(style: ContextStyle.Value)
+package object layout {
+  val CssSettings = devOrProdDefaults
+  import CssSettings._
 
-  val component = ScalaComponent.builder[Props]("Alert").renderPC { (_, p, c) =>
-    <.div(lookAndFeel.alert(p.style), ^.role := "alert", ^.padding := 5.px, c)
-  } build
-
-  def apply(style: ContextStyle.Value) = component(Props(style)) _
-
+  val lookAndFeel = new LookAndFeel
 }
