@@ -36,6 +36,9 @@ object Table {
 
   type OnSelect[Id] = Set[Id] => Callback
 
+  type HeaderRenderer = PartialFunction[Symbol, VdomNode]
+  val DefaultHeaderRenderer: HeaderRenderer = { case x => x.name }
+
   type RowCallback[Id]             = Id => Callback
   type RowCellRender[Id, Item]     = (Id, Item, Symbol) => VdomNode
   type RowActionsFactory[Id, Item] = (Id, Item) => Seq[RowAction[Id, Item]]
@@ -60,7 +63,12 @@ object Table {
   )
 
   private[this] val HeaderCell =
-    ScalaComponent.builder[Symbol]("HeaderCell").stateless.render_P(title => <.th(title.name)).build
+    ScalaComponent.builder[(Symbol, HeaderRenderer)]("HeaderCell")
+      .stateless
+      .render_P { case (columnId, customRenderer) =>
+        val renderer = customRenderer.orElse(DefaultHeaderRenderer)
+        <.th(renderer(columnId))
+      }.build
 
   private[this] val BodyCell =
     ScalaComponent.builder[VdomNode]("BodyCell").stateless.render_P(node => <.td(node)).build
@@ -141,6 +149,7 @@ object Table {
 
   final case class Props[Id, Item](
       headers: List[Symbol],
+      headerRenderer: HeaderRenderer,
       items: ItemSeq[Id, Item],
       render: RowCellRender[Id, Item],
       onRowClick: Option[RowCallback[Id]],
@@ -195,8 +204,8 @@ object Table {
     def render(props: Props[Id, Item], state: State[Id]) = {
       val headers: VdomArray = {
         val actionsHeader: VdomElement = <.th(^.key := "table-actions", "Actions")
-        val columns: List[VdomElement] = props.headers.map { title =>
-          HeaderCell.withKey(s"$title-header")(title).vdomElement
+        val columns: List[VdomElement] = props.headers.map { columnId =>
+          HeaderCell.withKey(s"$columnId-header")(columnId -> props.headerRenderer).vdomElement
         }
 
         val selectableColumns = {
@@ -253,6 +262,7 @@ object Table {
   def apply[Id, Item](headers: List[Symbol],
                       items: ItemSeq[Id, Item],
                       render: RowCellRender[Id, Item],
+                      headerRenderer: HeaderRenderer = DefaultHeaderRenderer,
                       onRowClick: Option[RowCallback[Id]] = None,
                       onSelect: Option[OnSelect[Id]] = None,
                       actions: Option[RowActionsFactory[Id, Item]] = None,
@@ -260,7 +270,7 @@ object Table {
                       selected: Set[Id] = Set.empty[Id],
                       style: Set[TableStyle.Value] = Set.empty[TableStyle.Value],
                       key: Option[String] = None) = {
-    component[Id, Item](Props(headers, items, render, onRowClick, onSelect, actions, filter, selected, style))
+    component[Id, Item](Props(headers, headerRenderer, items, render, onRowClick, onSelect, actions, filter, selected, style))
   }
 
 }

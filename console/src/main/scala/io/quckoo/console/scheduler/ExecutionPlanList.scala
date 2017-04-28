@@ -132,6 +132,10 @@ object ExecutionPlanList {
 
     // Rendering
 
+    def renderHeader: Table.HeaderRenderer = {
+      case 'Execution => "Last Execution"
+    }
+
     def renderItem(model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): VdomNode = {
       def renderPlanName: VdomNode = {
         val jobSpec = model.jobSpecs.get(plan.jobId)
@@ -183,6 +187,7 @@ object ExecutionPlanList {
             model.executionPlans.seq,
             renderItem(model),
             key = Some("executionPlans"),
+            headerRenderer = renderHeader,
             actions = Some(renderRowActions(props)(_, _)),
             filter = state.selectedFilter.flatMap(Filters.get),
             onSelect = Some(onPlanSelected(_)),
