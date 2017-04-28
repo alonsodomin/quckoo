@@ -104,10 +104,10 @@ object FiniteDurationInput {
               state.unit.map(u => ^.value := u.toString).whenDefined,
               ^.onChange ==> onUnitUpdate,
               <.option(^.key := s"${id}_none", ^.value := "", "Select a time unit..."),
-              SupportedUnits.map {
+              SupportedUnits.toVdomArray {
                 case (u, text) =>
                   <.option(^.key := s"${id}_${u.name()}", ^.value := u.name(), text)
-              } toVdomArray
+              }
             )
           )
         )

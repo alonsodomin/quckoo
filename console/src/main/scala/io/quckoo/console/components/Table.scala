@@ -89,13 +89,13 @@ object Table {
     ScalaComponent.builder[ActionsCellProps[Id, Item]]("ActionsCell").stateless.render_P {
       case (id, item, factory) =>
         <.td(
-          factory(id, item).zipWithIndex.map {
+          factory(id, item).zipWithIndex.toVdomArray {
             case (action, idx) =>
               val button = Button.component
                 .withKey(s"action-$id-$idx")
                 .withChildren(action.children.toList: _*)
               button(Button.Props(Some(action.execute(id))))
-          } toVdomArray
+          }
         )
     } build
 
@@ -193,7 +193,7 @@ object Table {
     }
 
     def render(props: Props[Id, Item], state: State[Id]) = {
-      val headers: List[VdomElement] = {
+      val headers: VdomArray = {
         val actionsHeader: VdomElement = <.th(^.key := "table-actions", "Actions")
         val columns: List[VdomElement] = props.headers.map { title =>
           HeaderCell.withKey(s"$title-header")(title).vdomElement
@@ -216,7 +216,7 @@ object Table {
         if (props.actions.nonEmpty) {
           selectableColumns :+ actionsHeader
         } else selectableColumns
-      }
+      } toVdomArray
 
       val userStyles = props.onRowClick
         .map(_ => props.style + TableStyle.hover)
@@ -225,7 +225,7 @@ object Table {
         .toSeq
       val style = if (userStyles.isEmpty) Seq(lookAndFeel.table.base) else userStyles
 
-      <.table(style.toTagMod, <.thead(<.tr(headers.toVdomArray)), <.tbody(visibleItems(props).map {
+      <.table(style.toTagMod, <.thead(<.tr(headers)), <.tbody(visibleItems(props).toVdomArray {
         case (id, item) =>
           row[Id, Item].withKey(s"row-$id")(
             RowProps(
@@ -239,7 +239,7 @@ object Table {
               toggleSelectItem(props),
               props.actions)
           )
-      } toVdomArray))
+      }))
     }
 
   }

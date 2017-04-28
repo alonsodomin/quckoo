@@ -95,7 +95,7 @@ object CoproductSelect {
               if (props.default.isEmpty) {
                 <.option(^.key :="select-none", "Choose one")
               } else EmptyVdom,
-              props.options.map(opt => ComponentOption.withKey(s"select-$opt")(opt)).toVdomArray
+              props.options.toVdomArray(opt => ComponentOption.withKey(s"select-$opt")(opt))
             )
           )
         ),

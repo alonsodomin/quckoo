@@ -69,11 +69,11 @@ object NavBar {
     def render(props: Props, children: PropsChildren, state: State) = {
       val currentTab = state.selected.getOrElse(props.initial)
       <.div(
-        <.ul(lookAndFeel.nav(props.style), props.addStyles.toTagMod, props.items.map { title =>
+        <.ul(lookAndFeel.nav(props.style), props.addStyles.toTagMod, props.items.toVdomArray { title =>
           NavItem.withKey(s"nav-bar_nav-item_$title")(
             NavItemProps(title, currentTab == title, tabClicked(props))
           )
-        } toVdomArray),
+        }),
         NavBody(children)
       )
     }
