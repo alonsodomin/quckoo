@@ -24,7 +24,6 @@ import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
 
-import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 
 import org.scalajs.dom
@@ -36,7 +35,7 @@ import scala.scalajs.js.annotation.JSExport
 import scalacss.ScalaCssReact._
 import scalacss.internal.mutable.GlobalRegistry
 
-object App extends JSApp with LazyLogging {
+object App extends JSApp with StrictLogging {
   import CssSettings._
 
   def inlineStyles() = {
@@ -52,8 +51,8 @@ object App extends JSApp with LazyLogging {
 
   @JSExport
   override def main(): Unit = {
-    LoggerConfig.factory = ConsoleLoggerFactory()
     LoggerConfig.level = LogLevel.DEBUG
+    LoggerConfig.factory = ConsoleLoggerFactory()
 
     GlobalStyles.addToDocument()
     inlineStyles()

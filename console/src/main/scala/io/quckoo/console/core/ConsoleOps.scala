@@ -45,6 +45,7 @@ private[core] trait ConsoleOps { this: LoggerHolder =>
       passport: Passport
   ): Future[ClusterStateLoaded] = {
     implicit val timeout = DefaultTimeout
+    logger.debug("Refreshing cluster status...")
     client.clusterState.map(ClusterStateLoaded)
   }
 

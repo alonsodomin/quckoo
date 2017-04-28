@@ -23,15 +23,18 @@ import cats.instances.list._
 import cats.syntax.applicative._
 import cats.syntax.traverse._
 import cats.syntax.show._
+
 import diode.data._
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-import io.quckoo.{ExecutionPlan, JobId, JobSpec, PlanId}
+
+import io.quckoo.{ExecutionPlan, PlanId}
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
 import io.quckoo.console.layout.ContextStyle
 import io.quckoo.protocol.scheduler.CancelExecutionPlan
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -142,10 +145,10 @@ object ExecutionPlanList {
         case 'Job       => renderPlanName
         case 'Current   => plan.currentTask.map(_.show).getOrElse[String]("")
         case 'Trigger   => plan.trigger.toString()
-        case 'Scheduled => plan.lastScheduledTime.map(renderDateTime).orNull
-        case 'Execution => plan.lastExecutionTime.map(renderDateTime).orNull
+        case 'Scheduled => plan.lastScheduledTime.map(renderDateTime).getOrElse(VdomArray.empty())
+        case 'Execution => plan.lastExecutionTime.map(renderDateTime).getOrElse(VdomArray.empty())
         case 'Outcome   => plan.lastOutcome.map(_.show).getOrElse[String]("")
-        case 'Next      => plan.nextExecutionTime.map(renderDateTime).orNull
+        case 'Next      => plan.nextExecutionTime.map(renderDateTime).getOrElse(VdomArray.empty())
       }
     }
 

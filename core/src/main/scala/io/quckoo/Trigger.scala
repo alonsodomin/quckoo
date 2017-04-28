@@ -18,8 +18,8 @@ package io.quckoo
 
 import java.time.{Clock, ZonedDateTime, Duration => JavaDuration}
 
-import cron4s._
 import cron4s.expr.CronExpr
+import cron4s.syntax.all._
 import cron4s.lib.javatime._
 
 import scala.concurrent.duration._

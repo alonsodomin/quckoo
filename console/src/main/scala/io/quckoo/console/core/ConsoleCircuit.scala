@@ -283,9 +283,11 @@ object ConsoleCircuit
         }
 
       case JobSpecsLoaded(specs) if specs.nonEmpty =>
+        logger.debug(s"Loaded ${specs.size} job specs from the server.")
         updated(PotMap(JobSpecFetcher, specs))
 
       case JobAccepted(jobId, spec) =>
+        logger.debug(s"Job has been accepted with identifier: $jobId")
         // TODO re-enable following code once registerJob command is fully async
         //val growl = Growl(Notification.info(s"Job accepted: $jobId"))
         //updated(value + (jobId -> Ready(spec)), growl)
@@ -324,6 +326,7 @@ object ConsoleCircuit
         }
 
       case ExecutionPlansLoaded(plans) if plans.nonEmpty =>
+        logger.debug(s"Loaded ${plans.size} execution plans from the server.")
         updated(PotMap(ExecutionPlanFetcher, plans))
 
       case action: RefreshExecutionPlans =>
