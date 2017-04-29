@@ -51,8 +51,8 @@ object App extends JSApp with StrictLogging {
 
   @JSExport
   override def main(): Unit = {
-    LoggerConfig.level = LogLevel.DEBUG
     LoggerConfig.factory = ConsoleLoggerFactory()
+    LoggerConfig.level = LogLevel.DEBUG
 
     GlobalStyles.addToDocument()
     inlineStyles()

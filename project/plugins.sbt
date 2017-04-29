@@ -10,7 +10,7 @@ addSbtPlugin("org.xerial.sbt"    % "sbt-sonatype"  % "1.1")
 addSbtPlugin("com.geirsson"      % "sbt-scalafmt"  % "0.5.4")
 
 // Web plugins
-addSbtPlugin("org.scala-js"     % "sbt-scalajs"     % "0.6.15")
+addSbtPlugin("org.scala-js"     % "sbt-scalajs"     % "0.6.16")
 addSbtPlugin("com.vmunier"      % "sbt-web-scalajs" % "1.0.4")
 addSbtPlugin("org.irundaia.sbt" % "sbt-sassify"     % "1.4.8")
 addSbtPlugin("com.typesafe.sbt" % "sbt-twirl"       % "1.3.0")
