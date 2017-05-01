@@ -19,15 +19,17 @@ package io.quckoo.console.registry
 import cats.data.NonEmptyList
 import cats.instances.list._
 import cats.syntax.traverse._
-import cats.syntax.show._
+
 import diode.AnyAction._
 import diode.data.{Pot, PotMap, Ready}
 import diode.react.ModelProxy
+
 import io.quckoo.{JobId, JobSpec}
 import io.quckoo.console.components._
 import io.quckoo.console.core.LoadJobSpecs
 import io.quckoo.console.layout.ContextStyle
 import io.quckoo.protocol.registry._
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -116,9 +118,9 @@ object JobSpecList {
 
     def rowActions(props: Props)(jobId: JobId, jobSpec: JobSpec) = {
       Seq(if (jobSpec.disabled) {
-        Table.RowAction[JobId, JobSpec](NonEmptyList.of(Icons.play, "Enable"), enableJob(props))
+        Table.RowAction[JobId](NonEmptyList.of(Icons.play, "Enable"), enableJob(props))
       } else {
-        Table.RowAction[JobId, JobSpec](NonEmptyList.of(Icons.stop, "Disable"), disableJob(props))
+        Table.RowAction[JobId](NonEmptyList.of(Icons.stop, "Disable"), disableJob(props))
       })
     }
 

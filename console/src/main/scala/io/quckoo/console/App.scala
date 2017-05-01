@@ -32,7 +32,6 @@ import slogging._
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
 
-import scalacss.ScalaCssReact._
 import scalacss.internal.mutable.GlobalRegistry
 
 object App extends JSApp with StrictLogging {

@@ -22,7 +22,6 @@ import diode._
 
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
-import io.quckoo.protocol.cluster.GetClusterStatus
 
 import japgolly.scalajs.react.extra.router.RouterCtl
 

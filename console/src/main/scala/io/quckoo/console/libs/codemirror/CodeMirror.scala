@@ -20,7 +20,6 @@ import org.scalajs.dom.Element
 import org.scalajs.dom.html.TextArea
 
 import scala.scalajs.js
-import scala.scalajs.js.|
 import scala.scalajs.js.annotation._
 
 /**

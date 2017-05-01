@@ -26,7 +26,6 @@ import monix.reactive.observers.Subscriber
 
 import org.scalajs.dom.raw.{Event, EventSource, MessageEvent}
 
-import scala.scalajs.js.JSON
 import slogging.LazyLogging
 
 /**

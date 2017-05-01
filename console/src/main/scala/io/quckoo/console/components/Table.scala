@@ -21,7 +21,7 @@ import cats.data.NonEmptyList
 import diode.data.{Pot, Ready}
 import diode.react.ReactPot._
 
-import io.quckoo.console.layout.{CssSettings, lookAndFeel}
+import io.quckoo.console.layout.lookAndFeel
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -32,7 +32,6 @@ import scalacss.ScalaCssReact._
   * Created by alonsodomin on 02/07/2016.
   */
 object Table {
-  import CssSettings._
 
   type OnSelect[Id] = Set[Id] => Callback
 
@@ -41,14 +40,14 @@ object Table {
 
   type RowCallback[Id]             = Id => Callback
   type RowCellRender[Id, Item]     = (Id, Item, Symbol) => VdomNode
-  type RowActionsFactory[Id, Item] = (Id, Item) => Seq[RowAction[Id, Item]]
+  type RowActionsFactory[Id, Item] = (Id, Item) => Seq[RowAction[Id]]
 
   type ItemSeq[Id, Item] = Traversable[(Id, Pot[Item])]
 
   type Filter[Id, Item] = (Id, Item) => Boolean
   def NoFilter[Id, Item]: Filter[Id, Item] = (_, _) => true
 
-  final case class RowAction[Id, Item](children: NonEmptyList[VdomNode], execute: RowCallback[Id])
+  final case class RowAction[Id](children: NonEmptyList[VdomNode], execute: RowCallback[Id])
 
   private[this] final case class RowProps[Id, Item](
       rowId: Id,

@@ -21,7 +21,6 @@ import io.quckoo.console.layout.GlobalStyles
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
 /**

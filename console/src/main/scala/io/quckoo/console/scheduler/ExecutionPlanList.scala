@@ -20,7 +20,6 @@ import java.time.{Clock, ZonedDateTime}
 
 import cats.data.NonEmptyList
 import cats.instances.list._
-import cats.syntax.applicative._
 import cats.syntax.traverse._
 import cats.syntax.show._
 
@@ -159,7 +158,7 @@ object ExecutionPlanList {
     def renderRowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
       if (!plan.finished && plan.nextExecutionTime.isDefined) {
         Seq(
-          Table.RowAction[PlanId, ExecutionPlan](
+          Table.RowAction[PlanId](
             NonEmptyList.of(Icons.stop, "Cancel"),
             cancelPlan)
         )

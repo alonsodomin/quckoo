@@ -22,7 +22,6 @@ import java.time.{LocalDate, LocalDateTime, LocalTime, ZonedDateTime}
 import cron4s.expr.CronExpr
 
 import io.quckoo._
-import io.quckoo.console.layout.CssSettings._
 
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.extra.Reusability

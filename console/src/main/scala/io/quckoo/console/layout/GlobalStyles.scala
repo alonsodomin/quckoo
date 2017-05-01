@@ -16,8 +16,6 @@
 
 package io.quckoo.console.layout
 
-import io.quckoo.console.components._
-
 import CssSettings._
 
 /**

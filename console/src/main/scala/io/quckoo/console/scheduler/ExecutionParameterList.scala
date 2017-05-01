@@ -18,11 +18,12 @@ package io.quckoo.console.scheduler
 
 import io.quckoo.console.components._
 import io.quckoo.console.layout.ContextStyle
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+
 import monocle.function.all._
 import monocle.macros.Lenses
-import monocle.std.vector._
 
 /**
   * Created by alonsodomin on 09/04/2016.

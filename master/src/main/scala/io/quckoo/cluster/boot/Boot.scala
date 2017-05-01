@@ -21,7 +21,6 @@ import akka.actor._
 import com.typesafe.config.ConfigFactory
 
 import io.quckoo._
-import io.quckoo.config._
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.{QuckooFacade, SystemName}
 import io.quckoo.time.implicits.systemClock

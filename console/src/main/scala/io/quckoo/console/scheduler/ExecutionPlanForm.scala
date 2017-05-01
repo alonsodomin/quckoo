@@ -29,7 +29,6 @@ import io.quckoo.console.registry.JobSelect
 import io.quckoo.protocol.scheduler.ScheduleJob
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 
 import monocle.macros.Lenses

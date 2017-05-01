@@ -17,7 +17,6 @@
 package io.quckoo.console.components
 
 import io.quckoo.console.layout.{ContextStyle, lookAndFeel}
-import io.quckoo.console.layout.CssSettings._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

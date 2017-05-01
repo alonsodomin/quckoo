@@ -25,9 +25,6 @@ import slogging.LazyLogging
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-import scalaz._
-import Scalaz._
-
 /**
   * Created by alonsodomin on 22/09/2016.
   */

@@ -17,7 +17,6 @@
 package io.quckoo.console.components
 
 import cats.data.Validated._
-import cats.instances.option._
 import cats.syntax.show._
 
 import io.quckoo.console.validation._
