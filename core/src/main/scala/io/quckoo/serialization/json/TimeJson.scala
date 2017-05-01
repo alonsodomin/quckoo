@@ -16,8 +16,6 @@
 
 package io.quckoo.serialization.json
 
-import java.time._
-import java.time.format._
 import java.util.concurrent.TimeUnit
 
 import cats.instances.either._
@@ -31,68 +29,6 @@ import scala.concurrent.duration.FiniteDuration
   * Created by alonsodomin on 11/08/2016.
   */
 trait TimeJson {
-
-  implicit final val decodeInstant: Decoder[Instant] =
-    Decoder.instance { c =>
-      c.as[Long] match {
-        case Right(s) => try Right(Instant.ofEpochMilli(s)) catch {
-          case _: DateTimeParseException => Left(DecodingFailure("Instant", c.history))
-        }
-        case l @ Left(_) => l.asInstanceOf[Decoder.Result[Instant]]
-      }
-    }
-
-  implicit final val encodeInstant: Encoder[Instant] = Encoder.instance(time => Json.fromLong(time.toEpochMilli))
-
-  implicit final val decodeLocalDateTimeDefault: Decoder[LocalDateTime] =
-    Decoder[Instant].map(time => LocalDateTime.ofInstant(time, ZoneOffset.UTC))
-  implicit final val encodeLocalDateTimeDefault: Encoder[LocalDateTime] =
-    Encoder[Instant].contramap(_.toInstant(ZoneOffset.UTC))
-
-  implicit final val decodeZonedDateTimeDefault: Decoder[ZonedDateTime] =
-    Decoder[Instant].map(time => ZonedDateTime.ofInstant(time, ZoneOffset.UTC))
-  implicit final val encodeZonedDateTimeDefault: Encoder[ZonedDateTime] =
-    Encoder[Instant].contramap(_.withZoneSameInstant(ZoneOffset.UTC).toInstant)
-
-  implicit final val decodeOffsetDateTimeDefault: Decoder[OffsetDateTime] =
-    Decoder[Instant].map(time => OffsetDateTime.ofInstant(time, ZoneOffset.UTC))
-  implicit final val encodeOffsetDateTimeDefault: Encoder[OffsetDateTime] =
-    Encoder[Instant].contramap(_.atZoneSameInstant(ZoneOffset.UTC).toInstant)
-
-  implicit final val decodeLocalDateDefault: Decoder[LocalDate] =
-    Decoder[Long].map(LocalDate.ofEpochDay)
-  implicit final val encodeLocalDateDefault: Encoder[LocalDate] =
-    Encoder[Long].contramap(_.toEpochDay)
-
-  implicit final val decodeLocalTimeDefault: Decoder[LocalTime] =
-    Decoder[Long].map(LocalTime.ofNanoOfDay)
-  implicit final val encodeLocalTimeDefault: Encoder[LocalTime] =
-    Encoder[Long].contramap(_.toNanoOfDay)
-
-  implicit final val decodePeriod: Decoder[Period] = Decoder.instance { c =>
-    c.as[String] match {
-      case Right(s) => try Right(Period.parse(s)) catch {
-        case _: DateTimeParseException => Left(DecodingFailure("Period", c.history))
-      }
-      case l@Left(_) => l.asInstanceOf[Decoder.Result[Period]]
-    }
-  }
-
-  implicit final val encodePeriod: Encoder[Period] = Encoder.instance { period =>
-    Json.fromString(period.toString)
-  }
-
-  implicit def durationEncoder: Encoder[Duration] = Encoder.instance { duration =>
-    Json.fromString(duration.toString)
-  }
-  implicit def durationDecoder: Decoder[Duration] = Decoder.instance { c =>
-    c.as[String] match {
-      case Right(s) => try Right(Duration.parse(s)) catch {
-        case _: DateTimeParseException => Left(DecodingFailure("Duration", c.history))
-      }
-      case l @ Left(_) => l.asInstanceOf[Decoder.Result[Duration]]
-    }
-  }
 
   implicit final val encodeFiniteDuration: Encoder[FiniteDuration] = Encoder.instance { duration =>
     Json.obj(

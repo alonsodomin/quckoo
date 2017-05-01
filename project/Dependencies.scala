@@ -60,7 +60,7 @@ object Dependencies {
     val betterfiles = "3.0.0"
     val diode       = "1.1.2-SNAPSHOT"
     val cats        = "0.9.0"
-    val circe       = "0.7.1"
+    val circe       = "0.8.0-RC1"
     val cron4s      = "0.4.0"
     val enumeratum  = "1.5.10"
     val ivy         = "2.4.0"
@@ -174,6 +174,7 @@ object Dependencies {
       "io.circe"          %%% "circe-parser"       % version.circe,
       "io.circe"          %%% "circe-generic"      % version.circe,
       "io.circe"          %%% "circe-optics"       % version.circe,
+      "io.circe"          %%% "circe-java8"        % version.circe,
       "com.beachape"      %%% "enumeratum"         % version.enumeratum,
       "com.beachape"      %%% "enumeratum-circe"   % version.enumeratum,
 

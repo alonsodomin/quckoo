@@ -30,6 +30,7 @@ import cats.syntax.either._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
 
 import io.circe.generic.auto._
+import io.circe.java8.time._
 
 import io.quckoo._
 import io.quckoo.api.{Scheduler => SchedulerApi}

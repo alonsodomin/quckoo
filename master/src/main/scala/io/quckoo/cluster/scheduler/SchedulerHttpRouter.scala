@@ -26,6 +26,7 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
 
 import io.circe.generic.auto._
+import io.circe.java8.time._
 
 import io.quckoo._
 import io.quckoo.api.{Scheduler => SchedulerApi}
