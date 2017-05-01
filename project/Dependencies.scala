@@ -39,7 +39,7 @@ object Dependencies {
 
       // persistence plugins
       val cassandra = "0.25.1"
-      val inmemory  = "2.4.17.3"
+      val inmemory  = s"$main.3"
     }
 
     // Monitoring ----
@@ -62,7 +62,8 @@ object Dependencies {
     val cats        = "0.9.0"
     val circe       = "0.8.0-RC1"
     val cron4s      = "0.4.0"
-    val enumeratum  = "1.5.10"
+    val enumeratum  = "1.5.12"
+    val enumCirce   = "1.5.13"
     val ivy         = "2.4.0"
     val monix       = "2.2.4"
     val monocle     = "1.4.0"
@@ -176,7 +177,7 @@ object Dependencies {
       "io.circe"          %%% "circe-optics"       % version.circe,
       "io.circe"          %%% "circe-java8"        % version.circe,
       "com.beachape"      %%% "enumeratum"         % version.enumeratum,
-      "com.beachape"      %%% "enumeratum-circe"   % version.enumeratum,
+      "com.beachape"      %%% "enumeratum-circe"   % version.enumCirce,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
@@ -193,7 +194,7 @@ object Dependencies {
   }
 
   lazy val coreJVM = Def.settings {
-    libraryDependencies ++= Seq() //"io.circe" %% "circe-java8" % version.circe
+    libraryDependencies ++= Seq()
   }
 
   // Utilities module ===========================
