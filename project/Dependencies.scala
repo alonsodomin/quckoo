@@ -18,13 +18,13 @@ object Dependencies {
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.5.0"
     val mockito    = "1.10.19"
-    val mockserver = "3.10.4"
+    val mockserver = "3.10.7"
     val discipline = "0.7.3"
 
     // Akka ----------
 
     object akka {
-      val main = "2.4.17"
+      val main = "2.4.18"
       val kryo = "0.5.2"
 
       val constructr = "0.7.0"
@@ -33,13 +33,13 @@ object Dependencies {
         val main = "10.0.5"
 
         // http extensions
-        val json = "1.14.0"
+        val json = "1.15.0"
         val sse  = "2.0.0"
       }
 
       // persistence plugins
       val cassandra = "0.25.1"
-      val inmemory  = s"$main.3"
+      val inmemory  = s"2.4.17.3"
     }
 
     // Monitoring ----
