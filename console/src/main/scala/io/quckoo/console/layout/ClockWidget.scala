@@ -33,7 +33,7 @@ import scala.concurrent.duration._
 object ClockWidget {
 
   private[this] final val Formatter = DateTimeFormatter.ofPattern(
-    "E, MMM d, HH:mm:ss"
+    "E, MMM d, HH:mm:ss z"
   )
 
   final case class State(current: ZonedDateTime)

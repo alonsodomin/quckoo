@@ -69,7 +69,7 @@ object Dependencies {
     val monocle     = "1.4.0"
     val pureconfig  = "0.7.0"
     val scalaCss    = "0.5.3"
-    val scalaTime   = "2.0.0-M10"
+    val scalaTime   = "2.0.0-M11-SNAPSHOT"
     val scalatags   = "0.6.5"
     val scopt       = "3.5.0"
     val shims       = "1.0-b0e5152"
@@ -178,6 +178,7 @@ object Dependencies {
       "io.circe"          %%% "circe-java8"        % version.circe,
       "com.beachape"      %%% "enumeratum"         % version.enumeratum,
       "com.beachape"      %%% "enumeratum-circe"   % version.enumCirce,
+      //"com.codecommit"    %%% "shims-core"         % version.shims,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,

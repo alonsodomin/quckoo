@@ -70,7 +70,7 @@ object Navigation {
             list.icon, list.name, <.span(^.`class` := "caret")
           ),
           <.ul(^.`class` := "dropdown-menu",
-            list.items.map(renderItem).toVdomArray
+            list.items.toVdomArray(renderItem)
           )
         )
       }
