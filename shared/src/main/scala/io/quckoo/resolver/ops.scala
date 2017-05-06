@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker.core
+package io.quckoo.resolver
 
-import cats.effect.IO
-
-import io.quckoo.resolver.Resolver
+import cats.free.Free
+import io.quckoo.ArtifactId
+import io.quckoo.reflect.Artifact
 
 /**
-  * Created by alonsodomin on 16/02/2017.
+  * Created by alonsodomin on 03/05/2017.
   */
-trait WorkerContext {
+object ops extends Resolver[ResolverIO] {
 
-  implicit def resolver: Resolver[IO]
+  def validate(artifactId: ArtifactId): ResolverIO[Resolved[ArtifactId]] =
+    Free.liftF(ResolverOp.Validate(artifactId))
+
+  def download(artifactId: ArtifactId): ResolverIO[Resolved[Artifact]] =
+    Free.liftF(ResolverOp.Download(artifactId))
 
 }

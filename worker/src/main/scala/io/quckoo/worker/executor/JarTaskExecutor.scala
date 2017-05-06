@@ -16,20 +16,34 @@
 
 package io.quckoo.worker.executor
 
-import java.util.concurrent.Callable
+import akka.actor.Props
+import akka.pattern._
 
-import akka.actor.{ActorRef, Props}
+import cats.{Monad, ~>}
+import cats.data.{Coproduct, EitherT}
+import cats.effect.IO
+import cats.free.Free
 
-import io.quckoo.{ExceptionThrown, JarJobPackage, TaskId}
-import io.quckoo.resolver.Resolver
+import io.quckoo._
+import io.quckoo.reflect._
+import io.quckoo.resolver._
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
-
-import scala.util.{Failure, Success, Try}
 
 /**
   * Created by alonsodomin on 16/02/2017.
   */
 object JarTaskExecutor {
+
+  type ArtifactOp[A] = Coproduct[ResolverOp, ReflectOp, A]
+  type ArtifactIO[A] = Free[ArtifactOp, A]
+
+  implicit def interpreter[F[_]: Monad](implicit resolver: ResolverInterpreter[F], reflector: ReflectorInterpreter[F]): ArtifactOp ~> F =
+    resolver or reflector
+
+  implicit class ArtifactIOOps[A](val self: ArtifactIO[A]) extends AnyVal {
+    def to[F[_]: Monad](implicit interpreter: ArtifactOp ~> F): F[A] =
+      self.foldMap(interpreter)
+  }
 
   def props(workerContext: WorkerContext, taskId: TaskId, jarPackage: JarJobPackage): Props =
     Props(new JarTaskExecutor(workerContext, taskId, jarPackage))
@@ -43,51 +57,41 @@ class JarTaskExecutor private (
   extends TaskExecutor {
 
   import TaskExecutor._
-  import workerContext._
+  import JarTaskExecutor._
 
   def receive: Receive = ready
 
   private[this] def ready: Receive = {
     case Run =>
+      import context.dispatcher
+
       log.info("Starting execution of task '{}' using class '{}' from artifact {}.",
         taskId, jarPackage.jobClass, jarPackage.artifactId
       )
-      resolver ! Resolver.Download(jarPackage.artifactId)
-      context.become(running(replyTo = sender()))
+
+      downloadAndRun.shift.unsafeToFuture().pipeTo(sender())
   }
 
-  private[this] def running(replyTo: ActorRef): Receive = {
-    case Resolver.ArtifactResolved(artifact) =>
-      log.debug("Received resolved artifact for id: {}", jarPackage.artifactId)
-      val result = for {
-        job    <- artifact.newJob(jarPackage.jobClass, Map.empty)
-        invoke <- runJob(job)
-      } yield invoke
+  private def downloadAndRun(implicit resolver: InjectableResolver[ArtifactOp], reflect: InjectableReflector[ArtifactOp]): IO[Response] = {
+    import resolver._, reflect._
 
-      val response = result match {
-        case Success(value) => Completed(value)
-        case Failure(ex)    => Failed(ExceptionThrown.from(ex))
-      }
-      complete(replyTo, response)
+    def downloadJars: ArtifactIO[Either[Failed, Artifact]] =
+      download(jarPackage.artifactId).map(_.leftMap(errors => Failed(MissingDependencies(errors))).toEither)
 
-    case Resolver.ResolutionFailed(_, cause) =>
-      val response = TaskExecutor.Failed(cause)
-      complete(replyTo, response)
-  }
+    def runIt(artifact: Artifact): ArtifactIO[Unit] = for {
+      jobClass <- loadJobClass(artifact, jarPackage.jobClass)
+      job      <- createJob(jobClass)
+      _        <- runJob(job)
+    } yield ()
 
-  private[this] def completed(response: Response): Receive = {
-    case _ => sender ! response
-  }
+    implicit val myResolver = workerContext.resolver
 
-  private def complete(replyTo: ActorRef, response: Response) = {
-    log.debug("Completing execution of task '{}' with response: {}", taskId, response)
-    replyTo ! response
-    context.become(completed(response))
-  }
-
-  private def runJob(callable: Callable[_]): Try[Any] = {
-    log.debug("Running class '{}'...", jarPackage.jobClass)
-    Try(callable.call())
+    EitherT(downloadJars)
+      .semiflatMap(runIt)
+      .value.to[IO]
+      .attempt
+      .map(_.fold(ex => Left(Failed(ExceptionThrown.from(ex))), identity))
+      .map(_.fold(identity, _ => Completed(())))
   }
 
 }

@@ -60,6 +60,7 @@ object Dependencies {
     val betterfiles = "3.0.0"
     val diode       = "1.1.2-SNAPSHOT"
     val cats        = "0.9.0"
+    val catsEffect  = "0.1-0848c9b"
     val circe       = "0.8.0-RC1"
     val cron4s      = "0.4.0"
     val enumeratum  = "1.5.12"
@@ -172,6 +173,7 @@ object Dependencies {
   lazy val core = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
       "org.typelevel"     %%% "cats"               % version.cats,
+      "org.typelevel"     %%% "cats-effect"        % version.catsEffect,
       "io.circe"          %%% "circe-parser"       % version.circe,
       "io.circe"          %%% "circe-generic"      % version.circe,
       "io.circe"          %%% "circe-optics"       % version.circe,
@@ -321,15 +323,16 @@ object Dependencies {
 
   lazy val clusterShared = Def.settings {
     import libs._
-    libraryDependencies ++= Log4j.All ++ Seq(
+    libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryoSerialization, ivy, scalaXml, pureconfig, slogging_slf4j,
-      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd
+      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd,
+      betterfiles
     )
   }
   lazy val clusterMaster = Def.settings {
     import libs._
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= compiler.plugins ++ Seq(
       Akka.sharding, Akka.http.main, Akka.http.circe, Akka.http.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
       Akka.persistence.query, Akka.persistence.memory, Akka.constructr,
@@ -342,7 +345,7 @@ object Dependencies {
   }
   lazy val clusterWorker = Def.settings {
     import libs._
-    libraryDependencies ++= Seq(scopt, scalaArm, betterfiles)
+    libraryDependencies ++= compiler.plugins ++ Seq(scopt, scalaArm)
   }
 
   // Support modules ================================
@@ -360,7 +363,7 @@ object Dependencies {
 
   lazy val testSupportJVM = Def.settings {
     import libs._
-    libraryDependencies ++= Log4j.All ++ Seq(
+    libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
       slogging_slf4j, mockito, scalaMock, Akka.testKit, Akka.http.testkit
     )
   }

@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker.core
+package io.quckoo.resolver
 
-import cats.effect.IO
-
-import io.quckoo.resolver.Resolver
+import cats.data.ValidatedNel
+import io.quckoo.reflect.Artifact
+import io.quckoo.{ArtifactId, DependencyError}
 
 /**
-  * Created by alonsodomin on 16/02/2017.
+  * Created by alonsodomin on 03/05/2017.
   */
-trait WorkerContext {
-
-  implicit def resolver: Resolver[IO]
-
+sealed trait ResolverOp[A]
+object ResolverOp {
+  case class Validate(artifactId: ArtifactId) extends ResolverOp[ValidatedNel[DependencyError, ArtifactId]]
+  case class Download(artifactId: ArtifactId) extends ResolverOp[ValidatedNel[DependencyError, Artifact]]
 }

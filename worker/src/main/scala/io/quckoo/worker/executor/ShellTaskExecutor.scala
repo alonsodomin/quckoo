@@ -23,13 +23,11 @@ import akka.pattern._
 
 import better.files._
 
+import cats.effect.IO
+import cats.implicits._
+
 import io.quckoo.{ExceptionThrown, ShellScriptPackage, TaskExitCodeFault, TaskId}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
-
-import scala.concurrent.Future
-
-import scalaz._
-import Scalaz._
 
 object ShellTaskExecutor {
 
@@ -48,7 +46,7 @@ class ShellTaskExecutor private (
     case TaskExecutor.Run =>
       import context.dispatcher
 
-      withRunner {
+      val program = withRunner {
         _.run.map { result =>
           if (result.exitCode == 0) {
             Completed(result.stdOut)
@@ -58,35 +56,33 @@ class ShellTaskExecutor private (
         } recover {
           case ex => Failed(ExceptionThrown.from(ex))
         }
-      } pipeTo sender()
+      }
+
+      program.unsafeToFuture() pipeTo sender()
   }
 
-  private [this] def withRunner[R](f: ProcessRunner => Future[R]): Future[R] = {
-    import context.dispatcher
-
-    def generateScript = {
-      Future {
-        val tempFile = File.newTemporaryFile()
-        tempFile.append(shellPackage.content)
-        tempFile.addPermission(PosixFilePermission.OWNER_EXECUTE)
-        tempFile
-      }
+  private [this] def withRunner[R](f: ProcessRunner => IO[R]): IO[R] = {
+    def generateScript = IO {
+      val tempFile = File.newTemporaryFile()
+      tempFile.append(shellPackage.content)
+      tempFile.addPermission(PosixFilePermission.OWNER_EXECUTE)
+      tempFile
     }
 
-    def runIt(file: File): Future[R] = {
-      def runScript: Future[R] = {
+    def runIt(file: File): IO[R] = {
+      def runScript: IO[R] = {
         log.debug("Running file: {}", file)
         val runner = new ProcessRunner(file.path.toString)
         f(runner)
       }
 
-      def deleteScript: Future[Unit] = Future {
+      def deleteScript: IO[Unit] = IO {
         log.debug("Deleting script")
         file.delete(true)
         ()
       }
 
-      runScript.flatMap(r => deleteScript.map(_ => r))
+      runScript.ensuring(deleteScript)
     }
 
     generateScript >>= runIt

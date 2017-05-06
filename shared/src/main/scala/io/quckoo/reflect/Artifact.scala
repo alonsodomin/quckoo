@@ -14,41 +14,45 @@
  * limitations under the License.
  */
 
-package io.quckoo.resolver
+package io.quckoo.reflect
 
 import java.net.URL
 import java.util.concurrent.Callable
 
+import cats.{Eq, Show}
 import cats.implicits._
 
 import io.quckoo.{ArtifactId, JobClass}
 
-import scala.util.{Failure, Success, Try}
-
 import slogging._
+
+import scala.util.{Failure, Success, Try}
 
 /**
   * Created by aalonsodominguez on 17/07/15.
   */
 object Artifact {
 
-  def apply(moduleId: ArtifactId, classpath: Seq[URL]): Artifact = {
-    new Artifact(moduleId, new ArtifactClassLoader(classpath.toArray))
+  implicit val artifactEq: Eq[Artifact] = Eq.by(_.artifactId)
+
+  implicit val artifactShow: Show[Artifact] = Show.show { artifact =>
+
+    show"${artifact.artifactId} ::  "
   }
 
 }
 
-final class Artifact private[resolver] (
-    val artifactId: ArtifactId,
-    classLoader: ArtifactClassLoader)
-  extends LazyLogging {
+final case class Artifact(
+    artifactId: ArtifactId,
+    classpath: List[URL]
+  ) extends LazyLogging {
 
   logCreation()
 
-  private[resolver] def loadClass(className: String): Try[Class[_]] =
-    Try(classLoader.loadClass(className))
+  lazy val classLoader: ClassLoader = new ArtifactClassLoader(classpath.toArray)
 
-  def classpath: Seq[URL] = classLoader.getURLs
+  private[reflect] def loadClass(className: String): Try[Class[_]] =
+    Try(classLoader.loadClass(className))
 
   def jobClass(className: String): Try[JobClass] = {
     logger.debug("Loading job class: {}", className)

@@ -18,6 +18,7 @@ package io.quckoo.resolver
 
 import java.net.URL
 
+import io.quckoo.reflect.ArtifactClassLoader
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 /**

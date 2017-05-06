@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker.core
+package io.quckoo.reflect
 
-import cats.effect.IO
-
-import io.quckoo.resolver.Resolver
+import io.quckoo.{Job, JobClass}
 
 /**
-  * Created by alonsodomin on 16/02/2017.
+  * Created by alonsodomin on 04/05/2017.
   */
-trait WorkerContext {
-
-  implicit def resolver: Resolver[IO]
-
+sealed trait ReflectOp[A]
+object ReflectOp {
+  case class LoadJobClass(artifact: Artifact, className: String) extends ReflectOp[JobClass]
+  case class CreateJob(jobClass: JobClass) extends ReflectOp[Job]
+  case class RunJob(job: Job) extends ReflectOp[Unit]
 }

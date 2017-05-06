@@ -14,17 +14,25 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker.core
+package io.quckoo
 
+import cats.Monad
 import cats.effect.IO
-
-import io.quckoo.resolver.Resolver
+import cats.free.Free
 
 /**
-  * Created by alonsodomin on 16/02/2017.
+  * Created by alonsodomin on 04/05/2017.
   */
-trait WorkerContext {
+package object reflect {
+  type ReflectIO[A] = Free[ReflectOp, A]
 
-  implicit def resolver: Resolver[IO]
+  implicit class ReflectIOOps[A](val self: ReflectIO[A]) extends AnyVal {
+
+    def to[F[_]: Monad](implicit interpreter: ReflectorInterpreter[F]): F[A] =
+      self.foldMap(interpreter)
+
+  }
+
+  implicit val javaReflector: Reflector[IO] = new JavaReflector
 
 }

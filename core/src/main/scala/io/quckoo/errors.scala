@@ -47,7 +47,7 @@ object ExceptionThrown {
 
 final case class MissingDependencies(dependencies: NonEmptyList[DependencyError]) extends QuckooError
 
-sealed trait DependencyError {
+sealed trait DependencyError extends Product with Serializable {
   val artifactId: ArtifactId
 }
 case class UnresolvedDependency(artifactId: ArtifactId) extends DependencyError

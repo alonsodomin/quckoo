@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker.core
+package io.quckoo.reflect
 
-import cats.effect.IO
+import cats.free.Free
 
-import io.quckoo.resolver.Resolver
+import io.quckoo.{Job, JobClass}
 
 /**
-  * Created by alonsodomin on 16/02/2017.
+  * Created by alonsodomin on 04/05/2017.
   */
-trait WorkerContext {
+object ops extends Reflector[ReflectIO] {
 
-  implicit def resolver: Resolver[IO]
+  override def loadJobClass(artifact: Artifact, className: String): ReflectIO[JobClass] =
+    Free.liftF(ReflectOp.LoadJobClass(artifact, className))
+
+  override def createJob(jobClass: JobClass): ReflectIO[Job] =
+    Free.liftF(ReflectOp.CreateJob(jobClass))
+
+  override def runJob(job: Job): ReflectIO[Unit] =
+    Free.liftF(ReflectOp.RunJob(job))
 
 }

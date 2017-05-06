@@ -16,18 +16,23 @@
 
 package io.quckoo.resolver
 
-import cats.data.Validated
-
-import io.quckoo.{ArtifactId, QuckooError}
-
-import scala.concurrent.{ExecutionContext, Future}
+import cats.{Monad, ~>}
 
 /**
-  * Created by alonsodomin on 23/01/2016.
+  * Created by alonsodomin on 04/05/2017.
   */
-trait Resolve {
+final class ResolverInterpreter[F[_]: Monad] private(impl: Resolver[F]) extends (ResolverOp ~> F) {
 
-  def apply(artifactId: ArtifactId, download: Boolean)(
-      implicit ec: ExecutionContext): Future[Validated[QuckooError, Artifact]]
+  override def apply[A](fa: ResolverOp[A]): F[A] = fa match {
+    case ResolverOp.Validate(artifactId) => impl.validate(artifactId)
+    case ResolverOp.Download(artifactId) => impl.download(artifactId)
+  }
+
+}
+
+object ResolverInterpreter {
+
+  implicit def deriveInstance[F[_]: Monad](implicit impl: Resolver[F]): ResolverInterpreter[F] =
+    new ResolverInterpreter[F](impl)
 
 }

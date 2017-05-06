@@ -19,7 +19,7 @@ package io.quckoo.resolver
 import java.net.URL
 
 import io.quckoo.ArtifactId
-
+import io.quckoo.reflect.{Artifact, ArtifactClassLoader}
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scala.collection.mutable

@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker.core
+package io.quckoo
 
-import cats.effect.IO
-
-import io.quckoo.resolver.Resolver
+import cats.Monad
+import cats.data.ValidatedNel
+import cats.free.Free
 
 /**
-  * Created by alonsodomin on 16/02/2017.
+  * Created by alonsodomin on 04/05/2017.
   */
-trait WorkerContext {
+package object resolver {
+  type ResolverIO[A] = Free[ResolverOp, A]
+  type Resolved[A] = ValidatedNel[DependencyError, A]
 
-  implicit def resolver: Resolver[IO]
-
+  implicit class ResolverIOOps[A](val self: ResolverIO[A]) extends AnyVal {
+    def to[F[_]: Monad](implicit interpreter: ResolverInterpreter[F]): F[A] =
+      self.foldMap(interpreter)
+  }
 }

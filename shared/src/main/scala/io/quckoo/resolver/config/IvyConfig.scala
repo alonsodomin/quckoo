@@ -27,8 +27,8 @@ final case class IvyConfig(
     baseDir: File,
     resolutionCacheDir: File,
     repositoryCacheDir: File,
-    ivyHome: Option[File],
-    repositories: List[MavenRepository]
+    ivyHome: Option[File] = None,
+    repositories: List[MavenRepository] = List.empty
 ) {
 
   def createFolders(): Unit = {

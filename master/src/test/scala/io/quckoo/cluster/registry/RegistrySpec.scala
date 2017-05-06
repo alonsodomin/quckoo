@@ -18,11 +18,11 @@ package io.quckoo.cluster.registry
 
 import akka.persistence.Persistence
 import akka.testkit.{ImplicitSender, TestActorRef, TestActors, TestProbe}
-
 import io.quckoo._
+import io.quckoo.reflect.Artifact
 import io.quckoo.cluster.journal.QuckooTestJournal
 import io.quckoo.protocol.registry._
-import io.quckoo.resolver.{Artifact, Resolver}
+import io.quckoo.resolver.Resolver
 import io.quckoo.testkit.QuckooActorClusterSuite
 
 import scala.concurrent.duration._

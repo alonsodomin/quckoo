@@ -29,6 +29,8 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
+import cats.effect.IO
+
 import io.quckoo.{JobId, JobNotFound, JobSpec}
 import io.quckoo.api.TopicTag
 import io.quckoo.cluster.QuckooRoles
@@ -36,7 +38,7 @@ import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
-import io.quckoo.resolver.ivy.IvyResolve
+import io.quckoo.resolver.ivy.IvyResolver
 
 import kamon.trace.Tracer
 
@@ -61,13 +63,9 @@ object Registry {
   case object Ready extends Signal
 
   def props(settings: ClusterSettings, journal: QuckooJournal): Props = {
-    val resolve       = IvyResolve(settings.resolver)
-    val resolverProps = Resolver.props(resolve).withDispatcher("quckoo.resolver.dispatcher")
-    props(RegistrySettings(resolverProps), journal)
+    val resolver = IvyResolver(settings.resolver)
+    Props(new Registry(resolver, journal))
   }
-
-  def props(settings: RegistrySettings, journal: QuckooJournal): Props =
-    Props(new Registry(settings, journal))
 
   private[registry] def startShardRegion(system: ActorSystem): ActorRef = {
     val cluster = Cluster(system)
@@ -91,7 +89,7 @@ object Registry {
 
 }
 
-class Registry private (settings: RegistrySettings, journal: QuckooJournal)
+class Registry private (resolver: Resolver[IO], journal: QuckooJournal)
     extends Actor with ActorLogging with Stash {
   import Registry._
 
@@ -103,7 +101,6 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
   )
 
   private[this] val mediator    = DistributedPubSub(context.system).mediator
-  private[this] val resolver    = context.actorOf(settings.resolverProps, "resolver")
   private[this] val shardRegion = startShardRegion(context.system)
 
   private[this] var jobIds = Set.empty[JobId]
@@ -135,7 +132,8 @@ class Registry private (settings: RegistrySettings, journal: QuckooJournal)
     case RegisterJob(spec) =>
       val registrationTrackId = s"registration-${UUID.randomUUID()}"
       Tracer.withNewContext(registrationTrackId) {
-        val registrationProps = Registration.props(spec, shardRegion, resolver, sender())
+        implicit val r = resolver
+        val registrationProps = Registration.props(spec, shardRegion, sender())
         context.actorOf(registrationProps, registrationTrackId)
       }
 

@@ -18,14 +18,14 @@ package io.quckoo.worker.executor
 
 import java.io._
 
+import cats.effect.IO
+import cats.implicits._
+
 import resource._
 
 import kamon.trace.Tracer
 
-import scala.concurrent._
-
-import scalaz._
-import Scalaz._
+import scala.concurrent.ExecutionContext
 
 import slogging._
 
@@ -38,39 +38,38 @@ object ProcessRunner {
 class ProcessRunner(command: String, args: String*) extends StrictLogging {
   import ProcessRunner._
 
-  def run(implicit executionContext: ExecutionContext): Future[Result] = {
-    def readStream(stream: InputStream): Future[String] = Future {
-      blocking {
-        val managedOutput = for {
-          buffer <- managed(new StringWriter())
-          writer <- managed(new PrintWriter(buffer))
-          input  <- managed(new BufferedReader(new InputStreamReader(stream)))
-        } yield {
-          def read(): Unit = input.readLine() match {
-            case null => ()
-            case line =>
-              writer.println(line)
-              read()
-          }
-
-          read()
-          buffer.toString
+  def run(implicit executionContext: ExecutionContext): IO[Result] = {
+    def readStream(stream: InputStream): IO[String] = IO {
+      val managedOutput = for {
+        buffer <- managed(new StringWriter())
+        writer <- managed(new PrintWriter(buffer))
+        input  <- managed(new BufferedReader(new InputStreamReader(stream)))
+      } yield {
+        def read(): Unit = input.readLine() match {
+          case null => ()
+          case line =>
+            writer.println(line)
+            read()
         }
 
-        managedOutput.acquireAndGet(identity)
+        read()
+        buffer.toString
       }
+
+      managedOutput.acquireAndGet(identity)
     }
 
-    def startProcess(builder: ProcessBuilder): Future[Process] = {
+    def startProcess(builder: ProcessBuilder): IO[Process] = IO {
       logger.info("Executing command: {}", command)
-      Future(builder.start())
+      builder.start()
     }
 
-    def captureResult(proc: Process): Future[Result] = {
-      def exitCode = Future { blocking { proc.waitFor() } }
-      def stdOut = readStream(proc.getInputStream)
-      def stdErr = readStream(proc.getErrorStream)
-      (exitCode |@| stdOut |@| stdErr)(Result)
+    def captureResult(proc: Process): IO[Result] = {
+      def exitCode = IO { proc.waitFor() } shift
+      def stdOut = readStream(proc.getInputStream).shift
+      def stdErr = readStream(proc.getErrorStream).shift
+
+      (exitCode |@| stdOut |@| stdErr).map(Result)
     }
 
     val commandLine = command +: args
