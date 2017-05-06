@@ -17,83 +17,28 @@
 package io.quckoo.reflect
 
 import java.net.URL
-import java.util.concurrent.Callable
 
 import cats.{Eq, Show}
 import cats.implicits._
 
-import io.quckoo.{ArtifactId, JobClass}
-
-import slogging._
-
-import scala.util.{Failure, Success, Try}
+import io.quckoo.ArtifactId
 
 /**
   * Created by aalonsodominguez on 17/07/15.
   */
 object Artifact {
 
-  implicit val artifactEq: Eq[Artifact] = Eq.by(_.artifactId)
+  implicit val artifactEq: Eq[Artifact] = Eq.fromUniversalEquals
 
   implicit val artifactShow: Show[Artifact] = Show.show { artifact =>
-
-    show"${artifact.artifactId} ::  "
+    val classpath = artifact.classpath.mkString(":")
+    show"${artifact.artifactId} :: $classpath"
   }
 
 }
 
-final case class Artifact(
-    artifactId: ArtifactId,
-    classpath: List[URL]
-  ) extends LazyLogging {
-
-  logCreation()
+final case class Artifact(artifactId: ArtifactId, classpath: List[URL]) {
 
   lazy val classLoader: ClassLoader = new ArtifactClassLoader(classpath.toArray)
-
-  private[reflect] def loadClass(className: String): Try[Class[_]] =
-    Try(classLoader.loadClass(className))
-
-  def jobClass(className: String): Try[JobClass] = {
-    logger.debug("Loading job class: {}", className)
-    loadClass(className) map { _.asInstanceOf[JobClass] }
-  }
-
-  def newJob(className: String, params: Map[String, Any]): Try[Callable[_]] = {
-    def injectParameters(clazz: JobClass, instance: Any): Try[Unit] = {
-      val injection = Either.catchNonFatal(clazz.getDeclaredFields.toList).flatMap { list =>
-        list.filter(f => params.contains(f.getName)).map { field =>
-          Either.catchNonFatal {
-            val value = params(field.getName)
-            logger.debug("Injecting value '{}' into job instance of class '{}'", value, className)
-            field.set(instance, value)
-          }
-        } sequenceU
-      }
-
-      injection match {
-        case Left(ex) => Failure(ex)
-        case Right(_) => Success(())
-      }
-    }
-
-    for {
-      clazz    <- jobClass(className)
-      instance <- Try(clazz.newInstance())
-      _        <- injectParameters(clazz, instance)
-    } yield instance
-  }
-
-  override def equals(other: Any): Boolean = other match {
-    case that: Artifact => artifactId == that.artifactId
-    case _              => false
-  }
-
-  override def hashCode(): Int = artifactId.hashCode()
-
-  private def logCreation(): Unit = {
-    val classpathStr = classpath.mkString(":")
-    logger.debug(s"Job package created for artifact ${artifactId.show} and classpath: $classpathStr")
-  }
 
 }

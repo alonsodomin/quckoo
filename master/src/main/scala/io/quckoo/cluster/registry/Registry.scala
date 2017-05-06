@@ -89,7 +89,7 @@ object Registry {
 
 }
 
-class Registry private (resolver: Resolver[IO], journal: QuckooJournal)
+class Registry private[registry](resolver: Resolver[IO], journal: QuckooJournal)
     extends Actor with ActorLogging with Stash {
   import Registry._
 

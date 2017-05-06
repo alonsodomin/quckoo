@@ -26,6 +26,7 @@ import cats.free.Free
 
 import io.quckoo._
 import io.quckoo.reflect._
+import io.quckoo.reflect.javareflect._
 import io.quckoo.resolver._
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 

@@ -282,7 +282,7 @@ lazy val master = (project in file("master"))
     scalaJSProjects := Seq(console),
     dockerExposedPorts := Seq(2551, 8095)
   )
-  .dependsOn(shared, testSupportJVM % Test)
+  .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
 
 lazy val worker = (project in file("worker"))
   .enablePlugins(AutomateHeaderPlugin, QuckooApp, QuckooServerPackager)
@@ -295,7 +295,7 @@ lazy val worker = (project in file("worker"))
     moduleName := "quckoo-worker",
     dockerExposedPorts := Seq(5001, 9010)
   )
-  .dependsOn(shared, testSupportJVM % Test)
+  .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
 
 // Misc Utilities ===========================================
 

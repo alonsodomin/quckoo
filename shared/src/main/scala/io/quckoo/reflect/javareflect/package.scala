@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo.testkit
+package io.quckoo.reflect
 
-import io.quckoo.Job
+import cats.effect.IO
 
 /**
- * Created by domingueza on 10/07/15.
- */
-class DummyJob extends Job {
-  override def execute(): Any = ???
+  * Created by alonsodomin on 06/05/2017.
+  */
+package object javareflect {
+
+  implicit val javaReflector: Reflector[IO] = new JavaReflector
+
 }

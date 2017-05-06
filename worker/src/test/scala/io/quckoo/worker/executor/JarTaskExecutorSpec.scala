@@ -25,6 +25,7 @@ import cats.data.NonEmptyList
 
 import io.quckoo._
 import io.quckoo.reflect.Artifact
+import io.quckoo.resolver.PureResolver
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 import io.quckoo.testkit.QuckooActorSuite
 

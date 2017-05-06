@@ -22,13 +22,11 @@ import java.util.concurrent.TimeUnit
 import akka.actor.ActorRefFactory
 import akka.cluster.client.ClusterClient.SendToAll
 import akka.testkit._
-
 import io.quckoo._
 import io.quckoo.reflect.Artifact
 import io.quckoo.cluster.protocol._
+import io.quckoo.resolver.PureResolver
 import io.quckoo.testkit.QuckooActorSuite
-import io.quckoo.worker.executor.PureResolver
-
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}

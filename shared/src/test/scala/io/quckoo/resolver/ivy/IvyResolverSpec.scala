@@ -21,12 +21,13 @@ import java.nio.file.Files
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
+
 import io.quckoo._
 import io.quckoo.reflect.Artifact
 import io.quckoo.resolver._
 import io.quckoo.resolver.config.IvyConfig
-import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 
+import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 
 /**
   * Created by alonsodomin on 23/01/2016.
@@ -71,7 +72,7 @@ class IvyResolverSpec extends FlatSpec with GivenWhenThen with Matchers {
     implicit val ivyResolver = IvyResolver(TestIvyConfig)
 
     And("an expected resolved artifact")
-    val expectedArtifact = Artifact(TestArtifactId, Seq())
+    val expectedArtifact = Artifact(TestArtifactId, List.empty)
 
     When("attempting to download the artifacts")
     val result = ops.download(TestArtifactId).to[IO].unsafeRunSync()

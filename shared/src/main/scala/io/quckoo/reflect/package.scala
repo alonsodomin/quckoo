@@ -33,6 +33,4 @@ package object reflect {
 
   }
 
-  implicit val javaReflector: Reflector[IO] = new JavaReflector
-
 }

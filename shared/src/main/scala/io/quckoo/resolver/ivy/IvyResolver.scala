@@ -22,15 +22,19 @@ import cats.data.Validated
 import cats.effect.IO
 import cats.syntax.cartesian._
 import cats.syntax.validated._
+import cats.syntax.show._
+
 import io.quckoo.reflect.Artifact
 import io.quckoo.resolver.config.IvyConfig
 import io.quckoo.resolver.{Resolved, Resolver}
 import io.quckoo.{ArtifactId, DependencyError, DownloadFailed, UnresolvedDependency}
+
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor.{Configuration, DefaultDependencyDescriptor, DefaultModuleDescriptor, ModuleDescriptor}
 import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
 import org.apache.ivy.core.report.{ArtifactDownloadReport, ResolveReport}
 import org.apache.ivy.core.resolve.ResolveOptions
+
 import slogging.LazyLogging
 
 /**
@@ -52,7 +56,7 @@ object IvyResolver {
 
 }
 
-class IvyResolver private[ivy] (ivy: Ivy) extends Resolver[IO] with LazyLogging {
+class IvyResolver private[ivy](ivy: Ivy) extends Resolver[IO] with LazyLogging {
   import IvyResolver._
 
   override def validate(artifactId: ArtifactId): IO[Resolved[ArtifactId]] =
@@ -123,7 +127,14 @@ class IvyResolver private[ivy] (ivy: Ivy) extends Resolver[IO] with LazyLogging 
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
     (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)).map { (_, r) =>
-      Artifact(artifactId, artifactLocations(r.getAllArtifactsReports).toList)
+      val artifactClasspath = artifactLocations(r.getAllArtifactsReports).toList
+
+      logger.debug(
+        "Job package created for artifact {} and classpath: {}",
+        artifactId.show,
+        artifactClasspath.mkString(":")
+      )
+      Artifact(artifactId, artifactClasspath)
     }
   }
 

@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package io.quckoo.worker.executor
+package io.quckoo.resolver
 
 import cats.effect.IO
 import cats.syntax.eq._
 import cats.syntax.validated._
 
-import io.quckoo.{ArtifactId, DependencyError, UnresolvedDependency}
 import io.quckoo.reflect.Artifact
-import io.quckoo.resolver.{Resolved, Resolver}
+import io.quckoo.{ArtifactId, DependencyError, UnresolvedDependency}
 
 /**
   * Created by alonsodomin on 06/05/2017.

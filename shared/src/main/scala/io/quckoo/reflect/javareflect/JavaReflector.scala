@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package io.quckoo.reflect
+package io.quckoo.reflect.javareflect
 
 import cats.effect.IO
 import cats.syntax.show._
 
+import io.quckoo.reflect.{Artifact, Reflector}
 import io.quckoo.{Job, JobClass}
+
 import slogging.LazyLogging
 
 /**
