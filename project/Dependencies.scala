@@ -60,7 +60,7 @@ object Dependencies {
     val betterfiles = "3.0.0"
     val diode       = "1.1.2"
     val cats        = "0.9.0"
-    val catsEffect  = "0.1-0848c9b"
+    val catsEffect  = "0.2-3772c8e"
     val circe       = "0.8.0-RC1"
     val cron4s      = "0.4.0"
     val enumeratum  = "1.5.12"
