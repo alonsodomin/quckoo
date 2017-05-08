@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package io.quckoo.console
+package io.quckoo.console.boot
 
 import diode.react.ModelProxy
 
-import io.quckoo.console.components._
+import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, ErrorProcessor, LoginProcessor}
-import io.quckoo.console.dashboard.DashboardView
-import io.quckoo.console.layout.Navigation
-import io.quckoo.console.layout.Navigation.NavigationItem
+import io.quckoo.console.dashboard.DashboardPage
+import io.quckoo.console.layout.Layout
 import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
@@ -34,7 +33,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 /**
   * Created by aalonsodominguez on 12/10/2015.
   */
-object SiteMap {
+object App {
   import ConsoleRoute._
 
   private[this] def publicPages(proxy: ModelProxy[ConsoleScope]) =
@@ -42,7 +41,7 @@ object SiteMap {
       import dsl._
 
       (emptyRule
-        | staticRoute(root, Root) ~> redirectToPage(Dashboard)(Redirect.Push)
+        | staticRoute(root,     Root)  ~> redirectToPage(Dashboard)(Redirect.Push)
         | staticRoute("#login", Login) ~> render(LoginPage(proxy)))
     }
 
@@ -57,8 +56,8 @@ object SiteMap {
         Some(render(LoginPage(proxy, Some(referral))))
 
       (emptyRule
-        | staticRoute("#home", Dashboard) ~> render(DashboardView(proxy))
-        | staticRoute("#registry", Registry) ~> render(RegistryPage(proxy))
+        | staticRoute("#home",      Dashboard) ~> render(DashboardPage(proxy))
+        | staticRoute("#registry",  Registry)  ~> render(RegistryPage(proxy))
         | staticRoute("#scheduler", Scheduler) ~> render(SchedulerPage(proxy)))
         .addCondition(isLoggedIn)(redirectToLogin)
     }
@@ -71,24 +70,9 @@ object SiteMap {
         | publicPages(proxy)
         | privatePages(proxy))
         .notFound(redirectToPage(Root)(Redirect.Replace))
-        .renderWith(layout(proxy))
+        .renderWith(Layout(proxy))
         .verify(ConsoleRoute.values.head, ConsoleRoute.values.tail: _*)
     }
-
-  val mainMenu = List(
-    NavigationItem(Icons.dashboard, "Dashboard", Dashboard),
-    NavigationItem(Icons.book, "Registry", Registry),
-    NavigationItem(Icons.clockO, "Scheduler", Scheduler)
-  )
-
-  def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute],
-                                              res: Resolution[ConsoleRoute]): VdomElement = {
-    def navigation = proxy.wrap(_.passport.flatMap(_.principal)) { principal =>
-      Navigation(mainMenu.head, mainMenu, ctrl, res.page, principal)
-    }
-
-    <.div(navigation, res.render())
-  }
 
   val baseUrl = BaseUrl.fromWindowOrigin_/
 

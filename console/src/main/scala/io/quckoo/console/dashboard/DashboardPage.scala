@@ -30,7 +30,7 @@ import scalacss.StyleSheet
 /**
   * Created by alonsodomin on 13/10/2015.
   */
-object DashboardView {
+object DashboardPage {
 
   object Style extends StyleSheet.Inline {
     import dsl._

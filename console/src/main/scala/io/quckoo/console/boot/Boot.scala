@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package io.quckoo.console
+package io.quckoo.console.boot
 
 import io.quckoo.{Info, Logo}
-import io.quckoo.console.core.ConsoleCircuit
-import io.quckoo.console.dashboard.{ClusterView, DashboardView}
+import io.quckoo.console.core.{ConsoleCircuit, EventLogProcessor}
+import io.quckoo.console.dashboard.{ClusterView, DashboardLogger, DashboardPage}
 import io.quckoo.console.layout._
+import io.quckoo.console.log
 import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
@@ -27,20 +28,20 @@ import io.quckoo.console.security.LoginPage
 import japgolly.scalajs.react.vdom.Implicits._
 
 import org.scalajs.dom
-import slogging._
+
+import slogging.StrictLogging
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
-
 import scalacss.internal.mutable.GlobalRegistry
 
-object App extends JSApp with StrictLogging {
+object Boot extends JSApp with StrictLogging {
   import CssSettings._
 
   def inlineStyles() = {
     GlobalRegistry.register(
       LoginPage.Style,
-      DashboardView.Style,
+      DashboardPage.Style,
       ClusterView.Style,
       RegistryPage.Style,
       SchedulerPage.Style
@@ -48,10 +49,24 @@ object App extends JSApp with StrictLogging {
     GlobalRegistry.onRegistration(_.addToDocument)
   }
 
-  @JSExport
-  override def main(): Unit = {
+  private[this] def setupUILogger(): Unit = {
+    import slogging._
+
     LoggerConfig.factory = ConsoleLoggerFactory()
     LoggerConfig.level = LogLevel.DEBUG
+  }
+
+  private[this] def setupBackendLogger(): Unit = {
+    import log.LogLevel
+
+    val logProcessor = new EventLogProcessor(LogLevel.Info, DashboardLogger)
+    ConsoleCircuit.addProcessor(logProcessor)
+  }
+
+  @JSExport
+  override def main(): Unit = {
+    setupUILogger()
+    setupBackendLogger()
 
     GlobalStyles.addToDocument()
     inlineStyles()
@@ -59,6 +74,7 @@ object App extends JSApp with StrictLogging {
     logger.info(s"Starting Quckoo Console ${Info.version}...\n" + Logo)
 
     val container = dom.document.getElementById("viewport")
-    ConsoleCircuit.wrap(identity(_))(p => SiteMap(p)).renderIntoDOM(container)
+
+    ConsoleCircuit.wrap(identity(_))(p => App(p)).renderIntoDOM(container)
   }
 }

@@ -33,7 +33,7 @@ private[core] object Effects {
   def seq(head: Effect, tail: Effect*)(implicit ec: ExecutionContext): EffectSeq =
     new EffectSeq(head, tail, ec)
 
-  def set(head: Effect, tail: Effect*)(implicit ec: ExecutionContext): EffectSet =
+  def parallel(head: Effect, tail: Effect*)(implicit ec: ExecutionContext): EffectSet =
     new EffectSet(head, tail.toSet, ec)
 
 }

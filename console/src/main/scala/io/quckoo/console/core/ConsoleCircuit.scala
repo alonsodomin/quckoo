@@ -27,6 +27,7 @@ import io.quckoo.auth.Passport
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.client.http.dom._
 import io.quckoo.console.components.Notification
+import io.quckoo.console.log.LogRecord
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.registry._
@@ -106,8 +107,10 @@ object ConsoleCircuit
             openSubscriptionChannels
             ActionResult.ModelUpdate(model.copy(subscribed = true))
           }
-        }
-        None
+        } else None
+
+      case logRecord: LogRecord =>
+        Some(ActionResult.ModelUpdate(model.copy(log = logRecord :: model.log)))
   }
 
   val loginHandler = new ActionHandler(zoomIntoPassport) {
@@ -188,7 +191,7 @@ object ConsoleCircuit
         validated.toEither match {
           case Right(id) =>
             val notification = Notification.info(s"Job registered with id $id")
-            val effects = Effects.set(
+            val effects = Effects.parallel(
               Growl(notification),
               RefreshJobSpecs(Set(id))
             )
@@ -229,42 +232,42 @@ object ConsoleCircuit
         }
 
       case ExecutionPlanStarted(jobId, planId, _) =>
-        val effect = Effects.set(
+        val effect = Effects.parallel(
           Growl(Notification.success(s"Started execution plan for job. planId=$planId")),
           RefreshExecutionPlans(Set(planId))
         )
         effectOnly(effect)
 
       case ExecutionPlanFinished(jobId, planId, _) =>
-        val effect = Effects.set(
+        val effect = Effects.parallel(
           Growl(Notification.info(s"Execution plan $planId has finished")),
           RefreshExecutionPlans(Set(planId))
         )
         effectOnly(effect)
 
       case ExecutionPlanCancelled(_, planId, _) =>
-        val effects = Effects.set(
+        val effects = Effects.parallel(
           Growl(Notification.danger(s"Execution plan $planId has been cancelled")),
           RefreshExecutionPlans(Set(planId))
         )
         effectOnly(effects)
 
       case TaskScheduled(_, _, task, _) =>
-        val effects = Effects.set(
+        val effects = Effects.parallel(
           Growl(Notification.info(s"Task ${task.id} has been scheduled.")),
           RefreshExecutions(Set(task.id))
         )
         effectOnly(effects)
 
       case TaskTriggered(_, _, taskId, _) =>
-        val effects = Effects.set(
+        val effects = Effects.parallel(
           Growl(Notification.info(s"Task $taskId has been triggered.")),
           RefreshExecutions(Set(taskId))
         )
         effectOnly(effects)
 
       case TaskCompleted(_, _, taskId, _, _) =>
-        val effects = Effects.set(
+        val effects = Effects.parallel(
           Growl(Notification.info(s"Task $taskId has completed.")),
           RefreshExecutions(Set(taskId))
         )
@@ -295,14 +298,14 @@ object ConsoleCircuit
 
       case JobEnabled(jobId) =>
         effectOnly(
-          Effects.set(
+          Effects.parallel(
             Growl(Notification.info(s"Job enabled: $jobId")),
             RefreshJobSpecs(Set(jobId))
           ))
 
       case JobDisabled(jobId) =>
         effectOnly(
-          Effects.set(
+          Effects.parallel(
             Growl(Notification.info(s"Job disabled: $jobId")),
             RefreshJobSpecs(Set(jobId))
           ))
