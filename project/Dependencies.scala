@@ -70,7 +70,7 @@ object Dependencies {
     val monocle     = "1.4.0"
     val pureconfig  = "0.7.0"
     val scalaCss    = "0.5.3"
-    val scalaTime   = "2.0.0-M11-SNAPSHOT"
+    val scalaTime   = "2.0.0-M10"
     val scalatags   = "0.6.5"
     val scopt       = "3.5.0"
     val shims       = "1.0-b0e5152"
