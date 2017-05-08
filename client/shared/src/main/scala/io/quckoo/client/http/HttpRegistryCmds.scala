@@ -20,8 +20,6 @@ import cats.data.ValidatedNel
 import cats.instances.either._
 import cats.syntax.either._
 
-//import io.circe.Encoder._
-//import io.circe.Decoder._
 import io.circe.generic.auto._
 
 import io.quckoo.{QuckooError, JobId, JobNotFound, JobSpec}
