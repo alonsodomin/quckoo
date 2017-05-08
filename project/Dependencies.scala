@@ -58,7 +58,7 @@ object Dependencies {
 
     val arm         = "2.0"
     val betterfiles = "3.0.0"
-    val diode       = "1.1.2-SNAPSHOT"
+    val diode       = "1.1.2"
     val cats        = "0.9.0"
     val catsEffect  = "0.1-0848c9b"
     val circe       = "0.8.0-RC1"
