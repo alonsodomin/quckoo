@@ -21,14 +21,15 @@ import java.util.UUID
 
 import akka.testkit._
 
+import cats.data.NonEmptyList
+
 import io.quckoo._
-import io.quckoo.resolver.{Artifact, Resolver}
+import io.quckoo.reflect.Artifact
+import io.quckoo.resolver.PureResolver
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 import io.quckoo.testkit.QuckooActorSuite
 
 import org.scalamock.scalatest.MockFactory
-
-import scalaz.NonEmptyList
 
 /**
  * Created by aalonsodominguez on 04/08/15.
@@ -49,8 +50,8 @@ class JarTaskExecutorSpec extends QuckooActorSuite("JobExecutorSpec")
   "A job executor" must {
 
     "fail if instantiation of the job failed" in {
-      val resolverProbe = TestProbe("resolverProbe")
-      val resolvedArtifact = Artifact(TestArtifactId, Seq(new URL("http://www.example.com")))
+      val resolvedArtifact = Artifact(TestArtifactId, List(new URL("http://www.example.com")))
+      val resolver = new PureResolver(resolvedArtifact)
 
       val workerContext = mock[WorkerContext]
       val executor = TestActorRef(
@@ -60,18 +61,15 @@ class JarTaskExecutorSpec extends QuckooActorSuite("JobExecutorSpec")
 
       val expectedException = new ClassNotFoundException(TestJobClass)
 
-      (workerContext.resolver _).expects().returning(resolverProbe.ref)
+      (workerContext.resolver _).expects().returning(resolver)
 
       executor ! TaskExecutor.Run
-
-      resolverProbe.expectMsg(Resolver.Download(TestArtifactId))
-      resolverProbe.reply(Resolver.ArtifactResolved(resolvedArtifact))
 
       expectMsgType[TaskExecutor.Failed].error shouldBe ExceptionThrown.from(expectedException)
     }
 
     "reply with a failure message when can not resolve the artifact of a task" in {
-      val resolverProbe = TestProbe("resolverProbe")
+      val resolver = new PureResolver()
 
       val workerContext = mock[WorkerContext]
       val executor = TestActorRef(
@@ -79,15 +77,12 @@ class JarTaskExecutorSpec extends QuckooActorSuite("JobExecutorSpec")
         "non-resolving-executor"
       )
 
-      val dependencyError = UnresolvedDependency(ArtifactId("com.example", "bar", "latest"))
-      val expectedFault = MissingDependencies(NonEmptyList(dependencyError))
+      val dependencyError = UnresolvedDependency(TestArtifactId)
+      val expectedFault = MissingDependencies(NonEmptyList.of(dependencyError))
 
-      (workerContext.resolver _).expects().returning(resolverProbe.ref)
+      (workerContext.resolver _).expects().returning(resolver)
 
       executor ! TaskExecutor.Run
-
-      resolverProbe.expectMsg(Resolver.Download(TestArtifactId))
-      resolverProbe.reply(Resolver.ResolutionFailed(TestArtifactId, expectedFault))
 
       expectMsgType[TaskExecutor.Failed].error shouldBe expectedFault
     }

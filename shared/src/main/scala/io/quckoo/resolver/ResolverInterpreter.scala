@@ -14,9 +14,25 @@
  * limitations under the License.
  */
 
-package io.quckoo.auth
+package io.quckoo.resolver
+
+import cats.{Monad, ~>}
 
 /**
-  * Created by alonsodomin on 16/09/2016.
+  * Created by alonsodomin on 04/05/2017.
   */
-case object InvalidCredentialsException extends Exception("Invalid credentials")
+final class ResolverInterpreter[F[_]: Monad] private(impl: Resolver[F]) extends (ResolverOp ~> F) {
+
+  override def apply[A](fa: ResolverOp[A]): F[A] = fa match {
+    case ResolverOp.Validate(artifactId) => impl.validate(artifactId)
+    case ResolverOp.Download(artifactId) => impl.download(artifactId)
+  }
+
+}
+
+object ResolverInterpreter {
+
+  implicit def deriveInstance[F[_]: Monad](implicit impl: Resolver[F]): ResolverInterpreter[F] =
+    new ResolverInterpreter[F](impl)
+
+}

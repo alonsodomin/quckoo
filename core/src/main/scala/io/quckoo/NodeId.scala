@@ -18,9 +18,11 @@ package io.quckoo
 
 import java.util.UUID
 
-import upickle.default.{Reader => UReader, Writer => UWriter, _}
+import cats.{Eq, Show}
 
-import scalaz.{Equal, Show}
+import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
+
+import scala.util.Try
 
 /**
   * Created by alonsodomin on 27/02/2017.
@@ -32,21 +34,24 @@ final class NodeId private (private val uuid: UUID) extends AnyVal {
 object NodeId {
 
   @inline def apply(uuid: UUID): NodeId = new NodeId(uuid)
-  @inline def apply(value: String): NodeId = new NodeId(UUID.fromString(value))
 
-  // Upickle encoders
+  // Circe encoding/decoding
 
-  implicit val upickleReader: UReader[NodeId] = UReader[NodeId] {
-    implicitly[UReader[UUID]].read andThen NodeId.apply
-  }
+  implicit val circeNodeIdEncoder: Encoder[NodeId] =
+    Encoder[UUID].contramap(_.uuid)
 
-  implicit val upickleWriter: UWriter[NodeId] = UWriter[NodeId] { nodeId =>
-    implicitly[UWriter[UUID]].write(nodeId.uuid)
-  }
+  implicit val circeNodeIdDecoder: Decoder[NodeId] =
+    Decoder[UUID].map(apply)
+
+  implicit val circeNodeIdKeyEncoder: KeyEncoder[NodeId] =
+    KeyEncoder.instance(_.uuid.toString)
+
+  implicit val circeNodeIdKeyDecoder: KeyDecoder[NodeId] =
+    KeyDecoder.instance(id => Try(UUID.fromString(id)).map(apply).toOption)
 
   // Typeclass instances
 
-  implicit val nodeIdEq: Equal[NodeId] = Equal.equal((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
-  implicit val nodeIdShow: Show[NodeId] = Show.showFromToString
+  implicit val nodeIdEq: Eq[NodeId] = Eq.instance((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
+  implicit val nodeIdShow: Show[NodeId] = Show.fromToString
 
 }

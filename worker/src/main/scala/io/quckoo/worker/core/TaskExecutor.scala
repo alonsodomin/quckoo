@@ -18,7 +18,7 @@ package io.quckoo.worker.core
 
 import akka.actor.{Actor, ActorLogging}
 
-import io.quckoo.Fault
+import io.quckoo.QuckooError
 
 /**
   * Created by alonsodomin on 16/02/2017.
@@ -27,7 +27,7 @@ object TaskExecutor {
 
   case object Run
   sealed trait Response extends Product with Serializable
-  final case class Failed(error: Fault) extends Response
+  final case class Failed(error: QuckooError) extends Response
   final case class Completed(result: Any) extends Response
 
 }

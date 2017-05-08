@@ -21,7 +21,7 @@ import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 03/07/2016.
@@ -102,8 +102,8 @@ object ArtifactInput {
 
   }
 
-  val component = ReactComponentB[Props]("ArtifactInput")
-    .initialState_P(props => new State(props.value))
+  val component = ScalaComponent.builder[Props]("ArtifactInput")
+    .initialStateFromProps(props => new State(props.value))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

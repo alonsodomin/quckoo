@@ -16,9 +16,7 @@
 
 package io.quckoo.console.layout
 
-import io.quckoo.console.components._
-
-import scalacss.Defaults._
+import CssSettings._
 
 /**
   * Created by alonsodomin on 20/02/2016.

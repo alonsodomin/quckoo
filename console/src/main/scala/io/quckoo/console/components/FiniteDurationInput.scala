@@ -18,16 +18,16 @@ package io.quckoo.console.components
 
 import java.util.concurrent.TimeUnit
 
+import cats.instances.all._
+
 import io.quckoo.validation.Validators._
 import io.quckoo.console.validation._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.concurrent.duration._
-
-import scalaz._
 
 /**
   * Created by alonsodomin on 08/04/2016.
@@ -73,7 +73,7 @@ object FiniteDurationInput {
     def onLengthUpdate(value: Option[Long]): Callback =
       $.modState(_.copy(length = value), propagateUpdate)
 
-    def onUnitUpdate(evt: ReactEventI): Callback = {
+    def onUnitUpdate(evt: ReactEventFromInput): Callback = {
       val value = {
         if (evt.target.value.isEmpty) None
         else Some(TimeUnit.valueOf(evt.target.value))
@@ -82,10 +82,7 @@ object FiniteDurationInput {
     }
 
     private[this] val _lengthInput = Input[Long]
-    private[this] val LengthValidation = {
-      import Scalaz._
-      ValidatedInput[Long]((greaterThan(0L) or equalTo(0L)).callback)
-    }
+    private[this] val LengthValidation = ValidatedInput[Long]((greaterThan(0L) or equalTo(0L)).callback)
 
     private[this] def lengthInput(props: Props, state: State)(onUpdate: Option[Long] => Callback) =
       _lengthInput(state.length, onUpdate, ^.id := s"${props.id}_length", ^.readOnly := props.readOnly)
@@ -96,7 +93,7 @@ object FiniteDurationInput {
         ^.`class` := "container-fluid",
         <.div(
           ^.`class` := "row",
-          <.div(^.`class` := "col-sm-4", LengthValidation(onLengthUpdate _)(lengthInput(props, state))),
+          <.div(^.`class` := "col-sm-4", LengthValidation(onLengthUpdate)(lengthInput(props, state))),
           <.div(
             ^.`class` := "col-sm-6",
             <.select(
@@ -104,12 +101,12 @@ object FiniteDurationInput {
               ^.`class` := "form-control",
               ^.readOnly := props.readOnly,
               ^.disabled := props.readOnly,
-              state.unit.map(u => ^.value := u.toString()),
+              state.unit.map(u => ^.value := u.toString).whenDefined,
               ^.onChange ==> onUnitUpdate,
-              <.option(^.value := "", "Select a time unit..."),
-              SupportedUnits.map {
+              <.option(^.key := s"${id}_none", ^.value := "", "Select a time unit..."),
+              SupportedUnits.toVdomArray {
                 case (u, text) =>
-                  <.option(^.value := u.name(), text)
+                  <.option(^.key := s"${id}_${u.name()}", ^.value := u.name(), text)
               }
             )
           )
@@ -119,8 +116,8 @@ object FiniteDurationInput {
 
   }
 
-  val component = ReactComponentB[Props]("FiniteDurationInput")
-    .initialState_P(props => new State(props.value))
+  val component = ScalaComponent.builder[Props]("FiniteDurationInput")
+    .initialStateFromProps(props => new State(props.value))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

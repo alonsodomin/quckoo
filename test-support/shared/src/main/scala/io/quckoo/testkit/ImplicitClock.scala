@@ -16,7 +16,7 @@
 
 package io.quckoo.testkit
 
-import org.threeten.bp._
+import java.time._
 
 /**
   * Created by domingueza on 27/08/15.

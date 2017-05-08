@@ -18,9 +18,11 @@ package io.quckoo
 
 import java.util.UUID
 
-import upickle.default.{Reader => UReader, Writer => UWriter, _}
+import cats.{Eq, Show}
 
-import scalaz.{Equal, Show}
+import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
+
+import scala.util.Try
 
 /**
   * Created by alonsodomin on 27/02/2017.
@@ -32,21 +34,24 @@ final class PlanId private (private val uuid: UUID) extends AnyVal {
 object PlanId {
 
   @inline def apply(uuid: UUID): PlanId = new PlanId(uuid)
-  @inline def apply(value: String): PlanId = new PlanId(UUID.fromString(value))
 
-  // Upickle encoders
+  // Circe encoding/decoding
 
-  implicit val jsonReader: UReader[PlanId] = UReader[PlanId] {
-    implicitly[UReader[String]].read andThen PlanId.apply
-  }
+  implicit val circePlanIdEncoder: Encoder[PlanId] =
+    Encoder[UUID].contramap(_.uuid)
 
-  implicit val jsonWriter: UWriter[PlanId] = UWriter[PlanId] { planId =>
-    implicitly[UWriter[String]].write(planId.uuid.toString)
-  }
+  implicit val circePlanIdDecoder: Decoder[PlanId] =
+    Decoder[UUID].map(apply)
+
+  implicit val circePlanIdKeyEncoder: KeyEncoder[PlanId] =
+    KeyEncoder.instance(_.uuid.toString)
+
+  implicit val circePlanIdKeyDecoder: KeyDecoder[PlanId] =
+    KeyDecoder.instance(id => Try(UUID.fromString(id)).map(apply).toOption)
 
   // Typeclass instances
 
-  implicit val planIdEq: Equal[PlanId] = Equal.equal((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
-  implicit val planIdShow: Show[PlanId] = Show.showFromToString
+  implicit val planIdEq: Eq[PlanId] = Eq.instance((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
+  implicit val planIdShow: Show[PlanId] = Show.fromToString
 
 }

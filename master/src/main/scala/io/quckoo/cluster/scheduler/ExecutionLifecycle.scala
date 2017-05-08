@@ -20,7 +20,7 @@ import akka.actor.{ActorSelection, Props}
 import akka.persistence.fsm.PersistentFSM.Normal
 import akka.persistence.fsm.{LoggingPersistentFSM, PersistentFSM}
 
-import io.quckoo.{Fault, PlanId, Task, TaskExecution}
+import io.quckoo.{QuckooError, PlanId, Task, TaskExecution}
 import io.quckoo.cluster.scheduler.TaskQueue.EnqueueAck
 
 import kamon.trace.Tracer
@@ -42,8 +42,8 @@ object ExecutionLifecycle {
   sealed trait Command
   final case class Awake(task: Task, queue: ActorSelection) extends Command
   case object Start                                         extends Command
-  final case class Finish(fault: Option[Fault])             extends Command
-  final case class Cancel(reason: UncompletedReason)        extends Command
+  final case class Finish(fault: Option[QuckooError])             extends Command
+  final case class Cancel(reason: Reason)        extends Command
   case object TimeOut                                       extends Command
   case object Get                                           extends Command
 
@@ -63,10 +63,10 @@ object ExecutionLifecycle {
 
   sealed trait ExecutionEvent
   final case class Awaken(task: Task, planId: PlanId, queue: ActorSelection) extends ExecutionEvent
-  final case class Cancelled(reason: UncompletedReason)                      extends ExecutionEvent
+  final case class Cancelled(reason: Reason)                      extends ExecutionEvent
   final case class Triggered(task: Task)                                     extends ExecutionEvent
   case object Started                                                        extends ExecutionEvent
-  final case class Completed(fault: Option[Fault])                           extends ExecutionEvent
+  final case class Completed(fault: Option[QuckooError])                           extends ExecutionEvent
   case object TimedOut                                                       extends ExecutionEvent
 
   final case class Result(outcome: Outcome)
@@ -125,7 +125,7 @@ class ExecutionLifecycle(
       stop applying Cancelled(reason)
 
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
-      stay replying TaskExecution(planId, task, Scheduled, outcome)
+      stay replying TaskExecution(planId, task, Status.Scheduled, outcome)
   }
 
   when(Enqueuing) {
@@ -134,7 +134,7 @@ class ExecutionLifecycle(
       goto(Waiting) applying Triggered(task)
 
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
-      stay replying TaskExecution(planId, task, Scheduled, outcome) forMax enqueueTimeout
+      stay replying TaskExecution(planId, task, Status.Scheduled, outcome) forMax enqueueTimeout
 
     case Event(StateTimeout, ExecutionState(_, Some(task), Some(queue), _)) =>
       enqueueAttempts += 1
@@ -144,7 +144,7 @@ class ExecutionLifecycle(
         stay forMax enqueueTimeout
       } else {
         log.debug("Task '{}' failed to be enqueued after {} attempts.", task.id, enqueueAttempts)
-        stop applying Cancelled(FailedToEnqueue)
+        stop applying Cancelled(Reason.FailedToEnqueue)
       }
   }
 
@@ -162,7 +162,7 @@ class ExecutionLifecycle(
       stop applying Cancelled(reason)
 
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
-      stay replying TaskExecution(planId, task, Enqueued, outcome)
+      stay replying TaskExecution(planId, task, Status.Enqueued, outcome)
 
     case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
       // May happen after recovery
@@ -171,7 +171,7 @@ class ExecutionLifecycle(
 
   when(Running) {
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
-      stay replying TaskExecution(planId, task, InProgress, outcome)
+      stay replying TaskExecution(planId, task, Status.InProgress, outcome)
 
     case Event(Cancel(reason), _) =>
       log.debug("Cancelling execution upon request. Reason: {}", reason)
@@ -217,17 +217,17 @@ class ExecutionLifecycle(
 
       case Completed(result) =>
         result match {
-          case Some(fault) => previous becomes Failure(fault)
-          case _           => previous becomes Success
+          case Some(fault) => previous becomes Outcome.Failure(fault)
+          case _           => previous becomes Outcome.Success
         }
 
       case Cancelled(reason) =>
         stateName match {
-          case Running => previous becomes Interrupted(reason)
-          case _       => previous becomes NeverRun(reason)
+          case Running => previous becomes Outcome.Interrupted(reason)
+          case _       => previous becomes Outcome.NeverRun(reason)
         }
 
-      case TimedOut => previous becomes NeverEnding
+      case TimedOut => previous becomes Outcome.NeverEnding
       case _        => previous
     }
 

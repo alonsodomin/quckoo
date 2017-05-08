@@ -16,7 +16,7 @@
 
 package io.quckoo.client.http
 
-import io.quckoo.auth.{Credentials, InvalidCredentialsException, Passport}
+import io.quckoo.auth.{Credentials, InvalidCredentials, Passport}
 import io.quckoo.client.core.CmdMarshalling.{Anon, Auth}
 import io.quckoo.client.core._
 import io.quckoo.serialization.DataBuffer
@@ -32,8 +32,8 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
       if (res.isSuccess) Passport(res.entity.asString())
       else
         Attempt.fail {
-          if (res.statusCode == 401) InvalidCredentialsException
-          else HttpErrorException(res.statusLine)
+          if (res.statusCode == 401) InvalidCredentials
+          else HttpError(res.statusLine)
         }
     }
 
@@ -83,7 +83,7 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
 
     override val unmarshall = Unmarshall[HttpResponse, Unit] { res =>
       if (res.isSuccess) Attempt.unit
-      else Attempt.fail(HttpErrorException(res.statusLine))
+      else Attempt.fail(HttpError(res.statusLine))
     }
   }
 }

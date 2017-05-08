@@ -21,7 +21,9 @@ import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.directives._
 
-import de.heikoseeberger.akkahttpupickle.UpickleSupport
+import cats.data.OptionT
+import cats.instances.future._
+import cats.syntax.either._
 
 import io.quckoo.auth.{Passport, Principal}
 import io.quckoo.auth.http._
@@ -31,13 +33,10 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
-import scalaz._
-import Scalaz._
-
 /**
   * Created by alonsodomin on 14/10/2015.
   */
-trait AuthDirectives extends UpickleSupport { auth: Auth =>
+trait AuthDirectives { auth: Auth =>
   import Directives._
 
   private[this] val QuckooHttpChallenge = HttpChallenge("FormBased", Realm)
@@ -46,9 +45,8 @@ trait AuthDirectives extends UpickleSupport { auth: Auth =>
       implicit ec: ExecutionContext
   ): Future[AuthenticationResult[T]] = {
     OptionT(result)
-      .map(_.right[HttpChallenge])
-      .getOrElse(QuckooHttpChallenge.left[T])
-      .map(_.toEither)
+      .map(_.asRight[HttpChallenge])
+      .getOrElse(QuckooHttpChallenge.asLeft[T])
   }
 
   def authenticateUser(implicit timeout: FiniteDuration): Route = {

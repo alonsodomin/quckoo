@@ -17,6 +17,7 @@
 package io.quckoo.console
 
 import diode.react.ModelProxy
+
 import io.quckoo.console.components._
 import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, ErrorProcessor, LoginProcessor}
 import io.quckoo.console.dashboard.DashboardView
@@ -25,9 +26,10 @@ import io.quckoo.console.layout.Navigation.NavigationItem
 import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by aalonsodominguez on 12/10/2015.
@@ -35,43 +37,29 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object SiteMap {
   import ConsoleRoute._
 
-  def dashboardPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity)(DashboardView(_))
-
-  def loginPage(proxy: ModelProxy[ConsoleScope])(referral: Option[ConsoleRoute]) =
-    proxy.wrap(identity)(p => LoginPage(p, referral))
-
-  def registryPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity)(RegistryPage(_))
-
-  def schedulerPage(proxy: ModelProxy[ConsoleScope]) =
-    proxy.wrap(identity)(SchedulerPage(_))
-
   private[this] def publicPages(proxy: ModelProxy[ConsoleScope]) =
     RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
       import dsl._
 
       (emptyRule
         | staticRoute(root, Root) ~> redirectToPage(Dashboard)(Redirect.Push)
-        | staticRoute("#login", Login) ~> render(loginPage(proxy)(None)))
+        | staticRoute("#login", Login) ~> render(LoginPage(proxy)))
     }
 
   private[this] def privatePages(proxy: ModelProxy[ConsoleScope]) =
     RouterConfigDsl[ConsoleRoute].buildRule { dsl =>
       import dsl._
 
-      implicit val redirectMethod = Redirect.Push
-
-      def isLoggedIn: CallbackB =
+      def isLoggedIn: CallbackTo[Boolean] =
         CallbackTo { proxy().passport.isDefined }
 
       def redirectToLogin(referral: ConsoleRoute) =
-        Some(render(loginPage(proxy)(Some(referral))))
+        Some(render(LoginPage(proxy, Some(referral))))
 
       (emptyRule
-        | staticRoute("#home", Dashboard) ~> render(dashboardPage(proxy))
-        | staticRoute("#registry", Registry) ~> render(registryPage(proxy))
-        | staticRoute("#scheduler", Scheduler) ~> render(schedulerPage(proxy)))
+        | staticRoute("#home", Dashboard) ~> render(DashboardView(proxy))
+        | staticRoute("#registry", Registry) ~> render(RegistryPage(proxy))
+        | staticRoute("#scheduler", Scheduler) ~> render(SchedulerPage(proxy)))
         .addCondition(isLoggedIn)(redirectToLogin)
     }
 
@@ -94,7 +82,7 @@ object SiteMap {
   )
 
   def layout(proxy: ModelProxy[ConsoleScope])(ctrl: RouterCtl[ConsoleRoute],
-                                              res: Resolution[ConsoleRoute]): ReactElement = {
+                                              res: Resolution[ConsoleRoute]): VdomElement = {
     def navigation = proxy.wrap(_.passport.flatMap(_.principal)) { principal =>
       Navigation(mainMenu.head, mainMenu, ctrl, res.page, principal)
     }

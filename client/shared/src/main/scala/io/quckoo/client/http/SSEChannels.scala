@@ -27,7 +27,7 @@ trait SSEChannels extends Channels[HttpProtocol] {
 
   override def createChannel[E: TopicTag](implicit decoder: Decoder[String, E]) =
     new Channel.Aux[HttpProtocol, E] {
-      override val topicTag      = implicitly[TopicTag[E]]
+      override val topicTag   = implicitly[TopicTag[E]]
       override val unmarshall = Unmarshall[HttpServerSentEvent, E](_.data.as[E])
     }
 

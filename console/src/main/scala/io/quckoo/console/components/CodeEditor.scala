@@ -20,8 +20,7 @@ import io.quckoo.console.libs.codemirror._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.ReactStyle
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import enumeratum._
 
@@ -104,17 +103,18 @@ object CodeEditor {
       )
     }
 
-    protected[CodeEditor] def initialize(props: Props, state: State): Callback = Callback {
-      val codeMirror = CodeMirror($.getDOMNode(), jsOptions(props))
+    protected[CodeEditor] def initialize(props: Props, state: State): Callback = {
+      $.getDOMNode.map(node => CodeMirror(node, jsOptions(props)))
+          .map { codeMirror =>
+            codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
+            codeMirror.on("blur", (cm, event) => onBlur(cm, event.asInstanceOf[Event]))
 
-      codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
-      codeMirror.on("blur", (cm, event) => onBlur(cm, event.asInstanceOf[Event]))
+            codeMirror.setValue(props.text.getOrElse(""))
+            codeMirror.setSize(props.width, props.height)
 
-      codeMirror.setValue(props.text.getOrElse(""))
-      codeMirror.setSize(props.width, props.height)
-
-      codeMirror.refresh()
-      codeMirror.markClean()
+            codeMirror.refresh()
+            codeMirror.markClean()
+          }
     }
 
     private[this] def valueUpdated(editorValue: Option[String]): Unit = {
@@ -133,40 +133,22 @@ object CodeEditor {
     }
 
     def render(props: Props, state: State) =
-      <.div(props.attrs)
+      <.div(props.attrs.toTagMod)
 
   }
 
-  val component = ReactComponentB[Props]("CodeEditor")
-    .initialState_P(props => State(props.text))
+  val component = ScalaComponent.builder[Props]("CodeEditor")
+    .initialStateFromProps(props => State(props.text))
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props, $.state))
     .build
 
-  private[this] def extractWidthAndHeight(attrs: Seq[TagMod]): (Width, Height, List[TagMod]) = {
-    import ReactStyle.NameAndValue
-
-    val initial: (Width, Height, List[TagMod]) = (DefaultWidth, DefaultHeight, List.empty[TagMod])
-    attrs.foldRight(initial) { case (attr, (w, h, acc)) =>
-      attr match {
-        case nv: NameAndValue[_] if nv.name == "width" =>
-          (nv.value.asInstanceOf[Width], h, acc)
-        case nv: NameAndValue[_] if nv.name == "height" =>
-          (w, nv.value.asInstanceOf[Height], acc)
-        case _ =>
-          (w, h, attr :: acc)
-      }
-    }
-  }
-
   def apply(value: Option[String], onUpdate: OnUpdate, attrs: TagMod*) = {
-    val (width, height, remaining) = extractWidthAndHeight(attrs)
-    component(Props(value, onUpdate, width, height, Options(), remaining))
+    component(Props(value, onUpdate, DefaultWidth, DefaultHeight, Options(), attrs))
   }
 
   def apply(value: Option[String], onUpdate: OnUpdate, options: Options, attrs: TagMod*) = {
-    val (width, height, remaining) = extractWidthAndHeight(attrs)
-    component(Props(value, onUpdate, width, height, options, remaining))
+    component(Props(value, onUpdate, DefaultWidth, DefaultHeight, options, attrs))
   }
 
 }

@@ -17,12 +17,19 @@
 package io.quckoo.client.http
 
 import java.util.UUID
+import java.time._
+
+import cats.data.{EitherT, NonEmptyList, Validated}
+import cats.implicits._
+
+import io.circe.generic.auto._
+import io.circe.java8.time._
 
 import io.quckoo._
-import io.quckoo.auth.{InvalidCredentialsException, Passport}
+import io.quckoo.auth.{InvalidCredentials, Passport}
 import io.quckoo.client.core.StubClient
-import io.quckoo.net.QuckooState
-import io.quckoo.protocol.cluster.{MasterEvent, MasterReachable}
+import io.quckoo.net.{QuckooState, Location}
+import io.quckoo.protocol.cluster.{MasterEvent, MasterJoined, MasterReachable}
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.DataBuffer
@@ -32,16 +39,12 @@ import io.quckoo.util._
 
 import monix.execution.Scheduler
 
-import org.threeten.bp._
 import org.scalatest._
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 import scala.util.matching.Regex
-
-import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 15/09/2016.
@@ -51,7 +54,7 @@ object HttpProtocolSpec {
   implicit final val FixedClock = Clock.fixed(FixedInstant, ZoneId.of("UTC"))
 
   def generatePassport(): Passport = {
-    val \/-(passport) = for {
+    val Right(passport) = for {
       header    <- DataBuffer.fromString("{}").toBase64
       claims    <- DataBuffer.fromString("{}").toBase64
       signature <- DataBuffer.fromString(System.currentTimeMillis().toString).toBase64
@@ -77,7 +80,7 @@ object HttpProtocolSpec {
 
   final val TestTaskId: TaskId = TaskId(UUID.randomUUID())
   final val TestTaskExecution = TaskExecution(
-    TestPlanId, Task(TestTaskId, TestJobSpec.jobPackage), TaskExecution.Complete
+    TestPlanId, Task(TestTaskId, TestJobSpec.jobPackage), TaskExecution.Status.Complete
   )
 
   object HttpSuccess {
@@ -95,8 +98,8 @@ object HttpProtocolSpec {
       entity.map(data => HttpResponse(statusCode, statusLine, data))
   }
 
-  def notFound[A](jobId: JobId): JobNotFound \/ A =
-    JobNotFound(jobId).left[A]
+  def notFound[A](jobId: JobId): Either[JobNotFound, A] =
+    JobNotFound(jobId).asLeft[A]
 
   object uris {
     private[this] final val BaseURI = "/api"
@@ -135,12 +138,11 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   // -- Subscribe
 
   "subscribe" should "return an stream of events" in {
-    val givenEvents = List(MasterReachable(NodeId(UUID.randomUUID())))
+    val givenNodeId = NodeId(UUID.randomUUID())
+    val givenEvents = List(MasterJoined(givenNodeId, Location("localhost")), MasterReachable(givenNodeId))
 
-    val httpEvents: Attempt[List[HttpServerSentEvent]] = EitherT(givenEvents.map(evt => DataBuffer(evt)))
-      .map(HttpServerSentEvent)
-      .run
-      .sequenceU
+    val httpEvents: Attempt[List[HttpServerSentEvent]] =
+      EitherT(givenEvents.map(evt => DataBuffer(evt))).map(HttpServerSentEvent).value.sequenceU
 
     attempt2Future(httpEvents).flatMap { events =>
       inProtocol[HttpProtocol] withEvents events usingClient { client =>
@@ -178,7 +180,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpError(401, "TEST AUTH ERROR")
     } usingClient { client =>
-      recoverToSucceededIf[InvalidCredentialsException.type](client.authenticate("foo", "bar"))
+      recoverToSucceededIf[InvalidCredentials.type](client.authenticate("foo", "bar"))
     }
   }
 
@@ -186,7 +188,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isLogin("foo", "bar") replyWith { _ =>
       HttpError(500, "TEST AUTH ERROR")
     } usingClient { client =>
-      recoverToSucceededIf[HttpErrorException](client.authenticate("foo", "bar"))
+      recoverToSucceededIf[HttpError](client.authenticate("foo", "bar"))
     }
   }
 
@@ -214,7 +216,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isRefreshPassport replyWith { _ =>
       HttpError(401, "TEST AUTH ERROR")
     } usingClient { client =>
-      recoverToSucceededIf[InvalidCredentialsException.type](client.refreshPassport)
+      recoverToSucceededIf[InvalidCredentials.type](client.refreshPassport)
     }
   }
 
@@ -222,7 +224,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isRefreshPassport replyWith { _ =>
       HttpError(500, "TEST AUTH ERROR")
     } usingClient { client =>
-      recoverToSucceededIf[HttpErrorException](client.refreshPassport)
+      recoverToSucceededIf[HttpError](client.refreshPassport)
     }
   }
 
@@ -246,7 +248,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     inProtocol[HttpProtocol] ensuringRequest isLogout replyWith {
       _ => HttpError(500, "TEST AUTH ERROR")
     } usingClient { client =>
-      recoverToSucceededIf[HttpErrorException](client.signOut)
+      recoverToSucceededIf[HttpError](client.signOut)
     }
   }
 
@@ -280,7 +282,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   "registerJob" should "return a validated JobId when it succeeds" in {
     inProtocol[HttpProtocol] ensuringRequest isRegisterJob replyWith { _ =>
-      HttpSuccess(DataBuffer(TestJobId.successNel[Fault]))
+      HttpSuccess(DataBuffer(TestJobId.validNel[QuckooError]))
     } usingClient { client =>
       client.registerJob(TestJobSpec).map { validatedJobId =>
         validatedJobId.toEither.right.value shouldBe TestJobId
@@ -289,12 +291,14 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   }
 
   it should "return the missed dependencies when fails to resolve" in {
-    val expectedFault = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
+    val missedDep                  = DownloadFailed(TestArtifactId, DownloadFailed.NotFound)
+    val expectedError: QuckooError = MissingDependencies(NonEmptyList.of(missedDep))
+
     inProtocol[HttpProtocol] ensuringRequest isRegisterJob replyWith {
-      _ => HttpSuccess(DataBuffer(expectedFault.failureNel[JobId]))
+      _ => HttpSuccess(DataBuffer(expectedError.invalidNel[JobId]))
     } usingClient { client =>
       client.registerJob(TestJobSpec).map { validatedJobId =>
-        validatedJobId.toEither.left.value shouldBe NonEmptyList(expectedFault)
+        validatedJobId shouldBe Validated.Invalid(NonEmptyList.of(expectedError))
       }
     }
   }
@@ -307,11 +311,12 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     hasEmptyBody and
     hasTimeout(TestTimeout)
 
-  "fetchJobs" should "return a map of the job specs" in {
+  "fetchJobs" should "return a list of the job specs" in {
     inProtocol[HttpProtocol] ensuringRequest isFetchJobs replyWith { _ =>
-      HttpSuccess(DataBuffer(Map(TestJobId -> TestJobSpec)))
+      HttpSuccess(DataBuffer(List(TestJobId -> TestJobSpec)))
     } usingClient { client =>
-      client.fetchJobs.map { jobMap =>
+      client.fetchJobs.map { jobs =>
+        val jobMap = jobs.toMap
         jobMap should contain key TestJobId
         jobMap should contain value TestJobSpec
       }
@@ -374,7 +379,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       HttpSuccess(DataBuffer(JobEnabled(JobId(id))))
     } usingClient { client =>
       client.enableJob(TestJobId).map { ack =>
-        ack shouldBe JobEnabled(TestJobId).right[JobNotFound]
+        ack shouldBe JobEnabled(TestJobId).asRight[JobNotFound]
       }
     }
   }
@@ -408,7 +413,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       HttpSuccess(DataBuffer(JobDisabled(JobId(id))))
     } usingClient { client =>
       client.disableJob(TestJobId).map { ack =>
-        ack shouldBe JobDisabled(TestJobId).right[JobNotFound]
+        ack shouldBe JobDisabled(TestJobId).asRight[JobNotFound]
       }
     }
   }
@@ -436,11 +441,12 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   "executionPlans" should "return a map with current exection plans" in {
     inProtocol[HttpProtocol] ensuringRequest isGetExecutionPlans replyWith {
-      _ => HttpSuccess(DataBuffer(Map(TestPlanId -> TestExecutionPlan)))
+      _ => HttpSuccess(DataBuffer(List(TestPlanId -> TestExecutionPlan)))
     } usingClient { client =>
       client.executionPlans.map { returnedPlans =>
-        returnedPlans should contain key TestPlanId
-        returnedPlans should contain value TestExecutionPlan
+        val returnedPlansMap = returnedPlans.toMap
+        returnedPlansMap should contain key TestPlanId
+        returnedPlansMap should contain value TestExecutionPlan
       }
     }
   }
@@ -502,7 +508,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       HttpSuccess(result)
     } usingClient { client =>
       client.scheduleJob(payload).map { returned =>
-        returned shouldBe ExecutionPlanStarted(TestJobId, TestPlanId, currentDateTime).right[JobNotFound]
+        returned shouldBe ExecutionPlanStarted(TestJobId, TestPlanId, currentDateTime).asRight[JobNotFound]
       }
     }
   }
@@ -515,7 +521,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       HttpError(404, entity = result)
     } usingClient { client =>
       client.scheduleJob(payload).map { returned =>
-        returned shouldBe JobNotFound(TestJobId).left[ExecutionPlanStarted]
+        returned shouldBe JobNotFound(TestJobId).asLeft[ExecutionPlanStarted]
       }
     }
   }
@@ -555,7 +561,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
       }
     } usingClient { client =>
       client.cancelPlan(TestPlanId).map { returned =>
-        returned shouldBe ExecutionPlanNotFound(TestPlanId).left[ExecutionPlanCancelled]
+        returned shouldBe ExecutionPlanNotFound(TestPlanId).asLeft[ExecutionPlanCancelled]
       }
     }
   }
@@ -570,11 +576,12 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   "executions" should "return a map with the executions" in {
     inProtocol[HttpProtocol] ensuringRequest isGetExecutions replyWith {
-      _ => HttpSuccess(DataBuffer(Map(TestTaskId -> TestTaskExecution)))
+      _ => HttpSuccess(DataBuffer(List(TestTaskId -> TestTaskExecution)))
     } usingClient { client =>
       client.executions.map { returnedExecutions =>
-        returnedExecutions should contain key TestTaskId
-        returnedExecutions should contain value TestTaskExecution
+        val returnedExecutionsMap = returnedExecutions.toMap
+        returnedExecutionsMap should contain key TestTaskId
+        returnedExecutionsMap should contain value TestTaskExecution
       }
     }
   }

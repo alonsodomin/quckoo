@@ -16,10 +16,11 @@
 
 package io.quckoo.console.components
 
+import io.quckoo.console.layout.lookAndFeel
 import io.quckoo.console.libs._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import org.scalajs.jquery._
 
@@ -33,31 +34,40 @@ object Modal {
 
   case class Options(backdrop: Boolean = true, keyboard: Boolean = true, show: Boolean = true)
 
-  case class Props(header: Callback => ReactNode,
-                   footer: Callback => ReactNode,
+  case class Props(header: Callback => VdomNode,
+                   footer: Callback => VdomNode,
                    onClosed: Callback,
                    onShown: Option[Callback] = None,
                    options: Options = Options())
 
   class Backend($ : BackendScope[Props, Unit]) {
+    private type RawModal = JQuery
+    private type Listener = JQueryEventObject => js.Any
 
     // Initialization code
 
-    private[Modal] def initialize(props: Props): Callback = Callback {
-      // instruct Bootstrap to show the modal
-      // $COVERAGE-OFF$ https://github.com/scoverage/scalac-scoverage-plugin/issues/176
-      jQuery($.getDOMNode()).modal(
-        js.Dynamic.literal(
-          "backdrop" -> props.options.backdrop,
-          "keyboard" -> props.options.keyboard,
-          "show"     -> props.options.show
+    private[Modal] def initialize(props: Props): Callback = {
+      def initJS: CallbackTo[RawModal] = $.getDOMNode.map { node =>
+        // instruct Bootstrap to show the modal
+        // $COVERAGE-OFF$ https://github.com/scoverage/scalac-scoverage-plugin/issues/176
+        jQuery(node).modal(
+          js.Dynamic.literal(
+            "backdrop" -> props.options.backdrop,
+            "keyboard" -> props.options.keyboard,
+            "show"     -> props.options.show
+          )
         )
-      )
-      // $COVERAGE-ON$
+        // $COVERAGE-ON$
+      }
 
-      // register event listener to be notified when the modal is closed
-      jQuery($.getDOMNode()).on("hidden.bs.modal", null, null, onHidden _)
-      jQuery($.getDOMNode()).on("shown.bs.modal", null, null, onShown _)
+      def registerListener(name: String, handler: Listener)(modal: RawModal): RawModal =
+        modal.on(name, null, null, handler)
+
+      val actions = initJS
+        .map(registerListener("hidden.bs.modal", onHidden))
+        .map(registerListener("shown.bs.modal", onShown))
+
+      actions.void
     }
 
     private[this] def onHidden(e: JQueryEventObject): js.Any =
@@ -68,9 +78,9 @@ object Modal {
 
     // Actions
 
-    private def invokeCmd(cmd: String): Callback = Callback {
-      jQuery($.getDOMNode()).modal(cmd)
-    }
+    private def invokeCmd(cmd: String): Callback = $.getDOMNode.map { node =>
+      jQuery(node).modal(cmd)
+    } void
 
     def toggle() : Callback = invokeCmd("toggle")
     def show()   : Callback = invokeCmd("show")
@@ -95,11 +105,14 @@ object Modal {
     }
   }
 
-  val Component = ReactComponentB[Props]("Modal")
-    .renderBackend[Backend]
+  val Component = ScalaComponent.builder[Props]("Modal")
+    .renderBackendWithChildren[Backend]
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
-  def apply()                                   = Component
-  def apply(props: Props, children: ReactNode*) = Component(props, children: _*)
+  def apply(header: Callback => VdomNode, footer: Callback => VdomNode, onClosed: Callback,
+    onShown: Option[Callback] = None, options: Options = Options()) =
+      Component(Props(header, footer, onClosed, onShown, options)) _
+
+  def apply(props: Props, children: VdomNode*) = Component(props)(children: _*)
 }

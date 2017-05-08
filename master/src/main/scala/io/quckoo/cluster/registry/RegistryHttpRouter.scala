@@ -22,8 +22,10 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
 
-import de.heikoseeberger.akkahttpupickle.UpickleSupport
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
+
+import io.circe.generic.auto._
 
 import io.quckoo._
 import io.quckoo.api.{Registry => RegistryApi}
@@ -34,16 +36,15 @@ import io.quckoo.serialization.json._
 
 import scala.concurrent.duration._
 
-import scalaz._
-
 /**
   * Created by domingueza on 21/03/16.
   */
-trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
+trait RegistryHttpRouter extends EventStreamMarshalling {
   this: RegistryApi with RegistryStreams =>
 
   import StatusCodes._
   import TimeoutDirectives._
+  import ErrorAccumulatingCirceSupport._
 
   def registryApi(implicit system: ActorSystem,
                   materializer: Materializer,
@@ -80,8 +81,8 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
             post {
               extractExecutionContext { implicit ec =>
                 onSuccess(enableJob(JobId(jobId))) {
-                  case \/-(res @ JobEnabled(_)) => complete(res)
-                  case -\/(JobNotFound(_))      => complete(NotFound -> jobId)
+                  case Right(res @ JobEnabled(_)) => complete(res)
+                  case Left(JobNotFound(_))       => complete(NotFound -> jobId)
                 }
               }
             }
@@ -89,8 +90,8 @@ trait RegistryHttpRouter extends UpickleSupport with EventStreamMarshalling {
             post {
               extractExecutionContext { implicit ec =>
                 onSuccess(disableJob(JobId(jobId))) {
-                  case \/-(res @ JobDisabled(_)) => complete(res)
-                  case -\/(JobNotFound(_))       => complete(NotFound -> jobId)
+                  case Right(res @ JobDisabled(_)) => complete(res)
+                  case Left(JobNotFound(_))        => complete(NotFound -> jobId)
                 }
               }
             }

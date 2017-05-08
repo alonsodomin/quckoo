@@ -24,18 +24,18 @@ import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
 
+import japgolly.scalajs.react.vdom.Implicits._
+
 import org.scalajs.dom
 import slogging._
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
 
-import scalacss.Defaults._
-import scalacss.ScalaCssReact._
 import scalacss.internal.mutable.GlobalRegistry
 
-@JSExport
-object App extends JSApp with LazyLogging {
+object App extends JSApp with StrictLogging {
+  import CssSettings._
 
   def inlineStyles() = {
     GlobalRegistry.register(
@@ -59,6 +59,6 @@ object App extends JSApp with LazyLogging {
     logger.info(s"Starting Quckoo Console ${Info.version}...\n" + Logo)
 
     val container = dom.document.getElementById("viewport")
-    ConsoleCircuit.wrap(identity(_))(p => SiteMap(p)).render(container)
+    ConsoleCircuit.wrap(identity(_))(p => SiteMap(p)).renderIntoDOM(container)
   }
 }

@@ -18,6 +18,8 @@ package io.quckoo.client.http.akka
 
 import akka.actor.ActorSystem
 
+import io.circe.generic.auto._
+
 import io.quckoo.{ArtifactId, JobId}
 import io.quckoo.client.http.{HttpMethod, HttpRequest, MockServer}
 import io.quckoo.serialization.DataBuffer

@@ -22,8 +22,11 @@ import akka.actor.SupervisorStrategy._
 import akka.actor._
 import akka.cluster.client.ClusterClient.SendToAll
 
+import cats.effect.IO
+
 import io.quckoo.{ExceptionThrown, NodeId, Task, TaskId}
 import io.quckoo.cluster.protocol._
+import io.quckoo.resolver.Resolver
 
 import kamon.Kamon
 import kamon.metric.instrument.Counter
@@ -41,13 +44,13 @@ object Worker {
   protected[worker] final val SchedulerPath = "/user/quckoo/scheduler"
 
   def props(clusterClient: ActorRef,
-            resolverProps: Props,
+            resolver: Resolver[IO],
             taskExecutorProvider: TaskExecutorProvider,
             registerInterval: FiniteDuration = DefaultRegisterFrequency,
             queueAckTimeout: FiniteDuration = DefaultQueueAckTimeout): Props =
     Props(new Worker(
       clusterClient,
-      resolverProps,
+      resolver,
       taskExecutorProvider,
       registerInterval,
       queueAckTimeout
@@ -57,11 +60,11 @@ object Worker {
 
 class Worker private (
     clusterClient: ActorRef,
-    resolverProps: Props,
+    resolver: Resolver[IO],
     taskExecutorProvider: TaskExecutorProvider,
     registerInterval: FiniteDuration,
     queueAckTimeout: FiniteDuration)
-    extends Actor with ActorLogging {
+    extends Actor with ActorLogging { myself =>
 
   import Worker._
   import context.dispatcher
@@ -76,7 +79,7 @@ class Worker private (
   )
 
   private[this] val workerContext = new WorkerContext {
-    val resolver: ActorRef = context.watch(context.actorOf(resolverProps, "resolver"))
+    val resolver: Resolver[IO] = myself.resolver
   }
   private[this] var executor: Option[ActorRef] = None
 

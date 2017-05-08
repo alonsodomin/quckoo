@@ -1,7 +1,7 @@
-import Dependencies.libs.Log4j
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import sbt._
 import Keys._
+
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object Dependencies {
 
@@ -14,32 +14,32 @@ object Dependencies {
 
     // Testing --------
 
-    val scalaTest  = "3.0.1"
+    val scalaTest  = "3.0.3"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.5.0"
     val mockito    = "1.10.19"
-    val mockserver = "3.10.4"
+    val mockserver = "3.10.7"
     val discipline = "0.7.3"
 
     // Akka ----------
 
     object akka {
-      val main = "2.4.17"
+      val main = "2.4.18"
       val kryo = "0.5.2"
 
-      val constructr = "0.6.0"
+      val constructr = "0.7.0"
 
       object http {
-        val main = "10.0.5"
+        val main = "10.0.6"
 
         // http extensions
-        val json = "1.14.0"
+        val json = "1.15.0"
         val sse  = "2.0.0"
       }
 
       // persistence plugins
-      val cassandra = "0.25"
-      val inmemory  = "2.4.17.3"
+      val cassandra = "0.25.1"
+      val inmemory  = s"2.4.17.3"
     }
 
     // Monitoring ----
@@ -48,32 +48,32 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "0.11.3"
+    val scalaJsReact    = "1.0.0"
     val scalaJsDom      = "0.9.1"
     val scalaJsJQuery   = "0.9.1"
     val scalaJSScripts  = "1.1.0"
-
-    val testState = "2.1.1"
-    val scalaCss  = "0.5.1"
-    val scalaTime = "2.0.0-M9"
-
-    val diode = "1.1.0"
-
-    val upickle   = "0.4.4"
-    val scalatags = "0.6.3"
+    val testState       = "2.1.2"
 
     // Other utils ---
 
     val arm         = "2.0"
-    val ivy         = "2.4.0"
-    val scopt       = "3.5.0"
-    val monocle     = "1.4.0"
-    val scalaz      = "7.2.10"
-    val monix       = "2.2.3"
-    val cron4s      = "0.3.2"
-    val enumeratum  = "1.5.10"
-    val pureconfig  = "0.7.0"
     val betterfiles = "3.0.0"
+    val diode       = "1.1.2"
+    val cats        = "0.9.0"
+    val catsEffect  = "0.2-3772c8e"
+    val circe       = "0.8.0-RC1"
+    val cron4s      = "0.4.0"
+    val enumeratum  = "1.5.12"
+    val enumCirce   = "1.5.13"
+    val ivy         = "2.4.0"
+    val monix       = "2.2.4"
+    val monocle     = "1.4.0"
+    val pureconfig  = "0.7.0"
+    val scalaCss    = "0.5.3"
+    val scalaTime   = "2.0.0-M10"
+    val scalatags   = "0.6.5"
+    val scopt       = "3.5.0"
+    val shims       = "1.0-b0e5152"
     val xml         = "1.0.6"
 
     // JavaScript Libraries
@@ -82,7 +82,7 @@ object Dependencies {
     val jquery           = "2.2.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs          = "15.4.2"
+    val reactJs          = "15.5.4"
     val sparkMD5         = "2.0.2"
     val codemirror       = "5.24.2"
   }
@@ -107,7 +107,7 @@ object Dependencies {
       object http {
         val main    = "com.typesafe.akka" %% "akka-http"         % version.akka.http.main
         val testkit = "com.typesafe.akka" %% "akka-http-testkit" % version.akka.http.main
-        val upickle = "de.heikoseeberger" %% "akka-http-upickle" % version.akka.http.json
+        val circe   = "de.heikoseeberger" %% "akka-http-circe"   % version.akka.http.json
         val sse     = "de.heikoseeberger" %% "akka-sse"          % version.akka.http.sse
       }
 
@@ -172,17 +172,32 @@ object Dependencies {
 
   lazy val core = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "com.lihaoyi"       %%% "upickle"            % version.upickle,
+      "org.typelevel"     %%% "cats"               % version.cats,
+      "org.typelevel"     %%% "cats-effect"        % version.catsEffect,
+      "io.circe"          %%% "circe-parser"       % version.circe,
+      "io.circe"          %%% "circe-generic"      % version.circe,
+      "io.circe"          %%% "circe-optics"       % version.circe,
+      "io.circe"          %%% "circe-java8"        % version.circe,
       "com.beachape"      %%% "enumeratum"         % version.enumeratum,
-      "com.beachape"      %%% "enumeratum-upickle" % version.enumeratum,
-      "org.scalaz"        %%% "scalaz-core"        % version.scalaz,
-      "io.github.cquiroz" %%% "scala-java-time"    % version.scalaTime,
+      "com.beachape"      %%% "enumeratum-circe"   % version.enumCirce,
+      //"com.codecommit"    %%% "shims-core"         % version.shims,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
 
-      "com.github.alonsodomin.cron4s" %%% "cron4s" % version.cron4s
+      "com.github.alonsodomin.cron4s" %%% "cron4s-core" % version.cron4s
     )
+  }
+
+  lazy val coreJS = Def.settings {
+    libraryDependencies ++= Seq(
+      "io.circe"          %%% "circe-scalajs"   % version.circe,
+      "io.github.cquiroz" %%% "scala-java-time" % version.scalaTime
+    )
+  }
+
+  lazy val coreJVM = Def.settings {
+    libraryDependencies ++= Seq()
   }
 
   // Utilities module ===========================
@@ -200,9 +215,9 @@ object Dependencies {
 
   lazy val api = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "me.chrons"      %%% "diode"           % version.diode,
-      "io.monix"       %%% "monix-reactive"  % version.monix,
-      "io.monix"       %%% "monix-scalaz-72" % version.monix
+      "io.suzaku" %%% "diode"          % version.diode changing(),
+      "io.monix"  %%% "monix-reactive" % version.monix,
+      "io.monix"  %%% "monix-cats"     % version.monix
     )
   )
 
@@ -235,12 +250,12 @@ object Dependencies {
     libraryDependencies ++= compiler.plugins ++ Seq(
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
-      "me.chrons"        %%% "diode-react"    % version.diode,
+      "io.suzaku"        %%% "diode-react"    % version.diode changing(),
       "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
 
       "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "extra"        % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "ext-scalaz72" % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-cats"     % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "ext-monocle"  % version.scalaJsReact,
       "com.github.japgolly.scalajs-react" %%% "test"         % version.scalaJsReact % Test,
       "com.github.japgolly.scalacss"      %%% "core"         % version.scalaCss,
@@ -250,7 +265,7 @@ object Dependencies {
       "com.github.japgolly.test-state" %%% "dom-zipper"        % version.testState % Test,
       "com.github.japgolly.test-state" %%% "dom-zipper-sizzle" % version.testState % Test,
       "com.github.japgolly.test-state" %%% "ext-scalajs-react" % version.testState % Test,
-      "com.github.japgolly.test-state" %%% "ext-scalaz"        % version.testState % Test
+      "com.github.japgolly.test-state" %%% "ext-cats"          % version.testState % Test
     ),
     jsDependencies ++= Seq(
       // ReactJS
@@ -268,9 +283,6 @@ object Dependencies {
         minified  "react-dom-server.min.js"
         dependsOn "react-dom.js"
         commonJSName "ReactDOMServer",
-      "org.webjars.bower" % "react" % version.reactJs % Test
-        /            "react-with-addons.js"
-        commonJSName "React",
 
       // JQuery & Bootstrap
       "org.webjars" % "jquery"    % version.jquery
@@ -311,16 +323,17 @@ object Dependencies {
 
   lazy val clusterShared = Def.settings {
     import libs._
-    libraryDependencies ++= Log4j.All ++ Seq(
+    libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryoSerialization, ivy, scalaXml, pureconfig, slogging_slf4j,
-      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd
+      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd,
+      betterfiles
     )
   }
   lazy val clusterMaster = Def.settings {
     import libs._
-    libraryDependencies ++= Seq(
-      Akka.sharding, Akka.http.main, Akka.http.upickle, Akka.http.sse,
+    libraryDependencies ++= compiler.plugins ++ Seq(
+      Akka.sharding, Akka.http.main, Akka.http.circe, Akka.http.sse,
       Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
       Akka.persistence.query, Akka.persistence.memory, Akka.constructr,
       Kamon.http, scopt, authenticatJwt,
@@ -332,7 +345,7 @@ object Dependencies {
   }
   lazy val clusterWorker = Def.settings {
     import libs._
-    libraryDependencies ++= Seq(scopt, scalaArm, betterfiles)
+    libraryDependencies ++= compiler.plugins ++ Seq(scopt, scalaArm)
   }
 
   // Support modules ================================
@@ -342,7 +355,7 @@ object Dependencies {
       "io.github.cquiroz" %%% "scala-java-time"           % version.scalaTime,
       "org.scalatest"     %%% "scalatest"                 % version.scalaTest,
       "org.scalacheck"    %%% "scalacheck"                % version.scalaCheck,
-      "org.scalaz"        %%% "scalaz-scalacheck-binding" % version.scalaz,
+      "org.typelevel"     %%% "cats-laws"                 % version.cats,
       "org.typelevel"     %%% "discipline"                % version.discipline,
       "biz.enef"          %%% "slogging"                  % version.slogging
     )
@@ -350,7 +363,7 @@ object Dependencies {
 
   lazy val testSupportJVM = Def.settings {
     import libs._
-    libraryDependencies ++= Log4j.All ++ Seq(
+    libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
       slogging_slf4j, mockito, scalaMock, Akka.testKit, Akka.http.testkit
     )
   }

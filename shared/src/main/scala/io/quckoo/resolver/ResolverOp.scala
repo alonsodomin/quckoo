@@ -16,18 +16,15 @@
 
 package io.quckoo.resolver
 
-import io.quckoo.{ArtifactId, Fault}
-
-import scala.concurrent.{ExecutionContext, Future}
-
-import scalaz._
+import cats.data.ValidatedNel
+import io.quckoo.reflect.Artifact
+import io.quckoo.{ArtifactId, DependencyError}
 
 /**
-  * Created by alonsodomin on 23/01/2016.
+  * Created by alonsodomin on 03/05/2017.
   */
-trait Resolve {
-
-  def apply(artifactId: ArtifactId, download: Boolean)(
-      implicit ec: ExecutionContext): Future[Validation[Fault, Artifact]]
-
+sealed trait ResolverOp[A]
+object ResolverOp {
+  case class Validate(artifactId: ArtifactId) extends ResolverOp[ValidatedNel[DependencyError, ArtifactId]]
+  case class Download(artifactId: ArtifactId) extends ResolverOp[ValidatedNel[DependencyError, Artifact]]
 }

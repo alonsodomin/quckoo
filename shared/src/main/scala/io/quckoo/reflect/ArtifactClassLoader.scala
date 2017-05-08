@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.quckoo.resolver
+package io.quckoo.reflect
 
 import java.net.{URL, URLClassLoader}
 import java.security.{AllPermission, CodeSource, Permission, PermissionCollection}

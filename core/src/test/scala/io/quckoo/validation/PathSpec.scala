@@ -16,10 +16,10 @@
 
 package io.quckoo.validation
 
-import org.scalacheck._
+import cats._
+import cats.implicits._
 
-import scalaz._
-import Scalaz._
+import org.scalacheck._
 
 object PathSpec extends Properties("Path") {
   import Prop._
@@ -36,7 +36,7 @@ object PathSpec extends Properties("Path") {
   }
 
   property("preseve") = forAll { path: Path =>
-    Path.unapply(path.shows) == Some(path)
+    Path.unapply(path.show) == Some(path)
   }
 
   property("elements") = forAll { elems: List[String] =>

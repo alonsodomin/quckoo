@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.components
-
-import japgolly.univeq.UnivEq
-
-import scalacss.internal.StyleLookup
+package io.quckoo.auth
 
 /**
-  * Created by alonsodomin on 20/02/2016.
+  * Created by alonsodomin on 15/09/2016.
   */
-object ContextStyle extends Enumeration {
-  val default, primary, success, info, warning, danger = Value
-
-  implicit val equiv  = UnivEq.force[Value]
-  implicit val lookup = StyleLookup.scalaMap[ContextStyle.Value]
-}
+final case class InvalidPassport(token: String)
+    extends Exception(s"Token '$token' is not valid.")

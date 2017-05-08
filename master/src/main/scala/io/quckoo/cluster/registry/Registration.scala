@@ -20,20 +20,25 @@ import java.util.concurrent.TimeoutException
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, ReceiveTimeout, Stash}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import akka.pattern._
+
+import cats.effect.IO
+import cats.data.Validated
 
 import io.quckoo._
 import io.quckoo.api.TopicTag
 import io.quckoo.protocol.registry.{JobAccepted, JobRejected}
 import io.quckoo.resolver.Resolver
+import io.quckoo.resolver.ops._
 
 import scala.concurrent.duration._
 
 object Registration {
 
-  def props(jobSpec: JobSpec, shardsGuardian: ActorRef, resolver: ActorRef, replyTo: ActorRef): Props = {
+  def props(jobSpec: JobSpec, shardsGuardian: ActorRef, replyTo: ActorRef)(implicit resolver: Resolver[IO]): Props = {
     jobSpec.jobPackage match {
       case JarJobPackage(artifactId, _) =>
-        Props(new JarRegistration(jobSpec, artifactId, shardsGuardian, resolver, replyTo))
+        Props(new JarRegistration(jobSpec, artifactId, shardsGuardian, replyTo))
 
       case _ =>
         Props(new SimpleRegistration(jobSpec, shardsGuardian, replyTo))
@@ -98,23 +103,29 @@ class SimpleRegistration private[registry] (jobSpec: JobSpec, shardsGuardian: Ac
 }
 
 class JarRegistration private[registry] (
-    jobSpec: JobSpec, artifactId: ArtifactId, shardsGuardian: ActorRef, resolver: ActorRef, replyTo: ActorRef
-  ) extends Registration(jobSpec, replyTo) {
-  import Resolver._
+    jobSpec: JobSpec, artifactId: ArtifactId, shardsGuardian: ActorRef, replyTo: ActorRef
+  )(implicit resolver: Resolver[IO]) extends Registration(jobSpec, replyTo) {
 
   override def startRegistration: Receive = {
-    resolver ! Resolver.Validate(artifactId)
+    import context.dispatcher
+
+    validate(artifactId)
+      .map(_.leftMap(MissingDependencies))
+      .to[IO]
+      .unsafeToFuture()
+      .pipeTo(self)
+
     resolvingArtifact
   }
 
   def resolvingArtifact: Receive = {
-    case ArtifactResolved(_) =>
+    case Validated.Valid(_) =>
       log.debug("Artifact {} for job '{}' has been successfully resolved.", artifactId, jobId)
       shardsGuardian ! PersistentJob.CreateJob(jobId, jobSpec)
       context.setReceiveTimeout(10 seconds)
       context become awaitAcceptance
 
-    case ResolutionFailed(_, cause) =>
+    case Validated.Invalid(cause @ MissingDependencies(_)) =>
       log.error("Couldn't validate the artifact {} for job '{}'. Reason: {}", artifactId, jobId, cause)
       replyTo ! JobRejected(jobId, cause)
       finish()

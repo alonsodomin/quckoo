@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 
-package io.quckoo.auth
+package io.quckoo
+
+import cats.Monad
+import cats.data.ValidatedNel
+import cats.free.Free
 
 /**
-  * Created by alonsodomin on 15/09/2016.
+  * Created by alonsodomin on 04/05/2017.
   */
-final case class InvalidPassportException(token: String)
-    extends Exception(s"Token '$token' is not valid.")
+package object resolver {
+  type ResolverIO[A] = Free[ResolverOp, A]
+  type Resolved[A] = ValidatedNel[DependencyError, A]
+
+  implicit class ResolverIOOps[A](val self: ResolverIO[A]) extends AnyVal {
+    def to[F[_]: Monad](implicit interpreter: ResolverInterpreter[F]): F[A] =
+      self.foldMap(interpreter)
+  }
+}

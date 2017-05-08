@@ -16,19 +16,19 @@
 
 package io.quckoo.client.core
 
+import cats.data.Kleisli
+import cats.instances.future._
+
 import io.quckoo.api.TopicTag
 import io.quckoo.serialization.Decoder
 import io.quckoo.util._
 
+import monix.cats._
 import monix.reactive.Observable
-import monix.scalaz._
 
 import slogging.LazyLogging
 
 import scala.concurrent.{ExecutionContext, Future}
-
-import scalaz.Kleisli
-import scalaz.std.scalaFuture._
 
 /**
   * Created by alonsodomin on 08/09/2016.
@@ -44,7 +44,7 @@ final class Driver[P <: Protocol] private (
   def openChannel[E](ch: Channel.Aux[P, E]): Kleisli[Observable, Unit, ch.Event] = {
     logger.debug("Opening channel for topic: {}", ch.topicTag.name)
     def decodeEvent = ch.unmarshall.transform(attempt2Observable)
-    backend.open(ch) >=> decodeEvent
+    backend.open(ch) andThen decodeEvent
   }
 
   def invoke[C <: CmdMarshalling[P]](implicit ec: ExecutionContext,
@@ -52,7 +52,7 @@ final class Driver[P <: Protocol] private (
     def encodeRequest  = cmd.marshall.transform(attempt2Future)
     def decodeResponse = cmd.unmarshall.transform(attempt2Future)
 
-    encodeRequest >=> backend.send >=> decodeResponse
+    encodeRequest andThen backend.send andThen decodeResponse
   }
 
 }

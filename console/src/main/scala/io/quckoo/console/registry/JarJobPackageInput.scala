@@ -18,10 +18,11 @@ package io.quckoo.console.registry
 
 import io.quckoo.{ArtifactId, JarJobPackage}
 import io.quckoo.console.components._
+import io.quckoo.console.layout._
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.ScalaCssReact._
 
@@ -87,8 +88,8 @@ object JarJobPackageInput {
 
   }
 
-  val component = ReactComponentB[Props]("JarJobPackageInput")
-    .initialState_P(props => new State(props.value))
+  val component = ScalaComponent.builder[Props]("JarJobPackageInput")
+    .initialStateFromProps(props => new State(props.value))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

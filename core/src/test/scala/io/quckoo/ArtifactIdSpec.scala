@@ -16,11 +16,11 @@
 
 package io.quckoo
 
-import io.quckoo.validation._
-import org.scalatest.{FlatSpec, Matchers}
+import cats.implicits._
 
-import scalaz.Scalaz._
-import scalaz._
+import io.quckoo.validation._
+
+import org.scalatest.{FlatSpec, Matchers}
 
 /**
   * Created by alonsodomin on 24/01/2016.
@@ -34,12 +34,12 @@ class ArtifactIdSpec extends FlatSpec with Matchers {
       PathViolation(Path("name"), Empty) and
       PathViolation(Path("version"), Empty)
 
-    ArtifactId.valid.run(ArtifactId("", "", "")) shouldBe expectedError.failure[ArtifactId]
+    ArtifactId.valid.run(ArtifactId("", "", "")) shouldBe expectedError.invalid[ArtifactId]
   }
 
   it should "accept any other values" in {
     val expectedArtifactId = ArtifactId("foo", "bar", "baz")
-    ArtifactId.valid.run(expectedArtifactId) shouldBe expectedArtifactId.success[Violation]
+    ArtifactId.valid.run(expectedArtifactId) shouldBe expectedArtifactId.valid[Violation]
   }
 
 }

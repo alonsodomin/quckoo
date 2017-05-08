@@ -16,15 +16,15 @@
 
 package io.quckoo.validation
 
+import cats._
+import cats.implicits._
+
 import org.scalatest.FunSuite
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 import org.scalacheck._
 
 import org.typelevel.discipline.scalatest.Discipline
-
-import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 06/11/2016.

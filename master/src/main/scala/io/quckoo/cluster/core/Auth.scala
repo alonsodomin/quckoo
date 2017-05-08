@@ -20,21 +20,20 @@ import akka.http.scaladsl.server.directives.Credentials
 
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
 
+import cats.syntax.option._
+
 import io.quckoo.auth.{Passport, Principal, User}
 import io.quckoo.serialization.DataBuffer
 
 import scala.concurrent.{ExecutionContext, Future}
-
-import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 14/10/2015.
   */
 trait Auth {
 
-  val Realm                        = "QuckooRealm"
-  private[this] val \/-(secretKey) = DataBuffer.fromString("dqwjq0jd9wjd192u4ued9hd0ew").toBase64
+  val Realm                          = "QuckooRealm"
+  private[this] val Right(secretKey) = DataBuffer.fromString("dqwjq0jd9wjd192u4ued9hd0ew").toBase64
 
   def basic(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Principal]] = {
     credentials match {

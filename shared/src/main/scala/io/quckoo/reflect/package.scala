@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
-package io.quckoo.testkit
+package io.quckoo
 
-import io.quckoo.Job
+import cats.Monad
+import cats.effect.IO
+import cats.free.Free
 
 /**
- * Created by domingueza on 10/07/15.
- */
-class DummyJob extends Job {
-  override def execute(): Any = ???
+  * Created by alonsodomin on 04/05/2017.
+  */
+package object reflect {
+  type ReflectIO[A] = Free[ReflectOp, A]
+
+  implicit class ReflectIOOps[A](val self: ReflectIO[A]) extends AnyVal {
+
+    def to[F[_]: Monad](implicit interpreter: ReflectorInterpreter[F]): F[A] =
+      self.foldMap(interpreter)
+
+  }
+
 }

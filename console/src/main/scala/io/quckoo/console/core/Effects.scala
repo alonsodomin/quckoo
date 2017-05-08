@@ -16,10 +16,11 @@
 
 package io.quckoo.console.core
 
+import cats.data.NonEmptyList
+
 import diode._
 
 import scala.concurrent.ExecutionContext
-import scalaz.NonEmptyList
 
 /**
   * Created by alonsodomin on 05/07/2016.
@@ -27,7 +28,7 @@ import scalaz.NonEmptyList
 private[core] object Effects {
 
   def seq[E <: Effect](effects: NonEmptyList[E])(implicit ec: ExecutionContext): EffectSeq =
-    seq(effects.head, effects.tail.toList: _*)
+    seq(effects.head, effects.tail: _*)
 
   def seq(head: Effect, tail: Effect*)(implicit ec: ExecutionContext): EffectSeq =
     new EffectSeq(head, tail, ec)

@@ -16,11 +16,11 @@
 
 package io.quckoo
 
+import java.time.{Clock, Instant, ZoneId, ZonedDateTime}
+
 import io.quckoo.Trigger.{Immediate, LastExecutionTime, ScheduledTime}
 
 import org.scalatest.{Matchers, WordSpec}
-
-import org.threeten.bp.{Clock, Instant, ZoneId, ZonedDateTime}
 
 /**
   * Created by alonsodomin on 14/03/2016.

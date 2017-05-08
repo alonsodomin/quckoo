@@ -18,9 +18,16 @@ package io.quckoo.resolver.ivy
 
 import java.net.URL
 
-import io.quckoo._
-import io.quckoo.resolver._
+import cats.data.Validated
+import cats.effect.IO
+import cats.syntax.cartesian._
+import cats.syntax.validated._
+import cats.syntax.show._
+
+import io.quckoo.reflect.Artifact
 import io.quckoo.resolver.config.IvyConfig
+import io.quckoo.resolver.{Resolved, Resolver}
+import io.quckoo.{ArtifactId, DependencyError, DownloadFailed, UnresolvedDependency}
 
 import org.apache.ivy.Ivy
 import org.apache.ivy.core.module.descriptor.{Configuration, DefaultDependencyDescriptor, DefaultModuleDescriptor, ModuleDescriptor}
@@ -28,15 +35,12 @@ import org.apache.ivy.core.module.id.{ModuleRevisionId => IvyModuleId}
 import org.apache.ivy.core.report.{ArtifactDownloadReport, ResolveReport}
 import org.apache.ivy.core.resolve.ResolveOptions
 
-import slogging._
-
-import scala.concurrent.{ExecutionContext, Future}
-import scalaz._
+import slogging.LazyLogging
 
 /**
-  * Created by aalonsodominguez on 17/07/15.
+  * Created by alonsodomin on 03/05/2017.
   */
-object IvyResolve {
+object IvyResolver {
 
   private final val DefaultConfName = "default"
   private final val CompileConfName = "compile"
@@ -45,40 +49,40 @@ object IvyResolve {
   private final val Configurations =
     Array(DefaultConfName, CompileConfName, RuntimeConfName)
 
-  def apply(config: IvyConfig): IvyResolve = {
+  def apply(config: IvyConfig): IvyResolver = {
     val ivy = Ivy.newInstance(config)
-    new IvyResolve(ivy)
+    new IvyResolver(ivy)
   }
 
 }
 
-class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with LazyLogging {
+class IvyResolver private[ivy](ivy: Ivy) extends Resolver[IO] with LazyLogging {
+  import IvyResolver._
 
-  import IvyResolve._
-  import Scalaz._
+  override def validate(artifactId: ArtifactId): IO[Resolved[ArtifactId]] =
+    resolve(artifactId, download = false).map(_.map(_ => artifactId))
 
-  def apply(artifactId: ArtifactId, download: Boolean)(
-      implicit ec: ExecutionContext): Future[Validation[Fault, Artifact]] = Future {
+  override def download(artifactId: ArtifactId): IO[Resolved[Artifact]] =
+    resolve(artifactId, download = true)
 
-    def unresolvedDependencies(
-        report: ResolveReport): ValidationNel[DependencyFault, ResolveReport] = {
-      val validations: List[Validation[DependencyFault, ResolveReport]] =
+  private[this] def resolve(artifactId: ArtifactId, download: Boolean): IO[Resolved[Artifact]] = IO {
+    def unresolvedDependencies(report: ResolveReport): Resolved[ResolveReport] = {
+      val validations: List[Validated[DependencyError, ResolveReport]] =
         report.getUnresolvedDependencies
           .map(_.getId)
           .map { moduleId =>
             val unresolvedId =
               ArtifactId(moduleId.getOrganisation, moduleId.getName, moduleId.getRevision)
-            UnresolvedDependency(unresolvedId).failure[ResolveReport]
-        } toList
+            UnresolvedDependency(unresolvedId).invalid[ResolveReport]
+          } toList
 
-      validations.foldLeft(report.successNel[DependencyFault])((acc, v) =>
-        (acc |@| v.toValidationNel) { (_, r) =>
-          r
-      })
+      validations.foldLeft(report.validNel[DependencyError])((acc, v) =>
+        (acc |@| v.toValidatedNel).map((_, r) => r)
+      )
     }
 
-    def downloadFailed(report: ResolveReport): ValidationNel[DependencyFault, ResolveReport] = {
-      val validations: List[Validation[DependencyFault, ResolveReport]] =
+    def downloadFailed(report: ResolveReport): Resolved[ResolveReport] = {
+      val validations: List[Validated[DependencyError, ResolveReport]] =
         report.getFailedArtifactsReports.map { artifactReport =>
           val moduleRevisionId = artifactReport.getArtifact.getModuleRevisionId
           val artifactId = ArtifactId(
@@ -92,13 +96,12 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with LazyLogging {
               DownloadFailed.Other(artifactReport.getDownloadDetails)
             }
           }
-          DownloadFailed(artifactId, reason).failure[ResolveReport]
+          DownloadFailed(artifactId, reason).invalid[ResolveReport]
         } toList
 
-      validations.foldLeft(report.successNel[DependencyFault])((acc, v) =>
-        (acc |@| v.toValidationNel) { (_, r) =>
-          r
-      })
+      validations.foldLeft(report.validNel[DependencyError])((acc, v) =>
+        (acc |@| v.toValidatedNel).map((_, r) => r)
+      )
     }
 
     def artifactLocations(artifactReports: Seq[ArtifactDownloadReport]): Seq[URL] = {
@@ -123,9 +126,16 @@ class IvyResolve private[ivy] (ivy: Ivy) extends Resolve with LazyLogging {
     logger.debug(s"Resolving $moduleDescriptor")
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
-    (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)) { (_, r) =>
-      Artifact(artifactId, artifactLocations(r.getAllArtifactsReports))
-    } leftMap MissingDependencies
+    (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport)).map { (_, r) =>
+      val artifactClasspath = artifactLocations(r.getAllArtifactsReports).toList
+
+      logger.debug(
+        "Job package created for artifact {} and classpath: {}",
+        artifactId.show,
+        artifactClasspath.mkString(":")
+      )
+      Artifact(artifactId, artifactClasspath)
+    }
   }
 
   private[this] def newCallerInstance(artifactId: ArtifactId): ModuleDescriptor = {

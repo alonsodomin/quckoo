@@ -16,7 +16,7 @@
 
 package io.quckoo.protocol.registry
 
-import io.quckoo.{Fault, JobId, JobSpec}
+import io.quckoo.{QuckooError, JobId, JobSpec}
 import io.quckoo.protocol.{Command, Event}
 
 sealed trait RegistryCommand      extends Command
@@ -37,7 +37,7 @@ case object GetJobs                   extends RegistryReadCommand
 
 final case class RegisterJob(job: JobSpec)               extends RegistryWriteCommand
 final case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryResolutionEvent
-final case class JobRejected(jobId: JobId, fault: Fault) extends RegistryResolutionEvent
+final case class JobRejected(jobId: JobId, fault: QuckooError) extends RegistryResolutionEvent
 
 final case class DisableJob(jobId: JobId)  extends RegistryWriteCommand with RegistryJobCommand
 final case class JobDisabled(jobId: JobId) extends RegistryEvent

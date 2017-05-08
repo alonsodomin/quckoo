@@ -16,6 +16,10 @@
 
 package io.quckoo.console.registry
 
+import cats.data.NonEmptyList
+import cats.instances.list._
+import cats.syntax.traverse._
+
 import diode.AnyAction._
 import diode.data.{Pot, PotMap, Ready}
 import diode.react.ModelProxy
@@ -23,22 +27,17 @@ import diode.react.ModelProxy
 import io.quckoo.{JobId, JobSpec}
 import io.quckoo.console.components._
 import io.quckoo.console.core.LoadJobSpecs
+import io.quckoo.console.layout.ContextStyle
 import io.quckoo.protocol.registry._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
-
-import scalaz._
-import scalaz.syntax.show._
-import scalaz.std.list._
-import scalaz.syntax.traverse._
-
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 17/10/2015.
   */
 object JobSpecList {
-  import ScalazReact._
+  import CatsReact._
 
   final val Columns = List('Name, 'Description, 'Package, 'Status)
 
@@ -119,9 +118,9 @@ object JobSpecList {
 
     def rowActions(props: Props)(jobId: JobId, jobSpec: JobSpec) = {
       Seq(if (jobSpec.disabled) {
-        Table.RowAction[JobId, JobSpec](NonEmptyList(Icons.play, "Enable"), enableJob(props))
+        Table.RowAction[JobId](NonEmptyList.of(Icons.play, "Enable"), enableJob(props))
       } else {
-        Table.RowAction[JobId, JobSpec](NonEmptyList(Icons.stop, "Disable"), disableJob(props))
+        Table.RowAction[JobId](NonEmptyList.of(Icons.stop, "Disable"), disableJob(props))
       })
     }
 
@@ -147,10 +146,10 @@ object JobSpecList {
 
     // Render methods
 
-    private[this] def renderName(jobId: JobId, jobSpec: JobSpec): ReactNode =
+    private[this] def renderName(jobId: JobId, jobSpec: JobSpec): VdomNode =
       <.a(^.onClick --> onJobClicked(jobId), jobSpec.displayName)
 
-    def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): ReactNode = column match {
+    def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): VdomNode = column match {
       case 'Name        => renderName(jobId, jobSpec)
       case 'Description => jobSpec.description.getOrElse[String]("")
       case 'Package     => jobSpec.jobPackage.toString
@@ -198,7 +197,7 @@ object JobSpecList {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("JobSpecList")
+  private[this] val component = ScalaComponent.builder[Props]("JobSpecList")
     .initialState(State())
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))

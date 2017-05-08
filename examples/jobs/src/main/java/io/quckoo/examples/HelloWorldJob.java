@@ -16,12 +16,12 @@
 
 package io.quckoo.examples;
 
-import java.util.concurrent.Callable;
+import io.quckoo.Job;
 
 /**
  * Created by alonsodomin on 27/07/2016.
  */
-public class HelloWorldJob implements Callable<Object> {
+public class HelloWorldJob implements Job {
 
     @Override
     public Object call() throws Exception {

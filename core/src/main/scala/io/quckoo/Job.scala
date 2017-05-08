@@ -16,11 +16,9 @@
 
 package io.quckoo
 
+import java.util.concurrent.Callable
+
 /**
   * Created by domingueza on 06/07/15.
   */
-trait Job extends Serializable {
-
-  def execute(): Any
-
-}
+trait Job extends Callable[Any]

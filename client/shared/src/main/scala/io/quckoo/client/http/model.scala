@@ -50,6 +50,6 @@ final case class HttpResponse(statusCode: Int,
   def isFailure: Boolean = statusCode >= 400
   def isSuccess: Boolean = !isFailure
 }
-final case class HttpErrorException(statusLine: String) extends Exception(statusLine)
+final case class HttpError(statusLine: String) extends Exception(statusLine)
 
 final case class HttpServerSentEvent(data: DataBuffer)

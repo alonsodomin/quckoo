@@ -24,12 +24,12 @@ import io.quckoo.{ExecutionPlan, JobId, JobSpec, Trigger}
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.core.LoadJobSpecs
+import io.quckoo.console.layout.{ContextStyle, lookAndFeel}
 import io.quckoo.console.registry.JobSelect
 import io.quckoo.protocol.scheduler.ScheduleJob
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import monocle.macros.Lenses
 
@@ -42,8 +42,7 @@ import scalacss.ScalaCssReact._
 object ExecutionPlanForm {
   import MonocleReact._
 
-  @inline
-  private def lnf = lookAndFeel
+  @inline private def lnf = lookAndFeel
 
   type Handler = Option[ScheduleJob] => Callback
 
@@ -114,8 +113,8 @@ object ExecutionPlanForm {
 
     def jobSpecs(props: Props): Map[JobId, JobSpec] = {
       props.proxy().seq.flatMap {
-        case (jobId, Ready(spec)) => Seq(jobId -> spec)
-        case _                    => Seq()
+        case (id, Ready(spec)) => Seq(id -> spec)
+        case _                 => Seq()
       } toMap
     }
 
@@ -160,19 +159,19 @@ object ExecutionPlanForm {
               trigger.get(state).map(ExecutionPlanPreview(_)).get
             }
           )
-        } else EmptyTag
+        } else EmptyVdom
       )
     }
 
   }
 
-  val component = ReactComponentB[Props]("ExecutionPlanForm")
+  val component = ScalaComponent.builder[Props]("ExecutionPlanForm")
     .initialState(State(EditableExecutionPlan(None)))
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
-  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]], handler: Handler, refName: String) =
-    component.withRef(refName)(Props(proxy, handler))
+  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]], handler: Handler) =
+    component(Props(proxy, handler))
 
 }

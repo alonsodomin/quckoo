@@ -16,6 +16,8 @@
 
 package io.quckoo.console.core
 
+import java.time.Clock
+
 import diode._
 import diode.data.{AsyncAction, PotMap}
 import diode.react.ReactConnector
@@ -31,13 +33,9 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
 
-import org.threeten.bp.Clock
-
 import slogging.LazyLogging
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-
-import scalaz.{-\/, \/-}
 
 /**
   * Created by alonsodomin on 20/02/2016.
@@ -187,8 +185,8 @@ object ConsoleCircuit
         }
 
       case RegisterJobResult(validated) =>
-        validated.disjunction match {
-          case \/-(id) =>
+        validated.toEither match {
+          case Right(id) =>
             val notification = Notification.info(s"Job registered with id $id")
             val effects = Effects.set(
               Growl(notification),
@@ -196,7 +194,7 @@ object ConsoleCircuit
             )
             effectOnly(effects)
 
-          case -\/(errors) =>
+          case Left(errors) =>
             val effects = errors.map { err =>
               Notification.danger(err)
             }.map(n => Effect.action(Growl(n)))
@@ -285,9 +283,11 @@ object ConsoleCircuit
         }
 
       case JobSpecsLoaded(specs) if specs.nonEmpty =>
+        logger.debug(s"Loaded ${specs.size} job specs from the server.")
         updated(PotMap(JobSpecFetcher, specs))
 
       case JobAccepted(jobId, spec) =>
+        logger.debug(s"Job has been accepted with identifier: $jobId")
         // TODO re-enable following code once registerJob command is fully async
         //val growl = Growl(Notification.info(s"Job accepted: $jobId"))
         //updated(value + (jobId -> Ready(spec)), growl)
@@ -326,6 +326,7 @@ object ConsoleCircuit
         }
 
       case ExecutionPlansLoaded(plans) if plans.nonEmpty =>
+        logger.debug(s"Loaded ${plans.size} execution plans from the server.")
         updated(PotMap(ExecutionPlanFetcher, plans))
 
       case action: RefreshExecutionPlans =>

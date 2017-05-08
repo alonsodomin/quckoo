@@ -16,25 +16,25 @@
 
 package io.quckoo
 
-import io.quckoo.validation.Violation
+import cats.data.NonEmptyList
 
-import scalaz.NonEmptyList
+import io.quckoo.validation.Violation
 
 /**
   * Created by alonsodomin on 28/12/2015.
   */
-sealed trait Fault extends Serializable
+sealed trait QuckooError extends Product with Serializable
 
 // == Business errors ===============
 
-final case class JobNotFound(jobId: JobId)             extends Fault
-final case class JobNotEnabled(jobId: JobId)           extends Fault
-final case class ExecutionPlanNotFound(planId: PlanId) extends Fault
-final case class TaskExecutionNotFound(taskId: TaskId) extends Fault
+final case class JobNotFound(jobId: JobId)             extends QuckooError
+final case class JobNotEnabled(jobId: JobId)           extends QuckooError
+final case class ExecutionPlanNotFound(planId: PlanId) extends QuckooError
+final case class TaskExecutionNotFound(taskId: TaskId) extends QuckooError
 
 // == Generic errors ================
 
-final case class ExceptionThrown(className: String, message: String) extends Fault {
+final case class ExceptionThrown(className: String, message: String) extends QuckooError {
 
   override def toString: String = s"$className: $message"
 
@@ -45,25 +45,25 @@ object ExceptionThrown {
 
 // == Artifact resolution errors ============
 
-case class MissingDependencies(dependencies: NonEmptyList[DependencyFault]) extends Fault
+final case class MissingDependencies(dependencies: NonEmptyList[DependencyError]) extends QuckooError
 
-sealed trait DependencyFault extends Fault {
+sealed trait DependencyError extends Product with Serializable {
   val artifactId: ArtifactId
 }
-case class UnresolvedDependency(artifactId: ArtifactId) extends DependencyFault
+case class UnresolvedDependency(artifactId: ArtifactId) extends DependencyError
 
 object DownloadFailed {
   sealed trait Reason
   case object NotFound                    extends Reason
   final case class Other(message: String) extends Reason
 }
-case class DownloadFailed(artifactId: ArtifactId, reason: DownloadFailed.Reason)
-    extends DependencyFault
+final case class DownloadFailed(artifactId: ArtifactId, reason: DownloadFailed.Reason)
+    extends DependencyError
 
 // == Validation errors ====================
 
-case class ValidationFault(violation: Violation) extends Fault
+final case class ValidationFault(violation: Violation) extends QuckooError
 
 // == Task Runtime Errors ==================
 
-case class TaskExitCodeFault(exitCode: Int) extends Fault
+final case class TaskExitCodeFault(exitCode: Int) extends QuckooError

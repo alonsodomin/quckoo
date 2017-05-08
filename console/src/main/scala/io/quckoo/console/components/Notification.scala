@@ -16,12 +16,12 @@
 
 package io.quckoo.console.components
 
-import io.quckoo.Fault
+import io.quckoo.QuckooError
 import io.quckoo.console.components.Notification._
+import io.quckoo.console.layout.ContextStyle
 import io.quckoo.console.libs._
 
-import japgolly.scalajs.react.ReactNode
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import org.scalajs.jquery.jQuery
 
@@ -74,7 +74,7 @@ object Notification {
       def apply() = Props(string)
     }
 
-    implicit def fromFault(fault: Fault): PropsMagnet = new PropsMagnet {
+    implicit def fromFault(fault: QuckooError): PropsMagnet = new PropsMagnet {
       def apply() = Props(fault.toString, title = Some("Error"))
     }
 
@@ -113,13 +113,14 @@ final case class Notification private[components] (
     ()
   }
 
-  def inline: ReactNode = {
-    Alert(
-      AlertStyle(level),
-      <.div(
+  def inline: VdomNode = {
+    Alert(AlertStyle(level))(
+      Seq(<.div(
         ^.`class` := "row",
         <.div(^.`class` := "col-sm-2", AlertIcon(level)),
-        <.div(^.`class` := "col-sm-10", props.message)))
+        <.div(^.`class` := "col-sm-10", props.message))
+      )
+    )
   }
 
 }

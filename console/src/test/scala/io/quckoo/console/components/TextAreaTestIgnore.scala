@@ -18,7 +18,7 @@ package io.quckoo.console.components
 
 import io.quckoo.console.test.ConsoleTestExports
 
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.test.ReactTestUtils
 
 import org.scalatest.FunSuite

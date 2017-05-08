@@ -33,7 +33,7 @@ class ProcessRunnerSpec extends AsyncFlatSpec with Matchers {
       result.exitCode shouldBe 0
       result.stdOut shouldBe s"$expectedOut\n"
       result.stdErr shouldBe ""
-    }
+    } unsafeToFuture()
   }
 
   it should "also capture the standad error" in {
@@ -53,7 +53,7 @@ class ProcessRunnerSpec extends AsyncFlatSpec with Matchers {
       result.exitCode shouldBe 0
       result.stdOut shouldBe ""
       result.stdErr shouldBe s"$expectedOut\n"
-    }
+    } unsafeToFuture()
   }
 
   it should "capture the exit code when explicitly set" in {
@@ -70,20 +70,20 @@ class ProcessRunnerSpec extends AsyncFlatSpec with Matchers {
     val runner = new ProcessRunner(scriptFile.path.toString)
     runner.run.map { result =>
       result.exitCode shouldBe expectedExitCode
-    }
+    } unsafeToFuture()
   }
 
   it should "return exit code 127 when the script uses a non-existent command" in {
     val runner = new ProcessRunner("bash", "foo")
     runner.run.map { result =>
       result.exitCode shouldBe 127
-    }
+    } unsafeToFuture()
   }
 
   it should "fail with an IO Exception when attempting to run an invalid command" in {
     val runner = new ProcessRunner("foo")
     recoverToSucceededIf[IOException] {
-      runner.run
+      runner.run.unsafeToFuture()
     }
   }
 

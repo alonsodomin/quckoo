@@ -17,10 +17,9 @@
 package io.quckoo.console.security
 
 import io.quckoo.console.components._
-
+import io.quckoo.console.layout.ContextStyle
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
-
+import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 
 /**
@@ -41,7 +40,7 @@ object LoginForm {
     def onPasswordChange(password: Option[Password]): Callback =
       $.modState(_.copy(password = password))
 
-    def submit(handler: LoginHandler)(event: ReactEventI): Callback = {
+    def submit(handler: LoginHandler)(event: ReactEventFromInput): Callback = {
       val username = $.state.map(_.username).asCBO[String]
       val password = $.state.map(_.password).asCBO[Password]
 
@@ -78,7 +77,7 @@ object LoginForm {
 
   }
 
-  private[this] val component = ReactComponentB[LoginHandler]("LoginForm")
+  private[this] val component = ScalaComponent.builder[LoginHandler]("LoginForm")
     .initialState(State(None, None))
     .renderBackend[LoginBackend]
     .build

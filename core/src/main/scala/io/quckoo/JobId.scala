@@ -16,10 +16,10 @@
 
 package io.quckoo
 
-import upickle.default.{Reader => UReader, Writer => UWriter, _}
+import cats.{Eq, Show}
+import cats.instances.string._
 
-import scalaz.std.string._
-import scalaz.{Equal, Show}
+import io.circe.{Encoder, Decoder, KeyDecoder, KeyEncoder}
 
 /**
   * Created by aalonsodominguez on 24/08/15.
@@ -44,18 +44,21 @@ object JobId {
 
   @inline def apply(id: String) = new JobId(id)
 
-  // Upickle encoders
+  // Circe encoding/decoding
 
-  implicit val jobIdW: UWriter[JobId] = UWriter[JobId] { jobId =>
-    implicitly[UWriter[String]].write(jobId.id)
-  }
-  implicit val jobIdR: UReader[JobId] = UReader[JobId] {
-    implicitly[UReader[String]].read andThen JobId.apply
-  }
+  implicit val jobIdEncoder: Encoder[JobId] =
+    Encoder[String].contramap(_.id)
+
+  implicit val jobIdDecoder: Decoder[JobId] =
+    Decoder[String].map(apply)
+
+  implicit val jobIdKeyEncoder: KeyEncoder[JobId] = KeyEncoder.instance(_.id)
+
+  implicit val jobIdKeyDecoder: KeyDecoder[JobId] = KeyDecoder.instance(id => Some(apply(id)))
 
   // Typeclass instances
 
-  implicit val jobIdEq: Equal[JobId] = Equal.equalBy(_.id)
-  implicit val jobIdShow: Show[JobId] = Show.showFromToString
+  implicit val jobIdEq: Eq[JobId] = Eq.by(_.id)
+  implicit val jobIdShow: Show[JobId] = Show.fromToString
 
 }

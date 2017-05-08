@@ -3,8 +3,6 @@ import sbt.Keys._
 
 import com.typesafe.sbt.pgp.PgpKeys
 
-import QuckooAppKeys.sigarLoaderOptions
-
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 organization in ThisBuild := "io.quckoo"
@@ -30,9 +28,10 @@ lazy val commonSettings = Seq(
       "-deprecation",
       "-Xlint",
       "-Xfuture",
+      "-Xfatal-warnings",
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen",
-      "-Xfatal-warnings"
+      "-Ypartial-unification"
     ),
     resolvers ++= Seq(
       Opts.resolver.mavenLocalFile,
@@ -45,21 +44,16 @@ lazy val commonSettings = Seq(
   ) ++ Licensing.settings
 
 lazy val commonJvmSettings = Seq(
-  fork in Test := true
+  fork in Test := false
 )
 
 lazy val commonJsSettings = Seq(
   coverageEnabled := false,
   coverageExcludedFiles := ".*",
-  persistLauncher in Test := false,
   scalaJSStage in Test := FastOptStage,
   jsEnv in Test := PhantomJSEnv().value,
   // batch mode decreases the amount of memory needed to compile scala.js code
   scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(botBuild.value)
-  /*scalacOptions ++= Seq(
-    "-P:scalajs:suppressMissingJSGlobalDeprecations",
-    "-P:scalajs:suppressExportDeprecations"
-  )*/
 )
 
 lazy val scoverageSettings = Seq(
@@ -180,12 +174,6 @@ lazy val quckoo = (project in file("."))
 
 lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
   .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
-  .settings(commonSettings: _*)
-  .settings(scoverageSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(Dependencies.core: _*)
-  .jsSettings(commonJsSettings: _*)
-  .jvmSettings(commonJvmSettings: _*)
   .settings(
     name := "core",
     moduleName := "quckoo-core",
@@ -193,6 +181,14 @@ lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
     buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
     buildInfoObject := "Info"
   )
+  .settings(commonSettings: _*)
+  .settings(scoverageSettings: _*)
+  .settings(publishSettings: _*)
+  .settings(Dependencies.core: _*)
+  .jsSettings(commonJsSettings: _*)
+  .jsSettings(Dependencies.coreJS: _*)
+  .jvmSettings(commonJvmSettings: _*)
+  .jvmSettings(Dependencies.coreJVM: _*)
   .dependsOn(util, testSupport % Test)
 
 lazy val coreJS = core.js
@@ -251,8 +247,7 @@ lazy val console = (project in file("console"))
     name := "console",
     moduleName := "quckoo-console",
     requiresDOM := true,
-    persistLauncher in Compile := true
-    //scalaJSUseMainModuleInitializer in Compile := true
+    scalaJSUseMainModuleInitializer in Compile := true
   )
   .dependsOn(clientJS, testSupportJS % Test)
 
@@ -287,7 +282,7 @@ lazy val master = (project in file("master"))
     scalaJSProjects := Seq(console),
     dockerExposedPorts := Seq(2551, 8095)
   )
-  .dependsOn(shared, testSupportJVM % Test)
+  .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
 
 lazy val worker = (project in file("worker"))
   .enablePlugins(AutomateHeaderPlugin, QuckooApp, QuckooServerPackager)
@@ -300,7 +295,7 @@ lazy val worker = (project in file("worker"))
     moduleName := "quckoo-worker",
     dockerExposedPorts := Seq(5001, 9010)
   )
-  .dependsOn(shared, testSupportJVM % Test)
+  .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
 
 // Misc Utilities ===========================================
 

@@ -16,32 +16,32 @@
 
 package io.quckoo.console.scheduler
 
+import java.time.{Clock, ZonedDateTime}
+
+import cats.data.NonEmptyList
+import cats.instances.list._
+import cats.syntax.traverse._
+import cats.syntax.show._
+
 import diode.data._
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 
-import io.quckoo.{ExecutionPlan, JobId, JobSpec, PlanId}
+import io.quckoo.{ExecutionPlan, PlanId}
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
+import io.quckoo.console.layout.ContextStyle
 import io.quckoo.protocol.scheduler.CancelExecutionPlan
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
-
-import org.threeten.bp.ZonedDateTime
-
-import scalaz._
-import scalaz.std.list._
-import scalaz.syntax.applicative.{^ => _, _}
-import scalaz.syntax.traverse._
-import scalaz.syntax.show._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 30/01/2016.
   */
 object ExecutionPlanList {
-  import ScalazReact._
+  import CatsReact._
 
   final val Columns = List(
     'Job,
@@ -131,31 +131,35 @@ object ExecutionPlanList {
 
     // Rendering
 
-    def renderItem(model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): ReactNode = {
-      def renderPlanName: ReactNode = {
+    def renderHeader: Table.HeaderRenderer = {
+      case 'Execution => "Last Execution"
+    }
+
+    def renderItem(model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): VdomNode = {
+      def renderPlanName: VdomNode = {
         val jobSpec = model.jobSpecs.get(plan.jobId)
         <.a(^.onClick --> onPlanClicked(planId), jobSpec.render(_.displayName))
       }
 
-      def renderDateTime(dateTime: ZonedDateTime): ReactNode =
-        DateTimeDisplay(dateTime)
+      def renderDateTime(dateTime: ZonedDateTime)(implicit clock: Clock): VdomNode =
+        DateTimeDisplay(dateTime.withZoneSameInstant(clock.getZone).toLocalDateTime)
 
       column match {
         case 'Job       => renderPlanName
-        case 'Current   => plan.currentTask.map(_.show).getOrElse(Cord.empty).toString()
+        case 'Current   => plan.currentTask.map(_.show).getOrElse[String]("")
         case 'Trigger   => plan.trigger.toString()
-        case 'Scheduled => plan.lastScheduledTime.map(renderDateTime).orNull
-        case 'Execution => plan.lastExecutionTime.map(renderDateTime).orNull
-        case 'Outcome   => plan.lastOutcome.map(_.toString).getOrElse[String]("")
-        case 'Next      => plan.nextExecutionTime.map(renderDateTime).orNull
+        case 'Scheduled => plan.lastScheduledTime.map(renderDateTime).getOrElse(VdomArray.empty())
+        case 'Execution => plan.lastExecutionTime.map(renderDateTime).getOrElse(VdomArray.empty())
+        case 'Outcome   => plan.lastOutcome.map(_.show).getOrElse[String]("")
+        case 'Next      => plan.nextExecutionTime.map(renderDateTime).getOrElse(VdomArray.empty())
       }
     }
 
     def renderRowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
       if (!plan.finished && plan.nextExecutionTime.isDefined) {
         Seq(
-          Table.RowAction[PlanId, ExecutionPlan](
-            NonEmptyList(Icons.stop, "Cancel"),
+          Table.RowAction[PlanId](
+            NonEmptyList.of(Icons.stop, "Cancel"),
             cancelPlan)
         )
       } else Seq.empty
@@ -182,6 +186,7 @@ object ExecutionPlanList {
             model.executionPlans.seq,
             renderItem(model),
             key = Some("executionPlans"),
+            headerRenderer = renderHeader,
             actions = Some(renderRowActions(props)(_, _)),
             filter = state.selectedFilter.flatMap(Filters.get),
             onSelect = Some(onPlanSelected(_)),
@@ -193,13 +198,13 @@ object ExecutionPlanList {
 
   }
 
-  private[this] val component = ReactComponentB[Props]("ExecutionPlanList")
+  private[this] val component = ScalaComponent.builder[Props]("ExecutionPlanList")
     .initialState(State())
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
   def apply(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick) =
-    component.withKey("execution-plan-list")(Props(proxy, onCreate, onClick))
+    component(Props(proxy, onCreate, onClick))
 
 }

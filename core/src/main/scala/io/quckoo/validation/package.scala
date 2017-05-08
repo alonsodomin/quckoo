@@ -16,29 +16,30 @@
 
 package io.quckoo
 
-import scalaz._
-import Scalaz._
+import cats._
+import cats.data.{Kleisli, Validated}
+import cats.implicits._
 
 /**
   * Created by alonsodomin on 21/10/2016.
   */
 package object validation extends ValidatorSyntax {
-  type ValidatorK[F[_], A] = Kleisli[F, A, Validation[Violation, A]]
+  type ValidatorK[F[_], A] = Kleisli[F, A, Validated[Violation, A]]
   type Validator[A]        = ValidatorK[Id, A]
 
   object Validator {
     def apply[F[_]: Functor, A](test: A => F[Boolean], err: A => Violation): ValidatorK[F, A] =
       Kleisli { a =>
-        test(a).map(cond => if (cond) a.success[Violation] else err(a).failure[A])
+        test(a).map(cond => if (cond) a.valid[Violation] else err(a).invalid[A])
       }
 
     def accept[F[_], A](implicit ev: Applicative[F]): ValidatorK[F, A] =
       Kleisli { a =>
-        ev.pure(a.success[Violation])
+        ev.pure(a.valid[Violation])
       }
 
     def reject[F[_], A](implicit ev: Applicative[F]): ValidatorK[F, A] =
-      Kleisli { a => ev.pure(Violation.Reject(a.toString).failure[A]) }
+      Kleisli { a => ev.pure(Violation.Reject(a.toString).invalid[A]) }
 
   }
 

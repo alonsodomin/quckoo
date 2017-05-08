@@ -97,7 +97,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     }
 
     "re-schedule an execution once it finishes" in {
-      val successOutcome = TaskExecution.Success
+      val successOutcome = TaskExecution.Outcome.Success
       lifecycleProbe.reply(ExecutionLifecycle.Result(successOutcome))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
@@ -117,11 +117,11 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     "not re-schedule an execution after the job is disabled" in {
       mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name, JobDisabled(TestJobId))
       // Complete the execution so the driver can come back to ready state
-      lifecycleProbe.reply(ExecutionLifecycle.Result(TaskExecution.Success))
+      lifecycleProbe.reply(ExecutionLifecycle.Result(TaskExecution.Outcome.Success))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId shouldBe TestJobId
-      completedMsg.outcome shouldBe TaskExecution.Success
+      completedMsg.outcome shouldBe TaskExecution.Outcome.Success
 
       val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
       finishedMsg.jobId shouldBe TestJobId
@@ -178,13 +178,15 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
       executionDriver ! CancelExecutionPlan(planId)
 
       val cancelMsg = lifecycleProbe.expectMsgType[ExecutionLifecycle.Cancel]
-      cancelMsg.reason shouldBe TaskExecution.UserRequest
+      cancelMsg.reason shouldBe TaskExecution.Reason.UserRequest
 
-      lifecycleProbe.reply(ExecutionLifecycle.Result(TaskExecution.Interrupted(TaskExecution.UserRequest)))
+      lifecycleProbe.reply(ExecutionLifecycle.Result(
+        TaskExecution.Outcome.Interrupted(TaskExecution.Reason.UserRequest)
+      ))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId shouldBe TestJobId
-      completedMsg.outcome shouldBe TaskExecution.Interrupted(TaskExecution.UserRequest)
+      completedMsg.outcome shouldBe TaskExecution.Outcome.Interrupted(TaskExecution.Reason.UserRequest)
 
       val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
       finishedMsg.jobId shouldBe TestJobId
@@ -235,7 +237,7 @@ class ExecutionDriverSpec extends QuckooActorClusterSuite("ExecutionDriverSpec")
     }
 
     "terminate once the execution finishes" in {
-      val successOutcome = TaskExecution.Success
+      val successOutcome = TaskExecution.Outcome.Success
       lifecycleProbe.send(executionPlan, ExecutionLifecycle.Result(successOutcome))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]

@@ -16,13 +16,15 @@
 
 package io.quckoo.cluster.registry
 
+import akka.actor.Props
 import akka.persistence.Persistence
 import akka.testkit.{ImplicitSender, TestActorRef, TestActors, TestProbe}
-
 import io.quckoo._
+import io.quckoo.cluster.config.ClusterSettings
+import io.quckoo.reflect.Artifact
 import io.quckoo.cluster.journal.QuckooTestJournal
 import io.quckoo.protocol.registry._
-import io.quckoo.resolver.{Artifact, Resolver}
+import io.quckoo.resolver.{PureResolver, Resolver}
 import io.quckoo.testkit.QuckooActorClusterSuite
 
 import scala.concurrent.duration._
@@ -36,6 +38,8 @@ object RegistrySpec {
     "io.quckoo", "quckoo-example-jobs_2.11", "0.1.0"
   ), "io.quckoo.examples.HelloWorldJob")
   final val TestJarJobSpec = JobSpec("Bar", jobPackage = TestJarJobPackage)
+
+  final val TestArtifact = Artifact(TestJarJobPackage.artifactId, List.empty)
 
 }
 
@@ -56,9 +60,8 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
   }
 
   "The registry" should {
-    val resolverProbe = TestProbe("resolver1")
-    val settings = RegistrySettings(TestActors.forwardActorProps(resolverProbe.ref))
-    val registry = TestActorRef(Registry.props(settings, journal).withDispatcher("akka.actor.default-dispatcher"))
+    val resolver = new PureResolver(TestArtifact)
+    val registry = TestActorRef(Props(new Registry(resolver, journal)).withDispatcher("akka.actor.default-dispatcher"))
 
     "complete warm up process" in {
       expectMsg(5 seconds, Registry.Ready)
@@ -75,8 +78,6 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
     "register shell script jobs" in {
       registry ! RegisterJob(TestShellJobSpec)
 
-      resolverProbe.expectNoMsg(500 millis)
-
       val acceptedMsg = expectMsgType[JobAccepted]
       acceptedMsg.jobId shouldBe JobId(TestShellJobSpec)
     }
@@ -89,9 +90,6 @@ class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with Implicit
 
     "register jar jobs" in {
       registry ! RegisterJob(TestJarJobSpec)
-
-      resolverProbe.expectMsg(Resolver.Validate(TestJarJobPackage.artifactId))
-      resolverProbe.reply(Resolver.ArtifactResolved(Artifact(TestJarJobPackage.artifactId, List.empty)))
 
       val acceptedMsg = expectMsgType[JobAccepted]
       acceptedMsg.jobId shouldBe JobId(TestJarJobSpec)

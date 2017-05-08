@@ -25,9 +25,6 @@ import slogging.LazyLogging
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-import scalaz._
-import Scalaz._
-
 /**
   * Created by alonsodomin on 22/09/2016.
   */
@@ -54,7 +51,7 @@ class ErrorProcessor extends ActionProcessor[ConsoleScope] with LazyLogging {
     }
   }
 
-  private[this] def generateNotification: PartialFunction[Fault, Notification] = {
+  private[this] def generateNotification: PartialFunction[QuckooError, Notification] = {
     case JobNotFound(jobId) =>
       Notification.danger(s"Job not found: $jobId")
 

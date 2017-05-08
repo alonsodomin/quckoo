@@ -32,6 +32,8 @@ import akka.stream.scaladsl.{Sink, Source}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.util.ByteString
 
+import cats.data.Kleisli
+
 import de.heikoseeberger.akkasse.{EventStreamUnmarshalling, ServerSentEvent}
 
 import io.quckoo.client.core.Channel
@@ -42,8 +44,6 @@ import monix.reactive.Observable
 
 import scala.collection.immutable
 import scala.concurrent.Future
-
-import scalaz.Kleisli
 
 /**
   * Created by alonsodomin on 11/09/2016.

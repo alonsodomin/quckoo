@@ -16,10 +16,9 @@
 
 package io.quckoo.validation
 
-import io.quckoo.util.IsTraversable
+import cats.{Applicative, Id}
 
-import scalaz._
-import Scalaz._
+import io.quckoo.util.IsTraversable
 
 /**
   * Created by alonsodomin on 21/10/2016.

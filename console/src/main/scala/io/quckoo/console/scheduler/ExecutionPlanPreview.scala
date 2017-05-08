@@ -16,13 +16,13 @@
 
 package io.quckoo.console.scheduler
 
+import java.time.{Clock, ZonedDateTime}
+
 import io.quckoo.Trigger
 import io.quckoo.console.components._
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
-
-import org.threeten.bp.{Clock, ZonedDateTime}
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Created by alonsodomin on 09/04/2016.
@@ -41,7 +41,7 @@ object ExecutionPlanPreview {
         props.trigger
           .nextExecutionTime(prev)(props.clock)
           .map(next => (LastExecutionTime(next), true))
-          .getOrElse((prev, false))
+          .getOrElse(prev -> false)
       }
 
       val first  = genNext(ScheduledTime(ZonedDateTime.now(props.clock)))
@@ -49,7 +49,7 @@ object ExecutionPlanPreview {
       stream.takeWhile { case (_, continue) => continue } map (_._1.when) take state.maxRows
     }
 
-    def onRowsSelectionUpdate(evt: ReactEventI): Callback =
+    def onRowsSelectionUpdate(evt: ReactEventFromInput): Callback =
       evt.extract(_.target.value.toInt)(value => $.modState(_.copy(maxRows = value)))
 
     def render(props: Props, state: State) = {
@@ -77,8 +77,8 @@ object ExecutionPlanPreview {
             <.tr(<.th("Expected Executions"))
           ),
           <.tbody(
-            generateTimeline(props, state).map { time =>
-              <.tr(<.td(DateTimeDisplay(time)))
+            generateTimeline(props, state).zipWithIndex.toVdomArray { case (time, idx) =>
+              <.tr(^.key := s"executionplan_timeline_$idx", <.td(DateTimeDisplay(time)))
             }
           ))
       )
@@ -86,7 +86,7 @@ object ExecutionPlanPreview {
 
   }
 
-  val component = ReactComponentB[Props]("ExecutionPlanPreview")
+  val component = ScalaComponent.builder[Props]("ExecutionPlanPreview")
     .initialState(State(10))
     .renderBackend[Backend]
     .build

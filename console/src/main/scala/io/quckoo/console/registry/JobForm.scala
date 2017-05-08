@@ -18,9 +18,10 @@ package io.quckoo.console.registry
 
 import io.quckoo.{JobPackage, JobSpec}
 import io.quckoo.console.components._
+import io.quckoo.console.layout.{ContextStyle, lookAndFeel}
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import monocle.macros.Lenses
 
@@ -32,8 +33,7 @@ import scalacss.ScalaCssReact._
 object JobForm {
   import MonocleReact._
 
-  @inline
-  private def lnf = lookAndFeel
+  @inline private def lnf = lookAndFeel
 
   type Handler = Option[JobSpec] => Callback
 
@@ -140,18 +140,18 @@ object JobForm {
             ),
             JobPackageSelect(state.spec.jobPackage, $.setStateL(jobPackage)(_), state.readOnly)
           )
-        } else EmptyTag
+        } else EmptyVdom
       )
     }
 
   }
 
-  private[registry] val component = ReactComponentB[Props]("JobForm")
+  private[registry] val component = ScalaComponent.builder[Props]("JobForm")
     .initialState(State(new EditableJobSpec(None)))
     .renderBackend[Backend]
     .build
 
-  def apply(handler: Handler, refName: String) =
-    component.withRef(refName)(Props(handler))
+  def apply(handler: Handler) =
+    component(Props(handler))
 
 }

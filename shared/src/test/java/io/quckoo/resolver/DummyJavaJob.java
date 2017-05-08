@@ -16,17 +16,17 @@
 
 package io.quckoo.resolver;
 
-import java.util.concurrent.Callable;
+import io.quckoo.Job;
 
 /**
  * Created by aalonsodominguez on 26/07/15.
  */
-public class DummyJavaJob implements Callable<Void> {
+public class DummyJavaJob implements Job {
 
     public int value = 0;
 
     @Override
-    public Void call() throws Exception {
+    public Object call() throws Exception {
         System.out.println("DummyJavaJob invoked! value=" + value);
         return null;
     }

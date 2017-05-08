@@ -16,10 +16,10 @@
 
 package io.quckoo.testkit.gen
 
-import org.scalacheck._
+import java.time._
+import java.time.temporal._
 
-import org.threeten.bp._
-import org.threeten.bp.temporal._
+import org.scalacheck._
 
 /**
   * Created by alonsodomin on 05/11/2016.

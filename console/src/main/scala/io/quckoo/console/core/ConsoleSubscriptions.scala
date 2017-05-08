@@ -16,6 +16,9 @@
 
 package io.quckoo.console.core
 
+import io.circe.generic.auto._
+import io.circe.java8.time._
+
 import io.quckoo.client.core.ChannelException
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.protocol.cluster.MasterEvent

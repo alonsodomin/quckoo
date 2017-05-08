@@ -17,6 +17,7 @@
 package io.quckoo.cluster.scheduler
 
 import java.util.UUID
+import java.time.Clock
 
 import akka.actor._
 import akka.cluster.client.ClusterClientReceptionist
@@ -37,8 +38,6 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 
 import kamon.trace.Tracer
-
-import org.threeten.bp.Clock
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -221,15 +220,17 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
       planIds += planId
 
     case TaskScheduled(jobId, planId, task, _) =>
-      val execution = TaskExecution(planId, task, TaskExecution.Scheduled)
+      val execution = TaskExecution(planId, task, TaskExecution.Status.Scheduled)
       executions += (task.id -> execution)
 
     case TaskTriggered(_, _, taskId, _) =>
-      executions += (taskId -> executions(taskId).copy(status = TaskExecution.InProgress))
+      executions += (taskId -> executions(taskId).copy(
+        status = TaskExecution.Status.InProgress
+      ))
 
     case TaskCompleted(_, _, taskId, _, outcome) =>
       executions += (taskId -> executions(taskId).copy(
-        status = TaskExecution.Complete,
+        status = TaskExecution.Status.Complete,
         outcome = Some(outcome)
       ))
 

@@ -16,23 +16,31 @@
 
 package io.quckoo.serialization
 
-import io.quckoo.util.Attempt
+import io.circe.{Encoder => CirceEncoder, Decoder => CirceDecoder}
+import io.circe.parser._
+import io.circe.syntax._
 
-import upickle.default.{Reader => UReader, Writer => UWriter, _}
+import io.quckoo.util.Attempt
 
 /**
   * Created by alonsodomin on 11/08/2016.
   */
-package object json extends ScalazJson with JavaTimeJson with Cron4s {
+package object json extends TimeJson with Cron4s {
 
   type JsonCodec[A] = Codec[A, String]
   type JsonEncoder[A] = Encoder[A, String]
   type JsonDecoder[A] = Decoder[String, A]
 
-  implicit def JsonCodecInstance[A: UReader: UWriter]: JsonCodec[A] = new JsonCodec[A] {
-    def encode(a: A): Attempt[String] = Attempt(write[A](a))
+  implicit def JsonEncoderInstance[A: CirceEncoder]: Encoder[A, String] =
+    (a: A) => Attempt(a.asJson.noSpaces)
 
-    def decode(input: String): Attempt[A] = Attempt(read[A](input))
+  implicit def JsonDecoderInstance[A: CirceDecoder]: Decoder[String, A] =
+    (input: String) => parse(input).flatMap(_.as[A])
+
+  implicit def JsonCodecInstance[A: CirceDecoder: CirceEncoder]: JsonCodec[A] = new JsonCodec[A] {
+    def encode(a: A): Attempt[String] = Attempt(a.asJson.noSpaces)
+
+    def decode(input: String): Attempt[A] = parse(input).flatMap(_.as[A])
   }
 
 }

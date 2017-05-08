@@ -18,10 +18,11 @@ package io.quckoo.console.registry
 
 import io.quckoo.ShellScriptPackage
 import io.quckoo.console.components._
+import io.quckoo.console.layout.lookAndFeel
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.ScalaCssReact._
 
@@ -69,7 +70,7 @@ object ShellScriptPackageInput {
             onContentUpdate _,
             opts,
             ^.id := "script_content",
-            ^.height := 250
+            ^.height := "250"
           )
         )
       )
@@ -77,8 +78,8 @@ object ShellScriptPackageInput {
 
   }
 
-  val component = ReactComponentB[Props]("ShellScriptPackageInput")
-    .initialState_P(props => State(props.value.map(_.content).orElse(Some(DefaultScript))))
+  val component = ScalaComponent.builder[Props]("ShellScriptPackageInput")
+    .initialStateFromProps(props => State(props.value.map(_.content).orElse(Some(DefaultScript))))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

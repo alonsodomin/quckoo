@@ -22,8 +22,11 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
 
-import de.heikoseeberger.akkahttpupickle.UpickleSupport
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
 import de.heikoseeberger.akkasse.EventStreamMarshalling
+
+import io.circe.generic.auto._
+import io.circe.java8.time._
 
 import io.quckoo._
 import io.quckoo.api.{Scheduler => SchedulerApi}
@@ -32,16 +35,15 @@ import io.quckoo.cluster.http._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.json._
 
-import scalaz._
-
 /**
   * Created by domingueza on 21/03/16.
   */
-trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
+trait SchedulerHttpRouter extends EventStreamMarshalling {
   this: SchedulerApi with SchedulerStreams =>
 
   import StatusCodes._
   import TimeoutDirectives._
+  import ErrorAccumulatingCirceSupport._
 
   def schedulerApi(
       implicit system: ActorSystem,
@@ -59,10 +61,10 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
             entity(as[ScheduleJob]) { req =>
               extractExecutionContext { implicit ec =>
                 onSuccess(scheduleJob(req)) {
-                  case \/-(res)                  => complete(res)
-                  case -\/(JobNotEnabled(jobId)) => complete(BadRequest -> jobId)
-                  case -\/(JobNotFound(jobId))   => complete(NotFound -> jobId)
-                  case -\/(error)                => complete(InternalServerError -> error)
+                  case Right(res)                 => complete(res)
+                  case Left(JobNotEnabled(jobId)) => complete(BadRequest -> jobId)
+                  case Left(JobNotFound(jobId))   => complete(NotFound -> jobId)
+                  case Left(error)                => complete(InternalServerError -> error)
                 }
               }
             }
@@ -78,8 +80,8 @@ trait SchedulerHttpRouter extends UpickleSupport with EventStreamMarshalling {
           } ~ delete {
             extractExecutionContext { implicit ec =>
               onSuccess(cancelPlan(PlanId(planUUID))) {
-                case \/-(res)                      => complete(res)
-                case -\/(ExecutionPlanNotFound(_)) => complete(NotFound -> planUUID)
+                case Right(res)                     => complete(res)
+                case Left(ExecutionPlanNotFound(_)) => complete(NotFound -> planUUID)
               }
             }
           }

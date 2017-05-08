@@ -16,45 +16,40 @@
 
 package io.quckoo
 
-import scala.concurrent.Future
-import scala.util.{Try, Success => StdSuccess, Failure => StdFailure}
+import cats._
+import cats.data.{EitherT, Validated}
+import cats.implicits._
 
-import scalaz._
-import Scalaz._
-import Isomorphism._
+import scala.concurrent.Future
+import scala.util._
 
 /**
   * Created by alonsodomin on 15/09/2016.
   */
 package object util {
 
-  type Attempt[+A] = Throwable \/ A
+  type Attempt[+A] = Either[Throwable, A]
   object Attempt {
     @inline def apply[A](thunk: => A): Attempt[A] =
-      \/.fromTryCatchNonFatal(thunk)
+      Either.catchNonFatal(thunk)
 
-    @inline def unit: Attempt[Unit]                = \/.right[Throwable, Unit](())
-    @inline def success[A](a: A): Attempt[A]       = \/.right[Throwable, A](a)
-    @inline def fail[A](ex: Throwable): Attempt[A] = \/.left[Throwable, A](ex)
+    @inline def unit: Attempt[Unit]                = Either.right[Throwable, Unit](())
+    @inline def success[A](a: A): Attempt[A]       = Either.right[Throwable, A](a)
+    @inline def fail[A](ex: Throwable): Attempt[A] = Either.left[Throwable, A](ex)
   }
 
   final val attempt2Try = new (Attempt ~> Try) {
     override def apply[A](fa: Attempt[A]): Try[A] = fa match {
-      case -\/(throwable) => StdFailure(throwable)
-      case \/-(value)     => StdSuccess(value)
+      case Left(throwable) => Failure(throwable)
+      case Right(value)    => Success(value)
     }
   }
 
   final val try2Attempt = new (Try ~> Attempt) {
     override def apply[A](fa: Try[A]): Attempt[A] = fa match {
-      case StdSuccess(value) => value.right[Throwable]
-      case StdFailure(ex)    => ex.left[A]
+      case Success(value) => Right(value)
+      case Failure(ex)    => Left(ex)
     }
-  }
-
-  final val attemptIso = new (Attempt <~> Try) {
-    override def to: ~>[Attempt, Try]   = attempt2Try
-    override def from: ~>[Try, Attempt] = try2Attempt
   }
 
   final val try2Future = new (Try ~> Future) {
@@ -63,5 +58,23 @@ package object util {
   }
 
   final val attempt2Future: Attempt ~> Future = attempt2Try andThen try2Future
+
+  implicit class RichValidated[E, A](val self: Validated[E, A]) extends AnyVal {
+    def append[EE >: E, AA >: A](other: Validated[EE, AA])(implicit es: Semigroup[EE], as: Semigroup[AA]): Validated[EE, AA] = {
+      import Validated._
+
+      (self, other) match {
+        case (Valid(a1), Valid(a2))     => Valid(as.combine(a1, a2))
+        case (Valid(_), Invalid(_))     => self
+        case (Invalid(_), Valid(_))     => other
+        case (Invalid(e1), Invalid(e2)) => Invalid(es.combine(e1, e2))
+      }
+    }
+  }
+
+  implicit class RichOptionEitherT[E, A](val self: EitherT[Option, E, A]) extends AnyVal {
+    def cozip: Either[Option[E], Option[A]] =
+      self.value.fold(none[E].asLeft[Option[A]])(_.bimap(Some(_), Some(_)))
+  }
 
 }

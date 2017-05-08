@@ -16,13 +16,12 @@
 
 package io.quckoo.validation
 
+import cats.{Applicative, Comonad, Eq, MonoidK}
+
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop
 
 import org.typelevel.discipline.Laws
-
-import scalaz._
-import Scalaz._
 
 /**
   * Created by alonsodomin on 06/11/2016.
@@ -32,7 +31,7 @@ trait ValidatorTests[F[_]] extends Laws {
 
   def laws: ValidatorLaws[F]
 
-  def rules[A : Equal : Arbitrary](semigroupName: String)(implicit arbitraryValidator: Arbitrary[ValidatorK[F, A]]): RuleSet =
+  def rules[A : Eq : Arbitrary](semigroupName: String)(implicit arbitraryValidator: Arbitrary[ValidatorK[F, A]]): RuleSet =
     new DefaultRuleSet(
       name = semigroupName,
       parent = None,
@@ -45,7 +44,7 @@ trait ValidatorTests[F[_]] extends Laws {
 }
 
 object ValidatorTests {
-  def apply[F[_]: Applicative : Comonad](implicit tc: PlusEmpty[ValidatorK[F, ?]]): ValidatorTests[F] =
+  def apply[F[_]: Applicative : Comonad](implicit tc: MonoidK[ValidatorK[F, ?]]): ValidatorTests[F] =
     new ValidatorTests[F] {
       val laws: ValidatorLaws[F] = ValidatorLaws[F]
     }

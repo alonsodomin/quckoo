@@ -16,15 +16,14 @@
 
 package io.quckoo.console.core
 
+import java.time.LocalDateTime
+
 import diode._
 
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
-import io.quckoo.protocol.cluster.GetClusterStatus
 
 import japgolly.scalajs.react.extra.router.RouterCtl
-
-import org.threeten.bp.LocalDateTime
 
 import slogging.LazyLogging
 

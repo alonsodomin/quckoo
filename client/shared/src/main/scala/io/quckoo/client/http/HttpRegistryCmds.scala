@@ -16,12 +16,16 @@
 
 package io.quckoo.client.http
 
-import io.quckoo.{Fault, JobId, JobNotFound, JobSpec}
+import cats.data.ValidatedNel
+import cats.instances.either._
+import cats.syntax.either._
+
+import io.circe.generic.auto._
+
+import io.quckoo.{QuckooError, JobId, JobNotFound, JobSpec}
 import io.quckoo.client.core._
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.serialization.json._
-
-import scalaz._
 
 /**
   * Created by alonsodomin on 19/09/2016.
@@ -35,7 +39,7 @@ trait HttpRegistryCmds extends HttpMarshalling with RegistryCmds[HttpProtocol] {
     s"$JobsURI/${cmd.payload}" + suffix.map(str => s"/$str").getOrElse("")
 
   implicit lazy val registerJobCmd: RegisterJobCmd =
-    new Auth[HttpProtocol, JobSpec, ValidationNel[Fault, JobId]] {
+    new Auth[HttpProtocol, JobSpec, ValidatedNel[QuckooError, JobId]] {
       override val marshall   = marshallToJson[RegisterJobCmd](HttpMethod.Put, _ => JobsURI)
       override val unmarshall = unmarshallFromJson[RegisterJobCmd]
     }
@@ -45,19 +49,19 @@ trait HttpRegistryCmds extends HttpMarshalling with RegistryCmds[HttpProtocol] {
     override val unmarshall = unmarshalOption[JobSpec]
   }
 
-  implicit lazy val getJobsCmd: GetJobsCmd = new Auth[HttpProtocol, Unit, Map[JobId, JobSpec]] {
+  implicit lazy val getJobsCmd: GetJobsCmd = new Auth[HttpProtocol, Unit, Seq[(JobId, JobSpec)]] {
     override val marshall   = marshallEmpty[GetJobsCmd](HttpMethod.Get, _ => JobsURI)
     override val unmarshall = unmarshallFromJson[GetJobsCmd]
   }
 
   implicit lazy val enableJobCmd: EnableJobCmd =
-    new Auth[HttpProtocol, JobId, JobNotFound \/ JobEnabled] {
+    new Auth[HttpProtocol, JobId, Either[JobNotFound, JobEnabled]] {
       override val marshall   = marshallEmpty[EnableJobCmd](HttpMethod.Post, jobUrl(Some("enable")))
       override val unmarshall = unmarshalEither[JobId, JobEnabled].map(_.leftMap(JobNotFound))
     }
 
   implicit lazy val disableJobCmd: DisableJobCmd =
-    new Auth[HttpProtocol, JobId, JobNotFound \/ JobDisabled] {
+    new Auth[HttpProtocol, JobId, Either[JobNotFound, JobDisabled]] {
       override val marshall =
         marshallEmpty[DisableJobCmd](HttpMethod.Post, jobUrl(Some("disable")))
       override val unmarshall = unmarshalEither[JobId, JobDisabled].map(_.leftMap(JobNotFound))

@@ -21,9 +21,8 @@ import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import io.quckoo.{Info, Logo}
-import io.quckoo.config._
 import io.quckoo.resolver.Resolver
-import io.quckoo.resolver.ivy.IvyResolve
+import io.quckoo.resolver.ivy.IvyResolver
 import io.quckoo.worker.config.{ResolverDispatcher, WorkerSettings}
 import io.quckoo.worker.core.Worker
 import io.quckoo.worker.SystemName
@@ -88,13 +87,10 @@ object Boot extends App with LazyLogging {
     }
     val clusterClient  = system.actorOf(ClusterClient.props(clientSettings), "client")
 
-    val ivyResolve = IvyResolve(settings.resolver)
+    val ivyResolver = IvyResolver(settings.resolver)
     settings.resolver.createFolders()
 
-    // TODO resolver should be re-implemented since there is not need to be an actor
-    val resolverProps    = Resolver.props(ivyResolve).withDispatcher(ResolverDispatcher)
-
-    system.actorOf(Worker.props(clusterClient, resolverProps, DefaultTaskExecutorProvider), "worker")
+    system.actorOf(Worker.props(clusterClient, ivyResolver, DefaultTaskExecutorProvider), "worker")
   }
 
   parser.parse(args, CliOptions()).foreach { opts =>

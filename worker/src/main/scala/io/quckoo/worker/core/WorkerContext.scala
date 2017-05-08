@@ -16,13 +16,15 @@
 
 package io.quckoo.worker.core
 
-import akka.actor.ActorRef
+import cats.effect.IO
+
+import io.quckoo.resolver.Resolver
 
 /**
   * Created by alonsodomin on 16/02/2017.
   */
 trait WorkerContext {
 
-  def resolver: ActorRef
+  implicit def resolver: Resolver[IO]
 
 }
