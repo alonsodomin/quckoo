@@ -18,7 +18,7 @@ package io.quckoo.resolver.ivy
 
 import java.nio.file.Files
 
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList, Validated}
 import cats.effect.IO
 import cats.implicits._
 
@@ -71,14 +71,11 @@ class IvyResolverSpec extends FlatSpec with GivenWhenThen with Matchers {
     Given("An Ivy resolver")
     implicit val ivyResolver = IvyResolver(TestIvyConfig)
 
-    And("an expected resolved artifact")
-    val expectedArtifact = Artifact(TestArtifactId, List.empty)
-
     When("attempting to download the artifacts")
     val result = ops.download(TestArtifactId).to[IO].unsafeRunSync()
 
     Then("the returned validation should contain the expected artifact")
-    result shouldBe expectedArtifact.validNel[DependencyError]
+    result should matchPattern { case Validated.Valid(Artifact(`TestArtifactId`, _)) => }
   }
 
 }

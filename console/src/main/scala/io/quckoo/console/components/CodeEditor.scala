@@ -143,31 +143,11 @@ object CodeEditor {
     .componentDidMount($ => $.backend.initialize($.props, $.state))
     .build
 
-  // private[this] def extractWidthAndHeight(attrs: Seq[TagMod]): (Width, Height, List[TagMod]) = {
-  //   import ReactStyle.NameAndValue
-  //
-  //   val initial: (Width, Height, List[TagMod]) = (DefaultWidth, DefaultHeight, List.empty[TagMod])
-  //   attrs.foldRight(initial) { case (attr, (w, h, acc)) =>
-  //     attr match {
-  //       case nv: NameAndValue[_] if nv.name == "width" =>
-  //         (nv.value.asInstanceOf[Width], h, acc)
-  //       case nv: NameAndValue[_] if nv.name == "height" =>
-  //         (w, nv.value.asInstanceOf[Height], acc)
-  //       case _ =>
-  //         (w, h, attr :: acc)
-  //     }
-  //   }
-  // }
-
   def apply(value: Option[String], onUpdate: OnUpdate, attrs: TagMod*) = {
-    //val (width, height, remaining) = extractWidthAndHeight(attrs)
-    //component(Props(value, onUpdate, width, height, Options(), remaining))
     component(Props(value, onUpdate, DefaultWidth, DefaultHeight, Options(), attrs))
   }
 
   def apply(value: Option[String], onUpdate: OnUpdate, options: Options, attrs: TagMod*) = {
-    //val (width, height, remaining) = extractWidthAndHeight(attrs)
-    //component(Props(value, onUpdate, width, height, options, remaining))
     component(Props(value, onUpdate, DefaultWidth, DefaultHeight, options, attrs))
   }
 
