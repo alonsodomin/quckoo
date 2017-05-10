@@ -39,7 +39,7 @@ object Dependencies {
 
       // persistence plugins
       val cassandra = "0.25.1"
-      val inmemory  = s"2.4.17.3"
+      val inmemory  = s"$main.0"
     }
 
     // Monitoring ----
@@ -61,7 +61,7 @@ object Dependencies {
     val diode       = "1.1.2"
     val cats        = "0.9.0"
     val catsEffect  = "0.2-3772c8e"
-    val circe       = "0.8.0-RC1"
+    val circe       = "0.8.0"
     val cron4s      = "0.4.0"
     val enumeratum  = "1.5.12"
     val enumCirce   = "1.5.13"
