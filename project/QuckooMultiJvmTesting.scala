@@ -5,6 +5,7 @@ import com.typesafe.sbt.SbtMultiJvm
 import com.typesafe.sbt.SbtMultiJvm.autoImport._
 
 import de.heikoseeberger.sbtheader.HeaderPlugin
+import de.heikoseeberger.sbtheader.HeaderPlugin.autoImport._
 
 import QuckooAppKeys._
 
@@ -21,6 +22,6 @@ object QuckooMultiJvmTesting extends AutoPlugin {
     ).map(_ % MultiJvm),
     parallelExecution in MultiJvm := false,
     jvmOptions in MultiJvm := (sigarLoaderOptions in Test).value :+ "-Xmx512M"
-  ) ++ HeaderPlugin.settingsFor(MultiJvm)
+  ) ++ headerSettings(MultiJvm)
 
 }
