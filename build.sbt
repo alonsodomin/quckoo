@@ -5,8 +5,6 @@ import com.typesafe.sbt.pgp.PgpKeys
 
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
-organization in ThisBuild := "io.quckoo"
-
 scalaVersion in ThisBuild := "2.12.1"
 
 parallelExecution in ThisBuild := false
@@ -17,6 +15,8 @@ lazy val botBuild = settingKey[Boolean]("Build by TravisCI instead of local dev 
 lazy val commonSettings = Seq(
     licenses += ("Apache-2.0", url(
       "https://www.apache.org/licenses/LICENSE-2.0.txt")),
+    organization := "io.quckoo",
+    organizationName := "A. Alonso Dominguez",
     startYear := Some(2015),
     scalacOptions ++= Seq(
       "-encoding",
@@ -277,6 +277,7 @@ lazy val master = (project in file("master"))
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
   .settings(publishSettings)
+  .settings(automateHeaderSettings(MultiJvm))
   .settings(Dependencies.clusterMaster)
   .settings(
     moduleName := "quckoo-master",
