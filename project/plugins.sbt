@@ -23,4 +23,4 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj"         % "0.10.6")
 addSbtPlugin("com.tapad"        % "sbt-docker-compose"  % "1.0.22")
 
 // Code generators
-addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.6.1")
+addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.7.0")

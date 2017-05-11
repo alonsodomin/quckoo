@@ -16,8 +16,7 @@ object Dependencies {
 
     val scalaTest  = "3.0.3"
     val scalaCheck = "1.13.5"
-    val scalaMock  = "3.5.0"
-    val mockito    = "1.10.19"
+    val scalaMock  = "3.6.0"
     val mockserver = "3.10.7"
     val discipline = "0.7.3"
 
@@ -49,7 +48,7 @@ object Dependencies {
     // ScalaJS -------
 
     val scalaJsReact    = "1.0.0"
-    val scalaJsDom      = "0.9.1"
+    val scalaJsDom      = "0.9.2"
     val scalaJsJQuery   = "0.9.1"
     val scalaJSScripts  = "1.1.0"
     val testState       = "2.1.2"
@@ -151,7 +150,6 @@ object Dependencies {
 
     val scalaTest  = "org.scalatest"   %% "scalatest"                   % version.scalaTest
     val scalaMock  = "org.scalamock"   %% "scalamock-scalatest-support" % version.scalaMock
-    val mockito    = "org.mockito"      % "mockito-core"                % version.mockito
     val mockserver = "org.mock-server"  % "mockserver-netty"            % version.mockserver excludeAll(
       ExclusionRule(organization = "org.slf4j"),
       ExclusionRule(organization = "ch.qos.logback"),
@@ -364,7 +362,7 @@ object Dependencies {
   lazy val testSupportJVM = Def.settings {
     import libs._
     libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
-      slogging_slf4j, mockito, scalaMock, Akka.testKit, Akka.http.testkit
+      slogging_slf4j, scalaMock, Akka.testKit, Akka.http.testkit
     )
   }
 
