@@ -16,24 +16,9 @@
 
 package io.quckoo.console.core
 
-import cats.data.NonEmptyList
-
-import diode._
-
-import scala.concurrent.ExecutionContext
+import diode.{ActionHandler, ModelRW}
 
 /**
-  * Created by alonsodomin on 05/07/2016.
+  * Created by alonsodomin on 14/05/2017.
   */
-object Effects {
-
-  def seq[E <: Effect](effects: NonEmptyList[E])(implicit ec: ExecutionContext): EffectSeq =
-    seq(effects.head, effects.tail: _*)
-
-  def seq(head: Effect, tail: Effect*)(implicit ec: ExecutionContext): EffectSeq =
-    new EffectSeq(head, tail, ec)
-
-  def parallel(head: Effect, tail: Effect*)(implicit ec: ExecutionContext): EffectSet =
-    new EffectSet(head, tail.toSet, ec)
-
-}
+abstract class ConsoleHandler[A](modelRW: ModelRW[ConsoleScope, A]) extends ActionHandler[ConsoleScope, A](modelRW)

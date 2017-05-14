@@ -23,7 +23,7 @@ import io.quckoo.auth.Passport
 /**
   * Created by alonsodomin on 26/03/2016.
   */
-private[core] trait AuthHandler[S] { this: ActionHandler[ConsoleScope, S] =>
+trait AuthHandler[S] { this: ActionHandler[ConsoleScope, S] =>
 
   def withAuth(f: Passport => ActionResult[ConsoleScope]): ActionResult[ConsoleScope] =
     this.modelRW.root.zoomMap(_.passport)(identity).value.map(f).getOrElse(noChange)
