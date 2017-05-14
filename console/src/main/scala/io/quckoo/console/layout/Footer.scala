@@ -40,7 +40,10 @@ object Footer {
     val footer = style(
       position.absolute,
       bottom.`0`,
-      width(100 %%)
+      width(100 %%),
+      height(60 px),
+      backgroundColor(c"#f5f5f5"),
+      padding(20 px, 25 px)
     )
   }
 
@@ -49,9 +52,11 @@ object Footer {
   private[this] val component = ScalaComponent.builder[Props]("Footer")
     .stateless
     .render_P { props =>
-      <.footer(Style.footer,
-        props.proxy().passport.flatMap(_.principal).map { principal =>
-          LogDisplay(props.logStream)
+      <.div(
+        props.proxy().passport.flatMap(_.principal).map { _ =>
+          <.footer(Style.footer,
+            LogDisplay(props.logStream)
+          )
         }.whenDefined
       )
     }.build

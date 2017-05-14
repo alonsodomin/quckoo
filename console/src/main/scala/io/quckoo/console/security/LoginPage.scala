@@ -58,9 +58,8 @@ object LoginPage {
     def render(props: Props) =
       <.div(
         Style.formPlacement,
-        Panel(
-          Panel.Props("Quckoo Console - Sign in", ContextStyle.primary),
-          LoginForm(loginHandler(props))))
+        Panel("Quckoo Console - Sign in", ContextStyle.primary)(Seq(LoginForm(loginHandler(props))))
+      )
   }
 
   private[this] val component =

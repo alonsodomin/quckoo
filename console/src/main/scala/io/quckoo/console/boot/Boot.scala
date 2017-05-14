@@ -39,6 +39,7 @@ object Boot extends JSApp with StrictLogging {
     GlobalRegistry.register(
       LoginPage.Style,
       Footer.Style,
+      log.LogDisplay.Style,
       DashboardPage.Style,
       ClusterView.Style,
       RegistryPage.Style,

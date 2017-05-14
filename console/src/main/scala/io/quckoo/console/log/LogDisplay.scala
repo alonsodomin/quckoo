@@ -19,6 +19,7 @@ package io.quckoo.console.log
 import cats.effect.IO
 
 import io.quckoo.console.components._
+import io.quckoo.console.layout.CssSettings
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -33,9 +34,20 @@ import scala.concurrent.Future
   * Created by alonsodomin on 06/05/2017.
   */
 object LogDisplay {
+  import CssSettings._
 
-  case class Props(logStream: Observable[LogRecord])
-  case class State(buffer: List[LogRecord])
+  object Style extends StyleSheet.Inline {
+    import dsl._
+
+    val messagesPanel = style(
+      position.absolute,
+      bottom(60 px),
+      width(100 %%)
+    )
+  }
+
+  case class Props(logStream: Observable[LogRecord], bufferSize: Int)
+  case class State(buffer: List[LogRecord], visible: Boolean = false)
 
   class Backend($ : BackendScope[Props, State]) {
     private var subscription: Option[Cancelable] = Option.empty
@@ -58,19 +70,38 @@ object LogDisplay {
       subscription = None
     }
 
-    private[this] def appendRecord(record: LogRecord): IO[Unit] = IO {
-      $.modState(st => st.copy(buffer = record :: st.buffer)).runNow()
+    private[this] def appendRecord(record: LogRecord): IO[Unit] = {
+      val callback = for {
+        props <- $.props
+        _     <- $.modState(st => st.copy(buffer = (record :: st.buffer).take(props.bufferSize)))
+      } yield ()
+
+      IO(callback.runNow())
     }
 
-    def render(props: Props, state: State) = {
-      val log = state.buffer.map(_.toString).mkString("\n")
+    private[this] def togglePanel: Callback =
+      $.modState(st => st.copy(visible = !st.visible))
 
-      Panel("Messages")(Seq(<.pre(
+    private[this] def renderRecord(record: LogRecord): String = {
+      s"${record.when} - [${record.level.entryName}] - ${record.message}"
+    }
+
+    private[this] def renderPanel(props: Props, state: State) = {
+      val log = state.buffer.map(renderRecord).mkString("\n")
+
+      Panel("Messages", addStyles = Seq(Style.messagesPanel))(Seq(<.pre(
         ^.border  := "solid 1px black",
         ^.height  := "20em",
-        ^.padding := "2px 6px",
         log
       )))
+    }
+
+    def render(props: Props, state: State): VdomElement = {
+      <.div(
+        <.div("Messages", ^.onClick --> togglePanel),
+        if (state.visible) renderPanel(props, state)
+        else EmptyVdom
+      )
     }
 
   }
@@ -82,7 +113,7 @@ object LogDisplay {
     .componentWillUnmount(_.backend.dispose())
     .build
 
-  def apply(logStream: Observable[LogRecord]) =
-    component(Props(logStream))
+  def apply(logStream: Observable[LogRecord], bufferSize: Int = 500) =
+    component(Props(logStream, bufferSize))
 
 }

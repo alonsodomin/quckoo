@@ -16,7 +16,7 @@
 
 package io.quckoo.console.components
 
-import io.quckoo.console.layout.{ContextStyle, lookAndFeel}
+import io.quckoo.console.layout.{CssSettings, ContextStyle, lookAndFeel}
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -27,17 +27,23 @@ import scalacss.ScalaCssReact._
   * Created by alonsodomin on 20/02/2016.
   */
 object Panel {
-  final case class Props(heading: String, style: ContextStyle.Value = ContextStyle.default)
+  import CssSettings._
+
+  final case class Props(
+    heading: String,
+    style: ContextStyle.Value = ContextStyle.default,
+    addStyles: Seq[StyleA]
+  )
 
   val component = ScalaComponent.builder[Props]("Panel").stateless.renderPC { (_, p, c) =>
     <.div(
-      lookAndFeel.panelOpt(p.style),
+      lookAndFeel.panelOpt(p.style), p.addStyles.toTagMod,
       <.div(lookAndFeel.panelHeading, p.heading),
       <.div(lookAndFeel.panelBody, c))
   } build
 
-  def apply(heading: String, style: ContextStyle.Value = ContextStyle.default) =
-    component(Props(heading, style)) _
+  def apply(heading: String, style: ContextStyle.Value = ContextStyle.default, addStyles: Seq[StyleA] = Seq.empty) =
+    component(Props(heading, style, addStyles)) _
 
   def apply(props: Props, children: VdomNode*) = component(props)(children: _*)
 }
