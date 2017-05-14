@@ -41,7 +41,7 @@ private[core] trait ConsoleSubscriptions extends LazyLogging {
       logger.error("Topic '{}' has been unexpectedly closed.", ex.topicName)
   }
 
-  def openSubscriptionChannels(implicit client: HttpQuckooClient): Unit = {
+  def openSubscriptionChannels(client: HttpQuckooClient): Unit = {
     client.channel[MasterEvent].subscribe(new ActionSubscriber[MasterEvent](errorHandler))
     client.channel[WorkerEvent].subscribe(new ActionSubscriber[WorkerEvent](errorHandler))
     client.channel[SchedulerEvent].subscribe(new ActionSubscriber[SchedulerEvent](errorHandler))
