@@ -16,8 +16,7 @@ object Dependencies {
 
     val scalaTest  = "3.0.3"
     val scalaCheck = "1.13.5"
-    val scalaMock  = "3.5.0"
-    val mockito    = "1.10.19"
+    val scalaMock  = "3.6.0"
     val mockserver = "3.10.7"
     val discipline = "0.7.3"
 
@@ -39,7 +38,7 @@ object Dependencies {
 
       // persistence plugins
       val cassandra = "0.25.1"
-      val inmemory  = s"2.4.17.3"
+      val inmemory  = s"$main.0"
     }
 
     // Monitoring ----
@@ -49,7 +48,7 @@ object Dependencies {
     // ScalaJS -------
 
     val scalaJsReact    = "1.0.0"
-    val scalaJsDom      = "0.9.1"
+    val scalaJsDom      = "0.9.2"
     val scalaJsJQuery   = "0.9.1"
     val scalaJSScripts  = "1.1.0"
     val testState       = "2.1.2"
@@ -61,7 +60,7 @@ object Dependencies {
     val diode       = "1.1.2"
     val cats        = "0.9.0"
     val catsEffect  = "0.2-3772c8e"
-    val circe       = "0.8.0-RC1"
+    val circe       = "0.8.0"
     val cron4s      = "0.4.0"
     val enumeratum  = "1.5.12"
     val enumCirce   = "1.5.13"
@@ -70,7 +69,7 @@ object Dependencies {
     val monocle     = "1.4.0"
     val pureconfig  = "0.7.0"
     val scalaCss    = "0.5.3"
-    val scalaTime   = "2.0.0-M10"
+    val scalaTime   = "2.0.0-M11"
     val scalatags   = "0.6.5"
     val scopt       = "3.5.0"
     val shims       = "1.0-b0e5152"
@@ -151,7 +150,6 @@ object Dependencies {
 
     val scalaTest  = "org.scalatest"   %% "scalatest"                   % version.scalaTest
     val scalaMock  = "org.scalamock"   %% "scalamock-scalatest-support" % version.scalaMock
-    val mockito    = "org.mockito"      % "mockito-core"                % version.mockito
     val mockserver = "org.mock-server"  % "mockserver-netty"            % version.mockserver excludeAll(
       ExclusionRule(organization = "org.slf4j"),
       ExclusionRule(organization = "ch.qos.logback"),
@@ -364,7 +362,7 @@ object Dependencies {
   lazy val testSupportJVM = Def.settings {
     import libs._
     libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
-      slogging_slf4j, mockito, scalaMock, Akka.testKit, Akka.http.testkit
+      slogging_slf4j, scalaMock, Akka.testKit, Akka.http.testkit
     )
   }
 

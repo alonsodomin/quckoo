@@ -5,8 +5,6 @@ import com.typesafe.sbt.pgp.PgpKeys
 
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
-organization in ThisBuild := "io.quckoo"
-
 scalaVersion in ThisBuild := "2.12.1"
 
 parallelExecution in ThisBuild := false
@@ -16,7 +14,9 @@ lazy val botBuild = settingKey[Boolean]("Build by TravisCI instead of local dev 
 
 lazy val commonSettings = Seq(
     licenses += ("Apache-2.0", url(
-      "http://opensource.org/licenses/Apache-2.0")),
+      "https://www.apache.org/licenses/LICENSE-2.0.txt")),
+    organization := "io.quckoo",
+    organizationName := "A. Alonso Dominguez",
     startYear := Some(2015),
     scalacOptions ++= Seq(
       "-encoding",
@@ -41,7 +41,7 @@ lazy val commonSettings = Seq(
       Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
     ),
     botBuild := scala.sys.env.get("TRAVIS").isDefined
-  ) ++ Licensing.settings
+  )
 
 lazy val commonJvmSettings = Seq(
   fork in Test := false
@@ -143,6 +143,7 @@ lazy val releaseSettings = {
 
 lazy val quckoo = (project in file("."))
   .enablePlugins(AutomateHeaderPlugin, DockerComposePlugin)
+  .settings(commonSettings)
   .settings(
     name := "quckoo",
     moduleName := "quckoo-root",
@@ -181,14 +182,14 @@ lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
     buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
     buildInfoObject := "Info"
   )
-  .settings(commonSettings: _*)
-  .settings(scoverageSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(Dependencies.core: _*)
-  .jsSettings(commonJsSettings: _*)
-  .jsSettings(Dependencies.coreJS: _*)
-  .jvmSettings(commonJvmSettings: _*)
-  .jvmSettings(Dependencies.coreJVM: _*)
+  .settings(commonSettings)
+  .settings(scoverageSettings)
+  .settings(publishSettings)
+  .settings(Dependencies.core)
+  .jsSettings(commonJsSettings)
+  .jsSettings(Dependencies.coreJS)
+  .jvmSettings(commonJvmSettings)
+  .jvmSettings(Dependencies.coreJVM)
   .dependsOn(util, testSupport % Test)
 
 lazy val coreJS = core.js
@@ -198,12 +199,12 @@ lazy val coreJVM = core.jvm
 
 lazy val api = (crossProject.crossType(CrossType.Pure) in file("api"))
   .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings: _*)
-  .settings(scoverageSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(Dependencies.api: _*)
-  .jsSettings(commonJsSettings: _*)
-  .jvmSettings(commonJvmSettings: _*)
+  .settings(commonSettings)
+  .settings(scoverageSettings)
+  .settings(publishSettings)
+  .settings(Dependencies.api)
+  .jsSettings(commonJsSettings)
+  .jvmSettings(commonJvmSettings)
   .settings(
     name := "api",
     moduleName := "quckoo-api"
@@ -217,14 +218,14 @@ lazy val apiJVM = api.jvm
 
 lazy val client = (crossProject in file("client"))
   .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings: _*)
-  .settings(scoverageSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(Dependencies.client: _*)
-  .jsSettings(commonJsSettings: _*)
-  .jsSettings(Dependencies.clientJS: _*)
-  .jvmSettings(commonJvmSettings: _*)
-  .jvmSettings(Dependencies.clientJVM: _*)
+  .settings(commonSettings)
+  .settings(scoverageSettings)
+  .settings(publishSettings)
+  .settings(Dependencies.client)
+  .jsSettings(commonJsSettings)
+  .jsSettings(Dependencies.clientJS)
+  .jvmSettings(commonJvmSettings)
+  .jvmSettings(Dependencies.clientJVM)
   .settings(
     name := "client",
     moduleName := "quckoo-client",
@@ -239,10 +240,10 @@ lazy val clientJVM = client.jvm
 
 lazy val console = (project in file("console"))
   .enablePlugins(AutomateHeaderPlugin, ScalaJSPlugin, ScalaJSWeb)
-  .settings(commonSettings: _*)
-  .settings(commonJsSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(Dependencies.console: _*)
+  .settings(commonSettings)
+  .settings(commonJsSettings)
+  .settings(publishSettings)
+  .settings(Dependencies.console)
   .settings(
     name := "console",
     moduleName := "quckoo-console",
@@ -276,6 +277,7 @@ lazy val master = (project in file("master"))
   .settings(commonJvmSettings)
   .settings(scoverageSettings)
   .settings(publishSettings)
+  .settings(automateHeaderSettings(MultiJvm))
   .settings(Dependencies.clusterMaster)
   .settings(
     moduleName := "quckoo-master",
@@ -315,12 +317,12 @@ lazy val utilJVM = util.jvm
 
 lazy val testSupport = (crossProject in file("test-support"))
   .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings: _*)
-  .settings(noPublishSettings: _*)
-  .settings(Dependencies.testSupport: _*)
-  .jsSettings(commonJsSettings: _*)
-  .jvmSettings(commonJvmSettings: _*)
-  .jvmSettings(Dependencies.testSupportJVM: _*)
+  .settings(commonSettings)
+  .settings(noPublishSettings)
+  .settings(Dependencies.testSupport)
+  .jsSettings(commonJsSettings)
+  .jvmSettings(commonJvmSettings)
+  .jvmSettings(Dependencies.testSupportJVM)
   .settings(
     name := "test-support",
     moduleName := "quckoo-test-support"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Antonio Alonso Dominguez
+ * Copyright 2015 A. Alonso Dominguez
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,6 @@ class LoginObserver($: HtmlDomZipper) {
 
   val emptyUsername = usernameInput.value.isEmpty
   val emptyPassword = passwordInput.value.isEmpty
-  val canSubmit = !submitButton.disabled.getOrElse(false)
+  val canSubmit = !submitButton.disabled
 
 }

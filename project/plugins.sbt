@@ -2,7 +2,7 @@
 logLevel := Level.Warn
 
 // Project management plugins
-addSbtPlugin("de.heikoseeberger" % "sbt-header"    % "1.6.0")
+addSbtPlugin("de.heikoseeberger" % "sbt-header"    % "2.0.0")
 addSbtPlugin("org.scoverage"     % "sbt-scoverage" % "1.5.0")
 addSbtPlugin("com.jsuereth"      % "sbt-pgp"       % "1.0.0")
 addSbtPlugin("com.github.gseitz" % "sbt-release"   % "1.0.4")
@@ -23,4 +23,4 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj"         % "0.10.6")
 addSbtPlugin("com.tapad"        % "sbt-docker-compose"  % "1.0.22")
 
 // Code generators
-addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.6.1")
+addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.7.0")
