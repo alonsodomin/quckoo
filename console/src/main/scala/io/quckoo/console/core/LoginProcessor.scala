@@ -16,7 +16,7 @@
 
 package io.quckoo.console.core
 
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 import diode._
 
@@ -54,7 +54,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
         val destination = referral.getOrElse(Dashboard)
         val newModel = currentModel.copy(
           passport = Some(passport),
-          lastLogin = Some(LocalDateTime.now(consoleClock))
+          lastLogin = Some(ZonedDateTime.now(consoleClock))
         )
         logger.info("Successfully logged in! Redirecting to {}", destination.entryName)
         val effects = Effects.seq(NavigateTo(destination), StartClusterSubscription)

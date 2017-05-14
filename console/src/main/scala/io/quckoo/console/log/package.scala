@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.core
+package io.quckoo.console
 
-import cats.data.NonEmptyList
-
-import diode._
-
-import scala.concurrent.ExecutionContext
+import cats.Order
 
 /**
-  * Created by alonsodomin on 05/07/2016.
+  * Created by alonsodomin on 07/05/2017.
   */
-private[core] object Effects {
+package object log {
+  type Logger[A] = PartialFunction[A, LogRecord]
 
-  def seq[E <: Effect](effects: NonEmptyList[E])(implicit ec: ExecutionContext): EffectSeq =
-    seq(effects.head, effects.tail: _*)
+  implicit val logLevelOrdering: Ordering[LogLevel] = Ordering.by(_.value)
 
-  def seq(head: Effect, tail: Effect*)(implicit ec: ExecutionContext): EffectSeq =
-    new EffectSeq(head, tail, ec)
-
-  def parallel(head: Effect, tail: Effect*)(implicit ec: ExecutionContext): EffectSet =
-    new EffectSet(head, tail.toSet, ec)
+  implicit val logLevelOrder: Order[LogLevel] = Order.fromOrdering
 
 }

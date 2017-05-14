@@ -16,9 +16,10 @@
 
 package io.quckoo.console.core
 
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 import io.quckoo.auth.Passport
+import io.quckoo.console.log.LogRecord
 import io.quckoo.net.QuckooState
 
 import monocle.macros.Lenses
@@ -30,7 +31,7 @@ import monocle.macros.Lenses
     passport: Option[Passport],
     clusterState: QuckooState,
     userScope: UserScope,
-    lastLogin: Option[LocalDateTime],
+    lastLogin: Option[ZonedDateTime],
     subscribed: Boolean
 )
 
