@@ -38,6 +38,7 @@ object Boot extends JSApp with StrictLogging {
   def inlineStyles() = {
     GlobalRegistry.register(
       LoginPage.Style,
+      Footer.Style,
       DashboardPage.Style,
       ClusterView.Style,
       RegistryPage.Style,

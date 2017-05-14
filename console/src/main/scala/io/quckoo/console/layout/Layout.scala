@@ -23,7 +23,7 @@ import io.quckoo.console.ConsoleRoute.{Dashboard, Registry, Scheduler}
 import io.quckoo.console.components.Icons
 import io.quckoo.console.core.ConsoleScope
 import io.quckoo.console.layout.Navigation.NavigationItem
-import io.quckoo.console.log.{LogDisplay, LogRecord}
+import io.quckoo.console.log.LogRecord
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.{Resolution, RouterCtl}
@@ -56,8 +56,7 @@ object Layout {
         Navigation(MainMenu.head, MainMenu, props.routerCtl, props.resolution.page, principal)
       }
 
-      val principal = props.proxy().passport.flatMap(_.principal)
-      <.div(navigation, props.resolution.render(), principal.map(_ => LogDisplay(props.logStream)).whenDefined)
+      <.div(navigation, props.resolution.render(), Footer(props.proxy, props.logStream))
     }
 
   }

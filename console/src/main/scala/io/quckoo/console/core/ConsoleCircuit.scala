@@ -250,25 +250,13 @@ object ConsoleCircuit
         effectOnly(effects)
 
       case TaskScheduled(_, _, task, _) =>
-        val effects = Effects.parallel(
-          Growl(Notification.info(s"Task ${task.id} has been scheduled.")),
-          RefreshExecutions(Set(task.id))
-        )
-        effectOnly(effects)
+        effectOnly(RefreshExecutions(Set(task.id)))
 
       case TaskTriggered(_, _, taskId, _) =>
-        val effects = Effects.parallel(
-          Growl(Notification.info(s"Task $taskId has been triggered.")),
-          RefreshExecutions(Set(taskId))
-        )
-        effectOnly(effects)
+        effectOnly(RefreshExecutions(Set(taskId)))
 
       case TaskCompleted(_, _, taskId, _, _) =>
-        val effects = Effects.parallel(
-          Growl(Notification.info(s"Task $taskId has completed.")),
-          RefreshExecutions(Set(taskId))
-        )
-        effectOnly(effects)
+        effectOnly(RefreshExecutions(Set(taskId)))
     }
 
   }

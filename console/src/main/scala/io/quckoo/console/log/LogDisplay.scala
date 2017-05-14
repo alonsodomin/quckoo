@@ -67,7 +67,6 @@ object LogDisplay {
 
       Panel("Messages")(Seq(<.pre(
         ^.border  := "solid 1px black",
-        ^.width   := "90ex",
         ^.height  := "20em",
         ^.padding := "2px 6px",
         log
