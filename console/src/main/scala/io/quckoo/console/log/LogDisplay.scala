@@ -98,7 +98,7 @@ object LogDisplay {
 
     def render(props: Props, state: State): VdomElement = {
       <.div(
-        <.div("Messages", ^.onClick --> togglePanel),
+        <.div("Messages", ^.cursor.pointer, ^.onClick --> togglePanel),
         if (state.visible) renderPanel(props, state)
         else EmptyVdom
       )
