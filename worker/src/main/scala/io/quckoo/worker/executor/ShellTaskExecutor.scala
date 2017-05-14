@@ -82,7 +82,7 @@ class ShellTaskExecutor private (
         ()
       }
 
-      runScript.ensuring(deleteScript)
+      runScript.attempt.flatMap(e => deleteScript.flatMap(_ => e.fold(IO.raiseError, IO.pure)))
     }
 
     generateScript >>= runIt
