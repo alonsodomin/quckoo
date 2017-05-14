@@ -39,8 +39,14 @@ object LogRecord {
   def info(message: String)(implicit clock: Clock): LogRecord =
     LogRecord(LogLevel.Info, ZonedDateTime.now(clock), message)
 
+  def info(when: ZonedDateTime, message: String): LogRecord =
+    LogRecord(LogLevel.Info, when, message)
+
   def warning(message: String)(implicit clock: Clock): LogRecord =
     LogRecord(LogLevel.Warning, ZonedDateTime.now(clock), message)
+
+  def error(when: ZonedDateTime, message: String): LogRecord =
+    LogRecord(LogLevel.Error, when, message)
 
   def error(message: String)(implicit clock: Clock): LogRecord =
     LogRecord(LogLevel.Error, ZonedDateTime.now(clock), message)

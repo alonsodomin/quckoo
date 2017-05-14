@@ -18,6 +18,8 @@ package io.quckoo.console.log
 
 import cats.effect.IO
 
+import io.quckoo.console.components._
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -63,13 +65,13 @@ object LogDisplay {
     def render(props: Props, state: State) = {
       val log = state.buffer.map(_.toString).mkString("\n")
 
-      <.pre(
+      Panel("Messages")(Seq(<.pre(
         ^.border  := "solid 1px black",
         ^.width   := "90ex",
         ^.height  := "20em",
         ^.padding := "2px 6px",
         log
-      )
+      )))
     }
 
   }
@@ -77,7 +79,7 @@ object LogDisplay {
   val component = ScalaComponent.builder[Props]("ConsoleLog")
     .initialState(State(List.empty))
     .renderBackend[Backend]
-    .componentDidMount($ => $.backend.initialize($.props))
+    .componentWillMount($ => $.backend.initialize($.props))
     .componentWillUnmount(_.backend.dispose())
     .build
 

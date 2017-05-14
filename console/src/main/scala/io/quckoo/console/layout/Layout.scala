@@ -56,7 +56,8 @@ object Layout {
         Navigation(MainMenu.head, MainMenu, props.routerCtl, props.resolution.page, principal)
       }
 
-      <.div(navigation, props.resolution.render(), LogDisplay(props.logStream))
+      val principal = props.proxy().passport.flatMap(_.principal)
+      <.div(navigation, props.resolution.render(), principal.map(_ => LogDisplay(props.logStream)).whenDefined)
     }
 
   }

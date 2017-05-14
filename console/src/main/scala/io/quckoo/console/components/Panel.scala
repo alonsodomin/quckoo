@@ -29,7 +29,7 @@ import scalacss.ScalaCssReact._
 object Panel {
   final case class Props(heading: String, style: ContextStyle.Value = ContextStyle.default)
 
-  val component = ScalaComponent.builder[Props]("Panel").renderPC { (_, p, c) =>
+  val component = ScalaComponent.builder[Props]("Panel").stateless.renderPC { (_, p, c) =>
     <.div(
       lookAndFeel.panelOpt(p.style),
       <.div(lookAndFeel.panelHeading, p.heading),
