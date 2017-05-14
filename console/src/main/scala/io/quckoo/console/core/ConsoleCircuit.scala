@@ -236,15 +236,11 @@ object ConsoleCircuit
         effectOnly(effect)
 
       case ExecutionPlanFinished(jobId, planId, _) =>
-        val effect = Effects.parallel(
-          Growl(Notification.info(s"Execution plan $planId has finished")),
-          RefreshExecutionPlans(Set(planId))
-        )
-        effectOnly(effect)
+        effectOnly(RefreshExecutionPlans(Set(planId)))
 
       case ExecutionPlanCancelled(_, planId, _) =>
         val effects = Effects.parallel(
-          Growl(Notification.danger(s"Execution plan $planId has been cancelled")),
+          Growl(Notification.success(s"Execution plan $planId has been cancelled")),
           RefreshExecutionPlans(Set(planId))
         )
         effectOnly(effects)

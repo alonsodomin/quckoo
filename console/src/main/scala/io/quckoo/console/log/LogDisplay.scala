@@ -16,7 +16,10 @@
 
 package io.quckoo.console.log
 
+import java.time.Clock
+
 import cats.effect.IO
+import cats.syntax.show._
 
 import io.quckoo.console.components._
 import io.quckoo.console.layout.CssSettings
@@ -46,7 +49,7 @@ object LogDisplay {
     )
   }
 
-  case class Props(logStream: Observable[LogRecord], bufferSize: Int)
+  case class Props(clock: Clock, logStream: Observable[LogRecord], bufferSize: Int)
   case class State(buffer: List[LogRecord], visible: Boolean = false)
 
   class Backend($ : BackendScope[Props, State]) {
@@ -59,7 +62,7 @@ object LogDisplay {
         override def onComplete(): Unit = ()
 
         override def onNext(elem: LogRecord): Future[Ack] =
-          appendRecord(elem).map(_ => Ack.Continue).unsafeToFuture()
+          feedRecord(elem).map(_ => Ack.Continue).unsafeToFuture()
 
       })
       subscription = Some(subscriptionRef)
@@ -70,10 +73,16 @@ object LogDisplay {
       subscription = None
     }
 
-    private[this] def appendRecord(record: LogRecord): IO[Unit] = {
+    private[this] def feedRecord(record: LogRecord): IO[Unit] = {
+      def prependRecord(props: Props, buffer: List[LogRecord]): List[LogRecord] = {
+        val newBuffer = record.copy(when = record.when.withZoneSameInstant(props.clock.getZone)) :: buffer
+        if (newBuffer.size <= props.bufferSize) newBuffer
+        else newBuffer.take(props.bufferSize)
+      }
+
       val callback = for {
         props <- $.props
-        _     <- $.modState(st => st.copy(buffer = (record :: st.buffer).take(props.bufferSize)))
+        _     <- $.modState(st => st.copy(buffer = prependRecord(props, st.buffer)))
       } yield ()
 
       IO(callback.runNow())
@@ -82,14 +91,10 @@ object LogDisplay {
     private[this] def togglePanel: Callback =
       $.modState(st => st.copy(visible = !st.visible))
 
-    private[this] def renderRecord(record: LogRecord): String = {
-      s"${record.when} - [${record.level.entryName}] - ${record.message}"
-    }
-
     private[this] def renderPanel(props: Props, state: State) = {
-      val log = state.buffer.map(renderRecord).mkString("\n")
+      val log = state.buffer.map(_.show).mkString("\n")
 
-      Panel("Messages", addStyles = Seq(Style.messagesPanel))(Seq(<.pre(
+      Panel("Messages", onHeaderClick = Some(togglePanel), addStyles = Seq(Style.messagesPanel))(Seq(<.pre(
         ^.border  := "solid 1px black",
         ^.height  := "20em",
         log
@@ -113,7 +118,7 @@ object LogDisplay {
     .componentWillUnmount(_.backend.dispose())
     .build
 
-  def apply(logStream: Observable[LogRecord], bufferSize: Int = 500) =
-    component(Props(logStream, bufferSize))
+  def apply(logStream: Observable[LogRecord], bufferSize: Int = 500)(implicit clock: Clock) =
+    component(Props(clock, logStream, bufferSize))
 
 }

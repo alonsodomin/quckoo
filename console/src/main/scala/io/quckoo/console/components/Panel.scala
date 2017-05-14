@@ -31,19 +31,26 @@ object Panel {
 
   final case class Props(
     heading: String,
-    style: ContextStyle.Value = ContextStyle.default,
+    style: ContextStyle.Value,
+    onHeaderClick: Option[Callback],
     addStyles: Seq[StyleA]
   )
 
   val component = ScalaComponent.builder[Props]("Panel").stateless.renderPC { (_, p, c) =>
     <.div(
       lookAndFeel.panelOpt(p.style), p.addStyles.toTagMod,
-      <.div(lookAndFeel.panelHeading, p.heading),
+      <.div(lookAndFeel.panelHeading,
+        p.heading,
+        p.onHeaderClick.map(cb => ^.onClick --> cb).whenDefined,
+        p.onHeaderClick.map(_ => ^.cursor.pointer).whenDefined
+      ),
       <.div(lookAndFeel.panelBody, c))
   } build
 
-  def apply(heading: String, style: ContextStyle.Value = ContextStyle.default, addStyles: Seq[StyleA] = Seq.empty) =
-    component(Props(heading, style, addStyles)) _
+  def apply(heading: String,
+            style: ContextStyle.Value = ContextStyle.default,
+            onHeaderClick: Option[Callback] = None,
+            addStyles: Seq[StyleA] = Seq.empty) =
+    component(Props(heading, style, onHeaderClick, addStyles)) _
 
-  def apply(props: Props, children: VdomNode*) = component(props)(children: _*)
 }

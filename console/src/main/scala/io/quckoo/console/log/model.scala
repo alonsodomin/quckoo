@@ -18,7 +18,7 @@ package io.quckoo.console.log
 
 import java.time.{Clock, ZonedDateTime}
 
-import diode.ActionType
+import cats.Show
 
 import enumeratum._
 import enumeratum.values._
@@ -51,5 +51,8 @@ object LogRecord {
   def error(message: String)(implicit clock: Clock): LogRecord =
     LogRecord(LogLevel.Error, ZonedDateTime.now(clock), message)
 
-  implicit object actionType extends ActionType[LogRecord]
+  implicit val logRecordShow: Show[LogRecord] = Show.show { record =>
+    s"${record.when} - [${record.level.entryName}] - ${record.message}"
+  }
+
 }

@@ -18,7 +18,7 @@ package io.quckoo.console.layout
 
 import diode.react.ModelProxy
 
-import io.quckoo.console.core.ConsoleScope
+import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope}
 import io.quckoo.console.log.{LogDisplay, LogRecord}
 
 import japgolly.scalajs.react._
@@ -33,6 +33,7 @@ import scalacss.ScalaCssReact._
   */
 object Footer {
   import CssSettings._
+  import ConsoleCircuit.Implicits.consoleClock
 
   object Style extends StyleSheet.Inline {
     import dsl._
