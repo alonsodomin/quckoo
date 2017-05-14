@@ -19,7 +19,7 @@ package io.quckoo.console.boot
 import diode.react.ModelProxy
 
 import io.quckoo.console.ConsoleRoute
-import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, ErrorProcessor, LoginProcessor}
+import io.quckoo.console.core.ConsoleScope
 import io.quckoo.console.dashboard.DashboardPage
 import io.quckoo.console.layout.Layout
 import io.quckoo.console.registry.RegistryPage
@@ -33,7 +33,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 /**
   * Created by aalonsodominguez on 12/10/2015.
   */
-object App {
+object ConsoleRouter {
   import ConsoleRoute._
 
   private[this] def publicPages(proxy: ModelProxy[ConsoleScope]) =
@@ -62,7 +62,7 @@ object App {
         .addCondition(isLoggedIn)(redirectToLogin)
     }
 
-  private[this] def config(proxy: ModelProxy[ConsoleScope]) =
+  def config(proxy: ModelProxy[ConsoleScope]) =
     RouterConfigDsl[ConsoleRoute].buildConfig { dsl =>
       import dsl._
 
@@ -75,22 +75,5 @@ object App {
     }
 
   val baseUrl = BaseUrl.fromWindowOrigin_/
-
-  def apply(proxy: ModelProxy[ConsoleScope]) = {
-    val cfg   = config(proxy)
-    val logic = new RouterLogic(baseUrl, cfg)
-    val processors = List(
-      new LoginProcessor(logic.ctl),
-      new ErrorProcessor
-    )
-
-    val component = Router
-      .componentUnbuiltC(baseUrl, cfg, logic)
-      .componentWillMount(_ => Callback(processors.foreach(ConsoleCircuit.addProcessor)))
-      .componentWillUnmount(_ => Callback(processors.foreach(ConsoleCircuit.removeProcessor)))
-      .build
-
-    component()
-  }
 
 }

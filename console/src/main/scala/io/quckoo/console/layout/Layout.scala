@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Antonio Alonso Dominguez
+ * Copyright 2015 A. Alonso Dominguez
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package io.quckoo.console.layout
 
 import diode.react.ModelProxy
-
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.ConsoleRoute.{Dashboard, Registry, Scheduler}
 import io.quckoo.console.components.Icons
