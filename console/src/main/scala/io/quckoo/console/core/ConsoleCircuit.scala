@@ -108,9 +108,6 @@ object ConsoleCircuit
             ActionResult.ModelUpdate(model.copy(subscribed = true))
           }
         } else None
-
-      case logRecord: LogRecord =>
-        Some(ActionResult.ModelUpdate(model.copy(log = logRecord :: model.log)))
   }
 
   val loginHandler = new ActionHandler(zoomIntoPassport) {

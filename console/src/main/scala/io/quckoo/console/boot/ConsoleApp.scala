@@ -22,6 +22,7 @@ import diode.react.ModelProxy
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, ErrorProcessor, EventLogProcessor, LoginProcessor}
 import io.quckoo.console.dashboard.DashboardLogger
+import io.quckoo.console.registry.RegistryLogger
 import io.quckoo.console.log.LogLevel
 
 import japgolly.scalajs.react._
@@ -60,11 +61,12 @@ object ConsoleApp {
   }
 
   private[this] def initState(props: Props): State = {
-    val routerConfig = ConsoleRouter.config(props.proxy)
+    val logger = DashboardLogger orElse RegistryLogger
+    val logProcessor = new EventLogProcessor(props.level, logger)
+
+    val routerConfig = ConsoleRouter.config(props.proxy, logProcessor.logStream)
     val (router, control) = Router.componentAndCtl(ConsoleRouter.baseUrl, routerConfig)
 
-    val logger = DashboardLogger
-    val logProcessor = new EventLogProcessor(props.level, logger)
     val loginProcessor = new LoginProcessor(control)
     val errorProcessor = new ErrorProcessor
 

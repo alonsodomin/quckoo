@@ -32,8 +32,7 @@ import monocle.macros.Lenses
     clusterState: QuckooState,
     userScope: UserScope,
     lastLogin: Option[ZonedDateTime],
-    subscribed: Boolean,
-    log: List[LogRecord]
+    subscribed: Boolean
 )
 
 object ConsoleScope {
@@ -44,8 +43,7 @@ object ConsoleScope {
       clusterState = QuckooState(),
       userScope = UserScope.initial,
       lastLogin = None,
-      subscribed = false,
-      log = List.empty
+      subscribed = false
     )
 
 }

@@ -19,7 +19,8 @@ package io.quckoo.console
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.log._
 import io.quckoo.protocol.Event
-import io.quckoo.protocol.cluster.MasterRemoved
+import io.quckoo.protocol.cluster.{MasterJoined, MasterReachable, MasterRemoved, MasterUnreachable}
+import io.quckoo.protocol.worker.{WorkerJoined, WorkerLost, WorkerRemoved}
 
 /**
   * Created by alonsodomin on 07/05/2017.
@@ -27,8 +28,26 @@ import io.quckoo.protocol.cluster.MasterRemoved
 package object dashboard {
 
   final val DashboardLogger: Logger[Event] = {
+    case MasterJoined(_, location) =>
+      LogRecord.info(s"Master node joined from: $location")
+
+    case MasterUnreachable(nodeId) =>
+      LogRecord.warning(s"Master node $nodeId has become unreachable")
+
+    case MasterReachable(nodeId) =>
+      LogRecord.info(s"Master node $nodeId has re-joined the cluster")
+
     case MasterRemoved(nodeId) =>
       LogRecord.warning(s"Master node $nodeId has left the cluster.")
+
+    case WorkerJoined(_, location) =>
+      LogRecord.info(s"Worker node joined from: $location")
+
+    case WorkerLost(nodeId) =>
+      LogRecord.warning(s"Worker $nodeId lost communication with the cluster")
+
+    case WorkerRemoved(nodeId) =>
+      LogRecord.error(s"Worker $nodeId has left the cluster")
   }
 
 }

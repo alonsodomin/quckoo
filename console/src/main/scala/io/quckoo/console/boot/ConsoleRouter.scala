@@ -22,6 +22,7 @@ import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.core.ConsoleScope
 import io.quckoo.console.dashboard.DashboardPage
 import io.quckoo.console.layout.Layout
+import io.quckoo.console.log.LogRecord
 import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
@@ -29,6 +30,8 @@ import io.quckoo.console.security.LoginPage
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._
+
+import monix.reactive.Observable
 
 /**
   * Created by aalonsodominguez on 12/10/2015.
@@ -62,7 +65,7 @@ object ConsoleRouter {
         .addCondition(isLoggedIn)(redirectToLogin)
     }
 
-  def config(proxy: ModelProxy[ConsoleScope]) =
+  def config(proxy: ModelProxy[ConsoleScope], logStream: Observable[LogRecord]) =
     RouterConfigDsl[ConsoleRoute].buildConfig { dsl =>
       import dsl._
 
@@ -70,7 +73,7 @@ object ConsoleRouter {
         | publicPages(proxy)
         | privatePages(proxy))
         .notFound(redirectToPage(Root)(Redirect.Replace))
-        .renderWith(Layout(proxy))
+        .renderWith(Layout(proxy, logStream) _)
         .verify(ConsoleRoute.values.head, ConsoleRoute.values.tail: _*)
     }
 
