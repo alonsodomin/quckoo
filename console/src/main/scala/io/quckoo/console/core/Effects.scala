@@ -25,7 +25,7 @@ import scala.concurrent.ExecutionContext
 /**
   * Created by alonsodomin on 05/07/2016.
   */
-private[core] object Effects {
+object Effects {
 
   def seq[E <: Effect](effects: NonEmptyList[E])(implicit ec: ExecutionContext): EffectSeq =
     seq(effects.head, effects.tail: _*)

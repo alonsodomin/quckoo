@@ -27,10 +27,9 @@ import io.quckoo.auth.Passport
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.client.http.dom._
 import io.quckoo.console.components.Notification
-import io.quckoo.console.log.LogRecord
+import io.quckoo.console.registry.RegistryHandler
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster._
-import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.worker._
 
@@ -56,8 +55,7 @@ object ConsoleCircuit
   override protected def actionHandler = composeHandlers(
     loginHandler,
     clusterStateHandler,
-    jobSpecMapHandler,
-    registryHandler,
+    new RegistryHandler(zoomIntoJobSpecs, this),
     scheduleHandler,
     executionPlanMapHandler,
     taskHandler,
@@ -176,45 +174,6 @@ object ConsoleCircuit
 
   }
 
-  val registryHandler = new ActionHandler(zoomIntoUserScope) with AuthHandler[UserScope] {
-
-    override def handle = {
-      case RegisterJob(spec) =>
-        withAuth { implicit passport =>
-          effectOnly(Effect(registerJob(spec)))
-        }
-
-      case RegisterJobResult(validated) =>
-        validated.toEither match {
-          case Right(id) =>
-            val notification = Notification.info(s"Job registered with id $id")
-            val effects = Effects.parallel(
-              Growl(notification),
-              RefreshJobSpecs(Set(id))
-            )
-            effectOnly(effects)
-
-          case Left(errors) =>
-            val effects = errors.map { err =>
-              Notification.danger(err)
-            }.map(n => Effect.action(Growl(n)))
-
-            effectOnly(Effects.seq(effects))
-        }
-
-      case EnableJob(jobId) =>
-        withAuth { implicit passport =>
-          effectOnly(Effect(enableJob(jobId)))
-        }
-
-      case DisableJob(jobId) =>
-        withAuth { implicit passport =>
-          effectOnly(Effect(disableJob(jobId)))
-        }
-    }
-
-  }
-
   val scheduleHandler = new ActionHandler(zoomIntoUserScope) with AuthHandler[UserScope] {
 
     override def handle = {
@@ -253,49 +212,6 @@ object ConsoleCircuit
 
       case TaskCompleted(_, _, taskId, _, _) =>
         effectOnly(RefreshExecutions(Set(taskId)))
-    }
-
-  }
-
-  val jobSpecMapHandler = new ActionHandler(zoomIntoJobSpecs)
-  with AuthHandler[PotMap[JobId, JobSpec]] {
-
-    override protected def handle = {
-      case LoadJobSpecs =>
-        withAuth { implicit passport =>
-          effectOnly(Effect(loadJobSpecs().map(JobSpecsLoaded)))
-        }
-
-      case JobSpecsLoaded(specs) if specs.nonEmpty =>
-        logger.debug(s"Loaded ${specs.size} job specs from the server.")
-        updated(PotMap(JobSpecFetcher, specs))
-
-      case JobAccepted(jobId, spec) =>
-        logger.debug(s"Job has been accepted with identifier: $jobId")
-        // TODO re-enable following code once registerJob command is fully async
-        //val growl = Growl(Notification.info(s"Job accepted: $jobId"))
-        //updated(value + (jobId -> Ready(spec)), growl)
-        noChange
-
-      case JobEnabled(jobId) =>
-        effectOnly(
-          Effects.parallel(
-            Growl(Notification.info(s"Job enabled: $jobId")),
-            RefreshJobSpecs(Set(jobId))
-          ))
-
-      case JobDisabled(jobId) =>
-        effectOnly(
-          Effects.parallel(
-            Growl(Notification.info(s"Job disabled: $jobId")),
-            RefreshJobSpecs(Set(jobId))
-          ))
-
-      case action: RefreshJobSpecs =>
-        withAuth { implicit passport =>
-          val updateEffect = action.effect(loadJobSpecs(action.keys))(identity)
-          action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
-        }
     }
 
   }

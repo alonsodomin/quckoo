@@ -36,7 +36,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 /**
   * Created by alonsodomin on 25/03/2016.
   */
-private[core] trait ConsoleOps { this: LoggerHolder =>
+trait ConsoleOps { this: LoggerHolder =>
 
   val DefaultTimeout = 2500 millis
 
