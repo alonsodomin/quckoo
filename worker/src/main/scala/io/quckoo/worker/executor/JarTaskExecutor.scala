@@ -70,7 +70,7 @@ class JarTaskExecutor private (
         taskId, jarPackage.jobClass, jarPackage.artifactId
       )
 
-      downloadAndRun.shift.unsafeToFuture().pipeTo(sender())
+      downloadAndRun.unsafeToFuture().pipeTo(sender())
   }
 
   private def downloadAndRun(implicit resolver: InjectableResolver[ArtifactOp], reflect: InjectableReflector[ArtifactOp]): IO[Response] = {
