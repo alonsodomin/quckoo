@@ -29,21 +29,24 @@ object Dependencies {
       val constructr = "0.7.0"
 
       object http {
-        val main = "10.0.6"
+        val main = "10.0.7"
 
         // http extensions
-        val json = "1.15.0"
-        val sse  = "2.0.0"
+        val json = "1.16.1"
+        val sse  = "3.0.0"
       }
 
       // persistence plugins
       val cassandra = "0.25.1"
-      val inmemory  = s"$main.0"
+      val inmemory  = s"$main.1"
     }
 
     // Monitoring ----
 
-    val kamon = "0.6.6"
+    object kamon {
+      val core  = "0.6.7"
+      val other = "0.6.6"
+    }
 
     // ScalaJS -------
 
@@ -59,11 +62,11 @@ object Dependencies {
     val betterfiles = "3.0.0"
     val diode       = "1.1.2"
     val cats        = "0.9.0"
-    val catsEffect  = "0.2"
+    val catsEffect  = "0.3"
     val circe       = "0.8.0"
     val cron4s      = "0.4.0"
     val enumeratum  = "1.5.12"
-    val enumCirce   = "1.5.13"
+    val enumCirce   = "1.5.14"
     val ivy         = "2.4.0"
     val monix       = "2.3.0"
     val monocle     = "1.4.0"
@@ -133,12 +136,12 @@ object Dependencies {
     }
 
     object Kamon {
-      val core       = "io.kamon" %% "kamon-core"            % version.kamon
-      val akka       = "io.kamon" %% "kamon-akka-remote-2.4" % version.kamon
-      val http       = "io.kamon" %% "kamon-akka-http"       % version.kamon
-      val scala      = "io.kamon" %% "kamon-scala"           % version.kamon
-      val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon
-      val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon
+      val core       = "io.kamon" %% "kamon-core"            % version.kamon.core
+      val akka       = "io.kamon" %% "kamon-akka-remote-2.4" % version.kamon.other
+      val http       = "io.kamon" %% "kamon-akka-http"       % version.kamon.other
+      val scala      = "io.kamon" %% "kamon-scala"           % version.kamon.other
+      val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon.other
+      val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon.other
     }
 
     val slogging_slf4j = "biz.enef" %% "slogging-slf4j" % version.slogging
@@ -161,7 +164,7 @@ object Dependencies {
 
   object compiler {
     val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.0" cross CrossVersion.full
-    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.3" cross CrossVersion.binary
+    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.4" cross CrossVersion.binary
 
     val plugins = Seq(macroParadise, kindProjector).map(compilerPlugin)
   }

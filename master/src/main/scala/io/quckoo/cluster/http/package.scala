@@ -23,7 +23,7 @@ import akka.http.scaladsl.model.MediaType
 import akka.http.scaladsl.model.MediaTypes
 import akka.stream.scaladsl.Source
 
-import de.heikoseeberger.akkasse.ServerSentEvent
+import de.heikoseeberger.akkasse.scaladsl.model.ServerSentEvent
 
 import io.circe.Encoder
 import io.quckoo.api.TopicTag

@@ -34,7 +34,8 @@ import akka.util.ByteString
 
 import cats.data.Kleisli
 
-import de.heikoseeberger.akkasse.{EventStreamUnmarshalling, ServerSentEvent}
+import de.heikoseeberger.akkasse.scaladsl.model.ServerSentEvent
+import de.heikoseeberger.akkasse.scaladsl.unmarshalling.EventStreamUnmarshalling
 
 import io.quckoo.client.core.Channel
 import io.quckoo.client.http.{HttpMethod, HttpRequest, HttpResponse, _}

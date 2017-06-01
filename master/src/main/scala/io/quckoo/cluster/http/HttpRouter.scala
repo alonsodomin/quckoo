@@ -24,7 +24,7 @@ import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, Val
 import akka.stream.ActorMaterializer
 
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
-import de.heikoseeberger.akkasse.EventStreamMarshalling
+import de.heikoseeberger.akkasse.scaladsl.marshalling.EventStreamMarshalling
 
 import io.circe.generic.auto._
 

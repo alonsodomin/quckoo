@@ -23,7 +23,7 @@ import akka.http.scaladsl.server._
 import akka.stream.Materializer
 
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
-import de.heikoseeberger.akkasse.EventStreamMarshalling
+import de.heikoseeberger.akkasse.scaladsl.marshalling.EventStreamMarshalling
 
 import io.circe.generic.auto._
 
