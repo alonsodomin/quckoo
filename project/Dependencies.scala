@@ -68,7 +68,6 @@ object Dependencies {
     val enumeratum  = "1.5.12"
     val enumCirce   = "1.5.14"
     val ivy         = "2.4.0"
-    val jline       = "3.3.0"
     val monix       = "2.3.0"
     val monocle     = "1.4.0"
     val pureconfig  = "0.7.0"
@@ -149,7 +148,6 @@ object Dependencies {
     val slogging_slf4j = "biz.enef" %% "slogging-slf4j" % version.slogging
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
-    val jline = "org.jline"         % "jline" % version.jline
     val stoml = "me.vican.jorge"   %% "stoml" % version.stoml
 
     val authenticatJwt = "com.jason-goodwin"     %% "authentikat-jwt" % "0.4.5"
@@ -254,7 +252,7 @@ object Dependencies {
   lazy val shell = Def.settings {
     import libs._
     libraryDependencies ++= Seq(
-      scopt, jline, betterfiles, stoml
+      scopt, betterfiles, stoml
     )
   }
 

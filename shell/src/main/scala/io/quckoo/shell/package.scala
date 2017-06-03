@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package io.quckoo.shell
+package io.quckoo
 
-import cats.effect.IO
-
-import io.quckoo.shell.console.StdConsole
+import cats.data.Kleisli
 
 /**
   * Created by alonsodomin on 03/06/2017.
   */
-object Main {
+package object shell {
 
-  def main(args: Array[String]): Unit = {
-    val console = new StdConsole[IO]("quckoo>")
-    val shell = new RunnableShell[IO](console, Map.empty)
-    shell.runInteractive.attempt.unsafeRunSync()
-  }
+
 
 }

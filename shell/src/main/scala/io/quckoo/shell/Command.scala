@@ -16,19 +16,25 @@
 
 package io.quckoo.shell
 
-import cats.effect.IO
-
-import io.quckoo.shell.console.StdConsole
+import cats.effect.Sync
+import cats.implicits._
 
 /**
   * Created by alonsodomin on 03/06/2017.
   */
-object Main {
 
-  def main(args: Array[String]): Unit = {
-    val console = new StdConsole[IO]("quckoo>")
-    val shell = new RunnableShell[IO](console, Map.empty)
-    shell.runInteractive.attempt.unsafeRunSync()
+trait Command {
+  def run[F[_]](shell: Shell[F])(implicit F: Sync[F]): F[Unit]
+}
+
+trait CommandParser {
+  def commandName: String
+
+  def parse(args: Seq[String]): Either[CommandParseError, Command]
+}
+
+object Quit extends Command {
+  override def run[F[_]](shell: Shell[F])(implicit F: Sync[F]): F[Unit] = {
+    shell.console.printLine("Bye!") >> F.delay(sys.exit())
   }
-
 }

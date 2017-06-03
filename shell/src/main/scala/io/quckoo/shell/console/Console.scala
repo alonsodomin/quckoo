@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package io.quckoo.shell
+package io.quckoo.shell.console
 
-import cats.effect.IO
-
-import io.quckoo.shell.console.StdConsole
+import cats.Show
 
 /**
   * Created by alonsodomin on 03/06/2017.
   */
-object Main {
+trait Console[F[_]] {
 
-  def main(args: Array[String]): Unit = {
-    val console = new StdConsole[IO]("quckoo>")
-    val shell = new RunnableShell[IO](console, Map.empty)
-    shell.runInteractive.attempt.unsafeRunSync()
-  }
+  def readLine: F[String]
+
+  def print[A: Show](a: A): F[Unit]
+
+  def printLine[A: Show](a: A): F[Unit]
 
 }

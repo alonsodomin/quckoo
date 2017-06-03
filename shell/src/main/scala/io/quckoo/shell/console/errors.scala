@@ -15,20 +15,6 @@
  */
 
 package io.quckoo.shell
+package console
 
-import cats.effect.IO
-
-import io.quckoo.shell.console.StdConsole
-
-/**
-  * Created by alonsodomin on 03/06/2017.
-  */
-object Main {
-
-  def main(args: Array[String]): Unit = {
-    val console = new StdConsole[IO]("quckoo>")
-    val shell = new RunnableShell[IO](console, Map.empty)
-    shell.runInteractive.attempt.unsafeRunSync()
-  }
-
-}
+sealed trait ConsoleError

@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 
-package io.quckoo.shell
+package io.quckoo.shell.console
 
-import cats.effect.IO
+import cats.Show
+import cats.effect.Sync
+import cats.implicits._
 
-import io.quckoo.shell.console.StdConsole
+import scala.io.StdIn
 
 /**
   * Created by alonsodomin on 03/06/2017.
   */
-object Main {
+class StdConsole[F[_]](prompt: String)(implicit F: Sync[F]) extends Console[F] {
 
-  def main(args: Array[String]): Unit = {
-    val console = new StdConsole[IO]("quckoo>")
-    val shell = new RunnableShell[IO](console, Map.empty)
-    shell.runInteractive.attempt.unsafeRunSync()
+  override def readLine: F[String] = F.delay(StdIn.readLine("%s ", prompt))
+
+  override def print[A: Show](a: A): F[Unit] = F.delay {
+    Console.print(a.show)
+  }
+
+  override def printLine[A: Show](a: A): F[Unit] = F.delay {
+    Console.println(a.show)
   }
 
 }

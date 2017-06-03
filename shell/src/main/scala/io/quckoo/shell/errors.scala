@@ -16,19 +16,13 @@
 
 package io.quckoo.shell
 
-import cats.effect.IO
-
-import io.quckoo.shell.console.StdConsole
+import io.quckoo.shell.console.Console
 
 /**
   * Created by alonsodomin on 03/06/2017.
   */
-object Main {
+trait CommandExecutionError
 
-  def main(args: Array[String]): Unit = {
-    val console = new StdConsole[IO]("quckoo>")
-    val shell = new RunnableShell[IO](console, Map.empty)
-    shell.runInteractive.attempt.unsafeRunSync()
-  }
-
+trait CommandParseError {
+  def printHelp[F[_]](console: Console[F]): F[Unit]
 }
