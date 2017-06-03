@@ -68,13 +68,15 @@ object Dependencies {
     val enumeratum  = "1.5.12"
     val enumCirce   = "1.5.14"
     val ivy         = "2.4.0"
+    val jline       = "3.3.0"
     val monix       = "2.3.0"
     val monocle     = "1.4.0"
     val pureconfig  = "0.7.0"
     val scalaCss    = "0.5.3"
     val scalaTime   = "2.0.0-M11"
     val scalatags   = "0.6.5"
-    val scopt       = "3.5.0"
+    val scopt       = "3.6.0"
+    val stoml       = "0.3"
     val shims       = "1.0-b0e5152"
     val xml         = "1.0.6"
 
@@ -147,6 +149,8 @@ object Dependencies {
     val slogging_slf4j = "biz.enef" %% "slogging-slf4j" % version.slogging
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
+    val jline = "org.jline"         % "jline" % version.jline
+    val stoml = "me.vican.jorge"   %% "stoml" % version.stoml
 
     val authenticatJwt = "com.jason-goodwin"     %% "authentikat-jwt" % "0.4.5"
     val pureconfig     = "com.github.pureconfig" %% "pureconfig" % version.pureconfig
@@ -242,6 +246,15 @@ object Dependencies {
       slogging_slf4j, Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryoSerialization, Akka.http.main, Akka.http.sse,
       mockserver % Test
+    )
+  }
+
+  // Shell module ===============================
+
+  lazy val shell = Def.settings {
+    import libs._
+    libraryDependencies ++= Seq(
+      scopt, jline, betterfiles, stoml
     )
   }
 

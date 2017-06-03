@@ -38,7 +38,8 @@ lazy val commonSettings = Seq(
       Resolver.bintrayRepo("krasserm", "maven"),
       Resolver.bintrayRepo("hseeberger", "maven"),
       Resolver.bintrayRepo("dnvriend", "maven"),
-      Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
+      Resolver.bintrayRepo("tecsisa", "maven-bintray-repo"),
+      Resolver.bintrayRepo("jvican", "releases")
     ),
     botBuild := scala.sys.env.get("TRAVIS").isDefined
   )
@@ -160,6 +161,7 @@ lazy val quckoo = (project in file("."))
     apiJVM,
     clientJS,
     clientJVM,
+    shell,
     console,
     shared,
     master,
@@ -235,6 +237,20 @@ lazy val client = (crossProject in file("client"))
 
 lazy val clientJS = client.js
 lazy val clientJVM = client.jvm
+
+// Shell ====================================================
+
+lazy val shell = (project in file("shell"))
+  .enablePlugins(AutomateHeaderPlugin)
+  .settings(commonSettings)
+  .settings(scoverageSettings)
+  .settings(publishSettings)
+  .settings(
+    name := "shell",
+    moduleName := "quckoo-shell"
+  )
+  .settings(Dependencies.shell)
+  .dependsOn(clientJVM)
 
 // Console ==================================================
 
