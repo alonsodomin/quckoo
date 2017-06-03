@@ -31,25 +31,29 @@ trait Shell[F[_]] {
 
 }
 
-class RunnableShell[F[_]](val console: Console[F], commands: Map[String, CommandParser], quitCmd: String = "quit")(implicit F: Sync[F]) extends Shell[F] {
+class RunnableShell[F[_]](
+    val console: Console[F],
+    commands: Map[String, CommandParser],
+    quitCmd: String = "quit"
+  )(implicit F: Sync[F]) extends Shell[F] {
 
-  def commandNotFound(cmdName: String): F[Unit] =
+  private[this] def commandNotFound(cmdName: String): F[Unit] =
     console.printLine(s"Command not found: $cmdName")
+
+  private[this] def executeCmdLine(cmd: String, args: Seq[String]): F[Unit] = {
+    if (cmd === quitCmd) Quit.run(this)
+    else {
+      commands.get(cmd).map { parser =>
+        parser.parse(args) match {
+          case Right(c)    => c.run(this)
+          case Left(error) => error.printHelp(console)
+        }
+      }.getOrElse(commandNotFound(cmd))
+    }
+  }
 
   def runInteractive: F[Unit] = {
     def welcome: F[Unit] = console.printLine(s"Quckoo v${Info.version}")
-
-    def executeCmdLine(cmd: String, args: Seq[String]): F[Unit] = {
-      if (cmd === quitCmd) Quit.run(this)
-      else {
-        commands.get(cmd).map { parser =>
-          parser.parse(args) match {
-            case Right(c)    => c.run(this)
-            case Left(error) => error.printHelp(console)
-          }
-        }.getOrElse(commandNotFound(cmd))
-      }
-    }
 
     def readCmdLine: F[Option[(String, Seq[String])]] =
       console.readLine.map { line =>
