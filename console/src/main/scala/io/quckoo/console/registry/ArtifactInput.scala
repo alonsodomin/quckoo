@@ -50,7 +50,7 @@ object ArtifactInput {
         version      <- $.state.map(_.version).asCBO[String]
       } yield ArtifactId(organization, name, version)
 
-      artifactId.get.flatMap(value => $.props.flatMap(_.onUpdate(value)))
+      artifactId.asCallback.flatMap(value => $.props.flatMap(_.onUpdate(value)))
     }
 
     def onGroupUpdate(organization: Option[String]): Callback =

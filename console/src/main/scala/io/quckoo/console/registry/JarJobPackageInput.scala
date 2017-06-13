@@ -53,7 +53,7 @@ object JarJobPackageInput {
         jobClass   <- $.state.map(_.jobClass).asCBO[String]
       } yield JarJobPackage(artifactId, jobClass)
 
-      jarPackage.get.flatMap(value => $.props.flatMap(_.onUpdate(value)))
+      jarPackage.asCallback.flatMap(value => $.props.flatMap(_.onUpdate(value)))
     }
 
     def onArtifactIdUpdate(value: Option[ArtifactId]): Callback =
