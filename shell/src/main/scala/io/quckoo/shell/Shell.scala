@@ -16,11 +16,19 @@
 
 package io.quckoo.shell
 
-import cats.effect.Sync
+import cats.data.StateT
+import cats.effect.Effect
 import cats.implicits._
 
 import io.quckoo.Info
+import io.quckoo.auth.Passport
+import io.quckoo.client.QuckooClient
+import io.quckoo.client.http.{Http, HttpProtocol}
+import io.quckoo.client.http.akka.HttpAkkaQuckooClient
 import io.quckoo.shell.console.Console
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 /**
   * Created by alonsodomin on 03/06/2017.
@@ -29,47 +37,62 @@ trait Shell[F[_]] {
 
   def console: Console[F]
 
+  def context: ShellContext = new ShellContext {
+    override def passport: Passport = ???
+  }
+
+  //def dispatch[A](f: QuckooClient[HttpProtocol] => ClientOp[A]): ShellOp[F, A]
+
 }
 
 class RunnableShell[F[_]](
     val console: Console[F],
     commands: Map[String, CommandParser],
     quitCmd: String = "quit"
-  )(implicit F: Sync[F]) extends Shell[F] {
+  )(implicit F: Effect[F], executionContext: ExecutionContext) extends Shell[F] {
 
-  private[this] def commandNotFound(cmdName: String): F[Unit] =
-    console.printLine(s"Command not found: $cmdName")
+  private val client: QuckooClient[HttpProtocol] = HttpAkkaQuckooClient("localhost")
 
-  private[this] def executeCmdLine(cmd: String, args: Seq[String]): F[Unit] = {
+  private[this] def commandNotFound(cmdName: String): ShellOp[F, Unit] =
+    StateT.lift(console.printLine(s"Command not found: $cmdName"))
+
+  private[this] def executeCmdLine(cmd: String, args: Seq[String]): ShellOp[F, Unit] = {
     if (cmd === quitCmd) Quit.run(this)
     else {
       commands.get(cmd).map { parser =>
         parser.parse(args) match {
           case Right(c)    => c.run(this)
-          case Left(error) => error.printHelp(console)
+          case Left(error) => ShellOp.lift(error.printHelp(console))
         }
       }.getOrElse(commandNotFound(cmd))
     }
   }
 
-  def runInteractive: F[Unit] = {
-    def welcome: F[Unit] = console.printLine(s"Quckoo v${Info.version}")
+  def dispatch[A](f: QuckooClient[HttpProtocol] => Future[A]): ShellOp[F, A] = ShellOp.lift(F.async { handler =>
+    f(client).onComplete {
+      case Success(a)   => handler(Right(a))
+      case Failure(err) => handler(Left(err))
+    }
+  })
 
-    def readCmdLine: F[Option[(String, Seq[String])]] =
-      console.readLine.map { line =>
+  def runInteractive: ShellOp[F, Unit] = {
+    def welcome: ShellOp[F, Unit] = ShellOp.lift(console.printLine(s"Quckoo v${Info.version}"))
+
+    def readCmdLine: ShellOp[F, Option[(String, Seq[String])]] =
+      ShellOp.lift(console.readLine.map { line =>
         val parts = line.split(' ')
         parts.headOption.filter(_.nonEmpty).map(_ -> parts.tail)
-      }
+      })
 
-    def execute: F[Unit] = {
+    def execute: ShellOp[F, Unit] = {
       val runnable = readCmdLine.flatMap {
-        _.fold(F.pure(())) { case (cmd, args) => executeCmdLine(cmd, args) }
+        _.fold(ShellOp.unit) { case (cmd, args) => executeCmdLine(cmd, args) }
       }
 
       runnable.attempt.flatMap {
-        case Right(_)  => F.pure(())
-        case Left(err) => console.printLine(err.getMessage)
-      } >> F.suspend(execute)
+        case Right(_)  => ShellOp.unit
+        case Left(err) => ShellOp.lift(console.printLine(err.getMessage))
+      } >> ShellOp.suspend(execute)
     }
 
     welcome >> execute

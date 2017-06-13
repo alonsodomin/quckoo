@@ -16,13 +16,40 @@
 
 package io.quckoo
 
-import cats.data.Kleisli
+import cats.data.StateT
+import cats.effect.{Sync, Async}
+
+import scala.concurrent.Future
 
 /**
   * Created by alonsodomin on 03/06/2017.
   */
 package object shell {
 
+  type ShellOp[F[_], A] = StateT[F, ShellContext, A]
+  object ShellOp {
+    def unit[F[_]](implicit F: Sync[F]): ShellOp[F, Unit] =
+      StateT.pure(())
 
+    def lift[F[_], A](a: F[A])(implicit F: Sync[F]): ShellOp[F, A] =
+      StateT.lift(a)
+
+    def delay[F[_], A](a: => A)(implicit F: Sync[F]): ShellOp[F, A] =
+      StateT(ctx => F.map(F.delay(a))(ctx -> _))
+
+    def suspend[F[_], A](op: => ShellOp[F, A])(implicit F: Async[F]): ShellOp[F, A] =
+      StateT(ctx => F.suspend(op.run(ctx)))
+  }
+
+  implicit class ShellOpExt[F[_], A](val self: ShellOp[F, A]) {
+    def attempt(implicit F: Sync[F]): ShellOp[F, Either[Throwable, A]] = StateT { ctx =>
+      F.map(F.attempt(self.run(ctx))) {
+        case Right((_, x)) => ctx -> Right(x)
+        case Left(err)     => ctx -> Left(err)
+      }
+    }
+  }
+
+  type ClientOp[A] = ShellOp[Future, A]
 
 }

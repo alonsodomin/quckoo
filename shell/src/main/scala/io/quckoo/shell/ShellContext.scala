@@ -16,28 +16,11 @@
 
 package io.quckoo.shell
 
-import cats.data.StateT
-import cats.effect.Effect
-import cats.implicits._
+import io.quckoo.auth.Passport
 
 /**
-  * Created by alonsodomin on 03/06/2017.
+  * Created by alonsodomin on 04/06/2017.
   */
-
-trait Command {
-  def run[F[_]](shell: Shell[F])(implicit F: Effect[F]): ShellOp[F, Unit]
-}
-
-trait CommandParser {
-  def commandName: String
-
-  def parse(args: Seq[String]): Either[CommandParseError, Command]
-}
-
-object Quit extends Command {
-
-  override def run[F[_]](shell: Shell[F])(implicit F: Effect[F]): ShellOp[F, Unit] = ShellOp.lift {
-    shell.console.printLine("Bye!") >> F.delay(sys.exit())
-  }
-
+trait ShellContext {
+  def passport: Passport
 }
