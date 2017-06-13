@@ -50,7 +50,7 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "1.0.0"
+    val scalaJsReact    = "1.0.1"
     val scalaJsDom      = "0.9.2"
     val scalaJsJQuery   = "0.9.1"
     val scalaJSScripts  = "1.1.0"
@@ -70,11 +70,11 @@ object Dependencies {
     val ivy         = "2.4.0"
     val monix       = "2.3.0"
     val monocle     = "1.4.0"
-    val pureconfig  = "0.7.0"
+    val pureconfig  = "0.7.2"
     val scalaCss    = "0.5.3"
-    val scalaTime   = "2.0.0-M11"
+    val scalaTime   = "2.0.0-M12"
     val scalatags   = "0.6.5"
-    val scopt       = "3.5.0"
+    val scopt       = "3.6.0"
     val shims       = "1.0-b0e5152"
     val xml         = "1.0.6"
 
@@ -139,9 +139,9 @@ object Dependencies {
       val core       = "io.kamon" %% "kamon-core"            % version.kamon.core
       val akka       = "io.kamon" %% "kamon-akka-remote-2.4" % version.kamon.other
       val http       = "io.kamon" %% "kamon-akka-http"       % version.kamon.other
-      val scala      = "io.kamon" %% "kamon-scala"           % version.kamon.other
-      val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon.other
-      val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon.other
+      val scala      = "io.kamon" %% "kamon-scala"           % version.kamon.core
+      val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon.core
+      val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon.core
     }
 
     val slogging_slf4j = "biz.enef" %% "slogging-slf4j" % version.slogging
