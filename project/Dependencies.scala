@@ -23,7 +23,7 @@ object Dependencies {
     // Akka ----------
 
     object akka {
-      val main = "2.4.18"
+      val main = "2.5.2"
       val kryo = "0.5.2"
 
       val constructr = "0.7.0"
@@ -37,15 +37,15 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.25.1"
-      val inmemory  = s"$main.1"
+      val cassandra = "0.54"
+      val inmemory  = "2.5.1.1"
     }
 
     // Monitoring ----
 
     object kamon {
-      val core  = "0.6.7"
-      val other = "0.6.6"
+      val core = "0.6.7"
+      val http = "0.6.8"
     }
 
     // ScalaJS -------
@@ -104,7 +104,7 @@ object Dependencies {
       val clusterTools    = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka.main
       val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka.main
       val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka.main
-      val distributedData = "com.typesafe.akka" %% "akka-distributed-data-experimental" % version.akka.main
+      val distributedData = "com.typesafe.akka" %% "akka-distributed-data"  % version.akka.main
 
       object http {
         val main    = "com.typesafe.akka" %% "akka-http"         % version.akka.http.main
@@ -114,10 +114,10 @@ object Dependencies {
       }
 
       object persistence {
-        val core      = "com.typesafe.akka"   %% "akka-persistence"              % version.akka.main
-        val query     = "com.typesafe.akka"   %% "akka-persistence-query-experimental" % version.akka.main
-        val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra"    % version.akka.cassandra
-        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"     % version.akka.inmemory % Test
+        val core      = "com.typesafe.akka"   %% "akka-persistence"           % version.akka.main
+        val query     = "com.typesafe.akka"   %% "akka-persistence-query"     % version.akka.main
+        val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra" % version.akka.cassandra
+        val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"  % version.akka.inmemory % Test
       }
 
       val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka.main
@@ -137,8 +137,8 @@ object Dependencies {
 
     object Kamon {
       val core       = "io.kamon" %% "kamon-core"            % version.kamon.core
-      val akka       = "io.kamon" %% "kamon-akka-remote-2.4" % version.kamon.other
-      val http       = "io.kamon" %% "kamon-akka-http"       % version.kamon.other
+      val akka       = "io.kamon" %% "kamon-akka-remote-2.4" % version.kamon.core
+      val http       = "io.kamon" %% "kamon-akka-http"       % version.kamon.http
       val scala      = "io.kamon" %% "kamon-scala"           % version.kamon.core
       val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon.core
       val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon.core

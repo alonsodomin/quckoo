@@ -24,7 +24,7 @@ import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
-import akka.persistence.query.EventEnvelope2
+import akka.persistence.query.EventEnvelope
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
@@ -169,7 +169,7 @@ class Registry private[registry](resolver: Resolver[IO], journal: QuckooJournal)
   }
 
   private def warmingUp: Receive = {
-    case EventEnvelope2(_, _, _, event: RegistryEvent) =>
+    case EventEnvelope(_, _, _, event: RegistryEvent) =>
       handleEvent(event)
       sender() ! WarmUp.Ack
 

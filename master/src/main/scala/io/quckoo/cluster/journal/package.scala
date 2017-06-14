@@ -16,13 +16,13 @@
 
 package io.quckoo.cluster
 
-import akka.persistence.query.scaladsl.{CurrentEventsByTagQuery2, ReadJournal}
+import akka.persistence.query.scaladsl.{CurrentEventsByTagQuery, ReadJournal}
 
 /**
   * Created by alonsodomin on 10/09/2016.
   */
 package object journal {
 
-  type ReadJournalRepr = ReadJournal with CurrentEventsByTagQuery2
+  type ReadJournalRepr = ReadJournal with CurrentEventsByTagQuery
 
 }

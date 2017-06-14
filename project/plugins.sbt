@@ -13,7 +13,7 @@ addSbtPlugin("com.geirsson"      % "sbt-scalafmt"  % "0.5.4")
 addSbtPlugin("org.scala-js"     % "sbt-scalajs"     % "0.6.17")
 addSbtPlugin("com.vmunier"      % "sbt-web-scalajs" % "1.0.4")
 addSbtPlugin("org.irundaia.sbt" % "sbt-sassify"     % "1.4.8")
-addSbtPlugin("com.typesafe.sbt" % "sbt-twirl"       % "1.3.0")
+addSbtPlugin("com.typesafe.sbt" % "sbt-twirl"       % "1.3.2")
 
 // Server side plugins
 addSbtPlugin("io.spray"         % "sbt-revolver"        % "0.8.0")
