@@ -86,7 +86,6 @@ object Boot extends LazyLogging {
       sys.addShutdownHook {
         logger.info("Received kill signal, terminating...")
         Kamon.shutdown()
-        Await.ready(system.terminate(), 10 seconds)
       }
 
       ClusterSettings(config)

@@ -67,7 +67,6 @@ object Boot extends App with LazyLogging {
     implicit val system = ActorSystem(SystemName, config)
     sys.addShutdownHook {
       Kamon.shutdown()
-      system.terminate()
     }
 
     WorkerSettings(config)
