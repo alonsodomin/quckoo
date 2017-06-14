@@ -21,9 +21,8 @@ import akka.cluster.client.{ClusterClient, ClusterClientSettings}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import io.quckoo.{Info, Logo}
-import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolver
-import io.quckoo.worker.config.{ResolverDispatcher, WorkerSettings}
+import io.quckoo.worker.config.WorkerSettings
 import io.quckoo.worker.core.Worker
 import io.quckoo.worker.SystemName
 import io.quckoo.worker.executor.DefaultTaskExecutorProvider

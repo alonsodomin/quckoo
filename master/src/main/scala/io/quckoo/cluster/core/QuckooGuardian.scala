@@ -22,9 +22,7 @@ import akka.actor._
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.cluster.client.ClusterClientReceptionist
-import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 
-import io.quckoo.api.TopicTag
 import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.journal.QuckooJournal
 import io.quckoo.cluster.net._
@@ -49,7 +47,7 @@ object QuckooGuardian {
 
   def props(settings: ClusterSettings, journal: QuckooJournal, boot: Promise[Unit])
            (implicit clock: Clock): Props =
-    Props(classOf[QuckooGuardian], settings, journal, boot, clock)
+    Props(new QuckooGuardian(settings, journal, boot))
 
   case object Shutdown
 
@@ -64,10 +62,8 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
   ClusterClientReceptionist(context.system).registerService(self)
 
   private[this] val cluster  = Cluster(context.system)
-  private[this] val mediator = DistributedPubSub(context.system).mediator
 
-  private[this] val userAuth =
-    context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
+  context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
   private[this] val registry =
     context.watch(context.actorOf(Registry.props(settings, journal), "registry"))

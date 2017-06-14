@@ -19,7 +19,6 @@ package io.quckoo.console.core
 import java.time.ZonedDateTime
 
 import io.quckoo.auth.Passport
-import io.quckoo.console.log.LogRecord
 import io.quckoo.net.QuckooState
 
 import monocle.macros.Lenses

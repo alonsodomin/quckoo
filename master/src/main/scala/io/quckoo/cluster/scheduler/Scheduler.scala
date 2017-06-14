@@ -93,7 +93,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
-  private[this] val monitor   = context.actorOf(TaskQueueMonitor.props, "monitor")
+  context.actorOf(TaskQueueMonitor.props, "monitor")
   private[this] val taskQueue = context.actorOf(queueProps, "queue")
   private[this] val shardRegion = ClusterSharding(context.system).start(
     ExecutionDriver.ShardName,

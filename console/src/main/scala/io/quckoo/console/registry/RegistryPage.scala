@@ -20,7 +20,6 @@ import diode.react.ModelProxy
 
 import io.quckoo._
 import io.quckoo.console.core.ConsoleScope
-import io.quckoo.console.core.ConsoleCircuit
 import io.quckoo.console.layout.CssSettings._
 import io.quckoo.protocol.registry._
 

@@ -25,7 +25,7 @@ import cats.syntax.option._
 import io.quckoo.auth.{Passport, Principal, User}
 import io.quckoo.serialization.DataBuffer
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Created by alonsodomin on 14/10/2015.
@@ -35,7 +35,7 @@ trait Auth {
   val Realm                          = "QuckooRealm"
   private[this] val Right(secretKey) = DataBuffer.fromString("dqwjq0jd9wjd192u4ued9hd0ew").toBase64
 
-  def basic(credentials: Credentials)(implicit ec: ExecutionContext): Future[Option[Principal]] = {
+  def basic(credentials: Credentials): Future[Option[Principal]] = {
     credentials match {
       case p @ Credentials.Provided(identifier) =>
         if (identifier == "admin" && p.verify("password")) {
@@ -47,8 +47,7 @@ trait Auth {
     }
   }
 
-  def bearer(acceptExpired: Boolean = false)(credentials: Credentials)(
-      implicit ec: ExecutionContext): Future[Option[Passport]] = {
+  def bearer(acceptExpired: Boolean = false)(credentials: Credentials): Future[Option[Passport]] = {
     credentials match {
       case p @ Credentials.Provided(token) =>
         if (isValidToken(token)) {

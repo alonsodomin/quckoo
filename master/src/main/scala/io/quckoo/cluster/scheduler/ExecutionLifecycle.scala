@@ -73,9 +73,9 @@ object ExecutionLifecycle {
 
   final case class ExecutionState private (
       planId: PlanId,
-      task: Option[Task] = None,
-      queue: Option[ActorSelection] = None,
-      outcome: Option[Outcome] = None
+      task: Option[Task],
+      queue: Option[ActorSelection],
+      outcome: Option[Outcome]
   ) {
 
     private[scheduler] def becomes(out: Outcome): ExecutionState =
@@ -113,7 +113,7 @@ class ExecutionLifecycle(
 
   private[this] var enqueueAttempts = 0
 
-  startWith(Sleeping, ExecutionState(planId))
+  startWith(Sleeping, ExecutionState(planId, None, None, None))
 
   when(Sleeping) {
     case Event(Awake(task, queue), _) =>

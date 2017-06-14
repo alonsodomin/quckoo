@@ -31,9 +31,6 @@ import slogging._
 
 import scopt.OptionParser
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
 /**
   * Created by domingueza on 09/07/15.
   */
