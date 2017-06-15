@@ -24,7 +24,7 @@ object Dependencies {
 
     object akka {
       val main = "2.5.2"
-      val kryo = "0.5.2"
+      val kryo = "0.9.2"
 
       val constructr = "0.7.0"
 
@@ -123,8 +123,8 @@ object Dependencies {
       val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka.main
       val testKit          = "com.typesafe.akka" %% "akka-testkit"            % version.akka.main % Test
 
-      val kryoSerialization = "com.github.romix.akka" %% "akka-kryo-serialization" % version.akka.kryo
-      val constructr        = "com.tecsisa" %% "constructr-coordination-consul" % version.akka.constructr
+      val kryo       = "com.twitter" %% "chill-akka"                     % version.akka.kryo
+      val constructr = "com.tecsisa" %% "constructr-coordination-consul" % version.akka.constructr % Runtime
     }
 
     object Log4j {
@@ -216,7 +216,7 @@ object Dependencies {
 
   lazy val api = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "io.suzaku" %%% "diode"          % version.diode changing(),
+      "io.suzaku" %%% "diode"          % version.diode,
       "io.monix"  %%% "monix-reactive" % version.monix,
       "io.monix"  %%% "monix-cats"     % version.monix
     )
@@ -240,7 +240,7 @@ object Dependencies {
     import libs._
     libraryDependencies ++= Log4j.All.map(_ % Test) ++ Seq(
       slogging_slf4j, Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
-      Akka.kryoSerialization, Akka.http.main, Akka.http.sse,
+      Akka.kryo, Akka.http.main, Akka.http.sse,
       mockserver % Test
     )
   }
@@ -251,7 +251,7 @@ object Dependencies {
     libraryDependencies ++= compiler.plugins ++ Seq(
       "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
-      "io.suzaku"        %%% "diode-react"    % version.diode changing(),
+      "io.suzaku"        %%% "diode-react"    % version.diode,
       "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
 
       "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,
@@ -326,11 +326,12 @@ object Dependencies {
     import libs._
     libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
-      Akka.kryoSerialization, ivy, scalaXml, pureconfig, slogging_slf4j,
+      Akka.kryo, ivy, scalaXml, pureconfig, slogging_slf4j,
       Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd,
       betterfiles
     )
   }
+
   lazy val clusterMaster = Def.settings {
     import libs._
     libraryDependencies ++= compiler.plugins ++ Seq(
@@ -344,6 +345,7 @@ object Dependencies {
       "org.webjars.bower" % "animatewithsass" % version.animate
     )
   }
+
   lazy val clusterWorker = Def.settings {
     import libs._
     libraryDependencies ++= compiler.plugins ++ Seq(scopt, scalaArm)
