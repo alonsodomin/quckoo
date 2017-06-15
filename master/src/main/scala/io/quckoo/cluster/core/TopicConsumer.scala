@@ -64,7 +64,6 @@ class LocalTopicConsumer private (topicName: String, classes: Seq[Class[_]]) ext
 object PubSubTopicConsumer {
 
   def props[A](implicit topicTag: TopicTag[A]): Props = {
-    implicit val eventTag = topicTag.eventType
     Props(new PubSubTopicConsumer(topicTag.name))
   }
 

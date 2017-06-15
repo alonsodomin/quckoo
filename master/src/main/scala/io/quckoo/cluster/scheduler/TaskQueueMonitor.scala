@@ -85,14 +85,14 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
     case MasterRemoved(nodeId) =>
       // Drop the key holding the counter for the lost node.
       replicator ! Replicator
-        .Update(TaskQueue.PendingKey, PNCounterMap(), Replicator.WriteMajority(timeout)) {
+        .Update(TaskQueue.PendingKey, PNCounterMap[String](), Replicator.WriteMajority(timeout)) {
           _ - nodeId.toString
         }
       // TODO This might not be the right thing to do with that tasks that are in-progress
       // ideally, the worker that has got it should be able to notify any of the partitions
       // that conform the cluster-wide queue
       replicator ! Replicator
-        .Update(TaskQueue.InProgressKey, PNCounterMap(), Replicator.WriteMajority(timeout)) {
+        .Update(TaskQueue.InProgressKey, PNCounterMap[String](), Replicator.WriteMajority(timeout)) {
           _ - nodeId.toString
         }
   }

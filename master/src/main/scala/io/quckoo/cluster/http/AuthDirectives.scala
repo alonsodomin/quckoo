@@ -29,7 +29,6 @@ import io.quckoo.auth.{Passport, Principal}
 import io.quckoo.auth.http._
 import io.quckoo.cluster.core.Auth
 
-import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
@@ -49,7 +48,7 @@ trait AuthDirectives { auth: Auth =>
       .getOrElse(QuckooHttpChallenge.asLeft[T])
   }
 
-  def authenticateUser(implicit timeout: FiniteDuration): Route = {
+  def authenticateUser: Route = {
     def basicHttpAuth(creds: Option[BasicHttpCredentials])(
         implicit ec: ExecutionContext
     ): Future[AuthenticationResult[Principal]] = {
@@ -66,11 +65,11 @@ trait AuthDirectives { auth: Auth =>
     }
   }
 
-  def refreshPassport(implicit timeout: FiniteDuration): Route =
+  def refreshPassport: Route =
     extractPassport(acceptExpired = true)(completeWithPassport)
 
   def authenticated: Directive1[Passport] =
-    extractPassport(acceptExpired = false).flatMap(provide)
+    extractPassport().flatMap(provide)
 
   private[this] def extractPassport(
       acceptExpired: Boolean = false): AuthenticationDirective[Passport] = {

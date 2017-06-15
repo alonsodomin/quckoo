@@ -32,7 +32,6 @@ import io.quckoo.api.{Registry => RegistryApi}
 import io.quckoo.auth.Passport
 import io.quckoo.cluster.http._
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
-import io.quckoo.serialization.json._
 
 import scala.concurrent.duration._
 

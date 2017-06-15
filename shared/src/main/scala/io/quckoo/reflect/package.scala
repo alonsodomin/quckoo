@@ -17,7 +17,6 @@
 package io.quckoo
 
 import cats.Monad
-import cats.effect.IO
 import cats.free.Free
 
 /**

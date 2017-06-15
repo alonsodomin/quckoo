@@ -38,11 +38,11 @@ object TaskQueue {
 
   type AcceptedTask = (Task, ActorRef)
 
-  val PendingKey    = PNCounterMapKey("pendingCount")
-  val InProgressKey = PNCounterMapKey("inProgressCount")
+  val PendingKey    = PNCounterMapKey[String]("pendingCount")
+  val InProgressKey = PNCounterMapKey[String]("inProgressCount")
 
   def props(maxWorkTimeout: FiniteDuration = 10 minutes) =
-    Props(classOf[TaskQueue], maxWorkTimeout)
+    Props(new TaskQueue(maxWorkTimeout))
 
   case class Enqueue(task: Task)
   case class EnqueueAck(taskId: TaskId)
@@ -65,7 +65,8 @@ object TaskQueue {
 
 }
 
-class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging {
+class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
+  extends Actor with ActorLogging {
   import TaskQueue._
   import WorkerState._
 
@@ -130,7 +131,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
         inProgressTasks -= taskId
         inProgressCounter.decrement()
 
-        replicator ! Replicator.Update(InProgressKey, PNCounterMap(), Replicator.WriteLocal) {
+        replicator ! Replicator.Update(InProgressKey, PNCounterMap[String](), Replicator.WriteLocal) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
         }
       }
@@ -163,12 +164,12 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
             lifecycle ! ExecutionLifecycle.Start
 
             replicator ! Replicator
-              .Update(PendingKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+              .Update(PendingKey, PNCounterMap[String](), Replicator.WriteMajority(replicationTimeout)) {
                 _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
               }
             replicator ! Replicator.Update(
               InProgressKey,
-              PNCounterMap(),
+              PNCounterMap[String](),
               Replicator.WriteMajority(replicationTimeout)) {
               _.increment(cluster.selfUniqueAddress.toNodeId.toString)
             }
@@ -199,7 +200,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
 
         sender ! TaskDoneAck(taskId)
         replicator ! Replicator
-          .Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+          .Update(InProgressKey, PNCounterMap[String](), Replicator.WriteMajority(replicationTimeout)) {
             _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
           }
         notifyWorkers()
@@ -212,7 +213,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       inProgressTasks -= taskId
       inProgressCounter.decrement()
       replicator ! Replicator
-        .Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+        .Update(InProgressKey, PNCounterMap[String](), Replicator.WriteMajority(replicationTimeout)) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
         }
       notifyWorkers()
@@ -223,7 +224,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       pendingTasks = pendingTasks.enqueue((task, sender()))
       pendingCounter.increment()
       replicator ! Replicator
-        .Update(PendingKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+        .Update(PendingKey, PNCounterMap[String](), Replicator.WriteMajority(replicationTimeout)) {
           _.increment(cluster.selfUniqueAddress.toNodeId.toString)
         }
       sender ! EnqueueAck(task.id)
@@ -306,7 +307,7 @@ class TaskQueue(maxWorkTimeout: FiniteDuration) extends Actor with ActorLogging 
       context.system.eventStream.publish(WorkerRemoved(workerId))
 
       replicator ! Replicator
-        .Update(InProgressKey, PNCounterMap(), Replicator.WriteMajority(replicationTimeout)) {
+        .Update(InProgressKey, PNCounterMap[String](), Replicator.WriteMajority(replicationTimeout)) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
         }
       notifyWorkers()

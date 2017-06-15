@@ -74,7 +74,7 @@ object QuckooFacade extends LazyLogging {
 
 }
 
-final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem, clock: Clock)
+final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
     extends HttpRouter with QuckooServer with LazyLogging {
 
   import QuckooFacade._

@@ -31,7 +31,6 @@ import io.circe.generic.auto._
 import io.quckoo.cluster.core.QuckooServer
 import io.quckoo.cluster.registry.RegistryHttpRouter
 import io.quckoo.cluster.scheduler.SchedulerHttpRouter
-import io.quckoo.serialization.json._
 
 trait HttpRouter
     extends StaticResources with RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives
