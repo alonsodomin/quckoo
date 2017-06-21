@@ -365,6 +365,20 @@ lazy val exampleProducers = (project in file("examples/producers"))
 
 // Command aliases ==================================================
 
-addCommandAlias("testJS",
-                ";coreJS/test;apiJS/test;clientJS/test;console/test")
-addCommandAlias("validate", ";test;master/multi-jvm:test")
+addCommandAlias(
+  "testJS",
+  Seq(
+    "coreJS/test",
+    "apiJS/test",
+    "clientJS/test",
+    "console/test"
+  ).mkString(";", ";", "")
+)
+
+addCommandAlias(
+  "validate",
+  Seq(
+    "test",
+    "master/multi-jvm:test"
+  ).mkString(";", ";", "")
+)

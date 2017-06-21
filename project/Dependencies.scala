@@ -23,13 +23,13 @@ object Dependencies {
     // Akka ----------
 
     object akka {
-      val main = "2.5.2"
+      val main = "2.5.3"
       val kryo = "0.9.2"
 
       val constructr = "0.7.0"
 
       object http {
-        val main = "10.0.7"
+        val main = "10.0.8"
 
         // http extensions
         val json = "1.16.1"
@@ -84,7 +84,7 @@ object Dependencies {
     val jquery           = "2.2.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs          = "15.5.4"
+    val reactJs          = "15.6.1"
     val sparkMD5         = "2.0.2"
     val codemirror       = "5.24.2"
   }
