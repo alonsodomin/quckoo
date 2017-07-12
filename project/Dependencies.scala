@@ -17,8 +17,8 @@ object Dependencies {
     val scalaTest  = "3.0.3"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
-    val mockserver = "3.10.7"
-    val discipline = "0.7.3"
+    val mockserver = "3.10.8"
+    val discipline = "0.8"
 
     // Akka ----------
 
@@ -29,10 +29,10 @@ object Dependencies {
       val constructr = "0.7.0"
 
       object http {
-        val main = "10.0.8"
+        val main = "10.0.9"
 
         // http extensions
-        val json = "1.16.1"
+        val json = "1.17.0"
         val sse  = "3.0.0"
       }
 
@@ -51,9 +51,9 @@ object Dependencies {
     // ScalaJS -------
 
     val scalaJsReact    = "1.0.1"
-    val scalaJsDom      = "0.9.2"
-    val scalaJsJQuery   = "0.9.1"
-    val scalaJSScripts  = "1.1.0"
+    val scalaJsDom      = "0.9.3"
+    val scalaJsJQuery   = "0.9.2"
+    val scalaJSScripts  = "1.1.1"
     val testState       = "2.1.2"
 
     // Other utils ---
