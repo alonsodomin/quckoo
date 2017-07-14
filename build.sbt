@@ -5,12 +5,13 @@ import com.typesafe.sbt.pgp.PgpKeys
 
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
-scalaVersion in ThisBuild := "2.12.1"
-
-parallelExecution in ThisBuild := false
-
 lazy val sandbox  = settingKey[String]("The name of the environment sandbox to use.")
 lazy val botBuild = settingKey[Boolean]("Build by TravisCI instead of local dev environment")
+
+inThisBuild(Seq(
+  scalaVersion := "2.12.2",
+  parallelExecution := false
+))
 
 lazy val commonSettings = Seq(
     licenses += ("Apache-2.0", url(
@@ -26,7 +27,7 @@ lazy val commonSettings = Seq(
       "-feature",
       "-unchecked",
       "-deprecation",
-      "-Xlint",
+      "-Xlint:-unused,_",
       "-Xfuture",
       "-Xfatal-warnings",
       "-Ywarn-dead-code",
