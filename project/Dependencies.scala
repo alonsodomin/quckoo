@@ -50,7 +50,7 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "1.0.1"
+    val scalaJsReact    = "1.1.0"
     val scalaJsDom      = "0.9.3"
     val scalaJsJQuery   = "0.9.2"
     val scalaJSScripts  = "1.1.1"
@@ -64,7 +64,7 @@ object Dependencies {
     val cats        = "0.9.0"
     val catsEffect  = "0.3"
     val circe       = "0.8.0"
-    val cron4s      = "0.4.0"
+    val cron4s      = "0.4.1"
     val enumeratum  = "1.5.12"
     val enumCirce   = "1.5.14"
     val ivy         = "2.4.0"
@@ -163,7 +163,7 @@ object Dependencies {
   }
 
   object compiler {
-    val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.0" cross CrossVersion.full
+    val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.1" cross CrossVersion.full
     val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.4" cross CrossVersion.binary
 
     val plugins = Seq(macroParadise, kindProjector).map(compilerPlugin)
