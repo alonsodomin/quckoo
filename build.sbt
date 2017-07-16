@@ -19,6 +19,10 @@ lazy val commonSettings = Seq(
     organization := "io.quckoo",
     organizationName := "A. Alonso Dominguez",
     startYear := Some(2015),
+    scmInfo := Some(ScmInfo(
+      url("https://www.github.com/alonsodomin/quckoo"),
+      "scm:git:git@github.com:alonsodomin/quckoo.git"
+    )),
     scalacOptions ++= Seq(
       "-encoding",
       "UTF-8",
@@ -98,10 +102,6 @@ lazy val publishSettings = Seq(
     }).transform(node).head
   },
   pomExtra :=
-    <scm>
-      <url>git@github.com:alonsodomin/quckoo.git</url>
-      <connection>scm:git:git@github.com:alonsodomin/quckoo.git</connection>
-    </scm>
     <developers>
       <developer>
         <id>alonsodomin</id>
