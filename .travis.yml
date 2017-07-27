@@ -21,9 +21,7 @@ env:
   - TRAVIS_NODE_VERSION="4"
 
 before_install:
-  - gem install compass
-  - nvm install node
-  - npm install -g phantomjs-prebuilt
+  - scripts/travis-setup.sh
 
 script:
   - scripts/travis-build.sh

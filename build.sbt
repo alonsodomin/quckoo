@@ -383,3 +383,11 @@ addCommandAlias(
     "master/multi-jvm:test"
   ).mkString(";", ";", "")
 )
+
+addCommandAlias(
+  "rebuild",
+  Seq(
+    "clean",
+    "validate"
+  ).mkString(";", ";", "")
+)
