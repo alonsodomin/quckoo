@@ -9,7 +9,7 @@ object Dependencies {
 
     // Logging -------
 
-    val slogging = "0.5.2"
+    val slogging = "0.5.3"
     val log4j    = "2.8.2"
 
     // Testing --------

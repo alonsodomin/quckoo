@@ -9,7 +9,7 @@ lazy val sandbox  = settingKey[String]("The name of the environment sandbox to u
 lazy val botBuild = settingKey[Boolean]("Build by TravisCI instead of local dev environment")
 
 inThisBuild(Seq(
-  scalaVersion := "2.12.2",
+  scalaVersion := "2.12.3",
   parallelExecution := false
 ))
 
