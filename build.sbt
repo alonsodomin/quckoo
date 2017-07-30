@@ -285,7 +285,9 @@ lazy val master = (project in file("master"))
   .settings(
     moduleName := "quckoo-master",
     scalaJSProjects := Seq(console),
-    dockerExposedPorts := Seq(2551, 8095)
+    dockerExposedPorts := Seq(2551, 8095),
+    parallelExecution in Test := false,
+    parallelExecution in MultiJvm := false
   )
   .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
 
@@ -298,7 +300,8 @@ lazy val worker = (project in file("worker"))
   .settings(Dependencies.clusterWorker)
   .settings(
     moduleName := "quckoo-worker",
-    dockerExposedPorts := Seq(5001, 9010)
+    dockerExposedPorts := Seq(5001, 9010),
+    parallelExecution in Test := false
   )
   .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
 

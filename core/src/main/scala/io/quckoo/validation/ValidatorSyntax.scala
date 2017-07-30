@@ -38,7 +38,7 @@ trait ValidatorSyntax {
       def combineK[A](a: ValidatorK[F, A], b: ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
         import Violation.conjunction._
         implicit val semi: Semigroup[A] = (first: A, _: A) => first
-        (a.run(x) |@| b.run(x)).map(_ combine _)
+        (a.run(x), b.run(x)).mapN(_ combine _)
       }
     }
   }
@@ -50,7 +50,7 @@ trait ValidatorSyntax {
       def combineK[A](a: ValidatorK[F, A], b: ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
         import Violation.disjunction._
         implicit val semi: Semigroup[A] = (first: A, _: A) => first
-        (a.run(x) |@| b.run(x)).map(_ append _)
+        (a.run(x), b.run(x)).mapN(_ append _)
       }
     }
   }
@@ -71,7 +71,7 @@ trait ValidatorSyntax {
     def product[B](other: ValidatorK[F, B]): ValidatorK[F, (A, B)] = Kleisli {
       case (a, b) =>
         import Violation.conjunction._
-        (self.run(a) |@| other.run(b)).map((left, right) => (left |@| right).map(_ -> _))
+        (self.run(a), other.run(b)).mapN((left, right) => (left, right).mapN(_ -> _))
     }
     def *[B](other: ValidatorK[F, B]): ValidatorK[F, (A, B)] = product(other)
 
@@ -89,8 +89,8 @@ trait ValidatorSyntax {
     def product[C](other: ValidatorK[F, C]): ValidatorK[F, (A, B, C)] = Kleisli {
       case (a, b, c) =>
         import Violation.conjunction._
-        (self.run((a, b)) |@| other.run(c)).map((l, r) =>
-          (l |@| r).map { case ((a1, b1), c1) => (a1, b1, c1) })
+        (self.run((a, b)), other.run(c)).mapN((l, r) =>
+          (l, r).mapN { case ((a1, b1), c1) => (a1, b1, c1) })
     }
     def *[C](other: ValidatorK[F, C]): ValidatorK[F, (A, B, C)] = product(other)
   }
@@ -99,8 +99,8 @@ trait ValidatorSyntax {
     def product[D](other: ValidatorK[F, D]): ValidatorK[F, (A, B, C, D)] = Kleisli {
       case (a, b, c, d) =>
         import Violation.conjunction._
-        (self.run((a, b, c)) |@| other.run(d)).map((l, r) =>
-          (l |@| r).map { case ((a1, b1, c1), d1) => (a1, b1, c1, d1) })
+        (self.run((a, b, c)), other.run(d)).mapN((l, r) =>
+          (l, r).mapN { case ((a1, b1, c1), d1) => (a1, b1, c1, d1) })
     }
     def *[D](other: ValidatorK[F, D]): ValidatorK[F, (A, B, C, D)] = product(other)
   }
@@ -109,8 +109,8 @@ trait ValidatorSyntax {
     def product[E](other: ValidatorK[F, E]): ValidatorK[F, (A, B, C, D, E)] = Kleisli {
       case (a, b, c, d, e) =>
         import Violation.conjunction._
-        (self.run((a, b, c, d)) |@| other.run(e)).map((l, r) =>
-          (l |@| r).map { case ((a1, b1, c1, d1), e1) => (a1, b1, c1, d1, e1) })
+        (self.run((a, b, c, d)), other.run(e)).mapN((l, r) =>
+          (l, r).mapN { case ((a1, b1, c1, d1), e1) => (a1, b1, c1, d1, e1) })
     }
     def *[E](other: ValidatorK[F, E]): ValidatorK[F, (A, B, C, D, E)] = product(other)
   }

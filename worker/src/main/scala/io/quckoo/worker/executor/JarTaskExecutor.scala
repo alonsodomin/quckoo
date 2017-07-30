@@ -20,7 +20,7 @@ import akka.actor.Props
 import akka.pattern._
 
 import cats.{Monad, ~>}
-import cats.data.{Coproduct, EitherT}
+import cats.data.{EitherK, EitherT}
 import cats.effect.IO
 import cats.free.Free
 
@@ -35,7 +35,7 @@ import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
   */
 object JarTaskExecutor {
 
-  type ArtifactOp[A] = Coproduct[ResolverOp, ReflectOp, A]
+  type ArtifactOp[A] = EitherK[ResolverOp, ReflectOp, A]
   type ArtifactIO[A] = Free[ArtifactOp, A]
 
   implicit def interpreter[F[_]: Monad](
