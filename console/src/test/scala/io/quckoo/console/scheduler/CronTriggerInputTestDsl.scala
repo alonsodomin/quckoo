@@ -33,7 +33,8 @@ object CronTriggerInputTestDsl {
   import ConsoleTestExports._
 
   @Lenses
-  case class State(inputExpr: String, updatedTrigger: Option[Trigger.Cron] = None) {
+  case class State(inputExpr: String,
+                   updatedTrigger: Option[Trigger.Cron] = None) {
     def asCron = Cron(inputExpr)
   }
 
@@ -42,14 +43,20 @@ object CronTriggerInputTestDsl {
   def blankInput = dsl.test("Blank input")(_.obs.expressionInput.value.isEmpty)
 
   def onUpdate(value: Option[Trigger.Cron]) = Callback {
-    dsl.action("Update callback").update(_.state).updateState(_.copy(updatedTrigger = value))
+    dsl
+      .action("Update callback")
+      .update(_.state)
+      .updateState(_.copy(updatedTrigger = value))
   }
 
   def setExpression(value: String): dsl.Actions =
-    dsl.action(s"Set expression: $value")(SimEvent.Change(value) simulate _.obs.expressionInput).
-      updateState(_.copy(inputExpr = value))
+    dsl
+      .action(s"Set expression: $value")(
+        SimEvent.Change(value) simulate _.obs.expressionInput)
+      .updateState(_.copy(inputExpr = value))
 
-  def emptyExpression = dsl.focus("Expression").value(_.obs.expressionInput.value.isEmpty)
+  def emptyExpression =
+    dsl.focus("Expression").value(_.obs.expressionInput.value.isEmpty)
 
   def hasError = dsl.focus("Parse error").value(_.obs.parseError.isDefined)
 

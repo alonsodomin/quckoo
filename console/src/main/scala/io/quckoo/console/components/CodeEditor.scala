@@ -57,64 +57,70 @@ object CodeEditor {
   implicit val themeStyleReuse: Reusability[Theme] = Reusability.byRef
 
   case class Options(
-    mode: Mode = Mode.Scala,
-    lineNumbers: Boolean = false,
-    lineSeparator: String = "\n",
-    matchBrackets: Boolean = false,
-    theme: Set[Theme] = Set.empty,
-    tabSize: Int = 2,
-    autoRefresh: Boolean = true,
-    readOnly: ReadOnly = false
+      mode: Mode = Mode.Scala,
+      lineNumbers: Boolean = false,
+      lineSeparator: String = "\n",
+      matchBrackets: Boolean = false,
+      theme: Set[Theme] = Set.empty,
+      tabSize: Int = 2,
+      autoRefresh: Boolean = true,
+      readOnly: ReadOnly = false
   )
-  implicit val optionsReuse: Reusability[Options] = Reusability.caseClass[Options]
+  implicit val optionsReuse: Reusability[Options] =
+    Reusability.caseClass[Options]
 
   final val DefaultWidth: Width = "100%"
   final val DefaultHeight: Height = 250
 
   case class Props(
-    text: Option[String],
-    onUpdate: OnUpdate,
-    width: Width,
-    height: Height,
-    options: Options,
-    attrs: Seq[TagMod]
+      text: Option[String],
+      onUpdate: OnUpdate,
+      width: Width,
+      height: Height,
+      options: Options,
+      attrs: Seq[TagMod]
   )
   case class State(value: Option[String])
 
-  implicit val propsReuse: Reusability[Props] = Reusability.caseClassExcept('onUpdate, 'attrs)
+  implicit val propsReuse: Reusability[Props] =
+    Reusability.caseClassExcept('onUpdate, 'attrs)
   implicit val stateReuse: Reusability[State] = Reusability.caseClass[State]
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     private[this] def propagateUpdate: Callback =
       $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.value)))
 
     private[this] def jsOptions(props: Props): js.Dynamic = {
       js.Dynamic.literal(
-        "mode"          -> props.options.mode.entryName,
-        "lineNumbers"   -> props.options.lineNumbers,
+        "mode" -> props.options.mode.entryName,
+        "lineNumbers" -> props.options.lineNumbers,
         "lineSeparator" -> props.options.lineSeparator,
         "matchBrackets" -> props.options.matchBrackets,
-        "theme"         -> props.options.theme.map(_.entryName).mkString(" "),
-        "tabSize"       -> props.options.tabSize,
-        "inputStyle"    -> "contenteditable",
-        "autoRefresh"   -> props.options.autoRefresh,
-        "readOnly"      -> props.options.readOnly.asInstanceOf[js.Any]
+        "theme" -> props.options.theme.map(_.entryName).mkString(" "),
+        "tabSize" -> props.options.tabSize,
+        "inputStyle" -> "contenteditable",
+        "autoRefresh" -> props.options.autoRefresh,
+        "readOnly" -> props.options.readOnly.asInstanceOf[js.Any]
       )
     }
 
     protected[CodeEditor] def initialize(props: Props, state: State): Callback = {
-      $.getDOMNode.map(node => CodeMirror(node, jsOptions(props)))
-          .map { codeMirror =>
-            codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
-            codeMirror.on("blur", (cm, event) => onBlur(cm, event.asInstanceOf[Event]))
+      $.getDOMNode
+        .map(node => CodeMirror(node, jsOptions(props)))
+        .map { codeMirror =>
+          codeMirror.on(
+            "change",
+            (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
+          codeMirror.on("blur",
+                        (cm, event) => onBlur(cm, event.asInstanceOf[Event]))
 
-            codeMirror.setValue(props.text.getOrElse(""))
-            codeMirror.setSize(props.width, props.height)
+          codeMirror.setValue(props.text.getOrElse(""))
+          codeMirror.setSize(props.width, props.height)
 
-            codeMirror.refresh()
-            codeMirror.markClean()
-          }
+          codeMirror.refresh()
+          codeMirror.markClean()
+        }
     }
 
     private[this] def valueUpdated(editorValue: Option[String]): Unit = {
@@ -126,7 +132,8 @@ object CodeEditor {
       valueUpdated(editorValue)
     }
 
-    private[this] def onChange(codeMirror: CodeMirror, change: ChangeEvent): Unit = {
+    private[this] def onChange(codeMirror: CodeMirror,
+                               change: ChangeEvent): Unit = {
       val editorValue = Option(codeMirror.getValue()).filterNot(_.isEmpty)
       if (!editorValue.contains(change.removed.mkString("\n")))
         valueUpdated(editorValue)
@@ -137,18 +144,24 @@ object CodeEditor {
 
   }
 
-  val component = ScalaComponent.builder[Props]("CodeEditor")
+  val component = ScalaComponent
+    .builder[Props]("CodeEditor")
     .initialStateFromProps(props => State(props.text))
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props, $.state))
     .build
 
   def apply(value: Option[String], onUpdate: OnUpdate, attrs: TagMod*) = {
-    component(Props(value, onUpdate, DefaultWidth, DefaultHeight, Options(), attrs))
+    component(
+      Props(value, onUpdate, DefaultWidth, DefaultHeight, Options(), attrs))
   }
 
-  def apply(value: Option[String], onUpdate: OnUpdate, options: Options, attrs: TagMod*) = {
-    component(Props(value, onUpdate, DefaultWidth, DefaultHeight, options, attrs))
+  def apply(value: Option[String],
+            onUpdate: OnUpdate,
+            options: Options,
+            attrs: TagMod*) = {
+    component(
+      Props(value, onUpdate, DefaultWidth, DefaultHeight, options, attrs))
   }
 
 }

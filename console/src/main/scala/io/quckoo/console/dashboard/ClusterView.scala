@@ -62,7 +62,7 @@ object ClusterView {
 
   case class Props(proxy: ModelProxy[QuckooState])
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def mounted(props: Props) = {
       // We assume that if master node map is empty, then we haven't subscribed yet
@@ -71,7 +71,8 @@ object ClusterView {
     }
 
     def render(props: Props) = {
-      def countStatus(nodes: Iterable[(NodeId, QuckooNode)], status: NodeStatus): Int =
+      def countStatus(nodes: Iterable[(NodeId, QuckooNode)],
+                      status: NodeStatus): Int =
         nodes.map(_._2.status).count(_ == status)
 
       def activeMasters: Int =
@@ -86,44 +87,47 @@ object ClusterView {
       def unreachableWorkers: Int =
         countStatus(props.proxy().workerNodes, NodeStatus.Unreachable)
 
-      <.div(Style.container,
-        <.div(^.`class` := "row",
-          <.div(^.`class` := "col-sm-12",
+      <.div(
+        Style.container,
+        <.div(
+          ^.`class` := "row",
+          <.div(
+            ^.`class` := "col-sm-12",
             <.div(Style.sectionTitle, "Nodes"),
             <.div(^.`class` := "row",
-              <.div(^.`class` := "col-sm-8", "Active"),
-              <.div(^.`class` := "col-sm-4 text-right", activeMasters)
-            ),
+                  <.div(^.`class` := "col-sm-8", "Active"),
+                  <.div(^.`class` := "col-sm-4 text-right", activeMasters)),
             <.div(^.`class` := "row",
-              <.div(^.`class` := "col-sm-8", "Unreachable"),
-              <.div(^.`class` := "col-sm-4 text-right", unreachableMasters)
-            )
+                  <.div(^.`class` := "col-sm-8", "Unreachable"),
+                  <.div(^.`class` := "col-sm-4 text-right", unreachableMasters))
           )
         ),
-        <.div(Style.topBuffer,
-          <.div(^.`class` := "col-sm-12",
+        <.div(
+          Style.topBuffer,
+          <.div(
+            ^.`class` := "col-sm-12",
             <.div(Style.sectionTitle, "Workers"),
             <.div(^.`class` := "row",
-              <.div(^.`class` := "col-sm-8", "Active"),
-              <.div(^.`class` := "col-sm-4 text-right", activeWorkers)
-            ),
+                  <.div(^.`class` := "col-sm-8", "Active"),
+                  <.div(^.`class` := "col-sm-4 text-right", activeWorkers)),
             <.div(^.`class` := "row",
-              <.div(^.`class` := "col-sm-8", "Unreachable"),
-              <.div(^.`class` := "col-sm-4 text-right", unreachableWorkers)
-            )
+                  <.div(^.`class` := "col-sm-8", "Unreachable"),
+                  <.div(^.`class` := "col-sm-4 text-right", unreachableWorkers))
           )
         ),
-        <.div(Style.topBuffer,
-          <.div(^.`class` := "col-sm-12",
+        <.div(
+          Style.topBuffer,
+          <.div(
+            ^.`class` := "col-sm-12",
             <.div(Style.sectionTitle, "Tasks"),
             <.div(^.`class` := "row",
-              <.div(^.`class` := "col-sm-8", "Pending"),
-              <.div(^.`class` := "col-sm-4 text-right", props.proxy().metrics.pendingTasks)
-            ),
+                  <.div(^.`class` := "col-sm-8", "Pending"),
+                  <.div(^.`class` := "col-sm-4 text-right",
+                        props.proxy().metrics.pendingTasks)),
             <.div(^.`class` := "row",
-              <.div(^.`class` := "col-sm-8", "In Progress"),
-              <.div(^.`class` := "col-sm-4 text-right", props.proxy().metrics.inProgressTasks)
-            )
+                  <.div(^.`class` := "col-sm-8", "In Progress"),
+                  <.div(^.`class` := "col-sm-4 text-right",
+                        props.proxy().metrics.inProgressTasks))
           )
         )
       )
@@ -131,11 +135,12 @@ object ClusterView {
 
   }
 
-  private[this] val component = ScalaComponent.builder[Props]("ClusterView").
-    stateless.
-    renderBackend[Backend].
-    componentDidMount($ => $.backend.mounted($.props)).
-    build
+  private[this] val component = ScalaComponent
+    .builder[Props]("ClusterView")
+    .stateless
+    .renderBackend[Backend]
+    .componentDidMount($ => $.backend.mounted($.props))
+    .build
 
   def apply(proxy: ModelProxy[QuckooState]) = component(Props(proxy))
 

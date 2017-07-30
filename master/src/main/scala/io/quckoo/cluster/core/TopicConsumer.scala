@@ -31,11 +31,15 @@ object TopicConsumer {
 object LocalTopicConsumer {
 
   def props[A](implicit topicTag: TopicTag[A]): Props =
-    Props(new LocalTopicConsumer(topicTag.name, Seq(topicTag.eventType.runtimeClass)))
+    Props(
+      new LocalTopicConsumer(topicTag.name,
+                             Seq(topicTag.eventType.runtimeClass)))
 
 }
 
-class LocalTopicConsumer private (topicName: String, classes: Seq[Class[_]]) extends Actor with ActorLogging {
+class LocalTopicConsumer private (topicName: String, classes: Seq[Class[_]])
+    extends Actor
+    with ActorLogging {
   import TopicConsumer._
 
   log.debug("Preparing to consume topic '{}'.", topicName)
@@ -51,7 +55,8 @@ class LocalTopicConsumer private (topicName: String, classes: Seq[Class[_]]) ext
 
   override def receive: Receive = {
     case Consume =>
-      log.debug("Starting to publish events from topic '{}' into the stream.", topicName)
+      log.debug("Starting to publish events from topic '{}' into the stream.",
+                topicName)
       context.become(sendTo(sender()))
   }
 
@@ -69,7 +74,10 @@ object PubSubTopicConsumer {
 
 }
 
-class PubSubTopicConsumer private(topic: String) extends Actor with ActorLogging with Stash {
+class PubSubTopicConsumer private (topic: String)
+    extends Actor
+    with ActorLogging
+    with Stash {
   import DistributedPubSubMediator._
   import TopicConsumer._
 
@@ -84,9 +92,11 @@ class PubSubTopicConsumer private(topic: String) extends Actor with ActorLogging
 
   override def receive: Receive = initializing()
 
-  private def initializing(subscribed: Boolean = false, target: Option[ActorRef] = None): Receive = {
+  private def initializing(subscribed: Boolean = false,
+                           target: Option[ActorRef] = None): Receive = {
     case SubscribeAck(Subscribe(`topic`, _, `self`)) =>
-      val nextBehaviour = target.map(switchToRunning)
+      val nextBehaviour = target
+        .map(switchToRunning)
         .getOrElse(initializing(subscribed = true))
       context.become(nextBehaviour)
 
@@ -104,7 +114,8 @@ class PubSubTopicConsumer private(topic: String) extends Actor with ActorLogging
   }
 
   private[this] def switchToRunning(targetRef: ActorRef): Receive = {
-    log.debug("Starting to publish events from topic '{}' into the stream.", topic)
+    log.debug("Starting to publish events from topic '{}' into the stream.",
+              topic)
     unstashAll()
     running(targetRef)
   }

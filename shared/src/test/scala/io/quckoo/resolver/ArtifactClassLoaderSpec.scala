@@ -23,11 +23,12 @@ import io.quckoo.reflect.ArtifactClassLoader
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 /**
- * Created by aalonsodominguez on 25/07/15.
- */
+  * Created by aalonsodominguez on 25/07/15.
+  */
 class ArtifactClassLoaderSpec extends FlatSpec with Matchers with Inside {
 
-  private val CommonsLoggingURL = new URL("http://repo1.maven.org/maven2/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar")
+  private val CommonsLoggingURL = new URL(
+    "http://repo1.maven.org/maven2/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar")
 
   "An ArtifactClassLoader" should "load any class from an URL" in {
     val classLoader = new ArtifactClassLoader(Array(CommonsLoggingURL))

@@ -28,7 +28,7 @@ import io.quckoo.console.html.index
 trait StaticResources {
 
   private[this] final val AssetsPath = "assets"
-  private[this] final val PublicDir  = "public/"
+  private[this] final val PublicDir = "public/"
 
   def staticResources: Route =
     pathEndOrSingleSlash {

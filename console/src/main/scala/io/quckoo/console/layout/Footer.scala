@@ -48,19 +48,25 @@ object Footer {
     )
   }
 
-  case class Props(proxy: ModelProxy[ConsoleScope], logStream: Observable[LogRecord])
-  
-  private[this] val component = ScalaComponent.builder[Props]("Footer")
+  case class Props(proxy: ModelProxy[ConsoleScope],
+                   logStream: Observable[LogRecord])
+
+  private[this] val component = ScalaComponent
+    .builder[Props]("Footer")
     .stateless
     .render_P { props =>
       <.div(
-        props.proxy().passport.flatMap(_.principal).map { _ =>
-          <.footer(Style.footer,
-            LogDisplay(props.logStream)
-          )
-        }.whenDefined
+        props
+          .proxy()
+          .passport
+          .flatMap(_.principal)
+          .map { _ =>
+            <.footer(Style.footer, LogDisplay(props.logStream))
+          }
+          .whenDefined
       )
-    }.build
+    }
+    .build
 
   def apply(proxy: ModelProxy[ConsoleScope], logStream: Observable[LogRecord]) =
     component(Props(proxy, logStream))

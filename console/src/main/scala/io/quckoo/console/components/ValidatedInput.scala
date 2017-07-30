@@ -39,13 +39,15 @@ object ValidatedInput {
     def onUpdate(props: Props[A])(newValue: Option[A]): Callback = {
       val validate = newValue.map { value =>
         props.validator.run(value).map {
-          case Valid(_)           => ValidatedField[A](Some(value))
-          case Invalid(violation) => ValidatedField[A](Some(value), Some(violation))
+          case Valid(_) => ValidatedField[A](Some(value))
+          case Invalid(violation) =>
+            ValidatedField[A](Some(value), Some(violation))
         }
       } getOrElse CallbackTo(ValidatedField[A](None))
 
       val updateState = validate
-        .flatMap(newFieldState => $.modState(_.copy(fieldState = newFieldState)))
+        .flatMap(newFieldState =>
+          $.modState(_.copy(fieldState = newFieldState)))
         .ret(newValue)
 
       updateState >>= props.onUpdate
@@ -54,11 +56,13 @@ object ValidatedInput {
     def render(props: Props[A], state: State[A]) = {
       <.div(
         ^.classSet(
-          "form-group"  -> true,
+          "form-group" -> true,
           "has-success" -> state.fieldState.valid,
-          "has-error"   -> state.fieldState.invalid
+          "has-error" -> state.fieldState.invalid
         ),
-        props.label.map(labelText => <.label(^.`class` := "control-label", labelText)).whenDefined,
+        props.label
+          .map(labelText => <.label(^.`class` := "control-label", labelText))
+          .whenDefined,
         props.component(onUpdate(props)),
         state.fieldState.violation.map { violation =>
           <.span(^.`class` := "help-block", violation.show)
@@ -67,14 +71,16 @@ object ValidatedInput {
     }
   }
 
-  def apply[A](validator: ValidatorCallback[A]) = new ValidatedInput[A](validator)
+  def apply[A](validator: ValidatorCallback[A]) =
+    new ValidatedInput[A](validator)
 
 }
 
 class ValidatedInput[A] private[components] (validator: ValidatorCallback[A]) {
   import ValidatedInput._
 
-  private[this] val component = ScalaComponent.builder[Props[A]]("ValidatedInput")
+  private[this] val component = ScalaComponent
+    .builder[Props[A]]("ValidatedInput")
     .initialState(State[A](ValidatedField()))
     .renderBackend[Backend[A]]
     .build

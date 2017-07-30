@@ -29,8 +29,9 @@ import scala.concurrent.ExecutionContext
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-class TasksHandler(model: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]], ops: ConsoleOps)(implicit ec: ExecutionContext)
-  extends ConsoleHandler[PotMap[TaskId, TaskExecution]](model)
+class TasksHandler(model: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]],
+                   ops: ConsoleOps)(implicit ec: ExecutionContext)
+    extends ConsoleHandler[PotMap[TaskId, TaskExecution]](model)
     with AuthHandler[PotMap[TaskId, TaskExecution]]
     with LazyLogging {
 
@@ -46,7 +47,8 @@ class TasksHandler(model: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]], 
     case action: RefreshExecutions =>
       withAuth { implicit passport =>
         val refreshEffect = action.effect(ops.loadTasks(action.keys))(identity)
-        action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
+        action.handleWith(this, refreshEffect)(
+          AsyncAction.mapHandler(action.keys))
       }
   }
 

@@ -33,7 +33,9 @@ object ExecutionParameterList {
 
   @Lenses case class Param(name: String, value: String)
 
-  case class ParamRowProps(value: Param, onUpdate: Param => Callback, onDelete: Callback)
+  case class ParamRowProps(value: Param,
+                           onUpdate: Param => Callback,
+                           onDelete: Callback)
   case class ParamRowState(name: String, value: String)
 
   class ParamRowBackend($ : BackendScope[ParamRowProps, ParamRowState]) {
@@ -51,34 +53,32 @@ object ExecutionParameterList {
 
     def render(props: ParamRowProps, state: ParamRowState) = {
       <.div(
-        <.div(
-          ^.`class` := "col-sm-5",
-          <.input.text(
-            ^.`class` := "form-control",
-            ^.value := state.name,
-            ^.onChange ==> onParamNameUpdate)),
-        <.div(
-          ^.`class` := "col-sm-5",
-          <.input.text(
-            ^.`class` := "form-control",
-            ^.value := state.value,
-            ^.onChange ==> onParamValueUpdate)),
-        <.div(
-          ^.`class` := "col-sm-2",
-          Button(
-            Button.Props(Some(props.onDelete), style = ContextStyle.default),
-            Icons.minus.noPadding))
+        <.div(^.`class` := "col-sm-5",
+              <.input.text(^.`class` := "form-control",
+                           ^.value := state.name,
+                           ^.onChange ==> onParamNameUpdate)),
+        <.div(^.`class` := "col-sm-5",
+              <.input.text(^.`class` := "form-control",
+                           ^.value := state.value,
+                           ^.onChange ==> onParamValueUpdate)),
+        <.div(^.`class` := "col-sm-2",
+              Button(Button.Props(Some(props.onDelete),
+                                  style = ContextStyle.default),
+                     Icons.minus.noPadding))
       )
     }
 
   }
 
-  val ParamRow = ScalaComponent.builder[ParamRowProps]("ParamRow")
-    .initialStateFromProps(props => ParamRowState(props.value.name, props.value.value))
+  val ParamRow = ScalaComponent
+    .builder[ParamRowProps]("ParamRow")
+    .initialStateFromProps(props =>
+      ParamRowState(props.value.name, props.value.value))
     .renderBackend[ParamRowBackend]
     .build
 
-  case class Props(value: Map[String, String], onUpdate: (String, String) => Callback)
+  case class Props(value: Map[String, String],
+                   onUpdate: (String, String) => Callback)
   @Lenses case class State(params: Vector[Param])
 
   class Backend($ : BackendScope[Props, State]) {
@@ -96,7 +96,8 @@ object ExecutionParameterList {
     def onParamUpdate(idx: Int)(param: Param): Callback = {
       val indexLens = State.params ^|-? index(idx)
 
-      $.setStateL(indexLens)(param) >> $.props.flatMap(_.onUpdate(param.name, param.value))
+      $.setStateL(indexLens)(param) >> $.props.flatMap(
+        _.onUpdate(param.name, param.value))
     }
 
     def render(props: Props, state: State) = {
@@ -106,16 +107,19 @@ object ExecutionParameterList {
           <.label(^.`class` := "col-sm-2 control-label", "Parameters"),
           <.div(
             ^.`class` := "col-sm-10",
-            Button(
-              Button.Props(Some(addParam()), style = ContextStyle.default),
-              Icons.plus.noPadding))),
+            Button(Button.Props(Some(addParam()), style = ContextStyle.default),
+                   Icons.plus.noPadding))
+        ),
         if (state.params.isEmpty) EmptyVdom
         else {
           <.div(
             <.div(
               ^.`class` := "col-sm-offset-2",
-              <.div(^.`class` := "col-sm-5", <.label(^.`class` := "control-label", "Name")),
-              <.div(^.`class` := "col-sm-5", <.label(^.`class` := "control-label", "Value"))),
+              <.div(^.`class` := "col-sm-5",
+                    <.label(^.`class` := "control-label", "Name")),
+              <.div(^.`class` := "col-sm-5",
+                    <.label(^.`class` := "control-label", "Value"))
+            ),
             state.params.zipWithIndex.map {
               case (param, idx) =>
                 <.div(
@@ -130,12 +134,14 @@ object ExecutionParameterList {
 
   }
 
-  val component = ScalaComponent.builder[Props]("ParameterList")
+  val component = ScalaComponent
+    .builder[Props]("ParameterList")
     .initialStateFromProps(props => State(Vector.empty))
     .renderBackend[Backend]
     .build
 
-  def apply(value: Map[String, String], onUpdate: (String, String) => Callback) =
+  def apply(value: Map[String, String],
+            onUpdate: (String, String) => Callback) =
     component(Props(value, onUpdate))
 
 }

@@ -38,8 +38,8 @@ import scala.concurrent.duration._
   */
 object Worker {
 
-  final val DefaultRegisterFrequency : FiniteDuration = 10 seconds
-  final val DefaultQueueAckTimeout   : FiniteDuration = 5 seconds
+  final val DefaultRegisterFrequency: FiniteDuration = 10 seconds
+  final val DefaultQueueAckTimeout: FiniteDuration = 5 seconds
 
   protected[worker] final val SchedulerPath = "/user/quckoo/scheduler"
 
@@ -48,23 +48,24 @@ object Worker {
             taskExecutorProvider: TaskExecutorProvider,
             registerInterval: FiniteDuration = DefaultRegisterFrequency,
             queueAckTimeout: FiniteDuration = DefaultQueueAckTimeout): Props =
-    Props(new Worker(
-      clusterClient,
-      resolver,
-      taskExecutorProvider,
-      registerInterval,
-      queueAckTimeout
-    ))
+    Props(
+      new Worker(
+        clusterClient,
+        resolver,
+        taskExecutorProvider,
+        registerInterval,
+        queueAckTimeout
+      ))
 
 }
 
-class Worker private (
-    clusterClient: ActorRef,
-    resolver: Resolver[IO],
-    taskExecutorProvider: TaskExecutorProvider,
-    registerInterval: FiniteDuration,
-    queueAckTimeout: FiniteDuration)
-    extends Actor with ActorLogging { myself =>
+class Worker private (clusterClient: ActorRef,
+                      resolver: Resolver[IO],
+                      taskExecutorProvider: TaskExecutorProvider,
+                      registerInterval: FiniteDuration,
+                      queueAckTimeout: FiniteDuration)
+    extends Actor
+    with ActorLogging { myself =>
 
   import Worker._
   import context.dispatcher
@@ -108,9 +109,9 @@ class Worker private (
       log.info("Received task for execution {}", task.id)
       currentTaskId = Some(task.id)
       //Tracer.withNewContext(s"task-${task.id}") {
-        executor = Some(taskExecutorProvider.executorFor(workerContext, task))
-          .map(context.watch)
-        executor.foreach(_ ! TaskExecutor.Run)
+      executor = Some(taskExecutorProvider.executorFor(workerContext, task))
+        .map(context.watch)
+      executor.foreach(_ ! TaskExecutor.Run)
       //}
       context.become(working(task))
   }
@@ -132,7 +133,8 @@ class Worker private (
       context.become(idle)
 
     case _: Task =>
-      log.info("Yikes. The task queue has sent me another another task while I'm busy.")
+      log.info(
+        "Yikes. The task queue has sent me another another task while I'm busy.")
   }
 
   private[this] def waitForTaskDoneAck(result: Any): Receive = {

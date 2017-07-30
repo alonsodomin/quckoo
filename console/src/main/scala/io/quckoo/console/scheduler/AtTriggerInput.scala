@@ -30,20 +30,24 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 object AtTriggerInput {
 
-  case class Props(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback, readOnly: Boolean)
+  case class Props(value: Option[Trigger.At],
+                   onUpdate: Option[Trigger.At] => Callback,
+                   readOnly: Boolean)
   case class State(date: Option[LocalDate], time: Option[LocalTime])
 
-  implicit val propsReuse: Reusability[Props] = Reusability.caseClassExcept('onUpdate)
+  implicit val propsReuse: Reusability[Props] =
+    Reusability.caseClassExcept('onUpdate)
   implicit val stateReuse: Reusability[State] = Reusability.caseClass
 
   class Backend($ : BackendScope[Props, State]) {
 
     def propagateUpdate: Callback = {
-      val value = $.state.map(st => st.date.flatMap(date => st.time.map(time => (date, time))))
+      val value = $.state.map(st =>
+        st.date.flatMap(date => st.time.map(time => (date, time))))
       value.flatMap {
         case Some((date, time)) =>
           val dateTime = LocalDateTime.of(date, time)
-          val trigger  = Trigger.At(dateTime.atZone(ZoneId.systemDefault))
+          val trigger = Trigger.At(dateTime.atZone(ZoneId.systemDefault))
           $.props.flatMap(_.onUpdate(Some(trigger)))
 
         case _ =>
@@ -65,23 +69,32 @@ object AtTriggerInput {
         <.div(
           ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Date"),
-          <.div(^.`class` := "col-sm-10", DateInput(state.date, onDateUpdate _, ^.readOnly := props.readOnly))),
+          <.div(
+            ^.`class` := "col-sm-10",
+            DateInput(state.date, onDateUpdate _, ^.readOnly := props.readOnly))
+        ),
         <.div(
           ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Time"),
-          <.div(^.`class` := "col-sm-10", TimeInput(state.time, onTimeUpdate _, ^.readOnly := props.readOnly)))
+          <.div(
+            ^.`class` := "col-sm-10",
+            TimeInput(state.time, onTimeUpdate _, ^.readOnly := props.readOnly))
+        )
       )
     }
 
   }
 
-  val component = ScalaComponent.builder[Props]("AtTriggerInput")
+  val component = ScalaComponent
+    .builder[Props]("AtTriggerInput")
     .initialStateFromProps(_ => State(None, None))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[Trigger.At], onUpdate: Option[Trigger.At] => Callback, readOnly: Boolean = false) =
+  def apply(value: Option[Trigger.At],
+            onUpdate: Option[Trigger.At] => Callback,
+            readOnly: Boolean = false) =
     component(Props(value, onUpdate, readOnly))
 
 }

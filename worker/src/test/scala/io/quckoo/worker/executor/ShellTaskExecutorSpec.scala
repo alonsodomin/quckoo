@@ -26,8 +26,10 @@ import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 
 import org.scalamock.scalatest.MockFactory
 
-class ShellTaskExecutorSpec extends QuckooActorSuite("ShellTaskExecutorSpec")
-    with ImplicitSender with MockFactory {
+class ShellTaskExecutorSpec
+    extends QuckooActorSuite("ShellTaskExecutorSpec")
+    with ImplicitSender
+    with MockFactory {
 
   "ShellTaskExecutor" should {
     "run shell scripts and capture its standard output" in {
@@ -38,7 +40,9 @@ class ShellTaskExecutorSpec extends QuckooActorSuite("ShellTaskExecutorSpec")
       val taskId = TaskId(UUID.randomUUID())
       val scriptPackage = ShellScriptPackage(script)
 
-      val executor = TestActorRef(ShellTaskExecutor.props(workerContext, taskId, scriptPackage), "hello-bash")
+      val executor = TestActorRef(
+        ShellTaskExecutor.props(workerContext, taskId, scriptPackage),
+        "hello-bash")
 
       executor ! TaskExecutor.Run
 
@@ -57,7 +61,9 @@ class ShellTaskExecutorSpec extends QuckooActorSuite("ShellTaskExecutorSpec")
       val taskId = TaskId(UUID.randomUUID())
       val scriptPackage = ShellScriptPackage(script)
 
-      val executor = TestActorRef(ShellTaskExecutor.props(workerContext, taskId, scriptPackage), "bash-exitcode")
+      val executor = TestActorRef(
+        ShellTaskExecutor.props(workerContext, taskId, scriptPackage),
+        "bash-exitcode")
 
       executor ! TaskExecutor.Run
 

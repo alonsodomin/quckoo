@@ -29,7 +29,8 @@ import io.quckoo.testkit.QuckooActorSuite
 /**
   * Created by alonsodomin on 01/03/2017.
   */
-class LocalTopicConsumerSpec extends QuckooActorSuite("LocalTopicConsumerSpec") {
+class LocalTopicConsumerSpec
+    extends QuckooActorSuite("LocalTopicConsumerSpec") {
 
   "LocalTopicConsumer" should {
     "emit events to its sender" in {

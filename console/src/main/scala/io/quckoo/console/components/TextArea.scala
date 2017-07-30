@@ -27,10 +27,11 @@ object TextArea {
   case class Props(text: Option[String], onUpdate: OnUpdate, attrs: Seq[TagMod])
   case class State(value: Option[String])
 
-  implicit val propsReuse: Reusability[Props] = Reusability.caseClassExcept('onUpdate, 'attrs)
+  implicit val propsReuse: Reusability[Props] =
+    Reusability.caseClassExcept('onUpdate, 'attrs)
   implicit val stateReuse: Reusability[State] = Reusability.caseClass[State]
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     private[this] def propagateUpdate: Callback =
       $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.value)))
@@ -46,16 +47,16 @@ object TextArea {
 
     def render(props: Props, state: State) = {
       <.textarea(^.`class` := "form-control",
-        ^.onChange ==> onUpdate,
-        ^.onBlur   ==> onUpdate,
-        state.value.map(v => ^.value := v).whenDefined,
-        props.attrs.toTagMod
-      )
+                 ^.onChange ==> onUpdate,
+                 ^.onBlur ==> onUpdate,
+                 state.value.map(v => ^.value := v).whenDefined,
+                 props.attrs.toTagMod)
     }
 
   }
 
-  val component = ScalaComponent.builder[Props]("TextArea")
+  val component = ScalaComponent
+    .builder[Props]("TextArea")
     .initialStateFromProps(props => State(props.text))
     .renderBackend[Backend]
     .build

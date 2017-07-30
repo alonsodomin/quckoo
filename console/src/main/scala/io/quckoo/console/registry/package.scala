@@ -29,7 +29,9 @@ package object registry {
 
   final val RegistryLogger: Logger[Event] = {
     case RegisterJobResult(validated) =>
-      validated.fold(errs => LogRecord.error(""), jobId => LogRecord.info(s"Job '$jobId' has been registered."))
+      validated.fold(
+        errs => LogRecord.error(""),
+        jobId => LogRecord.info(s"Job '$jobId' has been registered."))
 
     case JobEnabled(jobId) =>
       LogRecord.info(s"Job '$jobId' has been enabled")

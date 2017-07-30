@@ -31,12 +31,14 @@ class PureResolver(artifact: Option[Artifact] = None) extends Resolver[IO] {
   def this(artifact: Artifact) = this(Some(artifact))
 
   override def validate(artifactId: ArtifactId): IO[Resolved[ArtifactId]] = IO {
-    if (artifact.exists(_.artifactId === artifactId)) artifactId.validNel[DependencyError]
+    if (artifact.exists(_.artifactId === artifactId))
+      artifactId.validNel[DependencyError]
     else UnresolvedDependency(artifactId).invalidNel[ArtifactId]
   }
 
   override def download(artifactId: ArtifactId): IO[Resolved[Artifact]] = IO {
-    artifact.filter(_.artifactId === artifactId)
+    artifact
+      .filter(_.artifactId === artifactId)
       .map(_.validNel[DependencyError])
       .getOrElse(UnresolvedDependency(artifactId).invalidNel[Artifact])
   }

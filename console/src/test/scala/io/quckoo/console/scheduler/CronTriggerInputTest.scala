@@ -35,7 +35,11 @@ class CronTriggerInputTest extends FunSuite {
   val invariants: dsl.Invariants = {
     var invars = dsl.emptyInvariant
 
-    invars &= dsl.focus("Expression").obsAndState(_.expressionInput.value, _.inputExpr).assert.equal
+    invars &= dsl
+      .focus("Expression")
+      .obsAndState(_.expressionInput.value, _.inputExpr)
+      .assert
+      .equal
 
     /*invars &= dsl.focus("Expected trigger").obsAndState(
       _.state.asCron.disjunction.toOption.map(Trigger.Cron),
@@ -48,13 +52,14 @@ class CronTriggerInputTest extends FunSuite {
   def runPlan(plan: dsl.Plan): Report[String] = {
     val initialTrigger = Option.empty[Trigger.Cron]
 
-    ReactTestUtils.withRenderedIntoDocument(CronTriggerInput(initialTrigger, onUpdate)) { comp =>
+    ReactTestUtils.withRenderedIntoDocument(
+      CronTriggerInput(initialTrigger, onUpdate)) { comp =>
       def observe() = new CronTriggerInputObserver(comp.htmlDomZipper)
 
-      val test = plan.
-        addInvariants(invariants).
-        withInitialState(State("")).
-        test(Observer watch observe())
+      val test = plan
+        .addInvariants(invariants)
+        .withInitialState(State(""))
+        .test(Observer watch observe())
 
       test.runU
     }
@@ -63,8 +68,10 @@ class CronTriggerInputTest extends FunSuite {
   test("input should perform validation of the cron expression") {
     val plan = Plan.action(
       blankInput +>
-      setExpression("* * * * * ?") +> emptyExpression.assert(false) +> hasError.assert.equal(false) >>
-      setExpression("* *") +> emptyExpression.assert(false) +> hasError.assert.equal(true)
+        setExpression("* * * * * ?") +> emptyExpression
+        .assert(false) +> hasError.assert.equal(false) >>
+        setExpression("* *") +> emptyExpression.assert(false) +> hasError.assert
+          .equal(true)
     )
 
     runPlan(plan).assert()

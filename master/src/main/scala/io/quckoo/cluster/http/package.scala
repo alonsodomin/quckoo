@@ -40,15 +40,18 @@ package object http {
 
   /** Twirl marshallers for Xml, Html and Txt mediatypes */
   implicit val twirlHtmlMarshaller = twirlMarshaller[Html](`text/html`)
-  implicit val twirlTxtMarshaller  = twirlMarshaller[Txt](`text/plain`)
-  implicit val twirlXmlMarshaller  = twirlMarshaller[Xml](`text/xml`)
+  implicit val twirlTxtMarshaller = twirlMarshaller[Txt](`text/plain`)
+  implicit val twirlXmlMarshaller = twirlMarshaller[Xml](`text/xml`)
 
   def twirlMarshaller[A](contentType: MediaType): ToEntityMarshaller[A] = {
     Marshaller.StringMarshaller.wrap(contentType)(_.toString)
   }
 
-  def asSSE[A](source: Source[A, _])(implicit topicTag: TopicTag[A], encode: Encoder[A]): Source[ServerSentEvent, _] =
-    source.map(event => ServerSentEvent(encode(event).noSpaces, topicTag.name))
+  def asSSE[A](source: Source[A, _])(
+      implicit topicTag: TopicTag[A],
+      encode: Encoder[A]): Source[ServerSentEvent, _] =
+    source
+      .map(event => ServerSentEvent(encode(event).noSpaces, topicTag.name))
       .keepAlive(1 second, () => ServerSentEvent.heartbeat)
 
   def generateAuthToken: String = UUID.randomUUID().toString

@@ -25,7 +25,8 @@ import io.quckoo.{Job, JobClass}
   */
 object ops extends Reflector[ReflectIO] {
 
-  override def loadJobClass(artifact: Artifact, className: String): ReflectIO[JobClass] =
+  override def loadJobClass(artifact: Artifact,
+                            className: String): ReflectIO[JobClass] =
     Free.liftF(ReflectOp.LoadJobClass(artifact, className))
 
   override def createJob(jobClass: JobClass): ReflectIO[Job] =

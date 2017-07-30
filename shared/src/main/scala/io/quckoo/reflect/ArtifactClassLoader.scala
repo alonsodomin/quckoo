@@ -17,7 +17,12 @@
 package io.quckoo.reflect
 
 import java.net.{URL, URLClassLoader}
-import java.security.{AllPermission, CodeSource, Permission, PermissionCollection}
+import java.security.{
+  AllPermission,
+  CodeSource,
+  Permission,
+  PermissionCollection
+}
 import java.util
 
 import scala.collection.JavaConverters._
@@ -63,31 +68,33 @@ class ArtifactClassLoader(urls: Array[URL], parent: ClassLoader)
     resource
   }
 
-  override def loadClass(name: String, resolve: Boolean): Class[_] = this.synchronized {
-    var clazz = findLoadedClass(name)
-    if (clazz == null) {
-      if (systemClassLoader != null) {
-        try {
-          clazz = systemClassLoader.loadClass(name)
-        } catch {
-          case ex: ClassNotFoundException => // ignore
-        }
-      }
+  override def loadClass(name: String, resolve: Boolean): Class[_] =
+    this.synchronized {
+      var clazz = findLoadedClass(name)
       if (clazz == null) {
-        try {
-          clazz = findClass(name)
-        } catch {
-          case ex: ClassNotFoundException =>
-            clazz = super.loadClass(name, resolve)
+        if (systemClassLoader != null) {
+          try {
+            clazz = systemClassLoader.loadClass(name)
+          } catch {
+            case ex: ClassNotFoundException => // ignore
+          }
+        }
+        if (clazz == null) {
+          try {
+            clazz = findClass(name)
+          } catch {
+            case ex: ClassNotFoundException =>
+              clazz = super.loadClass(name, resolve)
+          }
         }
       }
+      if (resolve) {
+        resolveClass(clazz)
+      }
+      clazz
     }
-    if (resolve) {
-      resolveClass(clazz)
-    }
-    clazz
-  }
 
-  override def getPermissions(codesource: CodeSource): PermissionCollection = allPermissions
+  override def getPermissions(codesource: CodeSource): PermissionCollection =
+    allPermissions
 
 }

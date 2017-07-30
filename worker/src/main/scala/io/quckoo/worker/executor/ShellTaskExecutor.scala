@@ -26,19 +26,28 @@ import better.files._
 import cats.effect.IO
 import cats.implicits._
 
-import io.quckoo.{ExceptionThrown, ShellScriptPackage, TaskExitCodeFault, TaskId}
+import io.quckoo.{
+  ExceptionThrown,
+  ShellScriptPackage,
+  TaskExitCodeFault,
+  TaskId
+}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 
 object ShellTaskExecutor {
 
-  def props(workerContext: WorkerContext, taskId: TaskId, shellPackage: ShellScriptPackage): Props =
+  def props(workerContext: WorkerContext,
+            taskId: TaskId,
+            shellPackage: ShellScriptPackage): Props =
     Props(new ShellTaskExecutor(workerContext, taskId: TaskId, shellPackage))
 
 }
 
 class ShellTaskExecutor private (
-    workerContext: WorkerContext, taskId: TaskId, shellPackage: ShellScriptPackage
-  ) extends TaskExecutor {
+    workerContext: WorkerContext,
+    taskId: TaskId,
+    shellPackage: ShellScriptPackage
+) extends TaskExecutor {
 
   import TaskExecutor._
 
@@ -61,7 +70,7 @@ class ShellTaskExecutor private (
       program.unsafeToFuture() pipeTo sender()
   }
 
-  private [this] def withRunner[R](f: ProcessRunner => IO[R]): IO[R] = {
+  private[this] def withRunner[R](f: ProcessRunner => IO[R]): IO[R] = {
     def generateScript = IO {
       val tempFile = File.newTemporaryFile()
       tempFile.append(shellPackage.content)
@@ -82,7 +91,8 @@ class ShellTaskExecutor private (
         ()
       }
 
-      runScript.attempt.flatMap(e => deleteScript.flatMap(_ => e.fold(IO.raiseError, IO.pure)))
+      runScript.attempt.flatMap(e =>
+        deleteScript.flatMap(_ => e.fold(IO.raiseError, IO.pure)))
     }
 
     generateScript >>= runIt

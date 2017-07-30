@@ -5,15 +5,17 @@ logLevel := Level.Warn
 addSbtPlugin("de.heikoseeberger" % "sbt-header"    % "2.0.0")
 addSbtPlugin("org.scoverage"     % "sbt-scoverage" % "1.5.0")
 addSbtPlugin("com.jsuereth"      % "sbt-pgp"       % "1.0.0")
-addSbtPlugin("com.github.gseitz" % "sbt-release"   % "1.0.5")
+addSbtPlugin("com.github.gseitz" % "sbt-release"   % "1.0.6")
 addSbtPlugin("org.xerial.sbt"    % "sbt-sonatype"  % "1.1")
-addSbtPlugin("com.geirsson"      % "sbt-scalafmt"  % "0.5.4")
+addSbtPlugin("com.lucidchart"    % "sbt-scalafmt"  % "1.9")
 
 // Web plugins
-addSbtPlugin("org.scala-js"     % "sbt-scalajs"     % "0.6.19")
-addSbtPlugin("com.vmunier"      % "sbt-web-scalajs" % "1.0.5")
-addSbtPlugin("org.irundaia.sbt" % "sbt-sassify"     % "1.4.8")
-addSbtPlugin("com.typesafe.sbt" % "sbt-twirl"       % "1.3.3")
+addSbtPlugin("org.scala-js"     % "sbt-scalajs"              % "0.6.19")
+addSbtPlugin("org.scala-native" % "sbt-crossproject"         % "0.2.0")
+addSbtPlugin("org.scala-native" % "sbt-scalajs-crossproject" % "0.2.0")
+addSbtPlugin("com.vmunier"      % "sbt-web-scalajs"          % "1.0.5")
+addSbtPlugin("org.irundaia.sbt" % "sbt-sassify"              % "1.4.8")
+addSbtPlugin("com.typesafe.sbt" % "sbt-twirl"                % "1.3.3")
 
 // Server side plugins
 addSbtPlugin("io.spray"         % "sbt-revolver"        % "0.8.0")

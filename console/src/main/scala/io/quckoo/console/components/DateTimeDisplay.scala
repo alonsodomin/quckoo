@@ -31,15 +31,19 @@ object DateTimeDisplay {
     "MMM d, HH:mm:ss"
   )
 
-  final case class Props(dateTime: TemporalAccessor, formatter: Option[DateTimeFormatter])
+  final case class Props(dateTime: TemporalAccessor,
+                         formatter: Option[DateTimeFormatter])
 
-  private[this] val component = ScalaComponent.builder[Props]("DateTimeDisplay").stateless.render_P {
-    props =>
+  private[this] val component = ScalaComponent
+    .builder[Props]("DateTimeDisplay")
+    .stateless
+    .render_P { props =>
       val fmt = props.formatter.getOrElse(DefaultFormatter)
       <.span(fmt.format(props.dateTime))
   } build
 
-  def apply(dateTime: TemporalAccessor, formatter: Option[DateTimeFormatter] = None) =
+  def apply(dateTime: TemporalAccessor,
+            formatter: Option[DateTimeFormatter] = None) =
     component(Props(dateTime, formatter))
 
 }

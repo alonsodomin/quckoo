@@ -61,10 +61,11 @@ trait SchedulerHttpRouter extends EventStreamMarshalling {
             entity(as[ScheduleJob]) { req =>
               extractExecutionContext { implicit ec =>
                 onSuccess(scheduleJob(req)) {
-                  case Right(res)                 => complete(res)
-                  case Left(JobNotEnabled(jobId)) => complete(BadRequest -> jobId)
-                  case Left(JobNotFound(jobId))   => complete(NotFound -> jobId)
-                  case Left(error)                => complete(InternalServerError -> error)
+                  case Right(res) => complete(res)
+                  case Left(JobNotEnabled(jobId)) =>
+                    complete(BadRequest -> jobId)
+                  case Left(JobNotFound(jobId)) => complete(NotFound -> jobId)
+                  case Left(error)              => complete(InternalServerError -> error)
                 }
               }
             }
@@ -80,8 +81,9 @@ trait SchedulerHttpRouter extends EventStreamMarshalling {
           } ~ delete {
             extractExecutionContext { implicit ec =>
               onSuccess(cancelPlan(PlanId(planUUID))) {
-                case Right(res)                     => complete(res)
-                case Left(ExecutionPlanNotFound(_)) => complete(NotFound -> planUUID)
+                case Right(res) => complete(res)
+                case Left(ExecutionPlanNotFound(_)) =>
+                  complete(NotFound -> planUUID)
               }
             }
           }
@@ -106,7 +108,8 @@ trait SchedulerHttpRouter extends EventStreamMarshalling {
       }
     }
 
-  def schedulerEvents(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+  def schedulerEvents(implicit system: ActorSystem,
+                      materializer: ActorMaterializer): Route =
     path("scheduler") {
       get {
         complete(asSSE(schedulerTopic))

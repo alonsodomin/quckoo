@@ -29,8 +29,10 @@ import scala.concurrent.ExecutionContext
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-class ExecutionPlansHandler(model: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]], ops: ConsoleOps)(implicit ec: ExecutionContext)
-  extends ConsoleHandler[PotMap[PlanId, ExecutionPlan]](model)
+class ExecutionPlansHandler(
+    model: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]],
+    ops: ConsoleOps)(implicit ec: ExecutionContext)
+    extends ConsoleHandler[PotMap[PlanId, ExecutionPlan]](model)
     with AuthHandler[PotMap[PlanId, ExecutionPlan]]
     with LazyLogging {
 
@@ -47,7 +49,8 @@ class ExecutionPlansHandler(model: ModelRW[ConsoleScope, PotMap[PlanId, Executio
     case action: RefreshExecutionPlans =>
       withAuth { implicit passport =>
         val refreshEffect = action.effect(ops.loadPlans(action.keys))(identity)
-        action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
+        action.handleWith(this, refreshEffect)(
+          AsyncAction.mapHandler(action.keys))
       }
   }
 

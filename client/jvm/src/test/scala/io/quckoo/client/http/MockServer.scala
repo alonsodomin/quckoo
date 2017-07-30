@@ -35,7 +35,8 @@ trait MockServer extends fixture.FlatSpec with BeforeAndAfterAll {
   override protected def afterAll(): Unit = proxy.stop()
 
   override protected def withFixture(test: OneArgTest): Outcome = {
-    val server = ClientAndServer.startClientAndServer(PortFactory.findFreePort())
+    val server =
+      ClientAndServer.startClientAndServer(PortFactory.findFreePort())
     try {
       proxy.reset()
       withFixture(test.toNoArgTest(server))

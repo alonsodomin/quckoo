@@ -41,11 +41,12 @@ object JobSpecList {
 
   final val Columns = List('Name, 'Description, 'Package, 'Status)
 
-  final val DisabledFilter: Table.Filter[JobId, JobSpec] = (_, job) => job.disabled
-  final val EnabledFilter: Table.Filter[JobId, JobSpec]  = !DisabledFilter(_, _)
+  final val DisabledFilter: Table.Filter[JobId, JobSpec] = (_, job) =>
+    job.disabled
+  final val EnabledFilter: Table.Filter[JobId, JobSpec] = !DisabledFilter(_, _)
 
   final val Filters: Map[Symbol, Table.Filter[JobId, JobSpec]] = Map(
-    'Enabled  -> EnabledFilter,
+    'Enabled -> EnabledFilter,
     'Disabled -> DisabledFilter
   )
 
@@ -53,11 +54,12 @@ object JobSpecList {
   type OnClick = JobSpec => Callback
 
   final case class Props(
-    proxy: ModelProxy[PotMap[JobId, JobSpec]],
-    onJobCreate: OnCreate,
-    onJobEdit: OnClick
+      proxy: ModelProxy[PotMap[JobId, JobSpec]],
+      onJobCreate: OnCreate,
+      onJobEdit: OnClick
   )
-  final case class State(selectedFilter: Option[Symbol] = None, selectedJobs: Set[JobId] = Set.empty)
+  final case class State(selectedFilter: Option[Symbol] = None,
+                         selectedJobs: Set[JobId] = Set.empty)
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -75,19 +77,22 @@ object JobSpecList {
 
     // Actions
 
-    private[this] def performOnSelection(filter: (JobId, JobSpec) => Boolean)
-                                        (f: JobId => RegistryCommand): Callback = {
-      def collectIds: CallbackTo[Iterable[JobId]] = for {
-        props <- $.props
-        state <- $.state
-      } yield selectedJobs(props, state).collect {
-        case (id, Ready(spec)) if filter(id, spec) => id
-      }
+    private[this] def performOnSelection(filter: (JobId, JobSpec) => Boolean)(
+        f: JobId => RegistryCommand): Callback = {
+      def collectIds: CallbackTo[Iterable[JobId]] =
+        for {
+          props <- $.props
+          state <- $.state
+        } yield
+          selectedJobs(props, state).collect {
+            case (id, Ready(spec)) if filter(id, spec) => id
+          }
 
-      def invokeCommand(jobIds: Iterable[JobId]): Callback = for {
-        proxy <- $.props.map(_.proxy)
-        _     <- jobIds.toList.map(id => proxy.dispatchCB(f(id))).sequence
-      } yield ()
+      def invokeCommand(jobIds: Iterable[JobId]): Callback =
+        for {
+          proxy <- $.props.map(_.proxy)
+          _ <- jobIds.toList.map(id => proxy.dispatchCB(f(id))).sequence
+        } yield ()
 
       collectIds >>= invokeCommand
     }
@@ -118,9 +123,11 @@ object JobSpecList {
 
     def rowActions(props: Props)(jobId: JobId, jobSpec: JobSpec) = {
       Seq(if (jobSpec.disabled) {
-        Table.RowAction[JobId](NonEmptyList.of(Icons.play, "Enable"), enableJob(props))
+        Table.RowAction[JobId](NonEmptyList.of(Icons.play, "Enable"),
+                               enableJob(props))
       } else {
-        Table.RowAction[JobId](NonEmptyList.of(Icons.stop, "Disable"), disableJob(props))
+        Table.RowAction[JobId](NonEmptyList.of(Icons.stop, "Disable"),
+                               disableJob(props))
       })
     }
 
@@ -136,9 +143,11 @@ object JobSpecList {
       def jobIsNotReady: Callback =
         Callback.alert(s"Job '$jobId' is not ready yet.")
 
-      $.props.map(_.proxy()).flatMap(
-        _.get(jobId).headOption.map(onJobClickedCB).getOrElse(jobIsNotReady)
-      )
+      $.props
+        .map(_.proxy())
+        .flatMap(
+          _.get(jobId).headOption.map(onJobClickedCB).getOrElse(jobIsNotReady)
+        )
     }
 
     def onJobSelected(selection: Set[JobId]): Callback =
@@ -149,17 +158,18 @@ object JobSpecList {
     private[this] def renderName(jobId: JobId, jobSpec: JobSpec): VdomNode =
       <.a(^.onClick --> onJobClicked(jobId), jobSpec.displayName)
 
-    def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): VdomNode = column match {
-      case 'Name        => renderName(jobId, jobSpec)
-      case 'Description => jobSpec.description.getOrElse[String]("")
-      case 'Package     => jobSpec.jobPackage.toString
-      case 'Status =>
-        if (jobSpec.disabled) {
-          <.span(^.color.red, "DISABLED")
-        } else {
-          <.span(^.color.green, "ENABLED")
-        }
-    }
+    def renderItem(jobId: JobId, jobSpec: JobSpec, column: Symbol): VdomNode =
+      column match {
+        case 'Name        => renderName(jobId, jobSpec)
+        case 'Description => jobSpec.description.getOrElse[String]("")
+        case 'Package     => jobSpec.jobPackage.toString
+        case 'Status =>
+          if (jobSpec.disabled) {
+            <.span(^.color.red, "DISABLED")
+          } else {
+            <.span(^.color.green, "ENABLED")
+          }
+      }
 
     def render(props: Props, state: State) = {
       val model = props.proxy()
@@ -167,21 +177,30 @@ object JobSpecList {
       <.div(
         ToolBar(
           Button(Button.Props(
-            Some(props.onJobCreate),
-            style = ContextStyle.primary
-          ), Icons.plusSquare, "New Job"),
+                   Some(props.onJobCreate),
+                   style = ContextStyle.primary
+                 ),
+                 Icons.plusSquare,
+                 "New Job"),
           Button(Button.Props(
-            Some(enableAll),
-            disabled = enableAllDisabled(props, state)
-          ), Icons.playCircle, "Enable All"),
+                   Some(enableAll),
+                   disabled = enableAllDisabled(props, state)
+                 ),
+                 Icons.playCircle,
+                 "Enable All"),
           Button(Button.Props(
-            Some(disableAll),
-            disabled = disableAllDisabled(props, state)
-          ), Icons.stopCircle, "Disable All")
+                   Some(disableAll),
+                   disabled = disableAllDisabled(props, state)
+                 ),
+                 Icons.stopCircle,
+                 "Disable All")
         ),
         NavBar(
           NavBar
-            .Props(List('All, 'Enabled, 'Disabled), 'All, onFilterClicked, style = NavStyle.pills),
+            .Props(List('All, 'Enabled, 'Disabled),
+                   'All,
+                   onFilterClicked,
+                   style = NavStyle.pills),
           Table(
             Columns,
             model.seq,
@@ -190,14 +209,16 @@ object JobSpecList {
             actions = Some(rowActions(props)(_, _)),
             filter = state.selectedFilter.flatMap(Filters.get),
             selected = state.selectedJobs,
-            style = Set(TableStyle.hover))
+            style = Set(TableStyle.hover)
+          )
         )
       )
     }
 
   }
 
-  private[this] val component = ScalaComponent.builder[Props]("JobSpecList")
+  private[this] val component = ScalaComponent
+    .builder[Props]("JobSpecList")
     .initialState(State())
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))

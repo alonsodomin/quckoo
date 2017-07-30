@@ -49,8 +49,8 @@ object DashboardPage {
 
     def render(props: Props) = {
       val clusterState = props.proxy.connect(_.clusterState)
-      val masterNodes  = props.proxy.connect(_.clusterState.masterNodes)
-      val workerNodes  = props.proxy.connect(_.clusterState.workerNodes)
+      val masterNodes = props.proxy.connect(_.clusterState.masterNodes)
+      val workerNodes = props.proxy.connect(_.clusterState.workerNodes)
 
       <.div(
         ^.`class` := "container",
@@ -75,7 +75,11 @@ object DashboardPage {
   }
 
   private[this] val component =
-    ScalaComponent.builder[Props]("DashboardView").stateless.renderBackend[Backend].build
+    ScalaComponent
+      .builder[Props]("DashboardView")
+      .stateless
+      .renderBackend[Backend]
+      .build
 
   def apply(proxy: ModelProxy[ConsoleScope]) = component(Props(proxy))
 

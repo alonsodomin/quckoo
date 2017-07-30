@@ -40,7 +40,8 @@ class ErrorProcessor extends ActionProcessor[ConsoleScope] with LazyLogging {
   ): ActionResult[ConsoleScope] = {
     action match {
       case Failed(errors) =>
-        val notifications = errors.map(generateNotification.lift).toList.flatMap(_.toList)
+        val notifications =
+          errors.map(generateNotification.lift).toList.flatMap(_.toList)
         if (notifications.isEmpty) NoChange
         else {
           val growlActions = notifications.map(Growl).map(Effect.action(_))
@@ -51,7 +52,8 @@ class ErrorProcessor extends ActionProcessor[ConsoleScope] with LazyLogging {
     }
   }
 
-  private[this] def generateNotification: PartialFunction[QuckooError, Notification] = {
+  private[this] def generateNotification
+    : PartialFunction[QuckooError, Notification] = {
     case JobNotFound(jobId) =>
       Notification.danger(s"Job not found: $jobId")
 

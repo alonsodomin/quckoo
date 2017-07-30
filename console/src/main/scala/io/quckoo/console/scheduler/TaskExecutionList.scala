@@ -40,14 +40,17 @@ object TaskExecutionList {
   class Backend($ : BackendScope[Props, Unit]) {
 
     def mounted(props: Props): Callback =
-      Callback.when(props.proxy().size == 0)(props.proxy.dispatchCB(LoadExecutions))
+      Callback.when(props.proxy().size == 0)(
+        props.proxy.dispatchCB(LoadExecutions))
 
-    def renderItem(taskId: TaskId, execution: TaskExecution, column: Symbol): VdomNode =
+    def renderItem(taskId: TaskId,
+                   execution: TaskExecution,
+                   column: Symbol): VdomNode =
       column match {
-        case 'ID        => taskId.show
-        case 'Task      => execution.task.show
-        case 'Status    => execution.status.show
-        case 'Outcome   => execution.outcome.map(_.toString).getOrElse[String]("")
+        case 'ID      => taskId.show
+        case 'Task    => execution.task.show
+        case 'Status  => execution.status.show
+        case 'Outcome => execution.outcome.map(_.toString).getOrElse[String]("")
       }
 
     def render(props: Props) = {
@@ -57,7 +60,9 @@ object TaskExecutionList {
 
   }
 
-  private[this] val component = ScalaComponent.builder[Props]("TaskExecutionList").stateless
+  private[this] val component = ScalaComponent
+    .builder[Props]("TaskExecutionList")
+    .stateless
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.mounted($.props))
     .build

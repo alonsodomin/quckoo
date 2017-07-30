@@ -43,7 +43,8 @@ object IvyResolverSpec {
   )
 
   final val InvalidArtifactId = ArtifactId("com.example", "example", "latest")
-  final val TestArtifactId = ArtifactId("io.quckoo", "quckoo-core_2.11", "0.1.0")
+  final val TestArtifactId =
+    ArtifactId("io.quckoo", "quckoo-core_2.11", "0.1.0")
 
 }
 
@@ -58,7 +59,8 @@ class IvyResolverSpec extends FlatSpec with GivenWhenThen with Matchers {
     val expectedUnresolvedDependency = UnresolvedDependency(InvalidArtifactId)
 
     And("the expected result as accumulation of errors")
-    val expectedResult = NonEmptyList.of(expectedUnresolvedDependency).invalid[ArtifactId]
+    val expectedResult =
+      NonEmptyList.of(expectedUnresolvedDependency).invalid[ArtifactId]
 
     When("Attempting to validate the artifact")
     val result = ops.validate(InvalidArtifactId).to[IO].unsafeRunSync()
@@ -75,7 +77,9 @@ class IvyResolverSpec extends FlatSpec with GivenWhenThen with Matchers {
     val result = ops.download(TestArtifactId).to[IO].unsafeRunSync()
 
     Then("the returned validation should contain the expected artifact")
-    result should matchPattern { case Validated.Valid(Artifact(`TestArtifactId`, _)) => }
+    result should matchPattern {
+      case Validated.Valid(Artifact(`TestArtifactId`, _)) =>
+    }
   }
 
 }

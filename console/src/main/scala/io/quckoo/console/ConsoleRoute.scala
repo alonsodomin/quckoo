@@ -23,10 +23,10 @@ import enumeratum._
   */
 sealed trait ConsoleRoute extends EnumEntry with EnumEntry.Lowercase
 object ConsoleRoute extends Enum[ConsoleRoute] {
-  case object Root      extends ConsoleRoute
+  case object Root extends ConsoleRoute
   case object Dashboard extends ConsoleRoute
-  case object Login     extends ConsoleRoute
-  case object Registry  extends ConsoleRoute
+  case object Login extends ConsoleRoute
+  case object Registry extends ConsoleRoute
   case object Scheduler extends ConsoleRoute
 
   val values = findValues

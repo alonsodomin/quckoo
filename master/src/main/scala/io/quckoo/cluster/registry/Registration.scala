@@ -35,7 +35,8 @@ import scala.concurrent.duration._
 
 object Registration {
 
-  def props(jobSpec: JobSpec, shardsGuardian: ActorRef, replyTo: ActorRef)(implicit resolver: Resolver[IO]): Props = {
+  def props(jobSpec: JobSpec, shardsGuardian: ActorRef, replyTo: ActorRef)(
+      implicit resolver: Resolver[IO]): Props = {
     jobSpec.jobPackage match {
       case JarJobPackage(artifactId, _) =>
         Props(new JarRegistration(jobSpec, artifactId, shardsGuardian, replyTo))
@@ -47,8 +48,11 @@ object Registration {
 
 }
 
-abstract class Registration private[registry] (jobSpec: JobSpec, replyTo: ActorRef)
-  extends Actor with ActorLogging with Stash {
+abstract class Registration private[registry] (jobSpec: JobSpec,
+                                               replyTo: ActorRef)
+    extends Actor
+    with ActorLogging
+    with Stash {
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
@@ -75,7 +79,8 @@ abstract class Registration private[registry] (jobSpec: JobSpec, replyTo: ActorR
       finish()
 
     case ReceiveTimeout =>
-      log.error("Timed out whilst awaiting for the job '{}' to be accepted.", jobId)
+      log.error("Timed out whilst awaiting for the job '{}' to be accepted.",
+                jobId)
       replyTo ! JobRejected(jobId, ExceptionThrown.from(new TimeoutException))
       finish()
   }
@@ -86,13 +91,16 @@ abstract class Registration private[registry] (jobSpec: JobSpec, replyTo: ActorR
   }
 
   protected def finish(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name,
+                                                     self)
     context become stopping
   }
 
 }
 
-class SimpleRegistration private[registry] (jobSpec: JobSpec, shardsGuardian: ActorRef, replyTo: ActorRef)
+class SimpleRegistration private[registry] (jobSpec: JobSpec,
+                                            shardsGuardian: ActorRef,
+                                            replyTo: ActorRef)
     extends Registration(jobSpec, replyTo) {
 
   override def startRegistration: Receive = {
@@ -103,8 +111,12 @@ class SimpleRegistration private[registry] (jobSpec: JobSpec, shardsGuardian: Ac
 }
 
 class JarRegistration private[registry] (
-    jobSpec: JobSpec, artifactId: ArtifactId, shardsGuardian: ActorRef, replyTo: ActorRef
-  )(implicit resolver: Resolver[IO]) extends Registration(jobSpec, replyTo) {
+    jobSpec: JobSpec,
+    artifactId: ArtifactId,
+    shardsGuardian: ActorRef,
+    replyTo: ActorRef
+)(implicit resolver: Resolver[IO])
+    extends Registration(jobSpec, replyTo) {
 
   override def startRegistration: Receive = {
     import context.dispatcher
@@ -120,13 +132,18 @@ class JarRegistration private[registry] (
 
   def resolvingArtifact: Receive = {
     case Validated.Valid(_) =>
-      log.debug("Artifact {} for job '{}' has been successfully resolved.", artifactId, jobId)
+      log.debug("Artifact {} for job '{}' has been successfully resolved.",
+                artifactId,
+                jobId)
       shardsGuardian ! PersistentJob.CreateJob(jobId, jobSpec)
       context.setReceiveTimeout(10 seconds)
       context become awaitAcceptance
 
     case Validated.Invalid(cause @ MissingDependencies(_)) =>
-      log.error("Couldn't validate the artifact {} for job '{}'. Reason: {}", artifactId, jobId, cause)
+      log.error("Couldn't validate the artifact {} for job '{}'. Reason: {}",
+                artifactId,
+                jobId,
+                cause)
       replyTo ! JobRejected(jobId, cause)
       finish()
   }

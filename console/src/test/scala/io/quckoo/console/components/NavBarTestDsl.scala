@@ -35,9 +35,11 @@ object NavBarTestDsl {
   val dsl = Dsl[Unit, NavBarObserver, State]
 
   def selectItem(item: Symbol): dsl.Actions =
-    dsl.action(s"Select nav item $item")(Simulate click _.obs.navItems(item)).
-      updateState(State.currentItem.set(Some(item)))
+    dsl
+      .action(s"Select nav item $item")(Simulate click _.obs.navItems(item))
+      .updateState(State.currentItem.set(Some(item)))
 
-  val currentItem = dsl.focus("Current selected item").value(_.obs.activeNavItem)
+  val currentItem =
+    dsl.focus("Current selected item").value(_.obs.activeNavItem)
 
 }

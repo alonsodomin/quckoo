@@ -40,13 +40,15 @@ object JobForm {
   final case class Props(handler: Handler)
 
   @Lenses final case class EditableJobSpec(
-    displayName: Option[String] = None,
-    description: Option[String] = None,
-    jobPackage: Option[JobPackage] = None
+      displayName: Option[String] = None,
+      description: Option[String] = None,
+      jobPackage: Option[JobPackage] = None
   ) {
 
     def this(jobSpec: Option[JobSpec]) =
-      this(jobSpec.map(_.displayName), jobSpec.flatMap(_.description), jobSpec.map(_.jobPackage))
+      this(jobSpec.map(_.displayName),
+           jobSpec.flatMap(_.description),
+           jobSpec.map(_.jobPackage))
 
     def valid: Boolean =
       displayName.nonEmpty && jobPackage.nonEmpty
@@ -60,21 +62,22 @@ object JobForm {
       cancelled: Boolean = true
   )
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     val displayName = State.spec ^|-> EditableJobSpec.displayName
     val description = State.spec ^|-> EditableJobSpec.description
-    val jobPackage  = State.spec ^|-> EditableJobSpec.jobPackage
+    val jobPackage = State.spec ^|-> EditableJobSpec.jobPackage
 
     // Event handlers
 
     def onModalClosed(props: Props): Callback = {
-      def jobSpec(state: State): Option[JobSpec] = if (!state.cancelled) {
-        for {
-          name  <- state.spec.displayName
-          pckg  <- state.spec.jobPackage
-        } yield JobSpec(name, state.spec.description, pckg)
-      } else None
+      def jobSpec(state: State): Option[JobSpec] =
+        if (!state.cancelled) {
+          for {
+            name <- state.spec.displayName
+            pckg <- state.spec.jobPackage
+          } yield JobSpec(name, state.spec.description, pckg)
+        } else None
 
       $.modState(_.copy(visible = false)) >> $.state.map(jobSpec) >>= props.handler
     }
@@ -85,7 +88,10 @@ object JobForm {
       $.modState(_.copy(cancelled = false))
 
     def editJob(jobSpec: Option[JobSpec]): Callback =
-      $.setState(State(spec = new EditableJobSpec(jobSpec), visible = true, readOnly = jobSpec.isDefined))
+      $.setState(
+        State(spec = new EditableJobSpec(jobSpec),
+              visible = true,
+              readOnly = jobSpec.isDefined))
 
     // Rendering
 
@@ -93,30 +99,43 @@ object JobForm {
     private[this] val DescriptionInput = Input[String]
 
     def render(props: Props, state: State) = {
-      <.form(^.name := "jobDetails", ^.`class` := "form-horizontal",
+      <.form(
+        ^.name := "jobDetails",
+        ^.`class` := "form-horizontal",
         if (state.visible) {
           Modal(
             Modal.Props(
-              header = hide => <.span(
-                <.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close),
-                <.h4("Register Job")
+              header = hide =>
+                <.span(
+                  <.button(^.tpe := "button",
+                           lookAndFeel.close,
+                           ^.onClick --> hide,
+                           Icons.close),
+                  <.h4("Register Job")
               ),
-              footer = hide => <.span(
-                Button(Button.Props(
-                  Some(hide),
-                  style = ContextStyle.default
-                ), "Cancel"),
-                Button(Button.Props(
-                  Some(submitForm() >> hide),
-                  style = ContextStyle.primary,
-                  disabled = state.readOnly || !state.spec.valid
-                ), "Save")
+              footer = hide =>
+                <.span(
+                  Button(Button.Props(
+                           Some(hide),
+                           style = ContextStyle.default
+                         ),
+                         "Cancel"),
+                  Button(Button.Props(
+                           Some(submitForm() >> hide),
+                           style = ContextStyle.primary,
+                           disabled = state.readOnly || !state.spec.valid
+                         ),
+                         "Save")
               ),
               onClosed = onModalClosed(props)
             ),
-            <.div(lnf.formGroup,
-              <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "displayName", "Display Name"),
-              <.div(^.`class` := "col-sm-10",
+            <.div(
+              lnf.formGroup,
+              <.label(^.`class` := "col-sm-2 control-label",
+                      ^.`for` := "displayName",
+                      "Display Name"),
+              <.div(
+                ^.`class` := "col-sm-10",
                 DisplayNameInput(
                   state.spec.displayName,
                   $.setStateL(displayName)(_),
@@ -126,9 +145,13 @@ object JobForm {
                 )
               )
             ),
-            <.div(lnf.formGroup,
-              <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "description", "Description"),
-              <.div(^.`class` := "col-sm-10",
+            <.div(
+              lnf.formGroup,
+              <.label(^.`class` := "col-sm-2 control-label",
+                      ^.`for` := "description",
+                      "Description"),
+              <.div(
+                ^.`class` := "col-sm-10",
                 DescriptionInput(
                   state.spec.description,
                   $.setStateL(description)(_),
@@ -138,7 +161,9 @@ object JobForm {
                 )
               )
             ),
-            JobPackageSelect(state.spec.jobPackage, $.setStateL(jobPackage)(_), state.readOnly)
+            JobPackageSelect(state.spec.jobPackage,
+                             $.setStateL(jobPackage)(_),
+                             state.readOnly)
           )
         } else EmptyVdom
       )
@@ -146,7 +171,8 @@ object JobForm {
 
   }
 
-  private[registry] val component = ScalaComponent.builder[Props]("JobForm")
+  private[registry] val component = ScalaComponent
+    .builder[Props]("JobForm")
     .initialState(State(new EditableJobSpec(None)))
     .renderBackend[Backend]
     .build

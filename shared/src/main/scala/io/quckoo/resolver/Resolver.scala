@@ -32,7 +32,8 @@ trait Resolver[F[_]] {
 
 }
 
-class InjectableResolver[F[_]](implicit inject: Inject[ResolverOp, F]) extends Resolver[Free[F, ?]] {
+class InjectableResolver[F[_]](implicit inject: Inject[ResolverOp, F])
+    extends Resolver[Free[F, ?]] {
 
   override def validate(artifactId: ArtifactId): Free[F, Resolved[ArtifactId]] =
     Free.inject[ResolverOp, F](ResolverOp.Validate(artifactId))
@@ -44,7 +45,8 @@ class InjectableResolver[F[_]](implicit inject: Inject[ResolverOp, F]) extends R
 
 object InjectableResolver {
 
-  implicit def injectableResolver[F[_]](implicit inject: Inject[ResolverOp, F]): InjectableResolver[F] =
+  implicit def injectableResolver[F[_]](
+      implicit inject: Inject[ResolverOp, F]): InjectableResolver[F] =
     new InjectableResolver[F]
 
 }

@@ -38,24 +38,24 @@ object Button {
 
   final case class State(enabled: Boolean = true)
 
-  val component = ScalaComponent.builder[Props]("Button")
+  val component = ScalaComponent
+    .builder[Props]("Button")
     .renderPC { (_, p, children) =>
       val buttonType = if (p.onClick.isEmpty) "submit" else "button"
-      <.button(
-        lookAndFeel.buttonOpt(p.style),
-        p.addStyles.toTagMod,
-        ^.tpe := buttonType,
-        ^.onClick -->? p.onClick,
-        (^.disabled := true).when(p.disabled),
-        children)
+      <.button(lookAndFeel.buttonOpt(p.style),
+               p.addStyles.toTagMod,
+               ^.tpe := buttonType,
+               ^.onClick -->? p.onClick,
+               (^.disabled := true).when(p.disabled),
+               children)
     }
     .build
 
   def apply(onClick: Option[Callback] = None,
-      disabled: Boolean = false,
-      style: ContextStyle.Value = ContextStyle.default,
-      addStyles: Seq[StyleA] = Seq()
-    ) = component(Props(onClick, disabled, style, addStyles)) _
+            disabled: Boolean = false,
+            style: ContextStyle.Value = ContextStyle.default,
+            addStyles: Seq[StyleA] = Seq()) =
+    component(Props(onClick, disabled, style, addStyles)) _
 
   def apply(props: Props, children: VdomNode*) = component(props)(children: _*)
 

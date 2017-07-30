@@ -51,7 +51,10 @@ object RegistryPage {
 
     def jobEdited(spec: Option[JobSpec]): Callback = {
       def dispatchAction(props: Props): Callback =
-        spec.map(RegisterJob).map(props.proxy.dispatchCB[RegisterJob]).getOrElse(Callback.empty)
+        spec
+          .map(RegisterJob)
+          .map(props.proxy.dispatchCB[RegisterJob])
+          .getOrElse(Callback.empty)
 
       $.props >>= dispatchAction
     }
@@ -63,16 +66,15 @@ object RegistryPage {
         Style.content,
         <.h2("Registry"),
         jobFormRef.component(JobForm.Props(jobEdited)),
-        connector(JobSpecList(_,
-          editJob(None),
-          jobSpec => editJob(Some(jobSpec))
-        ))
+        connector(
+          JobSpecList(_, editJob(None), jobSpec => editJob(Some(jobSpec))))
       )
     }
 
   }
 
-  private[this] val component = ScalaComponent.builder[Props]("RegistryPage")
+  private[this] val component = ScalaComponent
+    .builder[Props]("RegistryPage")
     .stateless
     .renderBackend[Backend]
     .build

@@ -21,25 +21,26 @@ package io.quckoo.cluster
   */
 package object config {
 
-  final val AkkaRemoteNettyHost     = "akka.remote.netty.tcp.hostname"
-  final val AkkaRemoteNettyPort     = "akka.remote.netty.tcp.port"
+  final val AkkaRemoteNettyHost = "akka.remote.netty.tcp.hostname"
+  final val AkkaRemoteNettyPort = "akka.remote.netty.tcp.port"
   final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
   final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
 
   final val AkkaClusterSeedNodes = "akka.cluster.seed-nodes"
 
-  final val CassandraJournalContactPoints  = "cassandra-journal.contact-points"
-  final val CassandraSnapshotContactPoints = "cassandra-snapshot-store.contact-points"
+  final val CassandraJournalContactPoints = "cassandra-journal.contact-points"
+  final val CassandraSnapshotContactPoints =
+    "cassandra-snapshot-store.contact-points"
 
   final val QuckooHttpBindInterface = "quckoo.http.bind-interface"
-  final val QuckooHttpBindPort      = "quckoo.http.bind-port"
+  final val QuckooHttpBindPort = "quckoo.http.bind-port"
 
   final val HostAndPort = """(.+?):(\d+)""".r
 
   final val DefaultHttpInterface = "0.0.0.0"
-  final val DefaultHttpPort      = 8095
+  final val DefaultHttpPort = 8095
 
   final val DefaultTcpInterface = "127.0.0.1"
-  final val DefaultTcpPort      = 2551
+  final val DefaultTcpPort = 2551
 
 }

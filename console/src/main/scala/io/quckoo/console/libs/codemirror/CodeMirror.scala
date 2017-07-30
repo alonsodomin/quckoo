@@ -29,11 +29,14 @@ import scala.scalajs.js.annotation._
 @JSGlobal
 object CodeMirror extends js.Object {
 
-  def apply(element: Element, options: js.Any = js.Dynamic.literal()): CodeMirror = js.native
+  def apply(element: Element,
+            options: js.Any = js.Dynamic.literal()): CodeMirror = js.native
 
   def defaults: js.Dynamic = js.native
 
-  def fromTextArea(textArea: TextArea, options: js.Any = js.Dynamic.literal()): TACodeMirror = js.native
+  def fromTextArea(textArea: TextArea,
+                   options: js.Any = js.Dynamic.literal()): TACodeMirror =
+    js.native
 
   def version: String = js.native
 
@@ -70,11 +73,12 @@ trait CodeMirror extends js.Object {
   def getValue(separator: js.UndefOr[String] = null): String = js.native
   def setValue(content: String): Unit = js.native
 
-  def setSize(width: Width, height: Height): Unit  = js.native
+  def setSize(width: Width, height: Height): Unit = js.native
 
   def refresh(): Unit = js.native
 
-  def on(`type`: String, handler: js.Function2[CodeMirror, js.Any, _]): Unit = js.native
+  def on(`type`: String, handler: js.Function2[CodeMirror, js.Any, _]): Unit =
+    js.native
 
 }
 

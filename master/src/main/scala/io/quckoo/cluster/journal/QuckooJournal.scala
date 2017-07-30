@@ -29,7 +29,8 @@ trait QuckooJournal {
 
   protected val journalId: String
 
-  lazy val read = PersistenceQuery(actorSystem).readJournalFor[ReadRepr](journalId)
+  lazy val read =
+    PersistenceQuery(actorSystem).readJournalFor[ReadRepr](journalId)
 
   def firstOffset: Offset
 

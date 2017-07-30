@@ -29,14 +29,19 @@ import slogging._
 package object ivy extends StrictLogging {
   import scala.language.implicitConversions
 
-  private[ivy] implicit def convertConfig2Settings(config: IvyConfig): IvySettings = {
+  private[ivy] implicit def convertConfig2Settings(
+      config: IvyConfig): IvySettings = {
     implicit val ivySettings = new IvySettings()
     ivySettings.setBaseDir(config.baseDir)
-    ivySettings.setDefaultResolutionCacheBasedir(config.resolutionCacheDir.getAbsolutePath)
-    ivySettings.setDefaultRepositoryCacheBasedir(config.repositoryCacheDir.getAbsolutePath)
+    ivySettings.setDefaultResolutionCacheBasedir(
+      config.resolutionCacheDir.getAbsolutePath)
+    ivySettings.setDefaultRepositoryCacheBasedir(
+      config.repositoryCacheDir.getAbsolutePath)
 
-    logger.debug(s"Using default cache dir: ${ivySettings.getDefaultResolutionCacheBasedir}")
-    logger.debug(s"Using default repository dir: ${ivySettings.getDefaultRepositoryCacheBasedir}")
+    logger.debug(
+      s"Using default cache dir: ${ivySettings.getDefaultResolutionCacheBasedir}")
+    logger.debug(
+      s"Using default repository dir: ${ivySettings.getDefaultRepositoryCacheBasedir}")
 
     config.ivyHome match {
       case Some(home) => ivySettings.setDefaultIvyUserDir(home)

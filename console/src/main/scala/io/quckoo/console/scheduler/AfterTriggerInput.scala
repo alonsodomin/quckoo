@@ -30,8 +30,11 @@ import scala.concurrent.duration.FiniteDuration
   */
 object AfterTriggerInput {
 
-  case class Props(value: Option[Trigger.After], onUpdate: Option[Trigger.After] => Callback, readOnly: Boolean)
-  implicit val propsReuse = Reusability.by[Props, Option[Trigger.After]](_.value)
+  case class Props(value: Option[Trigger.After],
+                   onUpdate: Option[Trigger.After] => Callback,
+                   readOnly: Boolean)
+  implicit val propsReuse =
+    Reusability.by[Props, Option[Trigger.After]](_.value)
 
   class Backend($ : BackendScope[Props, Unit]) {
 
@@ -42,18 +45,25 @@ object AfterTriggerInput {
       <.div(
         ^.`class` := "form-group",
         <.label(^.`class` := "col-sm-2 control-label", "Delay"),
-        <.div(
-          ^.`class` := "col-sm-10",
-          FiniteDurationInput("afterTrigger", props.value.map(_.delay), onUpdate, props.readOnly)))
+        <.div(^.`class` := "col-sm-10",
+              FiniteDurationInput("afterTrigger",
+                                  props.value.map(_.delay),
+                                  onUpdate,
+                                  props.readOnly))
+      )
 
   }
 
-  val component = ScalaComponent.builder[Props]("AfterTriggerInput").stateless
+  val component = ScalaComponent
+    .builder[Props]("AfterTriggerInput")
+    .stateless
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[Trigger.After], onUpdate: Option[Trigger.After] => Callback, readOnly: Boolean = false) =
+  def apply(value: Option[Trigger.After],
+            onUpdate: Option[Trigger.After] => Callback,
+            readOnly: Boolean = false) =
     component(Props(value, onUpdate, readOnly))
 
 }

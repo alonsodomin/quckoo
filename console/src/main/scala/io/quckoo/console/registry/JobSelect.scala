@@ -35,10 +35,13 @@ object JobSelect {
                    onUpdate: Option[JobId] => Callback,
                    readOnly: Boolean = false)
 
-  private[this] val JobOption = ScalaComponent.builder[(JobId, JobSpec)]("JobOption").stateless.render_P {
-    case (jobId, spec) =>
-      val desc = spec.description.map(text => s"| $text").getOrElse("")
-      <.option(^.value := jobId.toString(), s"${spec.displayName} $desc")
+  private[this] val JobOption = ScalaComponent
+    .builder[(JobId, JobSpec)]("JobOption")
+    .stateless
+    .render_P {
+      case (jobId, spec) =>
+        val desc = spec.description.map(text => s"| $text").getOrElse("")
+        <.option(^.value := jobId.toString(), s"${spec.displayName} $desc")
   } build
 
   class Backend($ : BackendScope[Props, Unit]) {
@@ -53,11 +56,15 @@ object JobSelect {
     }
 
     def render(props: Props) = {
-      <.div(lnf.formGroup,
-        <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobId", "Job"),
+      <.div(
+        lnf.formGroup,
+        <.label(^.`class` := "col-sm-2 control-label",
+                ^.`for` := "jobId",
+                "Job"),
         <.div(
           ^.`class` := "col-sm-10",
-          <.select(lnf.formControl,
+          <.select(
+            lnf.formControl,
             ^.id := "jobId",
             props.value.map(id => ^.value := id.toString()).whenDefined,
             ^.onChange ==> onUpdate,
@@ -66,7 +73,8 @@ object JobSelect {
             <.option("Select a job"),
             props.jobs
               .filter(!_._2.disabled)
-              .toVdomArray(jobPair => JobOption.withKey(jobPair._1.toString)(jobPair))
+              .toVdomArray(jobPair =>
+                JobOption.withKey(jobPair._1.toString)(jobPair))
           )
         )
       )
@@ -74,7 +82,8 @@ object JobSelect {
 
   }
 
-  val Component = ScalaComponent.builder[Props]("JobSelect")
+  val Component = ScalaComponent
+    .builder[Props]("JobSelect")
     .stateless
     .renderBackend[Backend]
     .build
@@ -82,6 +91,7 @@ object JobSelect {
   def apply(jobs: Map[JobId, JobSpec],
             value: Option[JobId],
             onUpdate: Option[JobId] => Callback,
-            readOnly: Boolean = false) = Component(Props(jobs, value, onUpdate, readOnly))
+            readOnly: Boolean = false) =
+    Component(Props(jobs, value, onUpdate, readOnly))
 
 }

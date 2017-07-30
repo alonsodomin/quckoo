@@ -32,7 +32,9 @@ import scalacss.ScalaCssReact._
   */
 object Modal {
 
-  case class Options(backdrop: Boolean = true, keyboard: Boolean = true, show: Boolean = true)
+  case class Options(backdrop: Boolean = true,
+                     keyboard: Boolean = true,
+                     show: Boolean = true)
 
   case class Props(header: Callback => VdomNode,
                    footer: Callback => VdomNode,
@@ -54,13 +56,14 @@ object Modal {
           js.Dynamic.literal(
             "backdrop" -> props.options.backdrop,
             "keyboard" -> props.options.keyboard,
-            "show"     -> props.options.show
+            "show" -> props.options.show
           )
         )
         // $COVERAGE-ON$
       }
 
-      def registerListener(name: String, handler: Listener)(modal: RawModal): RawModal =
+      def registerListener(name: String, handler: Listener)(
+          modal: RawModal): RawModal =
         modal.on(name, null, null, handler)
 
       val actions = initJS
@@ -78,13 +81,14 @@ object Modal {
 
     // Actions
 
-    private def invokeCmd(cmd: String): Callback = $.getDOMNode.map { node =>
-      jQuery(node).modal(cmd)
-    } void
+    private def invokeCmd(cmd: String): Callback =
+      $.getDOMNode.map { node =>
+        jQuery(node).modal(cmd)
+      } void
 
-    def toggle() : Callback = invokeCmd("toggle")
-    def show()   : Callback = invokeCmd("show")
-    def hide()   : Callback = invokeCmd("hide")
+    def toggle(): Callback = invokeCmd("toggle")
+    def show(): Callback = invokeCmd("show")
+    def hide(): Callback = invokeCmd("hide")
 
     // Rendering
 
@@ -97,22 +101,27 @@ object Modal {
         ^.aria.hidden := true,
         <.div(
           modalStyle.dialog,
-          <.div(
-            modalStyle.content,
-            <.div(modalStyle.header, props.header(hide())),
-            <.div(modalStyle.body, children),
-            <.div(modalStyle.footer, props.footer(hide())))))
+          <.div(modalStyle.content,
+                <.div(modalStyle.header, props.header(hide())),
+                <.div(modalStyle.body, children),
+                <.div(modalStyle.footer, props.footer(hide())))
+        )
+      )
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("Modal")
+  val Component = ScalaComponent
+    .builder[Props]("Modal")
     .renderBackendWithChildren[Backend]
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
-  def apply(header: Callback => VdomNode, footer: Callback => VdomNode, onClosed: Callback,
-    onShown: Option[Callback] = None, options: Options = Options()) =
-      Component(Props(header, footer, onClosed, onShown, options)) _
+  def apply(header: Callback => VdomNode,
+            footer: Callback => VdomNode,
+            onClosed: Callback,
+            onShown: Option[Callback] = None,
+            options: Options = Options()) =
+    Component(Props(header, footer, onClosed, onShown, options)) _
 
   def apply(props: Props, children: VdomNode*) = Component(props)(children: _*)
 }

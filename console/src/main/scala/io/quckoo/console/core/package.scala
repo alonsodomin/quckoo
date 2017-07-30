@@ -26,7 +26,8 @@ import scala.language.implicitConversions
   */
 package object core {
 
-  implicit def action2Effect[A: ActionType](action: => A)(implicit ec: ExecutionContext): Effect =
+  implicit def action2Effect[A: ActionType](action: => A)(
+      implicit ec: ExecutionContext): Effect =
     Effect.action[A](action)
 
 }

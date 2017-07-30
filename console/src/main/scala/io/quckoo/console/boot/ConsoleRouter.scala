@@ -44,7 +44,7 @@ object ConsoleRouter {
       import dsl._
 
       (emptyRule
-        | staticRoute(root,     Root)  ~> redirectToPage(Dashboard)(Redirect.Push)
+        | staticRoute(root, Root) ~> redirectToPage(Dashboard)(Redirect.Push)
         | staticRoute("#login", Login) ~> render(LoginPage(proxy)))
     }
 
@@ -59,13 +59,14 @@ object ConsoleRouter {
         Some(render(LoginPage(proxy, Some(referral))))
 
       (emptyRule
-        | staticRoute("#home",      Dashboard) ~> render(DashboardPage(proxy))
-        | staticRoute("#registry",  Registry)  ~> render(RegistryPage(proxy))
+        | staticRoute("#home", Dashboard) ~> render(DashboardPage(proxy))
+        | staticRoute("#registry", Registry) ~> render(RegistryPage(proxy))
         | staticRoute("#scheduler", Scheduler) ~> render(SchedulerPage(proxy)))
         .addCondition(isLoggedIn)(redirectToLogin)
     }
 
-  def config(proxy: ModelProxy[ConsoleScope], logStream: Observable[LogRecord]) =
+  def config(proxy: ModelProxy[ConsoleScope],
+             logStream: Observable[LogRecord]) =
     RouterConfigDsl[ConsoleRoute].buildConfig { dsl =>
       import dsl._
 

@@ -47,12 +47,13 @@ object ExecutionPlanForm {
   type Handler = Option[ScheduleJob] => Callback
 
   @Lenses final case class EditableExecutionPlan(
-    jobId: Option[JobId] = None,
-    trigger: Option[Trigger] = None
+      jobId: Option[JobId] = None,
+      trigger: Option[Trigger] = None
   ) {
 
     def this(plan: Option[ExecutionPlan]) =
-      this(plan.map(_.jobId), plan.map(_.trigger).orElse(Some(Trigger.Immediate)))
+      this(plan.map(_.jobId),
+           plan.map(_.trigger).orElse(Some(Trigger.Immediate)))
 
     def valid: Boolean =
       jobId.nonEmpty && trigger.nonEmpty
@@ -72,24 +73,26 @@ object ExecutionPlanForm {
       cancelled: Boolean = true
   )
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
-    val jobId   = State.plan ^|-> EditableExecutionPlan.jobId
+    val jobId = State.plan ^|-> EditableExecutionPlan.jobId
     val trigger = State.plan ^|-> EditableExecutionPlan.trigger
     val timeout = State.timeout
 
     private[ExecutionPlanForm] def initialize(props: Props) =
-      Callback.when(props.proxy().size == 0)(props.proxy.dispatchCB(LoadJobSpecs))
+      Callback.when(props.proxy().size == 0)(
+        props.proxy.dispatchCB(LoadJobSpecs))
 
     // Event handlers
 
     def onModalClosed(props: Props): Callback = {
-      def command(state: State): Option[ScheduleJob] = if (!state.cancelled) {
-        for {
-          jobId   <- state.plan.jobId
-          trigger <- state.plan.trigger
-        } yield ScheduleJob(jobId, trigger, state.timeout)
-      } else None
+      def command(state: State): Option[ScheduleJob] =
+        if (!state.cancelled) {
+          for {
+            jobId <- state.plan.jobId
+            trigger <- state.plan.trigger
+          } yield ScheduleJob(jobId, trigger, state.timeout)
+        } else None
 
       $.modState(_.copy(visible = false)) >> $.state.map(command) >>= props.handler
     }
@@ -107,7 +110,10 @@ object ExecutionPlanForm {
       $.modState(_.copy(cancelled = false))
 
     def editPlan(plan: Option[ExecutionPlan]): Callback =
-      $.setState(State(new EditableExecutionPlan(plan), visible = true, readOnly = plan.isDefined))
+      $.setState(
+        State(new EditableExecutionPlan(plan),
+              visible = true,
+              readOnly = plan.isDefined))
 
     // Rendering
 
@@ -121,26 +127,36 @@ object ExecutionPlanForm {
     def render(props: Props, state: State) = {
       def formHeader(hide: Callback) = {
         <.span(
-          <.button(^.tpe := "button", lnf.close, ^.onClick --> hide, Icons.close),
+          <.button(^.tpe := "button",
+                   lnf.close,
+                   ^.onClick --> hide,
+                   Icons.close),
           <.h4("Execution plan")
         )
       }
 
       def formFooter(hide: Callback) = {
         <.span(
-          Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
-          Button(Button.Props(Some(togglePreview()), style = ContextStyle.default,
-            disabled = jobId.get(state).isEmpty || trigger.get(state).isEmpty),
+          Button(Button.Props(Some(hide), style = ContextStyle.default),
+                 "Cancel"),
+          Button(
+            Button.Props(Some(togglePreview()),
+                         style = ContextStyle.default,
+                         disabled = jobId
+                           .get(state)
+                           .isEmpty || trigger.get(state).isEmpty),
             if (state.showPreview) "Back" else "Preview"
           ),
           Button(Button.Props(Some(submitForm() >> hide),
-            disabled = state.readOnly || !state.plan.valid,
-            style = ContextStyle.primary), "Save"
-          )
+                              disabled = state.readOnly || !state.plan.valid,
+                              style = ContextStyle.primary),
+                 "Save")
         )
       }
 
-      <.form(^.name := "executionPlanForm", ^.`class` := "form-horizontal",
+      <.form(
+        ^.name := "executionPlanForm",
+        ^.`class` := "form-horizontal",
         if (state.visible) {
           Modal(
             Modal.Props(
@@ -150,9 +166,16 @@ object ExecutionPlanForm {
             ),
             if (!state.showPreview) {
               <.div(
-                JobSelect(jobSpecs(props), jobId.get(state), $.setStateL(jobId)(_), readOnly = state.readOnly),
-                TriggerSelect(trigger.get(state), $.setStateL(trigger)(_), readOnly = state.readOnly),
-                ExecutionTimeoutInput(timeout.get(state), $.setStateL(timeout)(_), readOnly = state.readOnly)
+                JobSelect(jobSpecs(props),
+                          jobId.get(state),
+                          $.setStateL(jobId)(_),
+                          readOnly = state.readOnly),
+                TriggerSelect(trigger.get(state),
+                              $.setStateL(trigger)(_),
+                              readOnly = state.readOnly),
+                ExecutionTimeoutInput(timeout.get(state),
+                                      $.setStateL(timeout)(_),
+                                      readOnly = state.readOnly)
                 //ExecutionParameterList(Map.empty, onParamUpdate)
               )
             } else {
@@ -165,7 +188,8 @@ object ExecutionPlanForm {
 
   }
 
-  val component = ScalaComponent.builder[Props]("ExecutionPlanForm")
+  val component = ScalaComponent
+    .builder[Props]("ExecutionPlanForm")
     .initialState(State(EditableExecutionPlan(None)))
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props))

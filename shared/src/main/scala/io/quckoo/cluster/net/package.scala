@@ -30,7 +30,10 @@ import io.quckoo.net._
 package object net {
 
   def masterNodes(cluster: Cluster): Map[NodeId, MasterNode] =
-    cluster.state.members.map(_.toQuckooMember).map(member => member.id -> member).toMap
+    cluster.state.members
+      .map(_.toQuckooMember)
+      .map(member => member.id -> member)
+      .toMap
 
   implicit class RichMember(val member: Member) extends AnyVal {
 
@@ -47,10 +50,12 @@ package object net {
 
   }
 
-  implicit class RichUniqueAddress(val uniqueAddress: UniqueAddress) extends AnyVal {
+  implicit class RichUniqueAddress(val uniqueAddress: UniqueAddress)
+      extends AnyVal {
 
     def toNodeId: NodeId = {
-      val addressUrl = s"${uniqueAddress.address.toString}#${uniqueAddress.longUid}"
+      val addressUrl =
+        s"${uniqueAddress.address.toString}#${uniqueAddress.longUid}"
       NodeId(UUID.nameUUIDFromBytes(addressUrl.getBytes("UTF-8")))
     }
 

@@ -76,19 +76,23 @@ object Boot extends App with LazyLogging {
       }
   }
 
-  private def doStart(settings: WorkerSettings)(implicit system: ActorSystem): Unit = {
+  private def doStart(settings: WorkerSettings)(
+      implicit system: ActorSystem): Unit = {
     val clientSettings = {
       val ccs = ClusterClientSettings(system)
       if (settings.worker.contactPoints.nonEmpty)
         ccs.withInitialContacts(settings.worker.contactPoints.map(_.actorPath))
       else ccs
     }
-    val clusterClient  = system.actorOf(ClusterClient.props(clientSettings), "client")
+    val clusterClient =
+      system.actorOf(ClusterClient.props(clientSettings), "client")
 
     val ivyResolver = IvyResolver(settings.resolver)
     settings.resolver.createFolders()
 
-    system.actorOf(Worker.props(clusterClient, ivyResolver, DefaultTaskExecutorProvider), "worker")
+    system.actorOf(
+      Worker.props(clusterClient, ivyResolver, DefaultTaskExecutorProvider),
+      "worker")
   }
 
   parser.parse(args, CliOptions()).foreach { opts =>

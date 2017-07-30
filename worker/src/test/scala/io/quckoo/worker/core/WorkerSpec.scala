@@ -35,8 +35,8 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 /**
- * Created by domingueza on 21/08/15.
- */
+  * Created by domingueza on 21/08/15.
+  */
 object WorkerSpec {
 
   final val TestSchedulerPath = "/user/quckoo/scheduler"
@@ -46,11 +46,13 @@ object WorkerSpec {
   final val FooArtifact = Artifact(FooArtifactId, List.empty)
 
   final val TestTaskId = TaskId(UUID.randomUUID())
-  final val TestTask = Task(TestTaskId, JobPackage.jar(FooArtifactId, FooJobClass))
+  final val TestTask =
+    Task(TestTaskId, JobPackage.jar(FooArtifactId, FooJobClass))
 
 }
 
-class WorkerSpec extends QuckooActorSuite("WorkerSpec")
+class WorkerSpec
+    extends QuckooActorSuite("WorkerSpec")
     with ImplicitSender
     with ScalaFutures {
 
@@ -66,21 +68,25 @@ class WorkerSpec extends QuckooActorSuite("WorkerSpec")
     val executorProps = TestActors.forwardActorProps(executorProbe.ref)
 
     val executorProvider = new TaskExecutorProvider {
-      override def executorFor(context: WorkerContext, task: Task)
-                              (implicit actorRefFactory: ActorRefFactory) = {
+      override def executorFor(context: WorkerContext, task: Task)(
+          implicit actorRefFactory: ActorRefFactory) = {
         actorRefFactory.actorOf(executorProps)
       }
     }
 
     val ackTimeout = 1 second
     val worker = TestActorRef(
-      Worker.props(clusterClientProbe.ref, resolver, executorProvider, 1 day, ackTimeout),
+      Worker.props(clusterClientProbe.ref,
+                   resolver,
+                   executorProvider,
+                   1 day,
+                   ackTimeout),
       "sucessful-worker"
     )
 
     "auto-register itself with the master" in {
       val registration = clusterClientProbe.expectMsgType[SendToAll]
-      registration.path should be (TestSchedulerPath)
+      registration.path should be(TestSchedulerPath)
       registration.msg should matchPattern { case RegisterWorker(_) => }
     }
 
@@ -88,7 +94,7 @@ class WorkerSpec extends QuckooActorSuite("WorkerSpec")
       worker ! TaskReady
 
       val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
-      queueMsg.path should be (TestSchedulerPath)
+      queueMsg.path should be(TestSchedulerPath)
       queueMsg.msg should matchPattern { case RequestTask(_) => }
     }
 
@@ -99,7 +105,8 @@ class WorkerSpec extends QuckooActorSuite("WorkerSpec")
     }
 
     "reject subsequent tasks if it's busy" in {
-      val anotherTask = Task(TaskId(UUID.randomUUID()), JobPackage.jar(FooArtifactId, FooJobClass))
+      val anotherTask = Task(TaskId(UUID.randomUUID()),
+                             JobPackage.jar(FooArtifactId, FooJobClass))
       worker ! anotherTask
 
       executorProbe.expectNoMsg(500 millis)
@@ -111,17 +118,21 @@ class WorkerSpec extends QuckooActorSuite("WorkerSpec")
       executorProbe.send(worker, TaskExecutor.Completed(result))
 
       val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
-      queueMsg.path should be (TestSchedulerPath)
-      queueMsg.msg should matchPattern { case TaskDone(_, `taskId`, `result`) => }
+      queueMsg.path should be(TestSchedulerPath)
+      queueMsg.msg should matchPattern {
+        case TaskDone(_, `taskId`, `result`) =>
+      }
     }
 
     "resend task done notification if queue doesn't reply whiting the ack timeout" in {
       val taskId = TestTask.id
 
-      val waitingForTimeout = Future { blocking { TimeUnit.SECONDS.sleep(ackTimeout.toSeconds) } }
+      val waitingForTimeout = Future {
+        blocking { TimeUnit.SECONDS.sleep(ackTimeout.toSeconds) }
+      }
       whenReady(waitingForTimeout, Timeout(Span(2, Seconds))) { _ =>
         val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
-        queueMsg.path should be (TestSchedulerPath)
+        queueMsg.path should be(TestSchedulerPath)
         queueMsg.msg should matchPattern { case TaskDone(_, `taskId`, _) => }
       }
     }
@@ -132,10 +143,12 @@ class WorkerSpec extends QuckooActorSuite("WorkerSpec")
 
       worker ! TaskDoneAck(anotherTaskId)
 
-      val waitingForTimeout = Future { blocking { TimeUnit.SECONDS.sleep(ackTimeout.toSeconds) } }
+      val waitingForTimeout = Future {
+        blocking { TimeUnit.SECONDS.sleep(ackTimeout.toSeconds) }
+      }
       whenReady(waitingForTimeout, Timeout(Span(2, Seconds))) { _ =>
         val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
-        queueMsg.path should be (TestSchedulerPath)
+        queueMsg.path should be(TestSchedulerPath)
         queueMsg.msg should matchPattern { case TaskDone(_, `taskId`, _) => }
       }
     }
@@ -146,7 +159,7 @@ class WorkerSpec extends QuckooActorSuite("WorkerSpec")
       worker ! TaskDoneAck(taskId)
 
       val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
-      queueMsg.path should be (TestSchedulerPath)
+      queueMsg.path should be(TestSchedulerPath)
       queueMsg.msg should matchPattern { case RequestTask(_) => }
     }
 
@@ -161,8 +174,10 @@ class WorkerSpec extends QuckooActorSuite("WorkerSpec")
       executorProbe.send(worker, TaskExecutor.Failed(expectedError))
 
       val queueMsg = clusterClientProbe.expectMsgType[SendToAll]
-      queueMsg.path should be (TestSchedulerPath)
-      queueMsg.msg should matchPattern { case TaskFailed(_, `taskId`, `expectedError`) => }
+      queueMsg.path should be(TestSchedulerPath)
+      queueMsg.msg should matchPattern {
+        case TaskFailed(_, `taskId`, `expectedError`) =>
+      }
     }
 
   }

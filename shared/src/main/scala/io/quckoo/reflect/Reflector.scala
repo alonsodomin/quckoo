@@ -29,9 +29,11 @@ trait Reflector[F[_]] {
   def runJob(job: Job): F[Unit]
 }
 
-class InjectableReflector[F[_]](implicit inject: Inject[ReflectOp, F]) extends Reflector[Free[F, ?]] {
+class InjectableReflector[F[_]](implicit inject: Inject[ReflectOp, F])
+    extends Reflector[Free[F, ?]] {
 
-  override def loadJobClass(artifact: Artifact, className: String): Free[F, JobClass] =
+  override def loadJobClass(artifact: Artifact,
+                            className: String): Free[F, JobClass] =
     Free.inject[ReflectOp, F](ReflectOp.LoadJobClass(artifact, className))
 
   override def createJob(jobClass: JobClass): Free[F, Job] =
@@ -42,6 +44,7 @@ class InjectableReflector[F[_]](implicit inject: Inject[ReflectOp, F]) extends R
 
 }
 object InjectableReflector {
-  implicit def injectableReflector[F[_]](implicit inject: Inject[ReflectOp, F]): InjectableReflector[F] =
+  implicit def injectableReflector[F[_]](
+      implicit inject: Inject[ReflectOp, F]): InjectableReflector[F] =
     new InjectableReflector[F]
 }

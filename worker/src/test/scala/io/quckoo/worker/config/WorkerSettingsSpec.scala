@@ -32,7 +32,8 @@ class WorkerSettingsSpec extends FlatSpec with Matchers with Inside {
 
     val returnedSettings = WorkerSettings(config)
     inside(returnedSettings) {
-      case Success(settings) => settings.worker.contactPoints should not be empty
+      case Success(settings) =>
+        settings.worker.contactPoints should not be empty
     }
   }
 

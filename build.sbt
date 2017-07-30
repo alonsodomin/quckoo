@@ -1,52 +1,58 @@
 import sbt._
 import sbt.Keys._
 
+import sbtcrossproject.{crossProject, CrossType}
 import com.typesafe.sbt.pgp.PgpKeys
-
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
-lazy val sandbox  = settingKey[String]("The name of the environment sandbox to use.")
-lazy val botBuild = settingKey[Boolean]("Build by TravisCI instead of local dev environment")
+lazy val sandbox =
+  settingKey[String]("The name of the environment sandbox to use.")
+lazy val botBuild =
+  settingKey[Boolean]("Build by TravisCI instead of local dev environment")
 
-inThisBuild(Seq(
-  scalaVersion := "2.12.3",
-  parallelExecution := false
-))
+inThisBuild(
+  Seq(
+    scalaVersion := "2.12.3",
+    parallelExecution := false,
+    scalafmtVersion := "1.1.0",
+    scalafmtOnCompile := true
+  ))
 
 lazy val commonSettings = Seq(
-    licenses += ("Apache-2.0", url(
-      "https://www.apache.org/licenses/LICENSE-2.0.txt")),
-    organization := "io.quckoo",
-    organizationName := "A. Alonso Dominguez",
-    startYear := Some(2015),
-    scmInfo := Some(ScmInfo(
+  licenses += ("Apache-2.0", url(
+    "https://www.apache.org/licenses/LICENSE-2.0.txt")),
+  organization := "io.quckoo",
+  organizationName := "A. Alonso Dominguez",
+  startYear := Some(2015),
+  scmInfo := Some(
+    ScmInfo(
       url("https://www.github.com/alonsodomin/quckoo"),
       "scm:git:git@github.com:alonsodomin/quckoo.git"
     )),
-    scalacOptions ++= Seq(
-      "-encoding",
-      "UTF-8",
-      "-language:postfixOps",
-      "-language:higherKinds",
-      "-feature",
-      "-unchecked",
-      "-deprecation",
-      "-Xlint:-unused,_",
-      "-Xfuture",
-      "-Xfatal-warnings",
-      "-Ywarn-dead-code",
-      "-Ywarn-numeric-widen",
-      "-Ypartial-unification"
-    ),
-    resolvers ++= Seq(
-      Opts.resolver.mavenLocalFile,
-      Resolver.bintrayRepo("krasserm", "maven"),
-      Resolver.bintrayRepo("hseeberger", "maven"),
-      Resolver.bintrayRepo("dnvriend", "maven"),
-      Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
-    ),
-    botBuild := scala.sys.env.get("TRAVIS").isDefined
-  )
+  scalacOptions ++= Seq(
+    "-encoding",
+    "UTF-8",
+    "-language:postfixOps",
+    "-language:higherKinds",
+    "-feature",
+    "-unchecked",
+    "-deprecation",
+    "-Xlint:-unused,_",
+    "-Xfuture",
+    "-Xfatal-warnings",
+    "-Ywarn-dead-code",
+    "-Ywarn-numeric-widen",
+    "-Ypartial-unification"
+  ),
+  resolvers ++= Seq(
+    Opts.resolver.mavenLocalFile,
+    Resolver.bintrayRepo("krasserm", "maven"),
+    Resolver.bintrayRepo("hseeberger", "maven"),
+    Resolver.bintrayRepo("dnvriend", "maven"),
+    Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
+  ),
+  botBuild := scala.sys.env.get("TRAVIS").isDefined
+)
 
 lazy val commonJvmSettings = Seq(
   fork in Test := false
@@ -58,7 +64,8 @@ lazy val commonJsSettings = Seq(
   scalaJSStage in Test := FastOptStage,
   jsEnv in Test := PhantomJSEnv().value,
   // batch mode decreases the amount of memory needed to compile scala.js code
-  scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(botBuild.value)
+  scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(
+    botBuild.value)
 )
 
 lazy val scoverageSettings = Seq(
@@ -174,50 +181,54 @@ lazy val quckoo = (project in file("."))
 
 // Core ==================================================
 
-lazy val core = (crossProject.crossType(CrossType.Pure) in file("core"))
-  .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
-  .settings(
-    name := "core",
-    moduleName := "quckoo-core",
-    buildInfoPackage := "io.quckoo",
-    buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
-    buildInfoObject := "Info"
-  )
-  .settings(commonSettings)
-  .settings(scoverageSettings)
-  .settings(publishSettings)
-  .settings(Dependencies.core)
-  .jsSettings(commonJsSettings)
-  .jsSettings(Dependencies.coreJS)
-  .jvmSettings(commonJvmSettings)
-  .jvmSettings(Dependencies.coreJVM)
-  .dependsOn(util, testSupport % Test)
+lazy val core =
+  (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file(
+    "core"))
+    .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
+    .settings(
+      name := "core",
+      moduleName := "quckoo-core",
+      buildInfoPackage := "io.quckoo",
+      buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
+      buildInfoObject := "Info"
+    )
+    .settings(commonSettings)
+    .settings(scoverageSettings)
+    .settings(publishSettings)
+    .settings(Dependencies.core)
+    .jsSettings(commonJsSettings)
+    .jsSettings(Dependencies.coreJS)
+    .jvmSettings(commonJvmSettings)
+    .jvmSettings(Dependencies.coreJVM)
+    .dependsOn(util, testSupport % Test)
 
 lazy val coreJS = core.js
 lazy val coreJVM = core.jvm
 
 // API ==================================================
 
-lazy val api = (crossProject.crossType(CrossType.Pure) in file("api"))
-  .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings)
-  .settings(scoverageSettings)
-  .settings(publishSettings)
-  .settings(Dependencies.api)
-  .jsSettings(commonJsSettings)
-  .jvmSettings(commonJvmSettings)
-  .settings(
-    name := "api",
-    moduleName := "quckoo-api"
-  )
-  .dependsOn(core, testSupport % Test)
+lazy val api =
+  (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file(
+    "api"))
+    .enablePlugins(AutomateHeaderPlugin)
+    .settings(commonSettings)
+    .settings(scoverageSettings)
+    .settings(publishSettings)
+    .settings(Dependencies.api)
+    .jsSettings(commonJsSettings)
+    .jvmSettings(commonJvmSettings)
+    .settings(
+      name := "api",
+      moduleName := "quckoo-api"
+    )
+    .dependsOn(core, testSupport % Test)
 
 lazy val apiJS = api.js
 lazy val apiJVM = api.jvm
 
 // Client ==================================================
 
-lazy val client = (crossProject in file("client"))
+lazy val client = (crossProject(JSPlatform, JVMPlatform) in file("client"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(scoverageSettings)
@@ -302,7 +313,7 @@ lazy val worker = (project in file("worker"))
 
 // Misc Utilities ===========================================
 
-lazy val util = (crossProject in file("util"))
+lazy val util = (crossProject(JSPlatform, JVMPlatform) in file("util"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .jsSettings(commonJsSettings)
@@ -316,18 +327,19 @@ lazy val utilJVM = util.jvm
 
 // Test Support Utilities ===================================
 
-lazy val testSupport = (crossProject in file("test-support"))
-  .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings)
-  .settings(noPublishSettings)
-  .settings(Dependencies.testSupport)
-  .jsSettings(commonJsSettings)
-  .jvmSettings(commonJvmSettings)
-  .jvmSettings(Dependencies.testSupportJVM)
-  .settings(
-    name := "test-support",
-    moduleName := "quckoo-test-support"
-  )
+lazy val testSupport =
+  (crossProject(JSPlatform, JVMPlatform) in file("test-support"))
+    .enablePlugins(AutomateHeaderPlugin)
+    .settings(commonSettings)
+    .settings(noPublishSettings)
+    .settings(Dependencies.testSupport)
+    .jsSettings(commonJsSettings)
+    .jvmSettings(commonJvmSettings)
+    .jvmSettings(Dependencies.testSupportJVM)
+    .settings(
+      name := "test-support",
+      moduleName := "quckoo-test-support"
+    )
 
 lazy val testSupportJS = testSupport.js
 lazy val testSupportJVM = testSupport.jvm
@@ -385,9 +397,26 @@ addCommandAlias(
 )
 
 addCommandAlias(
+  "recompile",
+  Seq(
+    "clean",
+    "test:compile",
+    "master/multi-jvm:compile"
+  ).mkString(";", ";", "")
+)
+
+addCommandAlias(
   "rebuild",
   Seq(
     "clean",
     "validate"
+  ).mkString(";", ";", "")
+)
+
+addCommandAlias(
+  "launchLocal",
+  Seq(
+    "docker:publishLocal",
+    "dockerComposeUp"
   ).mkString(";", ";", "")
 )

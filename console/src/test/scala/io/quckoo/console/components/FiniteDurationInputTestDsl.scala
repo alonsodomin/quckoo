@@ -49,22 +49,31 @@ object FiniteDurationInputTestDsl {
   }
 
   def selectedUnit =
-    dsl.focus("Selected Unit").value(_.obs.selectedUnitOpt.map(opt => TimeUnit.valueOf(opt.value)))
+    dsl
+      .focus("Selected Unit")
+      .value(_.obs.selectedUnitOpt.map(opt => TimeUnit.valueOf(opt.value)))
 
-  def validUnitOffer = dsl.test("Offers valid units")(_.obs.units.containsSlice(
-    Vector(MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS)
-  ))
+  def validUnitOffer =
+    dsl.test("Offers valid units")(
+      _.obs.units.containsSlice(
+        Vector(MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS)
+      ))
 
   def setLength(length: Long) =
-    dsl.action(s"Set length: $length")(SimEvent.Change(length.toString) simulate _.obs.lengthInput)
+    dsl
+      .action(s"Set length: $length")(
+        SimEvent.Change(length.toString) simulate _.obs.lengthInput)
       .updateState(State.length.set(Some(length)))
 
   def clearLength() =
-    dsl.action("Clear length")(SimEvent.Change("") simulate _.obs.lengthInput)
+    dsl
+      .action("Clear length")(SimEvent.Change("") simulate _.obs.lengthInput)
       .updateState(State.length.set(None))
 
   def chooseUnit(unit: TimeUnit) =
-    dsl.action(s"Choose unit: $unit")(SimEvent.Change(unit.name()) simulate _.obs.unitSelect)
+    dsl
+      .action(s"Choose unit: $unit")(
+        SimEvent.Change(unit.name()) simulate _.obs.unitSelect)
       .updateState(State.unit.set(Some(unit)))
 
   def validationMsg =

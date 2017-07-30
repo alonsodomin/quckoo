@@ -43,23 +43,28 @@ sealed trait GenericRepository extends Repository {
   def mavenStyle(): RepositoryType = copy(patterns.mavenStyle())
   def artifacts(artifactPatterns: String*): RepositoryType =
     copy(patterns.withArtifacts(artifactPatterns: _*))
-  def ivys(ivyPatterns: String*): RepositoryType = copy(patterns.withIvys(ivyPatterns: _*))
+  def ivys(ivyPatterns: String*): RepositoryType =
+    copy(patterns.withIvys(ivyPatterns: _*))
 }
 
 final case class MavenRepository(name: String, url: URL) extends Repository {
   type RepositoryType = MavenRepository
 }
 
-final case class URLRepository(name: String, patterns: Patterns) extends GenericRepository {
+final case class URLRepository(name: String, patterns: Patterns)
+    extends GenericRepository {
   type RepositoryType = URLRepository
 
-  override protected def copy(patterns: Patterns): RepositoryType = URLRepository(name, patterns)
+  override protected def copy(patterns: Patterns): RepositoryType =
+    URLRepository(name, patterns)
 }
 
-final case class FileRepository(name: String, patterns: Patterns) extends GenericRepository {
+final case class FileRepository(name: String, patterns: Patterns)
+    extends GenericRepository {
   type RepositoryType = FileRepository
 
-  override protected def copy(patterns: Patterns): RepositoryType = FileRepository(name, patterns)
+  override protected def copy(patterns: Patterns): RepositoryType =
+    FileRepository(name, patterns)
 }
 
 object Repository {
@@ -83,24 +88,27 @@ object Repository {
   }
 
   def sbtLocal(name: String): Repository = {
-    val pList    = ("${" + "ivy.home}/" + name + "/" + sbtStylePattern) :: Nil
+    val pList = ("${" + "ivy.home}/" + name + "/" + sbtStylePattern) :: Nil
     val patterns = Patterns(pList, pList, mavenCompatible = false)
     FileRepository(name, patterns)
   }
 
   object file {
-    def apply(name: String, baseFolder: File)(implicit patterns: Patterns): FileRepository =
+    def apply(name: String, baseFolder: File)(
+        implicit patterns: Patterns): FileRepository =
       repositoryFactory(new File(baseFolder.toURI.normalize).getAbsolutePath)(
         FileRepository(name, _))
   }
 
   object url {
-    def apply(name: String, baseURL: URL)(implicit patterns: Patterns): URLRepository =
-      repositoryFactory(baseURL.toURI.normalize.toURL.toString)(URLRepository(name, _))
+    def apply(name: String, baseURL: URL)(
+        implicit patterns: Patterns): URLRepository =
+      repositoryFactory(baseURL.toURI.normalize.toURL.toString)(
+        URLRepository(name, _))
   }
 
-  private def repositoryFactory[T <: GenericRepository](base: String)(constructor: Patterns => T)(
-      implicit patterns: Patterns): T = {
+  private def repositoryFactory[T <: GenericRepository](base: String)(
+      constructor: Patterns => T)(implicit patterns: Patterns): T = {
     constructor(Patterns.resolvePatterns(base, patterns))
   }
 
@@ -120,12 +128,15 @@ object Repository {
         // Occurs when File does not exist
         case _: IOException => None
         case e: SAXParseException =>
-          System.err.println(s"WARNING: Problem parsing ${f().getAbsolutePath}, ${e.getMessage}");
+          System.err.println(
+            s"WARNING: Problem parsing ${f().getAbsolutePath}, ${e.getMessage}");
           None
       }
 
-    loadHomeFromSettings(() => new File(System.getProperty("user.home"), ".m2/settings.xml")) orElse
-      loadHomeFromSettings(() => new File(new File(System.getenv("M2_HOME")), "conf/settings.xml")) getOrElse
+    loadHomeFromSettings(() =>
+      new File(System.getProperty("user.home"), ".m2/settings.xml")) orElse
+      loadHomeFromSettings(() =>
+        new File(new File(System.getenv("M2_HOME")), "conf/settings.xml")) getOrElse
       new File(System.getProperty("user.home"), ".m2/repository")
   }
 

@@ -27,14 +27,17 @@ import io.quckoo.worker.core.{TaskExecutorProvider, WorkerContext}
   */
 object DefaultTaskExecutorProvider extends TaskExecutorProvider {
 
-  override def executorFor(context: WorkerContext, task: Task)(implicit actorRefFactory: ActorRefFactory): ActorRef =
+  override def executorFor(context: WorkerContext, task: Task)(
+      implicit actorRefFactory: ActorRefFactory): ActorRef =
     task.jobPackage match {
       case jar: JarJobPackage =>
-        val executorProps = configure(JarTaskExecutor.props(context, task.id, jar))
+        val executorProps = configure(
+          JarTaskExecutor.props(context, task.id, jar))
         actorRefFactory.actorOf(executorProps, "jar-executor")
 
       case shell: ShellScriptPackage =>
-        val executorProps = configure(ShellTaskExecutor.props(context, task.id, shell))
+        val executorProps = configure(
+          ShellTaskExecutor.props(context, task.id, shell))
         actorRefFactory.actorOf(executorProps, "shell-executor")
     }
 

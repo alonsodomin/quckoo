@@ -44,20 +44,20 @@ object ExecutionPlanPreview {
           .getOrElse(prev -> false)
       }
 
-      val first  = genNext(ScheduledTime(ZonedDateTime.now(props.clock)))
+      val first = genNext(ScheduledTime(ZonedDateTime.now(props.clock)))
       val stream = Stream.iterate(first) { case (prev, _) => genNext(prev) }
       stream.takeWhile { case (_, continue) => continue } map (_._1.when) take state.maxRows
     }
 
     def onRowsSelectionUpdate(evt: ReactEventFromInput): Callback =
-      evt.extract(_.target.value.toInt)(value => $.modState(_.copy(maxRows = value)))
+      evt.extract(_.target.value.toInt)(value =>
+        $.modState(_.copy(maxRows = value)))
 
     def render(props: Props, state: State) = {
       <.div(
-        <.div(
-          ^.`class` := "form-group",
-          <.label(^.`class` := "col-sm-2", "Trigger"),
-          <.div(^.`class` := "col-sm-10", props.trigger.toString())),
+        <.div(^.`class` := "form-group",
+              <.label(^.`class` := "col-sm-2", "Trigger"),
+              <.div(^.`class` := "col-sm-10", props.trigger.toString())),
         <.div(
           ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2", "Max Rows"),
@@ -70,23 +70,30 @@ object ExecutionPlanPreview {
               ^.onChange ==> onRowsSelectionUpdate,
               <.option(^.value := 10, "10"),
               <.option(^.value := 25, "25"),
-              <.option(^.value := 50, "50")))),
+              <.option(^.value := 50, "50")
+            )
+          )
+        ),
         <.table(
           ^.`class` := "table table-striped",
           <.thead(
             <.tr(<.th("Expected Executions"))
           ),
           <.tbody(
-            generateTimeline(props, state).zipWithIndex.toVdomArray { case (time, idx) =>
-              <.tr(^.key := s"executionplan_timeline_$idx", <.td(DateTimeDisplay(time)))
+            generateTimeline(props, state).zipWithIndex.toVdomArray {
+              case (time, idx) =>
+                <.tr(^.key := s"executionplan_timeline_$idx",
+                     <.td(DateTimeDisplay(time)))
             }
-          ))
+          )
+        )
       )
     }
 
   }
 
-  val component = ScalaComponent.builder[Props]("ExecutionPlanPreview")
+  val component = ScalaComponent
+    .builder[Props]("ExecutionPlanPreview")
     .initialState(State(10))
     .renderBackend[Backend]
     .build

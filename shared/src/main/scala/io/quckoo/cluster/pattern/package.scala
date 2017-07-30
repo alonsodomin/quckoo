@@ -27,9 +27,12 @@ import scala.concurrent.duration.FiniteDuration
   */
 package object pattern {
 
-  def retry[T](f: => Future[T], delay: FiniteDuration, retries: Int)(implicit ec: ExecutionContext,
-                                                                     s: Scheduler): Future[T] = {
-    f recoverWith { case _ if retries > 0 => after(delay, s)(retry(f, delay, retries - 1)) }
+  def retry[T](f: => Future[T], delay: FiniteDuration, retries: Int)(
+      implicit ec: ExecutionContext,
+      s: Scheduler): Future[T] = {
+    f recoverWith {
+      case _ if retries > 0 => after(delay, s)(retry(f, delay, retries - 1))
+    }
   }
 
 }

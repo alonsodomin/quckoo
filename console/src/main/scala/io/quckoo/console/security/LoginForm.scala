@@ -60,24 +60,31 @@ object LoginForm {
         ^.onSubmit ==> submit(handler),
         <.div(
           ^.`class` := "form-group",
-          <.label(^.`for` := "username", ^.`class` := "control-label", "Username"),
-          UsernameInput(state.username, onUsernameChange _, ^.id := "username")),
+          <.label(^.`for` := "username",
+                  ^.`class` := "control-label",
+                  "Username"),
+          UsernameInput(state.username, onUsernameChange _, ^.id := "username")
+        ),
         <.div(
           ^.`class` := "form-group",
-          <.label(^.`for` := "password", ^.`class` := "control-label", "Password"),
-          PasswordInput(state.password, onPasswordChange _, ^.id := "password")),
-        Button(
-          Button.Props(
-            style = ContextStyle.primary,
-            disabled = state.username.isEmpty || state.password.isEmpty
-          ),
-          Icons.signIn,
-          "Sign in"))
+          <.label(^.`for` := "password",
+                  ^.`class` := "control-label",
+                  "Password"),
+          PasswordInput(state.password, onPasswordChange _, ^.id := "password")
+        ),
+        Button(Button.Props(
+                 style = ContextStyle.primary,
+                 disabled = state.username.isEmpty || state.password.isEmpty
+               ),
+               Icons.signIn,
+               "Sign in")
+      )
     }
 
   }
 
-  private[this] val component = ScalaComponent.builder[LoginHandler]("LoginForm")
+  private[this] val component = ScalaComponent
+    .builder[LoginHandler]("LoginForm")
     .initialState(State(None, None))
     .renderBackend[LoginBackend]
     .build

@@ -58,7 +58,8 @@ trait AuthDirectives { auth: Auth =>
     extractExecutionContext { implicit ec =>
       implicit val ev = implicitly[ClassTag[BasicHttpCredentials]]
       val authenticate =
-        authenticateOrRejectWithChallenge[BasicHttpCredentials, Principal](basicHttpAuth)
+        authenticateOrRejectWithChallenge[BasicHttpCredentials, Principal](
+          basicHttpAuth)
       authenticate { (principal: Principal) =>
         completeWithPassport(auth.generatePassport(principal))
       }
@@ -74,13 +75,15 @@ trait AuthDirectives { auth: Auth =>
   private[this] def extractPassport(
       acceptExpired: Boolean = false): AuthenticationDirective[Passport] = {
     def oauth2Http(creds: Option[OAuth2BearerToken])(
-        implicit ec: ExecutionContext): Future[AuthenticationResult[Passport]] = {
+        implicit ec: ExecutionContext)
+      : Future[AuthenticationResult[Passport]] = {
       authenticationResult(auth.bearer(acceptExpired)(Credentials(creds)))
     }
 
     extractExecutionContext.flatMap { implicit ec =>
       implicit val ev = implicitly[ClassTag[OAuth2BearerToken]]
-      authenticateOrRejectWithChallenge[OAuth2BearerToken, Passport](oauth2Http _)
+      authenticateOrRejectWithChallenge[OAuth2BearerToken, Passport](
+        oauth2Http _)
     }
   }
 
@@ -88,6 +91,10 @@ trait AuthDirectives { auth: Auth =>
     complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, passport.token))
 
   def invalidateAuth: Directive0 =
-    setCookie(HttpCookie(AuthCookie, "", path = Some("/"), expires = Some(DateTime.now)))
+    setCookie(
+      HttpCookie(AuthCookie,
+                 "",
+                 path = Some("/"),
+                 expires = Some(DateTime.now)))
 
 }

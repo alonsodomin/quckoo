@@ -22,11 +22,15 @@ import io.quckoo.{QuckooError, NodeId, TaskId}
 sealed trait WorkerMessage {
   def workerId: NodeId
 }
-final case class RegisterWorker(workerId: NodeId)                           extends WorkerMessage
-final case class RemoveWorker(workerId: NodeId)                             extends WorkerMessage
-final case class RequestTask(workerId: NodeId)                              extends WorkerMessage
-final case class TaskDone(workerId: NodeId, taskId: TaskId, result: Any)    extends WorkerMessage
-final case class TaskFailed(workerId: NodeId, taskId: TaskId, cause: QuckooError) extends WorkerMessage
+final case class RegisterWorker(workerId: NodeId) extends WorkerMessage
+final case class RemoveWorker(workerId: NodeId) extends WorkerMessage
+final case class RequestTask(workerId: NodeId) extends WorkerMessage
+final case class TaskDone(workerId: NodeId, taskId: TaskId, result: Any)
+    extends WorkerMessage
+final case class TaskFailed(workerId: NodeId,
+                            taskId: TaskId,
+                            cause: QuckooError)
+    extends WorkerMessage
 
 // Messages to workers
 sealed trait MasterMessage
