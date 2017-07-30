@@ -69,7 +69,7 @@ class ProcessRunner(command: String, args: String*) extends StrictLogging {
       def stdOut = IO.shift >> readStream(proc.getInputStream)
       def stdErr = IO.shift >> readStream(proc.getErrorStream)
 
-      (exitCode |@| stdOut |@| stdErr).map(Result)
+      (exitCode, stdOut, stdErr).mapN(Result)
     }
 
     val commandLine = command +: args

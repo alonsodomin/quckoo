@@ -141,7 +141,7 @@ object PathViolation {
   }
 
   implicit val jsonDecoder: Decoder[PathViolation] = Decoder.instance { cursor =>
-    (cursor.downField("path").as[Path] |@| cursor.downField("violation").as[Violation]).map { (path, violation) =>
+    (cursor.downField("path").as[Path], cursor.downField("violation").as[Violation]).mapN { (path, violation) =>
       PathViolation(path, violation)
     }
   }

@@ -62,8 +62,8 @@ object Dependencies {
     val arm         = "2.0"
     val betterfiles = "3.1.0"
     val diode       = "1.1.2"
-    val cats        = "0.9.0"
-    val catsEffect  = "0.3"
+    val cats        = "1.0.0-MF"
+    val catsEffect  = "0.4"
     val circe       = "0.8.0"
     val cron4s      = "0.4.1"
     val enumeratum  = "1.5.12"
@@ -175,7 +175,7 @@ object Dependencies {
 
   lazy val core = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "org.typelevel"     %%% "cats"               % version.cats,
+      "org.typelevel"     %%% "cats-free"          % version.cats,
       "org.typelevel"     %%% "cats-effect"        % version.catsEffect,
       "io.circe"          %%% "circe-parser"       % version.circe,
       "io.circe"          %%% "circe-generic"      % version.circe,

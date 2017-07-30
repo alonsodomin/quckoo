@@ -18,11 +18,10 @@ package io.quckoo.resolver.ivy
 
 import java.net.URL
 
+import cats._
 import cats.data.Validated
 import cats.effect.IO
-import cats.syntax.cartesian._
-import cats.syntax.validated._
-import cats.syntax.show._
+import cats.implicits._
 
 import io.quckoo.reflect.Artifact
 import io.quckoo.resolver.config.IvyConfig
@@ -93,7 +92,7 @@ class IvyResolver private[ivy] (ivy: Ivy)
         } toList
 
       validations.foldLeft(report.validNel[DependencyError])((acc, v) =>
-        (acc |@| v.toValidatedNel).map((_, r) => r))
+        (acc, v.toValidatedNel).mapN((_, r) => r))
     }
 
     def downloadFailed(report: ResolveReport): Resolved[ResolveReport] = {
@@ -114,7 +113,7 @@ class IvyResolver private[ivy] (ivy: Ivy)
         } toList
 
       validations.foldLeft(report.validNel[DependencyError])((acc, v) =>
-        (acc |@| v.toValidatedNel).map((_, r) => r))
+        (acc, v.toValidatedNel).mapN((_, r) => r))
     }
 
     def artifactLocations(
@@ -141,8 +140,8 @@ class IvyResolver private[ivy] (ivy: Ivy)
     logger.debug(s"Resolving $moduleDescriptor")
     val resolveReport = ivy.resolve(moduleDescriptor, resolveOptions)
 
-    (unresolvedDependencies(resolveReport) |@| downloadFailed(resolveReport))
-      .map { (_, r) =>
+    (unresolvedDependencies(resolveReport), downloadFailed(resolveReport))
+      .mapN { (_, r) =>
         val artifactClasspath =
           artifactLocations(r.getAllArtifactsReports).toList
 

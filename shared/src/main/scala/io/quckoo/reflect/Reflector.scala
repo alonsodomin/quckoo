@@ -16,7 +16,8 @@
 
 package io.quckoo.reflect
 
-import cats.free.{Free, Inject}
+import cats.InjectK
+import cats.free.Free
 
 import io.quckoo.{Job, JobClass}
 
@@ -29,7 +30,7 @@ trait Reflector[F[_]] {
   def runJob(job: Job): F[Unit]
 }
 
-class InjectableReflector[F[_]](implicit inject: Inject[ReflectOp, F])
+class InjectableReflector[F[_]](implicit inject: InjectK[ReflectOp, F])
     extends Reflector[Free[F, ?]] {
 
   override def loadJobClass(artifact: Artifact,
@@ -45,6 +46,6 @@ class InjectableReflector[F[_]](implicit inject: Inject[ReflectOp, F])
 }
 object InjectableReflector {
   implicit def injectableReflector[F[_]](
-      implicit inject: Inject[ReflectOp, F]): InjectableReflector[F] =
+      implicit inject: InjectK[ReflectOp, F]): InjectableReflector[F] =
     new InjectableReflector[F]
 }

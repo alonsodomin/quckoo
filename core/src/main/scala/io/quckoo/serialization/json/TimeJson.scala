@@ -18,8 +18,8 @@ package io.quckoo.serialization.json
 
 import java.util.concurrent.TimeUnit
 
-import cats.instances.either._
-import cats.syntax.cartesian._
+import cats._
+import cats.implicits._
 
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
 
@@ -46,7 +46,7 @@ trait TimeJson {
       case l @ Left(_) => l.asInstanceOf[Decoder.Result[TimeUnit]]
     }
 
-    (decodeLength |@| decodeUnit).map(FiniteDuration.apply)
+    (decodeLength, decodeUnit).mapN(FiniteDuration.apply)
   }
 
 }

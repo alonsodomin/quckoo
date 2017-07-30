@@ -16,7 +16,8 @@
 
 package io.quckoo.resolver
 
-import cats.free.{Free, Inject}
+import cats.InjectK
+import cats.free.Free
 
 import io.quckoo.ArtifactId
 import io.quckoo.reflect.Artifact
@@ -32,7 +33,7 @@ trait Resolver[F[_]] {
 
 }
 
-class InjectableResolver[F[_]](implicit inject: Inject[ResolverOp, F])
+class InjectableResolver[F[_]](implicit inject: InjectK[ResolverOp, F])
     extends Resolver[Free[F, ?]] {
 
   override def validate(artifactId: ArtifactId): Free[F, Resolved[ArtifactId]] =
@@ -46,7 +47,7 @@ class InjectableResolver[F[_]](implicit inject: Inject[ResolverOp, F])
 object InjectableResolver {
 
   implicit def injectableResolver[F[_]](
-      implicit inject: Inject[ResolverOp, F]): InjectableResolver[F] =
+      implicit inject: InjectK[ResolverOp, F]): InjectableResolver[F] =
     new InjectableResolver[F]
 
 }
