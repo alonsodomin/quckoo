@@ -38,7 +38,7 @@ object TaskQueue {
 
   type AcceptedTask = (Task, ActorRef)
 
-  val PendingKey    = PNCounterMapKey[String]("pendingCount")
+  val PendingKey = PNCounterMapKey[String]("pendingCount")
   val InProgressKey = PNCounterMapKey[String]("inProgressCount")
 
   def props(maxWorkTimeout: FiniteDuration = 10 minutes) =
@@ -54,30 +54,32 @@ object TaskQueue {
   private object WorkerState {
     sealed trait WorkerStatus
 
-    case object Idle                                    extends WorkerStatus
+    case object Idle extends WorkerStatus
     case class Busy(taskId: TaskId, deadline: Deadline) extends WorkerStatus
-    case class Unreachable(previous: WorkerStatus)      extends WorkerStatus
+    case class Unreachable(previous: WorkerStatus) extends WorkerStatus
   }
 
-  private case class WorkerState(ref: ActorRef, status: WorkerState.WorkerStatus)
+  private case class WorkerState(ref: ActorRef,
+                                 status: WorkerState.WorkerStatus)
 
   private case object CleanupTick
 
 }
 
 class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
-  extends Actor with ActorLogging {
+    extends Actor
+    with ActorLogging {
   import TaskQueue._
   import WorkerState._
 
   val replicationTimeout = 5 seconds
 
-  implicit val cluster         = Cluster(context.system)
+  implicit val cluster = Cluster(context.system)
   private[this] val replicator = DistributedData(context.system).replicator
 
-  private[this] var workers           = Map.empty[NodeId, WorkerState]
-  private[this] var pendingTasks      = Queue.empty[AcceptedTask]
-  private[this] var inProgressTasks   = Map.empty[TaskId, ActorRef]
+  private[this] var workers = Map.empty[NodeId, WorkerState]
+  private[this] var pendingTasks = Queue.empty[AcceptedTask]
+  private[this] var inProgressTasks = Map.empty[TaskId, ActorRef]
   private[this] var workerRemoveTasks = Map.empty[NodeId, Cancellable]
 
   private[this] val pendingCounter: MinMaxCounter =
@@ -108,16 +110,21 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
           case any                   => any
         }
 
-        workers += (workerId -> currentState.copy(ref = sender(), status = newStatus))
+        workers += (workerId -> currentState.copy(ref = sender(),
+                                                  status = newStatus))
         context.watch(sender())
       } else {
         val workerRef = sender()
-        workers += (workerId -> WorkerState(workerRef, status = WorkerState.Idle))
+        workers += (workerId -> WorkerState(workerRef,
+                                            status = WorkerState.Idle))
         context.watch(workerRef)
 
         val workerLocation = workerRef.location
-        log.info("Worker '{}' registered at location: {}", workerId, workerLocation)
-        context.system.eventStream.publish(WorkerJoined(workerId, workerLocation))
+        log.info("Worker '{}' registered at location: {}",
+                 workerId,
+                 workerLocation)
+        context.system.eventStream
+          .publish(WorkerJoined(workerId, workerLocation))
         if (pendingTasks.nonEmpty) {
           sender ! TaskReady
         }
@@ -131,7 +138,9 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
         inProgressTasks -= taskId
         inProgressCounter.decrement()
 
-        replicator ! Replicator.Update(InProgressKey, PNCounterMap[String](), Replicator.WriteLocal) {
+        replicator ! Replicator.Update(InProgressKey,
+                                       PNCounterMap[String](),
+                                       Replicator.WriteLocal) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
         }
       }
@@ -153,7 +162,8 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
         case Some(workerState @ WorkerState(_, WorkerState.Idle)) =>
           def dispatchTask(task: Task, lifecycle: ActorRef): Unit = {
             val timeout = Deadline.now + maxWorkTimeout
-            workers += (workerId        -> workerState.copy(status = Busy(task.id, timeout)))
+            workers += (workerId -> workerState.copy(
+              status = Busy(task.id, timeout)))
             inProgressTasks += (task.id -> lifecycle)
 
             pendingCounter.decrement()
@@ -164,7 +174,9 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
             lifecycle ! ExecutionLifecycle.Start
 
             replicator ! Replicator
-              .Update(PendingKey, PNCounterMap[String](), Replicator.WriteMajority(replicationTimeout)) {
+              .Update(PendingKey,
+                      PNCounterMap[String](),
+                      Replicator.WriteMajority(replicationTimeout)) {
                 _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
               }
             replicator ! Replicator.Update(
@@ -184,7 +196,9 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
           pendingTasks = dequeueTask
 
         case _ =>
-          log.info("Receiver a request for tasks from worker '{}', which is in a busy state.", workerId)
+          log.info(
+            "Receiver a request for tasks from worker '{}', which is in a busy state.",
+            workerId)
       }
 
     case TaskDone(workerId, taskId, result) =>
@@ -192,7 +206,9 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
         // Assume that previous Ack was lost so resend it again
         sender ! TaskDoneAck(taskId)
       } else {
-        log.info("Execution of task '{}' finished by worker '{}'.", workerId, taskId)
+        log.info("Execution of task '{}' finished by worker '{}'.",
+                 workerId,
+                 taskId)
         changeWorkerToIdle(workerId, taskId)
         inProgressTasks(taskId) ! ExecutionLifecycle.Finish(None)
         inProgressTasks -= taskId
@@ -200,20 +216,25 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
 
         sender ! TaskDoneAck(taskId)
         replicator ! Replicator
-          .Update(InProgressKey, PNCounterMap[String](), Replicator.WriteMajority(replicationTimeout)) {
+          .Update(InProgressKey,
+                  PNCounterMap[String](),
+                  Replicator.WriteMajority(replicationTimeout)) {
             _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
           }
         notifyWorkers()
       }
 
-    case TaskFailed(workerId, taskId, cause) if inProgressTasks.contains(taskId) =>
+    case TaskFailed(workerId, taskId, cause)
+        if inProgressTasks.contains(taskId) =>
       log.error("Worker '{}' failed executing task '{}'.", workerId, taskId)
       changeWorkerToIdle(workerId, taskId)
       inProgressTasks(taskId) ! ExecutionLifecycle.Finish(Some(cause))
       inProgressTasks -= taskId
       inProgressCounter.decrement()
       replicator ! Replicator
-        .Update(InProgressKey, PNCounterMap[String](), Replicator.WriteMajority(replicationTimeout)) {
+        .Update(InProgressKey,
+                PNCounterMap[String](),
+                Replicator.WriteMajority(replicationTimeout)) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
         }
       notifyWorkers()
@@ -224,7 +245,9 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
       pendingTasks = pendingTasks.enqueue((task, sender()))
       pendingCounter.increment()
       replicator ! Replicator
-        .Update(PendingKey, PNCounterMap[String](), Replicator.WriteMajority(replicationTimeout)) {
+        .Update(PendingKey,
+                PNCounterMap[String](),
+                Replicator.WriteMajority(replicationTimeout)) {
           _.increment(cluster.selfUniqueAddress.toNodeId.toString)
         }
       sender ! EnqueueAck(task.id)
@@ -307,7 +330,9 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
       context.system.eventStream.publish(WorkerRemoved(workerId))
 
       replicator ! Replicator
-        .Update(InProgressKey, PNCounterMap[String](), Replicator.WriteMajority(replicationTimeout)) {
+        .Update(InProgressKey,
+                PNCounterMap[String](),
+                Replicator.WriteMajority(replicationTimeout)) {
           _.decrement(cluster.selfUniqueAddress.toNodeId.toString)
         }
       notifyWorkers()

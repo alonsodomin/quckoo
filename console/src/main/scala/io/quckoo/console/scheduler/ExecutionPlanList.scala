@@ -44,13 +44,7 @@ object ExecutionPlanList {
   import CatsReact._
 
   final val Columns = List(
-    'Job,
-    'Current,
-    'Trigger,
-    'Scheduled,
-    'Execution,
-    'Outcome,
-    'Next
+    'Job, 'Current, 'Trigger, 'Scheduled, 'Execution, 'Outcome, 'Next
   )
 
   final val ActiveFilter: Table.Filter[PlanId, ExecutionPlan] =
@@ -59,15 +53,18 @@ object ExecutionPlanList {
     (id, plan) => !ActiveFilter(id, plan)
 
   final val Filters: Map[Symbol, Table.Filter[PlanId, ExecutionPlan]] = Map(
-    'Active   -> ActiveFilter,
+    'Active -> ActiveFilter,
     'Inactive -> InactiveFilter
   )
 
   type OnCreate = Callback
   type OnClick = ExecutionPlan => Callback
 
-  final case class Props(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick)
-  final case class State(selectedFilter: Option[Symbol] = None, selectedPlans: Set[PlanId] = Set.empty)
+  final case class Props(proxy: ModelProxy[UserScope],
+                         onCreate: OnCreate,
+                         onClick: OnClick)
+  final case class State(selectedFilter: Option[Symbol] = None,
+                         selectedPlans: Set[PlanId] = Set.empty)
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -75,18 +72,21 @@ object ExecutionPlanList {
       val model = props.proxy()
 
       def loadJobs: Callback =
-        Callback.when(model.jobSpecs.size == 0)(props.proxy.dispatchCB(LoadJobSpecs))
+        Callback.when(model.jobSpecs.size == 0)(
+          props.proxy.dispatchCB(LoadJobSpecs))
 
       def loadPlans: Callback =
-        Callback.when(model.executionPlans.size == 0)(props.proxy.dispatchCB(LoadExecutionPlans))
+        Callback.when(model.executionPlans.size == 0)(
+          props.proxy.dispatchCB(LoadExecutionPlans))
 
       loadJobs *> loadPlans
     }
 
-    def selectedPlans: CallbackTo[Map[PlanId, Pot[ExecutionPlan]]] = for {
-      plans     <- $.props.map(_.proxy().executionPlans)
-      selection <- $.state.map(_.selectedPlans)
-    } yield plans.get(selection)
+    def selectedPlans: CallbackTo[Map[PlanId, Pot[ExecutionPlan]]] =
+      for {
+        plans <- $.props.map(_.proxy().executionPlans)
+        selection <- $.state.map(_.selectedPlans)
+      } yield plans.get(selection)
 
     // Actions
 
@@ -100,10 +100,13 @@ object ExecutionPlanList {
       $.props.flatMap(_.proxy.dispatchCB(CancelExecutionPlan(planId)))
 
     def cancelAll: Callback = {
-      def invokeCommand(planIds: List[PlanId]): Callback = for {
-        proxy <- $.props.map(_.proxy)
-        _     <- planIds.map(id => proxy.dispatchCB(CancelExecutionPlan(id))).sequence
-      } yield ()
+      def invokeCommand(planIds: List[PlanId]): Callback =
+        for {
+          proxy <- $.props.map(_.proxy)
+          _ <- planIds
+            .map(id => proxy.dispatchCB(CancelExecutionPlan(id)))
+            .sequence
+        } yield ()
 
       activePlansSelected.map(_.toList) >>= invokeCommand
     }
@@ -122,7 +125,11 @@ object ExecutionPlanList {
         Callback.alert(s"Execution plan '$planId' is not ready yet.")
 
       $.props.map(_.proxy()).flatMap {
-        _.executionPlans.get(planId).headOption.map(planClickedCB).getOrElse(planIsNotReady)
+        _.executionPlans
+          .get(planId)
+          .headOption
+          .map(planClickedCB)
+          .getOrElse(planIsNotReady)
       }
     }
 
@@ -135,32 +142,44 @@ object ExecutionPlanList {
       case 'Execution => "Last Execution"
     }
 
-    def renderItem(model: UserScope)(planId: PlanId, plan: ExecutionPlan, column: Symbol): VdomNode = {
+    def renderItem(model: UserScope)(planId: PlanId,
+                                     plan: ExecutionPlan,
+                                     column: Symbol): VdomNode = {
       def renderPlanName: VdomNode = {
         val jobSpec = model.jobSpecs.get(plan.jobId)
         <.a(^.onClick --> onPlanClicked(planId), jobSpec.render(_.displayName))
       }
 
-      def renderDateTime(dateTime: ZonedDateTime)(implicit clock: Clock): VdomNode =
-        DateTimeDisplay(dateTime.withZoneSameInstant(clock.getZone).toLocalDateTime)
+      def renderDateTime(dateTime: ZonedDateTime)(
+          implicit clock: Clock): VdomNode =
+        DateTimeDisplay(
+          dateTime.withZoneSameInstant(clock.getZone).toLocalDateTime)
 
       column match {
-        case 'Job       => renderPlanName
-        case 'Current   => plan.currentTask.map(_.show).getOrElse[String]("")
-        case 'Trigger   => plan.trigger.toString()
-        case 'Scheduled => plan.lastScheduledTime.map(renderDateTime).getOrElse(VdomArray.empty())
-        case 'Execution => plan.lastExecutionTime.map(renderDateTime).getOrElse(VdomArray.empty())
-        case 'Outcome   => plan.lastOutcome.map(_.show).getOrElse[String]("")
-        case 'Next      => plan.nextExecutionTime.map(renderDateTime).getOrElse(VdomArray.empty())
+        case 'Job     => renderPlanName
+        case 'Current => plan.currentTask.map(_.show).getOrElse[String]("")
+        case 'Trigger => plan.trigger.toString()
+        case 'Scheduled =>
+          plan.lastScheduledTime
+            .map(renderDateTime)
+            .getOrElse(VdomArray.empty())
+        case 'Execution =>
+          plan.lastExecutionTime
+            .map(renderDateTime)
+            .getOrElse(VdomArray.empty())
+        case 'Outcome => plan.lastOutcome.map(_.show).getOrElse[String]("")
+        case 'Next =>
+          plan.nextExecutionTime
+            .map(renderDateTime)
+            .getOrElse(VdomArray.empty())
       }
     }
 
     def renderRowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
       if (!plan.finished && plan.nextExecutionTime.isDefined) {
         Seq(
-          Table.RowAction[PlanId](
-            NonEmptyList.of(Icons.stop, "Cancel"),
-            cancelPlan)
+          Table.RowAction[PlanId](NonEmptyList.of(Icons.stop, "Cancel"),
+                                  cancelPlan)
         )
       } else Seq.empty
     }
@@ -170,17 +189,24 @@ object ExecutionPlanList {
       <.div(
         ToolBar(
           Button(Button.Props(
-            Some(props.onCreate),
-            style = ContextStyle.primary
-          ), Icons.plusSquare, "Execution Plan"),
+                   Some(props.onCreate),
+                   style = ContextStyle.primary
+                 ),
+                 Icons.plusSquare,
+                 "Execution Plan"),
           Button(Button.Props(
-            Some(cancelAll),
-            disabled = cancelAllDisabled
-          ), Icons.stopCircle, "Cancel All")
+                   Some(cancelAll),
+                   disabled = cancelAllDisabled
+                 ),
+                 Icons.stopCircle,
+                 "Cancel All")
         ),
         NavBar(
           NavBar
-            .Props(List('All, 'Active, 'Inactive), 'All, onFilterClicked, style = NavStyle.pills),
+            .Props(List('All, 'Active, 'Inactive),
+                   'All,
+                   onFilterClicked,
+                   style = NavStyle.pills),
           Table(
             Columns,
             model.executionPlans.seq,
@@ -198,13 +224,16 @@ object ExecutionPlanList {
 
   }
 
-  private[this] val component = ScalaComponent.builder[Props]("ExecutionPlanList")
+  private[this] val component = ScalaComponent
+    .builder[Props]("ExecutionPlanList")
     .initialState(State())
     .renderBackend[Backend]
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
-  def apply(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick) =
+  def apply(proxy: ModelProxy[UserScope],
+            onCreate: OnCreate,
+            onClick: OnClick) =
     component(Props(proxy, onCreate, onClick))
 
 }

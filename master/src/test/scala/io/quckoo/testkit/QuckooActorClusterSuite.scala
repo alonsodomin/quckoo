@@ -23,7 +23,8 @@ import org.scalatest.Suite
 /**
   * Created by alonsodomin on 17/02/2017.
   */
-abstract class QuckooActorClusterSuite(name: String) extends QuckooActorSuite(name) {
+abstract class QuckooActorClusterSuite(name: String)
+    extends QuckooActorSuite(name) {
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()

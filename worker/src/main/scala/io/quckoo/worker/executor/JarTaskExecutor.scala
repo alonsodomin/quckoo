@@ -38,7 +38,9 @@ object JarTaskExecutor {
   type ArtifactOp[A] = Coproduct[ResolverOp, ReflectOp, A]
   type ArtifactIO[A] = Free[ArtifactOp, A]
 
-  implicit def interpreter[F[_]: Monad](implicit resolver: ResolverInterpreter[F], reflector: ReflectorInterpreter[F]): ArtifactOp ~> F =
+  implicit def interpreter[F[_]: Monad](
+      implicit resolver: ResolverInterpreter[F],
+      reflector: ReflectorInterpreter[F]): ArtifactOp ~> F =
     resolver or reflector
 
   implicit class ArtifactIOOps[A](val self: ArtifactIO[A]) extends AnyVal {
@@ -46,16 +48,17 @@ object JarTaskExecutor {
       self.foldMap(interpreter)
   }
 
-  def props(workerContext: WorkerContext, taskId: TaskId, jarPackage: JarJobPackage): Props =
+  def props(workerContext: WorkerContext,
+            taskId: TaskId,
+            jarPackage: JarJobPackage): Props =
     Props(new JarTaskExecutor(workerContext, taskId, jarPackage))
 
 }
 
-class JarTaskExecutor private (
-    workerContext: WorkerContext,
-    taskId: TaskId,
-    jarPackage: JarJobPackage)
-  extends TaskExecutor {
+class JarTaskExecutor private (workerContext: WorkerContext,
+                               taskId: TaskId,
+                               jarPackage: JarJobPackage)
+    extends TaskExecutor {
 
   import TaskExecutor._
   import JarTaskExecutor._
@@ -66,30 +69,37 @@ class JarTaskExecutor private (
     case Run =>
       import context.dispatcher
 
-      log.info("Starting execution of task '{}' using class '{}' from artifact {}.",
-        taskId, jarPackage.jobClass, jarPackage.artifactId
-      )
+      log.info(
+        "Starting execution of task '{}' using class '{}' from artifact {}.",
+        taskId,
+        jarPackage.jobClass,
+        jarPackage.artifactId)
 
       downloadAndRun.unsafeToFuture().pipeTo(sender())
   }
 
-  private def downloadAndRun(implicit resolver: InjectableResolver[ArtifactOp], reflect: InjectableReflector[ArtifactOp]): IO[Response] = {
+  private def downloadAndRun(
+      implicit resolver: InjectableResolver[ArtifactOp],
+      reflect: InjectableReflector[ArtifactOp]): IO[Response] = {
     import resolver._, reflect._
 
     def downloadJars: ArtifactIO[Either[Failed, Artifact]] =
-      download(jarPackage.artifactId).map(_.leftMap(errors => Failed(MissingDependencies(errors))).toEither)
+      download(jarPackage.artifactId).map(_.leftMap(errors =>
+        Failed(MissingDependencies(errors))).toEither)
 
-    def runIt(artifact: Artifact): ArtifactIO[Unit] = for {
-      jobClass <- loadJobClass(artifact, jarPackage.jobClass)
-      job      <- createJob(jobClass)
-      _        <- runJob(job)
-    } yield ()
+    def runIt(artifact: Artifact): ArtifactIO[Unit] =
+      for {
+        jobClass <- loadJobClass(artifact, jarPackage.jobClass)
+        job <- createJob(jobClass)
+        _ <- runJob(job)
+      } yield ()
 
     implicit val myResolver = workerContext.resolver
 
     EitherT(downloadJars)
       .semiflatMap(runIt)
-      .value.to[IO]
+      .value
+      .to[IO]
       .attempt
       .map(_.fold(ex => Left(Failed(ExceptionThrown.from(ex))), identity))
       .map(_.fold(identity, _ => Completed(())))

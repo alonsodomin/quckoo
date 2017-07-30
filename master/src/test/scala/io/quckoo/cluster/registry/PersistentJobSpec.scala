@@ -29,44 +29,50 @@ import org.scalatest._
 import scala.concurrent.duration._
 
 /**
- * Created by domingueza on 21/08/15.
- */
+  * Created by domingueza on 21/08/15.
+  */
 object PersistentJobSpec {
 
   final val BarArtifactId = ArtifactId("com.example", "bar", "test")
-  final val BarJobSpec    = JobSpec("bar", Some("bar desc"),
-    JobPackage.jar(BarArtifactId, "com.example.bar.Job")
-  )
-  final val BarJobId      = JobId(BarJobSpec)
+  final val BarJobSpec = JobSpec(
+    "bar",
+    Some("bar desc"),
+    JobPackage.jar(BarArtifactId, "com.example.bar.Job"))
+  final val BarJobId = JobId(BarJobSpec)
 
 }
 
-class PersistentJobSpec extends QuckooActorClusterSuite("PersistentJobSpec")
-    with ImplicitSender with BeforeAndAfterEach {
+class PersistentJobSpec
+    extends QuckooActorClusterSuite("PersistentJobSpec")
+    with ImplicitSender
+    with BeforeAndAfterEach {
 
   import PersistentJobSpec._
 
   val mediator = DistributedPubSub(system).mediator
   ignoreMsg {
-    case DistributedPubSubMediator.SubscribeAck(_) => true
+    case DistributedPubSubMediator.SubscribeAck(_)   => true
     case DistributedPubSubMediator.UnsubscribeAck(_) => true
   }
 
   val eventListener = TestProbe("persistentJobListener")
 
   override def beforeEach(): Unit = {
-    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Registry.name, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Registry.name,
+                                                   eventListener.ref)
   }
 
   override def afterEach(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name,
+                                                     eventListener.ref)
     if (eventListener.msgAvailable) {
       fail("There are additional messages in the listener queue.")
     }
   }
 
   "A persistent job" should {
-    val job = TestActorRef(PersistentJob.props.withDispatcher("akka.actor.default-dispatcher"))
+    val job = TestActorRef(
+      PersistentJob.props.withDispatcher("akka.actor.default-dispatcher"))
 
     "return job accepted when receiving a create command" in {
       job ! PersistentJob.CreateJob(BarJobId, BarJobSpec)

@@ -26,6 +26,6 @@ import scalacss.internal.StyleLookup
 object ContextStyle extends Enumeration {
   val default, primary, success, info, warning, danger = Value
 
-  implicit val equiv  = UnivEq.force[Value]
+  implicit val equiv = UnivEq.force[Value]
   implicit val lookup = StyleLookup.scalaMap[ContextStyle.Value]
 }

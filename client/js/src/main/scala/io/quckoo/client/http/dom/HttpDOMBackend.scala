@@ -50,14 +50,16 @@ private[http] object HttpDOMBackend extends HttpBackend {
       else 0
     }
 
-    val domReq  = new XMLHttpRequest()
+    val domReq = new XMLHttpRequest()
     val promise = Promise[HttpResponse]()
 
     domReq.onreadystatechange = { (e: DOMEvent) =>
       if (domReq.readyState == 4) {
         val entityData =
-          DataBuffer(TypedArrayBuffer.wrap(domReq.response.asInstanceOf[ArrayBuffer]))
-        val response = HttpResponse(domReq.status, domReq.statusText, entityData)
+          DataBuffer(
+            TypedArrayBuffer.wrap(domReq.response.asInstanceOf[ArrayBuffer]))
+        val response =
+          HttpResponse(domReq.status, domReq.statusText, entityData)
         promise.success(response)
       }
     }

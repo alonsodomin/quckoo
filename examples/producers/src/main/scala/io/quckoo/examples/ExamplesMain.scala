@@ -35,8 +35,9 @@ object ExamplesMain extends App {
 
   val parser = new OptionParser[CliOptions]("example-producers") {
     head("example-producers", "0.1.0")
-    opt[Seq[String]]('c', "cluster") required () valueName "<host>:<port>" action { (c, options) =>
-      options.copy(clusterNodes = c)
+    opt[Seq[String]]('c', "cluster") required () valueName "<host>:<port>" action {
+      (c, options) =>
+        options.copy(clusterNodes = c)
     } text "Comma separated list of Chronos cluster nodes to connect to"
   }
 
@@ -46,12 +47,15 @@ object ExamplesMain extends App {
   def start(config: Config): Unit = {
     val system = ActorSystem("QuckooExamplesSystem", config)
 
-    val initialContacts = immutableSeq(config.getStringList(CliOptions.QuckooContactPoints)).map {
-      case AddressFromURIString(addr) => RootActorPath(addr) / "system" / "receptionist"
-    }.toSet
+    val initialContacts =
+      immutableSeq(config.getStringList(CliOptions.QuckooContactPoints)).map {
+        case AddressFromURIString(addr) =>
+          RootActorPath(addr) / "system" / "receptionist"
+      }.toSet
 
-    val clientSettings = ClusterClientSettings(system).withInitialContacts(initialContacts)
-    val client         = system.actorOf(QuckooTcpClient.props(clientSettings), "client")
+    val clientSettings =
+      ClusterClientSettings(system).withInitialContacts(initialContacts)
+    val client = system.actorOf(QuckooTcpClient.props(clientSettings), "client")
     client ! Connect
 
     system.actorOf(Props(classOf[PowerOfNActor], client), "powerOfN")

@@ -31,8 +31,8 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 /**
- * Created by aalonsodominguez on 18/08/15.
- */
+  * Created by aalonsodominguez on 18/08/15.
+  */
 object TaskQueueSpec {
 
   final val TestMaxTaskTimeout = 5 minutes
@@ -41,17 +41,22 @@ object TaskQueueSpec {
 
 }
 
-class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
-    with ImplicitSender with ScalaFutures {
+class TaskQueueSpec
+    extends QuckooActorClusterSuite("TaskQueueSpec")
+    with ImplicitSender
+    with ScalaFutures {
 
   import TaskQueue._
   import TaskQueueSpec._
   import system.dispatcher
 
   "A TaskQueue" should {
-    val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
+    val task =
+      Task(TaskId(UUID.randomUUID()),
+           JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
-    val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "happyQueue")
+    val taskQueue =
+      TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "happyQueue")
     val workerId = NodeId(UUID.randomUUID())
     val executionProbe = TestProbe("happyExec")
     val workerProbe = TestProbe("happyWorker")
@@ -64,7 +69,7 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
 
         awaitAssert {
           val msg = expectMsgType[Workers]
-          msg.locations should contain (workerProbe.ref.path.address)
+          msg.locations should contain(workerProbe.ref.path.address)
         }
       }
     }
@@ -73,7 +78,7 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
       taskQueue.tell(Enqueue(task), executionProbe.ref)
 
       workerProbe.expectMsg(TaskReady)
-      executionProbe.expectMsgType[EnqueueAck].taskId should be (task.id)
+      executionProbe.expectMsgType[EnqueueAck].taskId should be(task.id)
     }
 
     "dispatch task to worker on successful request and notify execution" in {
@@ -82,7 +87,8 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
       val returnedTask = workerProbe.expectMsgType[Task]
       returnedTask should be(task)
 
-      executionProbe.expectMsg[ExecutionLifecycle.Command](ExecutionLifecycle.Start)
+      executionProbe.expectMsg[ExecutionLifecycle.Command](
+        ExecutionLifecycle.Start)
     }
 
     "ignore a task request from a busy worker" in {
@@ -107,16 +113,20 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
       val taskResult: Int = 26
       taskQueue.tell(TaskDone(workerId, task.id, taskResult), workerProbe.ref)
 
-      workerProbe.expectMsgType[TaskDoneAck].taskId should be (task.id)
-      executionProbe.expectMsgType[ExecutionLifecycle.Finish].fault should be (None)
+      workerProbe.expectMsgType[TaskDoneAck].taskId should be(task.id)
+      executionProbe.expectMsgType[ExecutionLifecycle.Finish].fault should be(
+        None)
     }
   }
 
   "A TaskQueue with an execution in progress" should {
-    val taskQueue = TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "willFailQueue")
+    val taskQueue =
+      TestActorRef(TaskQueue.props(TestMaxTaskTimeout), "willFailQueue")
 
     "notify an error in the execution when the worker fails" in {
-      val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
+      val task = Task(
+        TaskId(UUID.randomUUID()),
+        JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
       val failingWorkerId = NodeId(UUID.randomUUID())
       val failingExec = TestProbe("failingExec")
@@ -132,15 +142,20 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
       failingWorker.expectMsg(task)
       failingExec.expectMsg(ExecutionLifecycle.Start)
 
-      val cause: QuckooError = ExceptionThrown.from(new Exception("TEST EXCEPTION"))
-      taskQueue.tell(TaskFailed(failingWorkerId, task.id, cause), failingWorker.ref)
+      val cause: QuckooError =
+        ExceptionThrown.from(new Exception("TEST EXCEPTION"))
+      taskQueue.tell(TaskFailed(failingWorkerId, task.id, cause),
+                     failingWorker.ref)
 
-      failingExec.expectMsgType[ExecutionLifecycle.Finish].fault should be(Some(cause))
+      failingExec.expectMsgType[ExecutionLifecycle.Finish].fault should be(
+        Some(cause))
     }
 
     "perform a timeout if the execution does notify it" in {
       val taskTimeout = 1 seconds
-      val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
+      val task = Task(
+        TaskId(UUID.randomUUID()),
+        JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
       val timingOutWorkerId = NodeId(UUID.randomUUID())
       val timingOutExec = TestProbe("failingExec")
@@ -154,19 +169,24 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
 
       taskQueue.tell(RequestTask(timingOutWorkerId), timingOutWorker.ref)
       timingOutWorker.expectMsg(task)
-      timingOutExec.expectMsg[ExecutionLifecycle.Command](ExecutionLifecycle.Start)
+      timingOutExec.expectMsg[ExecutionLifecycle.Command](
+        ExecutionLifecycle.Start)
 
       taskQueue.tell(TimeOut(task.id), timingOutExec.ref)
-      timingOutExec.expectMsg[ExecutionLifecycle.Command](ExecutionLifecycle.TimeOut)
+      timingOutExec.expectMsg[ExecutionLifecycle.Command](
+        ExecutionLifecycle.TimeOut)
     }
 
   }
 
   "A task queue with a short timeout" should {
-    val taskQueue = TestActorRef(TaskQueue.props(100 millis), "willTimeoutQueue")
+    val taskQueue =
+      TestActorRef(TaskQueue.props(100 millis), "willTimeoutQueue")
 
     "notify a timeout if the worker doesn't reply in between the task timeout" in {
-      val task = Task(TaskId(UUID.randomUUID()), JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
+      val task = Task(
+        TaskId(UUID.randomUUID()),
+        JobPackage.jar(artifactId = TestArtifactId, jobClass = TestJobClass))
 
       val timingOutWorkerId = NodeId(UUID.randomUUID())
       val timingOutExec = TestProbe("failingExec")
@@ -182,9 +202,12 @@ class TaskQueueSpec extends QuckooActorClusterSuite("TaskQueueSpec")
       timingOutWorker.expectMsg(task)
       timingOutExec.expectMsg(ExecutionLifecycle.Start)
 
-      val waitForTimeout = Future { blocking { TimeUnit.MILLISECONDS.sleep(100) } }
+      val waitForTimeout = Future {
+        blocking { TimeUnit.MILLISECONDS.sleep(100) }
+      }
       whenReady(waitForTimeout) { _ =>
-        timingOutExec.expectMsg[ExecutionLifecycle.Command](ExecutionLifecycle.TimeOut)
+        timingOutExec.expectMsg[ExecutionLifecycle.Command](
+          ExecutionLifecycle.TimeOut)
       }
     }
   }

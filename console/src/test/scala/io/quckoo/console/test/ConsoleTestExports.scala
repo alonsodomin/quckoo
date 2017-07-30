@@ -22,7 +22,8 @@ import teststate.domzipper.sizzle
 /**
   * Created by alonsodomin on 04/03/2017.
   */
-object ConsoleTestExports extends Exports
-  with ExtScalaJsReact
-  with ExtCats
-  with sizzle.Exports
+object ConsoleTestExports
+    extends Exports
+    with ExtScalaJsReact
+    with ExtCats
+    with sizzle.Exports

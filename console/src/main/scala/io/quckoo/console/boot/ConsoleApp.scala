@@ -20,7 +20,13 @@ import diode.ActionProcessor
 import diode.react.ModelProxy
 
 import io.quckoo.console.ConsoleRoute
-import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope, ErrorProcessor, EventLogProcessor, LoginProcessor}
+import io.quckoo.console.core.{
+  ConsoleCircuit,
+  ConsoleScope,
+  ErrorProcessor,
+  EventLogProcessor,
+  LoginProcessor
+}
 import io.quckoo.console.dashboard.DashboardLogger
 import io.quckoo.console.registry.RegistryLogger
 import io.quckoo.console.scheduler.SchedulerLogger
@@ -37,20 +43,25 @@ import japgolly.scalajs.react.vdom.Implicits._
 object ConsoleApp {
 
   case class Props(level: LogLevel, proxy: ModelProxy[ConsoleScope])
-  case class State(router: Router[ConsoleRoute], processors: List[ActionProcessor[ConsoleScope]])
+  case class State(router: Router[ConsoleRoute],
+                   processors: List[ActionProcessor[ConsoleScope]])
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     def initialise: Callback = {
       def connectProcessors(state: State): Callback =
-        state.processors.map(p => Callback(ConsoleCircuit.addProcessor(p))).foldLeft(Callback.empty)(_ >> _)
+        state.processors
+          .map(p => Callback(ConsoleCircuit.addProcessor(p)))
+          .foldLeft(Callback.empty)(_ >> _)
 
       $.state >>= connectProcessors
     }
 
     def dipose: Callback = {
       def disconnectProcessors(state: State): Callback =
-        state.processors.map(p => Callback(ConsoleCircuit.removeProcessor(p))).foldLeft(Callback.empty)(_ >> _)
+        state.processors
+          .map(p => Callback(ConsoleCircuit.removeProcessor(p)))
+          .foldLeft(Callback.empty)(_ >> _)
 
       $.state >>= disconnectProcessors
     }
@@ -66,7 +77,8 @@ object ConsoleApp {
     val logProcessor = new EventLogProcessor(props.level, logger)
 
     val routerConfig = ConsoleRouter.config(props.proxy, logProcessor.logStream)
-    val (router, control) = Router.componentAndCtl(ConsoleRouter.baseUrl, routerConfig)
+    val (router, control) =
+      Router.componentAndCtl(ConsoleRouter.baseUrl, routerConfig)
 
     val loginProcessor = new LoginProcessor(control)
     val errorProcessor = new ErrorProcessor
@@ -75,7 +87,8 @@ object ConsoleApp {
     State(router, processors)
   }
 
-  private[this] val component = ScalaComponent.builder[Props]("ConsoleApp")
+  private[this] val component = ScalaComponent
+    .builder[Props]("ConsoleApp")
     .initialStateFromProps(initState)
     .renderBackend[Backend]
     .componentWillMount(_.backend.initialise)

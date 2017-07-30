@@ -25,7 +25,8 @@ import slogging._
   * Created by aalonsodominguez on 19/07/2015.
   */
 private[resolver] object RepositoryConversion extends LazyLogging {
-  type RepositoryConverter = PartialFunction[(Repository, IvySettings), DependencyResolver]
+  type RepositoryConverter =
+    PartialFunction[(Repository, IvySettings), DependencyResolver]
 
   def apply(repository: Repository, settings: IvySettings): DependencyResolver =
     apply(repository, settings, defaultConverter)

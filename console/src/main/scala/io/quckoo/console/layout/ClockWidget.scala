@@ -55,7 +55,8 @@ object ClockWidget {
 
   }
 
-  private[this] val component = ScalaComponent.builder[Clock]("Clock")
+  private[this] val component = ScalaComponent
+    .builder[Clock]("Clock")
     .initialStateFromProps(clock => State(ZonedDateTime.now(clock)))
     .renderBackend[Backend]
     .componentDidMount(_.backend.mounted)

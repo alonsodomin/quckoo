@@ -39,11 +39,11 @@ class IvyConfiguration private (
 object IvyConfiguration {
   final val Namespace = "resolver"
 
-  final val BaseDir       = "work-dir"
-  final val HomeDir       = "home"
+  final val BaseDir = "work-dir"
+  final val HomeDir = "home"
   final val ResolutionDir = "resolution-cache-dir"
   final val RepositoryDir = "repository-cache-dir"
-  final val Repositories  = "repositories"
+  final val Repositories = "repositories"
 
   val DefaultRepositories = Seq(
     Repository.mavenCentral,
@@ -52,12 +52,14 @@ object IvyConfiguration {
   )
 
   def apply(config: Config): IvyConfiguration = {
-    val baseDir       = createPathIfNotExists(config.getString(BaseDir))
+    val baseDir = createPathIfNotExists(config.getString(BaseDir))
     val resolutionDir = createPathIfNotExists(config.getString(ResolutionDir))
     val repositoryDir = createPathIfNotExists(config.getString(RepositoryDir))
 
-    val repositories = config.getConfigList(Repositories).asScala.map { repoConf =>
-      MavenRepository(repoConf.getString("name"), new URL(repoConf.getString("url")))
+    val repositories = config.getConfigList(Repositories).asScala.map {
+      repoConf =>
+        MavenRepository(repoConf.getString("name"),
+                        new URL(repoConf.getString("url")))
     }
 
     if (config.hasPath(HomeDir)) {
@@ -68,7 +70,11 @@ object IvyConfiguration {
         Some(createPathIfNotExists(config.getString(HomeDir))),
         repositories)
     } else {
-      new IvyConfiguration(baseDir, resolutionDir, repositoryDir, None, repositories)
+      new IvyConfiguration(baseDir,
+                           resolutionDir,
+                           repositoryDir,
+                           None,
+                           repositories)
     }
   }
 

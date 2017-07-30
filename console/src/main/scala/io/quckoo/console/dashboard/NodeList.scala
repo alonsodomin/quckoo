@@ -37,7 +37,8 @@ object NodeList {
 
   class Backend[N <: QuckooNode]($ : BackendScope[Props[N], Unit]) {
 
-    def renderItem(props: Props[N])(nodeId: NodeId, node: N, column: Symbol): VdomNode =
+    def renderItem(
+        props: Props[N])(nodeId: NodeId, node: N, column: Symbol): VdomNode =
       column match {
         case 'ID       => nodeId.toString
         case 'Location => node.location.host
@@ -54,8 +55,13 @@ object NodeList {
   }
 
   private[this] def component[N <: QuckooNode] =
-    ScalaComponent.builder[Props[N]]("NodeList").stateless.renderBackend[Backend[N]].build
+    ScalaComponent
+      .builder[Props[N]]("NodeList")
+      .stateless
+      .renderBackend[Backend[N]]
+      .build
 
-  def apply[N <: QuckooNode](proxy: ModelProxy[Map[NodeId, N]]) = component(Props(proxy))
+  def apply[N <: QuckooNode](proxy: ModelProxy[Map[NodeId, N]]) =
+    component(Props(proxy))
 
 }

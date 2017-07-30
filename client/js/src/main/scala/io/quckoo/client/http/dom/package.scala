@@ -25,6 +25,6 @@ import io.quckoo.client.core.DriverBackend
 package object dom {
 
   implicit val backend: DriverBackend[HttpProtocol] = HttpDOMBackend
-  val HttpDOMQuckooClient                           = QuckooClient[HttpProtocol]
+  val HttpDOMQuckooClient = QuckooClient[HttpProtocol]
 
 }

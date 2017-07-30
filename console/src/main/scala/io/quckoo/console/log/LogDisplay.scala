@@ -49,7 +49,9 @@ object LogDisplay {
     )
   }
 
-  case class Props(clock: Clock, logStream: Observable[LogRecord], bufferSize: Int)
+  case class Props(clock: Clock,
+                   logStream: Observable[LogRecord],
+                   bufferSize: Int)
   case class State(buffer: List[LogRecord], visible: Boolean = false)
 
   class Backend($ : BackendScope[Props, State]) {
@@ -74,15 +76,17 @@ object LogDisplay {
     }
 
     private[this] def feedRecord(record: LogRecord): IO[Unit] = {
-      def prependRecord(props: Props, buffer: List[LogRecord]): List[LogRecord] = {
-        val newBuffer = record.copy(when = record.when.withZoneSameInstant(props.clock.getZone)) :: buffer
+      def prependRecord(props: Props,
+                        buffer: List[LogRecord]): List[LogRecord] = {
+        val newBuffer = record.copy(
+          when = record.when.withZoneSameInstant(props.clock.getZone)) :: buffer
         if (newBuffer.size <= props.bufferSize) newBuffer
         else newBuffer.take(props.bufferSize)
       }
 
       val callback = for {
         props <- $.props
-        _     <- $.modState(st => st.copy(buffer = prependRecord(props, st.buffer)))
+        _ <- $.modState(st => st.copy(buffer = prependRecord(props, st.buffer)))
       } yield ()
 
       IO(callback.runNow())
@@ -94,11 +98,15 @@ object LogDisplay {
     private[this] def renderPanel(props: Props, state: State) = {
       val log = state.buffer.map(_.show).mkString("\n")
 
-      Panel("Messages", onHeaderClick = Some(togglePanel), addStyles = Seq(Style.messagesPanel))(Seq(<.pre(
-        ^.border  := "solid 1px black",
-        ^.height  := "20em",
-        log
-      )))
+      Panel("Messages",
+            onHeaderClick = Some(togglePanel),
+            addStyles = Seq(Style.messagesPanel))(
+        Seq(
+          <.pre(
+            ^.border := "solid 1px black",
+            ^.height := "20em",
+            log
+          )))
     }
 
     def render(props: Props, state: State): VdomElement = {
@@ -111,14 +119,16 @@ object LogDisplay {
 
   }
 
-  val component = ScalaComponent.builder[Props]("ConsoleLog")
+  val component = ScalaComponent
+    .builder[Props]("ConsoleLog")
     .initialState(State(List.empty))
     .renderBackend[Backend]
     .componentWillMount($ => $.backend.initialize($.props))
     .componentWillUnmount(_.backend.dispose())
     .build
 
-  def apply(logStream: Observable[LogRecord], bufferSize: Int = 500)(implicit clock: Clock) =
+  def apply(logStream: Observable[LogRecord], bufferSize: Int = 500)(
+      implicit clock: Clock) =
     component(Props(clock, logStream, bufferSize))
 
 }

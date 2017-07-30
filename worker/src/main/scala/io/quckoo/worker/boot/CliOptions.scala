@@ -36,7 +36,7 @@ final case class CliOptions(
     bindAddress: Option[String] = None,
     port: Int = DefaultTcpPort,
     masterNodes: Seq[String] = Seq()
-  ) {
+) {
 
   import CliOptions._
 

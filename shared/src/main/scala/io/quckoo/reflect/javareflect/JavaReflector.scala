@@ -27,10 +27,13 @@ import slogging.LazyLogging
 /**
   * Created by alonsodomin on 04/05/2017.
   */
-class JavaReflector private[reflect]() extends Reflector[IO] with LazyLogging {
+class JavaReflector private[reflect] () extends Reflector[IO] with LazyLogging {
 
-  override def loadJobClass(artifact: Artifact, className: String): IO[JobClass] = IO {
-    logger.debug("Loading job class {} from artifact {}", className, artifact.artifactId.show)
+  override def loadJobClass(artifact: Artifact,
+                            className: String): IO[JobClass] = IO {
+    logger.debug("Loading job class {} from artifact {}",
+                 className,
+                 artifact.artifactId.show)
     artifact.classLoader.loadClass(className).asInstanceOf[JobClass]
   }
 

@@ -27,18 +27,26 @@ object JobPackageSelect {
   final val Options = List('Jar, 'Shell)
 
   type Constructor = CoproductSelect.Constructor[JobPackage]
-  type Selector    = CoproductSelect.Selector[JobPackage]
-  type OnUpdate    = CoproductSelect.OnUpdate[JobPackage]
+  type Selector = CoproductSelect.Selector[JobPackage]
+  type OnUpdate = CoproductSelect.OnUpdate[JobPackage]
 
-  final case class Props(value: Option[JobPackage], onUpdate: OnUpdate, readOnly: Boolean = false)
+  final case class Props(value: Option[JobPackage],
+                         onUpdate: OnUpdate,
+                         readOnly: Boolean = false)
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def selectComponent(props: Props): Selector = {
-      case 'Jar   => (value, update) =>
-        JarJobPackageInput(value.map(_.asInstanceOf[JarJobPackage]), update, props.readOnly)
-      case 'Shell => (value, update) =>
-        ShellScriptPackageInput(value.map(_.asInstanceOf[ShellScriptPackage]), update, props.readOnly)
+      case 'Jar =>
+        (value, update) =>
+          JarJobPackageInput(value.map(_.asInstanceOf[JarJobPackage]),
+                             update,
+                             props.readOnly)
+      case 'Shell =>
+        (value, update) =>
+          ShellScriptPackageInput(value.map(_.asInstanceOf[ShellScriptPackage]),
+                                  update,
+                                  props.readOnly)
     }
 
     private[this] val selectInput = CoproductSelect[JobPackage] {
@@ -48,21 +56,32 @@ object JobPackageSelect {
 
     def render(props: Props) = {
       selectInput(
-        Options, selectComponent(props), props.value, props.onUpdate,
-        ^.id := "packageType", ^.readOnly := props.readOnly, ^.disabled := props.readOnly
+        Options,
+        selectComponent(props),
+        props.value,
+        props.onUpdate,
+        ^.id := "packageType",
+        ^.readOnly := props.readOnly,
+        ^.disabled := props.readOnly
       )(
-        Seq(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "packageType", "Package Type"))
+        Seq(
+          <.label(^.`class` := "col-sm-2 control-label",
+                  ^.`for` := "packageType",
+                  "Package Type"))
       )
     }
 
   }
 
-  val component = ScalaComponent.builder[Props]("JobPackage")
+  val component = ScalaComponent
+    .builder[Props]("JobPackage")
     .stateless
     .renderBackend[Backend]
     .build
 
-  def apply(value: Option[JobPackage], onUpdate: OnUpdate, readOnly: Boolean = false) =
+  def apply(value: Option[JobPackage],
+            onUpdate: OnUpdate,
+            readOnly: Boolean = false) =
     component(Props(value, onUpdate, readOnly))
 
 }

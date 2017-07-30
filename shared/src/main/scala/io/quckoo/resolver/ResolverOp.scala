@@ -25,6 +25,8 @@ import io.quckoo.{ArtifactId, DependencyError}
   */
 sealed trait ResolverOp[A]
 object ResolverOp {
-  case class Validate(artifactId: ArtifactId) extends ResolverOp[ValidatedNel[DependencyError, ArtifactId]]
-  case class Download(artifactId: ArtifactId) extends ResolverOp[ValidatedNel[DependencyError, Artifact]]
+  case class Validate(artifactId: ArtifactId)
+      extends ResolverOp[ValidatedNel[DependencyError, ArtifactId]]
+  case class Download(artifactId: ArtifactId)
+      extends ResolverOp[ValidatedNel[DependencyError, Artifact]]
 }

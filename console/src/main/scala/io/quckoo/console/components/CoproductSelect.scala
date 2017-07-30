@@ -27,27 +27,29 @@ import scalacss.ScalaCssReact._
 object CoproductSelect {
   @inline private def lnf = lookAndFeel
 
-  private[this] val ComponentOption = ScalaComponent.builder[Symbol]("ComponentOption")
-    .stateless.render_P { sym =>
+  private[this] val ComponentOption = ScalaComponent
+    .builder[Symbol]("ComponentOption")
+    .stateless
+    .render_P { sym =>
       <.option(^.value := sym.name, sym.name)
-    } build
+  } build
 
-  type OnUpdate[A]    = Option[A] => Callback
+  type OnUpdate[A] = Option[A] => Callback
   type Constructor[A] = (Option[A], OnUpdate[A]) => VdomNode
-  type Selector[A]    = PartialFunction[Symbol, Constructor[A]]
+  type Selector[A] = PartialFunction[Symbol, Constructor[A]]
   type ValueMapper[A] = PartialFunction[A, Symbol]
 
   final case class Props[A](
-    options: List[Symbol],
-    selector: Selector[A],
-    value: Option[A],
-    default: Option[Symbol],
-    onUpdate: OnUpdate[A],
-    attrs: Seq[TagMod]
+      options: List[Symbol],
+      selector: Selector[A],
+      value: Option[A],
+      default: Option[Symbol],
+      onUpdate: OnUpdate[A],
+      attrs: Seq[TagMod]
   )
   final case class State[A: Reusability](
-    selected: Option[Symbol] = None,
-    cache: Map[Symbol, A] = Map.empty[Symbol, A]
+      selected: Option[Symbol] = None,
+      cache: Map[Symbol, A] = Map.empty[Symbol, A]
   )
 
   implicit def propsReuse[A: Reusability]: Reusability[Props[A]] =
@@ -57,10 +59,11 @@ object CoproductSelect {
   implicit def stateReuse[A: Reusability]: Reusability[State[A]] =
     Reusability.caseClass[State[A]]
 
-  class Backend[A: Reusability]($: BackendScope[Props[A], State[A]]) {
+  class Backend[A: Reusability]($ : BackendScope[Props[A], State[A]]) {
 
     private[this] def propagateUpdate: Callback =
-      $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.selected.flatMap(st.cache.get))))
+      $.state.flatMap(st =>
+        $.props.flatMap(_.onUpdate(st.selected.flatMap(st.cache.get))))
 
     def onSelectionUpdate(props: Props[A])(evt: ReactEventFromInput): Callback = {
       val selectedSymbol: Option[Symbol] = {
@@ -77,7 +80,8 @@ object CoproductSelect {
 
       $.state.map(_.selected).flatMap {
         case Some(selection) =>
-          $.modState(st => st.copy(cache = updatedCache(selection, st.cache)), propagateUpdate)
+          $.modState(st => st.copy(cache = updatedCache(selection, st.cache)),
+                     propagateUpdate)
 
         case None => propagateUpdate
       }
@@ -85,17 +89,24 @@ object CoproductSelect {
 
     def render(props: Props[A], children: PropsChildren, state: State[A]) = {
       <.div(
-        <.div(lnf.formGroup,
+        <.div(
+          lnf.formGroup,
           children,
-          <.div(^.`class` := "col-sm-10",
-            <.select(lnf.formControl,
-              ^.value := state.selected.orElse(props.default).map(_.name).getOrElse(""),
+          <.div(
+            ^.`class` := "col-sm-10",
+            <.select(
+              lnf.formControl,
+              ^.value := state.selected
+                .orElse(props.default)
+                .map(_.name)
+                .getOrElse(""),
               ^.onChange ==> onSelectionUpdate(props),
               props.attrs.toTagMod,
               if (props.default.isEmpty) {
-                <.option(^.key :="select-none", "Choose one")
+                <.option(^.key := "select-none", "Choose one")
               } else EmptyVdom,
-              props.options.toVdomArray(opt => ComponentOption.withKey(s"select-$opt")(opt))
+              props.options.toVdomArray(opt =>
+                ComponentOption.withKey(s"select-$opt")(opt))
             )
           )
         ),
@@ -108,34 +119,51 @@ object CoproductSelect {
 
   }
 
-  def apply[A: Reusability](mapper: ValueMapper[A]) = new CoproductSelect[A](mapper)
+  def apply[A: Reusability](mapper: ValueMapper[A]) =
+    new CoproductSelect[A](mapper)
 
 }
 
-final class CoproductSelect[A: Reusability] private[components](mapper: CoproductSelect.ValueMapper[A]) {
+final class CoproductSelect[A: Reusability] private[components] (
+    mapper: CoproductSelect.ValueMapper[A]) {
   import CoproductSelect._
 
   private def generateState(props: Props[A]): State[A] = {
     val selectedSymbol = props.value.flatMap(mapper.lift)
-    val rebuiltCache   = selectedSymbol.zip(props.value).map {
-      case (sym, value) => Map(sym -> value)
-    }.headOption.getOrElse(Map.empty[Symbol, A])
+    val rebuiltCache = selectedSymbol
+      .zip(props.value)
+      .map {
+        case (sym, value) => Map(sym -> value)
+      }
+      .headOption
+      .getOrElse(Map.empty[Symbol, A])
 
     State[A](
       selected = selectedSymbol,
-      cache    = rebuiltCache
+      cache = rebuiltCache
     )
   }
 
-  private[components] val component = ScalaComponent.builder[Props[A]]("CoproductSelect")
+  private[components] val component = ScalaComponent
+    .builder[Props[A]]("CoproductSelect")
     .initialStateFromProps(generateState)
     .renderBackendWithChildren[Backend[A]]
-    .configure(Reusability.shouldComponentUpdate[Props[A], Children.Varargs, State[A], Backend[A]])
+    .configure(Reusability
+      .shouldComponentUpdate[Props[A], Children.Varargs, State[A], Backend[A]])
     .build
 
-  def apply(options: List[Symbol], selector: Selector[A], value: Option[A], default: Symbol, onUpdate: OnUpdate[A], attrs: TagMod*) =
+  def apply(options: List[Symbol],
+            selector: Selector[A],
+            value: Option[A],
+            default: Symbol,
+            onUpdate: OnUpdate[A],
+            attrs: TagMod*) =
     component(Props(options, selector, value, Some(default), onUpdate, attrs)) _
 
-  def apply(options: List[Symbol], selector: Selector[A], value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*) =
+  def apply(options: List[Symbol],
+            selector: Selector[A],
+            value: Option[A],
+            onUpdate: OnUpdate[A],
+            attrs: TagMod*) =
     component(Props(options, selector, value, None, onUpdate, attrs)) _
 }

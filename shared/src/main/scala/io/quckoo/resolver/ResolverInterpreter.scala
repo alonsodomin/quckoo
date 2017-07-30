@@ -21,7 +21,8 @@ import cats.{Monad, ~>}
 /**
   * Created by alonsodomin on 04/05/2017.
   */
-final class ResolverInterpreter[F[_]: Monad] private(impl: Resolver[F]) extends (ResolverOp ~> F) {
+final class ResolverInterpreter[F[_]: Monad] private (impl: Resolver[F])
+    extends (ResolverOp ~> F) {
 
   override def apply[A](fa: ResolverOp[A]): F[A] = fa match {
     case ResolverOp.Validate(artifactId) => impl.validate(artifactId)
@@ -32,7 +33,8 @@ final class ResolverInterpreter[F[_]: Monad] private(impl: Resolver[F]) extends 
 
 object ResolverInterpreter {
 
-  implicit def deriveInstance[F[_]: Monad](implicit impl: Resolver[F]): ResolverInterpreter[F] =
+  implicit def deriveInstance[F[_]: Monad](
+      implicit impl: Resolver[F]): ResolverInterpreter[F] =
     new ResolverInterpreter[F](impl)
 
 }

@@ -22,7 +22,11 @@ import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.pattern._
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
+import akka.stream.{
+  ActorMaterializer,
+  ActorMaterializerSettings,
+  OverflowStrategy
+}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 
@@ -54,28 +58,37 @@ object QuckooFacade extends LazyLogging {
   final val DefaultTimeout: FiniteDuration = 2500 millis
   final val DefaultBufferSize = 100
 
-  def start(settings: ClusterSettings)(implicit system: ActorSystem, clock: Clock): Future[Unit] = {
+  def start(settings: ClusterSettings)(implicit system: ActorSystem,
+                                       clock: Clock): Future[Unit] = {
     def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
-      implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system), "http")
+      implicit val materializer =
+        ActorMaterializer(ActorMaterializerSettings(system), "http")
 
       Http()
-        .bindAndHandle(facade.router, settings.http.bindInterface, settings.http.bindPort)
+        .bindAndHandle(facade.router,
+                       settings.http.bindInterface,
+                       settings.http.bindPort)
         .map(_ =>
-          logger.info(s"HTTP server started on ${settings.http.bindInterface}:${settings.http.bindPort}"))
+          logger.info(
+            s"HTTP server started on ${settings.http.bindInterface}:${settings.http.bindPort}"))
     }
 
-    val promise  = Promise[Unit]()
-    val journal  = new QuckooProductionJournal
-    val guardian = system.actorOf(QuckooGuardian.props(settings, journal, promise), "quckoo")
+    val promise = Promise[Unit]()
+    val journal = new QuckooProductionJournal
+    val guardian =
+      system.actorOf(QuckooGuardian.props(settings, journal, promise), "quckoo")
 
     import system.dispatcher
-    (promise.future |@| startHttpListener(new QuckooFacade(guardian))).map((_, _) => ())
+    (promise.future |@| startHttpListener(new QuckooFacade(guardian)))
+      .map((_, _) => ())
   }
 
 }
 
 final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
-    extends HttpRouter with QuckooServer with LazyLogging {
+    extends HttpRouter
+    with QuckooServer
+    with LazyLogging {
 
   import QuckooFacade._
 
@@ -99,10 +112,13 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
       passport: Passport
   ): Future[Seq[(PlanId, ExecutionPlan)]] = {
     val executionPlans = Source
-      .actorRef[(PlanId, ExecutionPlan)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
+      .actorRef[(PlanId, ExecutionPlan)](bufferSize = DefaultBufferSize,
+                                         OverflowStrategy.fail)
       .mapMaterializedValue(upstream => core.tell(GetExecutionPlans, upstream))
 
-    executionPlans.runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair).map(_.toSeq)
+    executionPlans
+      .runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
+      .map(_.toSeq)
   }
 
   def executionPlan(planId: PlanId)(
@@ -129,9 +145,12 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
       passport: Passport
   ): Future[Seq[(TaskId, TaskExecution)]] = {
     val tasks = Source
-      .actorRef[(TaskId, TaskExecution)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
+      .actorRef[(TaskId, TaskExecution)](bufferSize = DefaultBufferSize,
+                                         OverflowStrategy.fail)
       .mapMaterializedValue(upstream => core.tell(GetTaskExecutions, upstream))
-    tasks.runFold(Map.empty[TaskId, TaskExecution])((map, pair) => map + pair).map(_.toSeq)
+    tasks
+      .runFold(Map.empty[TaskId, TaskExecution])((map, pair) => map + pair)
+      .map(_.toSeq)
   }
 
   def execution(taskId: TaskId)(
@@ -153,7 +172,7 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
   ): Future[Either[QuckooError, ExecutionPlanStarted]] = {
     implicit val to = Timeout(timeout)
     (core ? schedule) map {
-      case fault: QuckooError                  => fault.asLeft[ExecutionPlanStarted]
+      case fault: QuckooError            => fault.asLeft[ExecutionPlanStarted]
       case started: ExecutionPlanStarted => started.asRight[QuckooError]
     }
   }
@@ -212,22 +231,26 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
       .run(jobSpec)
       .map(_.leftMap(ValidationFault).leftMap(_.asInstanceOf[QuckooError]))
 
-    EitherT(validatedJobSpec.map(_.toEither)).flatMapF { validJobSpec =>
-      implicit val to = Timeout(timeout)
-      logger.info(s"Registering job spec: $validJobSpec")
+    EitherT(validatedJobSpec.map(_.toEither))
+      .flatMapF { validJobSpec =>
+        implicit val to = Timeout(timeout)
+        logger.info(s"Registering job spec: $validJobSpec")
 
-      (core ? RegisterJob(validJobSpec)) map {
-        case JobAccepted(jobId, _) => jobId.asRight[QuckooError]
-        case JobRejected(_, error) => error.asLeft[JobId]
+        (core ? RegisterJob(validJobSpec)) map {
+          case JobAccepted(jobId, _) => jobId.asRight[QuckooError]
+          case JobRejected(_, error) => error.asLeft[JobId]
+        }
       }
-    }.value.map(_.toValidatedNel)
+      .value
+      .map(_.toValidatedNel)
   }
 
   def fetchJobs(implicit ec: ExecutionContext,
                 timeout: FiniteDuration,
                 passport: Passport): Future[List[(JobId, JobSpec)]] = {
     Source
-      .actorRef[(JobId, JobSpec)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
+      .actorRef[(JobId, JobSpec)](bufferSize = DefaultBufferSize,
+                                  OverflowStrategy.fail)
       .mapMaterializedValue { upstream =>
         core.tell(GetJobs, upstream)
       }

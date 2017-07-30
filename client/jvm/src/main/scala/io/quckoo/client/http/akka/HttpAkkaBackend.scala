@@ -20,7 +20,12 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.client.RequestBuilding.Get
 import akka.http.scaladsl.model.HttpHeader.ParsingResult
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpHeader, HttpMethods}
+import akka.http.scaladsl.model.{
+  ContentTypes,
+  HttpEntity,
+  HttpHeader,
+  HttpMethods
+}
 import akka.http.scaladsl.model.{
   HttpMethod => AkkaHttpMethod,
   HttpRequest => AkkaHttpRequest,
@@ -66,56 +71,62 @@ private[http] final class HttpAkkaBackend(host: String, port: Int = 80)(
       val publisherSink = Sink.asPublisher[ServerSentEvent](fanout = true)
 
       val source = for {
-        response <- AkkaHttp().singleRequest(Get(s"http://$host:$port" + topicURI(channel.topicTag.name)))
-        events   <- Unmarshal(response).to[Source[ServerSentEvent, NotUsed]]
+        response <- AkkaHttp().singleRequest(
+          Get(s"http://$host:$port" + topicURI(channel.topicTag.name)))
+        events <- Unmarshal(response).to[Source[ServerSentEvent, NotUsed]]
       } yield events.runWith(publisherSink)
 
       for {
         publisher <- Observable.fromFuture(source)
-        event     <- Observable.fromReactivePublisher(publisher)
+        event <- Observable.fromReactivePublisher(publisher)
       } yield {
         HttpServerSentEvent(DataBuffer.fromString(event.toString))
       }
     }
 
-  override def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
-    def method: AkkaHttpMethod = req.method match {
-      case HttpMethod.Get    => HttpMethods.GET
-      case HttpMethod.Put    => HttpMethods.PUT
-      case HttpMethod.Post   => HttpMethods.POST
-      case HttpMethod.Delete => HttpMethods.DELETE
-    }
+  override def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli {
+    req =>
+      def method: AkkaHttpMethod = req.method match {
+        case HttpMethod.Get    => HttpMethods.GET
+        case HttpMethod.Put    => HttpMethods.PUT
+        case HttpMethod.Post   => HttpMethods.POST
+        case HttpMethod.Delete => HttpMethods.DELETE
+      }
 
-    val headers = {
-      req.headers
-        .filterKeys(_ != "Content-Type")
-        .map({
-          case (name, value) => HttpHeader.parse(name, value)
-        })
-        .flatMap {
-          case ParsingResult.Ok(header, _) => Seq(header)
-          case _                           => Seq()
-        }
-        .to[immutable.Seq]
-    }
+      val headers = {
+        req.headers
+          .filterKeys(_ != "Content-Type")
+          .map({
+            case (name, value) => HttpHeader.parse(name, value)
+          })
+          .flatMap {
+            case ParsingResult.Ok(header, _) => Seq(header)
+            case _                           => Seq()
+          }
+          .to[immutable.Seq]
+      }
 
-    def parseRawResponse(response: AkkaHttpResponse): Future[HttpResponse] = {
-      val entityData = response.entity.dataBytes.runFold(ByteString())(_ ++ _)
+      def parseRawResponse(response: AkkaHttpResponse): Future[HttpResponse] = {
+        val entityData = response.entity.dataBytes.runFold(ByteString())(_ ++ _)
 
-      import actorSystem.dispatcher
-      entityData.map(
-        buff =>
-          HttpResponse(
-            response.status.intValue(),
-            response.status.value,
-            DataBuffer.fromString(buff.utf8String)))
-    }
+        import actorSystem.dispatcher
+        entityData.map(
+          buff =>
+            HttpResponse(response.status.intValue(),
+                         response.status.value,
+                         DataBuffer.fromString(buff.utf8String)))
+      }
 
-    val entity = HttpEntity(ContentTypes.`application/json`, req.entity.asString())
-    Source
-      .single(AkkaHttpRequest(method, uri = req.url, entity = entity, headers = headers))
-      .via(connection)
-      .mapAsync(1)(parseRawResponse)
-      .runWith(Sink.head[HttpResponse])
+      val entity =
+        HttpEntity(ContentTypes.`application/json`, req.entity.asString())
+      Source
+        .single(
+          AkkaHttpRequest(method,
+                          uri = req.url,
+                          entity = entity,
+                          headers = headers))
+        .via(connection)
+        .mapAsync(1)(parseRawResponse)
+        .runWith(Sink.head[HttpResponse])
   }
 }

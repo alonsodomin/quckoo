@@ -32,7 +32,7 @@ import pureconfig._
   */
 object IvyConfigSpec {
   final val TestRepositoryName = "foo-repo"
-  final val TestRepositoryUrl  = "http://foo.example.com"
+  final val TestRepositoryUrl = "http://foo.example.com"
 
   final val TestConfig: String =
     s"""
@@ -56,10 +56,11 @@ class IvyConfigSpec extends FlatSpec with Matchers with EitherValues {
   "IvyConfig" should "correctly parse config attributes and repositories" in {
     val config = ConfigFactory.parseString(TestConfig)
 
-    val expectedMavenRepo = MavenRepository(TestRepositoryName, new URL(TestRepositoryUrl))
+    val expectedMavenRepo =
+      MavenRepository(TestRepositoryName, new URL(TestRepositoryUrl))
 
     val returnedConfig = loadConfig[IvyConfig](config)
-    returnedConfig.right.value.repositories should contain (expectedMavenRepo)
+    returnedConfig.right.value.repositories should contain(expectedMavenRepo)
   }
 
 }

@@ -34,13 +34,20 @@ class TextAreaTestIgnore /** extends FunSuite **/ {
   val invariants: dsl.Invariants = {
     var invars = dsl.emptyInvariant
 
-    invars &= dsl.focus("Text").obsAndState(_.textArea.value, _.text.getOrElse("")).assert.equal
+    invars &= dsl
+      .focus("Text")
+      .obsAndState(_.textArea.value, _.text.getOrElse(""))
+      .assert
+      .equal
 
     invars
   }
 
   def runPlan(plan: dsl.Plan): Report[String] = {
-    val textAreaDef = TextArea(Some("hello"), onUpdate, ^.id := "testTextArea", ^.name := "myTextArea")
+    val textAreaDef = TextArea(Some("hello"),
+                               onUpdate,
+                               ^.id := "testTextArea",
+                               ^.name := "myTextArea")
 
     ReactTestUtils.withRenderedIntoDocument(textAreaDef) { comp =>
       def observe() = new TextAreaObserver(comp.htmlDomZipper)

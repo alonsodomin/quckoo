@@ -23,7 +23,7 @@ import org.scalajs.dom.html
 /**
   * Created by alonsodomin on 25/02/2017.
   */
-class TextAreaObserver($: HtmlDomZipper) {
+class TextAreaObserver($ : HtmlDomZipper) {
 
   val textArea = $("textarea").domAs[html.TextArea]
 

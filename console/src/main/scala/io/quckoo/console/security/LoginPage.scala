@@ -48,24 +48,32 @@ object LoginPage {
     )
   }
 
-  case class Props(proxy: ModelProxy[ConsoleScope], referral: Option[ConsoleRoute])
+  case class Props(proxy: ModelProxy[ConsoleScope],
+                   referral: Option[ConsoleRoute])
 
   class LoginBackend($ : BackendScope[Props, Unit]) {
 
-    def loginHandler(props: Props)(username: String, password: String): Callback =
+    def loginHandler(props: Props)(username: String,
+                                   password: String): Callback =
       props.proxy.dispatchCB(Login(username, password, props.referral))
 
     def render(props: Props) =
       <.div(
         Style.formPlacement,
-        Panel("Quckoo Console - Sign in", ContextStyle.primary)(Seq(LoginForm(loginHandler(props))))
+        Panel("Quckoo Console - Sign in", ContextStyle.primary)(
+          Seq(LoginForm(loginHandler(props))))
       )
   }
 
   private[this] val component =
-    ScalaComponent.builder[Props]("LoginPage").stateless.renderBackend[LoginBackend].build
+    ScalaComponent
+      .builder[Props]("LoginPage")
+      .stateless
+      .renderBackend[LoginBackend]
+      .build
 
-  def apply(proxy: ModelProxy[ConsoleScope], referral: Option[ConsoleRoute] = None) =
+  def apply(proxy: ModelProxy[ConsoleScope],
+            referral: Option[ConsoleRoute] = None) =
     component(Props(proxy, referral))
 
 }

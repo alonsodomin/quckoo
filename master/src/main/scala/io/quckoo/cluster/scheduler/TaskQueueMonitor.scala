@@ -44,9 +44,9 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
 
   val timeout = 5 seconds
 
-  implicit val cluster         = Cluster(context.system)
+  implicit val cluster = Cluster(context.system)
   private[this] val replicator = DistributedData(context.system).replicator
-  private[this] val mediator   = DistributedPubSub(context.system).mediator
+  private[this] val mediator = DistributedPubSub(context.system).mediator
 
   private[this] var currentMetrics = QueueMetrics()
 
@@ -60,7 +60,8 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
 
   private def initialising: Receive = {
     case DistributedPubSubMediator.SubscribeAck(_) =>
-      log.info("Task monitor initialised in node: {}", cluster.selfUniqueAddress.address.hostPort)
+      log.info("Task monitor initialised in node: {}",
+               cluster.selfUniqueAddress.address.hostPort)
       unstashAll()
       context.become(ready)
 
@@ -85,20 +86,24 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
     case MasterRemoved(nodeId) =>
       // Drop the key holding the counter for the lost node.
       replicator ! Replicator
-        .Update(TaskQueue.PendingKey, PNCounterMap[String](), Replicator.WriteMajority(timeout)) {
+        .Update(TaskQueue.PendingKey,
+                PNCounterMap[String](),
+                Replicator.WriteMajority(timeout)) {
           _ - nodeId.toString
         }
       // TODO This might not be the right thing to do with that tasks that are in-progress
       // ideally, the worker that has got it should be able to notify any of the partitions
       // that conform the cluster-wide queue
       replicator ! Replicator
-        .Update(TaskQueue.InProgressKey, PNCounterMap[String](), Replicator.WriteMajority(timeout)) {
+        .Update(TaskQueue.InProgressKey,
+                PNCounterMap[String](),
+                Replicator.WriteMajority(timeout)) {
           _ - nodeId.toString
         }
   }
 
   private def publishMetrics(): Unit = {
-    val totalPending    = currentMetrics.pendingPerNode.values.sum
+    val totalPending = currentMetrics.pendingPerNode.values.sum
     val totalInProgress = currentMetrics.inProgressPerNode.values.sum
     mediator ! DistributedPubSubMediator.Publish(
       TopicTag.Master.name,

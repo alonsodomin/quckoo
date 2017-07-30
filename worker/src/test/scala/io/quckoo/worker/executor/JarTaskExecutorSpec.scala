@@ -32,8 +32,8 @@ import io.quckoo.testkit.QuckooActorSuite
 import org.scalamock.scalatest.MockFactory
 
 /**
- * Created by aalonsodominguez on 04/08/15.
- */
+  * Created by aalonsodominguez on 04/08/15.
+  */
 object JarTaskExecutorSpec {
 
   final val TestTaskId: TaskId = TaskId(UUID.randomUUID())
@@ -42,20 +42,26 @@ object JarTaskExecutorSpec {
 
 }
 
-class JarTaskExecutorSpec extends QuckooActorSuite("JobExecutorSpec")
-  with ImplicitSender with DefaultTimeout with MockFactory {
+class JarTaskExecutorSpec
+    extends QuckooActorSuite("JobExecutorSpec")
+    with ImplicitSender
+    with DefaultTimeout
+    with MockFactory {
 
   import JarTaskExecutorSpec._
 
   "A job executor" must {
 
     "fail if instantiation of the job failed" in {
-      val resolvedArtifact = Artifact(TestArtifactId, List(new URL("http://www.example.com")))
+      val resolvedArtifact =
+        Artifact(TestArtifactId, List(new URL("http://www.example.com")))
       val resolver = new PureResolver(resolvedArtifact)
 
       val workerContext = mock[WorkerContext]
       val executor = TestActorRef(
-        JarTaskExecutor.props(workerContext, TestTaskId, JarJobPackage(TestArtifactId, TestJobClass)),
+        JarTaskExecutor.props(workerContext,
+                              TestTaskId,
+                              JarJobPackage(TestArtifactId, TestJobClass)),
         "failing-executor"
       )
 
@@ -65,7 +71,8 @@ class JarTaskExecutorSpec extends QuckooActorSuite("JobExecutorSpec")
 
       executor ! TaskExecutor.Run
 
-      expectMsgType[TaskExecutor.Failed].error shouldBe ExceptionThrown.from(expectedException)
+      expectMsgType[TaskExecutor.Failed].error shouldBe ExceptionThrown.from(
+        expectedException)
     }
 
     "reply with a failure message when can not resolve the artifact of a task" in {
@@ -73,7 +80,9 @@ class JarTaskExecutorSpec extends QuckooActorSuite("JobExecutorSpec")
 
       val workerContext = mock[WorkerContext]
       val executor = TestActorRef(
-        JarTaskExecutor.props(workerContext, TestTaskId, JarJobPackage(TestArtifactId, TestJobClass)),
+        JarTaskExecutor.props(workerContext,
+                              TestTaskId,
+                              JarJobPackage(TestArtifactId, TestJobClass)),
         "non-resolving-executor"
       )
 

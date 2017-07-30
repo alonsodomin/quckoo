@@ -25,7 +25,11 @@ import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.client.http.dom._
 import io.quckoo.console.dashboard.DashboardHandler
 import io.quckoo.console.registry.RegistryHandler
-import io.quckoo.console.scheduler.{ExecutionPlansHandler, SchedulerHandler, TasksHandler}
+import io.quckoo.console.scheduler.{
+  ExecutionPlansHandler,
+  SchedulerHandler,
+  TasksHandler
+}
 
 import slogging.LazyLogging
 
@@ -34,9 +38,12 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 /**
   * Created by alonsodomin on 20/02/2016.
   */
-object ConsoleCircuit extends Circuit[ConsoleScope]
-  with ReactConnector[ConsoleScope] with ConsoleOps
-  with ConsoleSubscriptions with LazyLogging {
+object ConsoleCircuit
+    extends Circuit[ConsoleScope]
+    with ReactConnector[ConsoleScope]
+    with ConsoleOps
+    with ConsoleSubscriptions
+    with LazyLogging {
 
   object Implicits {
     implicit val consoleClock: Clock = Clock.systemDefaultZone
@@ -79,9 +86,12 @@ object ConsoleCircuit extends Circuit[ConsoleScope]
         implicit val timeout = DefaultTimeout
         effectOnly(
           Effect(
-            client.authenticate(username, password).map(pass => LoggedIn(pass, referral)).recover {
-              case _ => LoginFailed
-            }
+            client
+              .authenticate(username, password)
+              .map(pass => LoggedIn(pass, referral))
+              .recover {
+                case _ => LoginFailed
+              }
           ))
 
       case Logout =>

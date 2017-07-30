@@ -44,11 +44,14 @@ object SchedulerPage {
 
   class Backend($ : BackendScope[Props, Unit]) {
 
-    private val executionPlanFormRef = ScalaComponent.mutableRefTo(ExecutionPlanForm.component)
+    private val executionPlanFormRef =
+      ScalaComponent.mutableRefTo(ExecutionPlanForm.component)
 
     def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
-        scheduleJob.map(props.proxy.dispatchCB[ScheduleJob]).getOrElse(Callback.empty)
+        scheduleJob
+          .map(props.proxy.dispatchCB[ScheduleJob])
+          .getOrElse(Callback.empty)
 
       $.props >>= dispatchAction
     }
@@ -65,10 +68,12 @@ object SchedulerPage {
         Style.content,
         <.h2("Scheduler"),
         props.proxy.wrap(_.userScope.jobSpecs) { jobs =>
-          executionPlanFormRef.component(ExecutionPlanForm.Props(jobs, scheduleJob))
+          executionPlanFormRef.component(
+            ExecutionPlanForm.Props(jobs, scheduleJob))
         },
         TabPanel(
-          'Plans      -> userScopeConnector(ExecutionPlanList(_, editPlan(None), plan => editPlan(Some(plan)))),
+          'Plans -> userScopeConnector(
+            ExecutionPlanList(_, editPlan(None), plan => editPlan(Some(plan)))),
           'Executions -> executionConnector(TaskExecutionList(_))
         )
       )
@@ -76,7 +81,8 @@ object SchedulerPage {
 
   }
 
-  private[this] val component = ScalaComponent.builder[Props]("ExecutionsPage")
+  private[this] val component = ScalaComponent
+    .builder[Props]("ExecutionsPage")
     .stateless
     .renderBackend[Backend]
     .build

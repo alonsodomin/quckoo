@@ -56,7 +56,8 @@ object SchedulerHttpRouterSpec {
   implicit final val TestPassport = {
     val header = DataBuffer.fromString("{}").toBase64
     val claims = DataBuffer.fromString("{}").toBase64
-    val signature = DataBuffer.fromString(System.currentTimeMillis().toString).toBase64
+    val signature =
+      DataBuffer.fromString(System.currentTimeMillis().toString).toBase64
     new Passport(Map.empty, s"$header.$claims.$signature")
   }
 
@@ -72,18 +73,28 @@ object SchedulerHttpRouterSpec {
   )
 
   final val TestTaskIds: Seq[TaskId] = List(TaskId(UUID.randomUUID()))
-  final val TestTask = Task(TestTaskIds.head, JobPackage.jar(
-    ArtifactId("com.example", "example", "latest"), ""))
+  final val TestTask = Task(
+    TestTaskIds.head,
+    JobPackage.jar(ArtifactId("com.example", "example", "latest"), ""))
   final val TestTaskMap = Map(
     TestTaskIds.head -> TaskExecution(
-      TestPlanIds.head, TestTask, TaskExecution.Status.Scheduled, None
+      TestPlanIds.head,
+      TestTask,
+      TaskExecution.Status.Scheduled,
+      None
     )
   )
 
 }
 
-class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matchers
-    with SchedulerHttpRouter with SchedulerApi with SchedulerStreams with ImplicitClock {
+class SchedulerHttpRouterSpec
+    extends WordSpec
+    with ScalatestRouteTest
+    with Matchers
+    with SchedulerHttpRouter
+    with SchedulerApi
+    with SchedulerStreams
+    with ImplicitClock {
 
   import SchedulerHttpRouterSpec._
   import StatusCodes._
@@ -95,44 +106,65 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
   }
 
   override def cancelPlan(planId: PlanId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
-  ): Future[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] = Future.successful {
-    TestPlanMap.get(planId).
-      map(plan => ExecutionPlanCancelled(plan.jobId, planId, ZonedDateTime.now(clock)).asRight[ExecutionPlanNotFound]).
-      getOrElse(ExecutionPlanNotFound(planId).asLeft[ExecutionPlanCancelled])
-  }
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
+  ): Future[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] =
+    Future.successful {
+      TestPlanMap
+        .get(planId)
+        .map(plan =>
+          ExecutionPlanCancelled(plan.jobId, planId, ZonedDateTime.now(clock))
+            .asRight[ExecutionPlanNotFound])
+        .getOrElse(ExecutionPlanNotFound(planId).asLeft[ExecutionPlanCancelled])
+    }
 
   override def executionPlan(planId: PlanId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Option[ExecutionPlan]] =
     Future.successful(TestPlanMap.get(planId))
 
   override def scheduleJob(schedule: ScheduleJob)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Either[JobNotFound, ExecutionPlanStarted]] = Future.successful {
-    TestPlanMap.values.find(_.jobId == schedule.jobId).
-      map(plan => ExecutionPlanStarted(schedule.jobId, plan.planId, ZonedDateTime.now(clock)).asRight[JobNotFound]).
-      getOrElse(JobNotFound(schedule.jobId).asLeft[ExecutionPlanStarted])
+    TestPlanMap.values
+      .find(_.jobId == schedule.jobId)
+      .map(
+        plan =>
+          ExecutionPlanStarted(schedule.jobId,
+                               plan.planId,
+                               ZonedDateTime.now(clock)).asRight[JobNotFound])
+      .getOrElse(JobNotFound(schedule.jobId).asLeft[ExecutionPlanStarted])
   }
 
   override def executionPlans(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Seq[(PlanId, ExecutionPlan)]] =
     Future.successful(TestPlanMap.toSeq)
 
   override def executions(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Seq[(TaskId, TaskExecution)]] =
     Future.successful(TestTaskMap.toSeq)
 
   override def execution(taskId: TaskId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Option[TaskExecution]] =
     Future.successful(TestTaskMap.get(taskId))
 
@@ -156,7 +188,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
 
     "return an execution plan when getting from a valid ID" in {
       Get(endpoint(s"/plans/${TestPlanIds.head}")) ~> entryPoint ~> check {
-        responseAs[ExecutionPlan].planId should be (TestPlanIds.head)
+        responseAs[ExecutionPlan].planId should be(TestPlanIds.head)
       }
     }
 
@@ -170,7 +202,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
       val scheduleMsg = ScheduleJob(JobId("fooJobId"))
       Put(endpoint(s"/plans"), Some(scheduleMsg)) ~> entryPoint ~> check {
         status === NotFound
-        responseAs[JobId] should be (scheduleMsg.jobId)
+        responseAs[JobId] should be(scheduleMsg.jobId)
       }
     }
 
@@ -180,7 +212,7 @@ class SchedulerHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matc
         status === OK
 
         val response = responseAs[ExecutionPlanStarted]
-        response.jobId should be (scheduleMsg.jobId)
+        response.jobId should be(scheduleMsg.jobId)
       }
     }
 

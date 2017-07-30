@@ -31,8 +31,9 @@ import scala.concurrent.ExecutionContext
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]], ops: ConsoleOps)(implicit ec: ExecutionContext)
-  extends ConsoleHandler[PotMap[JobId, JobSpec]](model)
+class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]],
+                      ops: ConsoleOps)(implicit ec: ExecutionContext)
+    extends ConsoleHandler[PotMap[JobId, JobSpec]](model)
     with AuthHandler[PotMap[JobId, JobSpec]]
     with LazyLogging {
 
@@ -69,8 +70,10 @@ class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]], ops:
 
     case action: RefreshJobSpecs =>
       withAuth { implicit passport =>
-        val updateEffect = action.effect(ops.loadJobSpecs(action.keys))(identity)
-        action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
+        val updateEffect =
+          action.effect(ops.loadJobSpecs(action.keys))(identity)
+        action.handleWith(this, updateEffect)(
+          AsyncAction.mapHandler(action.keys))
       }
 
     case RegisterJob(spec) =>
@@ -89,9 +92,11 @@ class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]], ops:
           effectOnly(effects)
 
         case Left(errors) =>
-          val effects = errors.map { err =>
-            Notification.danger(err)
-          }.map(n => Effect.action(Growl(n)))
+          val effects = errors
+            .map { err =>
+              Notification.danger(err)
+            }
+            .map(n => Effect.action(Growl(n)))
 
           effectOnly(Effects.seq(effects))
       }

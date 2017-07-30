@@ -22,12 +22,12 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.{FlatSpec, Matchers}
 
 /**
- * Created by domingueza on 04/08/15.
- */
+  * Created by domingueza on 04/08/15.
+  */
 object IvyConfigurationTest {
 
-  val ConfigWithoutHome = ConfigFactory.parseString(
-    """
+  val ConfigWithoutHome =
+    ConfigFactory.parseString("""
       | work-dir = "target/work"
       | resolution-cache-dir = "target/ivy/cache"
       | repository-cache-dir = "target/ivy/local"
@@ -35,15 +35,16 @@ object IvyConfigurationTest {
       | repositories = []
     """.stripMargin)
 
-  val ConfigWithHome = ConfigFactory.parseString(
-    """
+  val ConfigWithHome = ConfigFactory.parseString("""
       | home = "target/home"
     """.stripMargin).withFallback(ConfigWithoutHome)
 
-  val ExpectedWorkDir            = Paths.get("target/work").toAbsolutePath.toFile
-  val ExpectedResolutionCacheDir = Paths.get("target/ivy/cache").toAbsolutePath.toFile
-  val ExpectedResolutionRepoDir  = Paths.get("target/ivy/local").toAbsolutePath.toFile
-  val ExpectedHomeDir            = Paths.get("target/home").toAbsolutePath.toFile
+  val ExpectedWorkDir = Paths.get("target/work").toAbsolutePath.toFile
+  val ExpectedResolutionCacheDir =
+    Paths.get("target/ivy/cache").toAbsolutePath.toFile
+  val ExpectedResolutionRepoDir =
+    Paths.get("target/ivy/local").toAbsolutePath.toFile
+  val ExpectedHomeDir = Paths.get("target/home").toAbsolutePath.toFile
 
 }
 

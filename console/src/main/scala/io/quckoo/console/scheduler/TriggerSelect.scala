@@ -27,22 +27,36 @@ object TriggerSelect {
   final val Options = List('Immediate, 'After, 'Every, 'At, 'Cron)
 
   type Constructor = CoproductSelect.Constructor[Trigger]
-  type Selector    = CoproductSelect.Selector[Trigger]
-  type OnUpdate    = CoproductSelect.OnUpdate[Trigger]
+  type Selector = CoproductSelect.Selector[Trigger]
+  type OnUpdate = CoproductSelect.OnUpdate[Trigger]
 
-  case class Props(value: Option[Trigger], onUpdate: OnUpdate, readOnly: Boolean = false)
+  case class Props(value: Option[Trigger],
+                   onUpdate: OnUpdate,
+                   readOnly: Boolean = false)
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def selectComponent(props: Props): Selector = {
       case 'After =>
-        (value, callback) => AfterTriggerInput(value.map(_.asInstanceOf[Trigger.After]), callback, props.readOnly)
+        (value, callback) =>
+          AfterTriggerInput(value.map(_.asInstanceOf[Trigger.After]),
+                            callback,
+                            props.readOnly)
       case 'Every =>
-        (value, callback) => EveryTriggerInput(value.map(_.asInstanceOf[Trigger.Every]), callback, props.readOnly)
+        (value, callback) =>
+          EveryTriggerInput(value.map(_.asInstanceOf[Trigger.Every]),
+                            callback,
+                            props.readOnly)
       case 'At =>
-        (value, callback) => AtTriggerInput(value.map(_.asInstanceOf[Trigger.At]), callback, props.readOnly)
+        (value, callback) =>
+          AtTriggerInput(value.map(_.asInstanceOf[Trigger.At]),
+                         callback,
+                         props.readOnly)
       case 'Cron =>
-        (value, callback) => CronTriggerInput(value.map(_.asInstanceOf[Trigger.Cron]), callback, props.readOnly)
+        (value, callback) =>
+          CronTriggerInput(value.map(_.asInstanceOf[Trigger.Cron]),
+                           callback,
+                           props.readOnly)
     }
 
     val selectInput = CoproductSelect[Trigger] {
@@ -55,21 +69,33 @@ object TriggerSelect {
 
     def render(props: Props) = {
       selectInput(
-        Options, selectComponent(props), props.value, Options.head, props.onUpdate,
-        ^.id := "triggerType", ^.readOnly := props.readOnly, ^.disabled := props.readOnly
+        Options,
+        selectComponent(props),
+        props.value,
+        Options.head,
+        props.onUpdate,
+        ^.id := "triggerType",
+        ^.readOnly := props.readOnly,
+        ^.disabled := props.readOnly
       )(
-        Seq(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "triggerType", "Trigger"))
+        Seq(
+          <.label(^.`class` := "col-sm-2 control-label",
+                  ^.`for` := "triggerType",
+                  "Trigger"))
       )
     }
 
   }
 
-  val component = ScalaComponent.builder[Props]("TriggerSelect")
+  val component = ScalaComponent
+    .builder[Props]("TriggerSelect")
     .stateless
     .renderBackend[Backend]
     .build
 
-  def apply(value: Option[Trigger], onUpdate: OnUpdate, readOnly: Boolean = false) =
+  def apply(value: Option[Trigger],
+            onUpdate: OnUpdate,
+            readOnly: Boolean = false) =
     component(Props(value, onUpdate, readOnly))
 
 }

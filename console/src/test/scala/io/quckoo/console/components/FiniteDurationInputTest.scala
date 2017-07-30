@@ -35,15 +35,25 @@ class FiniteDurationInputTest extends FunSuite {
   val invariants: dsl.Invariants = {
     var invars = dsl.emptyInvariant
 
-    invars &= dsl.focus("Length").obsAndState(_.lengthInput.value, _.length.map(_.toString).getOrElse("")).assert.equal
-    invars &= dsl.focus("Unit").obsAndState(_.selectedUnitOpt.map(_.value), _.unit.map(_.toString)).assert.equal
+    invars &= dsl
+      .focus("Length")
+      .obsAndState(_.lengthInput.value, _.length.map(_.toString).getOrElse(""))
+      .assert
+      .equal
+    invars &= dsl
+      .focus("Unit")
+      .obsAndState(_.selectedUnitOpt.map(_.value), _.unit.map(_.toString))
+      .assert
+      .equal
 
     invars
   }
 
   def runPlan(plan: dsl.Plan): Report[String] = {
-    ReactTestUtils.withRenderedIntoDocument(FiniteDurationInput("testFD", None, _ => Callback.empty)) { comp =>
-      def observe() = new FiniteDurationInputObserver("testFD", comp.htmlDomZipper)
+    ReactTestUtils.withRenderedIntoDocument(
+      FiniteDurationInput("testFD", None, _ => Callback.empty)) { comp =>
+      def observe() =
+        new FiniteDurationInputObserver("testFD", comp.htmlDomZipper)
 
       val test = plan
         .addInvariants(invariants)
@@ -57,12 +67,12 @@ class FiniteDurationInputTest extends FunSuite {
   test("FiniteDurationInput") {
     val plan = Plan.action(
       currentLength.assert.equal(None) +>
-      validUnitOffer +>
-      validationMsg.map(_.isDefined).assert.equal(false) +>
-      setLength(324) >> currentLength.assert.equal(Some(324)) +>
-      chooseUnit(MINUTES) >> selectedUnit.assert.equal(Some(MINUTES)) +>
-      setLength(-1) >> validationMsg.map(_.isDefined).assert.equal(true) +>
-      clearLength() +> currentLength.assert.equal(None)
+        validUnitOffer +>
+        validationMsg.map(_.isDefined).assert.equal(false) +>
+        setLength(324) >> currentLength.assert.equal(Some(324)) +>
+        chooseUnit(MINUTES) >> selectedUnit.assert.equal(Some(MINUTES)) +>
+        setLength(-1) >> validationMsg.map(_.isDefined).assert.equal(true) +>
+        clearLength() +> currentLength.assert.equal(None)
     )
 
     runPlan(plan).assert()

@@ -43,31 +43,40 @@ object Layout {
   )
 
   case class Props(
-    proxy: ModelProxy[ConsoleScope],
-    logStream: Observable[LogRecord],
-    routerCtl: RouterCtl[ConsoleRoute],
-    resolution: Resolution[ConsoleRoute]
+      proxy: ModelProxy[ConsoleScope],
+      logStream: Observable[LogRecord],
+      routerCtl: RouterCtl[ConsoleRoute],
+      resolution: Resolution[ConsoleRoute]
   )
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($ : BackendScope[Props, Unit]) {
 
     def render(props: Props) = {
-      def navigation = props.proxy.wrap(_.passport.flatMap(_.principal)) { principal =>
-        Navigation(MainMenu.head, MainMenu, props.routerCtl, props.resolution.page, principal)
+      def navigation = props.proxy.wrap(_.passport.flatMap(_.principal)) {
+        principal =>
+          Navigation(MainMenu.head,
+                     MainMenu,
+                     props.routerCtl,
+                     props.resolution.page,
+                     principal)
       }
 
-      <.div(navigation, props.resolution.render(), Footer(props.proxy, props.logStream))
+      <.div(navigation,
+            props.resolution.render(),
+            Footer(props.proxy, props.logStream))
     }
 
   }
 
-  private[this] val component = ScalaComponent.builder[Props]("Layout")
+  private[this] val component = ScalaComponent
+    .builder[Props]("Layout")
     .stateless
     .renderBackend[Backend]
     .build
 
-  def apply(proxy: ModelProxy[ConsoleScope], logStream: Observable[LogRecord])
-           (routerCtl: RouterCtl[ConsoleRoute], resolution: Resolution[ConsoleRoute]) = {
+  def apply(proxy: ModelProxy[ConsoleScope], logStream: Observable[LogRecord])(
+      routerCtl: RouterCtl[ConsoleRoute],
+      resolution: Resolution[ConsoleRoute]) = {
     component(Props(proxy, logStream, routerCtl, resolution))
   }
 

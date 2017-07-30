@@ -49,13 +49,13 @@ import scala.concurrent.{ExecutionContext, Future}
 object RegistryHttpRouterSpec {
 
   final val TestJobSpec = JobSpec("TestJob",
-    Some("Description for TestJob"),
-    JobPackage.jar(
-      ArtifactId("org.example", "bar", "1.0.0"),
-      "org.example.JobClass"
-    )
-  )
-  final val TestInvalidJobSpec = JobSpec("", None, JobPackage.jar(ArtifactId("", "", ""), ""))
+                                  Some("Description for TestJob"),
+                                  JobPackage.jar(
+                                    ArtifactId("org.example", "bar", "1.0.0"),
+                                    "org.example.JobClass"
+                                  ))
+  final val TestInvalidJobSpec =
+    JobSpec("", None, JobPackage.jar(ArtifactId("", "", ""), ""))
 
   final val TestJobMap = Map(
     JobId(TestJobSpec) -> TestJobSpec
@@ -65,14 +65,20 @@ object RegistryHttpRouterSpec {
   implicit final val TestPassport = {
     val header = DataBuffer.fromString("{}").toBase64
     val claims = DataBuffer.fromString("{}").toBase64
-    val signature = DataBuffer.fromString(System.currentTimeMillis().toString).toBase64
+    val signature =
+      DataBuffer.fromString(System.currentTimeMillis().toString).toBase64
     new Passport(Map.empty, s"$header.$claims.$signature")
   }
 
 }
 
-class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Matchers
-    with RegistryHttpRouter with RegistryApi with RegistryStreams {
+class RegistryHttpRouterSpec
+    extends WordSpec
+    with ScalatestRouteTest
+    with Matchers
+    with RegistryHttpRouter
+    with RegistryApi
+    with RegistryStreams {
 
   import RegistryHttpRouterSpec._
   import StatusCodes._
@@ -84,8 +90,10 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   }
 
   override def enableJob(jobId: JobId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Either[JobNotFound, JobEnabled]] = {
     val response = {
       if (TestJobMap.contains(jobId)) JobEnabled(jobId).asRight[JobNotFound]
@@ -95,8 +103,10 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   }
 
   override def disableJob(jobId: JobId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Either[JobNotFound, JobDisabled]] = {
     val response = {
       if (TestJobMap.contains(jobId)) JobDisabled(jobId).asRight[JobNotFound]
@@ -106,24 +116,31 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
   }
 
   override def registerJob(jobSpec: JobSpec)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[ValidatedNel[QuckooError, JobId]] = Future.successful {
-    JobSpec.valid.run(jobSpec)
+    JobSpec.valid
+      .run(jobSpec)
       .map(JobId(_))
       .leftMap(vs => ValidationFault(vs).asInstanceOf[QuckooError])
       .toValidatedNel
   }
 
   override def fetchJobs(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Seq[(JobId, JobSpec)]] =
     Future.successful(TestJobMap.toSeq)
 
   override def fetchJob(jobId: JobId)(
-    implicit
-    ec: ExecutionContext, timeout: FiniteDuration, passport: Passport
+      implicit
+      ec: ExecutionContext,
+      timeout: FiniteDuration,
+      passport: Passport
   ): Future[Option[JobSpec]] =
     Future.successful(TestJobMap.get(jobId))
 
@@ -141,12 +158,14 @@ class RegistryHttpRouterSpec extends WordSpec with ScalatestRouteTest with Match
 
     "return a JobId if the job spec is valid" in {
       Put(endpoint("/jobs"), Some(TestJobSpec)) ~> entryPoint ~> check {
-        responseAs[ValidatedNel[QuckooError, JobId]] shouldBe JobId(TestJobSpec).validNel[QuckooError]
+        responseAs[ValidatedNel[QuckooError, JobId]] shouldBe JobId(TestJobSpec)
+          .validNel[QuckooError]
       }
     }
 
     "return validation errors if the job spec is invalid" in {
-      val expectedResponse = JobSpec.valid.run(TestInvalidJobSpec)
+      val expectedResponse = JobSpec.valid
+        .run(TestInvalidJobSpec)
         .map(JobId(_))
         .leftMap(vs => ValidationFault(vs).asInstanceOf[QuckooError])
         .toValidatedNel

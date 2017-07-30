@@ -28,7 +28,8 @@ import scala.util.Try
   */
 package object config {
 
-  implicit def hint[A]: ProductHint[A] = ProductHint(ConfigFieldMapping(CamelCase, KebabCase))
+  implicit def hint[A]: ProductHint[A] =
+    ProductHint(ConfigFieldMapping(CamelCase, KebabCase))
 
   implicit val fileConfigConvert: ConfigConvert[File] =
     ConfigConvert.viaString(

@@ -26,8 +26,8 @@ import io.quckoo.client.http._
   */
 object HttpAkkaQuckooClient {
   def apply(host: String, port: Int = 80)(implicit
-      actorSystem: ActorSystem = ActorSystem("HttpQuckooClient")
-    ) = {
+                                          actorSystem: ActorSystem =
+                                            ActorSystem("HttpQuckooClient")) = {
     implicit val backend = new HttpAkkaBackend(host, port)
     QuckooClient[HttpProtocol]
   }

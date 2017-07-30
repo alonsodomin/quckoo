@@ -33,7 +33,7 @@ import kamon.metric.instrument.MinMaxCounter
   */
 object PersistentJob {
 
-  final val ShardName      = "PersistentJob"
+  final val ShardName = "PersistentJob"
   final val NumberOfShards = 100
 
   final val PersistenceIdPrefix = "PersistentJob"
@@ -61,7 +61,7 @@ object PersistentJob {
 class PersistentJob extends PersistentActor with ActorLogging with Stash {
   import PersistentJob._
 
-  private[this] val mediator                             = DistributedPubSub(context.system).mediator
+  private[this] val mediator = DistributedPubSub(context.system).mediator
   private[this] var stateDuringRecovery: Option[JobSpec] = None
 
   private[this] val enabledJobCounter: MinMaxCounter =
@@ -102,7 +102,8 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
       persist(JobAccepted(jobId, jobSpec)) { event =>
         log.info("Job '{}' has been successfully registered.", jobId)
         enabledJobCounter.increment()
-        mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name, event)
+        mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name,
+                                                     event)
         unstashAll()
         context.become(enabled(jobId, jobSpec))
       }
@@ -120,7 +121,8 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
           enabledJobCounter.decrement()
           disabledJobCounter.increment()
 
-          mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name, event)
+          mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name,
+                                                       event)
           sender() ! event
           context.become(disabled(jobId, spec.copy(disabled = true)))
         }
@@ -139,7 +141,8 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
           enabledJobCounter.increment()
           disabledJobCounter.decrement()
 
-          mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name, event)
+          mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name,
+                                                       event)
           sender() ! event
           context.become(enabled(jobId, spec.copy(disabled = false)))
         }

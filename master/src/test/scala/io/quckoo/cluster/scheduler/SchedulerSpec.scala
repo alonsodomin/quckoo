@@ -36,20 +36,27 @@ import org.scalatest.concurrent.ScalaFutures
 import scala.concurrent.duration._
 
 /**
- * Created by aalonsodominguez on 18/08/15.
- */
+  * Created by aalonsodominguez on 18/08/15.
+  */
 object SchedulerSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec("foo", Some("foo desc"), JobPackage.jar(TestArtifactId, "com.example.Job"))
+  final val TestJobSpec = JobSpec(
+    "foo",
+    Some("foo desc"),
+    JobPackage.jar(TestArtifactId, "com.example.Job"))
   final val TestJobId = JobId(TestJobSpec)
 
   final val TestTrigger = Trigger.After(10 seconds)
 
 }
 
-class SchedulerSpec extends QuckooActorClusterSuite("SchedulerSpec")
-    with ImplicitSender with ImplicitClock with ScalaFutures with BeforeAndAfter {
+class SchedulerSpec
+    extends QuckooActorClusterSuite("SchedulerSpec")
+    with ImplicitSender
+    with ImplicitClock
+    with ScalaFutures
+    with BeforeAndAfter {
 
   import SchedulerSpec._
   import DistributedPubSubMediator._
@@ -62,28 +69,32 @@ class SchedulerSpec extends QuckooActorClusterSuite("SchedulerSpec")
   val eventListener = TestProbe()
   val mediator = DistributedPubSub(system).mediator
   ignoreMsg {
-    case DistributedPubSubMediator.SubscribeAck(_) => true
+    case DistributedPubSubMediator.SubscribeAck(_)   => true
     case DistributedPubSubMediator.UnsubscribeAck(_) => true
   }
 
   before {
-    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name,
+                                                   eventListener.ref)
     system.eventStream.subscribe(eventListener.ref, classOf[Scheduler.Signal])
   }
 
   after {
-    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name, eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name,
+                                                     eventListener.ref)
   }
 
   val readJournal = new QuckooTestJournal
 
   "A scheduler" should {
 
-    val scheduler = TestActorRef(new Scheduler(
-      readJournal,
-      registryProbe.ref,
-      TestActors.forwardActorProps(taskQueueProbe.ref)
-    ), "scheduler")
+    val scheduler =
+      TestActorRef(new Scheduler(
+                     readJournal,
+                     registryProbe.ref,
+                     TestActors.forwardActorProps(taskQueueProbe.ref)
+                   ),
+                   "scheduler")
 
     var testPlanId: Option[PlanId] = None
 
@@ -124,9 +135,11 @@ class SchedulerSpec extends QuckooActorClusterSuite("SchedulerSpec")
     "return a map containing the current live execution plan" in {
       testPlanId shouldBe defined
 
-      val executionPlans = Source.actorRef[(PlanId, ExecutionPlan)](5, OverflowStrategy.fail).
-        mapMaterializedValue(upstream => scheduler.tell(GetExecutionPlans, upstream)).
-        runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
+      val executionPlans = Source
+        .actorRef[(PlanId, ExecutionPlan)](5, OverflowStrategy.fail)
+        .mapMaterializedValue(upstream =>
+          scheduler.tell(GetExecutionPlans, upstream))
+        .runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
 
       whenReady(executionPlans) { plans =>
         plans should not be empty
@@ -142,31 +155,45 @@ class SchedulerSpec extends QuckooActorClusterSuite("SchedulerSpec")
         val completedMsg = eventListener.expectMsgType[TaskCompleted]
         completedMsg.jobId shouldBe TestJobId
         completedMsg.planId shouldBe planId
-        completedMsg.outcome shouldBe TaskExecution.Outcome.NeverRun(TaskExecution.Reason.UserRequest)
+        completedMsg.outcome shouldBe TaskExecution.Outcome.NeverRun(
+          TaskExecution.Reason.UserRequest)
 
         val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
         finishedMsg.planId shouldBe planId
         finishedMsg.jobId shouldBe TestJobId
 
-        expectMsg(ExecutionPlanCancelled(TestJobId, planId, finishedMsg.dateTime))
+        expectMsg(
+          ExecutionPlanCancelled(TestJobId, planId, finishedMsg.dateTime))
       }
     }
 
     "return an map of finished execution plans when there is none active" in {
       testPlanId shouldBe defined
 
-      val executionPlans = Source.actorRef[(PlanId, ExecutionPlan)](5, OverflowStrategy.fail).
-        mapMaterializedValue(upstream => scheduler.tell(GetExecutionPlans, upstream)).
-        runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
+      val executionPlans = Source
+        .actorRef[(PlanId, ExecutionPlan)](5, OverflowStrategy.fail)
+        .mapMaterializedValue(upstream =>
+          scheduler.tell(GetExecutionPlans, upstream))
+        .runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
 
       whenReady(executionPlans) { plans =>
         val planId = testPlanId.get
 
-        val expectedOutcome = Some(TaskExecution.Outcome.NeverRun(TaskExecution.Reason.UserRequest))
+        val expectedOutcome =
+          Some(TaskExecution.Outcome.NeverRun(TaskExecution.Reason.UserRequest))
 
         plans should contain key planId
         plans(planId) should matchPattern {
-          case ExecutionPlan(`TestJobId`, `planId`, _, _, _, `expectedOutcome`, _, _, _, _) =>
+          case ExecutionPlan(`TestJobId`,
+                             `planId`,
+                             _,
+                             _,
+                             _,
+                             `expectedOutcome`,
+                             _,
+                             _,
+                             _,
+                             _) =>
         }
       }
     }

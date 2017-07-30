@@ -34,15 +34,20 @@ import scalacss.ScalaCssReact._
 object EveryTriggerInput {
   @inline private def lnf = lookAndFeel
 
-  case class Props(value: Option[Trigger.Every], onUpdate: Option[Trigger.Every] => Callback, readOnly: Boolean)
-  case class State(freq: Option[FiniteDuration], delay: Option[FiniteDuration], delayEnabled: Boolean = false) {
+  case class Props(value: Option[Trigger.Every],
+                   onUpdate: Option[Trigger.Every] => Callback,
+                   readOnly: Boolean)
+  case class State(freq: Option[FiniteDuration],
+                   delay: Option[FiniteDuration],
+                   delayEnabled: Boolean = false) {
 
     def this(trigger: Option[Trigger.Every]) =
       this(trigger.map(_.frequency), trigger.flatMap(_.startingIn))
 
   }
 
-  implicit val propsReuse: Reusability[Props] = Reusability.caseClassExcept('onUpdate)
+  implicit val propsReuse: Reusability[Props] =
+    Reusability.caseClassExcept('onUpdate)
   implicit val stateReuse: Reusability[State] = Reusability.caseClass
 
   class Backend($ : BackendScope[Props, State]) {
@@ -66,22 +71,31 @@ object EveryTriggerInput {
       $.modState(_.copy(delay = value), propagateUpdate)
 
     def onToggleDelay: Callback =
-      $.modState(st => st.copy(
-        delay        = if (st.delayEnabled) None else st.delay,
-        delayEnabled = !st.delayEnabled
-      ), propagateUpdate)
+      $.modState(st =>
+                   st.copy(
+                     delay = if (st.delayEnabled) None else st.delay,
+                     delayEnabled = !st.delayEnabled
+                 ),
+                 propagateUpdate)
 
     def render(props: Props, state: State) = {
       <.div(
-        <.div(lnf.formGroup,
+        <.div(
+          lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", "Frequency"),
+          <.div(^.`class` := "col-sm-10",
+                FiniteDurationInput("everyTrigger_freq",
+                                    state.freq,
+                                    onFreqUpdate,
+                                    props.readOnly))
+        ),
+        <.div(
+          lnf.formGroup,
+          <.label(^.`class` := "col-sm-2 control-label", "Delay"),
           <.div(
             ^.`class` := "col-sm-10",
-            FiniteDurationInput("everyTrigger_freq", state.freq, onFreqUpdate, props.readOnly))),
-        <.div(lnf.formGroup,
-          <.label(^.`class` := "col-sm-2 control-label", "Delay"),
-          <.div(^.`class` := "col-sm-10",
-            <.div(^.`class` := "checkbox",
+            <.div(
+              ^.`class` := "checkbox",
               <.label(
                 <.input.checkbox(
                   ^.id := "enableDelay",
@@ -97,21 +111,26 @@ object EveryTriggerInput {
         ),
         if (state.delayEnabled) {
           <.div(^.`class` := "col-sm-offset-2",
-            FiniteDurationInput("everyTrigger_delay", state.delay, onDelayUpdate, props.readOnly)
-          )
+                FiniteDurationInput("everyTrigger_delay",
+                                    state.delay,
+                                    onDelayUpdate,
+                                    props.readOnly))
         } else EmptyVdom
       )
     }
 
   }
 
-  val component = ScalaComponent.builder[Props]("EveryTriggerInput")
+  val component = ScalaComponent
+    .builder[Props]("EveryTriggerInput")
     .initialStateFromProps(props => new State(props.value))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[Trigger.Every], onUpdate: Option[Trigger.Every] => Callback, readOnly: Boolean = false) =
+  def apply(value: Option[Trigger.Every],
+            onUpdate: Option[Trigger.Every] => Callback,
+            readOnly: Boolean = false) =
     component(Props(value, onUpdate, readOnly))
 
 }

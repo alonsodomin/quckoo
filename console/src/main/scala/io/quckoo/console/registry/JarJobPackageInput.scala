@@ -34,7 +34,9 @@ object JarJobPackageInput {
 
   type OnUpdate = Option[JarJobPackage] => Callback
 
-  case class Props(value: Option[JarJobPackage], readOnly: Boolean, onUpdate: OnUpdate)
+  case class Props(value: Option[JarJobPackage],
+                   readOnly: Boolean,
+                   onUpdate: OnUpdate)
   case class State(artifactId: Option[ArtifactId], jobClass: Option[String]) {
 
     def this(value: Option[JarJobPackage]) =
@@ -45,12 +47,12 @@ object JarJobPackageInput {
   implicit val propsReuse: Reusability[Props] = Reusability.by(_.value)
   implicit val stateReuse: Reusability[State] = Reusability.caseClass[State]
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($ : BackendScope[Props, State]) {
 
     private[this] def propagateChange: Callback = {
       val jarPackage = for {
         artifactId <- $.state.map(_.artifactId).asCBO[ArtifactId]
-        jobClass   <- $.state.map(_.jobClass).asCBO[String]
+        jobClass <- $.state.map(_.jobClass).asCBO[String]
       } yield JarJobPackage(artifactId, jobClass)
 
       jarPackage.asCallback.flatMap(value => $.props.flatMap(_.onUpdate(value)))
@@ -66,35 +68,40 @@ object JarJobPackageInput {
 
     def render(props: Props, state: State) = {
       <.div(
-        <.div(lnf.formGroup,
+        <.div(
+          lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", "Artifact"),
-          <.div(^.`class` := "col-sm-10",
-            ArtifactInput(state.artifactId, onArtifactIdUpdate, props.readOnly)
-          )
+          <.div(
+            ^.`class` := "col-sm-10",
+            ArtifactInput(state.artifactId, onArtifactIdUpdate, props.readOnly))
         ),
-        <.div(lnf.formGroup,
-          <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobClass", "Job Class"),
+        <.div(
+          lnf.formGroup,
+          <.label(^.`class` := "col-sm-2 control-label",
+                  ^.`for` := "jobClass",
+                  "Job Class"),
           <.div(^.`class` := "col-sm-10",
-            JobClassInput(state.jobClass,
-              onJobClassUpdate _,
-              ^.id := "jobClass",
-              ^.placeholder := "Job main class",
-              ^.readOnly := props.readOnly
-            )
-          )
+                JobClassInput(state.jobClass,
+                              onJobClassUpdate _,
+                              ^.id := "jobClass",
+                              ^.placeholder := "Job main class",
+                              ^.readOnly := props.readOnly))
         )
       )
     }
 
   }
 
-  val component = ScalaComponent.builder[Props]("JarJobPackageInput")
+  val component = ScalaComponent
+    .builder[Props]("JarJobPackageInput")
     .initialStateFromProps(props => new State(props.value))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[JarJobPackage], onUpdate: OnUpdate, readOnly: Boolean = false) =
+  def apply(value: Option[JarJobPackage],
+            onUpdate: OnUpdate,
+            readOnly: Boolean = false) =
     component(Props(value, readOnly, onUpdate))
 
 }

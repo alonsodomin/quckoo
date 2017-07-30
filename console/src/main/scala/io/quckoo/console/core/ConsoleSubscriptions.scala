@@ -42,10 +42,18 @@ private[core] trait ConsoleSubscriptions extends LazyLogging {
   }
 
   def openSubscriptionChannels(client: HttpQuckooClient): Unit = {
-    client.channel[MasterEvent].subscribe(new ActionSubscriber[MasterEvent](errorHandler))
-    client.channel[WorkerEvent].subscribe(new ActionSubscriber[WorkerEvent](errorHandler))
-    client.channel[SchedulerEvent].subscribe(new ActionSubscriber[SchedulerEvent](errorHandler))
-    client.channel[RegistryEvent].subscribe(new ActionSubscriber[RegistryEvent](errorHandler))
+    client
+      .channel[MasterEvent]
+      .subscribe(new ActionSubscriber[MasterEvent](errorHandler))
+    client
+      .channel[WorkerEvent]
+      .subscribe(new ActionSubscriber[WorkerEvent](errorHandler))
+    client
+      .channel[SchedulerEvent]
+      .subscribe(new ActionSubscriber[SchedulerEvent](errorHandler))
+    client
+      .channel[RegistryEvent]
+      .subscribe(new ActionSubscriber[RegistryEvent](errorHandler))
   }
 
 }

@@ -23,7 +23,8 @@ import io.quckoo.{Job, JobClass}
   */
 sealed trait ReflectOp[A]
 object ReflectOp {
-  case class LoadJobClass(artifact: Artifact, className: String) extends ReflectOp[JobClass]
+  case class LoadJobClass(artifact: Artifact, className: String)
+      extends ReflectOp[JobClass]
   case class CreateJob(jobClass: JobClass) extends ReflectOp[Job]
   case class RunJob(job: Job) extends ReflectOp[Unit]
 }

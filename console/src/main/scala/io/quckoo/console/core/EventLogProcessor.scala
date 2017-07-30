@@ -29,7 +29,8 @@ import monix.reactive.subjects.PublishSubject
 /**
   * Created by alonsodomin on 07/05/2017.
   */
-class EventLogProcessor(level: LogLevel, logger: Logger[Event]) extends ActionProcessor[ConsoleScope] {
+class EventLogProcessor(level: LogLevel, logger: Logger[Event])
+    extends ActionProcessor[ConsoleScope] {
 
   private val emitter = PublishSubject[LogRecord]
 

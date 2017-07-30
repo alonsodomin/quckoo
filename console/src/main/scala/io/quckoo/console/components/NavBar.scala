@@ -35,21 +35,24 @@ object NavBar {
       onClick: Symbol => Callback
   )
 
-  private[this] val NavItem = ScalaComponent.builder[NavItemProps]("NavItem")
+  private[this] val NavItem = ScalaComponent
+    .builder[NavItemProps]("NavItem")
     .stateless
     .render_P {
       case NavItemProps(title, selected, onClick) =>
-        <.li(
-          ^.id := title.name,
-          ^.role := "presentation",
-          (^.`class` := "active").when(selected),
-          <.a(^.onClick --> onClick(title), title.name))
+        <.li(^.id := title.name,
+             ^.role := "presentation",
+             (^.`class` := "active").when(selected),
+             <.a(^.onClick --> onClick(title), title.name))
     }
     .build
 
-  private[this] val NavBody = ScalaComponent.builder[PropsChildren]("NavBody")
+  private[this] val NavBody = ScalaComponent
+    .builder[PropsChildren]("NavBody")
     .stateless
-    .render_P { children => <.div(children) }
+    .render_P { children =>
+      <.div(children)
+    }
     .build
 
   final case class Props(
@@ -64,23 +67,29 @@ object NavBar {
   class Backend($ : BackendScope[Props, State]) {
 
     def tabClicked(props: Props)(title: Symbol): Callback =
-      $.modState(_.copy(selected = Some(title))).flatMap(_ => props.onClick(title))
+      $.modState(_.copy(selected = Some(title))).flatMap(_ =>
+        props.onClick(title))
 
     def render(props: Props, children: PropsChildren, state: State) = {
       val currentTab = state.selected.getOrElse(props.initial)
       <.div(
-        <.ul(lookAndFeel.nav(props.style), props.addStyles.toTagMod, props.items.toVdomArray { title =>
-          NavItem.withKey(s"nav-bar_nav-item_$title")(
-            NavItemProps(title, currentTab == title, tabClicked(props))
-          )
-        }),
+        <.ul(
+          lookAndFeel.nav(props.style),
+          props.addStyles.toTagMod,
+          props.items.toVdomArray { title =>
+            NavItem.withKey(s"nav-bar_nav-item_$title")(
+              NavItemProps(title, currentTab == title, tabClicked(props))
+            )
+          }
+        ),
         NavBody(children)
       )
     }
 
   }
 
-  private[this] val component = ScalaComponent.builder[Props]("NavBar")
+  private[this] val component = ScalaComponent
+    .builder[Props]("NavBar")
     .initialState(State())
     .renderBackendWithChildren[Backend]
     .build
@@ -91,7 +100,7 @@ object NavBar {
       onClick: Symbol => Callback,
       style: NavStyle.Value = NavStyle.tabs,
       addStyles: Seq[StyleA] = Seq()
-    ) = component(Props(items, initial, onClick, style, addStyles)) _
+  ) = component(Props(items, initial, onClick, style, addStyles)) _
 
   def apply(props: Props, children: VdomNode*) =
     component(props)(children: _*)

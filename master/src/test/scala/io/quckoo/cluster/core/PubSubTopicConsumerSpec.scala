@@ -31,13 +31,16 @@ import scala.concurrent.duration._
 /**
   * Created by domingueza on 28/02/2017.
   */
-class PubSubTopicConsumerSpec extends QuckooActorClusterSuite("PubSubTopicConsumerSpec") {
+class PubSubTopicConsumerSpec
+    extends QuckooActorClusterSuite("PubSubTopicConsumerSpec") {
 
   val mediator = DistributedPubSub(system).mediator
 
   val topicTag = TopicTag.Master
   val consumer = TestActorRef[PubSubTopicConsumer](
-    PubSubTopicConsumer.props(topicTag).withDispatcher("akka.actor.default-dispatcher")
+    PubSubTopicConsumer
+      .props(topicTag)
+      .withDispatcher("akka.actor.default-dispatcher")
   )
 
   "PubSubTopicConsumer" should {

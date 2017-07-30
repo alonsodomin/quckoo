@@ -73,7 +73,8 @@ object Registry {
       ClusterSharding(system).start(
         typeName = PersistentJob.ShardName,
         entityProps = PersistentJob.props,
-        settings = ClusterShardingSettings(system).withRole(QuckooRoles.Registry),
+        settings =
+          ClusterShardingSettings(system).withRole(QuckooRoles.Registry),
         extractEntityId = PersistentJob.idExtractor,
         extractShardId = PersistentJob.shardResolver
       )
@@ -89,8 +90,11 @@ object Registry {
 
 }
 
-class Registry private[registry](resolver: Resolver[IO], journal: QuckooJournal)
-    extends Actor with ActorLogging with Stash {
+class Registry private[registry] (resolver: Resolver[IO],
+                                  journal: QuckooJournal)
+    extends Actor
+    with ActorLogging
+    with Stash {
   import Registry._
 
   ClusterClientReceptionist(context.system).registerService(self)
@@ -100,7 +104,7 @@ class Registry private[registry](resolver: Resolver[IO], journal: QuckooJournal)
     "registry"
   )
 
-  private[this] val mediator    = DistributedPubSub(context.system).mediator
+  private[this] val mediator = DistributedPubSub(context.system).mediator
   private[this] val shardRegion = startShardRegion(context.system)
 
   private[this] var jobIds = Set.empty[JobId]
@@ -110,7 +114,8 @@ class Registry private[registry](resolver: Resolver[IO], journal: QuckooJournal)
   }
 
   override def postStop(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name, self)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name,
+                                                     self)
   }
 
   def receive: Receive = initializing
@@ -201,7 +206,11 @@ class Registry private[registry](resolver: Resolver[IO], journal: QuckooJournal)
     journal.read
       .currentEventsByTag(EventTag, journal.firstOffset)
       .runWith(
-        Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed))
+        Sink.actorRefWithAck(self,
+                             WarmUp.Start,
+                             WarmUp.Ack,
+                             WarmUp.Completed,
+                             WarmUp.Failed))
   }
 
 }

@@ -33,14 +33,15 @@ class JavaReflectorSpec extends FlatSpec with Matchers {
 
   "JavaReflector" should "fail to a class that does not exist" in {
     val fooArtifactId = ArtifactId("com.example", "foo", "latest")
-    val fooArtifact = Artifact(fooArtifactId, List(new URL("http://www.example.com")))
+    val fooArtifact =
+      Artifact(fooArtifactId, List(new URL("http://www.example.com")))
 
     val className = "com.example.Foo"
 
     val program = for {
       jobClass <- loadJobClass(fooArtifact, className)
-      job      <- createJob(jobClass)
-      _        <- runJob(job)
+      job <- createJob(jobClass)
+      _ <- runJob(job)
     } yield ()
 
     val exception = intercept[ClassNotFoundException] {

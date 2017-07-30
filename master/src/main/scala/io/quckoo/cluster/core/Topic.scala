@@ -28,7 +28,8 @@ import io.quckoo.api.TopicTag
   */
 object Topic {
 
-  def source[A](implicit actorSystem: ActorSystem, topicTag: TopicTag[A]): Source[A, NotUsed] = {
+  def source[A](implicit actorSystem: ActorSystem,
+                topicTag: TopicTag[A]): Source[A, NotUsed] = {
     def isLocal: Boolean = topicTag match {
       case TopicTag.Registry | TopicTag.Scheduler => false
       case _                                      => true
@@ -40,7 +41,8 @@ object Topic {
     }
 
     val consumerRef = actorSystem.actorOf(consumerProps)
-    Source.actorRef[A](50, OverflowStrategy.dropTail)
+    Source
+      .actorRef[A](50, OverflowStrategy.dropTail)
       .mapMaterializedValue { upstream =>
         consumerRef.tell(TopicConsumer.Consume, upstream)
         NotUsed
