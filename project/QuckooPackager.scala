@@ -1,7 +1,9 @@
 import sbt._
 import sbt.Keys._
 
-import com.typesafe.sbt.SbtAspectj._
+import com.lightbend.sbt.SbtAspectj.autoImport.Aspectj
+import com.lightbend.sbt.AspectjKeys._
+
 import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.Keys._
 import com.typesafe.sbt.packager.archetypes.{JavaAppPackaging, JavaServerAppPackaging}
@@ -64,8 +66,8 @@ object QuckooServerPackager extends QuckooPackager {
 
   override lazy val projectSettings = defaultPackagingSettings ++ Seq(
     mappings in Universal ++= Seq(
-      aspectjWeaver.value -> "bin/aspectjweaver.jar",
-      sigarLoader.value   -> "bin/sigar-loader.jar"
+      (aspectjWeaver in Aspectj).value.get -> "bin/aspectjweaver.jar",
+      sigarLoader.value                    -> "bin/sigar-loader.jar"
     ),
     extraJvmParams := defaultJvmParams ++ Seq(
       "-javaagent:${app_home}/aspectjweaver.jar",
