@@ -73,12 +73,6 @@ lazy val scoverageSettings = Seq(
   coverageExcludedPackages := "io\\.quckoo\\.console\\.html\\..*"
 )
 
-lazy val instrumentationSettings = aspectjSettings ++ Seq(
-  AspectjKeys.aspectjVersion in Aspectj := "1.8.10",
-  AspectjKeys.sourceLevel in Aspectj := "1.8",
-  javaOptions in reStart ++= (AspectjKeys.weaverOptions in Aspectj).value
-)
-
 lazy val noPublishSettings = Seq(
   publish := (),
   publishLocal := (),
