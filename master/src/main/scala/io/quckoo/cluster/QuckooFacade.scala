@@ -60,7 +60,8 @@ object QuckooFacade extends LazyLogging {
 
   def start(settings: ClusterSettings)(implicit system: ActorSystem,
                                        clock: Clock): Future[Unit] = {
-    def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
+    def startHttpListener(facade: QuckooFacade)(
+        implicit ec: ExecutionContext) = {
       implicit val materializer =
         ActorMaterializer(ActorMaterializerSettings(system), "http")
 

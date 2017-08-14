@@ -29,8 +29,8 @@ import scala.concurrent.ExecutionContext
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-class SchedulerHandler(model: ModelRW[ConsoleScope, UserScope],
-                       ops: ConsoleOps)(implicit ec: ExecutionContext)
+class SchedulerHandler(model: ModelRW[ConsoleScope, UserScope], ops: ConsoleOps)(
+    implicit ec: ExecutionContext)
     extends ConsoleHandler[UserScope](model)
     with AuthHandler[UserScope]
     with LazyLogging {

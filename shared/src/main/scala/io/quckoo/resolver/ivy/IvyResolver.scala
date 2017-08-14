@@ -79,7 +79,8 @@ class IvyResolver private[ivy] (ivy: Ivy)
 
   private[this] def resolve(artifactId: ArtifactId,
                             download: Boolean): IO[Resolved[Artifact]] = IO {
-    def unresolvedDependencies(report: ResolveReport): Resolved[ResolveReport] = {
+    def unresolvedDependencies(
+        report: ResolveReport): Resolved[ResolveReport] = {
       val validations: List[Validated[DependencyError, ResolveReport]] =
         report.getUnresolvedDependencies
           .map(_.getId)

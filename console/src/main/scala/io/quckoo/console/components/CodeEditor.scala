@@ -105,7 +105,8 @@ object CodeEditor {
       )
     }
 
-    protected[CodeEditor] def initialize(props: Props, state: State): Callback = {
+    protected[CodeEditor] def initialize(props: Props,
+                                         state: State): Callback = {
       $.getDOMNode
         .map(node => CodeMirror(node, jsOptions(props)))
         .map { codeMirror =>
