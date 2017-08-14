@@ -65,7 +65,8 @@ object CoproductSelect {
       $.state.flatMap(st =>
         $.props.flatMap(_.onUpdate(st.selected.flatMap(st.cache.get))))
 
-    def onSelectionUpdate(props: Props[A])(evt: ReactEventFromInput): Callback = {
+    def onSelectionUpdate(props: Props[A])(
+        evt: ReactEventFromInput): Callback = {
       val selectedSymbol: Option[Symbol] = {
         if (evt.target.value.isEmpty) None
         else Some(Symbol(evt.target.value))

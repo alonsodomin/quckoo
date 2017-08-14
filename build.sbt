@@ -14,7 +14,7 @@ inThisBuild(
   Seq(
     scalaVersion := "2.12.3",
     parallelExecution := false,
-    scalafmtVersion := "1.1.0",
+    scalafmtVersion := "1.2.0",
     scalafmtOnCompile := true
   ))
 
