@@ -11,10 +11,11 @@ object Dependencies {
 
     val slogging = "0.5.3"
     val log4j    = "2.8.2"
+    val slf4j    = "1.7.25"
 
     // Testing --------
 
-    val scalaTest  = "3.0.3"
+    val scalaTest  = "3.0.4"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
     val mockserver = "3.10.8"
@@ -32,12 +33,12 @@ object Dependencies {
         val main = "10.0.9"
 
         // http extensions
-        val json = "1.17.0"
+        val json = "1.18.0"
         val sse  = "3.0.0"
       }
 
       // persistence plugins
-      val cassandra = "0.54"
+      val cassandra = "0.55"
       val inmemory  = "2.5.1.1"
     }
 
@@ -59,7 +60,7 @@ object Dependencies {
     // Other utils ---
 
     val arm         = "2.0"
-    val betterfiles = "3.0.0"
+    val betterfiles = "3.1.0"
     val diode       = "1.1.2"
     val cats        = "0.9.0"
     val catsEffect  = "0.3"
@@ -70,11 +71,11 @@ object Dependencies {
     val ivy         = "2.4.0"
     val monix       = "2.3.0"
     val monocle     = "1.4.0"
-    val pureconfig  = "0.7.2"
+    val pureconfig  = "0.8.0"
     val scalaCss    = "0.5.3"
     val scalaTime   = "2.0.0-M12"
     val scalatags   = "0.6.5"
-    val scopt       = "3.6.0"
+    val scopt       = "3.7.0"
     val shims       = "1.0-b0e5152"
     val xml         = "1.0.6"
 
@@ -144,6 +145,7 @@ object Dependencies {
       val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon.core
     }
 
+    val slf4j          = "org.slf4j" % "slf4j-api"      % version.slf4j
     val slogging_slf4j = "biz.enef" %% "slogging-slf4j" % version.slogging
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
@@ -198,7 +200,8 @@ object Dependencies {
   }
 
   lazy val coreJVM = Def.settings {
-    libraryDependencies ++= Seq()
+    import libs._
+    libraryDependencies ++= Seq(slf4j)
   }
 
   // Utilities module ===========================

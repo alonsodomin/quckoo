@@ -1,6 +1,3 @@
-import sbt._
-import sbt.Keys._
-
 import sbtcrossproject.{crossProject, CrossType}
 import com.typesafe.sbt.pgp.PgpKeys
 import scala.xml.transform.{RewriteRule, RuleTransformer}
