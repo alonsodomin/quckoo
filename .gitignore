@@ -25,6 +25,7 @@
 *.log
 *.sqlite
 *.trace.db
+*.mdb
 
 # OS generated files #
 ######################
