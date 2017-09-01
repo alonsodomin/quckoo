@@ -17,8 +17,7 @@
 package io.quckoo.console.scheduler
 
 import cats.data.EitherT
-import cats.instances.option._
-import cats.syntax.cartesian._
+import cats.implicits._
 
 import cron4s.{Error => CronError, _}
 
@@ -104,8 +103,8 @@ object CronTriggerInput {
                               ^.readOnly := props.readOnly)),
         <.div(
           ^.`class` := "col-sm-offset-2",
-          (state.inputExpr |@| state.errorReason)
-            .map((input, error) => errorMessage((input, error)))
+          (state.inputExpr, state.errorReason)
+            .mapN((input, error) => errorMessage((input, error)))
             .whenDefined
         )
       )
