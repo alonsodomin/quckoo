@@ -23,7 +23,6 @@ import io.quckoo.api.TopicTag
 import io.quckoo.serialization.Decoder
 import io.quckoo.util._
 
-import monix.cats._
 import monix.reactive.Observable
 
 import slogging.LazyLogging
