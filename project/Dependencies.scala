@@ -64,12 +64,12 @@ object Dependencies {
     val diode       = "1.1.2"
     val cats        = "1.0.0-MF"
     val catsEffect  = "0.4"
-    val circe       = "0.8.0"
-    val cron4s      = "0.4.1"
+    val circe       = "0.9.0-M1"
+    val cron4s      = "0.4.2"
     val enumeratum  = "1.5.12"
     val enumCirce   = "1.5.14"
     val ivy         = "2.4.0"
-    val monix       = "2.3.0"
+    val monix       = "3.0.0-b20be32"
     val monocle     = "1.4.0"
     val pureconfig  = "0.8.0"
     val scalaCss    = "0.5.3"
@@ -220,8 +220,8 @@ object Dependencies {
   lazy val api = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
       "io.suzaku" %%% "diode"          % version.diode,
-      "io.monix"  %%% "monix-reactive" % version.monix,
-      "io.monix"  %%% "monix-cats"     % version.monix
+      "io.monix"  %%% "monix-reactive" % version.monix
+      //"io.monix"  %%% "monix-cats"     % version.monix
     )
   )
 

@@ -142,7 +142,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
     val givenEvents = List(MasterJoined(givenNodeId, Location("localhost")), MasterReachable(givenNodeId))
 
     val httpEvents: Attempt[List[HttpServerSentEvent]] =
-      EitherT(givenEvents.map(evt => DataBuffer(evt))).map(HttpServerSentEvent).value.sequenceU
+      EitherT(givenEvents.map(evt => DataBuffer(evt))).map(HttpServerSentEvent).value.sequence
 
     attempt2Future(httpEvents).flatMap { events =>
       inProtocol[HttpProtocol] withEvents events usingClient { client =>
