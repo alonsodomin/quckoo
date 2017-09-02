@@ -80,8 +80,8 @@ object QuckooFacade extends LazyLogging {
       system.actorOf(QuckooGuardian.props(settings, journal, promise), "quckoo")
 
     import system.dispatcher
-    (promise.future |@| startHttpListener(new QuckooFacade(guardian)))
-      .map((_, _) => ())
+    (promise.future, startHttpListener(new QuckooFacade(guardian)))
+      .mapN((_, _) => ())
   }
 
 }
