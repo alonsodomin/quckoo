@@ -34,7 +34,7 @@ object Passport {
     val tokenParts: Attempt[Array[String]] = {
       val parts = token.split('.')
       if (parts.length == 3) Right(parts)
-      else Left(InvalidPassport(token))
+      else Left(InvalidToken(token))
     }
 
     def decodePart(part: Int): Attempt[DataBuffer] =
@@ -54,7 +54,7 @@ object Passport {
 final class Passport(claims: Map[String, String], val token: String) {
   import Passport._
 
-  lazy val principal: Option[Principal] =
+  lazy val subject: Option[Subject] =
     claims.get(SubjectClaim).map(User)
 
   override def equals(other: Any): Boolean = other match {

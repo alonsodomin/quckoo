@@ -14,25 +14,10 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.security
+package io.quckoo.client.core2
 
-import io.quckoo.auth.Subject
-import io.quckoo.console.components._
-
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
-
-/**
-  * Created by alonsodomin on 20/02/2016.
-  */
-object PrincipalWidget {
-
-  private[this] val component = ScalaComponent
-    .builder[Subject]("UserDisplay")
-    .render_P { user =>
-      <.span(Icons.user, user.id)
-  } build
-
-  def apply(user: Subject) = component(user)
-
+sealed trait Transport
+object Transport {
+  case object HTTP extends Transport
+  case object TCP extends Transport
 }

@@ -18,6 +18,7 @@ package io.quckoo
 
 import cats._
 import cats.data.{EitherT, Validated}
+import cats.effect.IO
 import cats.implicits._
 
 import scala.concurrent.Future
@@ -38,26 +39,32 @@ package object util {
     @inline def fail[A](ex: Throwable): Attempt[A] = Either.left[Throwable, A](ex)
   }
 
-  final val attempt2Try = new (Attempt ~> Try) {
+  implicit final val attempt2Try: Attempt ~> Try = new (Attempt ~> Try) {
     override def apply[A](fa: Attempt[A]): Try[A] = fa match {
       case Left(throwable) => Failure(throwable)
       case Right(value)    => Success(value)
     }
   }
 
-  final val try2Attempt = new (Try ~> Attempt) {
+  implicit final val try2Attempt: Try ~> Attempt = new (Try ~> Attempt) {
     override def apply[A](fa: Try[A]): Attempt[A] = fa match {
       case Success(value) => Right(value)
       case Failure(ex)    => Left(ex)
     }
   }
 
-  final val try2Future = new (Try ~> Future) {
+  implicit final val try2Future: Try ~> Future = new (Try ~> Future) {
     override def apply[A](fa: Try[A]): Future[A] =
       Future.fromTry(fa)
   }
 
-  final val attempt2Future: Attempt ~> Future = attempt2Try andThen try2Future
+  implicit final val attempt2IO: Attempt ~> IO = new (Attempt ~> IO) {
+    override def apply[A](fa: Attempt[A]): IO[A] =
+      IO.async(_(fa))
+  }
+
+  implicit final val attempt2Future: Attempt ~> Future =
+    attempt2Try andThen try2Future
 
   implicit class RichValidated[E, A](val self: Validated[E, A]) extends AnyVal {
     def append[EE >: E, AA >: A](other: Validated[EE, AA])(implicit es: Semigroup[EE], as: Semigroup[AA]): Validated[EE, AA] = {

@@ -25,7 +25,7 @@ import cats.data.OptionT
 import cats.instances.future._
 import cats.syntax.either._
 
-import io.quckoo.auth.{Passport, Principal}
+import io.quckoo.auth.{Passport, Subject}
 import io.quckoo.auth.http._
 import io.quckoo.cluster.core.Auth
 
@@ -50,14 +50,15 @@ trait AuthDirectives { auth: Auth =>
   def authenticateUser: Route = {
     def basicHttpAuth(creds: Option[BasicHttpCredentials])(
         implicit ec: ExecutionContext
-    ): Future[AuthenticationResult[Principal]] =
+    ): Future[AuthenticationResult[Subject]] = {
       authenticationResult(auth.basic(Credentials(creds)))
 
     extractExecutionContext { implicit ec =>
       implicit val ev = implicitly[ClassTag[BasicHttpCredentials]]
       val authenticate =
-        authenticateOrRejectWithChallenge[BasicHttpCredentials, Principal](basicHttpAuth)
-      authenticate { (principal: Principal) =>
+        authenticateOrRejectWithChallenge[BasicHttpCredentials, Subject](
+          basicHttpAuth)
+      authenticate { (principal: Subject) =>
         completeWithPassport(auth.generatePassport(principal))
       }
     }

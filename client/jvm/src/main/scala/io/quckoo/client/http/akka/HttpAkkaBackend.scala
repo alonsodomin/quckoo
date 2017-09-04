@@ -38,7 +38,7 @@ import de.heikoseeberger.akkasse.scaladsl.model.ServerSentEvent
 import de.heikoseeberger.akkasse.scaladsl.unmarshalling.EventStreamUnmarshalling
 
 import io.quckoo.client.core.Channel
-import io.quckoo.client.http.{HttpMethod, HttpRequest, HttpResponse, _}
+import io.quckoo.client.http.{HttpMethod1, HttpRequest1, HttpResponse1, _}
 import io.quckoo.serialization.DataBuffer
 
 import monix.reactive.Observable
@@ -80,13 +80,14 @@ private[http] final class HttpAkkaBackend(host: String,
       }
     }
 
-  override def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
-    def method: AkkaHttpMethod = req.method match {
-      case HttpMethod.Get    => HttpMethods.GET
-      case HttpMethod.Put    => HttpMethods.PUT
-      case HttpMethod.Post   => HttpMethods.POST
-      case HttpMethod.Delete => HttpMethods.DELETE
-    }
+  override def send: Kleisli[Future, HttpRequest1, HttpResponse1] = Kleisli {
+    req =>
+      def method: AkkaHttpMethod = req.method match {
+        case HttpMethod1.Get    => HttpMethods.GET
+        case HttpMethod1.Put    => HttpMethods.PUT
+        case HttpMethod1.Post   => HttpMethods.POST
+        case HttpMethod1.Delete => HttpMethods.DELETE
+      }
 
     val headers = {
       req.headers
@@ -101,26 +102,28 @@ private[http] final class HttpAkkaBackend(host: String,
         .to[immutable.Seq]
     }
 
-    def parseRawResponse(response: AkkaHttpResponse): Future[HttpResponse] = {
-      val entityData = response.entity.dataBytes.runFold(ByteString())(_ ++ _)
+      def parseRawResponse(
+          response: AkkaHttpResponse): Future[HttpResponse1] = {
+        val entityData = response.entity.dataBytes.runFold(ByteString())(_ ++ _)
 
-      import actorSystem.dispatcher
-      entityData.map(
-        buff =>
-          HttpResponse(
-            response.status.intValue(),
-            response.status.value,
-            DataBuffer.fromString(buff.utf8String)
-        )
-      )
-    }
+        import actorSystem.dispatcher
+        entityData.map(
+          buff =>
+            HttpResponse1(response.status.intValue(),
+                          response.status.value,
+                          DataBuffer.fromString(buff.utf8String)))
+      }
 
-    val entity =
-      HttpEntity(ContentTypes.`application/json`, req.entity.asString())
-    Source
-      .single(AkkaHttpRequest(method, uri = req.url, entity = entity, headers = headers))
-      .via(connection)
-      .mapAsync(1)(parseRawResponse)
-      .runWith(Sink.head[HttpResponse])
+      val entity =
+        HttpEntity(ContentTypes.`application/json`, req.entity.asString())
+      Source
+        .single(
+          AkkaHttpRequest(method,
+                          uri = req.url,
+                          entity = entity,
+                          headers = headers))
+        .via(connection)
+        .mapAsync(1)(parseRawResponse)
+        .runWith(Sink.head[HttpResponse1])
   }
 }

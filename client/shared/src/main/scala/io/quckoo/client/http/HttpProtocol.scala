@@ -22,7 +22,7 @@ import io.quckoo.client.core.Protocol
   * Created by alonsodomin on 17/09/2016.
   */
 trait HttpProtocol extends Protocol {
-  type Request   = HttpRequest
-  type Response  = HttpResponse
+  type Request   = HttpRequest1
+  type Response  = HttpResponse1
   type EventType = HttpServerSentEvent
 }

@@ -14,25 +14,21 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.security
+package io.quckoo.auth
 
-import io.quckoo.auth.Subject
-import io.quckoo.console.components._
+import cats.Monoid
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
+sealed trait Session extends Product with Serializable
+object Session {
+  sealed trait Anonymous extends Session
+  case object Anonymous extends Anonymous
 
-/**
-  * Created by alonsodomin on 20/02/2016.
-  */
-object PrincipalWidget {
+  final case class Authenticated(passport: Passport) extends Session
 
-  private[this] val component = ScalaComponent
-    .builder[Subject]("UserDisplay")
-    .render_P { user =>
-      <.span(Icons.user, user.id)
-  } build
+  implicit val sessionMonoid: Monoid[Session] = new Monoid[Session] {
+    override def empty = Anonymous
 
-  def apply(user: Subject) = component(user)
+    override def combine(x: Session, y: Session) = y
+  }
 
 }

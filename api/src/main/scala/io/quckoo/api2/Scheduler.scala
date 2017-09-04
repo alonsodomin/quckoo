@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.security
+package io.quckoo.api2
 
-import io.quckoo.auth.Subject
-import io.quckoo.console.components._
+import io.quckoo.protocol.scheduler.{ExecutionPlanCancelled, ExecutionPlanStarted}
+import io.quckoo._
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
+import scala.concurrent.duration.FiniteDuration
 
-/**
-  * Created by alonsodomin on 20/02/2016.
-  */
-object PrincipalWidget {
+trait Scheduler[F[_]] {
 
-  private[this] val component = ScalaComponent
-    .builder[Subject]("UserDisplay")
-    .render_P { user =>
-      <.span(Icons.user, user.id)
-  } build
+  def cancelPlan(planId: PlanId): F[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]]
 
-  def apply(user: Subject) = component(user)
+  def fetchPlan(planId: PlanId): F[Option[ExecutionPlan]]
+
+  def submit(
+    jobId: JobId,
+    trigger: Trigger = Trigger.Immediate,
+    timeout: Option[FiniteDuration] = None
+  ): F[Either[InvalidJob, ExecutionPlanStarted]]
+
+  def fetchTask(taskId: TaskId): F[Option[TaskExecution]]
 
 }

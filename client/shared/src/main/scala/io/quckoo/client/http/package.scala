@@ -50,7 +50,7 @@ package object http {
   private[http] def topicURI(topicName: String): String =
     EventsURI + "/" + topicName
 
-  @inline private[http] def authHeader(passport: Passport): (String, String) =
+  @inline private[http] def bearerToken(passport: Passport): (String, String) =
     AuthorizationHeader -> s"Bearer ${passport.token}"
 
   type HttpQuckooClient = QuckooClient[HttpProtocol]

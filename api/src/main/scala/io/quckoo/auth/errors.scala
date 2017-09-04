@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-package io.quckoo.client.http
+package io.quckoo.auth
 
-import io.circe.generic.auto._
-
-import io.quckoo.client.core._
-import io.quckoo.net.QuckooState
-import io.quckoo.serialization.json._
+import cats.syntax.show._
 
 /**
-  * Created by alonsodomin on 19/09/2016.
+  * Created by alonsodomin on 16/09/2016.
   */
-trait HttpClusterCmds extends HttpMarshalling with ClusterCmds[HttpProtocol] {
-  import CmdMarshalling.Auth
+sealed abstract class SecurityError(msg: String) extends Exception(msg)
 
-  implicit lazy val getClusterStateCmd: GetClusterStateCmd =
-    new Auth[HttpProtocol, Unit, QuckooState] {
-      override val marshall =
-        marshallEmpty[GetClusterStateCmd](HttpMethod1.Get, _ => ClusterStateURI)
-      override val unmarshall = unmarshallFromJson[GetClusterStateCmd]
-    }
+case object InvalidCredentials extends SecurityError("Invalid credentials.")
 
-}
+case object NotAuthorized extends SecurityError("Not authorized.")
+
+final case class InvalidToken(token: String)
+  extends SecurityError(s"Token '$token' is invalid.")
+
+final case class PassportExpired(passport: Passport)
+  extends SecurityError(s"Passport '${passport.show}' has expired.")
+
+case object SessionExpired extends SecurityError("Session has expired.")

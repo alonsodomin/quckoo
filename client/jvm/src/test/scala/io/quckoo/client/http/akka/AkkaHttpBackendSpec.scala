@@ -21,7 +21,7 @@ import akka.actor.ActorSystem
 import io.circe.generic.auto._
 
 import io.quckoo.{ArtifactId, JobId}
-import io.quckoo.client.http.{HttpMethod, HttpRequest, MockServer}
+import io.quckoo.client.http.{HttpMethod1, HttpRequest1, MockServer}
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 
@@ -113,7 +113,8 @@ class AkkaHttpBackendSpec extends fixture.FlatSpec with MockServer with Matchers
 
     val headers = Map("Authorization" -> "foo")
     val response = Await.result(
-      transport.send(HttpRequest(HttpMethod.Post, "/path", Duration.Inf, headers)),
+      transport.send(
+        HttpRequest1(HttpMethod1.Post, "/path", Duration.Inf, headers)),
       Duration.Inf
     )
 

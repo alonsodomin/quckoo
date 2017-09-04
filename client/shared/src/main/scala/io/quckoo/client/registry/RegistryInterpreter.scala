@@ -14,10 +14,25 @@
  * limitations under the License.
  */
 
-package io.quckoo.auth
+package io.quckoo.client.registry
 
-/**
-  * Created by alonsodomin on 15/09/2016.
-  */
-final case class InvalidPassport(token: String)
-    extends Exception(s"Token '$token' is not valid.")
+import cats.{Monad, ~>}
+import io.quckoo.api2.Registry
+
+class RegistryInterpreter[F[_]: Monad](impl: Registry[F]) extends (RegistryOp ~> F) {
+  import RegistryOp._
+
+  override def apply[A](fa: RegistryOp[A]) = fa match {
+    case EnableJob(jobId) => impl.enableJob(jobId)
+    case DisableJob(jobId) => impl.disableJob(jobId)
+    case FetchJob(jobId) => impl.fetchJob(jobId)
+  }
+
+}
+
+object RegistryInterpreter {
+
+  implicit def deriveInterpreter[F[_]: Monad](implicit registry: Registry[F]): RegistryInterpreter[F] =
+    new RegistryInterpreter[F](registry)
+
+}

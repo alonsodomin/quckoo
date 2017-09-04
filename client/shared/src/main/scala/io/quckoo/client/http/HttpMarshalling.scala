@@ -43,18 +43,18 @@ trait HttpMarshalling {
       headerMap += (RequestTimeoutHeader -> timeout.toMillis.toString)
     }
     passport.foreach { pass =>
-      headerMap += authHeader(pass)
+      headerMap += bearerToken(pass)
     }
     headerMap.toMap
   }
 
   protected def marshallEmpty[O <: CmdMarshalling[HttpProtocol]](
-      method: HttpMethod,
-      uriFor: O#Cmd[O#In] => String
-  ) = Marshall[O#Cmd, O#In, HttpRequest] { cmd =>
+                                                                  method: HttpMethod1,
+                                                                  uriFor: O#Cmd[O#In] => String
+  ) = Marshall[O#Cmd, O#In, HttpRequest1] { cmd =>
     def createRequest(passport: Option[Passport]) = {
       val headers = httpHeaders(passport, cmd.timeout)
-      Attempt.success(HttpRequest(method, uriFor(cmd), cmd.timeout, headers))
+      Attempt.success(HttpRequest1(method, uriFor(cmd), cmd.timeout, headers))
     }
 
     cmd match {
@@ -63,10 +63,10 @@ trait HttpMarshalling {
     }
   }
 
-  protected def marshallToJson[O <: CmdMarshalling[HttpProtocol]](method: HttpMethod,
+  protected def marshallToJson[O <: CmdMarshalling[HttpProtocol]](method: HttpMethod1,
                                                                   uriFor: O#Cmd[O#In] => String)(
       implicit encoder: Encoder[O#In, String]
-  ): Marshall[O#Cmd, O#In, HttpRequest] = {
+  ): Marshall[O#Cmd, O#In, HttpRequest1] = {
     val encodePayload = Kleisli[Attempt, O#Cmd[O#In], DataBuffer] { cmd =>
       cmd.payload match {
         case ()  => Attempt.success(DataBuffer.Empty)
@@ -83,7 +83,7 @@ trait HttpMarshalling {
 
   protected def unmarshallFromJson[O <: CmdMarshalling[HttpProtocol]](
       implicit decoder: Decoder[String, O#Rslt]
-  ): Unmarshall[HttpResponse, O#Rslt] = Unmarshall { res =>
+  ): Unmarshall[HttpResponse1, O#Rslt] = Unmarshall { res =>
     if (res.isFailure && res.entity.isEmpty) {
       Attempt.fail(HttpError(res.statusLine))
     } else res.entity.as[O#Rslt](decoder)
@@ -91,7 +91,7 @@ trait HttpMarshalling {
 
   protected def unmarshalOption[A](
       implicit decoder: Decoder[String, A]
-  ): Unmarshall[HttpResponse, Option[A]] = Unmarshall { res =>
+  ): Unmarshall[HttpResponse1, Option[A]] = Unmarshall { res =>
     if (res.isSuccess) res.entity.as[A].map(Some(_))
     else Attempt.success(None)
   }
@@ -99,7 +99,7 @@ trait HttpMarshalling {
   protected def unmarshalEither[E, A](
       implicit errDecode: Decoder[String, E],
       succDecode: Decoder[String, A]
-  ): Unmarshall[HttpResponse, Either[E, A]] = Unmarshall { res =>
+  ): Unmarshall[HttpResponse1, Either[E, A]] = Unmarshall { res =>
     if (res.isFailure) res.entity.as[E].map(Left(_))
     else res.entity.as[A].map(Right(_))
   }
@@ -107,7 +107,7 @@ trait HttpMarshalling {
   protected def unmarshalValidation[E, A](
       implicit errDecode: Decoder[String, E],
       succDecode: Decoder[String, A]
-  ): Unmarshall[HttpResponse, Validated[E, A]] = Unmarshall { res =>
+  ): Unmarshall[HttpResponse1, Validated[E, A]] = Unmarshall { res =>
     if (res.isFailure) res.entity.as[E].map(_.invalid[A])
     else res.entity.as[A].map(_.valid[E])
   }

@@ -14,25 +14,11 @@
  * limitations under the License.
  */
 
-package io.quckoo.client.http
-
-import io.circe.generic.auto._
-
-import io.quckoo.client.core._
-import io.quckoo.net.QuckooState
-import io.quckoo.serialization.json._
+package io.quckoo.auth
 
 /**
-  * Created by alonsodomin on 19/09/2016.
+  * Created by alonsodomin on 29/03/2016.
   */
-trait HttpClusterCmds extends HttpMarshalling with ClusterCmds[HttpProtocol] {
-  import CmdMarshalling.Auth
-
-  implicit lazy val getClusterStateCmd: GetClusterStateCmd =
-    new Auth[HttpProtocol, Unit, QuckooState] {
-      override val marshall =
-        marshallEmpty[GetClusterStateCmd](HttpMethod1.Get, _ => ClusterStateURI)
-      override val unmarshall = unmarshallFromJson[GetClusterStateCmd]
-    }
-
+trait Subject extends Serializable {
+  val id: String
 }

@@ -84,18 +84,18 @@ object HttpProtocolSpec {
   )
 
   object HttpSuccess {
-    def apply(entity: DataBuffer): Attempt[HttpResponse] =
-      Attempt.success(HttpResponse(200, "", entity))
+    def apply(entity: DataBuffer): Attempt[HttpResponse1] =
+      Attempt.success(HttpResponse1(200, "", entity))
 
-    def apply(tryEntity: Attempt[DataBuffer]): Attempt[HttpResponse] = tryEntity.flatMap(apply)
+    def apply(tryEntity: Attempt[DataBuffer]): Attempt[HttpResponse1] = tryEntity.flatMap(apply)
   }
   object HttpError {
     def apply(
       statusCode: Int,
       statusLine: String = "",
       entity: Attempt[DataBuffer] = Attempt.success(DataBuffer.Empty)
-    ): Attempt[HttpResponse] =
-      entity.map(data => HttpResponse(statusCode, statusLine, data))
+    ): Attempt[HttpResponse1] =
+      entity.map(data => HttpResponse1(statusCode, statusLine, data))
   }
 
   def notFound[A](jobId: JobId): Either[JobNotFound, A] =
@@ -157,7 +157,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   // -- Login requests
 
   def isLogin(username: String, password: String) =
-    hasMethod(HttpMethod.Post) and
+    hasMethod(HttpMethod1.Post) and
       hasUrl(uris.login) and
       hasEmptyBody and
       hasAuth(username, password) and
@@ -194,7 +194,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Refresh token requests
 
-  val isRefreshPassport = hasMethod(HttpMethod.Post) and
+  val isRefreshPassport = hasMethod(HttpMethod1.Post) and
     hasUrl(uris.refreshPass) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -230,7 +230,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Logout requests
 
-  val isLogout = hasMethod(HttpMethod.Post) and
+  val isLogout = hasMethod(HttpMethod1.Post) and
     hasUrl(uris.logout) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -254,7 +254,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Get Cluster State
 
-  val isGetClusterState = hasMethod(HttpMethod.Get) and
+  val isGetClusterState = hasMethod(HttpMethod1.Get) and
     hasUrl(uris.cluster) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -273,7 +273,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Register Job
 
-  val isRegisterJob = hasMethod(HttpMethod.Put) and
+  val isRegisterJob = hasMethod(HttpMethod1.Put) and
     hasUrl(uris.jobs) and
     hasPassport(TestPassport) and
     hasBody(TestJobSpec) and
@@ -305,7 +305,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Fetch Jobs
 
-  val isFetchJobs = hasMethod(HttpMethod.Get) and
+  val isFetchJobs = hasMethod(HttpMethod1.Get) and
     hasUrl(uris.jobs) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -325,7 +325,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Fetch Job
 
-  val isFetchJob = hasMethod(HttpMethod.Get) and
+  val isFetchJob = hasMethod(HttpMethod1.Get) and
     hasUrl(uris.fetchJob) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -365,7 +365,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Enable Job
 
-  val isEnableJob = hasMethod(HttpMethod.Post) and
+  val isEnableJob = hasMethod(HttpMethod1.Post) and
     hasUrl(uris.enableJob) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -399,7 +399,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Disable Job
 
-  val isDisableJob = hasMethod(HttpMethod.Post) and
+  val isDisableJob = hasMethod(HttpMethod1.Post) and
     hasUrl(uris.disableJob) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -433,7 +433,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Get execution plans
 
-  val isGetExecutionPlans = hasMethod(HttpMethod.Get) and
+  val isGetExecutionPlans = hasMethod(HttpMethod1.Get) and
     hasUrl(uris.executionPlans) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -453,7 +453,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Get execution plan
 
-  val isGetExecutionPlan = hasMethod(HttpMethod.Get) and
+  val isGetExecutionPlan = hasMethod(HttpMethod1.Get) and
     hasUrl(uris.executionPlan) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -493,7 +493,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Schedule job
 
-  def isScheduleJob(value: ScheduleJob) = hasMethod(HttpMethod.Put) and
+  def isScheduleJob(value: ScheduleJob) = hasMethod(HttpMethod1.Put) and
     hasUrl(uris.executionPlans) and
     hasPassport(TestPassport) and
     hasBody(value) and
@@ -528,7 +528,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Cancel execution plan
 
-  val isCancelExecutionPlan = hasMethod(HttpMethod.Delete) and
+  val isCancelExecutionPlan = hasMethod(HttpMethod1.Delete) and
     hasUrl(uris.executionPlan) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -568,7 +568,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Get executions
 
-  val isGetExecutions = hasMethod(HttpMethod.Get) and
+  val isGetExecutions = hasMethod(HttpMethod1.Get) and
     hasUrl(uris.executions) and
     hasPassport(TestPassport) and
     hasEmptyBody and
@@ -588,7 +588,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
 
   // -- Get execution
 
-  val isGetExecution = hasMethod(HttpMethod.Get) and
+  val isGetExecution = hasMethod(HttpMethod1.Get) and
     hasUrl(uris.execution) and
     hasPassport(TestPassport) and
     hasEmptyBody and

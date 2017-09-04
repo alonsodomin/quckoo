@@ -18,7 +18,7 @@ package io.quckoo.console.layout
 
 import diode.react.ModelProxy
 
-import io.quckoo.auth.Principal
+import io.quckoo.auth.Subject
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
@@ -45,7 +45,7 @@ object Navigation {
                    menu: List[NavigationMenu],
                    routerCtl: RouterCtl[ConsoleRoute],
                    current: ConsoleRoute,
-                   proxy: ModelProxy[Option[Principal]])
+                   proxy: ModelProxy[Option[Subject]])
 
   class Backend($ : BackendScope[Props, Unit]) {
 
@@ -151,7 +151,7 @@ object Navigation {
             menu: List[NavigationMenu],
             routerCtl: RouterCtl[ConsoleRoute],
             current: ConsoleRoute,
-            proxy: ModelProxy[Option[Principal]]) =
+            proxy: ModelProxy[Option[Subject]]) =
     component(Props(initial, menu, routerCtl, current, proxy))
 
 }

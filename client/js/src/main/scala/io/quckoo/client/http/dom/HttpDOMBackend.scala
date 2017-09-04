@@ -19,7 +19,7 @@ package io.quckoo.client.http.dom
 import cats.data.Kleisli
 
 import io.quckoo.client.core.Channel
-import io.quckoo.client.http.{HttpRequest, HttpResponse, _}
+import io.quckoo.client.http.{HttpRequest1, HttpResponse1, _}
 import io.quckoo.serialization.DataBuffer
 
 import monix.reactive.{Observable, OverflowStrategy}
@@ -43,7 +43,7 @@ private[http] object HttpDOMBackend extends HttpBackend {
       Observable.create(OverflowStrategy.DropOld(20))(subscriber)
     }
 
-  def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
+  def send: Kleisli[Future, HttpRequest1, HttpResponse1] = Kleisli { req =>
     val timeout = {
       if (req.timeout.isFinite())
         req.timeout.toMillis.toInt
@@ -51,14 +51,14 @@ private[http] object HttpDOMBackend extends HttpBackend {
     }
 
     val domReq  = new XMLHttpRequest()
-    val promise = Promise[HttpResponse]()
+    val promise = Promise[HttpResponse1]()
 
     domReq.onreadystatechange = { (e: DOMEvent) =>
       if (domReq.readyState == 4) {
         val entityData =
           DataBuffer(TypedArrayBuffer.wrap(domReq.response.asInstanceOf[ArrayBuffer]))
         val response =
-          HttpResponse(domReq.status, domReq.statusText, entityData)
+          HttpResponse1(domReq.status, domReq.statusText, entityData)
         promise.success(response)
       }
     }

@@ -31,24 +31,24 @@ import scala.util.matching.Regex
   */
 trait HttpRequestMatchers extends Matchers {
 
-  def hasMethod(method: HttpMethod): Matcher[HttpRequest] = new Matcher[HttpRequest] {
-    override def apply(req: HttpRequest): MatchResult =
+  def hasMethod(method: HttpMethod1): Matcher[HttpRequest1] = new Matcher[HttpRequest1] {
+    override def apply(req: HttpRequest1): MatchResult =
       MatchResult(req.method == method,
         s"Http method ${req.method} is not a $method method",
         s"is a ${req.method} http request"
       )
   }
 
-  def hasUrl(pattern: Regex): Matcher[HttpRequest] = new Matcher[HttpRequest] {
-    override def apply(req: HttpRequest): MatchResult =
+  def hasUrl(pattern: Regex): Matcher[HttpRequest1] = new Matcher[HttpRequest1] {
+    override def apply(req: HttpRequest1): MatchResult =
       MatchResult(pattern.findAllIn(req.url).nonEmpty,
         s"URL '${req.url}' does not match pattern '$pattern'",
         s"URL '${req.url}' matches pattern '$pattern'"
       )
   }
 
-  def hasHeader(name: String, value: String): Matcher[HttpRequest] = new Matcher[HttpRequest] {
-    override def apply(req: HttpRequest): MatchResult = {
+  def hasHeader(name: String, value: String): Matcher[HttpRequest1] = new Matcher[HttpRequest1] {
+    override def apply(req: HttpRequest1): MatchResult = {
       val currValue = req.headers.get(name)
       MatchResult(
         currValue.contains(value),
@@ -62,21 +62,21 @@ trait HttpRequestMatchers extends Matchers {
     }
   }
 
-  val isJsonRequest: Matcher[HttpRequest] = hasHeader("Content-Type", "application/json")
+  val isJsonRequest: Matcher[HttpRequest1] = hasHeader("Content-Type", "application/json")
 
-  def hasAuth(username: String, password: String): Matcher[HttpRequest] = {
+  def hasAuth(username: String, password: String): Matcher[HttpRequest1] = {
     val Right(creds) = DataBuffer.fromString(s"$username:$password").toBase64
     hasHeader(AuthorizationHeader, s"Basic $creds")
   }
 
-  def hasPassport(passport: Passport): Matcher[HttpRequest] =
+  def hasPassport(passport: Passport): Matcher[HttpRequest1] =
     hasHeader(AuthorizationHeader, s"Bearer ${passport.token}")
 
-  def hasTimeout(timeout: FiniteDuration): Matcher[HttpRequest] =
+  def hasTimeout(timeout: FiniteDuration): Matcher[HttpRequest1] =
     hasHeader(RequestTimeoutHeader, timeout.toMillis.toString)
 
-  val hasEmptyBody: Matcher[HttpRequest] = new Matcher[HttpRequest] {
-    override def apply(req: HttpRequest): MatchResult = {
+  val hasEmptyBody: Matcher[HttpRequest1] = new Matcher[HttpRequest1] {
+    override def apply(req: HttpRequest1): MatchResult = {
       MatchResult(
         req.entity.isEmpty,
         s"has no empty body",
@@ -85,8 +85,8 @@ trait HttpRequestMatchers extends Matchers {
     }
   }
 
-  def hasBody[A](body: A)(implicit decoder: Decoder[String, A]): Matcher[HttpRequest] = new Matcher[HttpRequest] {
-    override def apply(req: HttpRequest): MatchResult = {
+  def hasBody[A](body: A)(implicit decoder: Decoder[String, A]): Matcher[HttpRequest1] = new Matcher[HttpRequest1] {
+    override def apply(req: HttpRequest1): MatchResult = {
       MatchResult(
         req.entity.as[A].toOption.contains(body),
         s"current body '${req.entity.asString()}' is not equals to '$body'",

@@ -16,15 +16,30 @@
 
 package io.quckoo.client.http
 
+import cats.effect.IO
+import io.quckoo.auth.{NotAuthorized, Passport, SessionExpired}
 import io.quckoo.client.QuckooClient
 import io.quckoo.client.core.DriverBackend
+import org.scalajs.dom.XMLHttpRequest
 
 /**
   * Created by alonsodomin on 20/09/2016.
   */
 package object dom {
+  type HttpResponseHandler[A] = PartialFunction[XMLHttpRequest, IO[A]]
 
   implicit val backend: DriverBackend[HttpProtocol] = HttpDOMBackend
   val HttpDOMQuckooClient                           = QuckooClient[HttpProtocol]
+
+  def handleResponse[A](handler: HttpResponseHandler[A]): XMLHttpRequest => IO[A] = {
+    def defaultHandler: XMLHttpRequest => IO[A] = res => {
+      if (res.status == 401) IO.raiseError(SessionExpired)
+      else if (res.status == 403) IO.raiseError(NotAuthorized)
+      else if (res.status > 400) IO.raiseError(new Exception(res.statusText))
+      else IO.raiseError(new Exception("Invalid response."))
+    }
+
+    handler.applyOrElse(_, defaultHandler)
+  }
 
 }

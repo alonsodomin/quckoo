@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package io.quckoo.auth
+package io.quckoo.client
 
-/**
-  * Created by alonsodomin on 16/09/2016.
-  */
-case object InvalidCredentials extends Exception("Invalid credentials")
+import cats.data.StateT
+import cats.effect.IO
+import io.quckoo.auth.Session
+
+class QuckooClient2 {
+
+}
+

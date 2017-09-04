@@ -58,7 +58,7 @@ object Footer {
         props
           .proxy()
           .passport
-          .flatMap(_.principal)
+          .flatMap(_.subject)
           .map { _ =>
             <.footer(Style.footer, LogDisplay(props.logStream))
           }

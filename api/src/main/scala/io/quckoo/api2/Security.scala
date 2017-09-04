@@ -14,25 +14,13 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.security
+package io.quckoo.api2
 
-import io.quckoo.auth.Subject
-import io.quckoo.console.components._
+trait Security[F[_]] {
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
+  def signIn(username: String, password: String): F[Unit]
+  def signOut(): F[Unit]
 
-/**
-  * Created by alonsodomin on 20/02/2016.
-  */
-object PrincipalWidget {
-
-  private[this] val component = ScalaComponent
-    .builder[Subject]("UserDisplay")
-    .render_P { user =>
-      <.span(Icons.user, user.id)
-  } build
-
-  def apply(user: Subject) = component(user)
+  def refreshToken(): F[Unit]
 
 }

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package io.quckoo.auth
+package io.quckoo.client.core2
 
-/**
-  * Created by alonsodomin on 29/03/2016.
-  */
-trait Principal extends Serializable {
-  val id: String
+class Driver2[F[_], T <: Transport] {
+
+
+
 }

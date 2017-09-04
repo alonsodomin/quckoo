@@ -14,25 +14,14 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.security
+package io.quckoo.client.registry
 
-import io.quckoo.auth.Subject
-import io.quckoo.console.components._
+import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
+import io.quckoo.{JobId, JobNotFound, JobSpec}
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
-
-/**
-  * Created by alonsodomin on 20/02/2016.
-  */
-object PrincipalWidget {
-
-  private[this] val component = ScalaComponent
-    .builder[Subject]("UserDisplay")
-    .render_P { user =>
-      <.span(Icons.user, user.id)
-  } build
-
-  def apply(user: Subject) = component(user)
-
+sealed trait RegistryOp[A]
+object RegistryOp {
+  case class EnableJob(jobId: JobId) extends RegistryOp[Either[JobNotFound, JobEnabled]]
+  case class DisableJob(jobId: JobId) extends RegistryOp[Either[JobNotFound, JobDisabled]]
+  case class FetchJob(jobId: JobId) extends RegistryOp[Option[JobSpec]]
 }

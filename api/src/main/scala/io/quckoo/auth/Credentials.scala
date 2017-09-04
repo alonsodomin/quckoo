@@ -16,7 +16,18 @@
 
 package io.quckoo.auth
 
+import cats.effect.IO
+
+import io.quckoo.serialization.DataBuffer
+
 /**
   * Created by alonsodomin on 05/09/2016.
   */
-final case class Credentials(username: String, password: String)
+final case class Credentials(username: String, password: String) {
+
+  def toBase64: IO[String] = IO.async { callback =>
+    val encoded = DataBuffer.fromString(s"$username:$password").toBase64
+    callback(encoded)
+  }
+
+}

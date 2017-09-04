@@ -28,7 +28,7 @@ import io.quckoo.util.Attempt
 trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
 
   private[this] def unmarshallPassport[O <: CmdMarshalling[HttpProtocol]] =
-    Unmarshall[HttpResponse, Passport] { res =>
+    Unmarshall[HttpResponse1, Passport] { res =>
       if (res.isSuccess) Passport(res.entity.asString())
       else
         Attempt.fail {
@@ -40,13 +40,13 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
   implicit lazy val authenticateCmd: AuthenticateCmd =
     new Anon[HttpProtocol, Credentials, Passport] {
 
-      override val marshall = Marshall[AnonCmd, Credentials, HttpRequest] { cmd =>
+      override val marshall = Marshall[AnonCmd, Credentials, HttpRequest1] { cmd =>
         DataBuffer.fromString(s"${cmd.payload.username}:${cmd.payload.password}").toBase64.map {
           creds =>
             val authHdr = AuthorizationHeader -> s"Basic $creds"
 
-            HttpRequest(
-              HttpMethod.Post,
+            HttpRequest1(
+              HttpMethod1.Post,
               LoginURI,
               cmd.timeout,
               headers = httpHeaders(None, cmd.timeout) + authHdr)
@@ -58,10 +58,10 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
 
   implicit lazy val refreshPassportCmd: RefreshPassportCmd =
     new Auth[HttpProtocol, Unit, Passport] {
-      override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
+      override val marshall = Marshall[AuthCmd, Unit, HttpRequest1] { cmd =>
         Attempt.success {
-          HttpRequest(
-            HttpMethod.Post,
+          HttpRequest1(
+            HttpMethod1.Post,
             AuthRefreshURI,
             cmd.timeout,
             httpHeaders(Some(cmd.passport), cmd.timeout))
@@ -71,17 +71,17 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
     }
 
   implicit lazy val signOutCmd: SingOutCmd = new Auth[HttpProtocol, Unit, Unit] {
-    override val marshall = Marshall[AuthCmd, Unit, HttpRequest] { cmd =>
+    override val marshall = Marshall[AuthCmd, Unit, HttpRequest1] { cmd =>
       Attempt.success {
-        HttpRequest(
-          HttpMethod.Post,
+        HttpRequest1(
+          HttpMethod1.Post,
           LogoutURI,
           cmd.timeout,
           httpHeaders(Some(cmd.passport), cmd.timeout))
       }
     }
 
-    override val unmarshall = Unmarshall[HttpResponse, Unit] { res =>
+    override val unmarshall = Unmarshall[HttpResponse1, Unit] { res =>
       if (res.isSuccess) Attempt.unit
       else Attempt.fail(HttpError(res.statusLine))
     }

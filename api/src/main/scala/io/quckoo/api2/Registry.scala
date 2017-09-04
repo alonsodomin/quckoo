@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.security
+package io.quckoo.api2
 
-import io.quckoo.auth.Subject
-import io.quckoo.console.components._
+import cats.data.ValidatedNel
+import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
+import io.quckoo.{JobId, JobNotFound, JobSpec, QuckooError}
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
+trait Registry[F[_]] {
 
-/**
-  * Created by alonsodomin on 20/02/2016.
-  */
-object PrincipalWidget {
+  def enableJob(jobId: JobId): F[Either[JobNotFound, JobEnabled]]
 
-  private[this] val component = ScalaComponent
-    .builder[Subject]("UserDisplay")
-    .render_P { user =>
-      <.span(Icons.user, user.id)
-  } build
+  def disableJob(jobId: JobId): F[Either[JobNotFound, JobDisabled]]
 
-  def apply(user: Subject) = component(user)
+  def fetchJob(jobId: JobId): F[Option[JobSpec]]
+
+  def registerJob(jobSpec: JobSpec): F[ValidatedNel[QuckooError, JobId]]
 
 }

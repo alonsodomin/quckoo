@@ -27,8 +27,11 @@ sealed trait QuckooError extends Product with Serializable
 
 // == Business errors ===============
 
-final case class JobNotFound(jobId: JobId)             extends QuckooError
-final case class JobNotEnabled(jobId: JobId)           extends QuckooError
+sealed trait InvalidJob extends QuckooError {
+  def jobId: JobId
+}
+final case class JobNotFound(jobId: JobId)             extends InvalidJob
+final case class JobNotEnabled(jobId: JobId)           extends InvalidJob
 final case class ExecutionPlanNotFound(planId: PlanId) extends QuckooError
 final case class TaskExecutionNotFound(taskId: TaskId) extends QuckooError
 

@@ -22,7 +22,7 @@ import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
 
 import cats.syntax.option._
 
-import io.quckoo.auth.{Passport, Principal, User}
+import io.quckoo.auth.{Passport, Subject, User}
 import io.quckoo.serialization.DataBuffer
 
 import scala.concurrent.Future
@@ -36,7 +36,7 @@ trait Auth {
   private[this] val Right(secretKey) =
     DataBuffer.fromString("dqwjq0jd9wjd192u4ued9hd0ew").toBase64
 
-  def basic(credentials: Credentials): Future[Option[Principal]] =
+  def basic(credentials: Credentials): Future[Option[Subject]] = {
     credentials match {
       case p @ Credentials.Provided(identifier) =>
         if (identifier == "admin" && p.verify("password")) {
