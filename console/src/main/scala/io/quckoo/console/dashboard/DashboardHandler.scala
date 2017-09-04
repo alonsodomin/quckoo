@@ -32,9 +32,9 @@ import scala.concurrent.ExecutionContext
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-class DashboardHandler(model: ModelRW[ConsoleScope, QuckooState],
-                       ops: ConsoleOps)(implicit ec: ExecutionContext)
-    extends ConsoleHandler[QuckooState](model) with AuthHandler[QuckooState] with LazyLogging {
+class DashboardHandler(model: ModelRW[ConsoleScope, QuckooState], ops: ConsoleOps)(
+    implicit ec: ExecutionContext
+) extends ConsoleHandler[QuckooState](model) with AuthHandler[QuckooState] with LazyLogging {
 
   override def handle = {
     case GetClusterStatus =>

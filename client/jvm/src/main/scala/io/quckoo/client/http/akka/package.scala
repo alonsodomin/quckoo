@@ -18,10 +18,7 @@ package io.quckoo.client.http
 
 import _root_.akka.http.scaladsl.Http.OutgoingConnection
 import _root_.akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
-import _root_.akka.http.scaladsl.model.headers.{
-  Authorization,
-  OAuth2BearerToken
-}
+import _root_.akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
 import _root_.akka.stream.Materializer
 import _root_.akka.stream.scaladsl.Flow
 
@@ -39,8 +36,11 @@ import scala.concurrent.duration.FiniteDuration
 
 package object akka {
 
-  type HttpClient = Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]]
+  type HttpClient             = Flow[HttpRequest, HttpResponse, Future[OutgoingConnection]]
   type HttpResponseHandler[A] = PartialFunction[HttpResponse, IO[A]]
+  type HttpResponseCheck      = HttpResponse => Boolean
+
+  private final val ParsableHttpResponse: HttpResponseCheck = _.status.allowsEntity()
 
   implicit class RichHttpRequest(request: HttpRequest) {
 
@@ -53,13 +53,13 @@ package object akka {
 
   }
 
-  def parseEntity[A](timeout: FiniteDuration)(
+  def parseEntity[A](timeout: FiniteDuration, check: HttpResponseCheck = ParsableHttpResponse)(
       implicit
       materializer: Materializer,
       executionContext: ExecutionContext,
       decoder: Decoder[A]
   ): HttpResponseHandler[A] = {
-    case response if response.status.allowsEntity() =>
+    case response if check(response) =>
       IO.fromFuture(Eval.later {
         response.entity
           .toStrict(timeout)
@@ -68,8 +68,7 @@ package object akka {
       })
   }
 
-  def handleResponse[A](
-      handler: HttpResponseHandler[A]): HttpResponse => IO[A] = {
+  def handleResponse[A](handler: HttpResponseHandler[A]): HttpResponse => IO[A] = {
     def defaultHandler: HttpResponse => IO[A] =
       res =>
         res.status match {

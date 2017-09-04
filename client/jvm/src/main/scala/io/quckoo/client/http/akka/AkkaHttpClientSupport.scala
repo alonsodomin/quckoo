@@ -31,8 +31,7 @@ trait AkkaHttpClientSupport {
   implicit def executionContext: ExecutionContext
   implicit def materializer: Materializer
 
-  protected def sendRequest[A](request: HttpRequest)(
-      handler: HttpResponseHandler[A]): IO[A] = {
+  protected def sendRequest[A](request: HttpRequest)(handler: HttpResponseHandler[A]): IO[A] =
     IO.fromFuture(Eval.later {
         Source
           .single(request)
@@ -41,6 +40,5 @@ trait AkkaHttpClientSupport {
           .runWith(Sink.head)
       })
       .flatten
-  }
 
 }

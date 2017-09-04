@@ -33,8 +33,7 @@ import scala.concurrent.duration._
 
 trait AkkaHttpRegistry extends AkkaHttpClientSupport with Registry[ClientIO] {
 
-  override def enableJob(
-      jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] =
+  override def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] =
     ClientIO { session =>
       val request =
         HttpRequest(HttpMethods.PUT, uri = s"$JobsURI/$jobId/enable")
@@ -48,8 +47,7 @@ trait AkkaHttpRegistry extends AkkaHttpClientSupport with Registry[ClientIO] {
       }
     }
 
-  override def disableJob(
-      jobId: JobId): ClientIO[Either[JobNotFound, JobDisabled]] =
+  override def disableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobDisabled]] =
     ClientIO { session =>
       val request =
         HttpRequest(HttpMethods.PUT, uri = s"$JobsURI/$jobId/disable")

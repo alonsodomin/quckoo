@@ -50,14 +50,13 @@ trait AuthDirectives { auth: Auth =>
   def authenticateUser: Route = {
     def basicHttpAuth(creds: Option[BasicHttpCredentials])(
         implicit ec: ExecutionContext
-    ): Future[AuthenticationResult[Subject]] = {
+    ): Future[AuthenticationResult[Subject]] =
       authenticationResult(auth.basic(Credentials(creds)))
 
     extractExecutionContext { implicit ec =>
       implicit val ev = implicitly[ClassTag[BasicHttpCredentials]]
       val authenticate =
-        authenticateOrRejectWithChallenge[BasicHttpCredentials, Subject](
-          basicHttpAuth)
+        authenticateOrRejectWithChallenge[BasicHttpCredentials, Subject](basicHttpAuth)
       authenticate { (principal: Subject) =>
         completeWithPassport(auth.generatePassport(principal))
       }

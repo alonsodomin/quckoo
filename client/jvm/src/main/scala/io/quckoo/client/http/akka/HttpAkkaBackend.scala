@@ -49,9 +49,9 @@ import scala.concurrent.Future
 /**
   * Created by alonsodomin on 11/09/2016.
   */
-private[http] final class HttpAkkaBackend(host: String,
-                                          port: Int = 80)(implicit val actorSystem: ActorSystem)
-    extends HttpBackend {
+private[http] final class HttpAkkaBackend(host: String, port: Int = 80)(
+    implicit val actorSystem: ActorSystem
+) extends HttpBackend {
 
   implicit val materializer =
     ActorMaterializer(ActorMaterializerSettings(actorSystem), "quckoo-http")
@@ -80,14 +80,13 @@ private[http] final class HttpAkkaBackend(host: String,
       }
     }
 
-  override def send: Kleisli[Future, HttpRequest1, HttpResponse1] = Kleisli {
-    req =>
-      def method: AkkaHttpMethod = req.method match {
-        case HttpMethod1.Get    => HttpMethods.GET
-        case HttpMethod1.Put    => HttpMethods.PUT
-        case HttpMethod1.Post   => HttpMethods.POST
-        case HttpMethod1.Delete => HttpMethods.DELETE
-      }
+  override def send: Kleisli[Future, HttpRequest1, HttpResponse1] = Kleisli { req =>
+    def method: AkkaHttpMethod = req.method match {
+      case HttpMethod1.Get    => HttpMethods.GET
+      case HttpMethod1.Put    => HttpMethods.PUT
+      case HttpMethod1.Post   => HttpMethods.POST
+      case HttpMethod1.Delete => HttpMethods.DELETE
+    }
 
     val headers = {
       req.headers
@@ -102,28 +101,26 @@ private[http] final class HttpAkkaBackend(host: String,
         .to[immutable.Seq]
     }
 
-      def parseRawResponse(
-          response: AkkaHttpResponse): Future[HttpResponse1] = {
-        val entityData = response.entity.dataBytes.runFold(ByteString())(_ ++ _)
+    def parseRawResponse(response: AkkaHttpResponse): Future[HttpResponse1] = {
+      val entityData = response.entity.dataBytes.runFold(ByteString())(_ ++ _)
 
-        import actorSystem.dispatcher
-        entityData.map(
-          buff =>
-            HttpResponse1(response.status.intValue(),
-                          response.status.value,
-                          DataBuffer.fromString(buff.utf8String)))
-      }
+      import actorSystem.dispatcher
+      entityData.map(
+        buff =>
+          HttpResponse1(
+            response.status.intValue(),
+            response.status.value,
+            DataBuffer.fromString(buff.utf8String)
+        )
+      )
+    }
 
-      val entity =
-        HttpEntity(ContentTypes.`application/json`, req.entity.asString())
-      Source
-        .single(
-          AkkaHttpRequest(method,
-                          uri = req.url,
-                          entity = entity,
-                          headers = headers))
-        .via(connection)
-        .mapAsync(1)(parseRawResponse)
-        .runWith(Sink.head[HttpResponse1])
+    val entity =
+      HttpEntity(ContentTypes.`application/json`, req.entity.asString())
+    Source
+      .single(AkkaHttpRequest(method, uri = req.url, entity = entity, headers = headers))
+      .via(connection)
+      .mapAsync(1)(parseRawResponse)
+      .runWith(Sink.head[HttpResponse1])
   }
 }

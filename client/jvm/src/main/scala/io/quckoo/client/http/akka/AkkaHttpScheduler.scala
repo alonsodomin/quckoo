@@ -17,31 +17,40 @@
 package io.quckoo.client.http.akka
 
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, StatusCodes}
+
 import cats.effect.IO
+
+import io.circe.generic.auto._
+import io.circe.java8.time._
+
 import io.quckoo.{ExecutionPlanNotFound, JobId, PlanId, Trigger}
 import io.quckoo.api2.Scheduler
 import io.quckoo.client.ClientIO
 import io.quckoo.client.http._
 import io.quckoo.protocol.scheduler.ExecutionPlanCancelled
+import io.quckoo.serialization.json._
 
 import scala.concurrent.duration._
 
 trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[ClientIO] {
 
-  override def cancelPlan(planId: PlanId)
-    : ClientIO[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] =
+  override def cancelPlan(
+      planId: PlanId
+  ): ClientIO[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] =
     ClientIO.auth { session =>
-      val request = HttpRequest(HttpMethods.DELETE, uri = s"$ExecutionPlansURI/$planId").withSession(session)
+      val request =
+        HttpRequest(HttpMethods.DELETE, uri = s"$ExecutionPlansURI/$planId").withSession(session)
 
-      sendRequest(request) {
+      val successHandler =
+        parseEntity[ExecutionPlanCancelled](500 millis, _.status == StatusCodes.OK)
+          .andThen(_.map(Right(_)))
+      val notFoundHandler
+        : HttpResponseHandler[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] = {
         case res if res.status == StatusCodes.NotFound =>
           IO.pure(Left(ExecutionPlanNotFound(planId)))
-
-        case res if res.status == StatusCodes.OK =>
-          parseEntity[ExecutionPlanCancelled](500 millis)
-            .andThen(_.map(Right(_)))
-            .apply(res)
       }
+
+      sendRequest(request)(successHandler.orElse(notFoundHandler))
     }
 
   override def submit(jobId: JobId, trigger: Trigger, timeout: Option[FiniteDuration]) = ???
