@@ -17,15 +17,18 @@
 package io.quckoo.client.http
 
 import _root_.akka.http.scaladsl.Http.OutgoingConnection
-import _root_.akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
+import _root_.akka.http.scaladsl.model.{RequestEntity, HttpRequest, HttpResponse, StatusCodes}
 import _root_.akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
+import _root_.akka.http.scaladsl.marshalling.{ToEntityMarshaller, Marshal}
+import _root_.akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshal}
 import _root_.akka.stream.Materializer
 import _root_.akka.stream.scaladsl.Flow
 
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
+
 import cats.Eval
 import cats.effect.IO
-
-import io.circe.Decoder
+import io.circe.{Decoder, Encoder}
 import io.circe.parser.decode
 
 import io.quckoo.auth.{NotAuthorized, Session, SessionExpired}
@@ -53,19 +56,29 @@ package object akka {
 
   }
 
-  def parseEntity[A](timeout: FiniteDuration, check: HttpResponseCheck = ParsableHttpResponse)(
+  def marshalEntity[A](payload: A)(
       implicit
+      ec: ExecutionContext,
+      marshaller: ToEntityMarshaller[A]
+  ): IO[RequestEntity] =
+    IO.fromFuture(Eval.later(Marshal(payload).to[RequestEntity]))
+
+  def unmarshalEntity[A](response: HttpResponse)(
+      implicit
+      ec: ExecutionContext,
       materializer: Materializer,
+      unmarshaller: FromEntityUnmarshaller[A]
+  ): IO[A] =
+    IO.fromFuture(Eval.later(Unmarshal(response).to[A]))
+
+  def handleEntity[A](check: HttpResponseCheck = ParsableHttpResponse)(
+      implicit
       executionContext: ExecutionContext,
-      decoder: Decoder[A]
+      materializer: Materializer,
+      unmarshaller: FromEntityUnmarshaller[A]
   ): HttpResponseHandler[A] = {
     case response if check(response) =>
-      IO.fromFuture(Eval.later {
-        response.entity
-          .toStrict(timeout)
-          .map(entity => decode[A](entity.data.utf8String))
-          .flatMap(attempt2Future.apply(_))
-      })
+      unmarshalEntity(response)
   }
 
   def handleResponse[A](handler: HttpResponseHandler[A]): HttpResponse => IO[A] = {

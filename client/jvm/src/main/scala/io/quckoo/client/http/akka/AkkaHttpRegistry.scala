@@ -20,6 +20,8 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest, StatusCodes}
 
 import cats.effect.IO
 
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
+
 import io.circe.generic.auto._
 
 import io.quckoo.api2.Registry
@@ -29,9 +31,8 @@ import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.serialization.json._
 import io.quckoo.{JobId, JobNotFound, JobSpec}
 
-import scala.concurrent.duration._
-
 trait AkkaHttpRegistry extends AkkaHttpClientSupport with Registry[ClientIO] {
+  import FailFastCirceSupport._
 
   override def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] =
     ClientIO { session =>
@@ -66,7 +67,7 @@ trait AkkaHttpRegistry extends AkkaHttpClientSupport with Registry[ClientIO] {
       def notFoundHandler: HttpResponseHandler[Option[JobSpec]] = {
         case res if res.status == StatusCodes.NotFound => IO.pure(None)
       }
-      val handler = parseEntity[JobSpec](500 millis)
+      val handler = handleEntity[JobSpec]()
         .andThen(_.map(Some(_)))
         .orElse(notFoundHandler)
 

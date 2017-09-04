@@ -19,30 +19,35 @@ package io.quckoo.client.http.akka
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, StatusCodes}
 
 import cats.effect.IO
+import cats.implicits._
+
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 
 import io.circe.generic.auto._
 import io.circe.java8.time._
 
-import io.quckoo.{ExecutionPlanNotFound, JobId, PlanId, Trigger}
+import io.quckoo._
 import io.quckoo.api2.Scheduler
 import io.quckoo.client.ClientIO
 import io.quckoo.client.http._
-import io.quckoo.protocol.scheduler.ExecutionPlanCancelled
+import io.quckoo.protocol.scheduler.{ExecutionPlanCancelled, ExecutionPlanStarted, ScheduleJob}
 import io.quckoo.serialization.json._
 
 import scala.concurrent.duration._
 
 trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[ClientIO] {
+  import FailFastCirceSupport._
 
   override def cancelPlan(
       planId: PlanId
   ): ClientIO[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] =
     ClientIO.auth { session =>
       val request =
-        HttpRequest(HttpMethods.DELETE, uri = s"$ExecutionPlansURI/$planId").withSession(session)
+        HttpRequest(HttpMethods.DELETE, uri = s"$ExecutionPlansURI/$planId")
+          .withSession(session)
 
       val successHandler =
-        parseEntity[ExecutionPlanCancelled](500 millis, _.status == StatusCodes.OK)
+        handleEntity[ExecutionPlanCancelled](_.status == StatusCodes.OK)
           .andThen(_.map(Right(_)))
       val notFoundHandler
         : HttpResponseHandler[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] = {
@@ -53,5 +58,27 @@ trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[ClientIO] {
       sendRequest(request)(successHandler.orElse(notFoundHandler))
     }
 
-  override def submit(jobId: JobId, trigger: Trigger, timeout: Option[FiniteDuration]) = ???
+  override def submit(
+      jobId: JobId,
+      trigger: Trigger,
+      timeout: Option[FiniteDuration]
+  ): ClientIO[Either[InvalidJob, ExecutionPlanStarted]] = ClientIO.auth { session =>
+    def request: IO[HttpRequest] = {
+      val payload = ScheduleJob(jobId, trigger, timeout)
+      marshalEntity(payload).map { entity =>
+        HttpRequest(HttpMethods.PUT, uri = ExecutionPlansURI, entity = entity)
+      }
+    }
+
+    def handler = {
+      val successHandler = handleEntity[ExecutionPlanStarted](_.status == StatusCodes.OK)
+        .andThen(_.map(Right(_)))
+      val failureHandler = handleEntity[InvalidJob](_.status != StatusCodes.OK)
+        .andThen(_.map(Left(_)))
+
+      successHandler.orElse(failureHandler)
+    }
+
+    request >>= (sendRequest(_)(handler))
+  }
 }

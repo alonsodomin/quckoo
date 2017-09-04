@@ -243,7 +243,7 @@ object Dependencies {
     import libs._
     libraryDependencies ++= Log4j.All.map(_ % Test) ++ Seq(
       slogging_slf4j, Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
-      Akka.kryo, Akka.http.main, Akka.http.sse,
+      Akka.kryo, Akka.http.main, Akka.http.sse, Akka.http.circe,
       mockserver % Test
     )
   }
