@@ -24,18 +24,12 @@ import _root_.akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarsha
 import _root_.akka.stream.Materializer
 import _root_.akka.stream.scaladsl.Flow
 
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
-
 import cats.Eval
 import cats.effect.IO
-import io.circe.{Decoder, Encoder}
-import io.circe.parser.decode
 
 import io.quckoo.auth.{NotAuthorized, Session, SessionExpired}
-import io.quckoo.util.attempt2Future
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration.FiniteDuration
 
 package object akka {
 
