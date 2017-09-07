@@ -43,10 +43,12 @@ object Panel {
       <.div(
         lookAndFeel.panelOpt(p.style),
         p.addStyles.toTagMod,
-        <.div(lookAndFeel.panelHeading,
-              p.heading,
-              p.onHeaderClick.map(cb => ^.onClick --> cb).whenDefined,
-              p.onHeaderClick.map(_ => ^.cursor.pointer).whenDefined),
+        <.div(
+          lookAndFeel.panelHeading,
+          p.heading,
+          p.onHeaderClick.map(cb => ^.onClick --> cb).whenDefined,
+          p.onHeaderClick.map(_ => ^.cursor.pointer).whenDefined
+        ),
         <.div(lookAndFeel.panelBody, c)
     )
   } build

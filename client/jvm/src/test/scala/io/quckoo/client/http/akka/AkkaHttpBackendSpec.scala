@@ -40,10 +40,7 @@ import scala.concurrent.duration.Duration
 /**
   * Created by alonsodomin on 20/09/2016.
   */
-class AkkaHttpBackendSpec
-    extends fixture.FlatSpec
-    with MockServer
-    with Matchers {
+class AkkaHttpBackendSpec extends fixture.FlatSpec with MockServer with Matchers {
   implicit val actorSystem = ActorSystem("AkkaHttpBackendSpec")
 
   override protected def afterAll(): Unit = {
@@ -51,64 +48,56 @@ class AkkaHttpBackendSpec
     super.afterAll()
   }
 
-  "on send" should "parse error codes correctly in any HTTP method" in {
-    mockServer =>
-      val transport = new HttpAkkaBackend("localhost", mockServer.getPort)
+  "on send" should "parse error codes correctly in any HTTP method" in { mockServer =>
+    val transport = new HttpAkkaBackend("localhost", mockServer.getPort)
 
-      for (method <- HttpMethod.values) {
-        val mockHttpRequest =
-          MockHttpRequest.request("/nowhere").withMethod(method.entryName)
-        val mockHttpResponse = MockHttpResponse.notFoundResponse()
+    for (method <- HttpMethod.values) {
+      val mockHttpRequest =
+        MockHttpRequest.request("/nowhere").withMethod(method.entryName)
+      val mockHttpResponse = MockHttpResponse.notFoundResponse()
 
-        mockServer.when(mockHttpRequest).respond(mockHttpResponse)
+      mockServer.when(mockHttpRequest).respond(mockHttpResponse)
 
-        val response = Await.result(
-          transport.send(
-            HttpRequest(method, "/nowhere", Duration.Inf, Map.empty)),
-          Duration.Inf
-        )
+      val response = Await.result(
+        transport.send(HttpRequest(method, "/nowhere", Duration.Inf, Map.empty)),
+        Duration.Inf
+      )
 
-        response.statusCode shouldBe 404
+      response.statusCode shouldBe 404
 
-        mockServer.verify(mockHttpRequest, VerificationTimes.once())
-      }
+      mockServer.verify(mockHttpRequest, VerificationTimes.once())
+    }
   }
 
-  it should "send JSON body request and parse the JSON output" in {
-    mockServer =>
-      val transport = new HttpAkkaBackend("localhost", mockServer.getPort)
+  it should "send JSON body request and parse the JSON output" in { mockServer =>
+    val transport = new HttpAkkaBackend("localhost", mockServer.getPort)
 
-      val input = ArtifactId("com.example", "example", "latest")
-      val output = JobId("fooId")
+    val input  = ArtifactId("com.example", "example", "latest")
+    val output = JobId("fooId")
 
-      DataBuffer(input)
-        .flatMap(in => DataBuffer(output).map(out => (in, out)))
-        .foreach {
-          case (in, out) =>
-            val mockHttpRequest = MockHttpRequest
-              .request("/path")
-              .withMethod("POST")
-              .withHeader("Content-Type", "application/json")
-              .withBody(JsonBody.json(in.asString()))
-            val mockHttpResponse =
-              MockHttpResponse.response.withBody(JsonBody.json(out.asString()))
+    DataBuffer(input)
+      .flatMap(in => DataBuffer(output).map(out => (in, out)))
+      .foreach {
+        case (in, out) =>
+          val mockHttpRequest = MockHttpRequest
+            .request("/path")
+            .withMethod("POST")
+            .withHeader("Content-Type", "application/json")
+            .withBody(JsonBody.json(in.asString()))
+          val mockHttpResponse =
+            MockHttpResponse.response.withBody(JsonBody.json(out.asString()))
 
-            mockServer.when(mockHttpRequest).respond(mockHttpResponse)
+          mockServer.when(mockHttpRequest).respond(mockHttpResponse)
 
-            val headers = Map("Content-Type" -> "application/json")
-            val response = Await.result(
-              transport.send(
-                HttpRequest(HttpMethod.Post,
-                            "/path",
-                            Duration.Inf,
-                            headers,
-                            in)),
-              Duration.Inf
-            )
+          val headers = Map("Content-Type" -> "application/json")
+          val response = Await.result(
+            transport.send(HttpRequest(HttpMethod.Post, "/path", Duration.Inf, headers, in)),
+            Duration.Inf
+          )
 
-            mockServer.verify(mockHttpRequest, VerificationTimes.once())
-            response.entity.asString() shouldBe out.asString()
-        }
+          mockServer.verify(mockHttpRequest, VerificationTimes.once())
+          response.entity.asString() shouldBe out.asString()
+      }
   }
 
   it should "send Authorization header" in { mockServer =>
@@ -124,8 +113,7 @@ class AkkaHttpBackendSpec
 
     val headers = Map("Authorization" -> "foo")
     val response = Await.result(
-      transport.send(
-        HttpRequest(HttpMethod.Post, "/path", Duration.Inf, headers)),
+      transport.send(HttpRequest(HttpMethod.Post, "/path", Duration.Inf, headers)),
       Duration.Inf
     )
 

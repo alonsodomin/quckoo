@@ -33,8 +33,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * Created by alonsodomin on 26/03/2016.
   */
 class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
-    extends ActionProcessor[ConsoleScope]
-    with LazyLogging {
+    extends ActionProcessor[ConsoleScope] with LazyLogging {
 
   import ConsoleRoute._
   import ActionResult._
@@ -43,11 +42,10 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
   val authFailedNotification =
     Notification.danger("Username or password incorrect")
 
-  override def process(
-      dispatch: Dispatcher,
-      action: Any,
-      next: Any => ActionResult[ConsoleScope],
-      currentModel: ConsoleScope): ActionResult[ConsoleScope] = {
+  override def process(dispatch: Dispatcher,
+                       action: Any,
+                       next: Any => ActionResult[ConsoleScope],
+                       currentModel: ConsoleScope): ActionResult[ConsoleScope] =
     action match {
       case LoginFailed =>
         logger.warn("Login failed!")
@@ -59,8 +57,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
           passport = Some(passport),
           lastLogin = Some(ZonedDateTime.now(consoleClock))
         )
-        logger.info("Successfully logged in! Redirecting to {}",
-                    destination.entryName)
+        logger.info("Successfully logged in! Redirecting to {}", destination.entryName)
         val effects =
           Effects.seq(NavigateTo(destination), StartClusterSubscription)
         ModelUpdateEffect(newModel, effects)
@@ -76,6 +73,5 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
 
       case _ => next(action)
     }
-  }
 
 }

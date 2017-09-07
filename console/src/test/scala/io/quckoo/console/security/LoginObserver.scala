@@ -27,10 +27,10 @@ class LoginObserver($ : HtmlDomZipper) {
 
   val usernameInput = $("#username").domAs[html.Input]
   val passwordInput = $("#password").domAs[html.Input]
-  val submitButton = $("button:contains('Sign in')").domAs[html.Button]
+  val submitButton  = $("button:contains('Sign in')").domAs[html.Button]
 
   val emptyUsername = usernameInput.value.isEmpty
   val emptyPassword = passwordInput.value.isEmpty
-  val canSubmit = !submitButton.disabled
+  val canSubmit     = !submitButton.disabled
 
 }

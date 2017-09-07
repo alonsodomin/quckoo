@@ -40,12 +40,9 @@ object TaskExecutionList {
   class Backend($ : BackendScope[Props, Unit]) {
 
     def mounted(props: Props): Callback =
-      Callback.when(props.proxy().size == 0)(
-        props.proxy.dispatchCB(LoadExecutions))
+      Callback.when(props.proxy().size == 0)(props.proxy.dispatchCB(LoadExecutions))
 
-    def renderItem(taskId: TaskId,
-                   execution: TaskExecution,
-                   column: Symbol): VdomNode =
+    def renderItem(taskId: TaskId, execution: TaskExecution, column: Symbol): VdomNode =
       column match {
         case 'ID      => taskId.show
         case 'Task    => execution.task.show

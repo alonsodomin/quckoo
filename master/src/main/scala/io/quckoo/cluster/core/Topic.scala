@@ -28,17 +28,15 @@ import io.quckoo.api.TopicTag
   */
 object Topic {
 
-  def source[A](implicit actorSystem: ActorSystem,
-                topicTag: TopicTag[A]): Source[A, NotUsed] = {
+  def source[A](implicit actorSystem: ActorSystem, topicTag: TopicTag[A]): Source[A, NotUsed] = {
     def isLocal: Boolean = topicTag match {
       case TopicTag.Registry | TopicTag.Scheduler => false
       case _                                      => true
     }
 
-    def consumerProps: Props = {
+    def consumerProps: Props =
       if (isLocal) LocalTopicConsumer.props[A]
       else PubSubTopicConsumer.props[A]
-    }
 
     val consumerRef = actorSystem.actorOf(consumerProps)
     Source

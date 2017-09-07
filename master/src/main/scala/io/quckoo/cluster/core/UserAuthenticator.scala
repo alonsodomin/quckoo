@@ -36,9 +36,7 @@ object UserAuthenticator {
 
 }
 
-class UserAuthenticator(sessionTimeout: FiniteDuration)
-    extends Actor
-    with ActorLogging {
+class UserAuthenticator(sessionTimeout: FiniteDuration) extends Actor with ActorLogging {
   import UserAuthenticator._
 
   def receive = {

@@ -31,8 +31,7 @@ import scala.concurrent.duration._
 /**
   * Created by domingueza on 28/02/2017.
   */
-class PubSubTopicConsumerSpec
-    extends QuckooActorClusterSuite("PubSubTopicConsumerSpec") {
+class PubSubTopicConsumerSpec extends QuckooActorClusterSuite("PubSubTopicConsumerSpec") {
 
   val mediator = DistributedPubSub(system).mediator
 

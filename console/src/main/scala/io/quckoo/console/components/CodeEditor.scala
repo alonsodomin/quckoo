@@ -37,8 +37,8 @@ object CodeEditor {
 
   sealed trait Mode extends EnumEntry with EnumEntry.Lowercase
   object Mode extends Enum[Mode] {
-    case object Scala extends Mode
-    case object Shell extends Mode
+    case object Scala  extends Mode
+    case object Shell  extends Mode
     case object Python extends Mode
 
     val values = findValues
@@ -47,10 +47,10 @@ object CodeEditor {
 
   sealed trait Theme extends EnumEntry with EnumEntry.Lowercase
   object Theme extends Enum[Theme] {
-    case object Monokai extends Theme
+    case object Monokai   extends Theme
     case object Solarized extends Theme
-    case object Dark extends Theme
-    case object Light extends Theme
+    case object Dark      extends Theme
+    case object Light     extends Theme
 
     val values = findValues
   }
@@ -69,7 +69,7 @@ object CodeEditor {
   implicit val optionsReuse: Reusability[Options] =
     Reusability.caseClass[Options]
 
-  final val DefaultWidth: Width = "100%"
+  final val DefaultWidth: Width   = "100%"
   final val DefaultHeight: Height = 250
 
   case class Props(
@@ -91,30 +91,25 @@ object CodeEditor {
     private[this] def propagateUpdate: Callback =
       $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.value)))
 
-    private[this] def jsOptions(props: Props): js.Dynamic = {
+    private[this] def jsOptions(props: Props): js.Dynamic =
       js.Dynamic.literal(
-        "mode" -> props.options.mode.entryName,
-        "lineNumbers" -> props.options.lineNumbers,
+        "mode"          -> props.options.mode.entryName,
+        "lineNumbers"   -> props.options.lineNumbers,
         "lineSeparator" -> props.options.lineSeparator,
         "matchBrackets" -> props.options.matchBrackets,
-        "theme" -> props.options.theme.map(_.entryName).mkString(" "),
-        "tabSize" -> props.options.tabSize,
-        "inputStyle" -> "contenteditable",
-        "autoRefresh" -> props.options.autoRefresh,
-        "readOnly" -> props.options.readOnly.asInstanceOf[js.Any]
+        "theme"         -> props.options.theme.map(_.entryName).mkString(" "),
+        "tabSize"       -> props.options.tabSize,
+        "inputStyle"    -> "contenteditable",
+        "autoRefresh"   -> props.options.autoRefresh,
+        "readOnly"      -> props.options.readOnly.asInstanceOf[js.Any]
       )
-    }
 
-    protected[CodeEditor] def initialize(props: Props,
-                                         state: State): Callback = {
+    protected[CodeEditor] def initialize(props: Props, state: State): Callback =
       $.getDOMNode
         .map(node => CodeMirror(node, jsOptions(props)))
         .map { codeMirror =>
-          codeMirror.on(
-            "change",
-            (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
-          codeMirror.on("blur",
-                        (cm, event) => onBlur(cm, event.asInstanceOf[Event]))
+          codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
+          codeMirror.on("blur", (cm, event) => onBlur(cm, event.asInstanceOf[Event]))
 
           codeMirror.setValue(props.text.getOrElse(""))
           codeMirror.setSize(props.width, props.height)
@@ -122,19 +117,16 @@ object CodeEditor {
           codeMirror.refresh()
           codeMirror.markClean()
         }
-    }
 
-    private[this] def valueUpdated(editorValue: Option[String]): Unit = {
+    private[this] def valueUpdated(editorValue: Option[String]): Unit =
       $.modState(_.copy(value = editorValue), propagateUpdate).runNow()
-    }
 
     private[this] def onBlur(codeMirror: CodeMirror, event: Event): Unit = {
       val editorValue = Option(codeMirror.getValue()).filterNot(_.isEmpty)
       valueUpdated(editorValue)
     }
 
-    private[this] def onChange(codeMirror: CodeMirror,
-                               change: ChangeEvent): Unit = {
+    private[this] def onChange(codeMirror: CodeMirror, change: ChangeEvent): Unit = {
       val editorValue = Option(codeMirror.getValue()).filterNot(_.isEmpty)
       if (!editorValue.contains(change.removed.mkString("\n")))
         valueUpdated(editorValue)
@@ -152,17 +144,10 @@ object CodeEditor {
     .componentDidMount($ => $.backend.initialize($.props, $.state))
     .build
 
-  def apply(value: Option[String], onUpdate: OnUpdate, attrs: TagMod*) = {
-    component(
-      Props(value, onUpdate, DefaultWidth, DefaultHeight, Options(), attrs))
-  }
+  def apply(value: Option[String], onUpdate: OnUpdate, attrs: TagMod*) =
+    component(Props(value, onUpdate, DefaultWidth, DefaultHeight, Options(), attrs))
 
-  def apply(value: Option[String],
-            onUpdate: OnUpdate,
-            options: Options,
-            attrs: TagMod*) = {
-    component(
-      Props(value, onUpdate, DefaultWidth, DefaultHeight, options, attrs))
-  }
+  def apply(value: Option[String], onUpdate: OnUpdate, options: Options, attrs: TagMod*) =
+    component(Props(value, onUpdate, DefaultWidth, DefaultHeight, options, attrs))
 
 }

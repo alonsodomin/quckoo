@@ -33,7 +33,7 @@ object ClusterSettingsSpec {
 
   object http {
     final val DefaultInterface = "0.0.0.0"
-    final val DefaultPort = 8095
+    final val DefaultPort      = 8095
   }
 
 }
@@ -42,7 +42,7 @@ class ClusterSettingsSpec extends FlatSpec with Matchers with Inside {
   import ClusterSettingsSpec._
 
   "ClusterConfig" should "be able to load default configuration" in {
-    val config = ConfigFactory.load()
+    val config               = ConfigFactory.load()
     val clusterConfigAttempt = ClusterSettings(config)
 
     inside(clusterConfigAttempt) {

@@ -48,12 +48,14 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 object RegistryHttpRouterSpec {
 
-  final val TestJobSpec = JobSpec("TestJob",
-                                  Some("Description for TestJob"),
-                                  JobPackage.jar(
-                                    ArtifactId("org.example", "bar", "1.0.0"),
-                                    "org.example.JobClass"
-                                  ))
+  final val TestJobSpec = JobSpec(
+    "TestJob",
+    Some("Description for TestJob"),
+    JobPackage.jar(
+      ArtifactId("org.example", "bar", "1.0.0"),
+      "org.example.JobClass"
+    )
+  )
   final val TestInvalidJobSpec =
     JobSpec("", None, JobPackage.jar(ArtifactId("", "", ""), ""))
 
@@ -73,11 +75,7 @@ object RegistryHttpRouterSpec {
 }
 
 class RegistryHttpRouterSpec
-    extends WordSpec
-    with ScalatestRouteTest
-    with Matchers
-    with RegistryHttpRouter
-    with RegistryApi
+    extends WordSpec with ScalatestRouteTest with Matchers with RegistryHttpRouter with RegistryApi
     with RegistryStreams {
 
   import RegistryHttpRouterSpec._

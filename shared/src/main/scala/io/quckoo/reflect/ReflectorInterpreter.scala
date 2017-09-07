@@ -21,8 +21,7 @@ import cats.{Monad, ~>}
 /**
   * Created by alonsodomin on 04/05/2017.
   */
-class ReflectorInterpreter[F[_]: Monad](impl: Reflector[F])
-    extends (ReflectOp ~> F) {
+class ReflectorInterpreter[F[_]: Monad](impl: Reflector[F]) extends (ReflectOp ~> F) {
 
   override def apply[A](fa: ReflectOp[A]): F[A] = fa match {
     case ReflectOp.LoadJobClass(artifact, className) =>
@@ -36,7 +35,8 @@ class ReflectorInterpreter[F[_]: Monad](impl: Reflector[F])
 object ReflectorInterpreter {
 
   implicit def deriveInterpreter[F[_]: Monad](
-      implicit reflector: Reflector[F]): ReflectorInterpreter[F] =
+      implicit reflector: Reflector[F]
+  ): ReflectorInterpreter[F] =
     new ReflectorInterpreter[F](reflector)
 
 }

@@ -33,8 +33,7 @@ trait Reflector[F[_]] {
 class InjectableReflector[F[_]](implicit inject: InjectK[ReflectOp, F])
     extends Reflector[Free[F, ?]] {
 
-  override def loadJobClass(artifact: Artifact,
-                            className: String): Free[F, JobClass] =
+  override def loadJobClass(artifact: Artifact, className: String): Free[F, JobClass] =
     Free.inject[ReflectOp, F](ReflectOp.LoadJobClass(artifact, className))
 
   override def createJob(jobClass: JobClass): Free[F, Job] =
@@ -46,6 +45,7 @@ class InjectableReflector[F[_]](implicit inject: InjectK[ReflectOp, F])
 }
 object InjectableReflector {
   implicit def injectableReflector[F[_]](
-      implicit inject: InjectK[ReflectOp, F]): InjectableReflector[F] =
+      implicit inject: InjectK[ReflectOp, F]
+  ): InjectableReflector[F] =
     new InjectableReflector[F]
 }

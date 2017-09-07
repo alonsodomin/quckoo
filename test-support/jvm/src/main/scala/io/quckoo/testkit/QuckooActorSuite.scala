@@ -27,10 +27,7 @@ import slogging._
   * Created by alonsodomin on 17/02/2017.
   */
 abstract class QuckooActorSuite(name: String)
-    extends TestKit(ActorSystem(name))
-    with WordSpecLike
-    with Matchers
-    with BeforeAndAfterAll {
+    extends TestKit(ActorSystem(name)) with WordSpecLike with Matchers with BeforeAndAfterAll {
 
   override protected def beforeAll(): Unit = {
     LoggerConfig.factory = SLF4JLoggerFactory()

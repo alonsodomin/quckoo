@@ -30,7 +30,7 @@ object Dependencies {
       val constructr = "0.7.0"
 
       object http {
-        val main = "10.0.9"
+        val main = "10.0.10"
 
         // http extensions
         val json = "1.18.0"
@@ -72,11 +72,11 @@ object Dependencies {
     val monix       = "3.0.0-b20be32"
     val monocle     = "1.4.0"
     val pureconfig  = "0.8.0"
+    val refined     = "0.8.3"
     val scalaCss    = "0.5.3"
     val scalaTime   = "2.0.0-M12"
     val scalatags   = "0.6.5"
     val scopt       = "3.7.0"
-    val shims       = "1.0-b0e5152"
     val xml         = "1.0.6"
 
     // JavaScript Libraries
@@ -181,9 +181,10 @@ object Dependencies {
       "io.circe"          %%% "circe-generic"      % version.circe,
       "io.circe"          %%% "circe-optics"       % version.circe,
       "io.circe"          %%% "circe-java8"        % version.circe,
+      "io.circe"          %%% "circe-refined"      % version.circe,
       "com.beachape"      %%% "enumeratum"         % version.enumeratum,
       "com.beachape"      %%% "enumeratum-circe"   % version.enumCirce,
-      //"com.codecommit"    %%% "shims-core"         % version.shims,
+      "eu.timepit"        %%% "refined"            % version.refined,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
@@ -221,7 +222,6 @@ object Dependencies {
     libraryDependencies ++= compiler.plugins ++ Seq(
       "io.suzaku" %%% "diode"          % version.diode,
       "io.monix"  %%% "monix-reactive" % version.monix
-      //"io.monix"  %%% "monix-cats"     % version.monix
     )
   )
 
@@ -331,7 +331,9 @@ object Dependencies {
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryo, ivy, scalaXml, pureconfig, slogging_slf4j,
       Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd,
-      betterfiles
+      betterfiles,
+
+      "eu.timepit" %% "refined-pureconfig" % version.refined
     )
   }
 

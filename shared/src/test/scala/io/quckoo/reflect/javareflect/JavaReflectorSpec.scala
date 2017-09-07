@@ -40,8 +40,8 @@ class JavaReflectorSpec extends FlatSpec with Matchers {
 
     val program = for {
       jobClass <- loadJobClass(fooArtifact, className)
-      job <- createJob(jobClass)
-      _ <- runJob(job)
+      job      <- createJob(jobClass)
+      _        <- runJob(job)
     } yield ()
 
     val exception = intercept[ClassNotFoundException] {

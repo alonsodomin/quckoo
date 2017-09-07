@@ -33,13 +33,12 @@ import scala.concurrent.duration._
 object ExecutionLifecycleSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "example", "test")
-  final val TestJobClass = "com.example.Job"
+  final val TestJobClass   = "com.example.Job"
 
 }
 
 class ExecutionLifecycleSpec
-    extends QuckooActorClusterSuite("ExecutionLifecycleSpec")
-    with ImplicitSender
+    extends QuckooActorClusterSuite("ExecutionLifecycleSpec") with ImplicitSender
     with DefaultTimeout {
 
   import ExecutionLifecycle._
@@ -47,11 +46,10 @@ class ExecutionLifecycleSpec
   import TaskExecution._
 
   // We need to use a multi-threaded dispatcher to be able to realiably test the FSM
-  private def executionProps(
-      planId: PlanId,
-      enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
-      maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
-      executionTimeout: Option[FiniteDuration] = None): Props =
+  private def executionProps(planId: PlanId,
+                             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
+                             maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
+                             executionTimeout: Option[FiniteDuration] = None): Props =
     ExecutionLifecycle
       .props(planId, enqueueTimeout, maxEnqueueAttempts, executionTimeout)
       .withDispatcher("akka.actor.default-dispatcher")
@@ -60,13 +58,15 @@ class ExecutionLifecycleSpec
     val planId = PlanId(UUID.randomUUID())
 
     val enqueueTimeout = 2 seconds
-    val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
-                                                       planId,
-                                                       enqueueTimeout,
-                                                       maxEnqueueAttempts = 2
-                                                     ),
-                                                     self,
-                                                     "non-enqueued-exec")
+    val lifecycle = TestActorRef[ExecutionLifecycle](
+      executionProps(
+        planId,
+        enqueueTimeout,
+        maxEnqueueAttempts = 2
+      ),
+      self,
+      "non-enqueued-exec"
+    )
     watch(lifecycle)
 
     "terminate when receiving the Cancel signal" in {
@@ -83,20 +83,21 @@ class ExecutionLifecycleSpec
 
   "An execution that fails to enqueue" should {
     val planId = PlanId(UUID.randomUUID())
-    val task = Task(TaskId(UUID.randomUUID()),
-                    JobPackage.jar(TestArtifactId, TestJobClass))
+    val task   = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
-    val taskQueue = TestProbe("queue-1")
+    val taskQueue          = TestProbe("queue-1")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 1 second
-    val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
-                                                       planId,
-                                                       enqueueTimeout,
-                                                       maxEnqueueAttempts = 2
-                                                     ),
-                                                     self,
-                                                     "enqueued-timedout-exec")
+    val lifecycle = TestActorRef[ExecutionLifecycle](
+      executionProps(
+        planId,
+        enqueueTimeout,
+        maxEnqueueAttempts = 2
+      ),
+      self,
+      "enqueued-timedout-exec"
+    )
     watch(lifecycle)
 
     "request to enqueue after receiving WakeUp signal" in {
@@ -136,21 +137,22 @@ class ExecutionLifecycleSpec
 
   "An execution that is cancelled before starting" should {
     val planId = PlanId(UUID.randomUUID())
-    val task = Task(TaskId(UUID.randomUUID()),
-                    JobPackage.jar(TestArtifactId, TestJobClass))
+    val task   = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
-    val taskQueue = TestProbe("queue-2")
+    val taskQueue          = TestProbe("queue-2")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
     val lifecycle =
-      TestActorRef[ExecutionLifecycle](executionProps(
-                                         planId,
-                                         enqueueTimeout,
-                                         maxEnqueueAttempts = 2
-                                       ),
-                                       self,
-                                       "cancelled-before-starting-exec")
+      TestActorRef[ExecutionLifecycle](
+        executionProps(
+          planId,
+          enqueueTimeout,
+          maxEnqueueAttempts = 2
+        ),
+        self,
+        "cancelled-before-starting-exec"
+      )
     watch(lifecycle)
 
     "move to Waiting state after receiving an enqueue ack" in {
@@ -192,21 +194,22 @@ class ExecutionLifecycleSpec
 
   "An execution in progress" should {
     val planId = PlanId(UUID.randomUUID())
-    val task = Task(TaskId(UUID.randomUUID()),
-                    JobPackage.jar(TestArtifactId, TestJobClass))
+    val task   = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
-    val taskQueue = TestProbe("queue-3")
+    val taskQueue          = TestProbe("queue-3")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
     val lifecycle =
-      TestActorRef[ExecutionLifecycle](executionProps(
-                                         planId,
-                                         enqueueTimeout,
-                                         maxEnqueueAttempts = 2
-                                       ),
-                                       self,
-                                       "cancelled-while-in-progress-exec")
+      TestActorRef[ExecutionLifecycle](
+        executionProps(
+          planId,
+          enqueueTimeout,
+          maxEnqueueAttempts = 2
+        ),
+        self,
+        "cancelled-while-in-progress-exec"
+      )
     watch(lifecycle)
 
     "move to Waiting state after receiving an enqueue ack" in {
@@ -251,23 +254,24 @@ class ExecutionLifecycleSpec
 
   "An execution that times out while running" should {
     val planId = PlanId(UUID.randomUUID())
-    val task = Task(TaskId(UUID.randomUUID()),
-                    JobPackage.jar(TestArtifactId, TestJobClass))
+    val task   = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
-    val taskQueue = TestProbe("queue-4")
+    val taskQueue          = TestProbe("queue-4")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
-    val enqueueTimeout = 5 seconds
+    val enqueueTimeout   = 5 seconds
     val executionTimeout = 1 second
     val lifecycle =
-      TestActorRef[ExecutionLifecycle](executionProps(
-                                         planId,
-                                         enqueueTimeout,
-                                         maxEnqueueAttempts = 2,
-                                         Some(executionTimeout)
-                                       ),
-                                       self,
-                                       "timed-out-while-in-progress-exec")
+      TestActorRef[ExecutionLifecycle](
+        executionProps(
+          planId,
+          enqueueTimeout,
+          maxEnqueueAttempts = 2,
+          Some(executionTimeout)
+        ),
+        self,
+        "timed-out-while-in-progress-exec"
+      )
     watch(lifecycle)
 
     "move to Waiting state after receiving an enqueue ack" in {
@@ -319,21 +323,22 @@ class ExecutionLifecycleSpec
 
   "An execution that fails while running" should {
     val planId = PlanId(UUID.randomUUID())
-    val task = Task(TaskId(UUID.randomUUID()),
-                    JobPackage.jar(TestArtifactId, TestJobClass))
+    val task   = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
-    val taskQueue = TestProbe("queue-5")
+    val taskQueue          = TestProbe("queue-5")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
     val lifecycle =
-      TestActorRef[ExecutionLifecycle](executionProps(
-                                         planId,
-                                         enqueueTimeout,
-                                         maxEnqueueAttempts = 2
-                                       ),
-                                       self,
-                                       "fails-while-in-progress-exec")
+      TestActorRef[ExecutionLifecycle](
+        executionProps(
+          planId,
+          enqueueTimeout,
+          maxEnqueueAttempts = 2
+        ),
+        self,
+        "fails-while-in-progress-exec"
+      )
     watch(lifecycle)
 
     "move to Waiting state after receiving an enqueue ack" in {
@@ -380,20 +385,21 @@ class ExecutionLifecycleSpec
 
   "An execution that completes successfully" should {
     val planId = PlanId(UUID.randomUUID())
-    val task = Task(TaskId(UUID.randomUUID()),
-                    JobPackage.jar(TestArtifactId, TestJobClass))
+    val task   = Task(TaskId(UUID.randomUUID()), JobPackage.jar(TestArtifactId, TestJobClass))
 
-    val taskQueue = TestProbe("queue-6")
+    val taskQueue          = TestProbe("queue-6")
     val taskQueueSelection = system.actorSelection(taskQueue.ref.path)
 
     val enqueueTimeout = 5 seconds
-    val lifecycle = TestActorRef[ExecutionLifecycle](executionProps(
-                                                       planId,
-                                                       enqueueTimeout,
-                                                       maxEnqueueAttempts = 2
-                                                     ),
-                                                     self,
-                                                     "successful-exec")
+    val lifecycle = TestActorRef[ExecutionLifecycle](
+      executionProps(
+        planId,
+        enqueueTimeout,
+        maxEnqueueAttempts = 2
+      ),
+      self,
+      "successful-exec"
+    )
     watch(lifecycle)
 
     "move to Waiting state after receiving an enqueue ack" in {

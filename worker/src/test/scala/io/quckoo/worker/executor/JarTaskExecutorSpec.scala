@@ -37,15 +37,13 @@ import org.scalamock.scalatest.MockFactory
 object JarTaskExecutorSpec {
 
   final val TestTaskId: TaskId = TaskId(UUID.randomUUID())
-  final val TestJobClass = "com.example.FooClass"
-  final val TestArtifactId = ArtifactId("com.example", "test", "latest")
+  final val TestJobClass       = "com.example.FooClass"
+  final val TestArtifactId     = ArtifactId("com.example", "test", "latest")
 
 }
 
 class JarTaskExecutorSpec
-    extends QuckooActorSuite("JobExecutorSpec")
-    with ImplicitSender
-    with DefaultTimeout
+    extends QuckooActorSuite("JobExecutorSpec") with ImplicitSender with DefaultTimeout
     with MockFactory {
 
   import JarTaskExecutorSpec._
@@ -59,9 +57,8 @@ class JarTaskExecutorSpec
 
       val workerContext = mock[WorkerContext]
       val executor = TestActorRef(
-        JarTaskExecutor.props(workerContext,
-                              TestTaskId,
-                              JarJobPackage(TestArtifactId, TestJobClass)),
+        JarTaskExecutor
+          .props(workerContext, TestTaskId, JarJobPackage(TestArtifactId, TestJobClass)),
         "failing-executor"
       )
 
@@ -71,8 +68,7 @@ class JarTaskExecutorSpec
 
       executor ! TaskExecutor.Run
 
-      expectMsgType[TaskExecutor.Failed].error shouldBe ExceptionThrown.from(
-        expectedException)
+      expectMsgType[TaskExecutor.Failed].error shouldBe ExceptionThrown.from(expectedException)
     }
 
     "reply with a failure message when can not resolve the artifact of a task" in {
@@ -80,14 +76,13 @@ class JarTaskExecutorSpec
 
       val workerContext = mock[WorkerContext]
       val executor = TestActorRef(
-        JarTaskExecutor.props(workerContext,
-                              TestTaskId,
-                              JarJobPackage(TestArtifactId, TestJobClass)),
+        JarTaskExecutor
+          .props(workerContext, TestTaskId, JarJobPackage(TestArtifactId, TestJobClass)),
         "non-resolving-executor"
       )
 
       val dependencyError = UnresolvedDependency(TestArtifactId)
-      val expectedFault = MissingDependencies(NonEmptyList.of(dependencyError))
+      val expectedFault   = MissingDependencies(NonEmptyList.of(dependencyError))
 
       (workerContext.resolver _).expects().returning(resolver)
 

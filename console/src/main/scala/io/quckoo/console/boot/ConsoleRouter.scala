@@ -65,8 +65,7 @@ object ConsoleRouter {
         .addCondition(isLoggedIn)(redirectToLogin)
     }
 
-  def config(proxy: ModelProxy[ConsoleScope],
-             logStream: Observable[LogRecord]) =
+  def config(proxy: ModelProxy[ConsoleScope], logStream: Observable[LogRecord]) =
     RouterConfigDsl[ConsoleRoute].buildConfig { dsl =>
       import dsl._
 

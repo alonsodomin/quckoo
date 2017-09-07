@@ -52,8 +52,7 @@ object ExecutionPlanForm {
   ) {
 
     def this(plan: Option[ExecutionPlan]) =
-      this(plan.map(_.jobId),
-           plan.map(_.trigger).orElse(Some(Trigger.Immediate)))
+      this(plan.map(_.jobId), plan.map(_.trigger).orElse(Some(Trigger.Immediate)))
 
     def valid: Boolean =
       jobId.nonEmpty && trigger.nonEmpty
@@ -75,13 +74,12 @@ object ExecutionPlanForm {
 
   class Backend($ : BackendScope[Props, State]) {
 
-    val jobId = State.plan ^|-> EditableExecutionPlan.jobId
+    val jobId   = State.plan ^|-> EditableExecutionPlan.jobId
     val trigger = State.plan ^|-> EditableExecutionPlan.trigger
     val timeout = State.timeout
 
     private[ExecutionPlanForm] def initialize(props: Props) =
-      Callback.when(props.proxy().size == 0)(
-        props.proxy.dispatchCB(LoadJobSpecs))
+      Callback.when(props.proxy().size == 0)(props.proxy.dispatchCB(LoadJobSpecs))
 
     // Event handlers
 
@@ -89,7 +87,7 @@ object ExecutionPlanForm {
       def command(state: State): Option[ScheduleJob] =
         if (!state.cancelled) {
           for {
-            jobId <- state.plan.jobId
+            jobId   <- state.plan.jobId
             trigger <- state.plan.trigger
           } yield ScheduleJob(jobId, trigger, state.timeout)
         } else None
@@ -110,49 +108,45 @@ object ExecutionPlanForm {
       $.modState(_.copy(cancelled = false))
 
     def editPlan(plan: Option[ExecutionPlan]): Callback =
-      $.setState(
-        State(new EditableExecutionPlan(plan),
-              visible = true,
-              readOnly = plan.isDefined))
+      $.setState(State(new EditableExecutionPlan(plan), visible = true, readOnly = plan.isDefined))
 
     // Rendering
 
-    def jobSpecs(props: Props): Map[JobId, JobSpec] = {
+    def jobSpecs(props: Props): Map[JobId, JobSpec] =
       props.proxy().seq.flatMap {
         case (id, Ready(spec)) => Seq(id -> spec)
         case _                 => Seq()
       } toMap
-    }
 
     def render(props: Props, state: State) = {
-      def formHeader(hide: Callback) = {
+      def formHeader(hide: Callback) =
         <.span(
-          <.button(^.tpe := "button",
-                   lnf.close,
-                   ^.onClick --> hide,
-                   Icons.close),
+          <.button(^.tpe := "button", lnf.close, ^.onClick --> hide, Icons.close),
           <.h4("Execution plan")
         )
-      }
 
-      def formFooter(hide: Callback) = {
+      def formFooter(hide: Callback) =
         <.span(
-          Button(Button.Props(Some(hide), style = ContextStyle.default),
-                 "Cancel"),
+          Button(Button.Props(Some(hide), style = ContextStyle.default), "Cancel"),
           Button(
-            Button.Props(Some(togglePreview()),
-                         style = ContextStyle.default,
-                         disabled = jobId
-                           .get(state)
-                           .isEmpty || trigger.get(state).isEmpty),
+            Button.Props(
+              Some(togglePreview()),
+              style = ContextStyle.default,
+              disabled = jobId
+                .get(state)
+                .isEmpty || trigger.get(state).isEmpty
+            ),
             if (state.showPreview) "Back" else "Preview"
           ),
-          Button(Button.Props(Some(submitForm() >> hide),
-                              disabled = state.readOnly || !state.plan.valid,
-                              style = ContextStyle.primary),
-                 "Save")
+          Button(
+            Button.Props(
+              Some(submitForm() >> hide),
+              disabled = state.readOnly || !state.plan.valid,
+              style = ContextStyle.primary
+            ),
+            "Save"
+          )
         )
-      }
 
       <.form(
         ^.name := "executionPlanForm",
@@ -166,16 +160,22 @@ object ExecutionPlanForm {
             ),
             if (!state.showPreview) {
               <.div(
-                JobSelect(jobSpecs(props),
-                          jobId.get(state),
-                          $.setStateL(jobId)(_),
-                          readOnly = state.readOnly),
-                TriggerSelect(trigger.get(state),
-                              $.setStateL(trigger)(_),
-                              readOnly = state.readOnly),
-                ExecutionTimeoutInput(timeout.get(state),
-                                      $.setStateL(timeout)(_),
-                                      readOnly = state.readOnly)
+                JobSelect(
+                  jobSpecs(props),
+                  jobId.get(state),
+                  $.setStateL(jobId)(_),
+                  readOnly = state.readOnly
+                ),
+                TriggerSelect(
+                  trigger.get(state),
+                  $.setStateL(trigger)(_),
+                  readOnly = state.readOnly
+                ),
+                ExecutionTimeoutInput(
+                  timeout.get(state),
+                  $.setStateL(timeout)(_),
+                  readOnly = state.readOnly
+                )
                 //ExecutionParameterList(Map.empty, onParamUpdate)
               )
             } else {

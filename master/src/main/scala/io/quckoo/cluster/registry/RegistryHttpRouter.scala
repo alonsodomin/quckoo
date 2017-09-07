@@ -99,8 +99,7 @@ trait RegistryHttpRouter extends EventStreamMarshalling {
       }
     }
 
-  def registryEvents(implicit system: ActorSystem,
-                     aterializer: Materializer): Route =
+  def registryEvents(implicit system: ActorSystem, aterializer: Materializer): Route =
     path("registry") {
       get {
         complete(asSSE(registryTopic))

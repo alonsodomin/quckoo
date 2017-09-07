@@ -19,12 +19,7 @@ package io.quckoo.console
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.log._
 import io.quckoo.protocol.Event
-import io.quckoo.protocol.cluster.{
-  MasterJoined,
-  MasterReachable,
-  MasterRemoved,
-  MasterUnreachable
-}
+import io.quckoo.protocol.cluster.{MasterJoined, MasterReachable, MasterRemoved, MasterUnreachable}
 import io.quckoo.protocol.worker.{WorkerJoined, WorkerLost, WorkerRemoved}
 
 /**

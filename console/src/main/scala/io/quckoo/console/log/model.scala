@@ -23,13 +23,11 @@ import cats.Show
 import enumeratum._
 import enumeratum.values._
 
-sealed abstract class LogLevel(val value: Short)
-    extends ShortEnumEntry
-    with EnumEntry.Uppercase
+sealed abstract class LogLevel(val value: Short) extends ShortEnumEntry with EnumEntry.Uppercase
 object LogLevel extends ShortEnum[LogLevel] {
-  case object Info extends LogLevel(0)
+  case object Info    extends LogLevel(0)
   case object Warning extends LogLevel(1)
-  case object Error extends LogLevel(2)
+  case object Error   extends LogLevel(2)
 
   val values = findValues
 }

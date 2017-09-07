@@ -29,13 +29,14 @@ object Patterns {
             mavenCompatible: Boolean): Patterns =
     new Patterns(ivyPatterns, artifactPatterns, mavenCompatible)
 
-  private[resolver] def resolvePatterns(base: String,
-                                        patterns: Patterns): Patterns = {
+  private[resolver] def resolvePatterns(base: String, patterns: Patterns): Patterns = {
     def resolveAll(patterns: Seq[String]): Seq[String] =
       patterns.map(p => resolvePattern(base, p))
-    Patterns(resolveAll(patterns.ivyPatterns),
-             resolveAll(patterns.artifactPatterns),
-             patterns.mavenCompatible)
+    Patterns(
+      resolveAll(patterns.ivyPatterns),
+      resolveAll(patterns.artifactPatterns),
+      patterns.mavenCompatible
+    )
   }
 
   private def resolvePattern(base: String, pattern: String): String = {

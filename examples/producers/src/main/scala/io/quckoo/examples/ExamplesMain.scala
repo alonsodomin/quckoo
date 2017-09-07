@@ -35,9 +35,8 @@ object ExamplesMain extends App {
 
   val parser = new OptionParser[CliOptions]("example-producers") {
     head("example-producers", "0.1.0")
-    opt[Seq[String]]('c', "cluster") required () valueName "<host>:<port>" action {
-      (c, options) =>
-        options.copy(clusterNodes = c)
+    opt[Seq[String]]('c', "cluster") required () valueName "<host>:<port>" action { (c, options) =>
+      options.copy(clusterNodes = c)
     } text "Comma separated list of Chronos cluster nodes to connect to"
   }
 

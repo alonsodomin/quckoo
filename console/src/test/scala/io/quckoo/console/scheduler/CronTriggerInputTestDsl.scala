@@ -33,8 +33,7 @@ object CronTriggerInputTestDsl {
   import ConsoleTestExports._
 
   @Lenses
-  case class State(inputExpr: String,
-                   updatedTrigger: Option[Trigger.Cron] = None) {
+  case class State(inputExpr: String, updatedTrigger: Option[Trigger.Cron] = None) {
     def asCron = Cron(inputExpr)
   }
 
@@ -51,8 +50,7 @@ object CronTriggerInputTestDsl {
 
   def setExpression(value: String): dsl.Actions =
     dsl
-      .action(s"Set expression: $value")(
-        SimEvent.Change(value) simulate _.obs.expressionInput)
+      .action(s"Set expression: $value")(SimEvent.Change(value) simulate _.obs.expressionInput)
       .updateState(_.copy(inputExpr = value))
 
   def emptyExpression =

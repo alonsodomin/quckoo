@@ -42,12 +42,14 @@ object Button {
     .builder[Props]("Button")
     .renderPC { (_, p, children) =>
       val buttonType = if (p.onClick.isEmpty) "submit" else "button"
-      <.button(lookAndFeel.buttonOpt(p.style),
-               p.addStyles.toTagMod,
-               ^.tpe := buttonType,
-               ^.onClick -->? p.onClick,
-               (^.disabled := true).when(p.disabled),
-               children)
+      <.button(
+        lookAndFeel.buttonOpt(p.style),
+        p.addStyles.toTagMod,
+        ^.tpe := buttonType,
+        ^.onClick -->? p.onClick,
+        (^.disabled := true).when(p.disabled),
+        children
+      )
     }
     .build
 

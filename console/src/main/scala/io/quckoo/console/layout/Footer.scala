@@ -48,8 +48,7 @@ object Footer {
     )
   }
 
-  case class Props(proxy: ModelProxy[ConsoleScope],
-                   logStream: Observable[LogRecord])
+  case class Props(proxy: ModelProxy[ConsoleScope], logStream: Observable[LogRecord])
 
   private[this] val component = ScalaComponent
     .builder[Props]("Footer")

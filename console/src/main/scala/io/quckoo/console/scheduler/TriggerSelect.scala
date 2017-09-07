@@ -27,36 +27,26 @@ object TriggerSelect {
   final val Options = List('Immediate, 'After, 'Every, 'At, 'Cron)
 
   type Constructor = CoproductSelect.Constructor[Trigger]
-  type Selector = CoproductSelect.Selector[Trigger]
-  type OnUpdate = CoproductSelect.OnUpdate[Trigger]
+  type Selector    = CoproductSelect.Selector[Trigger]
+  type OnUpdate    = CoproductSelect.OnUpdate[Trigger]
 
-  case class Props(value: Option[Trigger],
-                   onUpdate: OnUpdate,
-                   readOnly: Boolean = false)
+  case class Props(value: Option[Trigger], onUpdate: OnUpdate, readOnly: Boolean = false)
 
   class Backend($ : BackendScope[Props, Unit]) {
 
     def selectComponent(props: Props): Selector = {
       case 'After =>
         (value, callback) =>
-          AfterTriggerInput(value.map(_.asInstanceOf[Trigger.After]),
-                            callback,
-                            props.readOnly)
+          AfterTriggerInput(value.map(_.asInstanceOf[Trigger.After]), callback, props.readOnly)
       case 'Every =>
         (value, callback) =>
-          EveryTriggerInput(value.map(_.asInstanceOf[Trigger.Every]),
-                            callback,
-                            props.readOnly)
+          EveryTriggerInput(value.map(_.asInstanceOf[Trigger.Every]), callback, props.readOnly)
       case 'At =>
         (value, callback) =>
-          AtTriggerInput(value.map(_.asInstanceOf[Trigger.At]),
-                         callback,
-                         props.readOnly)
+          AtTriggerInput(value.map(_.asInstanceOf[Trigger.At]), callback, props.readOnly)
       case 'Cron =>
         (value, callback) =>
-          CronTriggerInput(value.map(_.asInstanceOf[Trigger.Cron]),
-                           callback,
-                           props.readOnly)
+          CronTriggerInput(value.map(_.asInstanceOf[Trigger.Cron]), callback, props.readOnly)
     }
 
     val selectInput = CoproductSelect[Trigger] {
@@ -67,7 +57,7 @@ object TriggerSelect {
       case _: Trigger.Cron   => 'Cron
     }
 
-    def render(props: Props) = {
+    def render(props: Props) =
       selectInput(
         Options,
         selectComponent(props),
@@ -78,12 +68,8 @@ object TriggerSelect {
         ^.readOnly := props.readOnly,
         ^.disabled := props.readOnly
       )(
-        Seq(
-          <.label(^.`class` := "col-sm-2 control-label",
-                  ^.`for` := "triggerType",
-                  "Trigger"))
+        Seq(<.label(^.`class` := "col-sm-2 control-label", ^.`for` := "triggerType", "Trigger"))
       )
-    }
 
   }
 
@@ -93,9 +79,7 @@ object TriggerSelect {
     .renderBackend[Backend]
     .build
 
-  def apply(value: Option[Trigger],
-            onUpdate: OnUpdate,
-            readOnly: Boolean = false) =
+  def apply(value: Option[Trigger], onUpdate: OnUpdate, readOnly: Boolean = false) =
     component(Props(value, onUpdate, readOnly))
 
 }

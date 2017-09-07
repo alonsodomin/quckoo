@@ -30,22 +30,18 @@ object LoginTestDsl {
   import ReactTestUtils._
 
   @Lenses
-  final case class LoginState(username: String,
-                              password: String,
-                              submitted: Boolean = false)
+  final case class LoginState(username: String, password: String, submitted: Boolean = false)
 
   val dsl = Dsl[Unit, LoginObserver, LoginState]
 
   def setUsername(username: String): dsl.Actions =
     dsl
-      .action(s"Set username as $username")(
-        SimEvent.Change(username) simulate _.obs.usernameInput)
+      .action(s"Set username as $username")(SimEvent.Change(username) simulate _.obs.usernameInput)
       .updateState(LoginState.username.set(username))
 
   def setPassword(password: String): dsl.Actions =
     dsl
-      .action(s"Set password as $password")(
-        SimEvent.Change(password) simulate _.obs.passwordInput)
+      .action(s"Set password as $password")(SimEvent.Change(password) simulate _.obs.passwordInput)
       .updateState(LoginState.password.set(password))
 
   def submitForm(): dsl.Actions =

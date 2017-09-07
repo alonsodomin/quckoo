@@ -26,7 +26,7 @@ object MD5 {
     val md = MessageDigest.getInstance("MD5")
     md.update(input.getBytes(StandardCharsets.UTF_8))
 
-    val digest = md.digest()
+    val digest  = md.digest()
     val builder = new StringBuilder()
     digest.foreach { byte =>
       builder.append(f"${byte & 0xff}%02x")

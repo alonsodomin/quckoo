@@ -54,32 +54,29 @@ object LoginForm {
     private[this] val UsernameInput = Input[String]
     private[this] val PasswordInput = Input[Password]
 
-    def render(handler: LoginHandler, state: State) = {
+    def render(handler: LoginHandler, state: State) =
       <.form(
         ^.name := "loginForm",
         ^.onSubmit ==> submit(handler),
         <.div(
           ^.`class` := "form-group",
-          <.label(^.`for` := "username",
-                  ^.`class` := "control-label",
-                  "Username"),
+          <.label(^.`for` := "username", ^.`class` := "control-label", "Username"),
           UsernameInput(state.username, onUsernameChange _, ^.id := "username")
         ),
         <.div(
           ^.`class` := "form-group",
-          <.label(^.`for` := "password",
-                  ^.`class` := "control-label",
-                  "Password"),
+          <.label(^.`for` := "password", ^.`class` := "control-label", "Password"),
           PasswordInput(state.password, onPasswordChange _, ^.id := "password")
         ),
-        Button(Button.Props(
-                 style = ContextStyle.primary,
-                 disabled = state.username.isEmpty || state.password.isEmpty
-               ),
-               Icons.signIn,
-               "Sign in")
+        Button(
+          Button.Props(
+            style = ContextStyle.primary,
+            disabled = state.username.isEmpty || state.password.isEmpty
+          ),
+          Icons.signIn,
+          "Sign in"
+        )
       )
-    }
 
   }
 

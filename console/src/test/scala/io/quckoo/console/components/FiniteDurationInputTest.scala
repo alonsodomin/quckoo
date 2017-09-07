@@ -49,9 +49,10 @@ class FiniteDurationInputTest extends FunSuite {
     invars
   }
 
-  def runPlan(plan: dsl.Plan): Report[String] = {
+  def runPlan(plan: dsl.Plan): Report[String] =
     ReactTestUtils.withRenderedIntoDocument(
-      FiniteDurationInput("testFD", None, _ => Callback.empty)) { comp =>
+      FiniteDurationInput("testFD", None, _ => Callback.empty)
+    ) { comp =>
       def observe() =
         new FiniteDurationInputObserver("testFD", comp.htmlDomZipper)
 
@@ -62,7 +63,6 @@ class FiniteDurationInputTest extends FunSuite {
 
       test.runU
     }
-  }
 
   test("FiniteDurationInput") {
     val plan = Plan.action(

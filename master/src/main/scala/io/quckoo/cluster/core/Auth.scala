@@ -36,7 +36,7 @@ trait Auth {
   private[this] val Right(secretKey) =
     DataBuffer.fromString("dqwjq0jd9wjd192u4ued9hd0ew").toBase64
 
-  def basic(credentials: Credentials): Future[Option[Principal]] = {
+  def basic(credentials: Credentials): Future[Option[Principal]] =
     credentials match {
       case p @ Credentials.Provided(identifier) =>
         if (identifier == "admin" && p.verify("password")) {
@@ -46,10 +46,8 @@ trait Auth {
       case _ =>
         Future.successful(none[User])
     }
-  }
 
-  def bearer(acceptExpired: Boolean = false)(
-      credentials: Credentials): Future[Option[Passport]] = {
+  def bearer(acceptExpired: Boolean = false)(credentials: Credentials): Future[Option[Passport]] =
     credentials match {
       case p @ Credentials.Provided(token) =>
         if (isValidToken(token)) {
@@ -59,8 +57,7 @@ trait Auth {
 
             case _ => None
           }
-          Future.successful(
-            claims.map(claimSet => new Passport(claimSet, token)))
+          Future.successful(claims.map(claimSet => new Passport(claimSet, token)))
         } else {
           Future.successful(None)
         }
@@ -68,13 +65,12 @@ trait Auth {
       case _ =>
         Future.successful(None)
     }
-  }
 
   def isValidToken(token: String): Boolean =
     JsonWebToken.validate(token, secretKey)
 
   def generatePassport(principal: Principal): Passport = {
-    val header = JwtHeader("HS256")
+    val header    = JwtHeader("HS256")
     val claimsSet = JwtClaimsSet(Map("sub" -> principal.id))
 
     val jwt = JsonWebToken(header, claimsSet, secretKey)

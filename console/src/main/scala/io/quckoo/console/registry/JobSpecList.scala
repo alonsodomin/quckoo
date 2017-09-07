@@ -41,17 +41,16 @@ object JobSpecList {
 
   final val Columns = List('Name, 'Description, 'Package, 'Status)
 
-  final val DisabledFilter: Table.Filter[JobId, JobSpec] = (_, job) =>
-    job.disabled
-  final val EnabledFilter: Table.Filter[JobId, JobSpec] = !DisabledFilter(_, _)
+  final val DisabledFilter: Table.Filter[JobId, JobSpec] = (_, job) => job.disabled
+  final val EnabledFilter: Table.Filter[JobId, JobSpec]  = !DisabledFilter(_, _)
 
   final val Filters: Map[Symbol, Table.Filter[JobId, JobSpec]] = Map(
-    'Enabled -> EnabledFilter,
+    'Enabled  -> EnabledFilter,
     'Disabled -> DisabledFilter
   )
 
   type OnCreate = Callback
-  type OnClick = JobSpec => Callback
+  type OnClick  = JobSpec => Callback
 
   final case class Props(
       proxy: ModelProxy[PotMap[JobId, JobSpec]],
@@ -77,8 +76,9 @@ object JobSpecList {
 
     // Actions
 
-    private[this] def performOnSelection(filter: (JobId, JobSpec) => Boolean)(
-        f: JobId => RegistryCommand): Callback = {
+    private[this] def performOnSelection(
+        filter: (JobId, JobSpec) => Boolean
+    )(f: JobId => RegistryCommand): Callback = {
       def collectIds: CallbackTo[Iterable[JobId]] =
         for {
           props <- $.props
@@ -91,7 +91,7 @@ object JobSpecList {
       def invokeCommand(jobIds: Iterable[JobId]): Callback =
         for {
           proxy <- $.props.map(_.proxy)
-          _ <- jobIds.toList.map(id => proxy.dispatchCB(f(id))).sequence
+          _     <- jobIds.toList.map(id => proxy.dispatchCB(f(id))).sequence
         } yield ()
 
       collectIds >>= invokeCommand
@@ -121,15 +121,12 @@ object JobSpecList {
     def disableJob(props: Props)(jobId: JobId): Callback =
       props.proxy.dispatchCB(DisableJob(jobId))
 
-    def rowActions(props: Props)(jobId: JobId, jobSpec: JobSpec) = {
+    def rowActions(props: Props)(jobId: JobId, jobSpec: JobSpec) =
       Seq(if (jobSpec.disabled) {
-        Table.RowAction[JobId](NonEmptyList.of(Icons.play, "Enable"),
-                               enableJob(props))
+        Table.RowAction[JobId](NonEmptyList.of(Icons.play, "Enable"), enableJob(props))
       } else {
-        Table.RowAction[JobId](NonEmptyList.of(Icons.stop, "Disable"),
-                               disableJob(props))
+        Table.RowAction[JobId](NonEmptyList.of(Icons.stop, "Disable"), disableJob(props))
       })
-    }
 
     // Event handlers
 
@@ -176,31 +173,34 @@ object JobSpecList {
 
       <.div(
         ToolBar(
-          Button(Button.Props(
-                   Some(props.onJobCreate),
-                   style = ContextStyle.primary
-                 ),
-                 Icons.plusSquare,
-                 "New Job"),
-          Button(Button.Props(
-                   Some(enableAll),
-                   disabled = enableAllDisabled(props, state)
-                 ),
-                 Icons.playCircle,
-                 "Enable All"),
-          Button(Button.Props(
-                   Some(disableAll),
-                   disabled = disableAllDisabled(props, state)
-                 ),
-                 Icons.stopCircle,
-                 "Disable All")
+          Button(
+            Button.Props(
+              Some(props.onJobCreate),
+              style = ContextStyle.primary
+            ),
+            Icons.plusSquare,
+            "New Job"
+          ),
+          Button(
+            Button.Props(
+              Some(enableAll),
+              disabled = enableAllDisabled(props, state)
+            ),
+            Icons.playCircle,
+            "Enable All"
+          ),
+          Button(
+            Button.Props(
+              Some(disableAll),
+              disabled = disableAllDisabled(props, state)
+            ),
+            Icons.stopCircle,
+            "Disable All"
+          )
         ),
         NavBar(
           NavBar
-            .Props(List('All, 'Enabled, 'Disabled),
-                   'All,
-                   onFilterClicked,
-                   style = NavStyle.pills),
+            .Props(List('All, 'Enabled, 'Disabled), 'All, onFilterClicked, style = NavStyle.pills),
           Table(
             Columns,
             model.seq,
@@ -224,9 +224,7 @@ object JobSpecList {
     .componentDidMount($ => $.backend.mounted($.props))
     .build
 
-  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]],
-            onJobCreate: OnCreate,
-            onJobClick: OnClick) =
+  def apply(proxy: ModelProxy[PotMap[JobId, JobSpec]], onJobCreate: OnCreate, onJobClick: OnClick) =
     component(Props(proxy, onJobCreate, onJobClick))
 
 }

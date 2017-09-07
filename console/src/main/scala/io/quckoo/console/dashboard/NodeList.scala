@@ -37,8 +37,7 @@ object NodeList {
 
   class Backend[N <: QuckooNode]($ : BackendScope[Props[N], Unit]) {
 
-    def renderItem(
-        props: Props[N])(nodeId: NodeId, node: N, column: Symbol): VdomNode =
+    def renderItem(props: Props[N])(nodeId: NodeId, node: N, column: Symbol): VdomNode =
       column match {
         case 'ID       => nodeId.toString
         case 'Location => node.location.host

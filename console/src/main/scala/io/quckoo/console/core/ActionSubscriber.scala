@@ -29,10 +29,8 @@ import scala.concurrent.Future
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-final class ActionSubscriber[A: ActionType](
-    errorHandler: PartialFunction[Throwable, Unit])
-    extends Observer[A]
-    with LazyLogging {
+final class ActionSubscriber[A: ActionType](errorHandler: PartialFunction[Throwable, Unit])
+    extends Observer[A] with LazyLogging {
 
   override def onError(ex: Throwable): Unit = {
     logger.debug("Action stream threw an exception.", ex)

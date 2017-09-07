@@ -24,10 +24,5 @@ import io.quckoo.cluster.scheduler.SchedulerStreams
   * Created by alonsodomin on 14/10/2015.
   */
 trait QuckooServer
-    extends Auth
-    with Cluster
-    with ClusterStreams
-    with Registry
-    with RegistryStreams
-    with Scheduler
+    extends Auth with Cluster with ClusterStreams with Registry with RegistryStreams with Scheduler
     with SchedulerStreams

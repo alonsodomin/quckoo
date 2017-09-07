@@ -32,7 +32,7 @@ import scala.concurrent.duration._
 object RegistrySpec {
 
   final val TestShellJobPackage = JobPackage.shell("echo \"hello\"")
-  final val TestShellJobSpec = JobSpec("Foo", jobPackage = TestShellJobPackage)
+  final val TestShellJobSpec    = JobSpec("Foo", jobPackage = TestShellJobPackage)
 
   final val TestJarJobPackage = JobPackage.jar(
     ArtifactId(
@@ -40,16 +40,15 @@ object RegistrySpec {
       "quckoo-example-jobs_2.11",
       "0.1.0"
     ),
-    "io.quckoo.examples.HelloWorldJob")
+    "io.quckoo.examples.HelloWorldJob"
+  )
   final val TestJarJobSpec = JobSpec("Bar", jobPackage = TestJarJobPackage)
 
   final val TestArtifact = Artifact(TestJarJobPackage.artifactId, List.empty)
 
 }
 
-class RegistrySpec
-    extends QuckooActorClusterSuite("RegistrySpec")
-    with ImplicitSender {
+class RegistrySpec extends QuckooActorClusterSuite("RegistrySpec") with ImplicitSender {
   import RegistrySpec._
 
   val journal = new QuckooTestJournal
@@ -69,7 +68,8 @@ class RegistrySpec
     val resolver = new PureResolver(TestArtifact)
     val registry = TestActorRef(
       Props(new Registry(resolver, journal))
-        .withDispatcher("akka.actor.default-dispatcher"))
+        .withDispatcher("akka.actor.default-dispatcher")
+    )
 
     "complete warm up process" in {
       expectMsg(5 seconds, Registry.Ready)

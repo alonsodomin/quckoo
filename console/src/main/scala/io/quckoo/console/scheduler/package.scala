@@ -27,32 +27,28 @@ package object scheduler {
 
   final val SchedulerLogger: Logger[Event] = {
     case ExecutionPlanStarted(jobId, planId, dateTime) =>
-      LogRecord.info(dateTime,
-                     s"Started execution plan '$planId' for job '$jobId'.")
+      LogRecord.info(dateTime, s"Started execution plan '$planId' for job '$jobId'.")
 
     case ExecutionPlanFinished(jobId, planId, dateTime) =>
-      LogRecord.info(dateTime,
-                     s"Execution plan '$planId' for job '$jobId' has finished")
+      LogRecord.info(dateTime, s"Execution plan '$planId' for job '$jobId' has finished")
 
     case ExecutionPlanCancelled(jobId, planId, dateTime) =>
-      LogRecord.error(
-        dateTime,
-        s"Execution plan '$planId' for job '$jobId' has been cancelled")
+      LogRecord.error(dateTime, s"Execution plan '$planId' for job '$jobId' has been cancelled")
 
     case TaskScheduled(jobId, planId, task, dateTime) =>
       LogRecord.info(
         dateTime,
-        s"Task ${task.id} for job '$jobId' in plan '$planId' has been scheduled.")
+        s"Task ${task.id} for job '$jobId' in plan '$planId' has been scheduled."
+      )
 
     case TaskTriggered(jobId, planId, taskId, dateTime) =>
       LogRecord.info(
         dateTime,
-        s"Task $taskId for job '$jobId' in plan '$planId' has been triggered.")
+        s"Task $taskId for job '$jobId' in plan '$planId' has been triggered."
+      )
 
     case TaskCompleted(jobId, planId, taskId, dateTime, _) =>
-      LogRecord.info(
-        dateTime,
-        s"Task $taskId for job '$jobId' in plan '$planId' has completed.")
+      LogRecord.info(dateTime, s"Task $taskId for job '$jobId' in plan '$planId' has completed.")
   }
 
 }

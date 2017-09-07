@@ -64,7 +64,7 @@ trait SchedulerHttpRouter extends EventStreamMarshalling {
                   case Right(res) => complete(res)
                   case Left(JobNotEnabled(jobId)) =>
                     complete(BadRequest -> jobId)
-                  case Left(JobNotFound(jobId)) => complete(NotFound -> jobId)
+                  case Left(JobNotFound(jobId)) => complete(NotFound            -> jobId)
                   case Left(error)              => complete(InternalServerError -> error)
                 }
               }
@@ -108,8 +108,7 @@ trait SchedulerHttpRouter extends EventStreamMarshalling {
       }
     }
 
-  def schedulerEvents(implicit system: ActorSystem,
-                      materializer: ActorMaterializer): Route =
+  def schedulerEvents(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
     path("scheduler") {
       get {
         complete(asSSE(schedulerTopic))

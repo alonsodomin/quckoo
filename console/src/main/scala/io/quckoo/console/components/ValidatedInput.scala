@@ -46,19 +46,18 @@ object ValidatedInput {
       } getOrElse CallbackTo(ValidatedField[A](None))
 
       val updateState = validate
-        .flatMap(newFieldState =>
-          $.modState(_.copy(fieldState = newFieldState)))
+        .flatMap(newFieldState => $.modState(_.copy(fieldState = newFieldState)))
         .ret(newValue)
 
       updateState >>= props.onUpdate
     }
 
-    def render(props: Props[A], state: State[A]) = {
+    def render(props: Props[A], state: State[A]) =
       <.div(
         ^.classSet(
-          "form-group" -> true,
+          "form-group"  -> true,
           "has-success" -> state.fieldState.valid,
-          "has-error" -> state.fieldState.invalid
+          "has-error"   -> state.fieldState.invalid
         ),
         props.label
           .map(labelText => <.label(^.`class` := "control-label", labelText))
@@ -68,7 +67,6 @@ object ValidatedInput {
           <.span(^.`class` := "help-block", violation.show)
         } whenDefined
       )
-    }
   }
 
   def apply[A](validator: ValidatorCallback[A]) =
@@ -85,8 +83,7 @@ class ValidatedInput[A] private[components] (validator: ValidatorCallback[A]) {
     .renderBackend[Backend[A]]
     .build
 
-  def apply(onUpdate: OnUpdate[A], label: Option[String] = None)(
-      factory: OnUpdate[A] => VdomNode) =
+  def apply(onUpdate: OnUpdate[A], label: Option[String] = None)(factory: OnUpdate[A] => VdomNode) =
     component(Props(factory, onUpdate, validator, label))
 
 }

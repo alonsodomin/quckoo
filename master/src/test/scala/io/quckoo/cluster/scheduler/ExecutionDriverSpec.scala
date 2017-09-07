@@ -39,20 +39,15 @@ import scala.concurrent.duration._
 object ExecutionDriverSpec {
 
   final val TestArtifactId = ArtifactId("com.example", "bar", "test")
-  final val TestJobSpec = JobSpec(
-    "foo",
-    Some("foo desc"),
-    JobPackage.jar(TestArtifactId, "com.example.Job"))
+  final val TestJobSpec =
+    JobSpec("foo", Some("foo desc"), JobPackage.jar(TestArtifactId, "com.example.Job"))
   final val TestJobId = JobId(TestJobSpec)
 
 }
 
 class ExecutionDriverSpec
-    extends QuckooActorClusterSuite("ExecutionDriverSpec")
-    with ImplicitSender
-    with ImplicitClock
-    with BeforeAndAfter
-    with Inside {
+    extends QuckooActorClusterSuite("ExecutionDriverSpec") with ImplicitSender with ImplicitClock
+    with BeforeAndAfter with Inside {
 
   import ExecutionDriver._
   import ExecutionDriverSpec._
@@ -66,13 +61,11 @@ class ExecutionDriverSpec
   val eventListener = TestProbe()
 
   before {
-    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name,
-                                                   eventListener.ref)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name, eventListener.ref)
   }
 
   after {
-    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name,
-                                                     eventListener.ref)
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name, eventListener.ref)
   }
 
   def executionDriverProps(lifecycleFactory: ExecutionLifecycleFactory): Props =
@@ -81,24 +74,20 @@ class ExecutionDriverSpec
       .withDispatcher("akka.actor.default-dispatcher")
 
   "An execution driver with a recurring trigger that eventually gets disabled" should {
-    val trigger = Trigger.Every(50 millis)
+    val trigger        = Trigger.Every(50 millis)
     val lifecycleProbe = TestProbe()
     val lifecycleProps = TestActors.forwardActorProps(lifecycleProbe.ref)
     val lifecycleFactory: ExecutionLifecycleFactory =
       (_: DriverState) => lifecycleProps
 
-    val planId = PlanId(UUID.randomUUID())
+    val planId     = PlanId(UUID.randomUUID())
     val driverName = "executionDriverWithRecurringTrigger"
     val executionDriver =
       system.actorOf(executionDriverProps(lifecycleFactory), driverName)
     watch(executionDriver)
 
     "create an execution from a job specification" in {
-      executionDriver ! Initialize(TestJobId,
-                                   planId,
-                                   TestJobSpec,
-                                   trigger,
-                                   None)
+      executionDriver ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId should be(TestJobId)
@@ -132,11 +121,9 @@ class ExecutionDriverSpec
     }
 
     "not re-schedule an execution after the job is disabled" in {
-      mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name,
-                                                   JobDisabled(TestJobId))
+      mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name, JobDisabled(TestJobId))
       // Complete the execution so the driver can come back to ready state
-      lifecycleProbe.reply(
-        ExecutionLifecycle.Result(TaskExecution.Outcome.Success))
+      lifecycleProbe.reply(ExecutionLifecycle.Result(TaskExecution.Outcome.Success))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId shouldBe TestJobId
@@ -158,11 +145,7 @@ class ExecutionDriverSpec
         system.actorOf(executionDriverProps(lifecycleFactory), driverName)
       watch(reencarnatedDriver)
 
-      reencarnatedDriver ! Initialize(TestJobId,
-                                      planId,
-                                      TestJobSpec,
-                                      trigger,
-                                      None)
+      reencarnatedDriver ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       eventListener.expectNoMsg()
       reencarnatedDriver ! PoisonPill
@@ -172,24 +155,20 @@ class ExecutionDriverSpec
   }
 
   "An execution driver with a recurring trigger that eventually gets cancelled" should {
-    val trigger = Trigger.Every(50 millis)
+    val trigger        = Trigger.Every(50 millis)
     val lifecycleProbe = TestProbe()
     val lifecycleProps = TestActors.forwardActorProps(lifecycleProbe.ref)
     val lifecycleFactory: ExecutionLifecycleFactory =
       (_: DriverState) => lifecycleProps
 
-    val planId = PlanId(UUID.randomUUID())
+    val planId     = PlanId(UUID.randomUUID())
     val driverName = "executionDriverWithRecurringTriggerAndCancellation"
     val executionDriver =
       system.actorOf(executionDriverProps(lifecycleFactory), driverName)
     watch(executionDriver)
 
     "create an execution from a job specification" in {
-      executionDriver ! Initialize(TestJobId,
-                                   planId,
-                                   TestJobSpec,
-                                   trigger,
-                                   None)
+      executionDriver ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       val startedMsg = eventListener.expectMsgType[ExecutionPlanStarted]
       startedMsg.jobId should be(TestJobId)
@@ -213,12 +192,14 @@ class ExecutionDriverSpec
       lifecycleProbe.reply(
         ExecutionLifecycle.Result(
           TaskExecution.Outcome.Interrupted(TaskExecution.Reason.UserRequest)
-        ))
+        )
+      )
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId shouldBe TestJobId
       completedMsg.outcome shouldBe TaskExecution.Outcome.Interrupted(
-        TaskExecution.Reason.UserRequest)
+        TaskExecution.Reason.UserRequest
+      )
 
       val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
       finishedMsg.jobId shouldBe TestJobId
@@ -236,11 +217,7 @@ class ExecutionDriverSpec
         system.actorOf(executionDriverProps(lifecycleFactory), driverName)
       watch(reencarnatedDriver)
 
-      reencarnatedDriver ! Initialize(TestJobId,
-                                      planId,
-                                      TestJobSpec,
-                                      trigger,
-                                      None)
+      reencarnatedDriver ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
       eventListener.expectNoMsg()
       reencarnatedDriver ! PoisonPill
@@ -250,16 +227,15 @@ class ExecutionDriverSpec
   }
 
   "An execution driver with non recurring trigger" should {
-    val trigger = Trigger.Immediate
+    val trigger        = Trigger.Immediate
     val lifecycleProbe = TestProbe()
     val lifecycleProps = TestActors.forwardActorProps(lifecycleProbe.ref)
     val lifecycleFactory: ExecutionLifecycleFactory =
       (_: DriverState) => lifecycleProps
 
     val planId = PlanId(UUID.randomUUID())
-    val executionPlan = TestActorRef(executionDriverProps(lifecycleFactory),
-                                     self,
-                                     "executionPlanWithOneShotTrigger")
+    val executionPlan =
+      TestActorRef(executionDriverProps(lifecycleFactory), self, "executionPlanWithOneShotTrigger")
     watch(executionPlan)
 
     "create an execution from a job specification" in {
@@ -278,8 +254,7 @@ class ExecutionDriverSpec
 
     "terminate once the execution finishes" in {
       val successOutcome = TaskExecution.Outcome.Success
-      lifecycleProbe.send(executionPlan,
-                          ExecutionLifecycle.Result(successOutcome))
+      lifecycleProbe.send(executionPlan, ExecutionLifecycle.Result(successOutcome))
 
       val completedMsg = eventListener.expectMsgType[TaskCompleted]
       completedMsg.jobId should be(TestJobId)
@@ -299,13 +274,13 @@ class ExecutionDriverSpec
   }
 
   "An execution driver that dies after firing the task" should {
-    val trigger = Trigger.Immediate
+    val trigger        = Trigger.Immediate
     val lifecycleProbe = TestProbe()
     val lifecycleProps = TestActors.forwardActorProps(lifecycleProbe.ref)
     val lifecycleFactory: ExecutionLifecycleFactory =
       (_: DriverState) => lifecycleProps
 
-    val planId = PlanId(UUID.randomUUID())
+    val planId     = PlanId(UUID.randomUUID())
     val driverName = "executionDriverThatDiesAfterFire"
     val executionPlan =
       system.actorOf(executionDriverProps(lifecycleFactory), driverName)
@@ -343,8 +318,7 @@ class ExecutionDriverSpec
         system.actorOf(executionDriverProps(lifecycleFactory), driverName)
       watch(reencarnatedDriver)
 
-      lifecycleProbe.send(reencarnatedDriver,
-                          ExecutionLifecycle.Triggered(task))
+      lifecycleProbe.send(reencarnatedDriver, ExecutionLifecycle.Triggered(task))
 
       val triggeredMsg = eventListener.expectMsgType[TaskTriggered]
       triggeredMsg.jobId shouldBe TestJobId
@@ -362,9 +336,8 @@ class ExecutionDriverSpec
       (_: DriverState) => lifecycleProps
 
     val planId = PlanId(UUID.randomUUID())
-    val executionPlan = TestActorRef(executionDriverProps(lifecycleFactory),
-                                     self,
-                                     "executionPlanThatNeverFires")
+    val executionPlan =
+      TestActorRef(executionDriverProps(lifecycleFactory), self, "executionPlanThatNeverFires")
     watch(executionPlan)
 
     "create an execution from a job specification and terminate it right after" in {

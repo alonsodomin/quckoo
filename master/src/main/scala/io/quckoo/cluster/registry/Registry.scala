@@ -73,8 +73,7 @@ object Registry {
       ClusterSharding(system).start(
         typeName = PersistentJob.ShardName,
         entityProps = PersistentJob.props,
-        settings =
-          ClusterShardingSettings(system).withRole(QuckooRoles.Registry),
+        settings = ClusterShardingSettings(system).withRole(QuckooRoles.Registry),
         extractEntityId = PersistentJob.idExtractor,
         extractShardId = PersistentJob.shardResolver
       )
@@ -90,11 +89,8 @@ object Registry {
 
 }
 
-class Registry private[registry] (resolver: Resolver[IO],
-                                  journal: QuckooJournal)
-    extends Actor
-    with ActorLogging
-    with Stash {
+class Registry private[registry] (resolver: Resolver[IO], journal: QuckooJournal)
+    extends Actor with ActorLogging with Stash {
   import Registry._
 
   ClusterClientReceptionist(context.system).registerService(self)
@@ -104,19 +100,16 @@ class Registry private[registry] (resolver: Resolver[IO],
     "registry"
   )
 
-  private[this] val mediator = DistributedPubSub(context.system).mediator
+  private[this] val mediator    = DistributedPubSub(context.system).mediator
   private[this] val shardRegion = startShardRegion(context.system)
 
   private[this] var jobIds = Set.empty[JobId]
 
-  override def preStart(): Unit = {
+  override def preStart(): Unit =
     mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Registry.name, self)
-  }
 
-  override def postStop(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name,
-                                                     self)
-  }
+  override def postStop(): Unit =
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Registry.name, self)
 
   def receive: Receive = initializing
 
@@ -137,7 +130,7 @@ class Registry private[registry] (resolver: Resolver[IO],
     case RegisterJob(spec) =>
       val registrationTrackId = s"registration-${UUID.randomUUID()}"
       Tracer.withNewContext(registrationTrackId) {
-        implicit val r = resolver
+        implicit val r        = resolver
         val registrationProps = Registration.props(spec, shardRegion, sender())
         context.actorOf(registrationProps, registrationTrackId)
       }
@@ -202,15 +195,11 @@ class Registry private[registry] (resolver: Resolver[IO],
     case _ =>
   }
 
-  private def warmUp(): Unit = {
+  private def warmUp(): Unit =
     journal.read
       .currentEventsByTag(EventTag, journal.firstOffset)
       .runWith(
-        Sink.actorRefWithAck(self,
-                             WarmUp.Start,
-                             WarmUp.Ack,
-                             WarmUp.Completed,
-                             WarmUp.Failed))
-  }
+        Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed)
+      )
 
 }

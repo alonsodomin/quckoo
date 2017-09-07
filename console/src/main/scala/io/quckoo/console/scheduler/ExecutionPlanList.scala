@@ -53,16 +53,14 @@ object ExecutionPlanList {
     (id, plan) => !ActiveFilter(id, plan)
 
   final val Filters: Map[Symbol, Table.Filter[PlanId, ExecutionPlan]] = Map(
-    'Active -> ActiveFilter,
+    'Active   -> ActiveFilter,
     'Inactive -> InactiveFilter
   )
 
   type OnCreate = Callback
-  type OnClick = ExecutionPlan => Callback
+  type OnClick  = ExecutionPlan => Callback
 
-  final case class Props(proxy: ModelProxy[UserScope],
-                         onCreate: OnCreate,
-                         onClick: OnClick)
+  final case class Props(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick)
   final case class State(selectedFilter: Option[Symbol] = None,
                          selectedPlans: Set[PlanId] = Set.empty)
 
@@ -72,29 +70,26 @@ object ExecutionPlanList {
       val model = props.proxy()
 
       def loadJobs: Callback =
-        Callback.when(model.jobSpecs.size == 0)(
-          props.proxy.dispatchCB(LoadJobSpecs))
+        Callback.when(model.jobSpecs.size == 0)(props.proxy.dispatchCB(LoadJobSpecs))
 
       def loadPlans: Callback =
-        Callback.when(model.executionPlans.size == 0)(
-          props.proxy.dispatchCB(LoadExecutionPlans))
+        Callback.when(model.executionPlans.size == 0)(props.proxy.dispatchCB(LoadExecutionPlans))
 
       loadJobs *> loadPlans
     }
 
     def selectedPlans: CallbackTo[Map[PlanId, Pot[ExecutionPlan]]] =
       for {
-        plans <- $.props.map(_.proxy().executionPlans)
+        plans     <- $.props.map(_.proxy().executionPlans)
         selection <- $.state.map(_.selectedPlans)
       } yield plans.get(selection)
 
     // Actions
 
-    private[this] def activePlansSelected: CallbackTo[Seq[PlanId]] = {
+    private[this] def activePlansSelected: CallbackTo[Seq[PlanId]] =
       selectedPlans.map(_.toSeq.collect {
         case (id, Ready(plan)) if !plan.finished => id
       })
-    }
 
     def cancelPlan(planId: PlanId): Callback =
       $.props.flatMap(_.proxy.dispatchCB(CancelExecutionPlan(planId)))
@@ -142,18 +137,16 @@ object ExecutionPlanList {
       case 'Execution => "Last Execution"
     }
 
-    def renderItem(model: UserScope)(planId: PlanId,
-                                     plan: ExecutionPlan,
-                                     column: Symbol): VdomNode = {
+    def renderItem(
+        model: UserScope
+    )(planId: PlanId, plan: ExecutionPlan, column: Symbol): VdomNode = {
       def renderPlanName: VdomNode = {
         val jobSpec = model.jobSpecs.get(plan.jobId)
         <.a(^.onClick --> onPlanClicked(planId), jobSpec.render(_.displayName))
       }
 
-      def renderDateTime(dateTime: ZonedDateTime)(
-          implicit clock: Clock): VdomNode =
-        DateTimeDisplay(
-          dateTime.withZoneSameInstant(clock.getZone).toLocalDateTime)
+      def renderDateTime(dateTime: ZonedDateTime)(implicit clock: Clock): VdomNode =
+        DateTimeDisplay(dateTime.withZoneSameInstant(clock.getZone).toLocalDateTime)
 
       column match {
         case 'Job     => renderPlanName
@@ -175,38 +168,37 @@ object ExecutionPlanList {
       }
     }
 
-    def renderRowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) = {
+    def renderRowActions(props: Props)(planId: PlanId, plan: ExecutionPlan) =
       if (!plan.finished && plan.nextExecutionTime.isDefined) {
         Seq(
-          Table.RowAction[PlanId](NonEmptyList.of(Icons.stop, "Cancel"),
-                                  cancelPlan)
+          Table.RowAction[PlanId](NonEmptyList.of(Icons.stop, "Cancel"), cancelPlan)
         )
       } else Seq.empty
-    }
 
     def render(props: Props, state: State) = {
       val model = props.proxy()
       <.div(
         ToolBar(
-          Button(Button.Props(
-                   Some(props.onCreate),
-                   style = ContextStyle.primary
-                 ),
-                 Icons.plusSquare,
-                 "Execution Plan"),
-          Button(Button.Props(
-                   Some(cancelAll),
-                   disabled = cancelAllDisabled
-                 ),
-                 Icons.stopCircle,
-                 "Cancel All")
+          Button(
+            Button.Props(
+              Some(props.onCreate),
+              style = ContextStyle.primary
+            ),
+            Icons.plusSquare,
+            "Execution Plan"
+          ),
+          Button(
+            Button.Props(
+              Some(cancelAll),
+              disabled = cancelAllDisabled
+            ),
+            Icons.stopCircle,
+            "Cancel All"
+          )
         ),
         NavBar(
           NavBar
-            .Props(List('All, 'Active, 'Inactive),
-                   'All,
-                   onFilterClicked,
-                   style = NavStyle.pills),
+            .Props(List('All, 'Active, 'Inactive), 'All, onFilterClicked, style = NavStyle.pills),
           Table(
             Columns,
             model.executionPlans.seq,
@@ -231,9 +223,7 @@ object ExecutionPlanList {
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
-  def apply(proxy: ModelProxy[UserScope],
-            onCreate: OnCreate,
-            onClick: OnClick) =
+  def apply(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick) =
     component(Props(proxy, onCreate, onClick))
 
 }

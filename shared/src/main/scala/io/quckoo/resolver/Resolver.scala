@@ -47,7 +47,8 @@ class InjectableResolver[F[_]](implicit inject: InjectK[ResolverOp, F])
 object InjectableResolver {
 
   implicit def injectableResolver[F[_]](
-      implicit inject: InjectK[ResolverOp, F]): InjectableResolver[F] =
+      implicit inject: InjectK[ResolverOp, F]
+  ): InjectableResolver[F] =
     new InjectableResolver[F]
 
 }

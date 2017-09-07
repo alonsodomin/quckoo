@@ -38,23 +38,23 @@ object Notification {
   }
 
   private final val AlertType = Map(
-    Level.Danger -> "danger",
+    Level.Danger  -> "danger",
     Level.Warning -> "warning",
-    Level.Info -> "info",
+    Level.Info    -> "info",
     Level.Success -> "success"
   )
 
   private final val AlertStyle = Map(
-    Level.Danger -> ContextStyle.danger,
+    Level.Danger  -> ContextStyle.danger,
     Level.Warning -> ContextStyle.warning,
-    Level.Info -> ContextStyle.info,
+    Level.Info    -> ContextStyle.info,
     Level.Success -> ContextStyle.success
   )
 
   private final val AlertIcon = Map(
-    Level.Danger -> Icons.exclamationCircle,
+    Level.Danger  -> Icons.exclamationCircle,
     Level.Warning -> Icons.exclamationTriangle,
-    Level.Info -> Icons.questionCircle,
+    Level.Info    -> Icons.questionCircle,
     Level.Success -> Icons.checkCircle
   )
 
@@ -81,8 +81,7 @@ object Notification {
     implicit def fromThrowable(throwable: Throwable): PropsMagnet =
       new PropsMagnet {
         def apply() =
-          Props(throwable.getMessage,
-                title = Some(throwable.getClass.getSimpleName))
+          Props(throwable.getMessage, title = Some(throwable.getClass.getSimpleName))
       }
 
   }
@@ -108,7 +107,7 @@ final case class Notification private[components] (
   def growl(): Unit = {
     // $COVERAGE-OFF$ https://github.com/scoverage/scalac-scoverage-plugin/issues/176
     val settings = js.Dynamic.literal(
-      "type" -> AlertType(level),
+      "type"          -> AlertType(level),
       "allow_dismiss" -> props.closable
     )
     // $COVERAGE-ON$
@@ -116,13 +115,15 @@ final case class Notification private[components] (
     ()
   }
 
-  def inline: VdomNode = {
+  def inline: VdomNode =
     Alert(AlertStyle(level))(
       Seq(
-        <.div(^.`class` := "row",
-              <.div(^.`class` := "col-sm-2", AlertIcon(level)),
-              <.div(^.`class` := "col-sm-10", props.message)))
+        <.div(
+          ^.`class` := "row",
+          <.div(^.`class` := "col-sm-2", AlertIcon(level)),
+          <.div(^.`class` := "col-sm-10", props.message)
+        )
+      )
     )
-  }
 
 }

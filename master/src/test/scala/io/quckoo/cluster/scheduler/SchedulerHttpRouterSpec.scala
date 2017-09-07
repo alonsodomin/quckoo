@@ -50,7 +50,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object SchedulerHttpRouterSpec {
 
   final val FixedInstant = Instant.ofEpochMilli(8939283923L)
-  final val FixedClock = Clock.fixed(FixedInstant, ZoneId.of("UTC"))
+  final val FixedClock   = Clock.fixed(FixedInstant, ZoneId.of("UTC"))
 
   implicit final val TestTimeout = 1 second
   implicit final val TestPassport = {
@@ -61,7 +61,7 @@ object SchedulerHttpRouterSpec {
     new Passport(Map.empty, s"$header.$claims.$signature")
   }
 
-  final val TestJobId = JobId("jobId")
+  final val TestJobId   = JobId("jobId")
   final val TestPlanIds = Set(PlanId(UUID.randomUUID()))
   final val TestPlanMap = Map(
     TestPlanIds.head -> ExecutionPlan(
@@ -73,9 +73,8 @@ object SchedulerHttpRouterSpec {
   )
 
   final val TestTaskIds: Seq[TaskId] = List(TaskId(UUID.randomUUID()))
-  final val TestTask = Task(
-    TestTaskIds.head,
-    JobPackage.jar(ArtifactId("com.example", "example", "latest"), ""))
+  final val TestTask =
+    Task(TestTaskIds.head, JobPackage.jar(ArtifactId("com.example", "example", "latest"), ""))
   final val TestTaskMap = Map(
     TestTaskIds.head -> TaskExecution(
       TestPlanIds.head,
@@ -88,13 +87,8 @@ object SchedulerHttpRouterSpec {
 }
 
 class SchedulerHttpRouterSpec
-    extends WordSpec
-    with ScalatestRouteTest
-    with Matchers
-    with SchedulerHttpRouter
-    with SchedulerApi
-    with SchedulerStreams
-    with ImplicitClock {
+    extends WordSpec with ScalatestRouteTest with Matchers with SchedulerHttpRouter
+    with SchedulerApi with SchedulerStreams with ImplicitClock {
 
   import SchedulerHttpRouterSpec._
   import StatusCodes._
@@ -114,9 +108,11 @@ class SchedulerHttpRouterSpec
     Future.successful {
       TestPlanMap
         .get(planId)
-        .map(plan =>
-          ExecutionPlanCancelled(plan.jobId, planId, ZonedDateTime.now(clock))
-            .asRight[ExecutionPlanNotFound])
+        .map(
+          plan =>
+            ExecutionPlanCancelled(plan.jobId, planId, ZonedDateTime.now(clock))
+              .asRight[ExecutionPlanNotFound]
+        )
         .getOrElse(ExecutionPlanNotFound(planId).asLeft[ExecutionPlanCancelled])
     }
 
@@ -138,9 +134,9 @@ class SchedulerHttpRouterSpec
       .find(_.jobId == schedule.jobId)
       .map(
         plan =>
-          ExecutionPlanStarted(schedule.jobId,
-                               plan.planId,
-                               ZonedDateTime.now(clock)).asRight[JobNotFound])
+          ExecutionPlanStarted(schedule.jobId, plan.planId, ZonedDateTime.now(clock))
+            .asRight[JobNotFound]
+      )
       .getOrElse(JobNotFound(schedule.jobId).asLeft[ExecutionPlanStarted])
   }
 

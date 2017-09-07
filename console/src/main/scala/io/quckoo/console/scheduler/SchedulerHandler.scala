@@ -29,11 +29,9 @@ import scala.concurrent.ExecutionContext
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-class SchedulerHandler(model: ModelRW[ConsoleScope, UserScope], ops: ConsoleOps)(
-    implicit ec: ExecutionContext)
-    extends ConsoleHandler[UserScope](model)
-    with AuthHandler[UserScope]
-    with LazyLogging {
+class SchedulerHandler(model: ModelRW[ConsoleScope, UserScope],
+                       ops: ConsoleOps)(implicit ec: ExecutionContext)
+    extends ConsoleHandler[UserScope](model) with AuthHandler[UserScope] with LazyLogging {
 
   override def handle = {
     case msg: ScheduleJob =>
@@ -48,9 +46,7 @@ class SchedulerHandler(model: ModelRW[ConsoleScope, UserScope], ops: ConsoleOps)
 
     case ExecutionPlanStarted(jobId, planId, _) =>
       val effect = Effects.parallel(
-        Growl(
-          Notification.success(
-            s"Started execution plan for job. planId=$planId")),
+        Growl(Notification.success(s"Started execution plan for job. planId=$planId")),
         RefreshExecutionPlans(Set(planId))
       )
       effectOnly(effect)
@@ -60,8 +56,7 @@ class SchedulerHandler(model: ModelRW[ConsoleScope, UserScope], ops: ConsoleOps)
 
     case ExecutionPlanCancelled(_, planId, _) =>
       val effects = Effects.parallel(
-        Growl(
-          Notification.success(s"Execution plan $planId has been cancelled")),
+        Growl(Notification.success(s"Execution plan $planId has been cancelled")),
         RefreshExecutionPlans(Set(planId))
       )
       effectOnly(effects)

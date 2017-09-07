@@ -49,9 +49,8 @@ object ClockWidget {
     def updateCurrent(clock: Clock): Callback =
       $.modState(_.copy(current = ZonedDateTime.now(clock)))
 
-    def render(clock: Clock, state: State) = {
+    def render(clock: Clock, state: State) =
       <.span(DateTimeDisplay(state.current.toLocalDateTime, Some(Formatter)))
-    }
 
   }
 

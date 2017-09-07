@@ -23,12 +23,16 @@ import io.quckoo.resolver.config.IvyConfig
 
 import pureconfig._
 
+import eu.timepit.refined.pureconfig._
+
 import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
 
-final case class ClusterSettings(resolver: IvyConfig,
-                                 taskQueue: TaskQueueSettings,
-                                 http: HttpSettings)
+final case class ClusterSettings(
+    resolver: IvyConfig,
+    taskQueue: TaskQueueSettings,
+    http: HttpSettings
+)
 
 object ClusterSettings {
   final val Namespace = "quckoo"
@@ -38,7 +42,9 @@ object ClusterSettings {
 
 }
 
-final case class HttpSettings(bindInterface: String,
-                              bindPort: Int,
-                              requestTimeout: FiniteDuration)
+final case class HttpSettings(
+    bindInterface: IPv4,
+    bindPort: PortNumber,
+    requestTimeout: FiniteDuration
+)
 final case class TaskQueueSettings(maxWorkTimeout: FiniteDuration)

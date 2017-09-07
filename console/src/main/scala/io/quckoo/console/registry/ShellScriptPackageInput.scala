@@ -43,9 +43,7 @@ object ShellScriptPackageInput {
 
   type OnUpdate = Option[ShellScriptPackage] => Callback
 
-  case class Props(value: Option[ShellScriptPackage],
-                   readOnly: Boolean,
-                   onUpdate: OnUpdate)
+  case class Props(value: Option[ShellScriptPackage], readOnly: Boolean, onUpdate: OnUpdate)
   case class State(content: Option[String])
 
   implicit val propsReuse: Reusability[Props] =
@@ -55,29 +53,29 @@ object ShellScriptPackageInput {
   class Backend($ : BackendScope[Props, State]) {
 
     private[this] def propagateChange: Callback =
-      $.state.flatMap(st =>
-        $.props.flatMap(_.onUpdate(st.content.map(ShellScriptPackage.apply))))
+      $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.content.map(ShellScriptPackage.apply))))
 
     def onContentUpdate(value: Option[String]): Callback =
       $.modState(_.copy(content = value), propagateChange)
 
     def render(props: Props, state: State) = {
-      def opts = {
+      def opts =
         if (props.readOnly) EditorOptions.copy(readOnly = "nocursor")
         else EditorOptions
-      }
 
       <.div(
         lnf.formGroup,
-        <.label(^.`class` := "col-sm-2 control-label",
-                ^.`for` := "script_content",
-                "Script"),
-        <.div(^.`class` := "col-sm-10",
-              CodeEditor(state.content,
-                         onContentUpdate _,
-                         opts,
-                         ^.id := "script_content",
-                         ^.height := "250"))
+        <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "script_content", "Script"),
+        <.div(
+          ^.`class` := "col-sm-10",
+          CodeEditor(
+            state.content,
+            onContentUpdate _,
+            opts,
+            ^.id := "script_content",
+            ^.height := "250"
+          )
+        )
       )
     }
 
@@ -85,15 +83,12 @@ object ShellScriptPackageInput {
 
   val component = ScalaComponent
     .builder[Props]("ShellScriptPackageInput")
-    .initialStateFromProps(props =>
-      State(props.value.map(_.content).orElse(Some(DefaultScript))))
+    .initialStateFromProps(props => State(props.value.map(_.content).orElse(Some(DefaultScript))))
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[ShellScriptPackage],
-            onUpdate: OnUpdate,
-            readOnly: Boolean = false) =
+  def apply(value: Option[ShellScriptPackage], onUpdate: OnUpdate, readOnly: Boolean = false) =
     component(Props(value, readOnly, onUpdate))
 
 }

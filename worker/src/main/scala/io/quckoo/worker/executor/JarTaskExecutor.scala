@@ -38,9 +38,8 @@ object JarTaskExecutor {
   type ArtifactOp[A] = EitherK[ResolverOp, ReflectOp, A]
   type ArtifactIO[A] = Free[ArtifactOp, A]
 
-  implicit def interpreter[F[_]: Monad](
-      implicit resolver: ResolverInterpreter[F],
-      reflector: ReflectorInterpreter[F]): ArtifactOp ~> F =
+  implicit def interpreter[F[_]: Monad](implicit resolver: ResolverInterpreter[F],
+                                        reflector: ReflectorInterpreter[F]): ArtifactOp ~> F =
     resolver or reflector
 
   implicit class ArtifactIOOps[A](val self: ArtifactIO[A]) extends AnyVal {
@@ -48,9 +47,7 @@ object JarTaskExecutor {
       self.foldMap(interpreter)
   }
 
-  def props(workerContext: WorkerContext,
-            taskId: TaskId,
-            jarPackage: JarJobPackage): Props =
+  def props(workerContext: WorkerContext, taskId: TaskId, jarPackage: JarJobPackage): Props =
     Props(new JarTaskExecutor(workerContext, taskId, jarPackage))
 
 }
@@ -73,25 +70,25 @@ class JarTaskExecutor private (workerContext: WorkerContext,
         "Starting execution of task '{}' using class '{}' from artifact {}.",
         taskId,
         jarPackage.jobClass,
-        jarPackage.artifactId)
+        jarPackage.artifactId
+      )
 
       downloadAndRun.unsafeToFuture().pipeTo(sender())
   }
 
-  private def downloadAndRun(
-      implicit resolver: InjectableResolver[ArtifactOp],
-      reflect: InjectableReflector[ArtifactOp]): IO[Response] = {
+  private def downloadAndRun(implicit resolver: InjectableResolver[ArtifactOp],
+                             reflect: InjectableReflector[ArtifactOp]): IO[Response] = {
     import resolver._, reflect._
 
     def downloadJars: ArtifactIO[Either[Failed, Artifact]] =
-      download(jarPackage.artifactId).map(_.leftMap(errors =>
-        Failed(MissingDependencies(errors))).toEither)
+      download(jarPackage.artifactId)
+        .map(_.leftMap(errors => Failed(MissingDependencies(errors))).toEither)
 
     def runIt(artifact: Artifact): ArtifactIO[Unit] =
       for {
         jobClass <- loadJobClass(artifact, jarPackage.jobClass)
-        job <- createJob(jobClass)
-        _ <- runJob(job)
+        job      <- createJob(jobClass)
+        _        <- runJob(job)
       } yield ()
 
     implicit val myResolver = workerContext.resolver

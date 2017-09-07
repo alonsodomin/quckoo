@@ -37,7 +37,7 @@ class ErrorProcessor extends ActionProcessor[ConsoleScope] with LazyLogging {
       action: Any,
       next: (Any) => ActionResult[ConsoleScope],
       currentModel: ConsoleScope
-  ): ActionResult[ConsoleScope] = {
+  ): ActionResult[ConsoleScope] =
     action match {
       case Failed(errors) =>
         val notifications =
@@ -50,10 +50,8 @@ class ErrorProcessor extends ActionProcessor[ConsoleScope] with LazyLogging {
 
       case _ => next(action)
     }
-  }
 
-  private[this] def generateNotification
-    : PartialFunction[QuckooError, Notification] = {
+  private[this] def generateNotification: PartialFunction[QuckooError, Notification] = {
     case JobNotFound(jobId) =>
       Notification.danger(s"Job not found: $jobId")
 

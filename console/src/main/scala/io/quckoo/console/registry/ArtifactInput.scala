@@ -30,12 +30,8 @@ object ArtifactInput {
 
   type OnUpdate = Option[ArtifactId] => Callback
 
-  case class Props(value: Option[ArtifactId],
-                   readOnly: Boolean,
-                   onUpdate: OnUpdate)
-  case class State(organization: Option[String],
-                   name: Option[String],
-                   version: Option[String]) {
+  case class Props(value: Option[ArtifactId], readOnly: Boolean, onUpdate: OnUpdate)
+  case class State(organization: Option[String], name: Option[String], version: Option[String]) {
 
     def this(value: Option[ArtifactId]) =
       this(value.map(_.organization), value.map(_.name), value.map(_.version))
@@ -43,15 +39,15 @@ object ArtifactInput {
   }
 
   implicit val propsReuse: Reusability[Props] = Reusability.by(_.value)
-  implicit val stateReuse = Reusability.caseClass[State]
+  implicit val stateReuse                     = Reusability.caseClass[State]
 
   class Backend($ : BackendScope[Props, State]) {
 
     def propagateUpdate: Callback = {
       val artifactId = for {
         organization <- $.state.map(_.organization).asCBO[String]
-        name <- $.state.map(_.name).asCBO[String]
-        version <- $.state.map(_.version).asCBO[String]
+        name         <- $.state.map(_.name).asCBO[String]
+        version      <- $.state.map(_.version).asCBO[String]
       } yield ArtifactId(organization, name, version)
 
       artifactId.asCallback.flatMap(value => $.props.flatMap(_.onUpdate(value)))
@@ -67,10 +63,10 @@ object ArtifactInput {
       $.modState(_.copy(version = version), propagateUpdate)
 
     private[this] val OrganizationInput = Input[String]
-    private[this] val NameInput = Input[String]
-    private[this] val VersionInput = Input[String]
+    private[this] val NameInput         = Input[String]
+    private[this] val VersionInput      = Input[String]
 
-    def render(props: Props, state: State) = {
+    def render(props: Props, state: State) =
       <.div(
         ^.`class` := "container-fluid",
         <.div(
@@ -85,25 +81,28 @@ object ArtifactInput {
               ^.readOnly := props.readOnly
             )
           ),
-          <.div(^.`class` := "col-sm-4",
-                NameInput(
-                  state.name,
-                  onNameUpdate _,
-                  ^.id := "artifactName",
-                  ^.placeholder := "Name",
-                  ^.readOnly := props.readOnly
-                )),
-          <.div(^.`class` := "col-sm-4",
-                VersionInput(
-                  state.version,
-                  onVersionUpdate _,
-                  ^.id := "artifactVerion",
-                  ^.placeholder := "Version",
-                  ^.readOnly := props.readOnly
-                ))
+          <.div(
+            ^.`class` := "col-sm-4",
+            NameInput(
+              state.name,
+              onNameUpdate _,
+              ^.id := "artifactName",
+              ^.placeholder := "Name",
+              ^.readOnly := props.readOnly
+            )
+          ),
+          <.div(
+            ^.`class` := "col-sm-4",
+            VersionInput(
+              state.version,
+              onVersionUpdate _,
+              ^.id := "artifactVerion",
+              ^.placeholder := "Version",
+              ^.readOnly := props.readOnly
+            )
+          )
         )
       )
-    }
 
   }
 
@@ -114,9 +113,7 @@ object ArtifactInput {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[ArtifactId],
-            onUpdate: OnUpdate,
-            readOnly: Boolean = false) =
+  def apply(value: Option[ArtifactId], onUpdate: OnUpdate, readOnly: Boolean = false) =
     component(Props(value, readOnly, onUpdate))
 
 }
