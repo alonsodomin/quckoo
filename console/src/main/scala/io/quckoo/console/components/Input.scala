@@ -40,12 +40,12 @@ object Input {
     }
 
     implicit val string: Converter[String] = new Converter[String] {
-      def to: String => String = identity
+      def to: String => String   = identity
       def from: String => String = identity
     }
 
     implicit val password: Converter[Password] = new Converter[Password] {
-      def to: Password => String = _.value
+      def to: Password => String   = _.value
       def from: String => Password = Password(_)
     }
 
@@ -74,13 +74,13 @@ object Input {
   @implicitNotFound("Type ${A} is not supported as Input component")
   sealed abstract class Type[A](val html: String)
   object Type {
-    implicit val string = new Type[String]("text") {}
+    implicit val string   = new Type[String]("text")       {}
     implicit val password = new Type[Password]("password") {}
-    implicit val int = new Type[Int]("number") {}
-    implicit val long = new Type[Long]("number") {}
-    implicit val short = new Type[Short]("number") {}
-    implicit val date = new Type[LocalDate]("date") {}
-    implicit val time = new Type[LocalTime]("time") {}
+    implicit val int      = new Type[Int]("number")        {}
+    implicit val long     = new Type[Long]("number")       {}
+    implicit val short    = new Type[Short]("number")      {}
+    implicit val date     = new Type[LocalDate]("date")    {}
+    implicit val time     = new Type[LocalTime]("time")    {}
   }
 
   type OnUpdate[A] = Option[A] => Callback
@@ -132,26 +132,23 @@ class Input[A: Reusability] private[components] () {
   import Input._
 
   implicit val propsReuse: Reusability[Props[A]] =
-    Reusability.by[Props[A], (Option[A], Option[A])](p =>
-      (p.value, p.defaultValue))
+    Reusability.by[Props[A], (Option[A], Option[A])](p => (p.value, p.defaultValue))
 
   private[components] val component = ScalaComponent
     .builder[Props[A]]("Input")
     .stateless
     .renderBackend[Backend[A]]
-    .configure(Reusability
-      .shouldComponentUpdate[Props[A], Children.None, Unit, Backend[A]])
+    .configure(
+      Reusability
+        .shouldComponentUpdate[Props[A], Children.None, Unit, Backend[A]]
+    )
     .build
 
-  def apply(value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(
-      implicit C: Converter[A],
-      T: Type[A]) =
+  def apply(value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A],
+                                                                     T: Type[A]) =
     component(Props(value, None, onUpdate, attrs))
 
-  def apply(value: Option[A],
-            defaultValue: Option[A],
-            onUpdate: OnUpdate[A],
-            attrs: TagMod*)(
+  def apply(value: Option[A], defaultValue: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(
       implicit C: Converter[A],
       T: Type[A]
   ) = component(Props(value, defaultValue, onUpdate, attrs))

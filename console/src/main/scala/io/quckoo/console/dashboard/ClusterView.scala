@@ -71,8 +71,7 @@ object ClusterView {
     }
 
     def render(props: Props) = {
-      def countStatus(nodes: Iterable[(NodeId, QuckooNode)],
-                      status: NodeStatus): Int =
+      def countStatus(nodes: Iterable[(NodeId, QuckooNode)], status: NodeStatus): Int =
         nodes.map(_._2.status).count(_ == status)
 
       def activeMasters: Int =
@@ -94,12 +93,16 @@ object ClusterView {
           <.div(
             ^.`class` := "col-sm-12",
             <.div(Style.sectionTitle, "Nodes"),
-            <.div(^.`class` := "row",
-                  <.div(^.`class` := "col-sm-8", "Active"),
-                  <.div(^.`class` := "col-sm-4 text-right", activeMasters)),
-            <.div(^.`class` := "row",
-                  <.div(^.`class` := "col-sm-8", "Unreachable"),
-                  <.div(^.`class` := "col-sm-4 text-right", unreachableMasters))
+            <.div(
+              ^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "Active"),
+              <.div(^.`class` := "col-sm-4 text-right", activeMasters)
+            ),
+            <.div(
+              ^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "Unreachable"),
+              <.div(^.`class` := "col-sm-4 text-right", unreachableMasters)
+            )
           )
         ),
         <.div(
@@ -107,12 +110,16 @@ object ClusterView {
           <.div(
             ^.`class` := "col-sm-12",
             <.div(Style.sectionTitle, "Workers"),
-            <.div(^.`class` := "row",
-                  <.div(^.`class` := "col-sm-8", "Active"),
-                  <.div(^.`class` := "col-sm-4 text-right", activeWorkers)),
-            <.div(^.`class` := "row",
-                  <.div(^.`class` := "col-sm-8", "Unreachable"),
-                  <.div(^.`class` := "col-sm-4 text-right", unreachableWorkers))
+            <.div(
+              ^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "Active"),
+              <.div(^.`class` := "col-sm-4 text-right", activeWorkers)
+            ),
+            <.div(
+              ^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "Unreachable"),
+              <.div(^.`class` := "col-sm-4 text-right", unreachableWorkers)
+            )
           )
         ),
         <.div(
@@ -120,14 +127,16 @@ object ClusterView {
           <.div(
             ^.`class` := "col-sm-12",
             <.div(Style.sectionTitle, "Tasks"),
-            <.div(^.`class` := "row",
-                  <.div(^.`class` := "col-sm-8", "Pending"),
-                  <.div(^.`class` := "col-sm-4 text-right",
-                        props.proxy().metrics.pendingTasks)),
-            <.div(^.`class` := "row",
-                  <.div(^.`class` := "col-sm-8", "In Progress"),
-                  <.div(^.`class` := "col-sm-4 text-right",
-                        props.proxy().metrics.inProgressTasks))
+            <.div(
+              ^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "Pending"),
+              <.div(^.`class` := "col-sm-4 text-right", props.proxy().metrics.pendingTasks)
+            ),
+            <.div(
+              ^.`class` := "row",
+              <.div(^.`class` := "col-sm-8", "In Progress"),
+              <.div(^.`class` := "col-sm-4 text-right", props.proxy().metrics.inProgressTasks)
+            )
           )
         )
       )

@@ -55,12 +55,10 @@ object JobSelect {
       $.props.flatMap(_.onUpdate(newValue))
     }
 
-    def render(props: Props) = {
+    def render(props: Props) =
       <.div(
         lnf.formGroup,
-        <.label(^.`class` := "col-sm-2 control-label",
-                ^.`for` := "jobId",
-                "Job"),
+        <.label(^.`class` := "col-sm-2 control-label", ^.`for` := "jobId", "Job"),
         <.div(
           ^.`class` := "col-sm-10",
           <.select(
@@ -73,12 +71,10 @@ object JobSelect {
             <.option("Select a job"),
             props.jobs
               .filter(!_._2.disabled)
-              .toVdomArray(jobPair =>
-                JobOption.withKey(jobPair._1.toString)(jobPair))
+              .toVdomArray(jobPair => JobOption.withKey(jobPair._1.toString)(jobPair))
           )
         )
       )
-    }
 
   }
 

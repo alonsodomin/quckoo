@@ -45,13 +45,14 @@ object TextArea {
       $.modState(_.copy(value = newValue), propagateUpdate)
     }
 
-    def render(props: Props, state: State) = {
-      <.textarea(^.`class` := "form-control",
-                 ^.onChange ==> onUpdate,
-                 ^.onBlur ==> onUpdate,
-                 state.value.map(v => ^.value := v).whenDefined,
-                 props.attrs.toTagMod)
-    }
+    def render(props: Props, state: State) =
+      <.textarea(
+        ^.`class` := "form-control",
+        ^.onChange ==> onUpdate,
+        ^.onBlur ==> onUpdate,
+        state.value.map(v => ^.value := v).whenDefined,
+        props.attrs.toTagMod
+      )
 
   }
 

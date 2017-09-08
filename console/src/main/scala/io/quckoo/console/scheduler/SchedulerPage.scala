@@ -56,9 +56,8 @@ object SchedulerPage {
       $.props >>= dispatchAction
     }
 
-    def editPlan(plan: Option[ExecutionPlan]): Callback = {
+    def editPlan(plan: Option[ExecutionPlan]): Callback =
       CallbackTo(executionPlanFormRef).flatMap(_.value.backend.editPlan(plan))
-    }
 
     def render(props: Props) = {
       val userScopeConnector = props.proxy.connect(_.userScope)
@@ -68,12 +67,12 @@ object SchedulerPage {
         Style.content,
         <.h2("Scheduler"),
         props.proxy.wrap(_.userScope.jobSpecs) { jobs =>
-          executionPlanFormRef.component(
-            ExecutionPlanForm.Props(jobs, scheduleJob))
+          executionPlanFormRef.component(ExecutionPlanForm.Props(jobs, scheduleJob))
         },
         TabPanel(
           'Plans -> userScopeConnector(
-            ExecutionPlanList(_, editPlan(None), plan => editPlan(Some(plan)))),
+            ExecutionPlanList(_, editPlan(None), plan => editPlan(Some(plan)))
+          ),
           'Executions -> executionConnector(TaskExecutionList(_))
         )
       )

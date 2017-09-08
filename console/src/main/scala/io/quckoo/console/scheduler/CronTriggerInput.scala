@@ -67,16 +67,14 @@ object CronTriggerInput {
   case class Props(value: Option[Trigger.Cron],
                    onUpdate: Option[Trigger.Cron] => Callback,
                    readOnly: Boolean)
-  case class State(inputExpr: Option[String],
-                   errorReason: Option[CronError] = None)
+  case class State(inputExpr: Option[String], errorReason: Option[CronError] = None)
 
   class Backend($ : BackendScope[Props, State]) {
 
     private[this] def doValidate(value: Option[String]) = {
 
       def updateError(err: Option[CronError]): Callback =
-        $.modState(_.copy(errorReason = err)) >> $.props.flatMap(
-          _.onUpdate(None))
+        $.modState(_.copy(errorReason = err)) >> $.props.flatMap(_.onUpdate(None))
 
       def invokeCallback(trigger: Option[Trigger.Cron]): Callback =
         updateError(None) >> $.props.flatMap(_.onUpdate(trigger))
@@ -92,15 +90,19 @@ object CronTriggerInput {
 
     private[this] val ExpressionInput = Input[String]
 
-    def render(props: Props, state: State) = {
+    def render(props: Props, state: State) =
       <.div(
         ^.`class` := "form-group",
         <.label(^.`class` := "col-sm-2 control-label", "Expression"),
-        <.div(^.`class` := "col-sm-10",
-              ExpressionInput(state.inputExpr,
-                              onUpdate _,
-                              ^.id := "cronTrigger",
-                              ^.readOnly := props.readOnly)),
+        <.div(
+          ^.`class` := "col-sm-10",
+          ExpressionInput(
+            state.inputExpr,
+            onUpdate _,
+            ^.id := "cronTrigger",
+            ^.readOnly := props.readOnly
+          )
+        ),
         <.div(
           ^.`class` := "col-sm-offset-2",
           (state.inputExpr, state.errorReason)
@@ -108,7 +110,6 @@ object CronTriggerInput {
             .whenDefined
         )
       )
-    }
 
   }
 

@@ -26,19 +26,12 @@ import better.files._
 import cats.effect.IO
 import cats.implicits._
 
-import io.quckoo.{
-  ExceptionThrown,
-  ShellScriptPackage,
-  TaskExitCodeFault,
-  TaskId
-}
+import io.quckoo.{ExceptionThrown, ShellScriptPackage, TaskExitCodeFault, TaskId}
 import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 
 object ShellTaskExecutor {
 
-  def props(workerContext: WorkerContext,
-            taskId: TaskId,
-            shellPackage: ShellScriptPackage): Props =
+  def props(workerContext: WorkerContext, taskId: TaskId, shellPackage: ShellScriptPackage): Props =
     Props(new ShellTaskExecutor(workerContext, taskId: TaskId, shellPackage))
 
 }
@@ -91,8 +84,7 @@ class ShellTaskExecutor private (
         ()
       }
 
-      runScript.attempt.flatMap(e =>
-        deleteScript.flatMap(_ => e.fold(IO.raiseError, IO.pure)))
+      runScript.attempt.flatMap(e => deleteScript.flatMap(_ => e.fold(IO.raiseError, IO.pure)))
     }
 
     generateScript >>= runIt

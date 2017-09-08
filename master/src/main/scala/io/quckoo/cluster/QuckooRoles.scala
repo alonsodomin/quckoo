@@ -21,7 +21,7 @@ package io.quckoo.cluster
   */
 object QuckooRoles {
 
-  final val Registry = "registry"
+  final val Registry  = "registry"
   final val Scheduler = "scheduler"
 
 }

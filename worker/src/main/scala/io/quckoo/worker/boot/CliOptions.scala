@@ -21,6 +21,7 @@ import java.util.{HashMap => JHashMap}
 
 import com.typesafe.config.{Config, ConfigFactory}
 
+import io.quckoo.config._
 import io.quckoo.worker.config._
 
 import scala.collection.JavaConverters._
@@ -34,7 +35,7 @@ object CliOptions {
 
 final case class CliOptions(
     bindAddress: Option[String] = None,
-    port: Int = DefaultTcpPort,
+    port: Int = DefaultTcpPort.value,
     masterNodes: Seq[String] = Seq()
 ) {
 
@@ -44,9 +45,9 @@ final case class CliOptions(
     val valueMap = new JHashMap[String, Object]()
 
     val (bindHost, bindPort) = bindAddress.map { addr =>
-      val HostAndPort(h, p) = addr
+      val HostAndPortRegex(h, p) = addr
       (h, p.toInt)
-    } getOrElse (DefaultTcpInterface -> port)
+    } getOrElse (DefaultTcpInterface.value -> port)
 
     valueMap.put(AkkaRemoteNettyHost, bindHost)
     valueMap.put(AkkaRemoteNettyPort, Int.box(bindPort))

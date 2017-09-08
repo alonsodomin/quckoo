@@ -39,7 +39,7 @@ import scala.concurrent.duration._
 object Worker {
 
   final val DefaultRegisterFrequency: FiniteDuration = 10 seconds
-  final val DefaultQueueAckTimeout: FiniteDuration = 5 seconds
+  final val DefaultQueueAckTimeout: FiniteDuration   = 5 seconds
 
   protected[worker] final val SchedulerPath = "/user/quckoo/scheduler"
 
@@ -55,7 +55,8 @@ object Worker {
         taskExecutorProvider,
         registerInterval,
         queueAckTimeout
-      ))
+      )
+    )
 
 }
 
@@ -64,8 +65,7 @@ class Worker private (clusterClient: ActorRef,
                       taskExecutorProvider: TaskExecutorProvider,
                       registerInterval: FiniteDuration,
                       queueAckTimeout: FiniteDuration)
-    extends Actor
-    with ActorLogging { myself =>
+    extends Actor with ActorLogging { myself =>
 
   import Worker._
   import context.dispatcher
@@ -133,8 +133,7 @@ class Worker private (clusterClient: ActorRef,
       context.become(idle)
 
     case _: Task =>
-      log.info(
-        "Yikes. The task queue has sent me another another task while I'm busy.")
+      log.info("Yikes. The task queue has sent me another another task while I'm busy.")
   }
 
   private[this] def waitForTaskDoneAck(result: Any): Receive = {
@@ -146,7 +145,8 @@ class Worker private (clusterClient: ActorRef,
     case ReceiveTimeout =>
       log.warning(
         "Didn't receive any ack from task queue in the last {}, retrying",
-        queueAckTimeout)
+        queueAckTimeout
+      )
       sendToMaster(TaskDone(workerId, taskId, result))
       context.setReceiveTimeout(queueAckTimeout)
   }

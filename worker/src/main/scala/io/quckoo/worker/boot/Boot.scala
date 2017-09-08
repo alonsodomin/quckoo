@@ -50,9 +50,8 @@ object Boot extends App with LazyLogging {
       options.copy(port = p)
     } text "Worker node port"
 
-    opt[Seq[String]]("master") valueName "<host:port>,<host:port>" action {
-      (nodes, options) =>
-        options.copy(masterNodes = nodes)
+    opt[Seq[String]]("master") valueName "<host:port>,<host:port>" action { (nodes, options) =>
+      options.copy(masterNodes = nodes)
     } text "Comma separated list of Quckoo master nodes"
   }
 
@@ -76,8 +75,7 @@ object Boot extends App with LazyLogging {
       }
   }
 
-  private def doStart(settings: WorkerSettings)(
-      implicit system: ActorSystem): Unit = {
+  private def doStart(settings: WorkerSettings)(implicit system: ActorSystem): Unit = {
     val clientSettings = {
       val ccs = ClusterClientSettings(system)
       if (settings.worker.contactPoints.nonEmpty)
@@ -90,9 +88,7 @@ object Boot extends App with LazyLogging {
     val ivyResolver = IvyResolver(settings.resolver)
     settings.resolver.createFolders()
 
-    system.actorOf(
-      Worker.props(clusterClient, ivyResolver, DefaultTaskExecutorProvider),
-      "worker")
+    system.actorOf(Worker.props(clusterClient, ivyResolver, DefaultTaskExecutorProvider), "worker")
   }
 
   parser.parse(args, CliOptions()).foreach { opts =>

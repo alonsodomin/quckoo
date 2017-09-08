@@ -23,6 +23,6 @@ import scala.scalajs.js
   */
 @js.native
 trait LineHandle extends js.Object {
-  def height: Int = js.native
+  def height: Int  = js.native
   def text: String = js.native
 }

@@ -23,15 +23,15 @@ import scala.scalajs.js
   */
 @js.native
 trait Position extends js.Object {
-  def ch: Int = js.native
+  def ch: Int   = js.native
   def line: Int = js.native
 }
 
 @js.native
 trait ChangeEvent extends js.Object {
-  def from: Position = js.native
-  def to: Position = js.native
-  def text: js.Array[String] = js.native
+  def from: Position            = js.native
+  def to: Position              = js.native
+  def text: js.Array[String]    = js.native
   def removed: js.Array[String] = js.native
-  def origin: String = js.native
+  def origin: String            = js.native
 }

@@ -40,10 +40,12 @@ object NavBar {
     .stateless
     .render_P {
       case NavItemProps(title, selected, onClick) =>
-        <.li(^.id := title.name,
-             ^.role := "presentation",
-             (^.`class` := "active").when(selected),
-             <.a(^.onClick --> onClick(title), title.name))
+        <.li(
+          ^.id := title.name,
+          ^.role := "presentation",
+          (^.`class` := "active").when(selected),
+          <.a(^.onClick --> onClick(title), title.name)
+        )
     }
     .build
 
@@ -67,8 +69,7 @@ object NavBar {
   class Backend($ : BackendScope[Props, State]) {
 
     def tabClicked(props: Props)(title: Symbol): Callback =
-      $.modState(_.copy(selected = Some(title))).flatMap(_ =>
-        props.onClick(title))
+      $.modState(_.copy(selected = Some(title))).flatMap(_ => props.onClick(title))
 
     def render(props: Props, children: PropsChildren, state: State) = {
       val currentTab = state.selected.getOrElse(props.initial)

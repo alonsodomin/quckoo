@@ -41,18 +41,17 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
   import context.dispatcher
 
   def scheduler = context.system.scheduler
-  def rnd = ThreadLocalRandom.current
+  def rnd       = ThreadLocalRandom.current
 
   val jobSpec = JobSpec(
     displayName = "Power Of N",
     jobPackage = JobPackage.jar(
-      artifactId =
-        ArtifactId("io.quckoo", "quckoo-example-jobs_2.11", "0.1.0-SNAPSHOT"),
+      artifactId = ArtifactId("io.quckoo", "quckoo-example-jobs_2.11", "0.1.0-SNAPSHOT"),
       jobClass = classOf[PowerOfNJob].getName
     )
   )
 
-  var n = 0
+  var n            = 0
   var jobId: JobId = _
 
   private[this] var scheduleTask: Option[Cancellable] = None
@@ -75,9 +74,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
       context.setReceiveTimeout(60 seconds)
 
     case JobAccepted(id, _) =>
-      log.info(
-        "JobSpec has been registered with id {}. Moving on to produce job schedules.",
-        id)
+      log.info("JobSpec has been registered with id {}. Moving on to produce job schedules.", id)
       jobId = id
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       context.become(produce)
@@ -88,7 +85,8 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
 
     case ReceiveTimeout =>
       log.warning(
-        "Timeout waiting for a response when registering a job specification. Retrying...")
+        "Timeout waiting for a response when registering a job specification. Retrying..."
+      )
       scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
   }
 
@@ -103,9 +101,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
 
   def waitAccepted: Receive = {
     case TaskScheduled(id, planId, taskId, _) if jobId == id =>
-      log.info(
-        "Job schedule has been accepted by the cluster. executionPlanId={}",
-        planId)
+      log.info("Job schedule has been accepted by the cluster. executionPlanId={}", planId)
       if (n < 25) {
         scheduler.scheduleOnce(rnd.nextInt(3, 10).seconds, self, Tick)
       }
@@ -114,12 +110,14 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
     case JobNotEnabled(id) if jobId == id =>
       log.error(
         "Job scheduling has failed because the job hasn't been registered in the first place. jobId={}",
-        jobId)
+        jobId
+      )
 
     case JobFailedToSchedule(id, cause) if jobId == id =>
       log.error(
         "Job scheduling has thrown an error. Will retry after a while. message={}",
-        cause.toString)
+        cause.toString
+      )
       scheduler.scheduleOnce(3.seconds, self, Tick)
       context.unbecome()
   }
@@ -129,7 +127,7 @@ class PowerOfNActor(client: ActorRef) extends Actor with ActorLogging {
       val delay = rnd.nextInt(1, 30)
       Trigger.After(delay seconds)
     case 2 => // Every random seconds
-      val freq = rnd.nextInt(5, 10)
+      val freq  = rnd.nextInt(5, 10)
       val delay = rnd.nextInt(5, 30)
       Trigger.Every(freq seconds, Option(delay seconds))
     case _ => // Immediate

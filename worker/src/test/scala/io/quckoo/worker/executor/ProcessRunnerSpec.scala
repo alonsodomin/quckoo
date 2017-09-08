@@ -58,7 +58,7 @@ class ProcessRunnerSpec extends AsyncFlatSpec with Matchers {
 
   it should "capture the exit code when explicitly set" in {
     val expectedExitCode = 123
-    val script = s"""
+    val script           = s"""
     | #!/bin/bash
     | exit $expectedExitCode
     """.stripMargin

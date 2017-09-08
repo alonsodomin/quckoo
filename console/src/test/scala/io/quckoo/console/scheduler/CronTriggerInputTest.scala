@@ -52,8 +52,7 @@ class CronTriggerInputTest extends FunSuite {
   def runPlan(plan: dsl.Plan): Report[String] = {
     val initialTrigger = Option.empty[Trigger.Cron]
 
-    ReactTestUtils.withRenderedIntoDocument(
-      CronTriggerInput(initialTrigger, onUpdate)) { comp =>
+    ReactTestUtils.withRenderedIntoDocument(CronTriggerInput(initialTrigger, onUpdate)) { comp =>
       def observe() = new CronTriggerInputObserver(comp.htmlDomZipper)
 
       val test = plan

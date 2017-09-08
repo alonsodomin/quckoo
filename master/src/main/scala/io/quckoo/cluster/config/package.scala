@@ -16,13 +16,17 @@
 
 package io.quckoo.cluster
 
+import io.quckoo.config._
+
+import eu.timepit.refined.auto._
+
 /**
   * Created by alonsodomin on 04/11/2016.
   */
 package object config {
 
-  final val AkkaRemoteNettyHost = "akka.remote.netty.tcp.hostname"
-  final val AkkaRemoteNettyPort = "akka.remote.netty.tcp.port"
+  final val AkkaRemoteNettyHost     = "akka.remote.netty.tcp.hostname"
+  final val AkkaRemoteNettyPort     = "akka.remote.netty.tcp.port"
   final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
   final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
 
@@ -33,14 +37,12 @@ package object config {
     "cassandra-snapshot-store.contact-points"
 
   final val QuckooHttpBindInterface = "quckoo.http.bind-interface"
-  final val QuckooHttpBindPort = "quckoo.http.bind-port"
+  final val QuckooHttpBindPort      = "quckoo.http.bind-port"
 
-  final val HostAndPort = """(.+?):(\d+)""".r
+  final val DefaultHttpInterface: IPv4  = "0.0.0.0"
+  final val DefaultHttpPort: PortNumber = 8095
 
-  final val DefaultHttpInterface = "0.0.0.0"
-  final val DefaultHttpPort = 8095
-
-  final val DefaultTcpInterface = "127.0.0.1"
-  final val DefaultTcpPort = 2551
+  final val DefaultTcpInterface: IPv4  = "127.0.0.1"
+  final val DefaultTcpPort: PortNumber = 2551
 
 }

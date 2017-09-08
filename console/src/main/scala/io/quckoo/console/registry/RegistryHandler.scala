@@ -33,8 +33,7 @@ import scala.concurrent.ExecutionContext
   */
 class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]],
                       ops: ConsoleOps)(implicit ec: ExecutionContext)
-    extends ConsoleHandler[PotMap[JobId, JobSpec]](model)
-    with AuthHandler[PotMap[JobId, JobSpec]]
+    extends ConsoleHandler[PotMap[JobId, JobSpec]](model) with AuthHandler[PotMap[JobId, JobSpec]]
     with LazyLogging {
 
   override protected def handle = {
@@ -59,21 +58,22 @@ class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]],
         Effects.parallel(
           Growl(Notification.info(s"Job enabled: $jobId")),
           RefreshJobSpecs(Set(jobId))
-        ))
+        )
+      )
 
     case JobDisabled(jobId) =>
       effectOnly(
         Effects.parallel(
           Growl(Notification.info(s"Job disabled: $jobId")),
           RefreshJobSpecs(Set(jobId))
-        ))
+        )
+      )
 
     case action: RefreshJobSpecs =>
       withAuth { implicit passport =>
         val updateEffect =
           action.effect(ops.loadJobSpecs(action.keys))(identity)
-        action.handleWith(this, updateEffect)(
-          AsyncAction.mapHandler(action.keys))
+        action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
       }
 
     case RegisterJob(spec) =>

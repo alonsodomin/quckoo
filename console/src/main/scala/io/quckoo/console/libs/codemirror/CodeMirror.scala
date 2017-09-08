@@ -29,13 +29,11 @@ import scala.scalajs.js.annotation._
 @JSGlobal
 object CodeMirror extends js.Object {
 
-  def apply(element: Element,
-            options: js.Any = js.Dynamic.literal()): CodeMirror = js.native
+  def apply(element: Element, options: js.Any = js.Dynamic.literal()): CodeMirror = js.native
 
   def defaults: js.Dynamic = js.native
 
-  def fromTextArea(textArea: TextArea,
-                   options: js.Any = js.Dynamic.literal()): TACodeMirror =
+  def fromTextArea(textArea: TextArea, options: js.Any = js.Dynamic.literal()): TACodeMirror =
     js.native
 
   def version: String = js.native
@@ -52,26 +50,26 @@ trait CodeMirror extends js.Object {
   def execCommand(command: String): Unit = js.native
 
   def hasFocus: Boolean = js.native
-  def focus(): Unit = js.native
+  def focus(): Unit     = js.native
 
-  def getOption(name: String): js.Any = js.native
+  def getOption(name: String): js.Any              = js.native
   def setOption(name: String, value: js.Any): Unit = js.native
 
   def getLine(line: Int): String = js.native
-  def lineCount: Int = js.native
-  def firstLine: Int = js.native
-  def lastLine: Int = js.native
-  def lineSeparator: String = js.native
+  def lineCount: Int             = js.native
+  def firstLine: Int             = js.native
+  def lastLine: Int              = js.native
+  def lineSeparator: String      = js.native
 
-  def eachLine(f: LineHandle => Unit): Unit = js.native
+  def eachLine(f: LineHandle => Unit): Unit                       = js.native
   def eachLine(start: Int, end: Int, f: LineHandle => Unit): Unit = js.native
 
-  def markClean(): Unit = js.native
+  def markClean(): Unit                                             = js.native
   def changeGeneration(closeEvent: js.UndefOr[Boolean] = null): Int = js.native
-  def isClean(generation: js.UndefOr[Int] = null): Boolean = js.native
+  def isClean(generation: js.UndefOr[Int] = null): Boolean          = js.native
 
   def getValue(separator: js.UndefOr[String] = null): String = js.native
-  def setValue(content: String): Unit = js.native
+  def setValue(content: String): Unit                        = js.native
 
   def setSize(width: Width, height: Height): Unit = js.native
 
@@ -85,6 +83,6 @@ trait CodeMirror extends js.Object {
 @js.native
 trait TACodeMirror extends CodeMirror {
   def getTextArea(): TextArea = js.native
-  def save(): Unit = js.native
-  def toTextArea(): Unit = js.native
+  def save(): Unit            = js.native
+  def toTextArea(): Unit      = js.native
 }

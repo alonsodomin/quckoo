@@ -34,18 +34,18 @@ import scala.reflect.ClassTag
 object ExecutionLifecycle {
   import TaskExecution._
 
-  final val DefaultEnqueueTimeout = 10 seconds
+  final val DefaultEnqueueTimeout     = 10 seconds
   final val DefaultMaxEnqueueAttempts = 3
 
   final val PersistenceIdPrefix = "Execution-"
 
   sealed trait Command
   final case class Awake(task: Task, queue: ActorSelection) extends Command
-  case object Start extends Command
-  final case class Finish(fault: Option[QuckooError]) extends Command
-  final case class Cancel(reason: Reason) extends Command
-  case object TimeOut extends Command
-  case object Get extends Command
+  case object Start                                         extends Command
+  final case class Finish(fault: Option[QuckooError])       extends Command
+  final case class Cancel(reason: Reason)                   extends Command
+  case object TimeOut                                       extends Command
+  case object Get                                           extends Command
 
   sealed trait Phase extends PersistentFSM.FSMState
   case object Sleeping extends Phase {
@@ -62,13 +62,12 @@ object ExecutionLifecycle {
   }
 
   sealed trait ExecutionEvent
-  final case class Awaken(task: Task, planId: PlanId, queue: ActorSelection)
-      extends ExecutionEvent
-  final case class Cancelled(reason: Reason) extends ExecutionEvent
-  final case class Triggered(task: Task) extends ExecutionEvent
-  case object Started extends ExecutionEvent
-  final case class Completed(fault: Option[QuckooError]) extends ExecutionEvent
-  case object TimedOut extends ExecutionEvent
+  final case class Awaken(task: Task, planId: PlanId, queue: ActorSelection) extends ExecutionEvent
+  final case class Cancelled(reason: Reason)                                 extends ExecutionEvent
+  final case class Triggered(task: Task)                                     extends ExecutionEvent
+  case object Started                                                        extends ExecutionEvent
+  final case class Completed(fault: Option[QuckooError])                     extends ExecutionEvent
+  case object TimedOut                                                       extends ExecutionEvent
 
   final case class Result(outcome: Outcome)
 
@@ -88,11 +87,7 @@ object ExecutionLifecycle {
             enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
             maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
             executionTimeout: Option[FiniteDuration] = None): Props =
-    Props(
-      new ExecutionLifecycle(planId,
-                             enqueueTimeout,
-                             maxEnqueueAttempts,
-                             executionTimeout))
+    Props(new ExecutionLifecycle(planId, enqueueTimeout, maxEnqueueAttempts, executionTimeout))
 
 }
 
@@ -101,12 +96,15 @@ class ExecutionLifecycle(
     enqueueTimeout: FiniteDuration,
     maxEnqueueAttempts: Int,
     executionTimeout: Option[FiniteDuration]
-) extends PersistentFSM[ExecutionLifecycle.Phase,
-                          ExecutionLifecycle.ExecutionState,
-                          ExecutionLifecycle.ExecutionEvent]
-    with LoggingPersistentFSM[ExecutionLifecycle.Phase,
-                              ExecutionLifecycle.ExecutionState,
-                              ExecutionLifecycle.ExecutionEvent] {
+) extends PersistentFSM[
+      ExecutionLifecycle.Phase,
+      ExecutionLifecycle.ExecutionState,
+      ExecutionLifecycle.ExecutionEvent
+    ] with LoggingPersistentFSM[
+      ExecutionLifecycle.Phase,
+      ExecutionLifecycle.ExecutionState,
+      ExecutionLifecycle.ExecutionEvent
+    ] {
 
   import ExecutionLifecycle._
   import TaskExecution._
@@ -129,8 +127,7 @@ class ExecutionLifecycle(
   }
 
   when(Enqueuing) {
-    case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _))
-        if taskId == task.id =>
+    case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
       log.debug("Queue has accepted task '{}'.", taskId)
       goto(Waiting) applying Triggered(task)
 
@@ -144,9 +141,7 @@ class ExecutionLifecycle(
         queue ! TaskQueue.Enqueue(task)
         stay forMax enqueueTimeout
       } else {
-        log.debug("Task '{}' failed to be enqueued after {} attempts.",
-                  task.id,
-                  enqueueAttempts)
+        log.debug("Task '{}' failed to be enqueued after {} attempts.", task.id, enqueueAttempts)
         stop applying Cancelled(Reason.FailedToEnqueue)
       }
   }
@@ -158,16 +153,17 @@ class ExecutionLifecycle(
       executionTimeout.map(duration => st forMax duration).getOrElse(st)
 
     case Event(Cancel(reason), data) =>
-      log.debug("Cancelling execution of task '{}' upon request. Reason: {}",
-                data.task.get.id,
-                reason)
+      log.debug(
+        "Cancelling execution of task '{}' upon request. Reason: {}",
+        data.task.get.id,
+        reason
+      )
       stop applying Cancelled(reason)
 
     case Event(Get, ExecutionState(_, Some(task), _, outcome)) =>
       stay replying TaskExecution(planId, task, Status.Enqueued, outcome)
 
-    case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _))
-        if taskId == task.id =>
+    case Event(EnqueueAck(taskId), ExecutionState(_, Some(task), _, _)) if taskId == task.id =>
       // May happen after recovery
       stay
   }
@@ -188,8 +184,7 @@ class ExecutionLifecycle(
       stop applying TimedOut
 
     case Event(StateTimeout, ExecutionState(_, Some(task), Some(queue), _)) =>
-      log.debug("Execution for task '{}' has timed out, notifying queue.",
-                task.id)
+      log.debug("Execution for task '{}' has timed out, notifying queue.", task.id)
       queue ! TaskQueue.TimeOut(task.id)
       stay
   }
@@ -204,14 +199,14 @@ class ExecutionLifecycle(
   override def domainEventClassTag: ClassTag[ExecutionEvent] =
     ClassTag(classOf[ExecutionEvent])
 
-  override def applyEvent(event: ExecutionEvent,
-                          previous: ExecutionState): ExecutionState =
+  override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState =
     event match {
       case Awaken(task, `planId`, queue) =>
         Tracer.withNewContext(s"task-${task.id}") {
           log.debug(
             "Execution lifecycle for task '{}' is allocating a slot at the local queue.",
-            task.id)
+            task.id
+          )
           queue ! TaskQueue.Enqueue(task)
         }
         previous.copy(task = Some(task), queue = Some(queue))

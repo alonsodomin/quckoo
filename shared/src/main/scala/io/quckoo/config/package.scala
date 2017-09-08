@@ -21,12 +21,27 @@ import java.nio.file.Paths
 
 import pureconfig._
 
+import eu.timepit.refined._
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.numeric._
+import eu.timepit.refined.string._
+
 import scala.util.Try
 
 /**
   * Created by alonsodomin on 04/11/2016.
   */
 package object config {
+
+  final val HostAndPortRegex = """(.+?):(\d+)""".r
+
+  type PortNumber = Int Refined Positive
+  type IPv4 =
+    String Refined MatchesRegex[
+      W.`"""(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\\.)?)+"""`.T
+    ]
+
+  type HostAndPort = String Refined MatchesRegex[W.`"""(.+?):(\\d+)"""`.T]
 
   implicit def hint[A]: ProductHint[A] =
     ProductHint(ConfigFieldMapping(CamelCase, KebabCase))

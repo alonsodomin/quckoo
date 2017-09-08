@@ -26,9 +26,9 @@ import io.quckoo.QuckooError
 object TaskExecutor {
 
   case object Run
-  sealed trait Response extends Product with Serializable
+  sealed trait Response                       extends Product with Serializable
   final case class Failed(error: QuckooError) extends Response
-  final case class Completed(result: Any) extends Response
+  final case class Completed(result: Any)     extends Response
 
 }
 

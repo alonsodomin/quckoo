@@ -31,32 +31,27 @@ object TopicConsumer {
 object LocalTopicConsumer {
 
   def props[A](implicit topicTag: TopicTag[A]): Props =
-    Props(
-      new LocalTopicConsumer(topicTag.name,
-                             Seq(topicTag.eventType.runtimeClass)))
+    Props(new LocalTopicConsumer(topicTag.name, Seq(topicTag.eventType.runtimeClass)))
 
 }
 
 class LocalTopicConsumer private (topicName: String, classes: Seq[Class[_]])
-    extends Actor
-    with ActorLogging {
+    extends Actor with ActorLogging {
   import TopicConsumer._
 
   log.debug("Preparing to consume topic '{}'.", topicName)
 
-  override def preStart(): Unit = {
+  override def preStart(): Unit =
     classes.foreach { clazz =>
       context.system.eventStream.subscribe(self, clazz)
     }
-  }
 
   override def postStop(): Unit =
     context.system.eventStream.unsubscribe(self)
 
   override def receive: Receive = {
     case Consume =>
-      log.debug("Starting to publish events from topic '{}' into the stream.",
-                topicName)
+      log.debug("Starting to publish events from topic '{}' into the stream.", topicName)
       context.become(sendTo(sender()))
   }
 
@@ -68,16 +63,12 @@ class LocalTopicConsumer private (topicName: String, classes: Seq[Class[_]])
 
 object PubSubTopicConsumer {
 
-  def props[A](implicit topicTag: TopicTag[A]): Props = {
+  def props[A](implicit topicTag: TopicTag[A]): Props =
     Props(new PubSubTopicConsumer(topicTag.name))
-  }
 
 }
 
-class PubSubTopicConsumer private (topic: String)
-    extends Actor
-    with ActorLogging
-    with Stash {
+class PubSubTopicConsumer private (topic: String) extends Actor with ActorLogging with Stash {
   import DistributedPubSubMediator._
   import TopicConsumer._
 
@@ -92,8 +83,7 @@ class PubSubTopicConsumer private (topic: String)
 
   override def receive: Receive = initializing()
 
-  private def initializing(subscribed: Boolean = false,
-                           target: Option[ActorRef] = None): Receive = {
+  private def initializing(subscribed: Boolean = false, target: Option[ActorRef] = None): Receive = {
     case SubscribeAck(Subscribe(`topic`, _, `self`)) =>
       val nextBehaviour = target
         .map(switchToRunning)
@@ -114,8 +104,7 @@ class PubSubTopicConsumer private (topic: String)
   }
 
   private[this] def switchToRunning(targetRef: ActorRef): Receive = {
-    log.debug("Starting to publish events from topic '{}' into the stream.",
-              topic)
+    log.debug("Starting to publish events from topic '{}' into the stream.", topic)
     unstashAll()
     running(targetRef)
   }

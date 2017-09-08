@@ -32,8 +32,7 @@ import slogging.LazyLogging
   * Created by alonsodomin on 02/04/2016.
   */
 private[dom] class EventSourceSubscriber(topicName: String)
-    extends (Subscriber.Sync[HttpServerSentEvent] => Cancelable)
-    with LazyLogging {
+    extends (Subscriber.Sync[HttpServerSentEvent] => Cancelable) with LazyLogging {
 
   val topicURL: String = topicURI(topicName)
 
@@ -41,8 +40,7 @@ private[dom] class EventSourceSubscriber(topicName: String)
 
   val source = new EventSource(topicURL)
 
-  override def apply(
-      subscriber: Subscriber.Sync[HttpServerSentEvent]): Cancelable = {
+  override def apply(subscriber: Subscriber.Sync[HttpServerSentEvent]): Cancelable = {
     val cancelable = RefCountCancelable { () =>
       subscriber.onComplete()
       source.close

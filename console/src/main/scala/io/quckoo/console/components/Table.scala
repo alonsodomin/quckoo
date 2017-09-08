@@ -38,8 +38,8 @@ object Table {
   type HeaderRenderer = PartialFunction[Symbol, VdomNode]
   val DefaultHeaderRenderer: HeaderRenderer = { case x => x.name }
 
-  type RowCallback[Id] = Id => Callback
-  type RowCellRender[Id, Item] = (Id, Item, Symbol) => VdomNode
+  type RowCallback[Id]             = Id => Callback
+  type RowCellRender[Id, Item]     = (Id, Item, Symbol) => VdomNode
   type RowActionsFactory[Id, Item] = (Id, Item) => Seq[RowAction[Id]]
 
   type ItemSeq[Id, Item] = Traversable[(Id, Pot[Item])]
@@ -47,8 +47,7 @@ object Table {
   type Filter[Id, Item] = (Id, Item) => Boolean
   def NoFilter[Id, Item]: Filter[Id, Item] = (_, _) => true
 
-  final case class RowAction[Id](children: NonEmptyList[VdomNode],
-                                 execute: RowCallback[Id])
+  final case class RowAction[Id](children: NonEmptyList[VdomNode], execute: RowCallback[Id])
 
   private[this] final case class RowProps[Id, Item](
       rowId: Id,
@@ -152,7 +151,8 @@ object Table {
                       s"select-item-${props.rowId}",
                       props.selected,
                       props.toggleSelected(props.rowId)
-                    ))
+                    )
+                  )
 
                 checkboxCell :: columns
               } else columns
@@ -188,9 +188,9 @@ object Table {
   class Backend[Id, Item]($ : BackendScope[Props[Id, Item], State[Id]]) {
 
     private[this] def propagateSelection: Callback =
-      $.props.flatMap(p =>
-        $.state.flatMap(s =>
-          p.onSelect.map(_(s.selected)).getOrElse(Callback.empty)))
+      $.props.flatMap(
+        p => $.state.flatMap(s => p.onSelect.map(_(s.selected)).getOrElse(Callback.empty))
+      )
 
     def visibleItems(props: Props[Id, Item]): ItemSeq[Id, Item] =
       props.filter map { f =>
@@ -206,10 +206,9 @@ object Table {
     }
 
     def toggleSelectAll(props: Props[Id, Item]): Callback = {
-      def updateState(state: State[Id]): State[Id] = {
+      def updateState(state: State[Id]): State[Id] =
         if (allSelected(props, state)) state.copy(selected = Set.empty[Id])
         else state.copy(selected = props.items.map(_._1).toSet)
-      }
 
       $.modState(updateState, propagateSelection)
     }
@@ -272,15 +271,17 @@ object Table {
         <.tbody(visibleItems(props).toVdomArray {
           case (id, item) =>
             row[Id, Item].withKey(s"row-$id")(
-              RowProps(id,
-                       props.headers,
-                       item,
-                       props.render,
-                       props.onRowClick,
-                       props.onSelect.isDefined,
-                       state.selected.contains(id),
-                       toggleSelectItem(props),
-                       props.actions)
+              RowProps(
+                id,
+                props.headers,
+                item,
+                props.render,
+                props.onRowClick,
+                props.onSelect.isDefined,
+                state.selected.contains(id),
+                toggleSelectItem(props),
+                props.actions
+              )
             )
         })
       )
@@ -295,29 +296,30 @@ object Table {
       .renderBackend[Backend[Id, Item]]
       .build
 
-  def apply[Id, Item](
-      headers: List[Symbol],
-      items: ItemSeq[Id, Item],
-      render: RowCellRender[Id, Item],
-      headerRenderer: HeaderRenderer = DefaultHeaderRenderer,
-      onRowClick: Option[RowCallback[Id]] = None,
-      onSelect: Option[OnSelect[Id]] = None,
-      actions: Option[RowActionsFactory[Id, Item]] = None,
-      filter: Option[Filter[Id, Item]] = None,
-      selected: Set[Id] = Set.empty[Id],
-      style: Set[TableStyle.Value] = Set.empty[TableStyle.Value],
-      key: Option[String] = None) = {
+  def apply[Id, Item](headers: List[Symbol],
+                      items: ItemSeq[Id, Item],
+                      render: RowCellRender[Id, Item],
+                      headerRenderer: HeaderRenderer = DefaultHeaderRenderer,
+                      onRowClick: Option[RowCallback[Id]] = None,
+                      onSelect: Option[OnSelect[Id]] = None,
+                      actions: Option[RowActionsFactory[Id, Item]] = None,
+                      filter: Option[Filter[Id, Item]] = None,
+                      selected: Set[Id] = Set.empty[Id],
+                      style: Set[TableStyle.Value] = Set.empty[TableStyle.Value],
+                      key: Option[String] = None) =
     component[Id, Item](
-      Props(headers,
-            headerRenderer,
-            items,
-            render,
-            onRowClick,
-            onSelect,
-            actions,
-            filter,
-            selected,
-            style))
-  }
+      Props(
+        headers,
+        headerRenderer,
+        items,
+        render,
+        onRowClick,
+        onSelect,
+        actions,
+        filter,
+        selected,
+        style
+      )
+    )
 
 }

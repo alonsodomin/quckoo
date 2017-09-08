@@ -34,9 +34,7 @@ import scala.concurrent.ExecutionContext
   */
 class DashboardHandler(model: ModelRW[ConsoleScope, QuckooState],
                        ops: ConsoleOps)(implicit ec: ExecutionContext)
-    extends ConsoleHandler[QuckooState](model)
-    with AuthHandler[QuckooState]
-    with LazyLogging {
+    extends ConsoleHandler[QuckooState](model) with AuthHandler[QuckooState] with LazyLogging {
 
   override def handle = {
     case GetClusterStatus =>
@@ -69,8 +67,7 @@ class DashboardHandler(model: ModelRW[ConsoleScope, QuckooState],
           Notification.success(s"Worker node joined from: $location")
 
         case WorkerLost(nodeId) =>
-          Notification.warning(
-            s"Worker $nodeId lost communication with the cluster")
+          Notification.warning(s"Worker $nodeId lost communication with the cluster")
 
         case WorkerRemoved(nodeId) =>
           Notification.danger(s"Worker $nodeId has left the cluster")

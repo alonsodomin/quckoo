@@ -27,16 +27,13 @@ import scala.concurrent.ExecutionContext
   */
 object Effects {
 
-  def seq[E <: Effect](effects: NonEmptyList[E])(
-      implicit ec: ExecutionContext): EffectSeq =
+  def seq[E <: Effect](effects: NonEmptyList[E])(implicit ec: ExecutionContext): EffectSeq =
     seq(effects.head, effects.tail: _*)
 
-  def seq(head: Effect, tail: Effect*)(
-      implicit ec: ExecutionContext): EffectSeq =
+  def seq(head: Effect, tail: Effect*)(implicit ec: ExecutionContext): EffectSeq =
     new EffectSeq(head, tail, ec)
 
-  def parallel(head: Effect, tail: Effect*)(
-      implicit ec: ExecutionContext): EffectSet =
+  def parallel(head: Effect, tail: Effect*)(implicit ec: ExecutionContext): EffectSet =
     new EffectSet(head, tail.toSet, ec)
 
 }

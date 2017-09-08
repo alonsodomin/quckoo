@@ -41,7 +41,7 @@ object ExecutionTimeoutInput {
     def onValueUpdate(value: Option[FiniteDuration]): Callback =
       $.props.flatMap(_.onUpdate(value))
 
-    def render(props: Props, state: State) = {
+    def render(props: Props, state: State) =
       <.div(
         <.div(
           ^.`class` := "form-group",
@@ -64,14 +64,12 @@ object ExecutionTimeoutInput {
           )
         ),
         if (state.enabled) {
-          <.div(^.`class` := "col-sm-offset-2",
-                FiniteDurationInput("timeout",
-                                    props.value,
-                                    onValueUpdate,
-                                    props.readOnly))
+          <.div(
+            ^.`class` := "col-sm-offset-2",
+            FiniteDurationInput("timeout", props.value, onValueUpdate, props.readOnly)
+          )
         } else EmptyVdom
       )
-    }
 
   }
 

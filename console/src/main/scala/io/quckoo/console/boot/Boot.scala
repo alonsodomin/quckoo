@@ -28,14 +28,12 @@ import org.scalajs.dom
 
 import slogging.StrictLogging
 
-import scala.scalajs.js.JSApp
-import scala.scalajs.js.annotation.JSExport
 import scalacss.internal.mutable.GlobalRegistry
 
-object Boot extends JSApp with StrictLogging {
+object Boot extends StrictLogging {
   import CssSettings._
 
-  def inlineStyles() = {
+  private[this] def inlineStyles() = {
     GlobalRegistry.register(
       LoginPage.Style,
       Footer.Style,
@@ -55,8 +53,7 @@ object Boot extends JSApp with StrictLogging {
     LoggerConfig.level = LogLevel.DEBUG
   }
 
-  @JSExport
-  override def main(): Unit = {
+  def main(args: Array[String]): Unit = {
     setupUILogger()
 
     GlobalStyles.addToDocument()

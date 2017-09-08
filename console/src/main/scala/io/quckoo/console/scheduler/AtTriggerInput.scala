@@ -42,12 +42,11 @@ object AtTriggerInput {
   class Backend($ : BackendScope[Props, State]) {
 
     def propagateUpdate: Callback = {
-      val value = $.state.map(st =>
-        st.date.flatMap(date => st.time.map(time => (date, time))))
+      val value = $.state.map(st => st.date.flatMap(date => st.time.map(time => (date, time))))
       value.flatMap {
         case Some((date, time)) =>
           val dateTime = LocalDateTime.of(date, time)
-          val trigger = Trigger.At(dateTime.atZone(ZoneId.systemDefault))
+          val trigger  = Trigger.At(dateTime.atZone(ZoneId.systemDefault))
           $.props.flatMap(_.onUpdate(Some(trigger)))
 
         case _ =>
@@ -64,24 +63,25 @@ object AtTriggerInput {
     private[this] val DateInput = Input[LocalDate]
     private[this] val TimeInput = Input[LocalTime]
 
-    def render(props: Props, state: State) = {
+    def render(props: Props, state: State) =
       <.div(
         <.div(
           ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Date"),
           <.div(
             ^.`class` := "col-sm-10",
-            DateInput(state.date, onDateUpdate _, ^.readOnly := props.readOnly))
+            DateInput(state.date, onDateUpdate _, ^.readOnly := props.readOnly)
+          )
         ),
         <.div(
           ^.`class` := "form-group",
           <.label(^.`class` := "col-sm-2 control-label", "Time"),
           <.div(
             ^.`class` := "col-sm-10",
-            TimeInput(state.time, onTimeUpdate _, ^.readOnly := props.readOnly))
+            TimeInput(state.time, onTimeUpdate _, ^.readOnly := props.readOnly)
+          )
         )
       )
-    }
 
   }
 

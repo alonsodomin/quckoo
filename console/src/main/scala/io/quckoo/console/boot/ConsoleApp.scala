@@ -43,8 +43,7 @@ import japgolly.scalajs.react.vdom.Implicits._
 object ConsoleApp {
 
   case class Props(level: LogLevel, proxy: ModelProxy[ConsoleScope])
-  case class State(router: Router[ConsoleRoute],
-                   processors: List[ActionProcessor[ConsoleScope]])
+  case class State(router: Router[ConsoleRoute], processors: List[ActionProcessor[ConsoleScope]])
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -66,14 +65,13 @@ object ConsoleApp {
       $.state >>= disconnectProcessors
     }
 
-    def render(props: Props, state: State): VdomElement = {
+    def render(props: Props, state: State): VdomElement =
       state.router()
-    }
 
   }
 
   private[this] def initState(props: Props): State = {
-    val logger = DashboardLogger orElse RegistryLogger orElse SchedulerLogger
+    val logger       = DashboardLogger orElse RegistryLogger orElse SchedulerLogger
     val logProcessor = new EventLogProcessor(props.level, logger)
 
     val routerConfig = ConsoleRouter.config(props.proxy, logProcessor.logStream)
@@ -95,10 +93,9 @@ object ConsoleApp {
     .componentWillUnmount(_.backend.dipose)
     .build
 
-  def apply(level: LogLevel) = {
+  def apply(level: LogLevel) =
     ConsoleCircuit.wrap(identity(_)) { proxy =>
       component(Props(level, proxy))
     }
-  }
 
 }

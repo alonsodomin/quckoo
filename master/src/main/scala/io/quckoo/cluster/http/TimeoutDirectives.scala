@@ -31,12 +31,10 @@ trait TimeoutDirectives {
 
   val DefaultTimeout = 2500 millis
 
-  def extractTimeout(default: FiniteDuration): Directive1[FiniteDuration] = {
-    optionalHeaderValueByName(RequestTimeoutHeader).map(_.flatMap {
-      timeoutValue =>
-        Attempt(timeoutValue.toLong).map(_ millis).toOption
+  def extractTimeout(default: FiniteDuration): Directive1[FiniteDuration] =
+    optionalHeaderValueByName(RequestTimeoutHeader).map(_.flatMap { timeoutValue =>
+      Attempt(timeoutValue.toLong).map(_ millis).toOption
     } getOrElse default)
-  }
 
 }
 

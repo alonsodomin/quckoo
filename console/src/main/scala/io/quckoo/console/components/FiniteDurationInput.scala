@@ -36,10 +36,10 @@ object FiniteDurationInput {
 
   val SupportedUnits = Seq(
     MILLISECONDS -> "Milliseconds",
-    SECONDS -> "Seconds",
-    MINUTES -> "Minutes",
-    HOURS -> "Hours",
-    DAYS -> "Days"
+    SECONDS      -> "Seconds",
+    MINUTES      -> "Minutes",
+    HOURS        -> "Hours",
+    DAYS         -> "Days"
   )
 
   case class Props(id: String,
@@ -54,7 +54,7 @@ object FiniteDurationInput {
   }
 
   implicit val propsReuse: Reusability[Props] = Reusability.by(_.value)
-  implicit val stateReuse = Reusability.caseClass[State]
+  implicit val stateReuse                     = Reusability.caseClass[State]
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -86,12 +86,13 @@ object FiniteDurationInput {
     private[this] val LengthValidation =
       ValidatedInput[Long]((greaterThan(0L) or equalTo(0L)).callback)
 
-    private[this] def lengthInput(props: Props, state: State)(
-        onUpdate: Option[Long] => Callback) =
-      _lengthInput(state.length,
-                   onUpdate,
-                   ^.id := s"${props.id}_length",
-                   ^.readOnly := props.readOnly)
+    private[this] def lengthInput(props: Props, state: State)(onUpdate: Option[Long] => Callback) =
+      _lengthInput(
+        state.length,
+        onUpdate,
+        ^.id := s"${props.id}_length",
+        ^.readOnly := props.readOnly
+      )
 
     def render(props: Props, state: State) = {
       val id = props.id
@@ -99,8 +100,10 @@ object FiniteDurationInput {
         ^.`class` := "container-fluid",
         <.div(
           ^.`class` := "row",
-          <.div(^.`class` := "col-sm-4",
-                LengthValidation(onLengthUpdate)(lengthInput(props, state))),
+          <.div(
+            ^.`class` := "col-sm-4",
+            LengthValidation(onLengthUpdate)(lengthInput(props, state))
+          ),
           <.div(
             ^.`class` := "col-sm-6",
             <.select(
@@ -110,14 +113,10 @@ object FiniteDurationInput {
               ^.disabled := props.readOnly,
               state.unit.map(u => ^.value := u.toString).whenDefined,
               ^.onChange ==> onUnitUpdate,
-              <.option(^.key := s"${id}_none",
-                       ^.value := "",
-                       "Select a time unit..."),
+              <.option(^.key := s"${id}_none", ^.value := "", "Select a time unit..."),
               SupportedUnits.toVdomArray {
                 case (u, text) =>
-                  <.option(^.key := s"${id}_${u.name()}",
-                           ^.value := u.name(),
-                           text)
+                  <.option(^.key := s"${id}_${u.name()}", ^.value := u.name(), text)
               }
             )
           )

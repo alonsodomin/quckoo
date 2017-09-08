@@ -11,13 +11,13 @@ inThisBuild(
   Seq(
     scalaVersion := "2.12.3",
     parallelExecution := false,
-    scalafmtVersion := "1.2.0",
+    scalafmtVersion := "1.1.0",
     scalafmtOnCompile := true
-  ))
+  )
+)
 
 lazy val commonSettings = Seq(
-  licenses += ("Apache-2.0", url(
-    "https://www.apache.org/licenses/LICENSE-2.0.txt")),
+  licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.txt")),
   organization := "io.quckoo",
   organizationName := "A. Alonso Dominguez",
   startYear := Some(2015),
@@ -25,7 +25,8 @@ lazy val commonSettings = Seq(
     ScmInfo(
       url("https://www.github.com/alonsodomin/quckoo"),
       "scm:git:git@github.com:alonsodomin/quckoo.git"
-    )),
+    )
+  ),
   scalacOptions ++= Seq(
     "-encoding",
     "UTF-8",
@@ -61,8 +62,7 @@ lazy val commonJsSettings = Seq(
   scalaJSStage in Test := FastOptStage,
   jsEnv in Test := PhantomJSEnv().value,
   // batch mode decreases the amount of memory needed to compile scala.js code
-  scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(
-    botBuild.value)
+  scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(botBuild.value)
 )
 
 lazy val scoverageSettings = Seq(
@@ -92,8 +92,8 @@ lazy val publishSettings = Seq(
     new RuleTransformer(new RewriteRule {
       override def transform(node: xml.Node): Seq[xml.Node] = node match {
         case e: xml.Elem
-            if e.label == "dependency" && e.child.exists(child =>
-              child.label == "groupId" && child.text == "org.scoverage") =>
+            if e.label == "dependency" && e.child
+              .exists(child => child.label == "groupId" && child.text == "org.scoverage") =>
           Nil
         case _ => Seq(node)
       }
@@ -112,10 +112,9 @@ lazy val publishSettings = Seq(
 lazy val releaseSettings = {
   import ReleaseTransformations._
 
-  val sonatypeReleaseAll = ReleaseStep(
-    action = Command.process("sonatypeReleaseAll", _))
+  val sonatypeReleaseAll = ReleaseStep(action = Command.process("sonatypeReleaseAll", _))
   val dockerRelease = ReleaseStep(action = st => {
-    val extracted = Project.extract(st)
+    val extracted              = Project.extract(st)
     val projectRef: ProjectRef = extracted.get(thisProjectRef)
     extracted.runAggregated(publish in Docker in projectRef, st)
     st
@@ -173,8 +172,7 @@ lazy val quckoo = (project in file("."))
 // Core ==================================================
 
 lazy val core =
-  (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file(
-    "core"))
+  (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("core"))
     .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
     .settings(
       name := "core",
@@ -193,14 +191,13 @@ lazy val core =
     .jvmSettings(Dependencies.coreJVM)
     .dependsOn(util, testSupport % Test)
 
-lazy val coreJS = core.js
+lazy val coreJS  = core.js
 lazy val coreJVM = core.jvm
 
 // API ==================================================
 
 lazy val api =
-  (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file(
-    "api"))
+  (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("api"))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(commonSettings)
     .settings(scoverageSettings)
@@ -214,7 +211,7 @@ lazy val api =
     )
     .dependsOn(core, testSupport % Test)
 
-lazy val apiJS = api.js
+lazy val apiJS  = api.js
 lazy val apiJVM = api.jvm
 
 // Client ==================================================
@@ -231,12 +228,11 @@ lazy val client = (crossProject(JSPlatform, JVMPlatform) in file("client"))
   .jvmSettings(Dependencies.clientJVM)
   .settings(
     name := "client",
-    moduleName := "quckoo-client",
-    requiresDOM := true
+    moduleName := "quckoo-client"
   )
   .dependsOn(api, testSupport % Test)
 
-lazy val clientJS = client.js
+lazy val clientJS  = client.js
 lazy val clientJVM = client.jvm
 
 // Console ==================================================
@@ -250,7 +246,6 @@ lazy val console = (project in file("console"))
   .settings(
     name := "console",
     moduleName := "quckoo-console",
-    requiresDOM := true,
     scalaJSUseMainModuleInitializer in Compile := true
   )
   .dependsOn(clientJS, testSupportJS % Test)
@@ -316,7 +311,7 @@ lazy val util = (crossProject(JSPlatform, JVMPlatform) in file("util"))
   .settings(moduleName := "quckoo-util")
   .dependsOn(testSupport % Test)
 
-lazy val utilJS = util.js
+lazy val utilJS  = util.js
 lazy val utilJVM = util.jvm
 
 // Test Support Utilities ===================================
@@ -335,7 +330,7 @@ lazy val testSupport =
       moduleName := "quckoo-test-support"
     )
 
-lazy val testSupportJS = testSupport.js
+lazy val testSupportJS  = testSupport.js
 lazy val testSupportJVM = testSupport.jvm
 
 // Examples ==================================================

@@ -41,9 +41,9 @@ object WorkerSpec {
 
   final val TestSchedulerPath = "/user/quckoo/scheduler"
 
-  final val FooJobClass = "com.example.FooClass"
+  final val FooJobClass   = "com.example.FooClass"
   final val FooArtifactId = ArtifactId("com.example", "foo", "latest")
-  final val FooArtifact = Artifact(FooArtifactId, List.empty)
+  final val FooArtifact   = Artifact(FooArtifactId, List.empty)
 
   final val TestTaskId = TaskId(UUID.randomUUID())
   final val TestTask =
@@ -51,10 +51,7 @@ object WorkerSpec {
 
 }
 
-class WorkerSpec
-    extends QuckooActorSuite("WorkerSpec")
-    with ImplicitSender
-    with ScalaFutures {
+class WorkerSpec extends QuckooActorSuite("WorkerSpec") with ImplicitSender with ScalaFutures {
 
   import WorkerSpec._
   import system.dispatcher
@@ -68,19 +65,14 @@ class WorkerSpec
     val executorProps = TestActors.forwardActorProps(executorProbe.ref)
 
     val executorProvider = new TaskExecutorProvider {
-      override def executorFor(context: WorkerContext, task: Task)(
-          implicit actorRefFactory: ActorRefFactory) = {
+      override def executorFor(context: WorkerContext,
+                               task: Task)(implicit actorRefFactory: ActorRefFactory) =
         actorRefFactory.actorOf(executorProps)
-      }
     }
 
     val ackTimeout = 1 second
     val worker = TestActorRef(
-      Worker.props(clusterClientProbe.ref,
-                   resolver,
-                   executorProvider,
-                   1 day,
-                   ackTimeout),
+      Worker.props(clusterClientProbe.ref, resolver, executorProvider, 1 day, ackTimeout),
       "sucessful-worker"
     )
 
@@ -105,8 +97,7 @@ class WorkerSpec
     }
 
     "reject subsequent tasks if it's busy" in {
-      val anotherTask = Task(TaskId(UUID.randomUUID()),
-                             JobPackage.jar(FooArtifactId, FooJobClass))
+      val anotherTask = Task(TaskId(UUID.randomUUID()), JobPackage.jar(FooArtifactId, FooJobClass))
       worker ! anotherTask
 
       executorProbe.expectNoMsg(500 millis)
@@ -138,7 +129,7 @@ class WorkerSpec
     }
 
     "ignore an ack from the master for a different task id" in {
-      val taskId = TestTask.id
+      val taskId        = TestTask.id
       val anotherTaskId = TaskId(UUID.randomUUID())
 
       worker ! TaskDoneAck(anotherTaskId)
@@ -167,7 +158,7 @@ class WorkerSpec
       worker ! TestTask
 
       val taskId = TestTask.id
-      val cause = new Exception("TEST EXCEPTION")
+      val cause  = new Exception("TEST EXCEPTION")
 
       val expectedError = ExceptionThrown.from(cause)
       executorProbe.expectMsg(TaskExecutor.Run)

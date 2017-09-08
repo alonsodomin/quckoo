@@ -66,8 +66,7 @@ object RegistryPage {
         Style.content,
         <.h2("Registry"),
         jobFormRef.component(JobForm.Props(jobEdited)),
-        connector(
-          JobSpecList(_, editJob(None), jobSpec => editJob(Some(jobSpec))))
+        connector(JobSpecList(_, editJob(None), jobSpec => editJob(Some(jobSpec))))
       )
     }
 

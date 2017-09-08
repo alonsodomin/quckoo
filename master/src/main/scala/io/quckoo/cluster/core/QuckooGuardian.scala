@@ -45,21 +45,18 @@ object QuckooGuardian {
 
   final val DefaultSessionTimeout: FiniteDuration = 30 minutes
 
-  def props(settings: ClusterSettings,
-            journal: QuckooJournal,
-            boot: Promise[Unit])(implicit clock: Clock): Props =
+  def props(settings: ClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(
+      implicit clock: Clock
+  ): Props =
     Props(new QuckooGuardian(settings, journal, boot))
 
   case object Shutdown
 
 }
 
-class QuckooGuardian(settings: ClusterSettings,
-                     journal: QuckooJournal,
-                     boot: Promise[Unit])(implicit clock: Clock)
-    extends Actor
-    with ActorLogging
-    with Stash {
+class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Promise[Unit])(
+    implicit clock: Clock
+) extends Actor with ActorLogging with Stash {
 
   import QuckooGuardian._
 
@@ -67,24 +64,24 @@ class QuckooGuardian(settings: ClusterSettings,
 
   private[this] val cluster = Cluster(context.system)
 
-  context.actorOf(UserAuthenticator.props(DefaultSessionTimeout),
-                  "authenticator")
+  context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
 
   private[this] val registry =
-    context.watch(
-      context.actorOf(Registry.props(settings, journal), "registry"))
+    context.watch(context.actorOf(Registry.props(settings, journal), "registry"))
 
   private[this] val scheduler = context.watch(
-    context.actorOf(Scheduler.props(
-                      settings,
-                      journal,
-                      registry
-                    ),
-                    "scheduler"))
+    context.actorOf(
+      Scheduler.props(
+        settings,
+        journal,
+        registry
+      ),
+      "scheduler"
+    )
+  )
 
-  private[this] var clients = Set.empty[ActorRef]
-  private[this] var clusterState = QuckooState(
-    masterNodes = masterNodes(cluster))
+  private[this] var clients      = Set.empty[ActorRef]
+  private[this] var clusterState = QuckooState(masterNodes = masterNodes(cluster))
 
   override def preStart(): Unit = {
     cluster.subscribe(
@@ -106,8 +103,7 @@ class QuckooGuardian(settings: ClusterSettings,
 
   def receive: Receive = starting()
 
-  def starting(registryReady: Boolean = false,
-               schedulerReady: Boolean = false): Receive = {
+  def starting(registryReady: Boolean = false, schedulerReady: Boolean = false): Receive = {
     def waitForReady: Receive = {
       case Registry.Ready =>
         if (schedulerReady) {
@@ -147,14 +143,15 @@ class QuckooGuardian(settings: ClusterSettings,
   private[this] def defaultActivity: Receive = {
     case Connect =>
       clients += sender()
-      log.info("Quckoo client connected to master node from address: {}",
-               sender().path.address)
+      log.info("Quckoo client connected to master node from address: {}", sender().path.address)
       sender() ! Connected
 
     case Disconnect =>
       clients -= sender()
-      log.info("Quckoo client disconnected from master node from address: {}",
-               sender().path.address)
+      log.info(
+        "Quckoo client disconnected from master node from address: {}",
+        sender().path.address
+      )
       sender() ! Disconnected
 
     case GetClusterStatus =>
@@ -192,8 +189,7 @@ class QuckooGuardian(settings: ClusterSettings,
       clusterState = clusterState.updated(evt)
 
     case evt: TaskQueueUpdated =>
-      clusterState =
-        clusterState.copy(metrics = clusterState.metrics.updated(evt))
+      clusterState = clusterState.copy(metrics = clusterState.metrics.updated(evt))
   }
 
   private[this] def becomeStarted(): Unit = {

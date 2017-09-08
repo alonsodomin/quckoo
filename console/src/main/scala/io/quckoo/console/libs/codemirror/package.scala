@@ -24,7 +24,7 @@ import scala.scalajs.js.|
 package object codemirror {
 
   type Length = Int | String
-  type Width = Length
+  type Width  = Length
   type Height = Length
 
   type ReadOnly = Boolean | String

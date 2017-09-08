@@ -28,9 +28,8 @@ trait MockServer extends fixture.FlatSpec with BeforeAndAfterAll {
 
   private[this] var proxy: ClientAndProxy = _
 
-  override protected def beforeAll(): Unit = {
+  override protected def beforeAll(): Unit =
     proxy = ClientAndProxy.startClientAndProxy(PortFactory.findFreePort())
-  }
 
   override protected def afterAll(): Unit = proxy.stop()
 

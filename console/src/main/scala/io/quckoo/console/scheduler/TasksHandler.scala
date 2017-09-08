@@ -32,8 +32,7 @@ import scala.concurrent.ExecutionContext
 class TasksHandler(model: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]],
                    ops: ConsoleOps)(implicit ec: ExecutionContext)
     extends ConsoleHandler[PotMap[TaskId, TaskExecution]](model)
-    with AuthHandler[PotMap[TaskId, TaskExecution]]
-    with LazyLogging {
+    with AuthHandler[PotMap[TaskId, TaskExecution]] with LazyLogging {
 
   override protected def handle = {
     case LoadExecutions =>
@@ -47,8 +46,7 @@ class TasksHandler(model: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]],
     case action: RefreshExecutions =>
       withAuth { implicit passport =>
         val refreshEffect = action.effect(ops.loadTasks(action.keys))(identity)
-        action.handleWith(this, refreshEffect)(
-          AsyncAction.mapHandler(action.keys))
+        action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
       }
   }
 

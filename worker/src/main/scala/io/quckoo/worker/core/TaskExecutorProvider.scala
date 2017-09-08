@@ -26,6 +26,7 @@ import io.quckoo.Task
 trait TaskExecutorProvider {
 
   def executorFor(context: WorkerContext, task: Task)(
-      implicit actorRefFactory: ActorRefFactory): ActorRef
+      implicit actorRefFactory: ActorRefFactory
+  ): ActorRef
 
 }

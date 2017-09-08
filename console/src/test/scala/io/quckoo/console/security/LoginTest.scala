@@ -52,20 +52,17 @@ class LoginTest extends FunSuite {
     invars
   }
 
-  def runPlan(plan: dsl.Plan): Report[String] = {
+  def runPlan(plan: dsl.Plan): Report[String] =
+    ReactTestUtils.withRenderedIntoDocument(LoginForm((_, _) => Callback.empty)) { comp =>
+      def observe() = new LoginObserver(comp.htmlDomZipper)
 
-    ReactTestUtils.withRenderedIntoDocument(LoginForm((_, _) => Callback.empty)) {
-      comp =>
-        def observe() = new LoginObserver(comp.htmlDomZipper)
+      val test = plan
+        .addInvariants(invariants)
+        .withInitialState(LoginState("", ""))
+        .test(Observer watch observe())
 
-        val test = plan
-          .addInvariants(invariants)
-          .withInitialState(LoginState("", ""))
-          .test(Observer watch observe())
-
-        test.runU
+      test.runU
     }
-  }
 
   test("should be able to submit user credentials") {
     val plan = Plan.action(

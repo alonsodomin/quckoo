@@ -46,9 +46,7 @@ object JobForm {
   ) {
 
     def this(jobSpec: Option[JobSpec]) =
-      this(jobSpec.map(_.displayName),
-           jobSpec.flatMap(_.description),
-           jobSpec.map(_.jobPackage))
+      this(jobSpec.map(_.displayName), jobSpec.flatMap(_.description), jobSpec.map(_.jobPackage))
 
     def valid: Boolean =
       displayName.nonEmpty && jobPackage.nonEmpty
@@ -66,7 +64,7 @@ object JobForm {
 
     val displayName = State.spec ^|-> EditableJobSpec.displayName
     val description = State.spec ^|-> EditableJobSpec.description
-    val jobPackage = State.spec ^|-> EditableJobSpec.jobPackage
+    val jobPackage  = State.spec ^|-> EditableJobSpec.jobPackage
 
     // Event handlers
 
@@ -89,16 +87,15 @@ object JobForm {
 
     def editJob(jobSpec: Option[JobSpec]): Callback =
       $.setState(
-        State(spec = new EditableJobSpec(jobSpec),
-              visible = true,
-              readOnly = jobSpec.isDefined))
+        State(spec = new EditableJobSpec(jobSpec), visible = true, readOnly = jobSpec.isDefined)
+      )
 
     // Rendering
 
     private[this] val DisplayNameInput = Input[String]
     private[this] val DescriptionInput = Input[String]
 
-    def render(props: Props, state: State) = {
+    def render(props: Props, state: State) =
       <.form(
         ^.name := "jobDetails",
         ^.`class` := "form-horizontal",
@@ -107,33 +104,36 @@ object JobForm {
             Modal.Props(
               header = hide =>
                 <.span(
-                  <.button(^.tpe := "button",
-                           lookAndFeel.close,
-                           ^.onClick --> hide,
-                           Icons.close),
+                  <.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close),
                   <.h4("Register Job")
               ),
               footer = hide =>
                 <.span(
-                  Button(Button.Props(
-                           Some(hide),
-                           style = ContextStyle.default
-                         ),
-                         "Cancel"),
-                  Button(Button.Props(
-                           Some(submitForm() >> hide),
-                           style = ContextStyle.primary,
-                           disabled = state.readOnly || !state.spec.valid
-                         ),
-                         "Save")
+                  Button(
+                    Button.Props(
+                      Some(hide),
+                      style = ContextStyle.default
+                    ),
+                    "Cancel"
+                  ),
+                  Button(
+                    Button.Props(
+                      Some(submitForm() >> hide),
+                      style = ContextStyle.primary,
+                      disabled = state.readOnly || !state.spec.valid
+                    ),
+                    "Save"
+                  )
               ),
               onClosed = onModalClosed(props)
             ),
             <.div(
               lnf.formGroup,
-              <.label(^.`class` := "col-sm-2 control-label",
-                      ^.`for` := "displayName",
-                      "Display Name"),
+              <.label(
+                ^.`class` := "col-sm-2 control-label",
+                ^.`for` := "displayName",
+                "Display Name"
+              ),
               <.div(
                 ^.`class` := "col-sm-10",
                 DisplayNameInput(
@@ -147,9 +147,11 @@ object JobForm {
             ),
             <.div(
               lnf.formGroup,
-              <.label(^.`class` := "col-sm-2 control-label",
-                      ^.`for` := "description",
-                      "Description"),
+              <.label(
+                ^.`class` := "col-sm-2 control-label",
+                ^.`for` := "description",
+                "Description"
+              ),
               <.div(
                 ^.`class` := "col-sm-10",
                 DescriptionInput(
@@ -161,13 +163,10 @@ object JobForm {
                 )
               )
             ),
-            JobPackageSelect(state.spec.jobPackage,
-                             $.setStateL(jobPackage)(_),
-                             state.readOnly)
+            JobPackageSelect(state.spec.jobPackage, $.setStateL(jobPackage)(_), state.readOnly)
           )
         } else EmptyVdom
       )
-    }
 
   }
 

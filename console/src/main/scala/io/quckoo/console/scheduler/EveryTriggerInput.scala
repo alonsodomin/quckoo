@@ -71,23 +71,24 @@ object EveryTriggerInput {
       $.modState(_.copy(delay = value), propagateUpdate)
 
     def onToggleDelay: Callback =
-      $.modState(st =>
-                   st.copy(
-                     delay = if (st.delayEnabled) None else st.delay,
-                     delayEnabled = !st.delayEnabled
-                 ),
-                 propagateUpdate)
+      $.modState(
+        st =>
+          st.copy(
+            delay = if (st.delayEnabled) None else st.delay,
+            delayEnabled = !st.delayEnabled
+        ),
+        propagateUpdate
+      )
 
-    def render(props: Props, state: State) = {
+    def render(props: Props, state: State) =
       <.div(
         <.div(
           lnf.formGroup,
           <.label(^.`class` := "col-sm-2 control-label", "Frequency"),
-          <.div(^.`class` := "col-sm-10",
-                FiniteDurationInput("everyTrigger_freq",
-                                    state.freq,
-                                    onFreqUpdate,
-                                    props.readOnly))
+          <.div(
+            ^.`class` := "col-sm-10",
+            FiniteDurationInput("everyTrigger_freq", state.freq, onFreqUpdate, props.readOnly)
+          )
         ),
         <.div(
           lnf.formGroup,
@@ -110,14 +111,12 @@ object EveryTriggerInput {
           )
         ),
         if (state.delayEnabled) {
-          <.div(^.`class` := "col-sm-offset-2",
-                FiniteDurationInput("everyTrigger_delay",
-                                    state.delay,
-                                    onDelayUpdate,
-                                    props.readOnly))
+          <.div(
+            ^.`class` := "col-sm-offset-2",
+            FiniteDurationInput("everyTrigger_delay", state.delay, onDelayUpdate, props.readOnly)
+          )
         } else EmptyVdom
       )
-    }
 
   }
 

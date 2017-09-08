@@ -69,9 +69,9 @@ object Scheduler {
       replyTo: ActorRef
   )
 
-  def props(settings: ClusterSettings,
-            journal: QuckooJournal,
-            registry: ActorRef)(implicit clock: Clock): Props = {
+  def props(settings: ClusterSettings, journal: QuckooJournal, registry: ActorRef)(
+      implicit clock: Clock
+  ): Props = {
     val queueProps = TaskQueue.props(settings.taskQueue.maxWorkTimeout)
     Props(new Scheduler(journal, registry, queueProps))
   }
@@ -79,10 +79,8 @@ object Scheduler {
 }
 
 class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
-    implicit clock: Clock)
-    extends Actor
-    with ActorLogging
-    with Stash {
+    implicit clock: Clock
+) extends Actor with ActorLogging with Stash {
 
   import Scheduler._
   import SchedulerTagEventAdapter.tags
@@ -100,26 +98,20 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   private[this] val taskQueue = context.actorOf(queueProps, "queue")
   private[this] val shardRegion = ClusterSharding(context.system).start(
     ExecutionDriver.ShardName,
-    entityProps =
-      ExecutionDriver.props(ExecutionDriver.DefaultExecutionLifecycleFactory),
-    settings =
-      ClusterShardingSettings(context.system).withRememberEntities(true),
+    entityProps = ExecutionDriver.props(ExecutionDriver.DefaultExecutionLifecycleFactory),
+    settings = ClusterShardingSettings(context.system).withRememberEntities(true),
     extractEntityId = ExecutionDriver.idExtractor,
     extractShardId = ExecutionDriver.shardResolver
   )
 
-  private[this] var planIds = Set.empty[PlanId]
+  private[this] var planIds    = Set.empty[PlanId]
   private[this] var executions = Map.empty[TaskId, TaskExecution]
 
-  override def preStart(): Unit = {
-    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name,
-                                                   self)
-  }
+  override def preStart(): Unit =
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name, self)
 
-  override def postStop(): Unit = {
-    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name,
-                                                     self)
-  }
+  override def postStop(): Unit =
+    mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name, self)
 
   override def receive: Receive = initializing
 
@@ -145,15 +137,12 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
 
     case cmd @ CreateExecutionDriver(_, config, _) =>
       val planId = PlanId(UUID.randomUUID())
-      val props = factoryProps(config.jobId, planId, cmd)
-      log.debug(
-        "Found enabled job '{}'. Initializing a new execution plan for it.",
-        config.jobId)
+      val props  = factoryProps(config.jobId, planId, cmd)
+      log.debug("Found enabled job '{}'. Initializing a new execution plan for it.", config.jobId)
       context.actorOf(props, s"execution-driver-factory-$planId")
 
     case cancel: CancelExecutionPlan =>
-      log.debug("Starting execution driver termination process for plan '{}'.",
-                cancel.planId)
+      log.debug("Starting execution driver termination process for plan '{}'.", cancel.planId)
       Tracer.withNewContext(s"cancel-${cancel.planId}") {
         val props = terminatorProps(cancel, sender())
         context.actorOf(props, s"execution-driver-terminator-${cancel.planId}")
@@ -191,8 +180,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
       }
 
     case GetTaskExecutions =>
-      Source(executions).runWith(
-        Sink.actorRef(sender(), Status.Success(GetTaskExecutions)))
+      Source(executions).runWith(Sink.actorRef(sender(), Status.Success(GetTaskExecutions)))
 
     case msg: WorkerMessage =>
       Tracer.withNewContext(s"worker-${msg.workerId}") {
@@ -261,16 +249,11 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
     executionPlanEvents
       .concat(executionEvents)
       .runWith(
-        Sink.actorRefWithAck(self,
-                             WarmUp.Start,
-                             WarmUp.Ack,
-                             WarmUp.Completed,
-                             WarmUp.Failed))
+        Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed)
+      )
   }
 
-  private[this] def jobFetcherProps(jobId: JobId,
-                                    replyTo: ActorRef,
-                                    config: ScheduleJob): Props =
+  private[this] def jobFetcherProps(jobId: JobId, replyTo: ActorRef, config: ScheduleJob): Props =
     Props(new JobFetcher(jobId, replyTo, config))
 
   private[this] def factoryProps(jobId: JobId,
@@ -278,18 +261,19 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
                                  createCmd: CreateExecutionDriver): Props =
     Props(new ExecutionDriverFactory(jobId, planId, createCmd, shardRegion))
 
-  private[this] def terminatorProps(cancelCmd: CancelExecutionPlan,
-                                    replyTo: ActorRef): Props =
+  private[this] def terminatorProps(cancelCmd: CancelExecutionPlan, replyTo: ActorRef): Props =
     Props(
-      new ExecutionDriverTerminator(cancelCmd.planId,
-                                    StopExecutionDriver(cancelCmd, replyTo),
-                                    shardRegion))
+      new ExecutionDriverTerminator(
+        cancelCmd.planId,
+        StopExecutionDriver(cancelCmd, replyTo),
+        shardRegion
+      )
+    )
 
 }
 
 private class JobFetcher(jobId: JobId, replyTo: ActorRef, config: ScheduleJob)
-    extends Actor
-    with ActorLogging {
+    extends Actor with ActorLogging {
 
   import Scheduler._
 
@@ -317,11 +301,8 @@ private class JobFetcher(jobId: JobId, replyTo: ActorRef, config: ScheduleJob)
       context stop self
   }
 
-  override def unhandled(message: Any): Unit = {
-    log.warning("Unexpected message {} received when fetching job '{}'.",
-                message,
-                jobId)
-  }
+  override def unhandled(message: Any): Unit =
+    log.warning("Unexpected message {} received when fetching job '{}'.", message, jobId)
 
 }
 
@@ -329,14 +310,12 @@ private class ExecutionDriverFactory(jobId: JobId,
                                      planId: PlanId,
                                      createCmd: Scheduler.CreateExecutionDriver,
                                      shardRegion: ActorRef)
-    extends Actor
-    with ActorLogging {
+    extends Actor with ActorLogging {
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart(): Unit =
-    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name,
-                                                   self)
+    mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Scheduler.name, self)
 
   def receive: Receive = initializing
 
@@ -344,22 +323,13 @@ private class ExecutionDriverFactory(jobId: JobId,
     case DistributedPubSubMediator.SubscribeAck(_) =>
       import createCmd._
 
-      log.debug("Creating execution driver for job '{}' and plan '{}'.",
-                jobId,
-                planId)
-      shardRegion ! ExecutionDriver.Initialize(jobId,
-                                               planId,
-                                               spec,
-                                               cmd.trigger,
-                                               cmd.timeout)
+      log.debug("Creating execution driver for job '{}' and plan '{}'.", jobId, planId)
+      shardRegion ! ExecutionDriver.Initialize(jobId, planId, spec, cmd.trigger, cmd.timeout)
 
     case response @ ExecutionPlanStarted(`jobId`, _, _) =>
-      log.info("Execution plan '{}' for job '{}' has been started.",
-               planId,
-               jobId)
+      log.info("Execution plan '{}' for job '{}' has been started.", planId, jobId)
       createCmd.replyTo ! response
-      mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name,
-                                                       self)
+      mediator ! DistributedPubSubMediator.Unsubscribe(TopicTag.Scheduler.name, self)
       context.become(shuttingDown)
   }
 
@@ -374,8 +344,7 @@ private class ExecutionDriverTerminator(
     planId: PlanId,
     killCmd: Scheduler.StopExecutionDriver,
     shardRegion: ActorRef
-) extends Actor
-    with ActorLogging {
+) extends Actor with ActorLogging {
 
   import DistributedPubSubMediator._
 

@@ -40,18 +40,16 @@ package object net {
     def nodeId: NodeId = member.uniqueAddress.toNodeId
 
     def toQuckooMember: MasterNode = {
-      def memberStatus = {
+      def memberStatus =
         if (member.status == MemberStatus.Up) NodeStatus.Active
         else NodeStatus.Unreachable
-      }
 
       MasterNode(member.nodeId, member.address.toLocation, memberStatus)
     }
 
   }
 
-  implicit class RichUniqueAddress(val uniqueAddress: UniqueAddress)
-      extends AnyVal {
+  implicit class RichUniqueAddress(val uniqueAddress: UniqueAddress) extends AnyVal {
 
     def toNodeId: NodeId = {
       val addressUrl =

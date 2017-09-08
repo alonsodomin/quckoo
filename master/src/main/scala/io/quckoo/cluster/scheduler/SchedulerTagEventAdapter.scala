@@ -50,7 +50,7 @@ object SchedulerTagEventAdapter {
 
   object tags {
     final val ExecutionPlan = "execution-plan"
-    final val Task = "task"
+    final val Task          = "task"
   }
 
 }

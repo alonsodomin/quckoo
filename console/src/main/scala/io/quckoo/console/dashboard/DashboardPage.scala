@@ -49,8 +49,8 @@ object DashboardPage {
 
     def render(props: Props) = {
       val clusterState = props.proxy.connect(_.clusterState)
-      val masterNodes = props.proxy.connect(_.clusterState.masterNodes)
-      val workerNodes = props.proxy.connect(_.clusterState.workerNodes)
+      val masterNodes  = props.proxy.connect(_.clusterState.masterNodes)
+      val workerNodes  = props.proxy.connect(_.clusterState.workerNodes)
 
       <.div(
         ^.`class` := "container",

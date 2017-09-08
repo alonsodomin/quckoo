@@ -34,9 +34,9 @@ object CoproductSelect {
       <.option(^.value := sym.name, sym.name)
   } build
 
-  type OnUpdate[A] = Option[A] => Callback
+  type OnUpdate[A]    = Option[A] => Callback
   type Constructor[A] = (Option[A], OnUpdate[A]) => VdomNode
-  type Selector[A] = PartialFunction[Symbol, Constructor[A]]
+  type Selector[A]    = PartialFunction[Symbol, Constructor[A]]
   type ValueMapper[A] = PartialFunction[A, Symbol]
 
   final case class Props[A](
@@ -62,11 +62,9 @@ object CoproductSelect {
   class Backend[A: Reusability]($ : BackendScope[Props[A], State[A]]) {
 
     private[this] def propagateUpdate: Callback =
-      $.state.flatMap(st =>
-        $.props.flatMap(_.onUpdate(st.selected.flatMap(st.cache.get))))
+      $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.selected.flatMap(st.cache.get))))
 
-    def onSelectionUpdate(props: Props[A])(
-        evt: ReactEventFromInput): Callback = {
+    def onSelectionUpdate(props: Props[A])(evt: ReactEventFromInput): Callback = {
       val selectedSymbol: Option[Symbol] = {
         if (evt.target.value.isEmpty) None
         else Some(Symbol(evt.target.value))
@@ -81,14 +79,13 @@ object CoproductSelect {
 
       $.state.map(_.selected).flatMap {
         case Some(selection) =>
-          $.modState(st => st.copy(cache = updatedCache(selection, st.cache)),
-                     propagateUpdate)
+          $.modState(st => st.copy(cache = updatedCache(selection, st.cache)), propagateUpdate)
 
         case None => propagateUpdate
       }
     }
 
-    def render(props: Props[A], children: PropsChildren, state: State[A]) = {
+    def render(props: Props[A], children: PropsChildren, state: State[A]) =
       <.div(
         <.div(
           lnf.formGroup,
@@ -106,8 +103,7 @@ object CoproductSelect {
               if (props.default.isEmpty) {
                 <.option(^.key := "select-none", "Choose one")
               } else EmptyVdom,
-              props.options.toVdomArray(opt =>
-                ComponentOption.withKey(s"select-$opt")(opt))
+              props.options.toVdomArray(opt => ComponentOption.withKey(s"select-$opt")(opt))
             )
           )
         ),
@@ -116,7 +112,6 @@ object CoproductSelect {
           ctor.map(_(state.cache.get(selection), onItemUpdate))
         } whenDefined
       )
-    }
 
   }
 
@@ -126,7 +121,8 @@ object CoproductSelect {
 }
 
 final class CoproductSelect[A: Reusability] private[components] (
-    mapper: CoproductSelect.ValueMapper[A]) {
+    mapper: CoproductSelect.ValueMapper[A]
+) {
   import CoproductSelect._
 
   private def generateState(props: Props[A]): State[A] = {
@@ -149,8 +145,10 @@ final class CoproductSelect[A: Reusability] private[components] (
     .builder[Props[A]]("CoproductSelect")
     .initialStateFromProps(generateState)
     .renderBackendWithChildren[Backend[A]]
-    .configure(Reusability
-      .shouldComponentUpdate[Props[A], Children.Varargs, State[A], Backend[A]])
+    .configure(
+      Reusability
+        .shouldComponentUpdate[Props[A], Children.Varargs, State[A], Backend[A]]
+    )
     .build
 
   def apply(options: List[Symbol],

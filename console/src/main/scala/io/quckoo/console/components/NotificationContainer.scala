@@ -29,31 +29,37 @@ object NotificationContainer {
   private[this] val component = ScalaComponent
     .builder[Unit]("NotificationContainer")
     .stateless
-    .render($ =>
-      <.div(
-        dataNotify := "container",
-        ^.`class` := "col-xs-11 col-sm-3 alert alert-{0}",
-        ^.role := "alert",
-        <.button(^.`type` := "button",
-                 ^.aria.hidden := true,
-                 ^.`class` := "close",
-                 dataNotify := "dismiss",
-                 "x"),
-        <.span(dataNotify := "icon"),
-        <.span(dataNotify := "title", "{1}"),
-        <.span(dataNotify := "message", "{2}"),
+    .render(
+      $ =>
         <.div(
-          ^.`class` := "progress",
-          dataNotify := "progressbar",
-          <.div(^.`class` := "progress-bar progress-bar-{0}",
-                ^.role := "progressbar",
-                ^.aria.valueNow := "0",
-                ^.aria.valueMin := "0",
-                ^.aria.valueMax := "100",
-                ^.width := "0%")
-        ),
-        <.a(^.href := "{3}", ^.target := "{4}", dataNotify := "url")
-  )) build
+          dataNotify := "container",
+          ^.`class` := "col-xs-11 col-sm-3 alert alert-{0}",
+          ^.role := "alert",
+          <.button(
+            ^.`type` := "button",
+            ^.aria.hidden := true,
+            ^.`class` := "close",
+            dataNotify := "dismiss",
+            "x"
+          ),
+          <.span(dataNotify := "icon"),
+          <.span(dataNotify := "title", "{1}"),
+          <.span(dataNotify := "message", "{2}"),
+          <.div(
+            ^.`class` := "progress",
+            dataNotify := "progressbar",
+            <.div(
+              ^.`class` := "progress-bar progress-bar-{0}",
+              ^.role := "progressbar",
+              ^.aria.valueNow := "0",
+              ^.aria.valueMin := "0",
+              ^.aria.valueMax := "100",
+              ^.width := "0%"
+            )
+          ),
+          <.a(^.href := "{3}", ^.target := "{4}", dataNotify := "url")
+    )
+  ) build
 
   def apply() = component()
 

@@ -17,12 +17,7 @@
 package io.quckoo.reflect
 
 import java.net.{URL, URLClassLoader}
-import java.security.{
-  AllPermission,
-  CodeSource,
-  Permission,
-  PermissionCollection
-}
+import java.security.{AllPermission, CodeSource, Permission, PermissionCollection}
 import java.util
 
 import scala.collection.JavaConverters._

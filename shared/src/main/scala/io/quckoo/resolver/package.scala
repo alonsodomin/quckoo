@@ -25,7 +25,7 @@ import cats.free.Free
   */
 package object resolver {
   type ResolverIO[A] = Free[ResolverOp, A]
-  type Resolved[A] = ValidatedNel[DependencyError, A]
+  type Resolved[A]   = ValidatedNel[DependencyError, A]
 
   implicit class ResolverIOOps[A](val self: ResolverIO[A]) extends AnyVal {
     def to[F[_]: Monad](implicit interpreter: ResolverInterpreter[F]): F[A] =

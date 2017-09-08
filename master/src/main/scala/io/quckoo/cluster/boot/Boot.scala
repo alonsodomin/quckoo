@@ -59,14 +59,12 @@ object Boot extends LazyLogging {
       options.copy(seed = true)
     } text "Flag that indicates that this node will be a seed node. Defaults to true if the list of seed nodes is empty."
 
-    opt[Seq[String]]("nodes") valueName "<host:port>,<host:port>" action {
-      (nodes, options) =>
-        options.copy(seedNodes = nodes)
+    opt[Seq[String]]("nodes") valueName "<host:port>,<host:port>" action { (nodes, options) =>
+      options.copy(seedNodes = nodes)
     } text "Comma separated list of Quckoo cluster seed nodes"
 
-    opt[Seq[String]]("cs") valueName "<host:port>,<host:port>" action {
-      (seedNodes, options) =>
-        options.copy(cassandraSeedNodes = seedNodes)
+    opt[Seq[String]]("cs") valueName "<host:port>,<host:port>" action { (seedNodes, options) =>
+      options.copy(cassandraSeedNodes = seedNodes)
     } text "Comma separated list of Cassandra seed nodes (same for Journal and Snapshots)"
     help("help") text "prints this usage text"
   }
@@ -96,8 +94,7 @@ object Boot extends LazyLogging {
     }
   }
 
-  def startCluster(settings: ClusterSettings)(
-      implicit actorSystem: ActorSystem): Unit = {
+  def startCluster(settings: ClusterSettings)(implicit actorSystem: ActorSystem): Unit = {
     import actorSystem.dispatcher
 
     QuckooFacade

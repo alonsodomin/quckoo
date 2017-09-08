@@ -32,7 +32,7 @@ import pureconfig._
   */
 object IvyConfigSpec {
   final val TestRepositoryName = "foo-repo"
-  final val TestRepositoryUrl = "http://foo.example.com"
+  final val TestRepositoryUrl  = "http://foo.example.com"
 
   final val TestConfig: String =
     s"""

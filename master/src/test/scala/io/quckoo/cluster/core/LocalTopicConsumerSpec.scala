@@ -29,15 +29,14 @@ import io.quckoo.testkit.QuckooActorSuite
 /**
   * Created by alonsodomin on 01/03/2017.
   */
-class LocalTopicConsumerSpec
-    extends QuckooActorSuite("LocalTopicConsumerSpec") {
+class LocalTopicConsumerSpec extends QuckooActorSuite("LocalTopicConsumerSpec") {
 
   "LocalTopicConsumer" should {
     "emit events to its sender" in {
       val topicTag = TopicTag.Master
 
       val receiverProbe = TestProbe("receiver")
-      val consumer = TestActorRef(LocalTopicConsumer.props(topicTag))
+      val consumer      = TestActorRef(LocalTopicConsumer.props(topicTag))
 
       val expectedMsg = MasterUnreachable(NodeId(UUID.randomUUID()))
 

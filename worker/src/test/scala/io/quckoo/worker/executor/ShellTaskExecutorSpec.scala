@@ -27,22 +27,19 @@ import io.quckoo.worker.core.{TaskExecutor, WorkerContext}
 import org.scalamock.scalatest.MockFactory
 
 class ShellTaskExecutorSpec
-    extends QuckooActorSuite("ShellTaskExecutorSpec")
-    with ImplicitSender
-    with MockFactory {
+    extends QuckooActorSuite("ShellTaskExecutorSpec") with ImplicitSender with MockFactory {
 
   "ShellTaskExecutor" should {
     "run shell scripts and capture its standard output" in {
-      val expectedOut = "Hello World!"
-      val script = s"""echo "$expectedOut""""
+      val expectedOut   = "Hello World!"
+      val script        = s"""echo "$expectedOut""""
       val workerContext = mock[WorkerContext]
 
-      val taskId = TaskId(UUID.randomUUID())
+      val taskId        = TaskId(UUID.randomUUID())
       val scriptPackage = ShellScriptPackage(script)
 
-      val executor = TestActorRef(
-        ShellTaskExecutor.props(workerContext, taskId, scriptPackage),
-        "hello-bash")
+      val executor =
+        TestActorRef(ShellTaskExecutor.props(workerContext, taskId, scriptPackage), "hello-bash")
 
       executor ! TaskExecutor.Run
 
@@ -52,18 +49,17 @@ class ShellTaskExecutorSpec
 
     "reply with a failure if script exit code is not 0" in {
       val expectedExitCode = 123
-      val script = s"""
+      val script           = s"""
       | #!/bin/bash
       | exit $expectedExitCode
       """.stripMargin
 
       val workerContext = mock[WorkerContext]
-      val taskId = TaskId(UUID.randomUUID())
+      val taskId        = TaskId(UUID.randomUUID())
       val scriptPackage = ShellScriptPackage(script)
 
-      val executor = TestActorRef(
-        ShellTaskExecutor.props(workerContext, taskId, scriptPackage),
-        "bash-exitcode")
+      val executor =
+        TestActorRef(ShellTaskExecutor.props(workerContext, taskId, scriptPackage), "bash-exitcode")
 
       executor ! TaskExecutor.Run
 

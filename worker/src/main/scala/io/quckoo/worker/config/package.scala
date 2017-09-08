@@ -18,6 +18,10 @@ package io.quckoo.worker
 
 import akka.actor.{AddressFromURIString, RootActorPath}
 
+import io.quckoo.config._
+
+import eu.timepit.refined.auto._
+
 import pureconfig._
 
 import scala.util.{Failure, Success}
@@ -28,24 +32,21 @@ import scala.util.{Failure, Success}
 package object config {
   final val DefaultPort = 5001
 
-  final val AkkaRemoteNettyHost = "akka.remote.netty.tcp.hostname"
-  final val AkkaRemoteNettyPort = "akka.remote.netty.tcp.port"
+  final val AkkaRemoteNettyHost     = "akka.remote.netty.tcp.hostname"
+  final val AkkaRemoteNettyPort     = "akka.remote.netty.tcp.port"
   final val AkkaRemoteNettyBindHost = "akka.remote.netty.tcp.bind-hostname"
   final val AkkaRemoteNettyBindPort = "akka.remote.netty.tcp.bind-port"
 
-  final val DefaultTcpInterface = "127.0.0.1"
-  final val DefaultTcpPort = 5001
+  final val DefaultTcpInterface: IPv4  = "127.0.0.1"
+  final val DefaultTcpPort: PortNumber = 5001
 
   final val ExecutorDispatcher = "quckoo.worker.dispatcher"
   final val ResolverDispatcher = "quckoo.resolver.dispatcher"
 
-  final val HostAndPort = """(.+?):(\d+)""".r
-
   implicit val contactPointConfig: ConfigReader[ContactPoint] =
     ConfigReader.fromNonEmptyStringTry {
       case AddressFromURIString(addr) =>
-        Success(
-          new ContactPoint(RootActorPath(addr) / "system" / "receptionist"))
+        Success(new ContactPoint(RootActorPath(addr) / "system" / "receptionist"))
       case str =>
         Failure(new IllegalArgumentException(s"Invalid contact point: $str"))
     }

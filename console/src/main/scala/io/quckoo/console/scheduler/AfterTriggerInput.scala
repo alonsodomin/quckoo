@@ -45,11 +45,10 @@ object AfterTriggerInput {
       <.div(
         ^.`class` := "form-group",
         <.label(^.`class` := "col-sm-2 control-label", "Delay"),
-        <.div(^.`class` := "col-sm-10",
-              FiniteDurationInput("afterTrigger",
-                                  props.value.map(_.delay),
-                                  onUpdate,
-                                  props.readOnly))
+        <.div(
+          ^.`class` := "col-sm-10",
+          FiniteDurationInput("afterTrigger", props.value.map(_.delay), onUpdate, props.readOnly)
+        )
       )
 
   }

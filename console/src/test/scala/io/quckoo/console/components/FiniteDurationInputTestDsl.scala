@@ -57,12 +57,12 @@ object FiniteDurationInputTestDsl {
     dsl.test("Offers valid units")(
       _.obs.units.containsSlice(
         Vector(MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS)
-      ))
+      )
+    )
 
   def setLength(length: Long) =
     dsl
-      .action(s"Set length: $length")(
-        SimEvent.Change(length.toString) simulate _.obs.lengthInput)
+      .action(s"Set length: $length")(SimEvent.Change(length.toString) simulate _.obs.lengthInput)
       .updateState(State.length.set(Some(length)))
 
   def clearLength() =
@@ -72,8 +72,7 @@ object FiniteDurationInputTestDsl {
 
   def chooseUnit(unit: TimeUnit) =
     dsl
-      .action(s"Choose unit: $unit")(
-        SimEvent.Change(unit.name()) simulate _.obs.unitSelect)
+      .action(s"Choose unit: $unit")(SimEvent.Change(unit.name()) simulate _.obs.unitSelect)
       .updateState(State.unit.set(Some(unit)))
 
   def validationMsg =
