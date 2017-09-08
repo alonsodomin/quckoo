@@ -16,6 +16,10 @@
 
 package io.quckoo.cluster.config
 
+import io.quckoo.config._
+
+import eu.timepit.refined.auto._
+
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
@@ -32,8 +36,8 @@ object ClusterSettingsSpec {
   }
 
   object http {
-    final val DefaultInterface = "0.0.0.0"
-    final val DefaultPort      = 8095
+    final val DefaultInterface: IPv4  = "0.0.0.0"
+    final val DefaultPort: PortNumber = 8095
   }
 
 }
