@@ -27,6 +27,8 @@ package object client {
 
   type ClientIO[A] = StateT[IO, Session, A]
   object ClientIO {
+
+    @inline
     def apply[A](f: Session => IO[A]): ClientIO[A] =
       StateT.inspectF(f)
 
@@ -35,14 +37,14 @@ package object client {
       case _ => IO.raiseError(NotAuthorized)
     }
 
+    @inline
     def session(f: Session => IO[Session]): ClientIO[Unit] =
       StateT.modifyF(f)
 
     def suspend[A](io: => ClientIO[A]): ClientIO[A] = StateT { session =>
       IO.suspend(io.run(session))
     }
-  }
 
-  type ClientStreamIO[A] = StateT[Observable, Session, A]
+  }
 
 }

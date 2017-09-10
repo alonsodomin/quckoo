@@ -17,9 +17,11 @@
 package io.quckoo.console
 
 import cats.data.Kleisli
+import cats.implicits._
 
 import diode.{ActionType, Effect}
 
+import io.quckoo.auth.PassportExpired
 import io.quckoo.client.{ClientIO, QuckooClient2}
 
 import scala.concurrent.ExecutionContext
@@ -31,6 +33,20 @@ import scala.language.implicitConversions
 package object core {
 
   type ConsoleIO[A] = Kleisli[ClientIO, QuckooClient2, A]
+  object ConsoleIO {
+
+    @inline
+    def apply[A](f: QuckooClient2 => ClientIO[A]): ConsoleIO[A] = Kleisli(f)
+
+    def refreshingToken[A](action: ConsoleIO[A]): ConsoleIO[A] = Kleisli { client =>
+      val handleExpired = ClientIO.suspend(client.refreshToken() >> action.run(client))
+
+      action.run(client).recoverWith {
+        case PassportExpired(_) => handleExpired
+      }
+    }
+
+  }
 
   implicit def action2Effect[A: ActionType](action: => A)(implicit ec: ExecutionContext): Effect =
     Effect.action[A](action)
