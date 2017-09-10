@@ -28,6 +28,8 @@ trait Registry[F[_]] {
 
   def fetchJob(jobId: JobId): F[Option[JobSpec]]
 
+  def allJobs: F[Seq[(JobId, JobSpec)]]
+
   def registerJob(jobSpec: JobSpec): F[ValidatedNel[QuckooError, JobId]]
 
 }

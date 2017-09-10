@@ -17,13 +17,15 @@
 package io.quckoo.client.http.dom
 
 import cats.Eval
+import cats.data.ValidatedNel
 import cats.effect.IO
 import cats.implicits._
 
 import io.circe.parser.decode
 import io.circe.generic.auto._
+import io.circe.syntax._
 
-import io.quckoo.{JobId, JobNotFound, JobSpec}
+import io.quckoo.{JobId, JobNotFound, JobSpec, QuckooError}
 import io.quckoo.api2.Registry
 import io.quckoo.client.ClientIO
 import io.quckoo.client.http._
@@ -64,6 +66,17 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
       }
     }
 
+  override def allJobs: ClientIO[Seq[(JobId, JobSpec)]] = ClientIO.auth { session =>
+    val ajax = IO.fromFuture(Eval.later {
+      Ajax.get(JobsURI, headers = Map(bearerToken(session.passport)))
+    })
+
+    ajax >>= handleResponse {
+      case res if res.status == 200 =>
+        IO.async[Seq[(JobId, JobSpec)]](cb => cb(decode[Seq[(JobId, JobSpec)]](res.responseText)))
+    }
+  }
+
   override def fetchJob(jobId: JobId): ClientIO[Option[JobSpec]] =
     ClientIO.auth { session =>
       val uri = s"$JobsURI/$jobId"
@@ -79,5 +92,21 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
       }
     }
 
-  override def registerJob(jobSpec: JobSpec) = ???
+  override def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]] =
+    ClientIO.auth { session =>
+      val ajax = IO.fromFuture(Eval.later {
+        Ajax.put(
+          JobsURI,
+          data = jobSpec.asJson.noSpaces,
+          headers = Map(bearerToken(session.passport))
+        )
+      })
+
+      ajax >>= handleResponse {
+        case res if res.status == 200 =>
+          IO.async[ValidatedNel[QuckooError, JobId]](
+            _(decode[ValidatedNel[QuckooError, JobId]](res.responseText))
+          )
+      }
+    }
 }

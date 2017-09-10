@@ -74,7 +74,12 @@ trait AjaxHttpSecurity extends Security[ClientIO] {
     case Session.Anonymous => IO.raiseError(NotAuthorized)
     case auth @ Session.Authenticated(passport) =>
       val req =
-        IO.fromFuture(Eval.later(Ajax.post(AuthRefreshURI, headers = Map(bearerToken(passport)))))
+        IO.fromFuture(
+          Eval.later(
+            Ajax.post(AuthRefreshURI, headers = Map(bearerToken(passport)))
+          )
+        )
+
       (req >>= readPassportFromResponse)
         .map(pass => auth.copy(passport = pass))
         .recoverWith {
