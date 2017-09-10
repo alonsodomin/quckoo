@@ -36,9 +36,10 @@ package object core {
   object ConsoleIO {
 
     @inline
-    def apply[A](f: QuckooClient2 => ClientIO[A]): ConsoleIO[A] = Kleisli(f)
+    def apply[A](f: QuckooClient2 => ClientIO[A]): ConsoleIO[A] =
+      refreshingToken(Kleisli(f))
 
-    def refreshingToken[A](action: ConsoleIO[A]): ConsoleIO[A] = Kleisli { client =>
+    private def refreshingToken[A](action: ConsoleIO[A]): ConsoleIO[A] = Kleisli { client =>
       val handleExpired = ClientIO.suspend(client.refreshToken() >> action.run(client))
 
       action.run(client).recoverWith {
