@@ -26,7 +26,7 @@ import cats.syntax.flatMap._
 import scala.concurrent.ExecutionContext
 
 trait AkkaHttpClientSupport {
-  def client: HttpClient
+  protected def client: HttpClient
 
   implicit def executionContext: ExecutionContext
   implicit def materializer: Materializer

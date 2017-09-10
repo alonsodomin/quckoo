@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package io.quckoo.client
+package io.quckoo.client.http.dom
 
 import cats.effect.IO
-import io.quckoo.api2.{Cluster, Registry, Scheduler, Security}
 
-trait QuckooClient2 extends Cluster[ClientIO] with Security[ClientIO] with Registry[ClientIO] with Scheduler[ClientIO] {
+import io.quckoo.client.QuckooClient2
 
-  def shutdown(): IO[Unit]
+object AjaxQuckooClient
+    extends QuckooClient2 with AjaxHttpSecurity with AjaxHttpCluster with AjaxHttpRegistry
+    with AjaxHttpScheduler {
+
+  override def shutdown(): IO[Unit] = IO.unit
 
 }
-

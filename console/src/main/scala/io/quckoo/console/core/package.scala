@@ -16,7 +16,11 @@
 
 package io.quckoo.console
 
+import cats.data.Kleisli
+
 import diode.{ActionType, Effect}
+
+import io.quckoo.client.{ClientIO, QuckooClient2}
 
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
@@ -25,6 +29,8 @@ import scala.language.implicitConversions
   * Created by alonsodomin on 05/07/2016.
   */
 package object core {
+
+  type ConsoleIO[A] = Kleisli[ClientIO, QuckooClient2, A]
 
   implicit def action2Effect[A: ActionType](action: => A)(implicit ec: ExecutionContext): Effect =
     Effect.action[A](action)
