@@ -91,7 +91,7 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
         Ajax.put(
           JobsURI,
           data = jobSpec.asJson.noSpaces,
-          headers = Map(bearerToken(session.passport))
+          headers = Map(JsonContentTypeHeader, bearerToken(session.passport))
         )
       })
 
