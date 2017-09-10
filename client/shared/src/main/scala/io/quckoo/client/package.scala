@@ -21,8 +21,6 @@ import cats.effect.IO
 
 import io.quckoo.auth.{NotAuthorized, Session}
 
-import monix.reactive.Observable
-
 package object client {
 
   type ClientIO[A] = StateT[IO, Session, A]

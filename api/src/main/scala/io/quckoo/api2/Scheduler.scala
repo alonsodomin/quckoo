@@ -27,6 +27,8 @@ trait Scheduler[F[_]] {
 
   def fetchPlan(planId: PlanId): F[Option[ExecutionPlan]]
 
+  def allPlans: F[Seq[(PlanId, ExecutionPlan)]]
+
   def submit(
     jobId: JobId,
     trigger: Trigger = Trigger.Immediate,
@@ -34,5 +36,7 @@ trait Scheduler[F[_]] {
   ): F[Either[InvalidJob, ExecutionPlanStarted]]
 
   def fetchTask(taskId: TaskId): F[Option[TaskExecution]]
+
+  def allTasks: F[Seq[(TaskId, TaskExecution)]]
 
 }

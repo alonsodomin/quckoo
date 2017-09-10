@@ -85,4 +85,8 @@ trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[ClientIO] {
   override def fetchPlan(planId: PlanId) = ???
 
   override def fetchTask(taskId: TaskId) = ???
+
+  override def allPlans = ???
+
+  override def allTasks = ???
 }

@@ -17,11 +17,10 @@
 package io.quckoo.console.core
 
 import cats.data.{NonEmptyList, ValidatedNel}
-
+import diode.ActionType
 import diode.data.{AsyncAction, Pot, PotState}
-
 import io.quckoo._
-import io.quckoo.auth.Passport
+import io.quckoo.auth.{Passport, Session}
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
 import io.quckoo.net.QuckooState
@@ -38,6 +37,8 @@ final case class LoggedIn(passport: Passport, referral: Option[ConsoleRoute]) ex
 case object Logout      extends Command
 case object LoggedOut   extends Event
 case object LoginFailed extends Event
+
+case class ClientResult(newSession: Session, action: Event) extends Command
 
 final case class NavigateTo(route: ConsoleRoute)   extends Command
 final case class Growl(notification: Notification) extends Command

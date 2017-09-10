@@ -118,4 +118,7 @@ trait AjaxHttpScheduler extends Scheduler[ClientIO] {
       }
     }
 
+  override def allPlans = ???
+
+  override def allTasks = ???
 }

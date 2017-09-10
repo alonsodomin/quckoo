@@ -17,6 +17,7 @@
 package io.quckoo.console
 
 import cats.data.Kleisli
+import cats.effect.{IO, LiftIO}
 import cats.implicits._
 
 import diode.{ActionType, Effect}
@@ -47,7 +48,14 @@ package object core {
       }
     }
 
+    def local[A](action: IO[A]): ConsoleIO[A] = Kleisli { _ =>
+      LiftIO[ClientIO].liftIO(action)
+    }
+
   }
+
+  implicit def io2Effect[A: ActionType](io: IO[A])(implicit ec: ExecutionContext): Effect =
+    Effect(io.unsafeToFuture())
 
   implicit def action2Effect[A: ActionType](action: => A)(implicit ec: ExecutionContext): Effect =
     Effect.action[A](action)

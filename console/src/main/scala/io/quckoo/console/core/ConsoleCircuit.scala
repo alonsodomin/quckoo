@@ -70,6 +70,12 @@ object ConsoleCircuit
             ActionResult.ModelUpdate(model.copy(subscribed = true))
           }
         } else None
+
+      case ClientResult(newSession, result) =>
+        Some(
+          ActionResult
+            .ModelUpdateSilentEffect(model.copy(session = newSession), Effect.action(result))
+        )
   }
 
   val loginHandler = new ActionHandler(zoomTo(_.passport)) {
