@@ -36,35 +36,28 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 trait AjaxHttpRegistry extends Registry[ClientIO] {
 
-  override def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] =
+  private def jobAction[A](jobId: JobId, action: String)(
+      onSuccess: JobId => A
+  ): ClientIO[Either[JobNotFound, A]] =
     ClientIO.auth { session =>
-      val uri = s"$JobsURI/$jobId/enable"
+      val uri = s"$JobsURI/$jobId/$action"
       val ajax = IO.fromFuture(Eval.later {
         Ajax.post(uri, headers = Map(bearerToken(session.passport)))
       })
 
       ajax >>= handleResponse {
         case res if (res.status == 200) || (res.status == 204) =>
-          IO.pure(Right(JobEnabled(jobId)))
+          IO.pure(Right(onSuccess(jobId)))
         case res if res.status == 404 =>
           IO.pure(Left(JobNotFound(jobId)))
       }
     }
+
+  override def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] =
+    jobAction(jobId, "enable")(JobEnabled)
 
   override def disableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobDisabled]] =
-    ClientIO.auth { session =>
-      val uri = s"$JobsURI/$jobId/disable"
-      val ajax = IO.fromFuture(Eval.later {
-        Ajax.post(uri, headers = Map(bearerToken(session.passport)))
-      })
-
-      ajax >>= handleResponse {
-        case res if (res.status == 200) || (res.status == 204) =>
-          IO.pure(Right(JobDisabled(jobId)))
-        case res if res.status == 404 =>
-          IO.pure(Left(JobNotFound(jobId)))
-      }
-    }
+    jobAction(jobId, "disabled")(JobDisabled)
 
   override def allJobs: ClientIO[Seq[(JobId, JobSpec)]] = ClientIO.auth { session =>
     val ajax = IO.fromFuture(Eval.later {
@@ -73,7 +66,7 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
 
     ajax >>= handleResponse {
       case res if res.status == 200 =>
-        IO.async[Seq[(JobId, JobSpec)]](cb => cb(decode[Seq[(JobId, JobSpec)]](res.responseText)))
+        IO.async[Seq[(JobId, JobSpec)]](_(decode[Seq[(JobId, JobSpec)]](res.responseText)))
     }
   }
 
@@ -86,7 +79,7 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
 
       ajax >>= handleResponse {
         case res if res.status == 200 =>
-          IO.async[Option[JobSpec]](cb => cb(decode[JobSpec](res.responseText).map(Some(_))))
+          IO.async[Option[JobSpec]](_(decode[JobSpec](res.responseText).map(Some(_))))
         case res if res.status == 404 =>
           IO.pure(None)
       }
