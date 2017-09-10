@@ -16,12 +16,15 @@
 
 package io.quckoo.console.registry
 
-import diode.data.{AsyncAction, PotMap}
+import diode.data.PotMap
 import diode.{Effect, ModelRW}
+
 import io.quckoo.console.components.Notification
 import io.quckoo.console.core._
+import io.quckoo.console.model.ConsoleScope
 import io.quckoo.protocol.registry._
 import io.quckoo.{JobId, JobSpec}
+
 import slogging._
 
 import scala.concurrent.ExecutionContext

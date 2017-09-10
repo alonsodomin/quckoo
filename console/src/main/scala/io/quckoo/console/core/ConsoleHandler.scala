@@ -18,6 +18,8 @@ package io.quckoo.console.core
 
 import diode.{ActionHandler, ModelRW}
 
+import io.quckoo.console.model.ConsoleScope
+
 /**
   * Created by alonsodomin on 14/05/2017.
   */

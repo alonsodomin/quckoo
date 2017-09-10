@@ -20,7 +20,8 @@ import diode.react.ModelProxy
 
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components._
-import io.quckoo.console.core.{ConsoleScope, Login}
+import io.quckoo.console.core.Login
+import io.quckoo.console.model.ConsoleScope
 import io.quckoo.console.layout.ContextStyle
 import io.quckoo.console.layout.CssSettings._
 

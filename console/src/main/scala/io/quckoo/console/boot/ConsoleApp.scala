@@ -20,13 +20,8 @@ import diode.ActionProcessor
 import diode.react.ModelProxy
 
 import io.quckoo.console.ConsoleRoute
-import io.quckoo.console.core.{
-  ConsoleCircuit,
-  ConsoleScope,
-  ErrorProcessor,
-  EventLogProcessor,
-  LoginProcessor
-}
+import io.quckoo.console.model.ConsoleScope
+import io.quckoo.console.core.{ConsoleCircuit, ErrorProcessor, EventLogProcessor, LoginProcessor}
 import io.quckoo.console.dashboard.DashboardLogger
 import io.quckoo.console.registry.RegistryLogger
 import io.quckoo.console.scheduler.SchedulerLogger

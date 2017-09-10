@@ -17,18 +17,21 @@
 package io.quckoo.console.boot
 
 import diode.react.ModelProxy
+
 import io.quckoo.auth.Session
 import io.quckoo.console.ConsoleRoute
-import io.quckoo.console.core.ConsoleScope
+import io.quckoo.console.model.ConsoleScope
 import io.quckoo.console.dashboard.DashboardPage
 import io.quckoo.console.layout.Layout
 import io.quckoo.console.log.LogRecord
 import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._
+
 import monix.reactive.Observable
 
 /**

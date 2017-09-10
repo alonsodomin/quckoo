@@ -20,6 +20,7 @@ import diode.ModelRW
 
 import io.quckoo.console.components.Notification
 import io.quckoo.console.core._
+import io.quckoo.console.model.ConsoleScope
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.scheduler.TaskQueueUpdated

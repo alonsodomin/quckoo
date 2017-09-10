@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.core
+package io.quckoo.console.model
 
-import diode.data.Fetch
+import diode.data._
 
-import io.quckoo.JobId
+import io.quckoo._
 
-/**
-  * Created by alonsodomin on 14/03/2016.
-  */
-object JobSpecFetcher extends Fetch[JobId] {
+import monocle.macros.Lenses
 
-  override def fetch(key: JobId): Unit =
-    ConsoleCircuit.dispatch(RefreshJobSpecs(keys = Set(key)))
+@Lenses final case class UserScope(
+    jobSpecs: PotMap[JobId, JobSpec],
+    executionPlans: PotMap[PlanId, ExecutionPlan],
+    executions: PotMap[TaskId, TaskExecution]
+)
 
-  override def fetch(keys: Traversable[JobId]): Unit =
-    ConsoleCircuit.dispatch(RefreshJobSpecs(keys.toSet))
+object UserScope {
+
+  def initial = UserScope(
+    jobSpecs = PotMap(JobSpecFetcher),
+    executionPlans = PotMap(ExecutionPlanFetcher),
+    executions = PotMap(ExecutionFetcher)
+  )
 
 }

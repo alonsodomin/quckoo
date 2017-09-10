@@ -20,6 +20,7 @@ import diode.{ActionProcessor, ActionResult, Dispatcher, Effect}
 
 import io.quckoo._
 import io.quckoo.console.components.Notification
+import io.quckoo.console.model.ConsoleScope
 
 import slogging.LazyLogging
 

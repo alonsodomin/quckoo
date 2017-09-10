@@ -20,6 +20,7 @@ import diode.{ActionProcessor, ActionResult, Dispatcher}
 
 import cats.syntax.order._
 
+import io.quckoo.console.model.ConsoleScope
 import io.quckoo.console.log._
 import io.quckoo.protocol.Event
 

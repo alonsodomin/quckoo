@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.core
+package io.quckoo.console.security
 
 import diode.ModelRW
+
 import io.quckoo.auth.Session
+import io.quckoo.console.core.{ConsoleHandler, ConsoleInterpreter, ConsoleOps, Login, Logout}
+import io.quckoo.console.model.ConsoleScope
 
 import scala.concurrent.ExecutionContext
 

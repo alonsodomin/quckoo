@@ -14,19 +14,35 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.core
+package io.quckoo.console.model
 
-import diode.data.Fetch
+import java.time.ZonedDateTime
 
-import io.quckoo.PlanId
+import io.quckoo.auth.Session
+import io.quckoo.net.QuckooState
+
+import monocle.macros.Lenses
 
 /**
-  * Created by alonsodomin on 14/03/2016.
+  * Created by alonsodomin on 20/02/2016.
   */
-object ExecutionPlanFetcher extends Fetch[PlanId] {
-  override def fetch(key: PlanId): Unit =
-    ConsoleCircuit.dispatch(RefreshExecutionPlans(keys = Set(key)))
+@Lenses final case class ConsoleScope private (
+    session: Session,
+    clusterState: QuckooState,
+    userScope: UserScope,
+    lastLogin: Option[ZonedDateTime],
+    subscribed: Boolean
+)
 
-  override def fetch(keys: Traversable[PlanId]): Unit =
-    ConsoleCircuit.dispatch(RefreshExecutionPlans(keys.toSet))
+object ConsoleScope {
+
+  def initial =
+    ConsoleScope(
+      session = Session.Anonymous,
+      clusterState = QuckooState(),
+      userScope = UserScope.initial,
+      lastLogin = None,
+      subscribed = false
+    )
+
 }

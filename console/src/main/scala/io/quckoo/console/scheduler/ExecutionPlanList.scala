@@ -30,7 +30,8 @@ import diode.react.ReactPot._
 import io.quckoo.{ExecutionPlan, PlanId}
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
-import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs, UserScope}
+import io.quckoo.console.model.UserScope
+import io.quckoo.console.core.{LoadExecutionPlans, LoadJobSpecs}
 import io.quckoo.console.layout.ContextStyle
 import io.quckoo.protocol.scheduler.CancelExecutionPlan
 

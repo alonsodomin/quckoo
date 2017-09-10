@@ -23,7 +23,7 @@ import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components._
 import io.quckoo.console.core.ConsoleCircuit.Implicits.consoleClock
 import io.quckoo.console.core.Logout
-import io.quckoo.console.security.PrincipalWidget
+import io.quckoo.console.security.SubjectWidget
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -129,7 +129,7 @@ object Navigation {
                   <.ul(
                     ^.`class` := "nav navbar-nav navbar-right",
                     <.li(^.`class` := "navbar-text", ClockWidget(consoleClock)),
-                    <.li(^.`class` := "navbar-text", PrincipalWidget(principal)),
+                    <.li(^.`class` := "navbar-text", SubjectWidget(principal)),
                     <.li(<.a(^.href := "#", ^.onClick ==> onLogoutClicked, Icons.signOut, "Logout"))
                   )
                 )

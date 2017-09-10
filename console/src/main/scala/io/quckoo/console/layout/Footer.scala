@@ -19,7 +19,8 @@ package io.quckoo.console.layout
 import diode.react.ModelProxy
 
 import io.quckoo.auth.Session
-import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope}
+import io.quckoo.console.core.ConsoleCircuit
+import io.quckoo.console.model.ConsoleScope
 import io.quckoo.console.log.{LogDisplay, LogRecord}
 
 import japgolly.scalajs.react._

@@ -25,7 +25,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 /**
   * Created by alonsodomin on 20/02/2016.
   */
-object PrincipalWidget {
+object SubjectWidget {
 
   private[this] val component = ScalaComponent
     .builder[Subject]("UserDisplay")

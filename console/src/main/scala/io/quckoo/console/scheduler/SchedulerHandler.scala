@@ -20,6 +20,7 @@ import diode.ModelRW
 
 import io.quckoo.console.components.Notification
 import io.quckoo.console.core._
+import io.quckoo.console.model.{ConsoleScope, UserScope}
 import io.quckoo.protocol.scheduler._
 
 import slogging._

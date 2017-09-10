@@ -20,7 +20,7 @@ import diode.react.ModelProxy
 
 import io.quckoo.ExecutionPlan
 import io.quckoo.console.components._
-import io.quckoo.console.core.ConsoleScope
+import io.quckoo.console.model.ConsoleScope
 import io.quckoo.console.layout.CssSettings._
 import io.quckoo.protocol.scheduler.ScheduleJob
 

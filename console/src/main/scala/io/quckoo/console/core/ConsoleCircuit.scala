@@ -24,9 +24,11 @@ import diode.react.ReactConnector
 import io.quckoo.auth.Session
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.client.http.dom._
+import io.quckoo.console.model.ConsoleScope
 import io.quckoo.console.dashboard.DashboardHandler
 import io.quckoo.console.registry.RegistryHandler
 import io.quckoo.console.scheduler.{ExecutionPlansHandler, SchedulerHandler, TasksHandler}
+import io.quckoo.console.security.SecurityHandler
 
 import slogging.LazyLogging
 

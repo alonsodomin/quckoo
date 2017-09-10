@@ -20,6 +20,7 @@ import diode.ModelRW
 import diode.data.PotMap
 
 import io.quckoo.console.core._
+import io.quckoo.console.model.ConsoleScope
 import io.quckoo.{ExecutionPlan, PlanId}
 
 import slogging._

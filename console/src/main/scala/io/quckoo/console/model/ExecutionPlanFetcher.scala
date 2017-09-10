@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-package io.quckoo.console.core
+package io.quckoo.console.model
 
 import diode.data.Fetch
 
-import io.quckoo.TaskId
+import io.quckoo.PlanId
+import io.quckoo.console.core.{ConsoleCircuit, RefreshExecutionPlans}
 
 /**
-  * Created by alonsodomin on 28/05/2016.
+  * Created by alonsodomin on 14/03/2016.
   */
-object ExecutionFetcher extends Fetch[TaskId] {
+object ExecutionPlanFetcher extends Fetch[PlanId] {
+  override def fetch(key: PlanId): Unit =
+    ConsoleCircuit.dispatch(RefreshExecutionPlans(keys = Set(key)))
 
-  override def fetch(key: TaskId): Unit =
-    ConsoleCircuit.dispatch(RefreshExecutions(Set(key)))
-
-  override def fetch(keys: Traversable[TaskId]): Unit =
-    ConsoleCircuit.dispatch(RefreshExecutions(keys.toSet))
-
+  override def fetch(keys: Traversable[PlanId]): Unit =
+    ConsoleCircuit.dispatch(RefreshExecutionPlans(keys.toSet))
 }

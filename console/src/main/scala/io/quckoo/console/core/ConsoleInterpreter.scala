@@ -17,8 +17,8 @@
 package io.quckoo.console.core
 
 import diode.{ActionHandler, ActionResult, ActionType}
-
 import io.quckoo.client.http.dom.AjaxQuckooClient
+import io.quckoo.console.model.ConsoleScope
 import io.quckoo.protocol.Event
 
 import scala.concurrent.ExecutionContext
