@@ -32,7 +32,7 @@ final case class Failed(fault: NonEmptyList[QuckooError]) extends Event
 
 final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None)
     extends Command
-final case class LoggedIn(passport: Passport, referral: Option[ConsoleRoute]) extends Event
+final case class LoggedIn(referral: Option[ConsoleRoute]) extends Event
 
 case object Logout      extends Command
 case object LoggedOut   extends Event

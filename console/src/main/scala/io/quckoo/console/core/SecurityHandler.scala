@@ -16,20 +16,21 @@
 
 package io.quckoo.console.core
 
-import diode.{ActionHandler, ActionResult}
+import diode.ModelRW
+import io.quckoo.auth.Session
 
-import io.quckoo.auth.Passport
+import scala.concurrent.ExecutionContext
 
-/**
-  * Created by alonsodomin on 26/03/2016.
-  */
-trait AuthHandler[S] { this: ActionHandler[ConsoleScope, S] =>
+class SecurityHandler(model: ModelRW[ConsoleScope, Session], ops: ConsoleOps)(
+    implicit ec: ExecutionContext
+) extends ConsoleHandler[Session](model) with ConsoleInterpreter[Session] {
 
-  def withAuth(f: Passport => ActionResult[ConsoleScope]): ActionResult[ConsoleScope] =
-    this.modelRW.root
-      .zoomMap(_.passport)(identity)
-      .value
-      .map(f)
-      .getOrElse(noChange)
+  override def handle = {
+    case msg: Login =>
+      handleIO(ops.login(msg))
+
+    case Logout =>
+      handleIO(ops.logout())
+  }
 
 }

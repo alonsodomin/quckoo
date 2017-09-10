@@ -19,7 +19,13 @@ package io.quckoo.auth
 import cats.Monoid
 
 sealed trait Session extends Product with Serializable
+
 object Session {
+  def passportFrom(session: Session): Option[Passport] = session match {
+    case Authenticated(passport) => Some(passport)
+    case _                       => None
+  }
+
   sealed trait Anonymous extends Session
   case object Anonymous extends Anonymous
 

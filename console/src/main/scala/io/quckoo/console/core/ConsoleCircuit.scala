@@ -21,6 +21,7 @@ import java.time.Clock
 import diode._
 import diode.react.ReactConnector
 
+import io.quckoo.auth.Session
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.client.http.dom._
 import io.quckoo.console.dashboard.DashboardHandler
@@ -42,12 +43,12 @@ object ConsoleCircuit
     implicit val consoleClock: Clock = Clock.systemDefaultZone
   }
 
-  override protected val client: HttpQuckooClient = HttpDOMQuckooClient
+  protected val client: HttpQuckooClient = HttpDOMQuckooClient
 
   override protected def initialModel: ConsoleScope = ConsoleScope.initial
 
   override protected def actionHandler = composeHandlers(
-    loginHandler,
+    new SecurityHandler(zoomTo(_.session), this),
     new DashboardHandler(zoomTo(_.clusterState), this),
     new RegistryHandler(zoomTo(_.userScope.jobSpecs), this),
     new SchedulerHandler(zoomTo(_.userScope), this),
@@ -64,10 +65,13 @@ object ConsoleCircuit
 
       case StartClusterSubscription =>
         if (!model.subscribed) {
-          model.passport.map { implicit passport =>
-            logger.debug("Opening console subscription channels...")
-            openSubscriptionChannels(client)
-            ActionResult.ModelUpdate(model.copy(subscribed = true))
+          model.session match {
+            case Session.Authenticated(passport) =>
+              logger.debug("Opening console subscription channels...")
+              openSubscriptionChannels(client)
+              Some(ActionResult.ModelUpdate(model.copy(subscribed = true)))
+
+            case _ => None
           }
         } else None
 
@@ -76,30 +80,6 @@ object ConsoleCircuit
           ActionResult
             .ModelUpdateSilentEffect(model.copy(session = newSession), Effect.action(result))
         )
-  }
-
-  val loginHandler = new ActionHandler(zoomTo(_.passport)) {
-
-    override def handle = {
-      case Login(username, password, referral) =>
-        implicit val timeout = DefaultTimeout
-        effectOnly(
-          Effect(
-            client
-              .authenticate(username, password)
-              .map(pass => LoggedIn(pass, referral))
-              .recover {
-                case _ => LoginFailed
-              }
-          )
-        )
-
-      case Logout =>
-        implicit val timeout = DefaultTimeout
-        value.map { implicit passport =>
-          effectOnly(Effect(client.signOut.map(_ => LoggedOut)))
-        } getOrElse noChange
-    }
   }
 
 }

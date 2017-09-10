@@ -17,7 +17,7 @@
 package io.quckoo.console.boot
 
 import diode.react.ModelProxy
-
+import io.quckoo.auth.Session
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.core.ConsoleScope
 import io.quckoo.console.dashboard.DashboardPage
@@ -26,11 +26,9 @@ import io.quckoo.console.log.LogRecord
 import io.quckoo.console.registry.RegistryPage
 import io.quckoo.console.scheduler.SchedulerPage
 import io.quckoo.console.security.LoginPage
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._
-
 import monix.reactive.Observable
 
 /**
@@ -53,7 +51,7 @@ object ConsoleRouter {
       import dsl._
 
       def isLoggedIn: CallbackTo[Boolean] =
-        CallbackTo { proxy().passport.isDefined }
+        CallbackTo { proxy().session != Session.Anonymous }
 
       def redirectToLogin(referral: ConsoleRoute) =
         Some(render(LoginPage(proxy, Some(referral))))

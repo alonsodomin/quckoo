@@ -16,7 +16,7 @@
 
 package io.quckoo.console.dashboard
 
-import diode.{Effect, ModelRW}
+import diode.ModelRW
 
 import io.quckoo.console.components.Notification
 import io.quckoo.console.core._
@@ -34,13 +34,12 @@ import scala.concurrent.ExecutionContext
   */
 class DashboardHandler(model: ModelRW[ConsoleScope, QuckooState], ops: ConsoleOps)(
     implicit ec: ExecutionContext
-) extends ConsoleHandler[QuckooState](model) with AuthHandler[QuckooState] with LazyLogging {
+) extends ConsoleHandler[QuckooState](model) with ConsoleInterpreter[QuckooState]
+    with LazyLogging {
 
   override def handle = {
     case GetClusterStatus =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.refreshClusterStatus))
-      }
+      handleIO(ops.currentClusterState.map(ClusterStateLoaded))
 
     case ClusterStateLoaded(state) =>
       updated(state)

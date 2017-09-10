@@ -16,7 +16,7 @@
 
 package io.quckoo.console.scheduler
 
-import diode.{Effect, ModelRW}
+import diode.ModelRW
 
 import io.quckoo.console.components.Notification
 import io.quckoo.console.core._
@@ -31,18 +31,14 @@ import scala.concurrent.ExecutionContext
   */
 class SchedulerHandler(model: ModelRW[ConsoleScope, UserScope], ops: ConsoleOps)(
     implicit ec: ExecutionContext
-) extends ConsoleHandler[UserScope](model) with AuthHandler[UserScope] with LazyLogging {
+) extends ConsoleHandler[UserScope](model) with ConsoleInterpreter[UserScope] with LazyLogging {
 
   override def handle = {
     case msg: ScheduleJob =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.scheduleJob(msg)))
-      }
+      handleIO(ops.scheduleJob(msg))
 
     case CancelExecutionPlan(planId) =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.cancelPlan(planId)))
-      }
+      handleIO(ops.cancelPlan(planId))
 
     case ExecutionPlanStarted(jobId, planId, _) =>
       val effect = Effects.parallel(

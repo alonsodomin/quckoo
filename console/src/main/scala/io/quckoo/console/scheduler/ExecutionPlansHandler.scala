@@ -16,11 +16,11 @@
 
 package io.quckoo.console.scheduler
 
-import diode.{Effect, ModelRW}
-import diode.data.{AsyncAction, PotMap}
+import diode.ModelRW
+import diode.data.PotMap
 
-import io.quckoo.{ExecutionPlan, PlanId}
 import io.quckoo.console.core._
+import io.quckoo.{ExecutionPlan, PlanId}
 
 import slogging._
 
@@ -32,23 +32,19 @@ import scala.concurrent.ExecutionContext
 class ExecutionPlansHandler(model: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]],
                             ops: ConsoleOps)(implicit ec: ExecutionContext)
     extends ConsoleHandler[PotMap[PlanId, ExecutionPlan]](model)
-    with AuthHandler[PotMap[PlanId, ExecutionPlan]] with LazyLogging {
+    with ConsoleInterpreter[PotMap[PlanId, ExecutionPlan]] with LazyLogging {
 
   override protected def handle = {
     case LoadExecutionPlans =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.loadPlans().map(ExecutionPlansLoaded)))
-      }
+      handleIO(ops.loadPlans().map(ExecutionPlansLoaded))
 
     case ExecutionPlansLoaded(plans) if plans.nonEmpty =>
       logger.debug(s"Loaded ${plans.size} execution plans from the server.")
-      updated(PotMap(ExecutionPlanFetcher, plans))
+      updated(model.value.updated(plans))
 
     case action: RefreshExecutionPlans =>
-      withAuth { implicit passport =>
-        val refreshEffect = action.effect(ops.loadPlans(action.keys))(identity)
-        action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
-      }
+      handleIO(ops.loadPlans(action.keys).map(ExecutionPlansLoaded))
+
   }
 
 }

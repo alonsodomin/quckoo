@@ -18,15 +18,15 @@ package io.quckoo.console.core
 
 import java.time.ZonedDateTime
 
-import io.quckoo.auth.{Passport, Session}
+import io.quckoo.auth.Session
 import io.quckoo.net.QuckooState
+
 import monocle.macros.Lenses
 
 /**
   * Created by alonsodomin on 20/02/2016.
   */
 @Lenses final case class ConsoleScope private (
-    passport: Option[Passport],
     session: Session,
     clusterState: QuckooState,
     userScope: UserScope,
@@ -38,7 +38,6 @@ object ConsoleScope {
 
   def initial =
     ConsoleScope(
-      passport = None,
       session = Session.Anonymous,
       clusterState = QuckooState(),
       userScope = UserScope.initial,

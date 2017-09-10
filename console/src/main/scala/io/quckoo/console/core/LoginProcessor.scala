@@ -39,7 +39,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
   import ActionResult._
   import ConsoleCircuit.Implicits.consoleClock
 
-  val authFailedNotification =
+  private val authFailedNotification =
     Notification.danger("Username or password incorrect")
 
   override def process(dispatch: Dispatcher,
@@ -51,10 +51,9 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
         logger.warn("Login failed!")
         EffectOnly(Growl(authFailedNotification))
 
-      case LoggedIn(passport, referral) =>
+      case LoggedIn(referral) =>
         val destination = referral.getOrElse(Dashboard)
         val newModel = currentModel.copy(
-          passport = Some(passport),
           lastLogin = Some(ZonedDateTime.now(consoleClock))
         )
         logger.info("Successfully logged in! Redirecting to {}", destination.entryName)
@@ -65,7 +64,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
       case LoggedOut =>
         logger.info("Successfully logged out.")
         val action = Effect.action(NavigateTo(Dashboard))
-        ModelUpdateEffect(currentModel.copy(passport = None), action)
+        EffectOnly(action)
 
       case NavigateTo(route) =>
         routerCtl.set(route).runNow()

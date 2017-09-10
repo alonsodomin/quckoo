@@ -17,18 +17,16 @@
 package io.quckoo.console.layout
 
 import diode.react.ModelProxy
-
+import io.quckoo.auth.Session
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.ConsoleRoute.{Dashboard, Registry, Scheduler}
 import io.quckoo.console.components.Icons
 import io.quckoo.console.core.ConsoleScope
 import io.quckoo.console.layout.Navigation.NavigationItem
 import io.quckoo.console.log.LogRecord
-
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.{Resolution, RouterCtl}
 import japgolly.scalajs.react.vdom.html_<^._
-
 import monix.reactive.Observable
 
 /**
@@ -52,9 +50,11 @@ object Layout {
   class Backend($ : BackendScope[Props, Unit]) {
 
     def render(props: Props) = {
-      def navigation = props.proxy.wrap(_.passport.flatMap(_.subject)) { subject =>
-        Navigation(MainMenu.head, MainMenu, props.routerCtl, props.resolution.page, subject)
-      }
+      def navigation =
+        props.proxy.wrap(scope => Session.passportFrom(scope.session).flatMap(_.subject)) {
+          subject =>
+            Navigation(MainMenu.head, MainMenu, props.routerCtl, props.resolution.page, subject)
+        }
 
       <.div(navigation, props.resolution.render(), Footer(props.proxy, props.logStream))
     }

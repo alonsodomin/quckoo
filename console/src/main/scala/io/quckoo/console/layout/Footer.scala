@@ -18,6 +18,7 @@ package io.quckoo.console.layout
 
 import diode.react.ModelProxy
 
+import io.quckoo.auth.Session
 import io.quckoo.console.core.{ConsoleCircuit, ConsoleScope}
 import io.quckoo.console.log.{LogDisplay, LogRecord}
 
@@ -54,16 +55,13 @@ object Footer {
     .builder[Props]("Footer")
     .stateless
     .render_P { props =>
-      <.div(
-        props
-          .proxy()
-          .passport
-          .flatMap(_.subject)
-          .map { _ =>
-            <.footer(Style.footer, LogDisplay(props.logStream))
-          }
-          .whenDefined
-      )
+      def footerElement = props.proxy().session match {
+        case Session.Authenticated(_) =>
+          Some(<.footer(Style.footer, LogDisplay(props.logStream)))
+        case _ => None
+      }
+
+      <.div(footerElement.whenDefined)
     }
     .build
 

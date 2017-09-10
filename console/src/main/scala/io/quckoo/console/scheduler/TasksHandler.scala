@@ -16,11 +16,11 @@
 
 package io.quckoo.console.scheduler
 
-import diode.{Effect, ModelRW}
-import diode.data.{AsyncAction, PotMap}
+import diode.ModelRW
+import diode.data.PotMap
 
-import io.quckoo.{TaskExecution, TaskId}
 import io.quckoo.console.core._
+import io.quckoo.{TaskExecution, TaskId}
 
 import slogging._
 
@@ -32,22 +32,17 @@ import scala.concurrent.ExecutionContext
 class TasksHandler(model: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]], ops: ConsoleOps)(
     implicit ec: ExecutionContext
 ) extends ConsoleHandler[PotMap[TaskId, TaskExecution]](model)
-    with AuthHandler[PotMap[TaskId, TaskExecution]] with LazyLogging {
+    with ConsoleInterpreter[PotMap[TaskId, TaskExecution]] with LazyLogging {
 
   override protected def handle = {
     case LoadExecutions =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.loadTasks().map(ExecutionsLoaded)))
-      }
+      handleIO(ops.loadTasks().map(ExecutionsLoaded))
 
     case ExecutionsLoaded(tasks) if tasks.nonEmpty =>
-      updated(PotMap(ExecutionFetcher, tasks))
+      updated(model.value.updated(tasks))
 
     case action: RefreshExecutions =>
-      withAuth { implicit passport =>
-        val refreshEffect = action.effect(ops.loadTasks(action.keys))(identity)
-        action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
-      }
+      handleIO(ops.loadTasks(action.keys).map(ExecutionsLoaded))
   }
 
 }

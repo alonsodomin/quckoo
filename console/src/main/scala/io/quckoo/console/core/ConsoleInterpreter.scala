@@ -25,7 +25,7 @@ import scala.concurrent.ExecutionContext
 
 trait ConsoleInterpreter[S] { this: ActionHandler[ConsoleScope, S] =>
 
-  def interpret[A: ActionType](
+  def handleIO(
       action: ConsoleIO[Event]
   )(implicit ec: ExecutionContext): ActionResult[ConsoleScope] = {
     val session = modelRW.root.zoom(_.session).value
