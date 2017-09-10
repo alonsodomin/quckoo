@@ -118,7 +118,25 @@ trait AjaxHttpScheduler extends Scheduler[ClientIO] {
       }
     }
 
-  override def allPlans = ???
+  override def allPlans: ClientIO[Seq[(PlanId, ExecutionPlan)]] = ClientIO.auth { session =>
+    val ajax = IO.fromFuture(Eval.later {
+      Ajax.get(ExecutionPlansURI, headers = Map(bearerToken(session.passport)))
+    })
 
-  override def allTasks = ???
+    ajax >>= handleResponse {
+      case res if res.status == 200 =>
+        attempt2IO(decode[Seq[(PlanId, ExecutionPlan)]](res.responseText))
+    }
+  }
+
+  override def allTasks: ClientIO[Seq[(TaskId, TaskExecution)]] = ClientIO.auth { session =>
+    val ajax = IO.fromFuture(Eval.later {
+      Ajax.get(TaskExecutionsURI, headers = Map(bearerToken(session.passport)))
+    })
+
+    ajax >>= handleResponse {
+      case res if res.status == 200 =>
+        attempt2IO(decode[Seq[(TaskId, TaskExecution)]](res.responseText))
+    }
+  }
 }

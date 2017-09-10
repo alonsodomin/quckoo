@@ -68,7 +68,7 @@ trait AkkaHttpRegistry extends AkkaHttpClientSupport with Registry[ClientIO] {
       def notFoundHandler: HttpResponseHandler[Option[JobSpec]] = {
         case res if res.status == StatusCodes.NotFound => IO.pure(None)
       }
-      val handler = handleEntity[JobSpec]()
+      val handler = handleEntity[JobSpec](_.status == StatusCodes.OK)
         .andThen(_.map(Some(_)))
         .orElse(notFoundHandler)
 
@@ -81,7 +81,7 @@ trait AkkaHttpRegistry extends AkkaHttpClientSupport with Registry[ClientIO] {
     ClientIO.auth { session =>
       def request: IO[HttpRequest] =
         marshalEntity(jobSpec).map { entity =>
-          HttpRequest(HttpMethods.PUT, uri = JobsURI, entity = entity)
+          HttpRequest(HttpMethods.PUT, uri = JobsURI, entity = entity).withSession(session)
         }
 
       request >>= (sendRequest(_)(handleEntity[ValidatedNel[QuckooError, JobId]]()))

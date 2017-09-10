@@ -82,11 +82,44 @@ trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[ClientIO] {
     request >>= (sendRequest(_)(handler))
   }
 
-  override def fetchPlan(planId: PlanId) = ???
+  override def fetchPlan(planId: PlanId): ClientIO[Option[ExecutionPlan]] =
+    ClientIO.auth { session =>
+      val request =
+        HttpRequest(HttpMethods.GET, uri = s"$ExecutionPlansURI/$planId").withSession(session)
 
-  override def fetchTask(taskId: TaskId) = ???
+      def notFoundHandler: HttpResponseHandler[Option[ExecutionPlan]] = {
+        case res if res.status == StatusCodes.NotFound => IO.pure(None)
+      }
+      val handler = handleEntity[ExecutionPlan](_.status == StatusCodes.OK)
+        .andThen(_.map(Some(_)))
+        .orElse(notFoundHandler)
 
-  override def allPlans = ???
+      sendRequest(request)(handler)
+    }
 
-  override def allTasks = ???
+  override def fetchTask(taskId: TaskId): ClientIO[Option[TaskExecution]] =
+    ClientIO.auth { session =>
+      val request =
+        HttpRequest(HttpMethods.GET, uri = s"$TaskExecutionsURI/$taskId").withSession(session)
+
+      def notFoundHandler: HttpResponseHandler[Option[TaskExecution]] = {
+        case res if res.status == StatusCodes.NotFound => IO.pure(None)
+      }
+      val handler = handleEntity[TaskExecution](_.status == StatusCodes.OK)
+        .andThen(_.map(Some(_)))
+        .orElse(notFoundHandler)
+
+      sendRequest(request)(handler)
+    }
+
+  override def allPlans: ClientIO[Seq[(PlanId, ExecutionPlan)]] = ClientIO.auth { session =>
+    val request = HttpRequest(HttpMethods.GET, uri = ExecutionPlansURI).withSession(session)
+    sendRequest(request)(handleEntity[Seq[(PlanId, ExecutionPlan)]](_.status == StatusCodes.OK))
+  }
+
+  override def allTasks: ClientIO[Seq[(TaskId, TaskExecution)]] = ClientIO.auth { session =>
+    val request = HttpRequest(HttpMethods.GET, uri = TaskExecutionsURI).withSession(session)
+    sendRequest(request)(handleEntity[Seq[(TaskId, TaskExecution)]](_.status == StatusCodes.OK))
+  }
+
 }

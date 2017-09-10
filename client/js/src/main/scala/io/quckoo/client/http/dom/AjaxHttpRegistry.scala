@@ -30,6 +30,7 @@ import io.quckoo.api2.Registry
 import io.quckoo.client.ClientIO
 import io.quckoo.client.http._
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
+import io.quckoo.util._
 
 import org.scalajs.dom.ext.Ajax
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -66,7 +67,7 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
 
     ajax >>= handleResponse {
       case res if res.status == 200 =>
-        IO.async[Seq[(JobId, JobSpec)]](_(decode[Seq[(JobId, JobSpec)]](res.responseText)))
+        attempt2IO(decode[Seq[(JobId, JobSpec)]](res.responseText))
     }
   }
 
@@ -79,7 +80,7 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
 
       ajax >>= handleResponse {
         case res if res.status == 200 =>
-          IO.async[Option[JobSpec]](_(decode[JobSpec](res.responseText).map(Some(_))))
+          attempt2IO(decode[JobSpec](res.responseText)).map(Some(_))
         case res if res.status == 404 =>
           IO.pure(None)
       }
@@ -97,9 +98,7 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
 
       ajax >>= handleResponse {
         case res if res.status == 200 =>
-          IO.async[ValidatedNel[QuckooError, JobId]](
-            _(decode[ValidatedNel[QuckooError, JobId]](res.responseText))
-          )
+          attempt2IO(decode[ValidatedNel[QuckooError, JobId]](res.responseText))
       }
     }
 }
