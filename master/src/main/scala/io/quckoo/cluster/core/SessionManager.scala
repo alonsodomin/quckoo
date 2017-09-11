@@ -28,33 +28,47 @@ import scala.concurrent.duration.FiniteDuration
 /**
   * Created by alonsodomin on 14/10/2015.
   */
-object UserAuthenticator {
+object SessionManager {
 
   private val Right(secretKey) =
     DataBuffer.fromString("dqwjq0jd9wjd192u4ued9hd0ew").toBase64
 
   case class Authenticate(username: String, password: Array[Char])
-  case class AuthenticationSuccess(session: Session)
+  case class SessionStarted(session: Session.Authenticated)
   case object AuthenticationFailed
 
   case class RefreshToken(subjectId: SubjectId)
+  case class CloseSession(session: Session.Authenticated)
+  case class SessionClosed()
 
   def props(sessionTimeout: FiniteDuration): Props =
-    Props(classOf[UserAuthenticator], sessionTimeout)
+    Props(classOf[SessionManager], sessionTimeout)
 
 }
 
-class UserAuthenticator(sessionTimeout: FiniteDuration) extends Actor with ActorLogging {
-  import UserAuthenticator._
+class SessionManager(sessionTimeout: FiniteDuration) extends Actor with ActorLogging {
+  import SessionManager._
 
   def receive = running(Map.empty, Map.empty)
 
   private[this] def running(
       subjects: Map[String, SubjectId],
-      sessions: Map[SubjectId, Session]
+      sessions: Map[SubjectId, Session.Authenticated]
   ): Receive = {
     case Authenticate(username, password) =>
       context.become(running(subjects, sessions))
+
+    case CloseSession(session) =>
+      val subjectId = session.passport.subject.map(_.id)
+      val (newSubjects, newSessions) = subjectId
+        .map { id =>
+          val subs = subjects.filter { case (_, subId) => subId != id }
+          val sess = sessions - id
+          (subs, sess)
+        }
+        .getOrElse(subjects -> sessions)
+
+      context.become(running(newSubjects, newSessions))
   }
 
   private[this] def generatePassport(subject: Subject): Passport = {

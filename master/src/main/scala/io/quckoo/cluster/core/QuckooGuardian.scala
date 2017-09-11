@@ -64,7 +64,7 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
 
   private[this] val cluster = Cluster(context.system)
 
-  context.actorOf(UserAuthenticator.props(DefaultSessionTimeout), "authenticator")
+  context.actorOf(SessionManager.props(DefaultSessionTimeout), "sessionManager")
 
   private[this] val registry =
     context.watch(context.actorOf(Registry.props(settings, journal), "registry"))
