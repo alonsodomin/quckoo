@@ -28,11 +28,11 @@ import japgolly.scalajs.react.vdom.html_<^._
 object SubjectWidget {
 
   private[this] val component = ScalaComponent
-    .builder[Subject]("UserDisplay")
-    .render_P { user =>
-      <.span(Icons.user, user.id)
+    .builder[Subject]("SubjectDisplay")
+    .render_P { subject =>
+      <.span(Icons.user, subject.id.value)
   } build
 
-  def apply(user: Subject) = component(user)
+  def apply(subject: Subject) = component(subject)
 
 }

@@ -55,7 +55,7 @@ final class Passport(claims: Map[String, String], val token: String) {
   import Passport._
 
   lazy val subject: Option[Subject] =
-    claims.get(SubjectClaim).map(User)
+    claims.get(SubjectClaim).map(SubjectId).map(User)
 
   override def equals(other: Any): Boolean = other match {
     case that: Passport => this.token === that.token

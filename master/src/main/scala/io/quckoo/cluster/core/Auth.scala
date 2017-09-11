@@ -22,7 +22,7 @@ import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
 
 import cats.syntax.option._
 
-import io.quckoo.auth.{Passport, Subject, User}
+import io.quckoo.auth.{Passport, Subject, SubjectId, User}
 import io.quckoo.serialization.DataBuffer
 
 import scala.concurrent.Future
@@ -40,7 +40,7 @@ trait Auth {
     credentials match {
       case p @ Credentials.Provided(identifier) =>
         if (identifier == "admin" && p.verify("password")) {
-          Future.successful(User(identifier).some)
+          Future.successful(User(SubjectId(identifier)).some)
         } else Future.successful(none[User])
 
       case _ =>

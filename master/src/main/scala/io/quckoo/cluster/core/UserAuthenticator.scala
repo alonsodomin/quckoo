@@ -18,7 +18,10 @@ package io.quckoo.cluster.core
 
 import akka.actor.{Actor, ActorLogging, Props}
 
-import io.quckoo.auth.UserId
+import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
+
+import io.quckoo.auth.{Passport, Session, Subject, SubjectId, User}
+import io.quckoo.serialization.DataBuffer
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -27,9 +30,14 @@ import scala.concurrent.duration.FiniteDuration
   */
 object UserAuthenticator {
 
-  case class Authenticate(userId: UserId, password: Array[Char])
-  case class AuthenticationSuccess()
+  private val Right(secretKey) =
+    DataBuffer.fromString("dqwjq0jd9wjd192u4ued9hd0ew").toBase64
+
+  case class Authenticate(username: String, password: Array[Char])
+  case class AuthenticationSuccess(session: Session)
   case object AuthenticationFailed
+
+  case class RefreshToken(subjectId: SubjectId)
 
   def props(sessionTimeout: FiniteDuration): Props =
     Props(classOf[UserAuthenticator], sessionTimeout)
@@ -39,8 +47,23 @@ object UserAuthenticator {
 class UserAuthenticator(sessionTimeout: FiniteDuration) extends Actor with ActorLogging {
   import UserAuthenticator._
 
-  def receive = {
-    case Authenticate(userId, password) =>
+  def receive = running(Map.empty, Map.empty)
+
+  private[this] def running(
+      subjects: Map[String, SubjectId],
+      sessions: Map[SubjectId, Session]
+  ): Receive = {
+    case Authenticate(username, password) =>
+      context.become(running(subjects, sessions))
+  }
+
+  private[this] def generatePassport(subject: Subject): Passport = {
+    val header    = JwtHeader("HS256")
+    val claimsSet = JwtClaimsSet(Map("sub" -> subject.id.value))
+
+    val jwt = JsonWebToken(header, claimsSet, secretKey)
+    // FIXME the claims map must be a multi map
+    new Passport(claimsSet.claims.mapValues(_.toString), jwt)
   }
 
 }

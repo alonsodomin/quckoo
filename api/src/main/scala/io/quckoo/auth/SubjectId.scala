@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-package io.quckoo
+package io.quckoo.auth
 
-/**
-  * Created by alonsodomin on 21/03/2016.
-  */
-package object auth {
-
-  type UserId = String
-
-}
+final case class SubjectId(value: String) extends AnyVal
