@@ -19,6 +19,7 @@ package io.quckoo.client.http.akka
 import akka.http.scaladsl.model.HttpRequest
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
+
 import cats.Eval
 import cats.effect.IO
 import cats.syntax.flatMap._

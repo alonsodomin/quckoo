@@ -16,9 +16,31 @@
 
 package io.quckoo
 
-import cats.data.State
-import io.quckoo.auth.Passport
+import cats.data.StateT
+import cats.effect.IO
+
+import io.quckoo.auth.{NotAuthorized, Session}
 
 package object api2 {
 
+  type QuckooIO[A] = StateT[IO, Session, A]
+  object QuckooIO {
+    @inline
+    def apply[A](f: Session => IO[A]): QuckooIO[A] =
+      StateT.inspectF(f)
+
+    def auth[A](f: Session.Authenticated => IO[A]): QuckooIO[A] = QuckooIO {
+      case auth: Session.Authenticated => f(auth)
+      case _ => IO.raiseError(NotAuthorized)
+    }
+
+    @inline
+    def session(f: Session => IO[Session]): QuckooIO[Unit] =
+      StateT.modifyF(f)
+
+    def suspend[A](io: => QuckooIO[A]): QuckooIO[A] = StateT { session =>
+      IO.suspend(io.run(session))
+    }
+  }
+  
 }

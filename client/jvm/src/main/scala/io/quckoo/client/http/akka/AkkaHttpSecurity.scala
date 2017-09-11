@@ -21,12 +21,11 @@ import akka.http.scaladsl.model.headers._
 
 import cats.effect.IO
 
-import io.quckoo.api2.Security
+import io.quckoo.api2.{QuckooIO, Security}
 import io.quckoo.auth._
-import io.quckoo.client.ClientIO
 import io.quckoo.client.http._
 
-trait AkkaHttpSecurity extends AkkaHttpClientSupport with Security[ClientIO] {
+trait AkkaHttpSecurity extends AkkaHttpClientSupport with Security[QuckooIO] {
   import ContentTypes.`text/plain(UTF-8)`
 
   private def readPassportFromResponse(response: HttpResponse): IO[Passport] =
@@ -39,7 +38,7 @@ trait AkkaHttpSecurity extends AkkaHttpClientSupport with Security[ClientIO] {
       case _ => IO.raiseError(InvalidCredentials)
     }
 
-  override def signIn(username: String, password: String): ClientIO[Unit] = {
+  override def signIn(username: String, password: String): QuckooIO[Unit] = {
     def authenticate(): IO[Session.Authenticated] = {
       val credentials = BasicHttpCredentials(username, password)
       val request = HttpRequest(HttpMethods.POST, uri = LoginURI)
@@ -58,13 +57,13 @@ trait AkkaHttpSecurity extends AkkaHttpClientSupport with Security[ClientIO] {
       }
     }
 
-    ClientIO.session {
+    QuckooIO.session {
       case Session.Anonymous           => authenticate()
       case auth: Session.Authenticated => IO.pure(auth)
     }
   }
 
-  override def signOut(): ClientIO[Unit] = ClientIO.session {
+  override def signOut(): QuckooIO[Unit] = QuckooIO.session {
     case anon: Session.Anonymous => IO.pure(anon)
     case auth: Session.Authenticated =>
       val request =
@@ -74,7 +73,7 @@ trait AkkaHttpSecurity extends AkkaHttpClientSupport with Security[ClientIO] {
       }
   }
 
-  override def refreshToken(): ClientIO[Unit] = ClientIO.session {
+  override def refreshToken(): QuckooIO[Unit] = QuckooIO.session {
     case Session.Anonymous => IO.raiseError(NotAuthorized)
     case auth: Session.Authenticated =>
       val request =

@@ -23,7 +23,8 @@ import cats.implicits._
 import diode.{ActionType, Effect}
 
 import io.quckoo.auth.PassportExpired
-import io.quckoo.client.{ClientIO, QuckooClient2}
+import io.quckoo.api2.QuckooIO
+import io.quckoo.client.QuckooClient2
 
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
@@ -33,15 +34,15 @@ import scala.language.implicitConversions
   */
 package object core {
 
-  type ConsoleIO[A] = Kleisli[ClientIO, QuckooClient2, A]
+  type ConsoleIO[A] = Kleisli[QuckooIO, QuckooClient2, A]
   object ConsoleIO {
 
     @inline
-    def apply[A](f: QuckooClient2 => ClientIO[A]): ConsoleIO[A] =
+    def apply[A](f: QuckooClient2 => QuckooIO[A]): ConsoleIO[A] =
       refreshingToken(Kleisli(f))
 
     private def refreshingToken[A](action: ConsoleIO[A]): ConsoleIO[A] = Kleisli { client =>
-      val handleExpired = ClientIO.suspend(client.refreshToken() >> action.run(client))
+      val handleExpired = QuckooIO.suspend(client.refreshToken() >> action.run(client))
 
       action.run(client).recoverWith {
         case PassportExpired(_) => handleExpired
@@ -49,7 +50,7 @@ package object core {
     }
 
     def local[A](action: IO[A]): ConsoleIO[A] = Kleisli { _ =>
-      LiftIO[ClientIO].liftIO(action)
+      LiftIO[QuckooIO].liftIO(action)
     }
 
   }

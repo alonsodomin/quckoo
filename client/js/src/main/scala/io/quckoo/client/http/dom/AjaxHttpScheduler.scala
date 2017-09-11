@@ -26,8 +26,7 @@ import io.circe.java8.time._
 import io.circe.syntax._
 
 import io.quckoo._
-import io.quckoo.api2.Scheduler
-import io.quckoo.client.ClientIO
+import io.quckoo.api2.{Scheduler, QuckooIO}
 import io.quckoo.client.http._
 import io.quckoo.protocol.scheduler.{ExecutionPlanCancelled, ExecutionPlanStarted, ScheduleJob}
 import io.quckoo.serialization.json._
@@ -38,12 +37,12 @@ import org.scalajs.dom.ext.Ajax
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-trait AjaxHttpScheduler extends Scheduler[ClientIO] {
+trait AjaxHttpScheduler extends Scheduler[QuckooIO] {
 
   override def cancelPlan(
       planId: PlanId
-  ): ClientIO[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] =
-    ClientIO.auth { session =>
+  ): QuckooIO[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] =
+    QuckooIO.auth { session =>
       val uri = s"$ExecutionPlansURI/$planId"
       val ajax = IO.fromFuture(Eval.later {
         Ajax.delete(uri, headers = Map(bearerToken(session.passport)))
@@ -59,8 +58,8 @@ trait AjaxHttpScheduler extends Scheduler[ClientIO] {
       }
     }
 
-  override def fetchPlan(planId: PlanId): ClientIO[Option[ExecutionPlan]] =
-    ClientIO.auth { session =>
+  override def fetchPlan(planId: PlanId): QuckooIO[Option[ExecutionPlan]] =
+    QuckooIO.auth { session =>
       val uri = s"$ExecutionPlansURI/$planId"
       val ajax = IO.fromFuture(Eval.later {
         Ajax.get(uri, headers = Map(bearerToken(session.passport)))
@@ -76,8 +75,8 @@ trait AjaxHttpScheduler extends Scheduler[ClientIO] {
       }
     }
 
-  override def fetchTask(taskId: TaskId): ClientIO[Option[TaskExecution]] =
-    ClientIO.auth { session =>
+  override def fetchTask(taskId: TaskId): QuckooIO[Option[TaskExecution]] =
+    QuckooIO.auth { session =>
       val uri = s"$TaskExecutionsURI/$taskId"
       val ajax = IO.fromFuture(Eval.later {
         Ajax.get(uri, headers = Map(bearerToken(session.passport)))
@@ -96,8 +95,8 @@ trait AjaxHttpScheduler extends Scheduler[ClientIO] {
       jobId: JobId,
       trigger: Trigger,
       timeout: Option[FiniteDuration]
-  ): ClientIO[Either[InvalidJob, ExecutionPlanStarted]] =
-    ClientIO.auth { session =>
+  ): QuckooIO[Either[InvalidJob, ExecutionPlanStarted]] =
+    QuckooIO.auth { session =>
       val payload = ScheduleJob(jobId, trigger, timeout).asJson.noSpaces
       val hdrs = Map(
         JsonContentTypeHeader,
@@ -118,7 +117,7 @@ trait AjaxHttpScheduler extends Scheduler[ClientIO] {
       }
     }
 
-  override def allPlans: ClientIO[Seq[(PlanId, ExecutionPlan)]] = ClientIO.auth { session =>
+  override def allPlans: QuckooIO[Seq[(PlanId, ExecutionPlan)]] = QuckooIO.auth { session =>
     val ajax = IO.fromFuture(Eval.later {
       Ajax.get(ExecutionPlansURI, headers = Map(bearerToken(session.passport)))
     })
@@ -129,7 +128,7 @@ trait AjaxHttpScheduler extends Scheduler[ClientIO] {
     }
   }
 
-  override def allTasks: ClientIO[Seq[(TaskId, TaskExecution)]] = ClientIO.auth { session =>
+  override def allTasks: QuckooIO[Seq[(TaskId, TaskExecution)]] = QuckooIO.auth { session =>
     val ajax = IO.fromFuture(Eval.later {
       Ajax.get(TaskExecutionsURI, headers = Map(bearerToken(session.passport)))
     })

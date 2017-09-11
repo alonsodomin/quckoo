@@ -17,9 +17,9 @@
 package io.quckoo.client
 
 import cats.effect.IO
-import io.quckoo.api2.{Cluster, Registry, Scheduler, Security}
+import io.quckoo.api2.{Cluster, Registry, Scheduler, Security, QuckooIO}
 
-trait QuckooClient2 extends Cluster[ClientIO] with Security[ClientIO] with Registry[ClientIO] with Scheduler[ClientIO] {
+trait QuckooClient2 extends Cluster[QuckooIO] with Security[QuckooIO] with Registry[QuckooIO] with Scheduler[QuckooIO] {
 
   def shutdown(): IO[Unit]
 

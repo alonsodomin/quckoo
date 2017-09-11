@@ -23,24 +23,24 @@ import cats.implicits._
 import io.circe.generic.auto._
 import io.circe.parser.decode
 
-import io.quckoo.api2.Cluster
-import io.quckoo.client.ClientIO
+import io.quckoo.api2.{Cluster, QuckooIO}
 import io.quckoo.client.http._
 import io.quckoo.net.QuckooState
+import io.quckoo.util._
 
 import org.scalajs.dom.ext.Ajax
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-trait AjaxHttpCluster extends Cluster[ClientIO] {
+trait AjaxHttpCluster extends Cluster[QuckooIO] {
 
-  override def currentState: ClientIO[QuckooState] = ClientIO.auth { session =>
+  override def currentState: QuckooIO[QuckooState] = QuckooIO.auth { session =>
     val ajax = IO.fromFuture(Eval.later {
       Ajax.get(ClusterStateURI, headers = Map(bearerToken(session.passport)))
     })
 
     ajax >>= handleResponse {
       case res if res.status == 200 =>
-        IO.async[QuckooState](_(decode[QuckooState](res.responseText)))
+        attempt2IO(decode[QuckooState](res.responseText))
     }
   }
 

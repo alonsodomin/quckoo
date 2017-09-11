@@ -27,19 +27,18 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.generic.auto._
 
 import io.quckoo.QuckooError
-import io.quckoo.api2.Registry
-import io.quckoo.client.ClientIO
+import io.quckoo.api2.{QuckooIO, Registry}
 import io.quckoo.client.http._
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.serialization.json._
 import io.quckoo.{JobId, JobNotFound, JobSpec}
 
-trait AkkaHttpRegistry extends AkkaHttpClientSupport with Registry[ClientIO] {
+trait AkkaHttpRegistry extends AkkaHttpClientSupport with Registry[QuckooIO] {
   import FailFastCirceSupport._
 
   private def jobAction[A](jobId: JobId, action: String)(
       onSuccess: JobId => A
-  ): ClientIO[Either[JobNotFound, A]] = ClientIO.auth { session =>
+  ): QuckooIO[Either[JobNotFound, A]] = QuckooIO.auth { session =>
     val request =
       HttpRequest(HttpMethods.PUT, uri = s"$JobsURI/$jobId/$action")
         .withSession(session)
@@ -52,19 +51,19 @@ trait AkkaHttpRegistry extends AkkaHttpClientSupport with Registry[ClientIO] {
     }
   }
 
-  override def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] =
+  override def enableJob(jobId: JobId): QuckooIO[Either[JobNotFound, JobEnabled]] =
     jobAction(jobId, "enable")(JobEnabled)
 
-  override def disableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobDisabled]] =
+  override def disableJob(jobId: JobId): QuckooIO[Either[JobNotFound, JobDisabled]] =
     jobAction(jobId, "disable")(JobDisabled)
 
-  override def allJobs: ClientIO[Seq[(JobId, JobSpec)]] = ClientIO.auth { session =>
+  override def allJobs: QuckooIO[Seq[(JobId, JobSpec)]] = QuckooIO.auth { session =>
     val request = HttpRequest(HttpMethods.GET, uri = JobsURI).withSession(session)
     sendRequest(request)(handleEntity[Seq[(JobId, JobSpec)]](_.status == StatusCodes.OK))
   }
 
-  override def fetchJob(jobId: JobId): ClientIO[Option[JobSpec]] =
-    ClientIO.auth { session =>
+  override def fetchJob(jobId: JobId): QuckooIO[Option[JobSpec]] =
+    QuckooIO.auth { session =>
       def notFoundHandler: HttpResponseHandler[Option[JobSpec]] = {
         case res if res.status == StatusCodes.NotFound => IO.pure(None)
       }
@@ -77,8 +76,8 @@ trait AkkaHttpRegistry extends AkkaHttpClientSupport with Registry[ClientIO] {
       sendRequest(request)(handler)
     }
 
-  override def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]] =
-    ClientIO.auth { session =>
+  override def registerJob(jobSpec: JobSpec): QuckooIO[ValidatedNel[QuckooError, JobId]] =
+    QuckooIO.auth { session =>
       def request: IO[HttpRequest] =
         marshalEntity(jobSpec).map { entity =>
           HttpRequest(HttpMethods.PUT, uri = JobsURI, entity = entity).withSession(session)

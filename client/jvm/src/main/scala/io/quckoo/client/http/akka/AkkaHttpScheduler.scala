@@ -27,21 +27,20 @@ import io.circe.generic.auto._
 import io.circe.java8.time._
 
 import io.quckoo._
-import io.quckoo.api2.Scheduler
-import io.quckoo.client.ClientIO
+import io.quckoo.api2.{QuckooIO, Scheduler}
 import io.quckoo.client.http._
 import io.quckoo.protocol.scheduler.{ExecutionPlanCancelled, ExecutionPlanStarted, ScheduleJob}
 import io.quckoo.serialization.json._
 
 import scala.concurrent.duration._
 
-trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[ClientIO] {
+trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[QuckooIO] {
   import FailFastCirceSupport._
 
   override def cancelPlan(
       planId: PlanId
-  ): ClientIO[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] =
-    ClientIO.auth { session =>
+  ): QuckooIO[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] =
+    QuckooIO.auth { session =>
       val request =
         HttpRequest(HttpMethods.DELETE, uri = s"$ExecutionPlansURI/$planId")
           .withSession(session)
@@ -62,7 +61,7 @@ trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[ClientIO] {
       jobId: JobId,
       trigger: Trigger,
       timeout: Option[FiniteDuration]
-  ): ClientIO[Either[InvalidJob, ExecutionPlanStarted]] = ClientIO.auth { session =>
+  ): QuckooIO[Either[InvalidJob, ExecutionPlanStarted]] = QuckooIO.auth { session =>
     def request: IO[HttpRequest] = {
       val payload = ScheduleJob(jobId, trigger, timeout)
       marshalEntity(payload).map { entity =>
@@ -82,8 +81,8 @@ trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[ClientIO] {
     request >>= (sendRequest(_)(handler))
   }
 
-  override def fetchPlan(planId: PlanId): ClientIO[Option[ExecutionPlan]] =
-    ClientIO.auth { session =>
+  override def fetchPlan(planId: PlanId): QuckooIO[Option[ExecutionPlan]] =
+    QuckooIO.auth { session =>
       val request =
         HttpRequest(HttpMethods.GET, uri = s"$ExecutionPlansURI/$planId").withSession(session)
 
@@ -97,8 +96,8 @@ trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[ClientIO] {
       sendRequest(request)(handler)
     }
 
-  override def fetchTask(taskId: TaskId): ClientIO[Option[TaskExecution]] =
-    ClientIO.auth { session =>
+  override def fetchTask(taskId: TaskId): QuckooIO[Option[TaskExecution]] =
+    QuckooIO.auth { session =>
       val request =
         HttpRequest(HttpMethods.GET, uri = s"$TaskExecutionsURI/$taskId").withSession(session)
 
@@ -112,12 +111,12 @@ trait AkkaHttpScheduler extends AkkaHttpClientSupport with Scheduler[ClientIO] {
       sendRequest(request)(handler)
     }
 
-  override def allPlans: ClientIO[Seq[(PlanId, ExecutionPlan)]] = ClientIO.auth { session =>
+  override def allPlans: QuckooIO[Seq[(PlanId, ExecutionPlan)]] = QuckooIO.auth { session =>
     val request = HttpRequest(HttpMethods.GET, uri = ExecutionPlansURI).withSession(session)
     sendRequest(request)(handleEntity[Seq[(PlanId, ExecutionPlan)]](_.status == StatusCodes.OK))
   }
 
-  override def allTasks: ClientIO[Seq[(TaskId, TaskExecution)]] = ClientIO.auth { session =>
+  override def allTasks: QuckooIO[Seq[(TaskId, TaskExecution)]] = QuckooIO.auth { session =>
     val request = HttpRequest(HttpMethods.GET, uri = TaskExecutionsURI).withSession(session)
     sendRequest(request)(handleEntity[Seq[(TaskId, TaskExecution)]](_.status == StatusCodes.OK))
   }

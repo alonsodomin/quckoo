@@ -20,23 +20,22 @@ import cats.Eval
 import cats.effect.IO
 import cats.implicits._
 
-import io.quckoo.api2.Security
+import io.quckoo.api2.{Security, QuckooIO}
 import io.quckoo.auth._
-import io.quckoo.client.ClientIO
 import io.quckoo.client.http._
 
 import org.scalajs.dom
 import org.scalajs.dom.ext.{Ajax, AjaxException}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-trait AjaxHttpSecurity extends Security[ClientIO] {
+trait AjaxHttpSecurity extends Security[QuckooIO] {
 
   private def readPassportFromResponse(request: dom.XMLHttpRequest): IO[Passport] =
     if (request.status == 200)
       IO.async(cb => cb(Passport(request.responseText)))
     else IO.raiseError(InvalidCredentials)
 
-  override def signIn(username: String, password: String): ClientIO[Unit] = {
+  override def signIn(username: String, password: String): QuckooIO[Unit] = {
     def authHeaders(credentials: Credentials): IO[Map[String, String]] =
       credentials.toBase64.map(v => Map(AuthorizationHeader -> v))
 
@@ -56,13 +55,13 @@ trait AjaxHttpSecurity extends Security[ClientIO] {
         }
     }
 
-    ClientIO.session {
+    QuckooIO.session {
       case Session.Anonymous           => authenticate()
       case auth: Session.Authenticated => IO.pure(auth)
     }
   }
 
-  override def signOut(): ClientIO[Unit] = ClientIO.session {
+  override def signOut(): QuckooIO[Unit] = QuckooIO.session {
     case anon: Session.Anonymous => IO.pure(anon)
     case Session.Authenticated(passport) =>
       val req =
@@ -70,7 +69,7 @@ trait AjaxHttpSecurity extends Security[ClientIO] {
       req.map(_ => Session.Anonymous)
   }
 
-  override def refreshToken(): ClientIO[Unit] = ClientIO.session {
+  override def refreshToken(): QuckooIO[Unit] = QuckooIO.session {
     case Session.Anonymous => IO.raiseError(NotAuthorized)
     case auth @ Session.Authenticated(passport) =>
       val req =

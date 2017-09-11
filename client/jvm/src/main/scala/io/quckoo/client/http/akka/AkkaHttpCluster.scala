@@ -20,17 +20,16 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest, StatusCodes}
 
 import io.circe.generic.auto._
 
-import io.quckoo.api2.Cluster
-import io.quckoo.client.ClientIO
+import io.quckoo.api2.{QuckooIO, Cluster}
 import io.quckoo.client.http._
 import io.quckoo.net.QuckooState
 
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 
-trait AkkaHttpCluster extends AkkaHttpClientSupport with Cluster[ClientIO] {
+trait AkkaHttpCluster extends AkkaHttpClientSupport with Cluster[QuckooIO] {
   import FailFastCirceSupport._
 
-  override def currentState: ClientIO[QuckooState] = ClientIO.auth { session =>
+  override def currentState: QuckooIO[QuckooState] = QuckooIO.auth { session =>
     val request = HttpRequest(HttpMethods.GET, uri = ClusterStateURI)
     sendRequest(request)(handleEntity[QuckooState](_.status == StatusCodes.OK))
   }

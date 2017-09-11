@@ -26,8 +26,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 
 import io.quckoo.{JobId, JobNotFound, JobSpec, QuckooError}
-import io.quckoo.api2.Registry
-import io.quckoo.client.ClientIO
+import io.quckoo.api2.{QuckooIO, Registry}
 import io.quckoo.client.http._
 import io.quckoo.protocol.registry.{JobDisabled, JobEnabled}
 import io.quckoo.util._
@@ -35,12 +34,12 @@ import io.quckoo.util._
 import org.scalajs.dom.ext.Ajax
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-trait AjaxHttpRegistry extends Registry[ClientIO] {
+trait AjaxHttpRegistry extends Registry[QuckooIO] {
 
   private def jobAction[A](jobId: JobId, action: String)(
       onSuccess: JobId => A
-  ): ClientIO[Either[JobNotFound, A]] =
-    ClientIO.auth { session =>
+  ): QuckooIO[Either[JobNotFound, A]] =
+    QuckooIO.auth { session =>
       val uri = s"$JobsURI/$jobId/$action"
       val ajax = IO.fromFuture(Eval.later {
         Ajax.post(uri, headers = Map(bearerToken(session.passport)))
@@ -54,13 +53,13 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
       }
     }
 
-  override def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] =
+  override def enableJob(jobId: JobId): QuckooIO[Either[JobNotFound, JobEnabled]] =
     jobAction(jobId, "enable")(JobEnabled)
 
-  override def disableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobDisabled]] =
+  override def disableJob(jobId: JobId): QuckooIO[Either[JobNotFound, JobDisabled]] =
     jobAction(jobId, "disabled")(JobDisabled)
 
-  override def allJobs: ClientIO[Seq[(JobId, JobSpec)]] = ClientIO.auth { session =>
+  override def allJobs: QuckooIO[Seq[(JobId, JobSpec)]] = QuckooIO.auth { session =>
     val ajax = IO.fromFuture(Eval.later {
       Ajax.get(JobsURI, headers = Map(bearerToken(session.passport)))
     })
@@ -71,8 +70,8 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
     }
   }
 
-  override def fetchJob(jobId: JobId): ClientIO[Option[JobSpec]] =
-    ClientIO.auth { session =>
+  override def fetchJob(jobId: JobId): QuckooIO[Option[JobSpec]] =
+    QuckooIO.auth { session =>
       val uri = s"$JobsURI/$jobId"
       val ajax = IO.fromFuture(Eval.later {
         Ajax.get(uri, headers = Map(bearerToken(session.passport)))
@@ -86,8 +85,8 @@ trait AjaxHttpRegistry extends Registry[ClientIO] {
       }
     }
 
-  override def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]] =
-    ClientIO.auth { session =>
+  override def registerJob(jobSpec: JobSpec): QuckooIO[ValidatedNel[QuckooError, JobId]] =
+    QuckooIO.auth { session =>
       val ajax = IO.fromFuture(Eval.later {
         Ajax.put(
           JobsURI,
