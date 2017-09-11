@@ -37,8 +37,7 @@ package object core {
   type ConsoleIO[A] = Kleisli[QuckooIO, QuckooClient2, A]
   object ConsoleIO {
 
-    @inline
-    def apply[A](f: QuckooClient2 => QuckooIO[A]): ConsoleIO[A] =
+    def remote[A](f: QuckooClient2 => QuckooIO[A]): ConsoleIO[A] =
       refreshingToken(Kleisli(f))
 
     private def refreshingToken[A](action: ConsoleIO[A]): ConsoleIO[A] = Kleisli { client =>
@@ -49,8 +48,8 @@ package object core {
       }
     }
 
-    def local[A](action: IO[A]): ConsoleIO[A] = Kleisli { _ =>
-      LiftIO[QuckooIO].liftIO(action)
+    def local[A](action: => A): ConsoleIO[A] = Kleisli { _ =>
+      LiftIO[QuckooIO].liftIO(IO(action))
     }
 
   }
