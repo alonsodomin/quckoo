@@ -43,7 +43,6 @@ lazy val commonSettings = Seq(
     "-Ypartial-unification"
   ),
   resolvers ++= Seq(
-    Opts.resolver.mavenLocalFile,
     Resolver.bintrayRepo("krasserm", "maven"),
     Resolver.bintrayRepo("hseeberger", "maven"),
     Resolver.bintrayRepo("dnvriend", "maven"),
