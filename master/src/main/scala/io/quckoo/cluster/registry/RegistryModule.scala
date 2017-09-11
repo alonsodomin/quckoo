@@ -22,10 +22,12 @@ import akka.pattern._
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
 
+import cats.Eval
 import cats.data.{EitherT, ValidatedNel}
+import cats.effect.{LiftIO, IO}
 import cats.implicits._
 
-import io.quckoo.api2.{Registry => RegistryAPI}
+import io.quckoo.api2.{QuckooIO, Registry => RegistryAPI}
 import io.quckoo.cluster.QuckooFacade.DefaultBufferSize
 import io.quckoo.protocol.registry._
 import io.quckoo._
@@ -33,8 +35,8 @@ import io.quckoo._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-abstract class RegistryModule(registryActor: ActorRef)(implicit actorSystem: ActorSystem)
-    extends RegistryAPI[Future] {
+class RegistryModule(registryActor: ActorRef)(implicit actorSystem: ActorSystem)
+    extends RegistryAPI[QuckooIO] {
   import actorSystem.dispatcher
 
   implicit val materialier: ActorMaterializer = ActorMaterializer(
@@ -42,54 +44,75 @@ abstract class RegistryModule(registryActor: ActorRef)(implicit actorSystem: Act
     "registry"
   )
 
-  override def enableJob(jobId: JobId): Future[Either[JobNotFound, JobEnabled]] = {
-    implicit val timeout = Timeout(5 seconds)
-    (registryActor ? EnableJob(jobId)).map {
-      case msg: JobNotFound => msg.asLeft[JobEnabled]
-      case msg: JobEnabled  => msg.asRight[JobNotFound]
-    }
-  }
-
-  override def disableJob(jobId: JobId): Future[Either[JobNotFound, JobDisabled]] = {
-    implicit val timeout = Timeout(5 seconds)
-    (registryActor ? EnableJob(jobId)).map {
-      case msg: JobNotFound => msg.asLeft[JobDisabled]
-      case msg: JobDisabled => msg.asRight[JobNotFound]
-    }
-  }
-
-  override def fetchJob(jobId: JobId): Future[Option[JobSpec]] = {
-    implicit val timeout = Timeout(5 seconds)
-    (registryActor ? GetJob(jobId)).map {
-      case JobNotFound(_) => None
-      case spec: JobSpec  => Some(spec)
-    }
-  }
-
-  override def allJobs: Future[Seq[(JobId, JobSpec)]] =
-    Source
-      .actorRef[(JobId, JobSpec)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
-      .mapMaterializedValue { upstream =>
-        registryActor.tell(GetJobs, upstream)
+  override def enableJob(jobId: JobId): QuckooIO[Either[JobNotFound, JobEnabled]] = {
+    val action = IO.fromFuture(Eval.later {
+      implicit val timeout = Timeout(5 seconds)
+      (registryActor ? EnableJob(jobId)).map {
+        case msg: JobNotFound => msg.asLeft[JobEnabled]
+        case msg: JobEnabled  => msg.asRight[JobNotFound]
       }
-      .runFold(Map.empty[JobId, JobSpec])(_ + _)
-      .map(_.toList)
+    })
 
-  override def registerJob(jobSpec: JobSpec): Future[ValidatedNel[QuckooError, JobId]] = {
-    val validatedJobSpec = JobSpec.valid.async
-      .run(jobSpec)
-      .map(_.leftMap(ValidationFault).leftMap(_.asInstanceOf[QuckooError]))
+    LiftIO[QuckooIO].liftIO(action)
+  }
 
-    EitherT(validatedJobSpec.map(_.toEither))
-      .flatMapF { validJobSpec =>
-        implicit val timeout = Timeout(10 minutes)
+  override def disableJob(jobId: JobId): QuckooIO[Either[JobNotFound, JobDisabled]] = {
+    val action = IO.fromFuture(Eval.later {
+      implicit val timeout = Timeout(5 seconds)
+      (registryActor ? EnableJob(jobId)).map {
+        case msg: JobNotFound => msg.asLeft[JobDisabled]
+        case msg: JobDisabled => msg.asRight[JobNotFound]
+      }
+    })
 
-        (registryActor ? RegisterJob(validJobSpec)) map {
-          case JobAccepted(jobId, _) => jobId.asRight[QuckooError]
-          case JobRejected(_, error) => error.asLeft[JobId]
+    LiftIO[QuckooIO].liftIO(action)
+  }
+
+  override def fetchJob(jobId: JobId): QuckooIO[Option[JobSpec]] = {
+    val action = IO.fromFuture(Eval.later {
+      implicit val timeout = Timeout(5 seconds)
+      (registryActor ? GetJob(jobId)).map {
+        case JobNotFound(_) => None
+        case spec: JobSpec  => Some(spec)
+      }
+    })
+
+    LiftIO[QuckooIO].liftIO(action)
+  }
+
+  override def allJobs: QuckooIO[Seq[(JobId, JobSpec)]] = {
+    val action = IO.fromFuture(Eval.later {
+      Source
+        .actorRef[(JobId, JobSpec)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
+        .mapMaterializedValue { upstream =>
+          registryActor.tell(GetJobs, upstream)
         }
-      }
-      .value
-      .map(_.toValidatedNel)
+        .runFold(Map.empty[JobId, JobSpec])(_ + _)
+        .map(_.toList)
+    })
+
+    LiftIO[QuckooIO].liftIO(action)
+  }
+
+  override def registerJob(jobSpec: JobSpec): QuckooIO[ValidatedNel[QuckooError, JobId]] = {
+    val action = IO.fromFuture(Eval.later {
+      val validatedJobSpec = JobSpec.valid.async
+        .run(jobSpec)
+        .map(_.leftMap(ValidationFault).leftMap(_.asInstanceOf[QuckooError]))
+
+      EitherT(validatedJobSpec.map(_.toEither))
+        .flatMapF { validJobSpec =>
+          implicit val timeout = Timeout(10 minutes)
+
+          (registryActor ? RegisterJob(validJobSpec)) map {
+            case JobAccepted(jobId, _) => jobId.asRight[QuckooError]
+            case JobRejected(_, error) => error.asLeft[JobId]
+          }
+        }
+        .value
+        .map(_.toValidatedNel)
+    })
+
+    LiftIO[QuckooIO].liftIO(action)
   }
 }
