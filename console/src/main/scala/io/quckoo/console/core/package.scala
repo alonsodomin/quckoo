@@ -41,16 +41,15 @@ package object core {
       refreshingToken(Kleisli(f))
 
     private def refreshingToken[A](action: ConsoleIO[A]): ConsoleIO[A] = Kleisli { client =>
-      val handleExpired = QuckooIO.suspend(client.refreshToken() >> action.run(client))
+      def handleExpired = client.refreshToken() >> action.run(client)
 
       action.run(client).recoverWith {
         case PassportExpired(_) => handleExpired
       }
     }
 
-    def local[A](action: => A): ConsoleIO[A] = Kleisli { _ =>
-      LiftIO[QuckooIO].liftIO(IO(action))
-    }
+    def local[A](action: => A): ConsoleIO[A] =
+      LiftIO[ConsoleIO].liftIO(IO(action))
 
   }
 

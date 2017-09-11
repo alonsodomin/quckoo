@@ -18,7 +18,6 @@ package io.quckoo.console.core
 
 import cats.Functor
 import cats.data.{EitherT, NonEmptyList, ValidatedNel}
-import cats.effect.IO
 import cats.implicits._
 
 import diode.data.{Pot, Ready, Unavailable}
@@ -65,18 +64,22 @@ trait ConsoleOps { this: LoggerHolder =>
       case None       => (jobId, Unavailable)
     }
 
-  def loadJobSpecs(keys: Set[JobId] = Set.empty): ConsoleIO[Map[JobId, Pot[JobSpec]]] =
-    if (keys.isEmpty) {
+  def loadJobSpecs(keys: Set[JobId] = Set.empty): ConsoleIO[Map[JobId, Pot[JobSpec]]] = {
+    def loadAll: ConsoleIO[Map[JobId, Pot[JobSpec]]] =
       for {
         _      <- ConsoleIO.local(logger.debug("Loading all jobs from the server..."))
         result <- ConsoleIO.remote(_.allJobs).map(_.map { case (k, v) => (k, Ready(v)) }.toMap)
       } yield result
-    } else {
+
+    def loadFromSet: ConsoleIO[Map[JobId, Pot[JobSpec]]] =
       for {
         _      <- ConsoleIO.local(logger.debug("Loading job specs for ids: {}", keys.mkString(", ")))
-        result <- keys.toList.map(loadJobSpec).sequence.map(_.toMap)
+        result <- keys.toList.traverse(loadJobSpec).map(_.toMap)
       } yield result
-    }
+
+    if (keys.isEmpty) loadAll
+    else loadFromSet
+  }
 
   def scheduleJob(details: ScheduleJob): ConsoleIO[Event] =
     foldIntoEvent(ConsoleIO.remote(_.submit(details.jobId, details.trigger, details.timeout)))
@@ -84,20 +87,24 @@ trait ConsoleOps { this: LoggerHolder =>
   def cancelPlan(planId: PlanId): ConsoleIO[Event] =
     foldIntoEvent(ConsoleIO.remote(_.cancelPlan(planId)))
 
-  def loadPlans(ids: Set[PlanId] = Set.empty): ConsoleIO[Map[PlanId, Pot[ExecutionPlan]]] =
-    if (ids.isEmpty) {
+  def loadPlans(ids: Set[PlanId] = Set.empty): ConsoleIO[Map[PlanId, Pot[ExecutionPlan]]] = {
+    def loadAll: ConsoleIO[Map[PlanId, Pot[ExecutionPlan]]] =
       for {
         _      <- ConsoleIO.local(logger.debug("Loading all execution plans from the server"))
         result <- ConsoleIO.remote(_.allPlans.map(_.map { case (k, v) => (k, Ready(v)) }.toMap))
       } yield result
-    } else {
+
+    def loadFromSet: ConsoleIO[Map[PlanId, Pot[ExecutionPlan]]] =
       for {
         _ <- ConsoleIO.local(
           logger.debug("Loading execution plans for ids: {}", ids.mkString(", "))
         )
-        result <- ids.toList.map(loadPlan).sequence.map(_.toMap)
+        result <- ids.toList.traverse(loadPlan).map(_.toMap)
       } yield result
-    }
+
+    if (ids.isEmpty) loadAll
+    else loadFromSet
+  }
 
   def loadPlan(id: PlanId): ConsoleIO[(PlanId, Pot[ExecutionPlan])] =
     ConsoleIO.remote(_.fetchPlan(id)).map {
@@ -109,7 +116,7 @@ trait ConsoleOps { this: LoggerHolder =>
     if (ids.isEmpty) {
       ConsoleIO.remote(_.allTasks).map(_.map { case (k, v) => (k, Ready(v)) }.toMap)
     } else {
-      ids.toList.map(loadTask).sequence.map(_.toMap)
+      ids.toList.traverse(loadTask).map(_.toMap)
     }
 
   def loadTask(id: TaskId): ConsoleIO[(TaskId, Pot[TaskExecution])] =
