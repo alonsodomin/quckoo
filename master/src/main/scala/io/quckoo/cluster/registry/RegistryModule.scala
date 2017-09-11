@@ -32,7 +32,6 @@ import io.quckoo.cluster.QuckooFacade.DefaultBufferSize
 import io.quckoo.protocol.registry._
 import io.quckoo._
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class RegistryModule(registryActor: ActorRef)(implicit actorSystem: ActorSystem)
