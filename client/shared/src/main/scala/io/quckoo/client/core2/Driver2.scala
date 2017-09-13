@@ -18,6 +18,4 @@ package io.quckoo.client.core2
 
 class Driver2[F[_], T <: Transport] {
 
-
-
 }

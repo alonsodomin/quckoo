@@ -126,9 +126,9 @@ trait ConsoleOps { this: LoggerHolder =>
     }
 
   private[this] def foldIntoEvent[F[_]: Functor, E <: QuckooError, A <: Event](
-      f: => F[Either[E, A]]
+      fea: F[Either[E, A]]
   ): F[Event] =
-    EitherT(f)
+    EitherT(fea)
       .leftMap(fault => Failed(NonEmptyList.of[QuckooError](fault)))
       .fold(identity, identity)
 

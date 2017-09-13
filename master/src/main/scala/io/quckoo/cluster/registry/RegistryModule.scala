@@ -27,10 +27,10 @@ import cats.data.{EitherT, ValidatedNel}
 import cats.effect.{LiftIO, IO}
 import cats.implicits._
 
+import io.quckoo._
 import io.quckoo.api2.{QuckooIO, Registry => RegistryAPI}
 import io.quckoo.cluster.QuckooFacade.DefaultBufferSize
 import io.quckoo.protocol.registry._
-import io.quckoo._
 
 import scala.concurrent.duration._
 
