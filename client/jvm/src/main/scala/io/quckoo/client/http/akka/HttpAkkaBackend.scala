@@ -49,9 +49,9 @@ import scala.concurrent.Future
 /**
   * Created by alonsodomin on 11/09/2016.
   */
-private[http] final class HttpAkkaBackend(host: String,
-                                          port: Int = 80)(implicit val actorSystem: ActorSystem)
-    extends HttpBackend {
+private[http] final class HttpAkkaBackend(host: String, port: Int = 80)(
+    implicit val actorSystem: ActorSystem
+) extends HttpBackend {
 
   implicit val materializer =
     ActorMaterializer(ActorMaterializerSettings(actorSystem), "quckoo-http")

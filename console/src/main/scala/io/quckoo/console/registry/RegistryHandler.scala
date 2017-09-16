@@ -31,9 +31,9 @@ import scala.concurrent.ExecutionContext
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]],
-                      ops: ConsoleOps)(implicit ec: ExecutionContext)
-    extends ConsoleHandler[PotMap[JobId, JobSpec]](model) with AuthHandler[PotMap[JobId, JobSpec]]
+class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]], ops: ConsoleOps)(
+    implicit ec: ExecutionContext
+) extends ConsoleHandler[PotMap[JobId, JobSpec]](model) with AuthHandler[PotMap[JobId, JobSpec]]
     with LazyLogging {
 
   override protected def handle = {

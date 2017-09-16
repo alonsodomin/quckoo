@@ -29,9 +29,9 @@ import scala.concurrent.ExecutionContext
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-class TasksHandler(model: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]],
-                   ops: ConsoleOps)(implicit ec: ExecutionContext)
-    extends ConsoleHandler[PotMap[TaskId, TaskExecution]](model)
+class TasksHandler(model: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]], ops: ConsoleOps)(
+    implicit ec: ExecutionContext
+) extends ConsoleHandler[PotMap[TaskId, TaskExecution]](model)
     with AuthHandler[PotMap[TaskId, TaskExecution]] with LazyLogging {
 
   override protected def handle = {

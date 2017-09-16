@@ -7,7 +7,7 @@ addSbtPlugin("org.scoverage"     % "sbt-scoverage" % "1.5.1")
 addSbtPlugin("com.jsuereth"      % "sbt-pgp"       % "1.1.0")
 addSbtPlugin("com.github.gseitz" % "sbt-release"   % "1.0.6")
 addSbtPlugin("org.xerial.sbt"    % "sbt-sonatype"  % "2.0")
-addSbtPlugin("com.lucidchart"    % "sbt-scalafmt"  % "1.11")
+addSbtPlugin("com.lucidchart"    % "sbt-scalafmt"  % "1.12")
 
 // Web plugins
 addSbtPlugin("org.scala-js"     % "sbt-scalajs"              % "0.6.20")
@@ -15,7 +15,7 @@ addSbtPlugin("org.scala-native" % "sbt-crossproject"         % "0.2.2")
 addSbtPlugin("org.scala-native" % "sbt-scalajs-crossproject" % "0.2.2")
 addSbtPlugin("com.vmunier"      % "sbt-web-scalajs"          % "1.0.5")
 addSbtPlugin("org.irundaia.sbt" % "sbt-sassify"              % "1.4.9")
-addSbtPlugin("com.typesafe.sbt" % "sbt-twirl"                % "1.3.4")
+addSbtPlugin("com.typesafe.sbt" % "sbt-twirl"                % "1.3.7")
 
 // Server side plugins
 addSbtPlugin("io.spray"          % "sbt-revolver"        % "0.9.0")

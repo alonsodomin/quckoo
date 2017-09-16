@@ -18,7 +18,7 @@ object Dependencies {
     val scalaTest  = "3.0.4"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
-    val mockserver = "3.10.8"
+    val mockserver = "3.11"
     val discipline = "0.8"
 
     // Akka ----------
@@ -69,13 +69,13 @@ object Dependencies {
     val enumeratum  = "1.5.12"
     val enumCirce   = "1.5.14"
     val ivy         = "2.4.0"
-    val monix       = "3.0.0-b20be32"
+    val monix       = "3.0.0-M1"
     val monocle     = "1.4.0"
     val pureconfig  = "0.8.0"
     val refined     = "0.8.3"
     val scalaCss    = "0.5.3"
+    val scalafmt    = "1.2.0"
     val scalaTime   = "2.0.0-M12"
-    val scalatags   = "0.6.5"
     val scopt       = "3.7.0"
     val xml         = "1.0.6"
 
@@ -252,7 +252,6 @@ object Dependencies {
 
   lazy val console = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "com.lihaoyi"      %%% "scalatags"      % version.scalatags,
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
       "io.suzaku"        %%% "diode-react"    % version.diode,
       "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
