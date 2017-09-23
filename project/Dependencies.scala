@@ -18,7 +18,7 @@ object Dependencies {
     val scalaTest  = "3.0.4"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
-    val mockserver = "3.11"
+    val mockserver = "3.10.8"
     val discipline = "0.8"
 
     // Akka ----------

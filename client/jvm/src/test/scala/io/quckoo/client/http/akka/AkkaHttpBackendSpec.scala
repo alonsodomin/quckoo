@@ -79,13 +79,16 @@ class AkkaHttpBackendSpec extends fixture.FlatSpec with MockServer with Matchers
       .flatMap(in => DataBuffer(output).map(out => (in, out)))
       .foreach {
         case (in, out) =>
+          val requestBody  = JsonBody.json(in.asString())
+          val responseBody = JsonBody.json(out.asString())
+
           val mockHttpRequest = MockHttpRequest
             .request("/path")
             .withMethod("POST")
             .withHeader("Content-Type", "application/json")
-            .withBody(JsonBody.json(in.asString()))
+            .withBody(requestBody)
           val mockHttpResponse =
-            MockHttpResponse.response.withBody(JsonBody.json(out.asString()))
+            MockHttpResponse.response.withBody(responseBody)
 
           mockServer.when(mockHttpRequest).respond(mockHttpResponse)
 
