@@ -48,9 +48,7 @@ The easiest way to launch the cluster right now is by building the Docker images
 cluster setup. This operations can easily be done from within SBT:
 
 ```
-sbt
-> docker:publishLocal
-> dockerComposeUp
+sbt launchLocal
 ```
 
 After the previous commands, using `docker ps` you should be able to see 2 master nodes, one worker node and one Cassandra node running as docker containers
