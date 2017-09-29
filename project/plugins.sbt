@@ -14,8 +14,8 @@ addSbtPlugin("org.scala-js"     % "sbt-scalajs"              % "0.6.20")
 addSbtPlugin("org.scala-native" % "sbt-crossproject"         % "0.2.2")
 addSbtPlugin("org.scala-native" % "sbt-scalajs-crossproject" % "0.2.2")
 addSbtPlugin("com.vmunier"      % "sbt-web-scalajs"          % "1.0.6")
-addSbtPlugin("org.irundaia.sbt" % "sbt-sassify"              % "1.4.10")
-addSbtPlugin("com.typesafe.sbt" % "sbt-twirl"                % "1.3.7")
+addSbtPlugin("org.irundaia.sbt" % "sbt-sassify"              % "1.4.11")
+addSbtPlugin("com.typesafe.sbt" % "sbt-twirl"                % "1.3.8")
 
 // Server side plugins
 addSbtPlugin("io.spray"          % "sbt-revolver"        % "0.9.0")
