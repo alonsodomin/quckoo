@@ -17,6 +17,7 @@ inThisBuild(
 )
 
 lazy val commonSettings = Seq(
+  homepage := Some(url("https://www.quckoo.io")),
   licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.txt")),
   organization := "io.quckoo",
   organizationName := "A. Alonso Dominguez",
@@ -70,17 +71,9 @@ lazy val scoverageSettings = Seq(
   coverageExcludedPackages := "io\\.quckoo\\.console\\.html\\..*"
 )
 
-lazy val noPublishSettings = Seq(
-  publish := (),
-  publishLocal := (),
-  publishArtifact := false
-)
-
 lazy val publishSettings = Seq(
-  homepage := Some(url("https://www.quckoo.io")),
   publishMavenStyle := true,
   publishArtifact in Test := false,
-  releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   publishTo := Some(
     if (isSnapshot.value) Opts.resolver.sonatypeSnapshots
     else Opts.resolver.sonatypeStaging
@@ -109,10 +102,14 @@ lazy val publishSettings = Seq(
     </developers>
 )
 
+lazy val noPublishSettings = publishSettings ++ Seq(
+  skip in publish := true,
+  publishArtifact := false
+)
+
 lazy val releaseSettings = {
   import ReleaseTransformations._
 
-  val sonatypeReleaseAll = ReleaseStep(action = Command.process("sonatypeReleaseAll", _))
   val dockerRelease = ReleaseStep(action = st => {
     val extracted              = Project.extract(st)
     val projectRef: ProjectRef = extracted.get(thisProjectRef)
@@ -121,6 +118,7 @@ lazy val releaseSettings = {
   })
 
   Seq(
+    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
@@ -130,7 +128,7 @@ lazy val releaseSettings = {
       commitReleaseVersion,
       tagRelease,
       publishArtifacts,
-      sonatypeReleaseAll,
+      releaseStepCommand("sonatypeReleaseAll"),
       dockerRelease,
       setNextVersion,
       commitNextVersion,
