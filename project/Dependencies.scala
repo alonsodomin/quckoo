@@ -9,7 +9,7 @@ object Dependencies {
 
     // Logging -------
 
-    val slogging = "0.5.3"
+    val slogging = "0.6.0"
     val log4j    = "2.8.2"
     val slf4j    = "1.7.25"
 
@@ -24,7 +24,7 @@ object Dependencies {
     // Akka ----------
 
     object akka {
-      val main = "2.5.4"
+      val main = "2.5.6"
       val kryo = "0.9.2"
 
       val constructr = "0.7.0"
@@ -38,7 +38,7 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.55"
+      val cassandra = "0.56"
       val inmemory  = "2.5.1.1"
     }
 
@@ -72,7 +72,7 @@ object Dependencies {
     val monix       = "3.0.0-M1"
     val monocle     = "1.4.0"
     val pureconfig  = "0.8.0"
-    val refined     = "0.8.3"
+    val refined     = "0.8.4"
     val scalaCss    = "0.5.3"
     val scalafmt    = "1.2.0"
     val scalaTime   = "2.0.0-M12"
