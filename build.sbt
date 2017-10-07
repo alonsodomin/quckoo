@@ -4,12 +4,9 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 lazy val sandbox =
   settingKey[String]("The name of the environment sandbox to use.")
-lazy val botBuild =
-  settingKey[Boolean]("Build by TravisCI instead of local dev environment")
 
 inThisBuild(
   Seq(
-    scalaVersion := "2.12.3",
     parallelExecution := false,
     scalafmtVersion := Dependencies.version.scalafmt,
     scalafmtOnCompile := true
@@ -49,8 +46,7 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("hseeberger", "maven"),
     Resolver.bintrayRepo("dnvriend", "maven"),
     Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
-  ),
-  botBuild := scala.sys.env.get("TRAVIS").isDefined
+  )
 )
 
 lazy val commonJvmSettings = Seq(
@@ -63,7 +59,7 @@ lazy val commonJsSettings = Seq(
   scalaJSStage in Test := FastOptStage,
   jsEnv in Test := PhantomJSEnv().value,
   // batch mode decreases the amount of memory needed to compile scala.js code
-  scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(botBuild.value)
+  scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(isTravisBuild.value)
 )
 
 lazy val scoverageSettings = Seq(
