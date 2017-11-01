@@ -10,7 +10,7 @@ object Dependencies {
     // Logging -------
 
     val slogging = "0.6.0"
-    val log4j    = "2.8.2"
+    val log4j    = "2.9.1"
     val slf4j    = "1.7.25"
 
     // Testing --------
@@ -33,12 +33,12 @@ object Dependencies {
         val main = "10.0.10"
 
         // http extensions
-        val json = "1.18.0"
+        val json = "1.18.1"
         val sse  = "3.0.0"
       }
 
       // persistence plugins
-      val cassandra = "0.56"
+      val cassandra = "0.58"
       val inmemory  = "2.5.1.1"
     }
 
@@ -51,7 +51,7 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "1.1.0"
+    val scalaJsReact    = "1.1.1"
     val scalaJsDom      = "0.9.3"
     val scalaJsJQuery   = "0.9.2"
     val scalaJSScripts  = "1.1.1"
@@ -60,7 +60,7 @@ object Dependencies {
     // Other utils ---
 
     val arm         = "2.0"
-    val betterfiles = "3.1.0"
+    val betterfiles = "3.2.0"
     val diode       = "1.1.2"
     val cats        = "1.0.0-MF"
     val catsEffect  = "0.4"
@@ -74,7 +74,7 @@ object Dependencies {
     val pureconfig  = "0.8.0"
     val refined     = "0.8.4"
     val scalaCss    = "0.5.3"
-    val scalafmt    = "1.2.0"
+    val scalafmt    = "1.3.0"
     val scalaTime   = "2.0.0-M12"
     val scopt       = "3.7.0"
     val xml         = "1.0.6"

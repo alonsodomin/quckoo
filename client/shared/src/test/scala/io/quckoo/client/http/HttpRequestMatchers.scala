@@ -62,7 +62,8 @@ trait HttpRequestMatchers extends Matchers {
     }
   }
 
-  val isJsonRequest: Matcher[HttpRequest] = hasHeader("Content-Type", "application/json")
+  val isJsonRequest: Matcher[HttpRequest] =
+    hasHeader("Content-Type", "application/json")
 
   def hasAuth(username: String, password: String): Matcher[HttpRequest] = {
     val Right(creds) = DataBuffer.fromString(s"$username:$password").toBase64
