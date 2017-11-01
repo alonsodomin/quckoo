@@ -23,6 +23,8 @@ import scala.scalajs.js.annotation._
 @JSGlobal
 object SparkMD5 extends js.Object {
 
+  def hash(str: String, raw: Boolean = false): String = js.native
+
   @js.native
   class ArrayBuffer() extends js.Object {
     def append(chunk: js.typedarray.ArrayBuffer): Unit = js.native

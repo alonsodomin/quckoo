@@ -86,7 +86,7 @@ object Dependencies {
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
     val reactJs          = "15.6.1"
-    val sparkMD5         = "2.0.2"
+    val sparkMD5         = "3.0.0"
     val codemirror       = "5.24.2"
   }
 
