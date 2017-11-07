@@ -70,7 +70,12 @@ object AtTriggerInput {
           <.label(^.`class` := "col-sm-2 control-label", "Date"),
           <.div(
             ^.`class` := "col-sm-10",
-            DateInput(state.date, onDateUpdate _, ^.readOnly := props.readOnly)
+            DateInput(
+              state.date,
+              onDateUpdate _,
+              ^.id := "atTrigger_date",
+              ^.readOnly := props.readOnly
+            )
           )
         ),
         <.div(
@@ -78,7 +83,12 @@ object AtTriggerInput {
           <.label(^.`class` := "col-sm-2 control-label", "Time"),
           <.div(
             ^.`class` := "col-sm-10",
-            TimeInput(state.time, onTimeUpdate _, ^.readOnly := props.readOnly)
+            TimeInput(
+              state.time,
+              onTimeUpdate _,
+              ^.id := "atTrigger_time",
+              ^.readOnly := props.readOnly
+            )
           )
         )
       )
