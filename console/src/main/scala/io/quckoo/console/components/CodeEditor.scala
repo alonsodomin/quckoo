@@ -91,6 +91,7 @@ object CodeEditor {
     private[this] def propagateUpdate: Callback =
       $.state.flatMap(st => $.props.flatMap(_.onUpdate(st.value)))
 
+    // $COVERAGE-OFF$ https://github.com/scoverage/scalac-scoverage-plugin/issues/176
     private[this] def jsOptions(props: Props): js.Dynamic =
       js.Dynamic.literal(
         "mode"          -> props.options.mode.entryName,
@@ -103,6 +104,7 @@ object CodeEditor {
         "autoRefresh"   -> props.options.autoRefresh,
         "readOnly"      -> props.options.readOnly.asInstanceOf[js.Any]
       )
+    // $COVERAGE-ON$
 
     protected[CodeEditor] def initialize(props: Props, state: State): Callback =
       $.getDOMNode

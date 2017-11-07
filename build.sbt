@@ -55,7 +55,6 @@ lazy val commonJvmSettings = Seq(
 
 lazy val commonJsSettings = Seq(
   coverageEnabled := false,
-  coverageExcludedFiles := ".*",
   scalaJSStage in Test := FastOptStage,
   jsEnv in Test := PhantomJSEnv().value,
   // batch mode decreases the amount of memory needed to compile scala.js code
