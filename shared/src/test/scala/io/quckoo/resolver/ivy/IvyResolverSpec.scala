@@ -44,7 +44,7 @@ object IvyResolverSpec {
 
   final val InvalidArtifactId = ArtifactId("com.example", "example", "latest")
   final val TestArtifactId =
-    ArtifactId("io.quckoo", "quckoo-core_2.11", "0.1.0")
+    ArtifactId("org.apache.commons", "commons-lang3", "3.6")
 
 }
 

@@ -16,6 +16,8 @@
 
 package io.quckoo.console.scheduler
 
+import java.time._
+
 import io.quckoo.Trigger
 import io.quckoo.console.test.ConsoleTestExports
 
@@ -23,54 +25,58 @@ import japgolly.scalajs.react.test.ReactTestUtils
 
 import org.scalatest.FunSuite
 
-class CronTriggerInputTest extends FunSuite {
-  import ConsoleTestExports._
-  import CronTriggerInputTestDsl._
+object AtTriggerInputTest {
+  final val TestClock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC)
+}
 
-  implicit val triggerEq = _root_.scalaz.Equal.equalA[Trigger.Cron]
+class AtTriggerInputTest extends FunSuite {
+  import ConsoleTestExports._
+  import AtTriggerInputTestDsl._
+  import AtTriggerInputTest._
 
   val invariants: dsl.Invariants = {
     var invars = dsl.emptyInvariant
 
     invars &= dsl
-      .focus("Expression")
-      .obsAndState(_.expressionInput.value, _.inputExpr)
+      .focus("Date")
+      .obsAndState(_.dateInput.value, _.date.map(_.toString).getOrElse(""))
       .assert
       .equal
 
-    /*invars &= dsl.focus("Expected trigger").obsAndState(
-      _.state.asCron.disjunction.toOption.map(Trigger.Cron),
-      _.state.updatedTrigger
-    ).assert.equal*/
+    invars &= dsl
+      .focus("Time")
+      .obsAndState(_.timeInput.value, _.time.map(_.toString).getOrElse(""))
+      .assert
+      .equal
 
     invars
   }
 
   def runPlan(plan: dsl.Plan): Report[String] = {
-    val initialTrigger = Option.empty[Trigger.Cron]
+    val initialTrigger = Option.empty[Trigger.At]
 
-    ReactTestUtils.withRenderedIntoDocument(CronTriggerInput(initialTrigger, onUpdate)) { comp =>
-      def observe() = new CronTriggerInputObserver(comp.htmlDomZipper)
+    ReactTestUtils.withRenderedIntoDocument(AtTriggerInput(initialTrigger, onUpdate)) { comp =>
+      def observe() = new AtTriggerInputObserver(comp.htmlDomZipper)
 
       val test = plan
         .addInvariants(invariants)
-        .withInitialState(State(""))
+        .withInitialState(State(None, None))
         .test(Observer watch observe())
 
       test.runU
     }
   }
 
-  test("input should perform validation of the cron expression") {
+  test("input should update date and time") {
+    val newDate = LocalDate.now(TestClock).plusDays(25)
+    val newTime = LocalTime.now(TestClock).minusMinutes(15)
+
     val plan = Plan.action(
-      blankInput +>
-        setExpression("* * * * * ?") +> emptyExpression
-        .assert(false) +> hasError.assert.equal(false) >>
-        setExpression("* *") +> emptyExpression.assert(false) +> hasError.assert
-          .equal(true)
+      noDate.assert(true) +> noTime.assert(true) +>
+        setDate(newDate) +> noDate.assert(false) +> noTime.assert(true) >>
+        setTime(newTime) +> noDate.assert(false) +> noTime.assert(false)
     )
 
     runPlan(plan).assert()
   }
-
 }
