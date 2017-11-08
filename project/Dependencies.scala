@@ -18,8 +18,8 @@ object Dependencies {
     val scalaTest  = "3.0.4"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
-    val mockserver = "3.10.8"
     val discipline = "0.8"
+    val wiremock   = "2.10.1"
 
     // Akka ----------
 
@@ -155,11 +155,7 @@ object Dependencies {
 
     val scalaTest  = "org.scalatest"   %% "scalatest"                   % version.scalaTest
     val scalaMock  = "org.scalamock"   %% "scalamock-scalatest-support" % version.scalaMock
-    val mockserver = "org.mock-server"  % "mockserver-netty"            % version.mockserver excludeAll(
-      ExclusionRule(organization = "org.slf4j"),
-      ExclusionRule(organization = "ch.qos.logback"),
-      ExclusionRule(organization = "com.twitter")
-    )
+    val wiremock   = "com.github.tomakehurst" % "wiremock" % version.wiremock
 
     val betterfiles = "com.github.pathikrit" %% "better-files" % version.betterfiles
   }
@@ -241,10 +237,10 @@ object Dependencies {
 
   lazy val clientJVM = Def.settings {
     import libs._
-    libraryDependencies ++= Log4j.All.map(_ % Test) ++ Seq(
+    libraryDependencies ++= Log4j.All.map(_ % Runtime) ++ Seq(
       slogging_slf4j, Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryo, Akka.http.main, Akka.http.sse,
-      mockserver % Test
+      wiremock % Test
     )
   }
 
