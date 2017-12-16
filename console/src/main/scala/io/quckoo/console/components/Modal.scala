@@ -33,17 +33,17 @@ import scalacss.ScalaCssReact._
 object Modal {
 
   case class Options(
-    backdrop: Boolean = true,
-    keyboard: Boolean = true,
-    show: Boolean = true
+      backdrop: Boolean = true,
+      keyboard: Boolean = true,
+      show: Boolean = true
   )
 
   case class Props(
-    header: Callback => VdomNode,
-    footer: Callback => VdomNode,
-    onClosed: Callback,
-    onShown: Option[Callback] = None,
-    options: Options = Options()
+      header: Callback => VdomNode,
+      footer: Callback => VdomNode,
+      onClosed: Callback,
+      onShown: Option[Callback] = None,
+      options: Options = Options()
   )
 
   class Backend($ : BackendScope[Props, Unit]) {

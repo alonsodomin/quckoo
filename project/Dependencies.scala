@@ -10,7 +10,7 @@ object Dependencies {
     // Logging -------
 
     val slogging = "0.6.0"
-    val log4j    = "2.9.1"
+    val log4j    = "2.10.0"
     val slf4j    = "1.7.25"
 
     // Testing --------
@@ -19,18 +19,18 @@ object Dependencies {
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
     val discipline = "0.8"
-    val wiremock   = "2.10.1"
+    val wiremock   = "2.12.0"
 
     // Akka ----------
 
     object akka {
-      val main = "2.5.6"
+      val main = "2.5.8"
       val kryo = "0.9.2"
 
-      val constructr = "0.7.0"
+      val constructr = "0.8.0"
 
       object http {
-        val main = "10.0.10"
+        val main = "10.0.11"
 
         // http extensions
         val json = "1.18.1"
@@ -38,7 +38,7 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.58"
+      val cassandra = "0.59"
       val inmemory  = "2.5.1.1"
     }
 
@@ -52,7 +52,7 @@ object Dependencies {
     // ScalaJS -------
 
     val scalaJsReact    = "1.1.1"
-    val scalaJsDom      = "0.9.3"
+    val scalaJsDom      = "0.9.4"
     val scalaJsJQuery   = "0.9.2"
     val scalaJSScripts  = "1.1.1"
     val testState       = "2.1.2"
@@ -60,8 +60,8 @@ object Dependencies {
     // Other utils ---
 
     val arm         = "2.0"
-    val betterfiles = "3.2.0"
-    val diode       = "1.1.2"
+    val betterfiles = "3.4.0"
+    val diode       = "1.1.3"
     val cats        = "1.0.0-MF"
     val catsEffect  = "0.4"
     val circe       = "0.9.0-M1"
@@ -162,7 +162,7 @@ object Dependencies {
 
   object compiler {
     val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.1" cross CrossVersion.full
-    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.4" cross CrossVersion.binary
+    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.5" cross CrossVersion.binary
 
     val plugins = Seq(macroParadise, kindProjector).map(compilerPlugin)
   }
