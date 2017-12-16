@@ -42,14 +42,14 @@ final class Driver[P <: Protocol] private (
 
   def openChannel[E](ch: Channel.Aux[P, E]): Kleisli[Observable, Unit, ch.Event] = {
     logger.debug("Opening channel for topic: {}", ch.topicTag.name)
-    def decodeEvent = ch.unmarshall.transform(attempt2Observable)
+    def decodeEvent = ch.unmarshall.mapK(attempt2Observable)
     backend.open(ch) andThen decodeEvent
   }
 
   def invoke[C <: CmdMarshalling[P]](implicit ec: ExecutionContext,
                                      cmd: C): Kleisli[Future, cmd.Cmd[cmd.In], cmd.Rslt] = {
-    def encodeRequest  = cmd.marshall.transform(attempt2Future)
-    def decodeResponse = cmd.unmarshall.transform(attempt2Future)
+    def encodeRequest  = cmd.marshall.mapK(attempt2Future)
+    def decodeResponse = cmd.unmarshall.mapK(attempt2Future)
 
     encodeRequest andThen backend.send andThen decodeResponse
   }

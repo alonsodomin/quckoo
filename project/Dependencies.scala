@@ -66,14 +66,16 @@ object Dependencies {
     val arm         = "2.0"
     val betterfiles = "3.4.0"
     val diode       = "1.1.3"
-    val cats        = "1.0.0-MF"
-    val catsEffect  = "0.4"
-    val circe       = "0.9.0-M1"
-    val cron4s      = "0.4.2"
+    object cats {
+      val main      = "1.0.1"
+      val effect    = "0.8"
+    }
+    val circe       = "0.9.1"
+    val cron4s      = "0.4.4"
     val enumeratum  = "1.5.12"
     val enumCirce   = "1.5.14"
     val ivy         = "2.4.0"
-    val monix       = "3.0.0-M1"
+    val monix       = "3.0.0-M2"
     val monocle     = "1.4.0"
     val pureconfig  = "0.8.0"
     val refined     = "0.8.7"
@@ -176,8 +178,8 @@ object Dependencies {
 
   lazy val core = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "org.typelevel"     %%% "cats-free"          % version.cats,
-      "org.typelevel"     %%% "cats-effect"        % version.catsEffect,
+      "org.typelevel"     %%% "cats-free"          % version.cats.main,
+      "org.typelevel"     %%% "cats-effect"        % version.cats.effect,
       "io.circe"          %%% "circe-parser"       % version.circe,
       "io.circe"          %%% "circe-generic"      % version.circe,
       "io.circe"          %%% "circe-optics"       % version.circe,
@@ -363,7 +365,7 @@ object Dependencies {
       "io.github.cquiroz" %%% "scala-java-time"           % version.scalaTime,
       "org.scalatest"     %%% "scalatest"                 % version.scalaTest,
       "org.scalacheck"    %%% "scalacheck"                % version.scalaCheck,
-      "org.typelevel"     %%% "cats-laws"                 % version.cats,
+      "org.typelevel"     %%% "cats-laws"                 % version.cats.main,
       "org.typelevel"     %%% "discipline"                % version.discipline,
       "biz.enef"          %%% "slogging"                  % version.slogging
     )
