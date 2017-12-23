@@ -40,6 +40,7 @@ lazy val commonSettings = Seq(
     "-Ywarn-numeric-widen",
     "-Ypartial-unification"
   ),
+  scalaModuleInfo := scalaModuleInfo.value.map(_.withOverrideScalaVersion(true)),
   resolvers ++= Seq(
     Opts.resolver.mavenLocalFile,
     Resolver.bintrayRepo("krasserm", "maven"),
