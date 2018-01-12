@@ -19,12 +19,12 @@ object Dependencies {
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
     val discipline = "0.8"
-    val wiremock   = "2.12.0"
+    val wiremock   = "2.13.0"
 
     // Akka ----------
 
     object akka {
-      val main = "2.5.8"
+      val main = "2.5.9"
       val kryo = "0.9.2"
 
       val constructr = "0.8.0"
@@ -38,7 +38,7 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.59"
+      val cassandra = "0.80"
       val inmemory  = "2.5.1.1"
     }
 
@@ -72,9 +72,9 @@ object Dependencies {
     val monix       = "3.0.0-M1"
     val monocle     = "1.4.0"
     val pureconfig  = "0.8.0"
-    val refined     = "0.8.5"
+    val refined     = "0.8.6"
     val scalaCss    = "0.5.4"
-    val scalafmt    = "1.3.0"
+    val scalafmt    = "1.4.0"
     val scalaTime   = "2.0.0-M12"
     val scopt       = "3.7.0"
     val xml         = "1.0.6"
