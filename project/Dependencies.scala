@@ -27,13 +27,13 @@ object Dependencies {
       val main = "2.5.9"
       val kryo = "0.9.2"
 
-      val constructr = "0.8.0"
+      val constructr = "0.9.0"
 
       object http {
         val main = "10.0.11"
 
         // http extensions
-        val json = "1.18.1"
+        val json = "1.19.0"
         val sse  = "3.0.0"
       }
 
@@ -68,18 +68,19 @@ object Dependencies {
     val diode       = "1.1.3"
     object cats {
       val main      = "1.0.1"
+      val mtl       = "0.2.1"
       val effect    = "0.8"
     }
     val circe       = "0.9.1"
     val cron4s      = "0.4.4"
     val enumeratum  = "1.5.12"
-    val enumCirce   = "1.5.14"
+    val enumCirce   = "1.5.15"
     val ivy         = "2.4.0"
-    val monix       = "3.0.0-M2"
+    val monix       = "3.0.0-M3"
     val monocle     = "1.4.0"
-    val pureconfig  = "0.8.0"
+    val pureconfig  = "0.9.0"
     val refined     = "0.8.7"
-    val scalaCss    = "0.5.4"
+    val scalaCss    = "0.5.5"
     val scalafmt    = "1.4.0"
     val scalaTime   = "2.0.0-M12"
     val scopt       = "3.7.0"
@@ -179,6 +180,7 @@ object Dependencies {
   lazy val core = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
       "org.typelevel"     %%% "cats-free"          % version.cats.main,
+      "org.typelevel"     %%% "cats-mtl-core"      % version.cats.mtl,
       "org.typelevel"     %%% "cats-effect"        % version.cats.effect,
       "io.circe"          %%% "circe-parser"       % version.circe,
       "io.circe"          %%% "circe-generic"      % version.circe,
