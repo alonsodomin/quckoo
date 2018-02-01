@@ -25,9 +25,6 @@ import io.quckoo.{JobId, JobSpec}
 import io.quckoo.api.TopicTag
 import io.quckoo.protocol.registry._
 
-import kamon.Kamon
-import kamon.metric.instrument.MinMaxCounter
-
 /**
   * Created by alonsodomin on 15/04/2016.
   */
@@ -64,11 +61,6 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
   private[this] val mediator                             = DistributedPubSub(context.system).mediator
   private[this] var stateDuringRecovery: Option[JobSpec] = None
 
-  private[this] val enabledJobCounter: MinMaxCounter =
-    Kamon.metrics.minMaxCounter("enabled-jobs")
-  private[this] val disabledJobCounter: MinMaxCounter =
-    Kamon.metrics.minMaxCounter("disabled-jobs")
-
   override def persistenceId: String = s"$PersistenceIdPrefix-${self.path.name}"
 
   override def receiveRecover: Receive = {
@@ -101,7 +93,6 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
     case CreateJob(jobId, jobSpec) =>
       persist(JobAccepted(jobId, jobSpec)) { event =>
         log.info("Job '{}' has been successfully registered.", jobId)
-        enabledJobCounter.increment()
         mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name, event)
         unstashAll()
         context.become(enabled(jobId, jobSpec))
@@ -117,9 +108,6 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
 
       case DisableJob(`jobId`) =>
         persist(JobDisabled(jobId)) { event =>
-          enabledJobCounter.decrement()
-          disabledJobCounter.increment()
-
           mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name, event)
           sender() ! event
           context.become(disabled(jobId, spec.copy(disabled = true)))
@@ -136,9 +124,6 @@ class PersistentJob extends PersistentActor with ActorLogging with Stash {
 
       case EnableJob(`jobId`) =>
         persist(JobEnabled(jobId)) { event =>
-          enabledJobCounter.increment()
-          disabledJobCounter.decrement()
-
           mediator ! DistributedPubSubMediator.Publish(TopicTag.Registry.name, event)
           sender() ! event
           context.become(enabled(jobId, spec.copy(disabled = false)))
