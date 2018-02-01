@@ -21,9 +21,9 @@ import java.io._
 import cats.effect.IO
 import cats.implicits._
 
-import resource._
+import io.quckoo.kamon._
 
-import kamon.trace.Tracer
+import resource._
 
 import scala.concurrent.ExecutionContext
 
@@ -75,9 +75,7 @@ class ProcessRunner(command: String, args: String*) extends StrictLogging {
     val commandLine = command +: args
     val procBuilder = new ProcessBuilder(commandLine: _*)
 
-    Tracer.withNewContext(s"process-$command") {
-      startProcess(procBuilder) >>= captureResult
-    }
+    (startProcess(procBuilder) >>= captureResult).trace(s"process-$command")
   }
 
 }

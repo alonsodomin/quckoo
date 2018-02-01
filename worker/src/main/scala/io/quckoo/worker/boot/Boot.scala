@@ -60,13 +60,8 @@ object Boot extends App with LazyLogging {
 
   def start(config: Config): Unit = {
     logger.info(s"Starting Quckoo Worker ${Info.version}...\n" + Logo)
-    Kamon.start()
 
     implicit val system = ActorSystem(SystemName, config)
-    sys.addShutdownHook {
-      Kamon.shutdown()
-    }
-
     WorkerSettings(config)
       .map(doStart)
       .recover {

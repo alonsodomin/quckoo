@@ -29,7 +29,7 @@ import io.quckoo.cluster.protocol._
 import io.quckoo.resolver.Resolver
 
 import kamon.Kamon
-import kamon.metric.instrument.Counter
+import kamon.metric.Counter
 
 import scala.concurrent.duration._
 
@@ -87,9 +87,9 @@ class Worker private (clusterClient: ActorRef,
   private[this] var currentTaskId: Option[TaskId] = None
 
   private[this] val successfulTasksCounter: Counter =
-    Kamon.metrics.counter("successful-tasks")
+    Kamon.counter("successful-tasks")
   private[this] val failedTasksCounter: Counter =
-    Kamon.metrics.counter("failed-tasks")
+    Kamon.counter("failed-tasks")
 
   def taskId: TaskId = currentTaskId match {
     case Some(id) => id
