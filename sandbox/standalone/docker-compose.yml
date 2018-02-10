@@ -15,12 +15,19 @@ services:
       - 8080:80
       - 8081:81
 
+  prometheus:
+    image: prom/prometheus
+    hostname: prometheus
+    ports:
+      - 9090:9090
+
   master1:
     image: quckoo/master<localBuild>
     hostname: "master-01"
     ports:
       - 8095:8095
       - 2551:2551
+      - 9095:9095
     links:
       - cassandra
       - graphite
@@ -34,6 +41,7 @@ services:
     ports:
       - 8096:8095
       - 2552:2551
+      - 9096:9095
     links:
       - cassandra
       - graphite
@@ -47,6 +55,7 @@ services:
     hostname: "worker"
     ports:
       - 5001:5001
+      - 9097:9095
     links:
       - graphite
       - master1

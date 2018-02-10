@@ -49,6 +49,7 @@ object Dependencies {
       val akka       = "1.0.0"
       val scala      = "1.0.0"
       val sysmetrics = "1.0.0"
+      val prometheus = "1.0.0"
       val statsd     = "0.6.7"
     }
 
@@ -145,6 +146,7 @@ object Dependencies {
       val http       = "io.kamon" %% "kamon-akka-http-2.5"   % version.kamon.core
       val scala      = "io.kamon" %% "kamon-scala-future"    % version.kamon.scala
       val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon.sysmetrics
+      val prometheus = "io.kamon" %% "kamon-prometheus"      % version.kamon.prometheus
       val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon.statsd
     }
 
@@ -328,7 +330,7 @@ object Dependencies {
     libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryo, ivy, scalaXml, pureconfig, slogging_slf4j,
-      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd,
+      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.prometheus,
       betterfiles,
 
       "eu.timepit" %% "refined-pureconfig" % version.refined
