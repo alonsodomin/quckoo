@@ -76,7 +76,7 @@ object Dependencies {
     val monix       = "3.0.0-M1"
     val monocle     = "1.4.0"
     val pureconfig  = "0.8.0"
-    val refined     = "0.8.6"
+    val refined     = "0.8.7"
     val scalaCss    = "0.5.4"
     val scalafmt    = "1.4.0"
     val scalaTime   = "2.0.0-M12"
@@ -167,7 +167,7 @@ object Dependencies {
 
   object compiler {
     val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.1" cross CrossVersion.full
-    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.5" cross CrossVersion.binary
+    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.6" cross CrossVersion.binary
 
     val plugins = Seq(macroParadise, kindProjector).map(compilerPlugin)
   }

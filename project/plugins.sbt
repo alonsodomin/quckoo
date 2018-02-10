@@ -11,9 +11,9 @@ addSbtPlugin("com.lucidchart"    % "sbt-scalafmt"  % "1.15")
 addSbtPlugin("com.dwijnand"      % "sbt-travisci"  % "1.1.1")
 
 // Web plugins
-addSbtPlugin("org.scala-js"       % "sbt-scalajs"              % "0.6.21")
-addSbtPlugin("org.portable-scala" % "sbt-crossproject"         % "0.3.0")
-addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.3.0")
+addSbtPlugin("org.scala-js"       % "sbt-scalajs"              % "0.6.22")
+addSbtPlugin("org.portable-scala" % "sbt-crossproject"         % "0.3.1")
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.3.1")
 addSbtPlugin("com.vmunier"        % "sbt-web-scalajs"          % "1.0.6")
 addSbtPlugin("org.irundaia.sbt"   % "sbt-sassify"              % "1.4.11")
 addSbtPlugin("com.typesafe.sbt"   % "sbt-twirl"                % "1.3.13")
