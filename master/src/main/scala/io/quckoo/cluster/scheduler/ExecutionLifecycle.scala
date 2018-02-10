@@ -23,8 +23,6 @@ import akka.persistence.fsm.{LoggingPersistentFSM, PersistentFSM}
 import io.quckoo.{QuckooError, PlanId, Task, TaskExecution}
 import io.quckoo.cluster.scheduler.TaskQueue.EnqueueAck
 
-import kamon.trace.Tracer
-
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
@@ -202,13 +200,11 @@ class ExecutionLifecycle(
   override def applyEvent(event: ExecutionEvent, previous: ExecutionState): ExecutionState =
     event match {
       case Awaken(task, `planId`, queue) =>
-        Tracer.withNewContext(s"task-${task.id}") {
-          log.debug(
-            "Execution lifecycle for task '{}' is allocating a slot at the local queue.",
-            task.id
-          )
-          queue ! TaskQueue.Enqueue(task)
-        }
+        log.debug(
+          "Execution lifecycle for task '{}' is allocating a slot at the local queue.",
+          task.id
+        )
+        queue ! TaskQueue.Enqueue(task)
         previous.copy(task = Some(task), queue = Some(queue))
 
       case event @ Triggered(task) =>

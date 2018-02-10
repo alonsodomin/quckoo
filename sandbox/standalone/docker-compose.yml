@@ -8,12 +8,21 @@ services:
       - 7000:7000
       - 9160:9160
 
-  graphite:
-    image: kamon/grafana_graphite
-    hostname: graphite
+  grafana:
+    image: grafana/grafana
+    hostname: grafana
     ports:
-      - 8080:80
-      - 8081:81
+      - 3000:3000
+    links:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus
+    hostname: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./etc/prometheus/config.yml:/etc/prometheus/prometheus.yml
 
   master1:
     image: quckoo/master<localBuild>
@@ -21,9 +30,9 @@ services:
     ports:
       - 8095:8095
       - 2551:2551
+      - 9095:9095
     links:
       - cassandra
-      - graphite
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
     command: --seed --cs cassandra:9042 -b master1:2551
@@ -34,9 +43,9 @@ services:
     ports:
       - 8096:8095
       - 2552:2551
+      - 9096:9095
     links:
       - cassandra
-      - graphite
       - master1
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
@@ -47,8 +56,8 @@ services:
     hostname: "worker"
     ports:
       - 5001:5001
+      - 9097:9095
     links:
-      - graphite
       - master1
       - master2
     volumes:

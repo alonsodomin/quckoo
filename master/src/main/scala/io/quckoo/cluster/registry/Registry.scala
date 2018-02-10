@@ -40,7 +40,7 @@ import io.quckoo.protocol.registry._
 import io.quckoo.resolver.Resolver
 import io.quckoo.resolver.ivy.IvyResolver
 
-import kamon.trace.Tracer
+import kamon.Kamon
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -129,11 +129,11 @@ class Registry private[registry] (resolver: Resolver[IO], journal: QuckooJournal
 
     case RegisterJob(spec) =>
       val registrationTrackId = s"registration-${UUID.randomUUID()}"
-      Tracer.withNewContext(registrationTrackId) {
-        implicit val r        = resolver
-        val registrationProps = Registration.props(spec, shardRegion, sender())
-        context.actorOf(registrationProps, registrationTrackId)
-      }
+      Kamon.currentSpan.tag("registration-track-id", registrationTrackId)
+
+      implicit val r        = resolver
+      val registrationProps = Registration.props(spec, shardRegion, sender())
+      context.actorOf(registrationProps, registrationTrackId)
 
     case GetJobs =>
       val origSender = sender()
@@ -151,9 +151,7 @@ class Registry private[registry] (resolver: Resolver[IO], journal: QuckooJournal
 
     case get @ GetJob(jobId) =>
       if (jobIds.contains(jobId)) {
-        Tracer.withNewContext(s"get-job-$jobId") {
-          shardRegion forward get
-        }
+        shardRegion forward get
       } else {
         sender() ! JobNotFound(jobId)
       }

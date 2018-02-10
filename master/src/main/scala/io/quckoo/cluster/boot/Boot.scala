@@ -25,8 +25,6 @@ import io.quckoo.cluster.config.ClusterSettings
 import io.quckoo.cluster.{QuckooFacade, SystemName}
 import io.quckoo.time.implicits.systemClock
 
-import kamon.Kamon
-
 import slogging._
 
 import scopt.OptionParser
@@ -75,14 +73,12 @@ object Boot extends LazyLogging {
 
     parser.parse(args, CliOptions()).foreach { opts =>
       logger.info(s"Starting Quckoo Server ${Info.version}...\n" + Logo)
-      Kamon.start()
 
       val config = opts.toConfig.withFallback(ConfigFactory.load())
 
       implicit val system = ActorSystem(SystemName, config)
       sys.addShutdownHook {
         logger.info("Received kill signal, terminating...")
-        Kamon.shutdown()
       }
 
       ClusterSettings(config)

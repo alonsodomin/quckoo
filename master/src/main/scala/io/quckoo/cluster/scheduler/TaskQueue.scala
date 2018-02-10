@@ -26,7 +26,7 @@ import io.quckoo.cluster.net._
 import io.quckoo.protocol.worker._
 
 import kamon.Kamon
-import kamon.metric.instrument.MinMaxCounter
+import kamon.metric.Gauge
 
 import scala.collection.immutable.Queue
 import scala.concurrent.duration._
@@ -80,10 +80,10 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
   private[this] var inProgressTasks   = Map.empty[TaskId, ActorRef]
   private[this] var workerRemoveTasks = Map.empty[NodeId, Cancellable]
 
-  private[this] val pendingCounter: MinMaxCounter =
-    Kamon.metrics.minMaxCounter("pending-tasks")
-  private[this] val inProgressCounter: MinMaxCounter =
-    Kamon.metrics.minMaxCounter("inprogress-tasks")
+  private[this] val pendingCounter: Gauge =
+    Kamon.gauge("pending-tasks")
+  private[this] val inProgressCounter: Gauge =
+    Kamon.gauge("inprogress-tasks")
 
   private[this] val cleanupTask = createCleanUpTask()
 

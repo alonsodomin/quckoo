@@ -28,6 +28,7 @@ import io.quckoo.worker.SystemName
 import io.quckoo.worker.executor.DefaultTaskExecutorProvider
 
 import kamon.Kamon
+import kamon.prometheus.PrometheusReporter
 
 import slogging._
 
@@ -60,13 +61,8 @@ object Boot extends App with LazyLogging {
 
   def start(config: Config): Unit = {
     logger.info(s"Starting Quckoo Worker ${Info.version}...\n" + Logo)
-    Kamon.start()
 
     implicit val system = ActorSystem(SystemName, config)
-    sys.addShutdownHook {
-      Kamon.shutdown()
-    }
-
     WorkerSettings(config)
       .map(doStart)
       .recover {
@@ -76,6 +72,8 @@ object Boot extends App with LazyLogging {
   }
 
   private def doStart(settings: WorkerSettings)(implicit system: ActorSystem): Unit = {
+    Kamon.addReporter(new PrometheusReporter)
+
     val clientSettings = {
       val ccs = ClusterClientSettings(system)
       if (settings.worker.contactPoints.nonEmpty)

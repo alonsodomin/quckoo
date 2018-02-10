@@ -9,17 +9,17 @@ object Dependencies {
 
     // Logging -------
 
-    val slogging = "0.6.0"
+    val slogging = "0.6.1"
     val log4j    = "2.10.0"
     val slf4j    = "1.7.25"
 
     // Testing --------
 
-    val scalaTest  = "3.0.4"
+    val scalaTest  = "3.0.5"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
     val discipline = "0.8"
-    val wiremock   = "2.13.0"
+    val wiremock   = "2.14.0"
 
     // Akka ----------
 
@@ -45,8 +45,12 @@ object Dependencies {
     // Monitoring ----
 
     object kamon {
-      val core = "0.6.7"
-      val http = "0.6.8"
+      val core       = "1.0.1"
+      val akka       = "1.0.0"
+      val scala      = "1.0.0"
+      val sysmetrics = "1.0.0"
+      val prometheus = "1.0.0"
+      val statsd     = "0.6.7"
     }
 
     // ScalaJS -------
@@ -138,11 +142,12 @@ object Dependencies {
 
     object Kamon {
       val core       = "io.kamon" %% "kamon-core"            % version.kamon.core
-      val akka       = "io.kamon" %% "kamon-akka-remote-2.4" % version.kamon.core
-      val http       = "io.kamon" %% "kamon-akka-http"       % version.kamon.http
-      val scala      = "io.kamon" %% "kamon-scala"           % version.kamon.core
-      val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon.core
-      val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon.core
+      val akka       = "io.kamon" %% "kamon-akka-remote-2.5" % version.kamon.akka
+      val http       = "io.kamon" %% "kamon-akka-http-2.5"   % version.kamon.core
+      val scala      = "io.kamon" %% "kamon-scala-future"    % version.kamon.scala
+      val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon.sysmetrics
+      val prometheus = "io.kamon" %% "kamon-prometheus"      % version.kamon.prometheus
+      val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon.statsd
     }
 
     val slf4j          = "org.slf4j" % "slf4j-api"      % version.slf4j
@@ -325,7 +330,7 @@ object Dependencies {
     libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryo, ivy, scalaXml, pureconfig, slogging_slf4j,
-      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.statsd,
+      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.prometheus,
       betterfiles,
 
       "eu.timepit" %% "refined-pureconfig" % version.refined
