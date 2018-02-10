@@ -25,7 +25,6 @@ import akka.pattern._
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
-
 import cats.data.{EitherT, ValidatedNel}
 import cats.implicits._
 
@@ -40,6 +39,9 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
+
+import _root_.kamon.Kamon
+import _root_.kamon.prometheus.PrometheusReporter
 
 import slogging._
 
@@ -72,14 +74,17 @@ object QuckooFacade extends LazyLogging {
         }
     }
 
+    def startMonitoring(implicit ec: ExecutionContext): Future[Unit] =
+      Future(Kamon.addReporter(new PrometheusReporter))
+
     val promise = Promise[Unit]()
     val journal = new QuckooProductionJournal
     val guardian =
       system.actorOf(QuckooGuardian.props(settings, journal, promise), "quckoo")
 
     import system.dispatcher
-    (promise.future, startHttpListener(new QuckooFacade(guardian)))
-      .mapN((_, _) => ())
+    (promise.future, startHttpListener(new QuckooFacade(guardian)), startMonitoring)
+      .mapN((_, _, _) => ())
   }
 
 }
