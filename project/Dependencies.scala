@@ -73,8 +73,7 @@ object Dependencies {
     }
     val circe       = "0.9.1"
     val cron4s      = "0.4.4"
-    val enumeratum  = "1.5.12"
-    val enumCirce   = "1.5.15"
+    val enumeratum  = "1.5.15"
     val ivy         = "2.4.0"
     val monix       = "3.0.0-M3"
     val monocle     = "1.4.0"
@@ -187,8 +186,7 @@ object Dependencies {
       "io.circe"          %%% "circe-optics"       % version.circe,
       "io.circe"          %%% "circe-java8"        % version.circe,
       "io.circe"          %%% "circe-refined"      % version.circe,
-      "com.beachape"      %%% "enumeratum"         % version.enumeratum,
-      "com.beachape"      %%% "enumeratum-circe"   % version.enumCirce,
+      "com.beachape"      %%% "enumeratum-circe"   % version.enumeratum,
       "eu.timepit"        %%% "refined"            % version.refined,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
