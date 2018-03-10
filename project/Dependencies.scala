@@ -19,38 +19,38 @@ object Dependencies {
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
     val discipline = "0.8"
-    val wiremock   = "2.14.0"
+    val wiremock   = "2.15.0"
 
     // Akka ----------
 
     object akka {
-      val main = "2.5.9"
+      val main = "2.5.11"
       val kryo = "0.9.2"
 
       val constructr = "0.9.0"
 
       object http {
-        val main = "10.0.11"
+        val main = "10.1.0"
 
         // http extensions
-        val json = "1.19.0"
+        val json = "1.20.0"
         val sse  = "3.0.0"
       }
 
       // persistence plugins
-      val cassandra = "0.80"
+      val cassandra = "0.83"
       val inmemory  = "2.5.1.1"
     }
 
     // Monitoring ----
 
     object kamon {
-      val core       = "1.0.1"
-      val akka       = "1.0.0"
+      val core       = "1.1.0"
+      val akka       = "1.0.1"
+      val http       = "1.1.0"
       val scala      = "1.0.0"
       val sysmetrics = "1.0.0"
       val prometheus = "1.0.0"
-      val statsd     = "0.6.7"
     }
 
     // ScalaJS -------
@@ -68,8 +68,8 @@ object Dependencies {
     val diode       = "1.1.3"
     object cats {
       val main      = "1.0.1"
-      val mtl       = "0.2.1"
-      val effect    = "0.8"
+      val mtl       = "0.2.3"
+      val effect    = "0.9"
     }
     val circe       = "0.9.1"
     val cron4s      = "0.4.4"
@@ -81,9 +81,9 @@ object Dependencies {
     val refined     = "0.8.7"
     val scalaCss    = "0.5.5"
     val scalafmt    = "1.4.0"
-    val scalaTime   = "2.0.0-M12"
+    val scalaTime   = "2.0.0-M13"
     val scopt       = "3.7.0"
-    val xml         = "1.0.6"
+    val xml         = "1.1.0"
 
     // JavaScript Libraries
 
@@ -145,11 +145,10 @@ object Dependencies {
     object Kamon {
       val core       = "io.kamon" %% "kamon-core"            % version.kamon.core
       val akka       = "io.kamon" %% "kamon-akka-remote-2.5" % version.kamon.akka
-      val http       = "io.kamon" %% "kamon-akka-http-2.5"   % version.kamon.core
+      val http       = "io.kamon" %% "kamon-akka-http-2.5"   % version.kamon.http
       val scala      = "io.kamon" %% "kamon-scala-future"    % version.kamon.scala
       val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon.sysmetrics
       val prometheus = "io.kamon" %% "kamon-prometheus"      % version.kamon.prometheus
-      val statsd     = "io.kamon" %% "kamon-statsd"          % version.kamon.statsd
     }
 
     val slf4j          = "org.slf4j" % "slf4j-api"      % version.slf4j
