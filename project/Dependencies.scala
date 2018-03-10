@@ -72,7 +72,7 @@ object Dependencies {
       val effect    = "0.9"
     }
     val circe       = "0.9.1"
-    val cron4s      = "0.4.4"
+    val cron4s      = "0.4.5"
     val enumeratum  = "1.5.15"
     val ivy         = "2.4.0"
     val monix       = "3.0.0-M3"
@@ -149,6 +149,17 @@ object Dependencies {
       val scala      = "io.kamon" %% "kamon-scala-future"    % version.kamon.scala
       val sysmetrics = "io.kamon" %% "kamon-system-metrics"  % version.kamon.sysmetrics
       val prometheus = "io.kamon" %% "kamon-prometheus"      % version.kamon.prometheus
+
+      lazy val All = Seq(core, akka, http, scala, sysmetrics, prometheus)
+    }
+
+    object Pureconfig {
+      val core       = "com.github.pureconfig" %% "pureconfig"            % version.pureconfig
+      val cats       = "com.github.pureconfig" %% "pureconfig-cats"       % version.pureconfig
+      val enumeratum = "com.github.pureconfig" %% "pureconfig-enumeratum" % version.pureconfig
+      val akka       = "com.github.pureconfig" %% "pureconfig-akka"       % version.pureconfig
+
+      lazy val All = Seq(core, enumeratum, cats, akka)
     }
 
     val slf4j          = "org.slf4j" % "slf4j-api"      % version.slf4j
@@ -157,7 +168,6 @@ object Dependencies {
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
 
     val authenticatJwt = "com.jason-goodwin"     %% "authentikat-jwt" % "0.4.5"
-    val pureconfig     = "com.github.pureconfig" %% "pureconfig" % version.pureconfig
 
     val scalaTest  = "org.scalatest"   %% "scalatest"                   % version.scalaTest
     val scalaMock  = "org.scalamock"   %% "scalamock-scalatest-support" % version.scalaMock
@@ -187,6 +197,7 @@ object Dependencies {
       "io.circe"          %%% "circe-refined"      % version.circe,
       "com.beachape"      %%% "enumeratum-circe"   % version.enumeratum,
       "eu.timepit"        %%% "refined"            % version.refined,
+      "eu.timepit"        %%% "refined-cats"       % version.refined,
 
       "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
       "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
@@ -328,11 +339,9 @@ object Dependencies {
 
   lazy val clusterShared = Def.settings {
     import libs._
-    libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
+    libraryDependencies ++= compiler.plugins ++ Kamon.All ++ Log4j.All ++ Pureconfig.All ++ Seq(
       Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
-      Akka.kryo, ivy, scalaXml, pureconfig, slogging_slf4j,
-      Kamon.core, Kamon.akka, Kamon.scala, Kamon.sysmetrics, Kamon.prometheus,
-      betterfiles,
+      Akka.kryo, ivy, scalaXml, slogging_slf4j, betterfiles,
 
       "eu.timepit" %% "refined-pureconfig" % version.refined
     )
@@ -361,12 +370,13 @@ object Dependencies {
 
   lazy val testSupport = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "io.github.cquiroz" %%% "scala-java-time"           % version.scalaTime,
-      "org.scalatest"     %%% "scalatest"                 % version.scalaTest,
-      "org.scalacheck"    %%% "scalacheck"                % version.scalaCheck,
-      "org.typelevel"     %%% "cats-laws"                 % version.cats.main,
-      "org.typelevel"     %%% "discipline"                % version.discipline,
-      "biz.enef"          %%% "slogging"                  % version.slogging
+      "io.github.cquiroz" %%% "scala-java-time"    % version.scalaTime,
+      "org.scalatest"     %%% "scalatest"          % version.scalaTest,
+      "org.scalacheck"    %%% "scalacheck"         % version.scalaCheck,
+      "org.typelevel"     %%% "cats-laws"          % version.cats.main,
+      "org.typelevel"     %%% "discipline"         % version.discipline,
+      "biz.enef"          %%% "slogging"           % version.slogging,
+      "eu.timepit"        %%% "refined-scalacheck" % version.refined
     )
   }
 
