@@ -18,7 +18,7 @@ object Dependencies {
     val scalaTest  = "3.0.5"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
-    val discipline = "0.8"
+    val discipline = "0.9.0"
     val wiremock   = "2.15.0"
 
     // Akka ----------
@@ -55,11 +55,11 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "1.1.1"
+    val scalaJsReact    = "1.2.0"
     val scalaJsDom      = "0.9.4"
     val scalaJsJQuery   = "0.9.2"
     val scalaJSScripts  = "1.1.1"
-    val testState       = "2.1.2"
+    val testState       = "2.1.3"
 
     // Other utils ---
 
@@ -76,7 +76,7 @@ object Dependencies {
     val enumeratum  = "1.5.15"
     val ivy         = "2.4.0"
     val monix       = "3.0.0-M3"
-    val monocle     = "1.4.0"
+    val monocle     = "1.5.0-cats"
     val pureconfig  = "0.9.0"
     val refined     = "0.8.7"
     val scalaCss    = "0.5.5"
@@ -91,9 +91,9 @@ object Dependencies {
     val jquery           = "2.2.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs          = "15.6.1"
+    val reactJs          = "16.2.0"
     val sparkMD5         = "3.0.0"
-    val codemirror       = "5.24.2"
+    val codemirror       = "5.33.0"
   }
 
   // Common library definitions
@@ -192,7 +192,7 @@ object Dependencies {
       "org.typelevel"     %%% "cats-effect"        % version.cats.effect,
       "io.circe"          %%% "circe-parser"       % version.circe,
       "io.circe"          %%% "circe-generic"      % version.circe,
-      "io.circe"          %%% "circe-optics"       % version.circe,
+      //"io.circe"          %%% "circe-optics"       % version.circe,
       "io.circe"          %%% "circe-java8"        % version.circe,
       "io.circe"          %%% "circe-refined"      % version.circe,
       "com.beachape"      %%% "enumeratum-circe"   % version.enumeratum,
@@ -269,13 +269,13 @@ object Dependencies {
       "io.suzaku"        %%% "diode-react"    % version.diode,
       "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
 
-      "com.github.japgolly.scalajs-react" %%% "core"         % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "extra"        % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "ext-cats"     % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "ext-monocle"  % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "test"         % version.scalaJsReact % Test,
-      "com.github.japgolly.scalacss"      %%% "core"         % version.scalaCss,
-      "com.github.japgolly.scalacss"      %%% "ext-react"    % version.scalaCss,
+      "com.github.japgolly.scalajs-react" %%% "core"             % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "extra"            % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-cats"         % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-monocle-cats" % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "test"             % version.scalaJsReact % Test,
+      "com.github.japgolly.scalacss"      %%% "core"             % version.scalaCss,
+      "com.github.japgolly.scalacss"      %%% "ext-react"        % version.scalaCss,
 
       "com.github.japgolly.test-state" %%% "core"              % version.testState % Test,
       "com.github.japgolly.test-state" %%% "dom-zipper"        % version.testState % Test,
@@ -285,19 +285,19 @@ object Dependencies {
     ),
     jsDependencies ++= Seq(
       // ReactJS
-      "org.webjars.bower" % "react" % version.reactJs
-        /        "react-with-addons.js"
-        minified "react-with-addons.min.js"
+      "org.webjars.npm" % "react" % version.reactJs
+        /        "umd/react.development.js"
+        minified "umd/react.production.min.js"
         commonJSName "React",
-      "org.webjars.bower" % "react" % version.reactJs
-        /         "react-dom.js"
-        minified  "react-dom.min.js"
-        dependsOn "react-with-addons.js"
+      "org.webjars.npm" % "react-dom" % version.reactJs
+        /         "umd/react-dom.development.js"
+        minified  "umd/react-dom.production.min.js"
+        dependsOn "umd/react.development.js"
         commonJSName "ReactDOM",
-      "org.webjars.bower" % "react" % version.reactJs
-        /         "react-dom-server.js"
-        minified  "react-dom-server.min.js"
-        dependsOn "react-dom.js"
+      "org.webjars.npm" % "react-dom" % version.reactJs
+        /         "umd/react-dom-server.browser.development.js"
+        minified  "umd/react-dom-server.browser.production.min.js"
+        dependsOn "umd/react-dom.development.js"
         commonJSName "ReactDOMServer",
 
       // JQuery & Bootstrap

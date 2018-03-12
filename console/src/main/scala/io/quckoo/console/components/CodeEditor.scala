@@ -108,7 +108,7 @@ object CodeEditor {
 
     protected[CodeEditor] def initialize(props: Props, state: State): Callback =
       $.getDOMNode
-        .map(node => CodeMirror(node, jsOptions(props)))
+        .map(node => CodeMirror(node.asElement, jsOptions(props)))
         .map { codeMirror =>
           codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
           codeMirror.on("blur", (cm, event) => onBlur(cm, event.asInstanceOf[Event]))

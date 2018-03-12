@@ -44,10 +44,10 @@ object RegistryPage {
 
   class Backend($ : BackendScope[Props, Unit]) {
 
-    private val jobFormRef = ScalaComponent.mutableRefTo(JobForm.component)
+    private val jobFormRef = Ref.toScalaComponent(JobForm.component)
 
     def editJob(spec: Option[JobSpec]): Callback =
-      CallbackTo(jobFormRef).flatMap(_.value.backend.editJob(spec))
+      jobFormRef.get.flatMapCB(_.backend.editJob(spec)).toCallback
 
     def jobEdited(spec: Option[JobSpec]): Callback = {
       def dispatchAction(props: Props): Callback =

@@ -45,7 +45,7 @@ object SchedulerPage {
   class Backend($ : BackendScope[Props, Unit]) {
 
     private val executionPlanFormRef =
-      ScalaComponent.mutableRefTo(ExecutionPlanForm.component)
+      Ref.toScalaComponent(ExecutionPlanForm.component)
 
     def scheduleJob(scheduleJob: Option[ScheduleJob]): Callback = {
       def dispatchAction(props: Props): Callback =
@@ -57,7 +57,7 @@ object SchedulerPage {
     }
 
     def editPlan(plan: Option[ExecutionPlan]): Callback =
-      CallbackTo(executionPlanFormRef).flatMap(_.value.backend.editPlan(plan))
+      executionPlanFormRef.get.flatMapCB(_.backend.editPlan(plan)).toCallback
 
     def render(props: Props) = {
       val userScopeConnector = props.proxy.connect(_.userScope)

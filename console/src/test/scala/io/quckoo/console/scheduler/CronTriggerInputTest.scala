@@ -27,8 +27,6 @@ class CronTriggerInputTest extends FunSuite {
   import ConsoleTestExports._
   import CronTriggerInputTestDsl._
 
-  implicit val triggerEq = _root_.scalaz.Equal.equalA[Trigger.Cron]
-
   val invariants: dsl.Invariants = {
     var invars = dsl.emptyInvariant
 
