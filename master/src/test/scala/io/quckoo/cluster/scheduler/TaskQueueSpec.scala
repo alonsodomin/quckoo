@@ -93,19 +93,19 @@ class TaskQueueSpec
     "ignore a task request from a busy worker" in {
       taskQueue.tell(RequestTask(workerId), workerProbe.ref)
 
-      workerProbe.expectNoMsg()
-      executionProbe.expectNoMsg()
+      workerProbe.expectNoMessage(500 millis)
+      executionProbe.expectNoMessage(500 millis)
     }
 
     "not dispatch work to another worker when there is no more pending" in {
       val otherWorkerId    = NodeId(UUID.randomUUID())
       val otherWorkerProbe = TestProbe("otherWorker")
-      taskQueue.tell(RegisterWorker(otherWorkerId), otherWorkerProbe.ref)
 
+      taskQueue.tell(RegisterWorker(otherWorkerId), otherWorkerProbe.ref)
       taskQueue.tell(RequestTask(otherWorkerId), otherWorkerProbe.ref)
 
-      otherWorkerProbe.expectNoMsg()
-      executionProbe.expectNoMsg()
+      otherWorkerProbe.expectNoMessage(500 millis)
+      executionProbe.expectNoMessage(500 millis)
     }
 
     "resend task result to execution when worker finishes" in {

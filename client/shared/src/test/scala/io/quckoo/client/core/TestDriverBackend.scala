@@ -31,7 +31,7 @@ private[core] final class TestDriverBackend[P <: Protocol](
   ) extends DriverBackend[P] {
 
   @inline def send =
-    Kleisli[Attempt, P#Request, P#Response](command).transform(attempt2Future)
+    Kleisli[Attempt, P#Request, P#Response](command).mapK(attempt2Future)
 
   @inline def open[Ch <: Channel[P]](channel: Ch) =
     Kleisli[Observable, Unit, P#EventType](_ => Observable.fromIterable(stream))

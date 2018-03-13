@@ -133,7 +133,7 @@ class ExecutionDriverSpec
       finishedMsg.jobId shouldBe TestJobId
       finishedMsg.planId shouldBe planId
 
-      lifecycleProbe.expectNoMsg()
+      lifecycleProbe.expectNoMessage()
 
       executionDriver ! PoisonPill
       expectTerminated(executionDriver)
@@ -147,7 +147,7 @@ class ExecutionDriverSpec
 
       reencarnatedDriver ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
-      eventListener.expectNoMsg()
+      eventListener.expectNoMessage()
       reencarnatedDriver ! PoisonPill
 
       expectTerminated(reencarnatedDriver)
@@ -205,7 +205,7 @@ class ExecutionDriverSpec
       finishedMsg.jobId shouldBe TestJobId
       finishedMsg.planId shouldBe planId
 
-      lifecycleProbe.expectNoMsg()
+      lifecycleProbe.expectNoMessage()
 
       executionDriver ! PoisonPill
       expectTerminated(executionDriver)
@@ -219,7 +219,7 @@ class ExecutionDriverSpec
 
       reencarnatedDriver ! Initialize(TestJobId, planId, TestJobSpec, trigger, None)
 
-      eventListener.expectNoMsg()
+      eventListener.expectNoMessage()
       reencarnatedDriver ! PoisonPill
 
       expectTerminated(reencarnatedDriver)
@@ -262,10 +262,10 @@ class ExecutionDriverSpec
       completedMsg.outcome should be(successOutcome)
 
       val finishedMsg = eventListener.expectMsgType[ExecutionPlanFinished]
-      finishedMsg.jobId should be(TestJobId)
-      finishedMsg.planId should be(planId)
+      finishedMsg.jobId shouldBe TestJobId
+      finishedMsg.planId shouldBe planId
 
-      lifecycleProbe.expectNoMsg()
+      lifecycleProbe.expectNoMessage()
       expectMsg(ShardRegion.Passivate(PoisonPill))
 
       executionPlan ! PoisonPill
@@ -351,7 +351,7 @@ class ExecutionDriverSpec
       finishedMsg.jobId should be(TestJobId)
       finishedMsg.planId should be(planId)
 
-      lifecycleProbe.expectNoMsg()
+      lifecycleProbe.expectNoMessage()
       expectMsg(ShardRegion.Passivate(PoisonPill))
 
       executionPlan ! PoisonPill

@@ -89,7 +89,7 @@ class PersistentJobSpec
     "do nothing when trying to disable it again" in {
       job ! DisableJob(BarJobId)
 
-      eventListener.expectNoMsg(500 millis)
+      eventListener.expectNoMessage(500 millis)
       expectMsgType[JobDisabled].jobId shouldBe BarJobId
     }
 
@@ -109,7 +109,7 @@ class PersistentJobSpec
     "do nothing when trying to enable it again" in {
       job ! EnableJob(BarJobId)
 
-      eventListener.expectNoMsg(500 millis)
+      eventListener.expectNoMessage(500 millis)
       expectMsgType[JobEnabled].jobId shouldBe BarJobId
     }
 

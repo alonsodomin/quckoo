@@ -197,7 +197,7 @@ class SchedulerSpec
       registryProbe.reply(TestJobSpec.copy(disabled = true))
 
       expectMsgType[JobNotEnabled].jobId shouldBe TestJobId
-      eventListener.expectNoMsg()
+      eventListener.expectNoMessage()
     }
 
     "should reply job not found if the job is not present" in {
@@ -207,7 +207,7 @@ class SchedulerSpec
       registryProbe.reply(JobNotFound(TestJobId))
 
       expectMsgType[JobNotFound].jobId shouldBe TestJobId
-      eventListener.expectNoMsg()
+      eventListener.expectNoMessage()
     }
   }
 

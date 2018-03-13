@@ -100,7 +100,7 @@ class WorkerSpec extends QuckooActorSuite("WorkerSpec") with ImplicitSender with
       val anotherTask = Task(TaskId(UUID.randomUUID()), JobPackage.jar(FooArtifactId, FooJobClass))
       worker ! anotherTask
 
-      executorProbe.expectNoMsg(500 millis)
+      executorProbe.expectNoMessage(500 millis)
     }
 
     "notify the master when the worker completes with a result" in {
