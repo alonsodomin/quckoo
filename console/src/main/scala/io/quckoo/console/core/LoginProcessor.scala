@@ -57,7 +57,7 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
           passport = Some(passport),
           lastLogin = Some(ZonedDateTime.now(consoleClock))
         )
-        println(s"Successfully logged in! Redirecting to ${destination.entryName}")
+
         logger.info("Successfully logged in! Redirecting to {}", destination.entryName)
         val effects =
           Effects.seq(NavigateTo(destination), StartClusterSubscription)

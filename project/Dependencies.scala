@@ -72,7 +72,7 @@ object Dependencies {
       val effect    = "0.9"
     }
     val circe       = "0.9.1"
-    val cron4s      = "0.4.5"
+    val cron4s      = "0.4.4"
     val enumeratum  = "1.5.15"
     val ivy         = "2.4.0"
     val monix       = "3.0.0-M3"
@@ -81,7 +81,7 @@ object Dependencies {
     val refined     = "0.8.7"
     val scalaCss    = "0.5.5"
     val scalafmt    = "1.4.0"
-    val scalaTime   = "2.0.0-M13"
+    val scalaTime   = "2.0.0-M12"
     val scopt       = "3.7.0"
     val xml         = "1.1.0"
 

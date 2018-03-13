@@ -26,11 +26,11 @@ import io.quckoo.console.security.LoginPage
 
 import org.scalajs.dom
 
-import slogging.StrictLogging
+import slogging.LazyLogging
 
 import scalacss.internal.mutable.GlobalRegistry
 
-object Boot extends StrictLogging {
+object Boot extends LazyLogging {
   import CssSettings._
 
   private[this] def inlineStyles() = {
@@ -49,7 +49,6 @@ object Boot extends StrictLogging {
   private[this] def setupUILogger(): Unit = {
     import slogging._
 
-    println("Initializing ")
     LoggerConfig.factory = ConsoleLoggerFactory()
     LoggerConfig.level = LogLevel.DEBUG
     LoggerConfig.onError = (level, msg1, msg2) => {

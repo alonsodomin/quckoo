@@ -48,7 +48,7 @@ object LoginForm extends LazyLogging {
       val handleLogin = for {
         username <- $.state.map(_.username).asCBO[String]
         password <- $.state.map(_.password).asCBO[Password]
-        _        <- Callback.log(s"Login attempt by user: $username").toCBO
+        _        <- Callback(logger.debug(s"Login attempt by user: $username")).toCBO
         _        <- handler(username, password.value).toCBO
       } yield ()
 

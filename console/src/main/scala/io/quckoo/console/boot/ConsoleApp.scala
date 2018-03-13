@@ -37,10 +37,12 @@ import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom._
 import japgolly.scalajs.react.vdom.Implicits._
 
+import slogging.LazyLogging
+
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-object ConsoleApp {
+object ConsoleApp extends LazyLogging {
 
   case class Props(level: LogLevel, proxy: ModelProxy[ConsoleScope])
   case class State(router: Router[ConsoleRoute], processors: List[ActionProcessor[ConsoleScope]])
@@ -48,21 +50,29 @@ object ConsoleApp {
   class Backend($ : BackendScope[Props, State]) {
 
     def initialise: Callback = {
+      def logInit: Callback = Callback {
+        logger.debug("Initialising console...")
+      }
+
       def connectProcessors(state: State): Callback =
         state.processors
           .map(p => Callback(ConsoleCircuit.addProcessor(p)))
           .foldLeft(Callback.empty)(_ >> _)
 
-      Callback.log("Initializing...") >> $.state >>= connectProcessors
+      logInit >> $.state >>= connectProcessors
     }
 
     def dispose: Callback = {
+      def logDispose: Callback = Callback {
+        logger.debug("Disposing console resources...")
+      }
+
       def disconnectProcessors(state: State): Callback =
         state.processors
           .map(p => Callback(ConsoleCircuit.removeProcessor(p)))
           .foldLeft(Callback.empty)(_ >> _)
 
-      $.state >>= disconnectProcessors
+      logDispose >> $.state >>= disconnectProcessors
     }
 
     def render(props: Props, state: State): VdomElement =

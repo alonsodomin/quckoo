@@ -55,13 +55,13 @@ private[http] object HttpDOMBackend extends HttpBackend {
     val promise = Promise[HttpResponse]()
 
     domReq.onreadystatechange = { (e: DOMEvent) =>
-      println(e)
       if (domReq.readyState == 4) {
         if ((domReq.status >= 200 && domReq.status < 300) || domReq.status == 304) {
           val entityData =
             DataBuffer(TypedArrayBuffer.wrap(domReq.response.asInstanceOf[ArrayBuffer]))
           val response =
             HttpResponse(domReq.status, domReq.statusText, entityData)
+
           promise.success(response)
         } else {
           promise.failure(AjaxException(domReq))
