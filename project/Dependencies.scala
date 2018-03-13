@@ -65,7 +65,7 @@ object Dependencies {
 
     val arm         = "2.0"
     val betterfiles = "3.4.0"
-    val diode       = "1.1.3"
+    val diode       = "1.1.4-SNAPSHOT"
     object cats {
       val main      = "1.0.1"
       val mtl       = "0.2.3"
