@@ -26,6 +26,7 @@ import monix.reactive.{Observable, OverflowStrategy}
 
 import org.scalajs.dom.{XMLHttpRequest, Event => DOMEvent}
 import org.scalajs.dom.ext.Ajax.InputData
+import org.scalajs.dom.ext.AjaxException
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
@@ -54,12 +55,17 @@ private[http] object HttpDOMBackend extends HttpBackend {
     val promise = Promise[HttpResponse]()
 
     domReq.onreadystatechange = { (e: DOMEvent) =>
+      println(e)
       if (domReq.readyState == 4) {
-        val entityData =
-          DataBuffer(TypedArrayBuffer.wrap(domReq.response.asInstanceOf[ArrayBuffer]))
-        val response =
-          HttpResponse(domReq.status, domReq.statusText, entityData)
-        promise.success(response)
+        if ((domReq.status >= 200 && domReq.status < 300) || domReq.status == 304) {
+          val entityData =
+            DataBuffer(TypedArrayBuffer.wrap(domReq.response.asInstanceOf[ArrayBuffer]))
+          val response =
+            HttpResponse(domReq.status, domReq.statusText, entityData)
+          promise.success(response)
+        } else {
+          promise.failure(AjaxException(domReq))
+        }
       }
     }
 

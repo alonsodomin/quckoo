@@ -53,10 +53,10 @@ object ConsoleApp {
           .map(p => Callback(ConsoleCircuit.addProcessor(p)))
           .foldLeft(Callback.empty)(_ >> _)
 
-      $.state >>= connectProcessors
+      Callback.log("Initializing...") >> $.state >>= connectProcessors
     }
 
-    def dipose: Callback = {
+    def dispose: Callback = {
       def disconnectProcessors(state: State): Callback =
         state.processors
           .map(p => Callback(ConsoleCircuit.removeProcessor(p)))
@@ -90,7 +90,7 @@ object ConsoleApp {
     .initialStateFromProps(initState)
     .renderBackend[Backend]
     .componentWillMount(_.backend.initialise)
-    .componentWillUnmount(_.backend.dipose)
+    .componentWillUnmount(_.backend.dispose)
     .build
 
   def apply(level: LogLevel) =

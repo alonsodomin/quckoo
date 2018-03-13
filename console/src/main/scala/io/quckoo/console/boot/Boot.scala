@@ -49,8 +49,12 @@ object Boot extends StrictLogging {
   private[this] def setupUILogger(): Unit = {
     import slogging._
 
+    println("Initializing ")
     LoggerConfig.factory = ConsoleLoggerFactory()
     LoggerConfig.level = LogLevel.DEBUG
+    LoggerConfig.onError = (level, msg1, msg2) => {
+      println(s"$level: $msg1 - $msg2")
+    }
   }
 
   def main(args: Array[String]): Unit = {

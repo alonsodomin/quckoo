@@ -27,10 +27,12 @@ import io.quckoo.serialization.DataBuffer
 
 import scala.concurrent.Future
 
+import slogging.LoggerHolder
+
 /**
   * Created by alonsodomin on 14/10/2015.
   */
-trait Auth {
+trait Auth { this: LoggerHolder =>
 
   val Realm = "QuckooRealm"
   private[this] val Right(secretKey) =
@@ -39,11 +41,17 @@ trait Auth {
   def basic(credentials: Credentials): Future[Option[Principal]] =
     credentials match {
       case p @ Credentials.Provided(identifier) =>
+        logger.debug("Proceeding to authenticate user with id: {}", identifier)
         if (identifier == "admin" && p.verify("password")) {
+          logger.info("User '{}' successfully authenticated.", identifier)
           Future.successful(User(identifier).some)
-        } else Future.successful(none[User])
+        } else {
+          logger.warn("Failed loging attempt by user: {}", identifier)
+          Future.successful(none[User])
+        }
 
       case _ =>
+        logger.debug("Missing credentials, basic auth negated")
         Future.successful(none[User])
     }
 

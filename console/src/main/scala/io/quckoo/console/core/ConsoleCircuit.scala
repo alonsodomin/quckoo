@@ -83,7 +83,9 @@ object ConsoleCircuit
               .authenticate(username, password)
               .map(pass => LoggedIn(pass, referral))
               .recover {
-                case _ => LoginFailed
+                case ex =>
+                  ex.printStackTrace()
+                  LoginFailed
               }
           )
         )
