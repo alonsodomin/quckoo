@@ -21,14 +21,18 @@ import java.time.Clock
 import diode._
 import diode.react.ReactConnector
 
+import io.quckoo.auth.InvalidCredentials
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.client.http.dom._
+import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.dashboard.DashboardHandler
 import io.quckoo.console.registry.RegistryHandler
 import io.quckoo.console.scheduler.{ExecutionPlansHandler, SchedulerHandler, TasksHandler}
+import io.quckoo.protocol.Event
 
 import slogging.LazyLogging
 
+import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
@@ -74,21 +78,20 @@ object ConsoleCircuit
 
   val loginHandler = new ActionHandler(zoomTo(_.passport)) {
 
+    def performLogin(username: String, password: String, referral: Option[ConsoleRoute]): Future[Event] = {
+      implicit val timeout = DefaultTimeout
+      client.authenticate(username, password)
+        .map(passport => LoggedIn(passport, referral))
+        .recover { case _: InvalidCredentials.type => LoginFailed }
+        .recoverWith { case ex =>
+            logger.error("Unexpected error when performing login.", ex)
+            Future.failed(ex)
+        }
+    }
+
     override def handle = {
       case Login(username, password, referral) =>
-        implicit val timeout = DefaultTimeout
-        effectOnly(
-          Effect(
-            client
-              .authenticate(username, password)
-              .map(pass => LoggedIn(pass, referral))
-              .recover {
-                case ex =>
-                  ex.printStackTrace()
-                  LoginFailed
-              }
-          )
-        )
+        effectOnly(Effect(performLogin(username, password, referral)))
 
       case Logout =>
         implicit val timeout = DefaultTimeout
