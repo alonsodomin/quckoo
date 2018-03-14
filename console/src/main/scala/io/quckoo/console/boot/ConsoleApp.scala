@@ -16,6 +16,8 @@
 
 package io.quckoo.console.boot
 
+import cats.implicits._
+
 import diode.ActionProcessor
 import diode.react.ModelProxy
 
@@ -43,6 +45,7 @@ import slogging.LazyLogging
   * Created by alonsodomin on 14/05/2017.
   */
 object ConsoleApp extends LazyLogging {
+  import CatsReact._
 
   case class Props(level: LogLevel, proxy: ModelProxy[ConsoleScope])
   case class State(router: Router[ConsoleRoute], processors: List[ActionProcessor[ConsoleScope]])
@@ -55,9 +58,7 @@ object ConsoleApp extends LazyLogging {
       }
 
       def connectProcessors(state: State): Callback =
-        state.processors
-          .map(p => Callback(ConsoleCircuit.addProcessor(p)))
-          .foldLeft(Callback.empty)(_ >> _)
+        state.processors.traverse_(p => Callback(ConsoleCircuit.addProcessor(p)))
 
       logInit >> $.state >>= connectProcessors
     }
@@ -68,9 +69,7 @@ object ConsoleApp extends LazyLogging {
       }
 
       def disconnectProcessors(state: State): Callback =
-        state.processors
-          .map(p => Callback(ConsoleCircuit.removeProcessor(p)))
-          .foldLeft(Callback.empty)(_ >> _)
+        state.processors.traverse_(p => Callback(ConsoleCircuit.removeProcessor(p)))
 
       logDispose >> $.state >>= disconnectProcessors
     }

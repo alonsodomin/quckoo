@@ -51,9 +51,6 @@ object Boot extends LazyLogging {
 
     LoggerConfig.factory = ConsoleLoggerFactory()
     LoggerConfig.level = LogLevel.DEBUG
-    LoggerConfig.onError = (level, msg1, msg2) => {
-      println(s"$level: $msg1 - $msg2")
-    }
   }
 
   def main(args: Array[String]): Unit = {
