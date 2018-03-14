@@ -17,7 +17,7 @@
 package io.quckoo.console.registry
 
 import diode.{Effect, ModelRW}
-import diode.data.{AsyncAction, PotMap}
+import diode.data.{AsyncAction, PotMap, Ready}
 
 import io.quckoo.{JobId, JobSpec}
 import io.quckoo.console.components.Notification
@@ -48,10 +48,8 @@ class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]], ops:
 
     case JobAccepted(jobId, spec) =>
       logger.debug(s"Job has been accepted with identifier: $jobId")
-      // TODO re-enable following code once registerJob command is fully async
-      //val growl = Growl(Notification.info(s"Job accepted: $jobId"))
-      //updated(value + (jobId -> Ready(spec)), growl)
-      noChange
+      val growl = Growl(Notification.info(s"Job accepted: $jobId"))
+      updated(value + (jobId -> Ready(spec)), growl)
 
     case JobEnabled(jobId) =>
       effectOnly(
