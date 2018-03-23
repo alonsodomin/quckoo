@@ -23,8 +23,6 @@ import cats.implicits._
 
 import io.quckoo.kamon._
 
-import resource._
-
 import scala.concurrent.ExecutionContext
 
 import slogging._
@@ -33,30 +31,44 @@ object ProcessRunner {
 
   final case class Result(exitCode: Int, stdOut: String, stdErr: String)
 
+  private def resource[A <: Closeable, B](acquire: IO[A])(use: A => IO[B]): IO[B] = {
+    acquire.flatMap { resource =>
+      use(resource).attempt.flatMap { result =>
+        val exit = result match {
+          case Right(value) => IO.pure(value)
+          case Left(error)  => IO.raiseError(error)
+        }
+        IO(resource.close()).attempt.void *> exit
+      }
+    }
+  }
+
 }
 
 class ProcessRunner(command: String, args: String*) extends StrictLogging {
   import ProcessRunner._
 
   def run(implicit executionContext: ExecutionContext): IO[Result] = {
-    def readStream(stream: InputStream): IO[String] = IO {
-      val managedOutput = for {
-        buffer <- managed(new StringWriter())
-        writer <- managed(new PrintWriter(buffer))
-        input  <- managed(new BufferedReader(new InputStreamReader(stream)))
-      } yield {
-        def read(): Unit = input.readLine() match {
-          case null => ()
-          case line =>
-            writer.println(line)
-            read()
+    def readStream(stream: InputStream): IO[String] = {
+      def bufferInput(buffer: StringWriter): IO[String] = {
+        val acquirePW = IO(new PrintWriter(buffer))
+        val acquireBR = IO(new BufferedReader(new InputStreamReader(stream)))
+
+        resource(acquirePW) { writer =>
+          resource(acquireBR)(input => readInput(input, writer))
+        } *> IO(buffer.toString)
+      }
+
+      def readInput(input: BufferedReader, writer: PrintWriter): IO[Unit] = {
+        def read(): IO[Unit] = IO(input.readLine()).flatMap {
+          case null => IO.unit
+          case line => IO(writer.println(line)) *> IO.suspend(read())
         }
 
         read()
-        buffer.toString
       }
 
-      managedOutput.acquireAndGet(identity)
+      resource(IO(new StringWriter()))(bufferInput)
     }
 
     def startProcess(builder: ProcessBuilder): IO[Process] = IO {

@@ -78,12 +78,16 @@ object ConsoleCircuit
 
   val loginHandler = new ActionHandler(zoomTo(_.passport)) {
 
-    def performLogin(username: String, password: String, referral: Option[ConsoleRoute]): Future[Event] = {
+    def performLogin(username: String,
+                     password: String,
+                     referral: Option[ConsoleRoute]): Future[Event] = {
       implicit val timeout = DefaultTimeout
-      client.authenticate(username, password)
+      client
+        .authenticate(username, password)
         .map(passport => LoggedIn(passport, referral))
         .recover { case _: InvalidCredentials.type => LoginFailed }
-        .recoverWith { case ex =>
+        .recoverWith {
+          case ex =>
             logger.error("Unexpected error when performing login.", ex)
             Future.failed(ex)
         }
