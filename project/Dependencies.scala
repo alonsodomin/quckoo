@@ -19,7 +19,7 @@ object Dependencies {
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
     val discipline = "0.9.0"
-    val wiremock   = "2.15.0"
+    val wiremock   = "2.16.0"
 
     // Akka ----------
 
@@ -30,10 +30,10 @@ object Dependencies {
       val constructr = "0.9.0"
 
       object http {
-        val main = "10.1.0"
+        val main = "10.1.1"
 
         // http extensions
-        val json = "1.20.0"
+        val json = "1.20.1"
         val sse  = "3.0.0"
       }
 
@@ -45,7 +45,7 @@ object Dependencies {
     // Monitoring ----
 
     object kamon {
-      val core       = "1.1.0"
+      val core       = "1.1.2"
       val akka       = "1.0.1"
       val http       = "1.1.0"
       val scala      = "1.0.0"
@@ -57,8 +57,8 @@ object Dependencies {
 
     val scalaJsReact    = "1.2.0"
     val scalaJsDom      = "0.9.5"
-    val scalaJsJQuery   = "0.9.2"
-    val scalaJSScripts  = "1.1.1"
+    val scalaJsJQuery   = "0.9.3"
+    val scalaJSScripts  = "1.1.2"
     val testState       = "2.1.3"
 
     // Other utils ---
@@ -71,13 +71,13 @@ object Dependencies {
       val mtl       = "0.2.3"
       val effect    = "0.10"
     }
-    val circe       = "0.9.2"
+    val circe       = "0.9.3"
     val cron4s      = "0.4.4"
-    val enumeratum  = "1.5.16"
+    val enumeratum  = "1.5.17"
     val ivy         = "2.4.0"
     val monix       = "3.0.0-RC1"
     val monocle     = "1.5.1-cats"
-    val pureconfig  = "0.9.0"
+    val pureconfig  = "0.9.1"
     val refined     = "0.8.7"
     val scalaCss    = "0.5.5"
     val scalafmt    = "1.4.0"
