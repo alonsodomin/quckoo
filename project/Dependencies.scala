@@ -1,6 +1,9 @@
 import sbt._
 import Keys._
 
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
+import sbtcrossproject.CrossPlugin.autoImport._
+import scalajscrossproject.ScalaJSCrossPlugin.autoImport.{toScalaJSGroupID => _, _}
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object Dependencies {
@@ -19,12 +22,12 @@ object Dependencies {
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
     val discipline = "0.9.0"
-    val wiremock   = "2.16.0"
+    val wiremock   = "2.18.0"
 
     // Akka ----------
 
     object akka {
-      val main = "2.5.11"
+      val main = "2.5.13"
       val kryo = "0.9.2"
 
       val constructr = "0.9.0"
@@ -33,12 +36,12 @@ object Dependencies {
         val main = "10.1.1"
 
         // http extensions
-        val json = "1.20.1"
+        val json = "1.21.0"
         val sse  = "3.0.0"
       }
 
       // persistence plugins
-      val cassandra = "0.83"
+      val cassandra = "0.84"
       val inmemory  = "2.5.1.1"
     }
 
@@ -50,13 +53,13 @@ object Dependencies {
       val http       = "1.1.0"
       val scala      = "1.0.0"
       val sysmetrics = "1.0.0"
-      val prometheus = "1.0.0"
+      val prometheus = "1.1.1"
     }
 
     // ScalaJS -------
 
     val scalaJsReact    = "1.2.0"
-    val scalaJsDom      = "0.9.5"
+    val scalaJsDom      = "0.9.6"
     val scalaJsJQuery   = "0.9.3"
     val scalaJSScripts  = "1.1.2"
     val testState       = "2.1.3"
@@ -64,12 +67,12 @@ object Dependencies {
     // Other utils ---
 
     val arm         = "2.0"
-    val betterfiles = "3.4.0"
+    val betterfiles = "3.5.0"
     val diode       = "1.1.4-SNAPSHOT"
     object cats {
       val main      = "1.1.0"
-      val mtl       = "0.2.3"
-      val effect    = "0.10"
+      val mtl       = "0.3.0"
+      val effect    = "1.0.0-RC2-68b7bd9"
     }
     val circe       = "0.9.3"
     val cron4s      = "0.4.4"
@@ -78,7 +81,7 @@ object Dependencies {
     val monix       = "3.0.0-RC1"
     val monocle     = "1.5.1-cats"
     val pureconfig  = "0.9.1"
-    val refined     = "0.8.7"
+    val refined     = "0.9.0"
     val scalaCss    = "0.5.5"
     val scalafmt    = "1.4.0"
     val scalaTime   = "2.0.0-M12"
@@ -91,7 +94,7 @@ object Dependencies {
     val jquery           = "2.2.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs          = "16.2.0"
+    val reactJs          = "16.3.2"
     val sparkMD5         = "3.0.0"
     val codemirror       = "5.33.0"
   }
@@ -178,7 +181,7 @@ object Dependencies {
 
   object compiler {
     val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.1" cross CrossVersion.full
-    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.6" cross CrossVersion.binary
+    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.7" cross CrossVersion.binary
 
     val plugins = Seq(macroParadise, kindProjector).map(compilerPlugin)
   }
