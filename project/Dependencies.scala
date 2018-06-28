@@ -3,7 +3,7 @@ import Keys._
 
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbtcrossproject.CrossPlugin.autoImport._
-import scalajscrossproject.ScalaJSCrossPlugin.autoImport.{toScalaJSGroupID => _, _}
+import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object Dependencies {
@@ -21,7 +21,7 @@ object Dependencies {
     val scalaTest  = "3.0.5"
     val scalaCheck = "1.13.5"
     val scalaMock  = "3.6.0"
-    val discipline = "0.9.0"
+    val discipline = "0.10.0"
     val wiremock   = "2.18.0"
 
     // Akka ----------
@@ -33,7 +33,7 @@ object Dependencies {
       val constructr = "0.9.0"
 
       object http {
-        val main = "10.1.1"
+        val main = "10.1.3"
 
         // http extensions
         val json = "1.21.0"
@@ -41,14 +41,14 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.84"
+      val cassandra = "0.85"
       val inmemory  = "2.5.1.1"
     }
 
     // Monitoring ----
 
     object kamon {
-      val core       = "1.1.2"
+      val core       = "1.1.3"
       val akka       = "1.0.1"
       val http       = "1.1.0"
       val scala      = "1.0.0"
@@ -68,23 +68,27 @@ object Dependencies {
 
     val arm         = "2.0"
     val betterfiles = "3.5.0"
-    val diode       = "1.1.4-SNAPSHOT"
+    object diode {
+      val core  = "1.1.3"
+      val react = s"$core.120"
+    }
     object cats {
       val main      = "1.1.0"
       val mtl       = "0.3.0"
       val effect    = "1.0.0-RC2-68b7bd9"
+      val kittens   = "1.1.0"
     }
-    val circe       = "0.9.3"
-    val cron4s      = "0.4.4"
+    val circe       = "0.10.0-M1"
+    val cron4s      = "0.4.5"
     val enumeratum  = "1.5.17"
     val ivy         = "2.4.0"
     val monix       = "3.0.0-RC1"
     val monocle     = "1.5.1-cats"
     val pureconfig  = "0.9.1"
-    val refined     = "0.9.0"
+    val refined     = "0.9.1"
     val scalaCss    = "0.5.5"
     val scalafmt    = "1.4.0"
-    val scalaTime   = "2.0.0-M12"
+    val scalaTime   = "2.0.0-M13"
     val scopt       = "3.7.0"
     val xml         = "1.1.0"
 
@@ -94,7 +98,7 @@ object Dependencies {
     val jquery           = "2.2.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs          = "16.3.2"
+    val reactJs          = "16.4.1"
     val sparkMD5         = "3.0.0"
     val codemirror       = "5.33.0"
   }
@@ -193,6 +197,7 @@ object Dependencies {
       "org.typelevel"     %%% "cats-free"          % version.cats.main,
       "org.typelevel"     %%% "cats-mtl-core"      % version.cats.mtl,
       "org.typelevel"     %%% "cats-effect"        % version.cats.effect,
+      "org.typelevel"     %%% "kittens"            % version.cats.kittens,
       "io.circe"          %%% "circe-parser"       % version.circe,
       "io.circe"          %%% "circe-generic"      % version.circe,
       //"io.circe"          %%% "circe-optics"       % version.circe,
@@ -236,7 +241,7 @@ object Dependencies {
 
   lazy val api = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "io.suzaku" %%% "diode"          % version.diode,
+      "io.suzaku" %%% "diode"          % version.diode.core,
       "io.monix"  %%% "monix-reactive" % version.monix
     )
   )
@@ -269,7 +274,7 @@ object Dependencies {
   lazy val console = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
       "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
-      "io.suzaku"        %%% "diode-react"    % version.diode,
+      "io.suzaku"        %%% "diode-react"    % version.diode.react,
       "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
 
       "com.github.japgolly.scalajs-react" %%% "core"             % version.scalaJsReact,

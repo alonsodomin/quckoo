@@ -31,7 +31,7 @@ object ProcessRunner {
 
   final case class Result(exitCode: Int, stdOut: String, stdErr: String)
 
-  private def resource[A <: Closeable, B](acquire: IO[A])(use: A => IO[B]): IO[B] = {
+  private def resource[A <: Closeable, B](acquire: IO[A])(use: A => IO[B]): IO[B] =
     acquire.flatMap { resource =>
       use(resource).attempt.flatMap { result =>
         val exit = result match {
@@ -41,7 +41,6 @@ object ProcessRunner {
         IO(resource.close()).attempt.void *> exit
       }
     }
-  }
 
 }
 
