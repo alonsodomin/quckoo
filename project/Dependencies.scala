@@ -5,6 +5,7 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbtcrossproject.CrossPlugin.autoImport._
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import scalajsbundler.sbtplugin.ScalaJSBundlerPlugin.autoImport._
 
 object Dependencies {
 
@@ -58,9 +59,9 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "1.2.0"
+    val scalaJsReact    = "1.2.1"
     val scalaJsDom      = "0.9.6"
-    val scalaJsJQuery   = "0.9.3"
+    val scalaJsJQuery   = "0.9.4"
     val scalaJSScripts  = "1.1.2"
     val testState       = "2.1.3"
 
@@ -75,8 +76,8 @@ object Dependencies {
     object cats {
       val main      = "1.1.0"
       val mtl       = "0.3.0"
-      val effect    = "1.0.0-RC2-68b7bd9"
-      val kittens   = "1.1.0"
+      val effect    = "1.0.0-RC2"
+      //val kittens   = "1.1.0"
     }
     val circe       = "0.10.0-M1"
     val cron4s      = "0.4.5"
@@ -291,56 +292,64 @@ object Dependencies {
       "com.github.japgolly.test-state" %%% "ext-scalajs-react" % version.testState % Test,
       "com.github.japgolly.test-state" %%% "ext-cats"          % version.testState % Test
     ),
-    jsDependencies ++= Seq(
+    npmDependencies in Compile ++= Seq(
+      "react"            -> version.reactJs,
+      "react-dom"        -> version.reactJs,
+      "jquery"           -> version.jquery,
+      "bootstrap3"       -> version.bootstrap,
+      "bootstrap-notify" -> version.bootstrapNotifiy,
+      "codemirror"       -> version.codemirror
+    ),
+    //jsDependencies ++= Seq(
       // ReactJS
-      "org.webjars.npm" % "react" % version.reactJs
-        /        "umd/react.development.js"
-        minified "umd/react.production.min.js"
-        commonJSName "React",
-      "org.webjars.npm" % "react-dom" % version.reactJs
-        /         "umd/react-dom.development.js"
-        minified  "umd/react-dom.production.min.js"
-        dependsOn "umd/react.development.js"
-        commonJSName "ReactDOM",
-      "org.webjars.npm" % "react-dom" % version.reactJs
-        /         "umd/react-dom-server.browser.development.js"
-        minified  "umd/react-dom-server.browser.production.min.js"
-        dependsOn "umd/react-dom.development.js"
-        commonJSName "ReactDOMServer",
+      //"org.webjars.npm" % "react" % version.reactJs
+      //  /        "umd/react.development.js"
+      //  minified "umd/react.production.min.js"
+      //  commonJSName "React",
+      //"org.webjars.npm" % "react-dom" % version.reactJs
+      //  /         "umd/react-dom.development.js"
+      //  minified  "umd/react-dom.production.min.js"
+      //  dependsOn "umd/react.development.js"
+      //  commonJSName "ReactDOM",
+      //"org.webjars.npm" % "react-dom" % version.reactJs
+      //  /         "umd/react-dom-server.browser.development.js"
+      //  minified  "umd/react-dom-server.browser.production.min.js"
+      //  dependsOn "umd/react-dom.development.js"
+      //  commonJSName "ReactDOMServer",
 
       // JQuery & Bootstrap
-      "org.webjars" % "jquery"    % version.jquery
-        /        s"${version.jquery}/jquery.js"
-        minified "jquery.min.js",
-      "org.webjars" % "bootstrap" % version.bootstrap
-        /         "bootstrap.js"
-        minified  "bootstrap.min.js"
-        dependsOn s"${version.jquery}/jquery.js",
-      "org.webjars" % "bootstrap-notify" % version.bootstrapNotifiy
-        /         "bootstrap-notify.js"
-        minified  "bootstrap-notify.min.js"
-        dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js"),
+      //"org.webjars" % "jquery"    % version.jquery
+      //  /        s"${version.jquery}/jquery.js"
+      //  minified "jquery.min.js",
+      //"org.webjars" % "bootstrap" % version.bootstrap
+      //  /         "bootstrap.js"
+      //  minified  "bootstrap.min.js"
+      //  dependsOn s"${version.jquery}/jquery.js",
+      //"org.webjars" % "bootstrap-notify" % version.bootstrapNotifiy
+      //  /         "bootstrap-notify.js"
+      //  minified  "bootstrap-notify.min.js"
+      //  dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js"),
 
       // CodeMirror
-      "org.webjars" % "codemirror" % version.codemirror
-        /            "lib/codemirror.js"
-        commonJSName "CodeMirror",
-      "org.webjars" % "codemirror" % version.codemirror
-        /         "mode/shell/shell.js"
-        dependsOn "lib/codemirror.js",
-      "org.webjars" % "codemirror" % version.codemirror
-        /         "mode/python/python.js"
-        dependsOn "lib/codemirror.js",
-      "org.webjars" % "codemirror" % version.codemirror
-        /         "addon/display/autorefresh.js"
-        dependsOn "lib/codemirror.js",
-      "org.webjars" % "codemirror" % version.codemirror
-        /         "addon/edit/closebrackets.js"
-        dependsOn "lib/codemirror.js",
-      "org.webjars" % "codemirror" % version.codemirror
-        /         "addon/edit/matchbrackets.js"
-        dependsOn "lib/codemirror.js"
-    )
+      //"org.webjars" % "codemirror" % version.codemirror
+      //  /            "lib/codemirror.js"
+      //  commonJSName "CodeMirror",
+      //"org.webjars" % "codemirror" % version.codemirror
+      //  /         "mode/shell/shell.js"
+      //  dependsOn "lib/codemirror.js",
+      //"org.webjars" % "codemirror" % version.codemirror
+      //  /         "mode/python/python.js"
+      //  dependsOn "lib/codemirror.js",
+      //"org.webjars" % "codemirror" % version.codemirror
+      //  /         "addon/display/autorefresh.js"
+      //  dependsOn "lib/codemirror.js",
+      //"org.webjars" % "codemirror" % version.codemirror
+      //  /         "addon/edit/closebrackets.js"
+      //  dependsOn "lib/codemirror.js",
+      //"org.webjars" % "codemirror" % version.codemirror
+      //  /         "addon/edit/matchbrackets.js"
+      //  dependsOn "lib/codemirror.js"
+    //)
   )
 
   // Server modules ===============================

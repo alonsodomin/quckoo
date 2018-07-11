@@ -232,7 +232,7 @@ lazy val clientJVM = client.jvm
 // Console ==================================================
 
 lazy val console = (project in file("console"))
-  .enablePlugins(AutomateHeaderPlugin, ScalaJSPlugin, ScalaJSWeb)
+  .enablePlugins(AutomateHeaderPlugin, ScalaJSPlugin, ScalaJSWeb, ScalaJSBundlerPlugin)
   .settings(commonSettings)
   .settings(commonJsSettings)
   .settings(publishSettings)
