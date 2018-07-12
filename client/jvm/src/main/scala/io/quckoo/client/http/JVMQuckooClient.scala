@@ -24,8 +24,10 @@ import com.softwaremill.sttp._
 import com.softwaremill.sttp.akkahttp._
 import com.softwaremill.sttp.circe._
 
+import io.quckoo._
 import io.quckoo.client._
 import io.quckoo.auth.{InvalidCredentials, Passport}
+import io.quckoo.serialization.json._
 
 abstract class JVMQuckooClient extends NewQuckooClient {
   import NewQuckooClient._
@@ -50,10 +52,24 @@ abstract class JVMQuckooClient extends NewQuckooClient {
 
   def signOut(): ClientIO[Unit] =
     for {
-      passport <- ClientIO.getPassport
-      request  <- ClientIO.pure(sttp.post(uri"$LogoutURI").auth.bearer(passport.toString))
+      request  <- auth.map(_.post(uri"$LogoutURI"))
       response <- ClientIO.fromFuture(IO(request.send()))
       _        <- ClientIO.fromEither(response.body)
     } yield ()
+
+  def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]] =
+    for {
+      request <- auth.map(
+        _.post(uri"$JobsURI").body(jobSpec).response(asJson[ValidatedNel[QuckooError, JobId]])
+      )
+      response <- ClientIO.fromFuture(IO(request.send()))
+      result   <- ClientIO.fromEither(response.body)
+    } yield result
+
+  private[this] def auth =
+    for {
+      passport <- ClientIO.getPassport
+      req      <- ClientIO.pure(sttp.auth.bearer(passport.toString))
+    } yield req
 
 }

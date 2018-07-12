@@ -16,9 +16,12 @@
 
 package io.quckoo
 
-import cats.Show
+import cats.{Eq, Show}
 
 import io.quckoo.validation._
+
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
 
 import monocle.macros.Lenses
 
@@ -46,6 +49,10 @@ object JobSpec {
       any[Boolean])(JobSpec.unapply, JobSpec.apply)
   }
 
-  implicit val display: Show[JobSpec] = Show.fromToString[JobSpec]
+  implicit val jobSpecEq: Eq[JobSpec] = Eq.fromUniversalEquals
+  implicit val jobSpecShow: Show[JobSpec] = Show.fromToString[JobSpec]
+
+  implicit val jobSpecEncoder: Encoder[JobSpec] = deriveEncoder[JobSpec]
+  implicit val jobSpecDecoder: Decoder[JobSpec] = deriveDecoder[JobSpec]
 
 }

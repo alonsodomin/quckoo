@@ -23,6 +23,9 @@ import cats.implicits._
 import io.quckoo.md5.MD5
 import io.quckoo.validation._
 
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+
 import monocle.Prism
 import monocle.macros.{GenPrism, Lenses}
 
@@ -58,6 +61,9 @@ object JobPackage {
     case shell: ShellScriptPackage => shell.show
   }
 
+  implicit val jobPackageEncoder: Encoder[JobPackage] = deriveEncoder[JobPackage]
+  implicit val jobPackageDecoder: Decoder[JobPackage] = deriveDecoder[JobPackage]
+
 }
 
 @Lenses final case class ShellScriptPackage(content: String) extends JobPackage {
@@ -75,6 +81,9 @@ object ShellScriptPackage {
     caseClass1(validContent)(ShellScriptPackage.unapply, ShellScriptPackage.apply)
   }
 
+  implicit val shellScriptPackageEncoder: Encoder[ShellScriptPackage] = deriveEncoder[ShellScriptPackage]
+  implicit val shellScriptPackageDecoder: Decoder[ShellScriptPackage] = deriveDecoder[ShellScriptPackage]
+
 }
 
 @Lenses final case class JarJobPackage(
@@ -88,7 +97,7 @@ object ShellScriptPackage {
 
 object JarJobPackage {
 
-  implicit val jobPackageShow: Show[JarJobPackage] = Show.show { pckg =>
+  implicit val jarJobPackageShow: Show[JarJobPackage] = Show.show { pckg =>
     s"${pckg.jobClass} @ ${pckg.artifactId.show}"
   }
 
@@ -100,5 +109,8 @@ object JarJobPackage {
 
     caseClass2(validArtifactId, validJobClass)(JarJobPackage.unapply, JarJobPackage.apply)
   }
+
+  implicit val jarJobPackageEncoder: Encoder[JarJobPackage] = deriveEncoder[JarJobPackage]
+  implicit val jarJobPackageDecoder: Decoder[JarJobPackage] = deriveDecoder[JarJobPackage]
 
 }

@@ -20,6 +20,9 @@ import cats._
 
 import io.quckoo.validation._
 
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+
 import monocle.macros.Lenses
 
 /**
@@ -45,6 +48,9 @@ object ArtifactId {
   }
 
   implicit val artifactIdEq: Eq[ArtifactId] = Eq.fromUniversalEquals[ArtifactId]
+
+  implicit val artifactIdEncoder: Encoder[ArtifactId] = deriveEncoder[ArtifactId]
+  implicit val artifactIdDecoder: Decoder[ArtifactId] = deriveDecoder[ArtifactId]
 
 }
 
