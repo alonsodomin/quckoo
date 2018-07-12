@@ -43,7 +43,7 @@ abstract class JVMQuckooClient extends NewQuckooClient {
         sttp.post(uri"$LoginURI").auth.basic(username, password)
       )
       response <- ClientIO.fromFuture(IO(request.send()))
-      passport <- ClientIO.fromEither(decodeLoginBody(response.body))
+      passport <- ClientIO.fromAttempt(decodeLoginBody(response.body))
       _        <- ClientIO.setPassport(passport)
     } yield ()
   }
@@ -53,7 +53,7 @@ abstract class JVMQuckooClient extends NewQuckooClient {
       passport <- ClientIO.getPassport
       request  <- ClientIO.pure(sttp.post(uri"$LogoutURI").auth.bearer(passport.toString))
       response <- ClientIO.fromFuture(IO(request.send()))
-      _        <- ClientIO.fromEither(response.body.leftMap(str => new Exception(str)))
+      _        <- ClientIO.fromEither(response.body)
     } yield ()
 
 }

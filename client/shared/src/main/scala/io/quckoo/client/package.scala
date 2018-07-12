@@ -22,6 +22,7 @@ import cats.effect._
 import cats.implicits._
 
 import io.quckoo.auth.{Passport, Unauthorized}
+import io.quckoo.util.Attempt
 
 import scala.concurrent.Future
 
@@ -36,8 +37,11 @@ package object client {
     def fromFuture[A](action: IO[Future[A]]): ClientIO[A] =
       StateT.liftF(IO.fromFuture(action))
 
-    def fromEither[A](result: Either[Throwable, A]): ClientIO[A] =
+    def fromAttempt[A](result: Attempt[A]): ClientIO[A] =
       StateT.liftF(IO.fromEither(result))
+
+    def fromEither[A](result: Either[String, A]): ClientIO[A] =
+      fromAttempt(result.leftMap(err => new Exception(err)))
 
     def getPassport: ClientIO[Passport] = {
       def retrievePassport(state: ClientState): IO[Passport] = state.passport match {
