@@ -77,9 +77,9 @@ object Dependencies {
       val main      = "1.1.0"
       val mtl       = "0.3.0"
       val effect    = "1.0.0-RC2"
-      //val kittens   = "1.1.0"
+      val kittens   = "1.1.0"
     }
-    val circe       = "0.10.0-M1"
+    val circe       = "0.9.3"
     val cron4s      = "0.4.5"
     val enumeratum  = "1.5.17"
     val ivy         = "2.4.0"
@@ -91,6 +91,7 @@ object Dependencies {
     val scalafmt    = "1.4.0"
     val scalaTime   = "2.0.0-M13"
     val scopt       = "3.7.0"
+    val sttp        = "1.2.2"
     val xml         = "1.1.0"
 
     // JavaScript Libraries
@@ -251,7 +252,9 @@ object Dependencies {
 
   lazy val client = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "biz.enef" %%% "slogging" % version.slogging
+      "biz.enef"              %%% "slogging" % version.slogging,
+      "com.softwaremill.sttp" %%% "core"     % version.sttp,
+      "com.softwaremill.sttp" %%% "circe"    % version.sttp
     )
   }
 
@@ -264,6 +267,7 @@ object Dependencies {
   lazy val clientJVM = Def.settings {
     import libs._
     libraryDependencies ++= Log4j.All.map(_ % Runtime) ++ Seq(
+      "com.softwaremill.sttp" %% "akka-http-backend"     % version.sttp,
       slogging_slf4j, Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryo, Akka.http.main, Akka.http.sse,
       wiremock % Test
