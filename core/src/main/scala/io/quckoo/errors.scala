@@ -18,12 +18,26 @@ package io.quckoo
 
 import cats.data.NonEmptyList
 
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+
 import io.quckoo.validation.Violation
 
 /**
   * Created by alonsodomin on 28/12/2015.
   */
 sealed trait QuckooError extends Product with Serializable
+object QuckooError {
+  implicit val quckooErrorEncoder: Encoder[QuckooError] = {
+    import io.circe.generic.auto._
+    deriveEncoder[QuckooError]
+  }
+
+  implicit val quckooErrorDecoder: Decoder[QuckooError] = {
+    import io.circe.generic.auto._
+    deriveDecoder[QuckooError]
+  }
+}
 
 // == Business errors ===============
 

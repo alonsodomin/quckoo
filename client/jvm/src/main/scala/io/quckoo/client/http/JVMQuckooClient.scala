@@ -24,15 +24,17 @@ import com.softwaremill.sttp._
 import com.softwaremill.sttp.akkahttp._
 import com.softwaremill.sttp.circe._
 
+import io.circe.{Error => JsonError, _}
+
 import io.quckoo._
 import io.quckoo.client._
 import io.quckoo.auth.{InvalidCredentials, Passport}
+import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.json._
 
-abstract class JVMQuckooClient extends NewQuckooClient {
+abstract class JVMQuckooClient(implicit backend: AkkaHttpBackend) extends NewQuckooClient {
   import NewQuckooClient._
-
-  implicit val backend = AkkaHttpBackend()
 
   def signIn(username: String, password: String): ClientIO[Unit] = {
     def decodeLoginBody(body: Either[String, String]): Either[Throwable, Passport] = {
@@ -44,7 +46,7 @@ abstract class JVMQuckooClient extends NewQuckooClient {
       request <- ClientIO.pure(
         sttp.post(uri"$LoginURI").auth.basic(username, password)
       )
-      response <- ClientIO.fromFuture(IO(request.send()))
+      response <- ClientIO.fromFuture(request.send())
       passport <- ClientIO.fromAttempt(decodeLoginBody(response.body))
       _        <- ClientIO.setPassport(passport)
     } yield ()
@@ -52,24 +54,68 @@ abstract class JVMQuckooClient extends NewQuckooClient {
 
   def signOut(): ClientIO[Unit] =
     for {
-      request  <- auth.map(_.post(uri"$LogoutURI"))
-      response <- ClientIO.fromFuture(IO(request.send()))
-      _        <- ClientIO.fromEither(response.body)
+      request <- ClientIO.auth.map(_.post(uri"$LogoutURI"))
+      _       <- ClientIO.handle(request)
     } yield ()
 
-  def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]] =
+  // -- Registry
+
+  def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]] = {
+    // The Scala compiler needs some help resolving this decoder
+    implicit lazy val resultDec: Decoder[ValidatedNel[QuckooError, JobId]] =
+      Decoder[ValidatedNel[QuckooError, JobId]]
+
     for {
-      request <- auth.map(
+      request <- ClientIO.auth.map(
         _.post(uri"$JobsURI").body(jobSpec).response(asJson[ValidatedNel[QuckooError, JobId]])
       )
-      response <- ClientIO.fromFuture(IO(request.send()))
-      result   <- ClientIO.fromEither(response.body)
+      result <- ClientIO.handleAttempt(request)
+    } yield result
+  }
+
+  def fetchJob(jobId: JobId): ClientIO[Option[JobSpec]] =
+    for {
+      request <- ClientIO.auth.map(_.get(uri"$JobsURI/$jobId").response(asJson[JobSpec]))
+      result  <- ClientIO.handleNotFound(request)
     } yield result
 
-  private[this] def auth =
+  def fetchJobs(): ClientIO[List[(JobId, JobSpec)]] =
     for {
-      passport <- ClientIO.getPassport
-      req      <- ClientIO.pure(sttp.auth.bearer(passport.toString))
-    } yield req
+      request <- ClientIO.auth.map(_.get(uri"$JobsURI").response(asJson[List[(JobId, JobSpec)]]))
+      result  <- ClientIO.handleAttempt(request)
+    } yield result
 
+  def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] = {
+    import io.circe.generic.auto._
+    for {
+      request <- ClientIO.auth.map(
+        _.post(uri"$JobsURI/$jobId/enable").response(asJson[Either[JobNotFound, JobEnabled]])
+      )
+      result <- ClientIO.handleAttempt(request)
+    } yield result
+  }
+
+  def disableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobDisabled]] = {
+    import io.circe.generic.auto._
+    for {
+      request <- ClientIO.auth.map(
+        _.post(uri"$JobsURI/$jobId/disable").response(asJson[Either[JobNotFound, JobDisabled]])
+      )
+      result <- ClientIO.handleAttempt(request)
+    } yield result
+  }
+
+  // -- Scheduler
+
+  //def startPlan(schedule: ScheduleJob): ClientIO[Either[JobNotFound, ExecutionPlanStarted]] = {
+  //  import io.circe.generic.auto._
+  //  for {
+  //    request <- ClientIO.auth.map(
+  //      _.put(uri"$ExecutionPlansURI")
+  //        .body(schedule)
+  //        .response(asJson[Either[JobNotFound, ExecutionPlanStarted]])
+  //    )
+  //    result <- ClientIO.handleAttempt(request)
+  //  } yield result
+  //}
 }

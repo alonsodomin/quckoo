@@ -21,6 +21,8 @@ import cats.data._
 import cats.effect._
 import cats.implicits._
 
+import com.softwaremill.sttp._
+
 import io.quckoo.auth.{Passport, Unauthorized}
 import io.quckoo.util.Attempt
 
@@ -34,14 +36,51 @@ package object client {
     def pure[A](a: A): ClientIO[A] =
       StateT.pure[IO, ClientState, A](a)
 
-    def fromFuture[A](action: IO[Future[A]]): ClientIO[A] =
-      StateT.liftF(IO.fromFuture(action))
+    def auth = for {
+      passport <- getPassport
+      req <- pure(sttp.auth.bearer(passport.toString))
+    } yield req
+
+    def handle[A, S](request: Request[A, S])(
+      implicit backend: SttpBackend[Future, S]
+    ): ClientIO[A] = for {
+      response <- fromFuture(request.send())
+      body     <- fromEither(response.body)
+    } yield body
+
+    def handleAttempt[E <: Throwable, A, S](request: Request[Either[E, A], S])(
+      implicit backend: SttpBackend[Future, S]
+    ): ClientIO[A] = for {
+      body   <- handle(request)
+      result <- fromAttempt(body)
+    } yield result
+
+    def handleNotFound[E <: Throwable, A, S](request: Request[Either[E, A], S])(
+      implicit backend: SttpBackend[Future, S]
+    ): ClientIO[Option[A]] = {
+      def optionalBody(response: Response[Either[E, A]]): ClientIO[Either[E, Option[A]]] = {
+        if (response.code == 404) {
+          pure(none[A].asRight[E])
+        } else {
+          fromEither(response.body.map(_.map(_.some)))
+        }
+      }
+
+      for {
+        response <- fromFuture(request.send())
+        body <- optionalBody(response)
+        result <- fromAttempt(body)
+      } yield result
+    }
+
+    def fromFuture[A](action: => Future[A]): ClientIO[A] =
+      StateT.liftF(IO.fromFuture(IO(action)))
 
     def fromAttempt[A](result: Attempt[A]): ClientIO[A] =
       StateT.liftF(IO.fromEither(result))
 
-    def fromEither[A](result: Either[String, A]): ClientIO[A] =
-      fromAttempt(result.leftMap(err => new Exception(err)))
+    def fromEither[E: Show, A](result: Either[E, A]): ClientIO[A] =
+      fromAttempt(result.leftMap(err => new Exception(err.show)))
 
     def getPassport: ClientIO[Passport] = {
       def retrievePassport(state: ClientState): IO[Passport] = state.passport match {
