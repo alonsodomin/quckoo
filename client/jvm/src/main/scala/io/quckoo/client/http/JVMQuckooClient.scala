@@ -76,7 +76,7 @@ abstract class JVMQuckooClient(implicit backend: AkkaHttpBackend) extends NewQuc
   def fetchJob(jobId: JobId): ClientIO[Option[JobSpec]] =
     for {
       request <- ClientIO.auth.map(_.get(uri"$JobsURI/$jobId").response(asJson[JobSpec]))
-      result  <- ClientIO.handleNotFound(request)
+      result  <- ClientIO.handleNotFoundOption(request)
     } yield result
 
   def fetchJobs(): ClientIO[List[(JobId, JobSpec)]] =
@@ -85,25 +85,21 @@ abstract class JVMQuckooClient(implicit backend: AkkaHttpBackend) extends NewQuc
       result  <- ClientIO.handleAttempt(request)
     } yield result
 
-  def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] = {
-    import io.circe.generic.auto._
+  def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] =
     for {
       request <- ClientIO.auth.map(
         _.post(uri"$JobsURI/$jobId/enable").response(asJson[Either[JobNotFound, JobEnabled]])
       )
-      result <- ClientIO.handleAttempt(request)
+      result <- ClientIO.handleNotFound(request)(JobNotFound(jobId), _.asRight[JobNotFound])
     } yield result
-  }
 
-  def disableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobDisabled]] = {
-    import io.circe.generic.auto._
+  def disableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobDisabled]] =
     for {
       request <- ClientIO.auth.map(
         _.post(uri"$JobsURI/$jobId/disable").response(asJson[Either[JobNotFound, JobDisabled]])
       )
-      result <- ClientIO.handleAttempt(request)
+      result <- ClientIO.handleNotFound(request)(JobNotFound(jobId), _.asRight[JobNotFound])
     } yield result
-  }
 
   // -- Scheduler
 

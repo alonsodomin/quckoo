@@ -43,7 +43,7 @@ trait HttpSchedulerCmds extends HttpMarshalling with SchedulerCmds[HttpProtocol]
       override val marshall =
         marshallToJson[ScheduleJobCmd](HttpMethod.Put, _ => ExecutionPlansURI)
       override val unmarshall =
-        unmarshalEither[JobId, ExecutionPlanStarted].map(_.leftMap(JobNotFound))
+        unmarshalEither[JobId, ExecutionPlanStarted].map(_.leftMap(JobNotFound.apply))
     }
 
   implicit lazy val getPlansCmd: GetPlansCmd =

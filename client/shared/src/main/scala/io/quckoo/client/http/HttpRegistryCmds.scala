@@ -57,13 +57,13 @@ trait HttpRegistryCmds extends HttpMarshalling with RegistryCmds[HttpProtocol] {
   implicit lazy val enableJobCmd: EnableJobCmd =
     new Auth[HttpProtocol, JobId, Either[JobNotFound, JobEnabled]] {
       override val marshall   = marshallEmpty[EnableJobCmd](HttpMethod.Post, jobUrl(Some("enable")))
-      override val unmarshall = unmarshalEither[JobId, JobEnabled].map(_.leftMap(JobNotFound))
+      override val unmarshall = unmarshalEither[JobId, JobEnabled].map(_.leftMap(JobNotFound.apply))
     }
 
   implicit lazy val disableJobCmd: DisableJobCmd =
     new Auth[HttpProtocol, JobId, Either[JobNotFound, JobDisabled]] {
       override val marshall =
         marshallEmpty[DisableJobCmd](HttpMethod.Post, jobUrl(Some("disable")))
-      override val unmarshall = unmarshalEither[JobId, JobDisabled].map(_.leftMap(JobNotFound))
+      override val unmarshall = unmarshalEither[JobId, JobDisabled].map(_.leftMap(JobNotFound.apply))
     }
 }

@@ -42,6 +42,11 @@ object QuckooError {
 // == Business errors ===============
 
 final case class JobNotFound(jobId: JobId)             extends QuckooError
+object JobNotFound {
+  implicit val jobNotFoundEncoder: Encoder[JobNotFound] = deriveEncoder[JobNotFound]
+  implicit val jobNotFoundDecoder: Decoder[JobNotFound] = deriveDecoder[JobNotFound]
+}
+
 final case class JobNotEnabled(jobId: JobId)           extends QuckooError
 final case class ExecutionPlanNotFound(planId: PlanId) extends QuckooError
 final case class TaskExecutionNotFound(taskId: TaskId) extends QuckooError

@@ -55,23 +55,31 @@ package object client {
       result <- fromAttempt(body)
     } yield result
 
-    def handleNotFound[E <: Throwable, A, S](request: Request[Either[E, A], S])(
+    def handleNotFound[E <: Throwable, A, B, S](request: Request[Either[E, A], S])(
+      onNotFound: => B,
+      onFound: A => B
+    )(
       implicit backend: SttpBackend[Future, S]
-    ): ClientIO[Option[A]] = {
-      def optionalBody(response: Response[Either[E, A]]): ClientIO[Either[E, Option[A]]] = {
+    ): ClientIO[B] = {
+      def optionalBody(response: Response[Either[E, A]]): ClientIO[Either[E, B]] = {
         if (response.code == 404) {
-          pure(none[A].asRight[E])
+          pure(onNotFound.asRight[E])
         } else {
-          fromEither(response.body.map(_.map(_.some)))
+          fromEither(response.body.map(_.map(onFound)))
         }
       }
 
       for {
         response <- fromFuture(request.send())
-        body <- optionalBody(response)
-        result <- fromAttempt(body)
+        body     <- optionalBody(response)
+        result   <- fromAttempt(body)
       } yield result
     }
+
+    def handleNotFoundOption[E <: Throwable, A, S](request: Request[Either[E, A], S])(
+      implicit backend: SttpBackend[Future, S]
+    ): ClientIO[Option[A]] =
+      handleNotFound(request)(none[A], _.some)
 
     def fromFuture[A](action: => Future[A]): ClientIO[A] =
       StateT.liftF(IO.fromFuture(IO(action)))
@@ -97,4 +105,5 @@ package object client {
     def setPassport(passport: Passport): ClientIO[Unit] =
       StateT.set(ClientState(passport.some))
   }
+
 }

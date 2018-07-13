@@ -16,6 +16,9 @@
 
 package io.quckoo.protocol.registry
 
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+
 import io.quckoo.{QuckooError, JobId, JobSpec}
 import io.quckoo.protocol.{Command, Event}
 
@@ -41,6 +44,15 @@ final case class JobRejected(jobId: JobId, fault: QuckooError) extends RegistryR
 
 final case class DisableJob(jobId: JobId)  extends RegistryWriteCommand with RegistryJobCommand
 final case class JobDisabled(jobId: JobId) extends RegistryEvent
+object JobDisabled {
+  implicit val jobDisabledEncoder: Encoder[JobDisabled] = deriveEncoder[JobDisabled]
+  implicit val jobDisabledDecoder: Decoder[JobDisabled] = deriveDecoder[JobDisabled]
+}
 
 final case class EnableJob(jobId: JobId) extends RegistryWriteCommand with RegistryJobCommand
+
 final case class JobEnabled(jobId: JobId) extends RegistryEvent
+object JobEnabled {
+  implicit val jobEnabledEncoder: Encoder[JobEnabled] = deriveEncoder[JobEnabled]
+  implicit val jobEnabledDecoder: Decoder[JobEnabled] = deriveDecoder[JobEnabled]
+}
