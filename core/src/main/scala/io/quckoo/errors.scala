@@ -18,6 +18,8 @@ package io.quckoo
 
 import cats.data.NonEmptyList
 
+import enumeratum._
+
 import io.circe.{Encoder, Decoder}
 import io.circe.generic.semiauto._
 
@@ -26,7 +28,7 @@ import io.quckoo.validation.Violation
 /**
   * Created by alonsodomin on 28/12/2015.
   */
-sealed trait QuckooError extends Product with Serializable
+sealed abstract class QuckooError extends Exception
 object QuckooError {
   implicit val quckooErrorEncoder: Encoder[QuckooError] = {
     import io.circe.generic.auto._
@@ -72,7 +74,7 @@ sealed trait DependencyError extends Product with Serializable {
 case class UnresolvedDependency(artifactId: ArtifactId) extends DependencyError
 
 object DownloadFailed {
-  sealed trait Reason
+  sealed trait Reason extends Product with Serializable
   case object NotFound                    extends Reason
   final case class Other(message: String) extends Reason
 }

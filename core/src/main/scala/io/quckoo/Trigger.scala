@@ -22,6 +22,12 @@ import cron4s.expr.CronExpr
 import cron4s.syntax.all._
 import cron4s.lib.javatime._
 
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+import io.circe.java8.time._
+
+import io.quckoo.serialization.json._
+
 import scala.concurrent.duration._
 
 /**
@@ -119,4 +125,13 @@ object Trigger {
 
   }
 
+  implicit val triggerEncoder: Encoder[Trigger] = {
+    import io.circe.generic.auto._
+    deriveEncoder[Trigger]
+  }
+
+  implicit val triggerDecoder: Decoder[Trigger] = {
+    import io.circe.generic.auto._
+    deriveDecoder[Trigger]
+  }
 }

@@ -33,7 +33,7 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.json._
 
-abstract class JVMQuckooClient(implicit backend: AkkaHttpBackend) extends NewQuckooClient {
+class JVMQuckooClient(implicit backend: AkkaHttpBackend) extends NewQuckooClient {
   import NewQuckooClient._
 
   def signIn(username: String, password: String): ClientIO[Unit] = {
@@ -85,33 +85,75 @@ abstract class JVMQuckooClient(implicit backend: AkkaHttpBackend) extends NewQuc
       result  <- ClientIO.handleAttempt(request)
     } yield result
 
-  def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]] =
+  def enableJob(jobId: JobId): ClientIO[Unit] =
     for {
       request <- ClientIO.auth.map(
-        _.post(uri"$JobsURI/$jobId/enable").response(asJson[Either[JobNotFound, JobEnabled]])
+        _.post(uri"$JobsURI/$jobId/enable").response(asJson[JobEnabled])
       )
-      result <- ClientIO.handleNotFound(request)(JobNotFound(jobId), _.asRight[JobNotFound])
-    } yield result
+      response <- ClientIO.fromFuture(request.send())
+      _        <- if (response.code == 404) ClientIO.raiseError(JobNotFound(jobId)) else ClientIO.unit
+    } yield ()
 
-  def disableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobDisabled]] =
+  def disableJob(jobId: JobId): ClientIO[Unit] =
     for {
       request <- ClientIO.auth.map(
-        _.post(uri"$JobsURI/$jobId/disable").response(asJson[Either[JobNotFound, JobDisabled]])
+        _.post(uri"$JobsURI/$jobId/disable").response(asJson[JobDisabled])
       )
-      result <- ClientIO.handleNotFound(request)(JobNotFound(jobId), _.asRight[JobNotFound])
-    } yield result
+      response <- ClientIO.fromFuture(request.send())
+      _        <- if (response.code == 404) ClientIO.raiseError(JobNotFound(jobId)) else ClientIO.unit
+    } yield ()
 
   // -- Scheduler
 
-  //def startPlan(schedule: ScheduleJob): ClientIO[Either[JobNotFound, ExecutionPlanStarted]] = {
-  //  import io.circe.generic.auto._
-  //  for {
-  //    request <- ClientIO.auth.map(
-  //      _.put(uri"$ExecutionPlansURI")
-  //        .body(schedule)
-  //        .response(asJson[Either[JobNotFound, ExecutionPlanStarted]])
-  //    )
-  //    result <- ClientIO.handleAttempt(request)
-  //  } yield result
-  //}
+  def startPlan(schedule: ScheduleJob): ClientIO[PlanId] =
+    for {
+      request <- ClientIO.auth.map(
+        _.put(uri"$ExecutionPlansURI").body(schedule).response(asJson[PlanId])
+      )
+      response <- ClientIO.fromFuture(request.send())
+      body <- if (response.code == 404) ClientIO.raiseError(JobNotFound(schedule.jobId))
+      else ClientIO.fromEither(response.body)
+      result <- ClientIO.fromAttempt(body)
+    } yield result
+
+  def cancelPlan(planId: PlanId): ClientIO[Unit] =
+    for {
+      request  <- ClientIO.auth.map(_.delete(uri"$ExecutionPlansURI/$planId"))
+      response <- ClientIO.fromFuture(request.send())
+      _ <- if (response.code == 404) ClientIO.raiseError(ExecutionPlanNotFound(planId))
+      else ClientIO.unit
+    } yield ()
+
+  def fetchPlans(): ClientIO[List[(PlanId, ExecutionPlan)]] =
+    for {
+      request <- ClientIO.auth.map(
+        _.get(uri"$ExecutionPlansURI").response(asJson[List[(PlanId, ExecutionPlan)]])
+      )
+      result <- ClientIO.handleAttempt(request)
+    } yield result
+
+  def fetchPlan(planId: PlanId): ClientIO[Option[ExecutionPlan]] =
+    for {
+      request <- ClientIO.auth.map(
+        _.get(uri"$ExecutionPlansURI/$planId").response(asJson[ExecutionPlan])
+      )
+      result <- ClientIO.handleNotFoundOption(request)
+    } yield result
+
+  def fetchTasks(): ClientIO[List[(TaskId, TaskExecution)]] =
+    for {
+      request <- ClientIO.auth.map(
+        _.get(uri"$TaskExecutionsURI").response(asJson[List[(TaskId, TaskExecution)]])
+      )
+      result <- ClientIO.handleAttempt(request)
+    } yield result
+
+  def fetchTask(taskId: TaskId): ClientIO[Option[TaskExecution]] =
+    for {
+      request <- ClientIO.auth.map(
+        _.get(uri"$TaskExecutionsURI/$taskId").response(asJson[TaskExecution])
+      )
+      result <- ClientIO.handleNotFoundOption(request)
+    } yield result
+
 }

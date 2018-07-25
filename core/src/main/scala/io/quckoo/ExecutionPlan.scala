@@ -18,6 +18,10 @@ package io.quckoo
 
 import java.time.{Clock, ZonedDateTime}
 
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+import io.circe.java8.time._
+
 import monocle.macros.Lenses
 
 /**
@@ -47,5 +51,12 @@ import monocle.macros.Lenses
     }
     trigger.nextExecutionTime(referenceTime)
   }
+
+}
+
+object ExecutionPlan {
+
+  implicit val executionPlanEncoder: Encoder[ExecutionPlan] = deriveEncoder[ExecutionPlan]
+  implicit val executionPlanDecoder: Decoder[ExecutionPlan] = deriveDecoder[ExecutionPlan]
 
 }

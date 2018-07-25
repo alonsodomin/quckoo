@@ -17,7 +17,10 @@
 package io.quckoo
 
 import cats.Show
-import cats.syntax.contravariant._
+import cats.implicits._
+
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
 
 /**
   * Created by aalonsodominguez on 05/07/15.
@@ -29,6 +32,9 @@ final case class Task(
 )
 
 object Task {
+
+  implicit val taskEncoder: Encoder[Task] = deriveEncoder[Task]
+  implicit val taskDecoder: Decoder[Task] = deriveDecoder[Task]
 
   implicit val showTask: Show[Task] = Show[JobPackage].contramap(_.jobPackage)
 

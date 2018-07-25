@@ -18,6 +18,11 @@ package io.quckoo
 
 import cats.Show
 
+import enumeratum._
+
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+
 import monocle.macros.Lenses
 
 /**
@@ -32,33 +37,42 @@ import monocle.macros.Lenses
 
 object TaskExecution {
 
-  sealed trait Status extends Product with Serializable
-  object Status {
+  sealed trait Status extends EnumEntry
+  object Status extends Enum[Status] with CirceEnum[Status] {
     case object Scheduled  extends Status
     case object Enqueued   extends Status
     case object InProgress extends Status
     case object Complete   extends Status
+
+    val values = findValues
+
+    implicit val statusShow: Show[Status] = Show.fromToString
   }
 
-  implicit val statusShow: Show[Status] = Show.fromToString
-
-  sealed trait Reason extends Product with Serializable
-  object Reason {
+  sealed trait Reason extends EnumEntry
+  object Reason extends Enum[Reason] with CirceEnum[Reason] {
     case object UserRequest     extends Reason
     case object FailedToEnqueue extends Reason
+
+    val values = findValues
+
+    implicit val reasonShow: Show[Reason] = Show.fromToString
   }
 
-  implicit val reasonShow: Show[Reason] = Show.fromToString
-
-  sealed trait Outcome extends Product with Serializable
-  object Outcome {
+  sealed trait Outcome extends EnumEntry
+  object Outcome extends Enum[Outcome] with CirceEnum[Outcome] {
     case object Success                          extends Outcome
     final case class Failure(cause: QuckooError)       extends Outcome
     final case class Interrupted(reason: Reason) extends Outcome
     final case class NeverRun(reason: Reason)    extends Outcome
     case object NeverEnding                      extends Outcome
+
+    val values = findValues
+
+    implicit val outcomeShow: Show[Outcome] = Show.fromToString
   }
 
-  implicit val outcomeShow: Show[Outcome] = Show.fromToString
+  implicit val taskExecutionEncoder: Encoder[TaskExecution] = deriveEncoder[TaskExecution]
+  implicit val taskExecutionDecoder: Decoder[TaskExecution] = deriveDecoder[TaskExecution]
 
 }

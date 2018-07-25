@@ -33,13 +33,13 @@ trait NewQuckooClient {
   def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]]
   def fetchJob(jobId: JobId): ClientIO[Option[JobSpec]]
   def fetchJobs(): ClientIO[List[(JobId, JobSpec)]]
-  def enableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobEnabled]]
-  def disableJob(jobId: JobId): ClientIO[Either[JobNotFound, JobDisabled]]
+  def enableJob(jobId: JobId): ClientIO[Unit]
+  def disableJob(jobId: JobId): ClientIO[Unit]
 
   // -- Scheduler
 
-  def startPlan(schedule: ScheduleJob): ClientIO[Either[JobNotFound, ExecutionPlanStarted]]
-  def cancelPlan(planId: PlanId): ClientIO[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]]
+  def startPlan(schedule: ScheduleJob): ClientIO[PlanId]
+  def cancelPlan(planId: PlanId): ClientIO[Unit]
   def fetchPlans(): ClientIO[List[(PlanId, ExecutionPlan)]]
   def fetchPlan(planId: PlanId): ClientIO[Option[ExecutionPlan]]
   def fetchTasks(): ClientIO[List[(TaskId, TaskExecution)]]

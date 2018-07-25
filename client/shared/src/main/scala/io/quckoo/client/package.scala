@@ -36,6 +36,8 @@ package object client {
     def pure[A](a: A): ClientIO[A] =
       StateT.pure[IO, ClientState, A](a)
 
+    def unit: ClientIO[Unit] = pure(())
+
     def auth = for {
       passport <- getPassport
       req <- pure(sttp.auth.bearer(passport.toString))
@@ -76,6 +78,13 @@ package object client {
       } yield result
     }
 
+    def handleNotFoundEither[E <: Throwable, A, B, S](request: Request[Either[E, A], S])(
+      onNotFound: => B
+    )(
+      implicit backend: SttpBackend[Future, S]
+    ): ClientIO[Either[B, A]] =
+      handleNotFound(request)(onNotFound.asLeft[A], _.asRight[B])
+
     def handleNotFoundOption[E <: Throwable, A, S](request: Request[Either[E, A], S])(
       implicit backend: SttpBackend[Future, S]
     ): ClientIO[Option[A]] =
@@ -104,6 +113,9 @@ package object client {
 
     def setPassport(passport: Passport): ClientIO[Unit] =
       StateT.set(ClientState(passport.some))
+
+    def raiseError[A](error: Throwable): ClientIO[A] =
+      StateT.liftF(IO.raiseError(error))
   }
 
 }
