@@ -26,42 +26,15 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Created by alonsodomin on 13/03/2016.
   */
-trait Scheduler {
+trait Scheduler[F[_]] {
 
-  def cancelPlan(planId: PlanId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]]
+  def startPlan(schedule: ScheduleJob): F[PlanId]
+  def cancelPlan(planId: PlanId): F[Unit]
 
-  def executionPlan(planId: PlanId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Option[ExecutionPlan]]
+  def fetchPlans(): F[List[(PlanId, ExecutionPlan)]]
+  def fetchPlan(planId: PlanId): F[Option[ExecutionPlan]]
 
-  def executionPlans(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Seq[(PlanId, ExecutionPlan)]]
-
-  def executions(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Seq[(TaskId, TaskExecution)]]
-
-  def execution(taskId: TaskId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Option[TaskExecution]]
-
-  def scheduleJob(schedule: ScheduleJob)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[QuckooError, ExecutionPlanStarted]]
+  def fetchTasks(): F[List[(TaskId, TaskExecution)]]
+  def fetchTask(taskId: TaskId): F[Option[TaskExecution]]
 
 }

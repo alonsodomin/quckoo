@@ -53,8 +53,4 @@ package object http {
   @inline private[http] def authHeader(passport: Passport): (String, String) =
     AuthorizationHeader -> s"Bearer ${passport.token}"
 
-  type HttpQuckooClient = QuckooClient[HttpProtocol]
-
-  implicit val httpCommands: ProtocolSpecs[HttpProtocol] = Http
-
 }

@@ -16,6 +16,9 @@
 
 package io.quckoo.client.http
 
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+
 import cats.data._
 import cats.effect._
 import cats.implicits._
@@ -33,8 +36,19 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.json._
 
-class JVMQuckooClient(implicit backend: AkkaHttpBackend) extends NewQuckooClient {
-  import NewQuckooClient._
+import scala.concurrent.Future
+
+object JVMQuckooClient {
+  def apply(host: String, port: Int = 80): JVMQuckooClient = {
+    val backend = AkkaHttpBackend()
+    new JVMQuckooClient(host, port)(backend)
+  }
+}
+
+class JVMQuckooClient private (host: String, port: Int)(
+    implicit backend: SttpBackend[Future, Source[ByteString, Any]]
+) extends QuckooClient {
+  import QuckooClient._
 
   def signIn(username: String, password: String): ClientIO[Unit] = {
     def decodeLoginBody(body: Either[String, String]): Either[Throwable, Passport] = {

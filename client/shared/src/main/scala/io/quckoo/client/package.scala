@@ -29,7 +29,7 @@ import io.quckoo.util.Attempt
 import scala.concurrent.Future
 
 package object client {
-  import NewQuckooClient.ClientState
+  import QuckooClient.ClientState
 
   type ClientIO[A] = StateT[IO, ClientState, A]
   object ClientIO {
