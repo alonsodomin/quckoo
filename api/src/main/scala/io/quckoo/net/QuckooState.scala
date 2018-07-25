@@ -16,6 +16,9 @@
 
 package io.quckoo.net
 
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+
 import io.quckoo.NodeId
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker._
@@ -65,4 +68,8 @@ import monocle.macros.Lenses
       copy(workerNodes = workerNodes - workerId)
   }
 
+}
+object QuckooState {
+  implicit val quckooStateEncoder: Encoder[QuckooState] = deriveEncoder[QuckooState]
+  implicit val quckooStateDecoder: Decoder[QuckooState] = deriveDecoder[QuckooState]
 }

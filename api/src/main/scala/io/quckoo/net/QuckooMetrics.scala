@@ -16,7 +16,11 @@
 
 package io.quckoo.net
 
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+
 import io.quckoo.protocol.scheduler.TaskQueueUpdated
+
 import monocle.macros.Lenses
 
 /**
@@ -27,4 +31,8 @@ import monocle.macros.Lenses
   def updated(event: TaskQueueUpdated): QuckooMetrics =
     copy(pendingTasks = event.pendingTasks, inProgressTasks = event.inProgressTasks)
 
+}
+object QuckooMetrics {
+  implicit val quckooMetricsEncoder: Encoder[QuckooMetrics] = deriveEncoder[QuckooMetrics]
+  implicit val quckooMetricsDecoder: Decoder[QuckooMetrics] = deriveDecoder[QuckooMetrics]
 }

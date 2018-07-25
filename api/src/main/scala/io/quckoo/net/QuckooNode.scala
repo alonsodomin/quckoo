@@ -16,6 +16,9 @@
 
 package io.quckoo.net
 
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+
 import io.quckoo.NodeId
 
 /**
@@ -28,4 +31,13 @@ sealed trait QuckooNode {
 }
 
 final case class MasterNode(id: NodeId, location: Location, status: NodeStatus) extends QuckooNode
+object MasterNode {
+  implicit val masterNodeEncoder: Encoder[MasterNode] = deriveEncoder[MasterNode]
+  implicit val masterNodeDecoder: Decoder[MasterNode] = deriveDecoder[MasterNode]
+}
+
 final case class WorkerNode(id: NodeId, location: Location, status: NodeStatus) extends QuckooNode
+object WorkerNode {
+  implicit val workerNodeEncoder: Encoder[WorkerNode] = deriveEncoder[WorkerNode]
+  implicit val workerNodeDecoder: Decoder[WorkerNode] = deriveDecoder[WorkerNode]
+}

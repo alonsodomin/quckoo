@@ -21,13 +21,16 @@ import cats.data._
 import io.quckoo._
 import io.quckoo.api._
 import io.quckoo.auth.Passport
+import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 
-trait QuckooClient extends Auth[ClientIO] with Registry[ClientIO] with Scheduler[ClientIO] {
+trait QuckooClient extends Auth[ClientIO] with Cluster[ClientIO] with Registry[ClientIO] with Scheduler[ClientIO] {
 
   def signIn(username: String, password: String): ClientIO[Unit]
   def signOut(): ClientIO[Unit]
+
+  def clusterState: ClientIO[QuckooState]
 
   // -- Registry
 

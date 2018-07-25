@@ -23,6 +23,7 @@ import cats.implicits._
 import io.quckoo._
 import io.quckoo.client._
 import io.quckoo.auth.{InvalidCredentials, Passport}
+import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.json._
@@ -60,6 +61,11 @@ class HttpQuckooClient private[http] (host: String, port: Int)(
       request <- ClientIO.auth.map(_.post(uri"$LogoutURI"))
       _       <- ClientIO.handle(request)
     } yield ()
+
+  def clusterState: ClientIO[QuckooState] = for {
+    request <- ClientIO.auth.map(_.get(uri"$ClusterStateURI").response(asJson[QuckooState]))
+    result  <- ClientIO.handleAttempt(request)
+  } yield result
 
   // -- Registry
 
