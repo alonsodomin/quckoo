@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-package io.quckoo.client.http
+package io.quckoo.api
 
-import com.softwaremill.sttp.akkahttp._
-
-object JVMQuckooClient {
-  def apply(host: String, port: Int = 80): HttpQuckooClient = {
-    val backend = AkkaHttpBackend()
-    new HttpQuckooClient(host, port)(backend)
-  }
+trait Auth[F[_]] {
+  def signIn(username: String, password: String): F[Unit]
+  def signOut(): F[Unit]
 }
