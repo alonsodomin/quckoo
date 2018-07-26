@@ -260,6 +260,7 @@ object Dependencies {
 
   lazy val clientJS = Def.settings(
     libraryDependencies ++= Seq(
+      "com.softwaremill.sttp" %%% "monix" % version.sttp,
       "org.scala-js" %%% "scalajs-dom" % version.scalaJsDom
     )
   )
@@ -267,7 +268,7 @@ object Dependencies {
   lazy val clientJVM = Def.settings {
     import libs._
     libraryDependencies ++= Log4j.All.map(_ % Runtime) ++ Seq(
-      "com.softwaremill.sttp" %% "akka-http-backend"     % version.sttp,
+      "com.softwaremill.sttp" %% "async-http-client-backend-monix"     % version.sttp,
       slogging_slf4j, Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
       Akka.kryo, Akka.http.main, Akka.http.sse,
       wiremock % Test

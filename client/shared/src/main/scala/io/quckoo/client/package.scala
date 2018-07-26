@@ -43,15 +43,20 @@ package object client {
       req <- pure(sttp.auth.bearer(passport.toString))
     } yield req
 
-    def handle[A, S](request: Request[A, S])(
-      implicit backend: SttpBackend[Future, S]
+    def handle[F[_]: Effect, A, S](request: Request[A, S])(
+      implicit backend: SttpBackend[F, S]
     ): ClientIO[A] = for {
-      response <- fromFuture(request.send())
+      response <- fromEffect(request.send())
       body     <- fromEither(response.body)
     } yield body
 
-    def handleAttempt[E <: Throwable, A, S](request: Request[Either[E, A], S])(
-      implicit backend: SttpBackend[Future, S]
+    def optionalBody[A](response: Response[A]): ClientIO[Option[A]] = {
+      if (response.code == 404) pure(none[A])
+      else fromEither(response.body.map(_.some))
+    }
+
+    def handleAttempt[F[_]: Effect, E <: Throwable, A, S](request: Request[Either[E, A], S])(
+      implicit backend: SttpBackend[F, S]
     ): ClientIO[A] = for {
       body   <- handle(request)
       result <- fromAttempt(body)
@@ -92,6 +97,9 @@ package object client {
 
     def fromFuture[A](action: => Future[A]): ClientIO[A] =
       StateT.liftF(IO.fromFuture(IO(action)))
+
+    def fromEffect[F[_], A](effect: F[A])(implicit F: Effect[F]): ClientIO[A] =
+      StateT.liftF(F.toIO(effect))
 
     def fromAttempt[A](result: Attempt[A]): ClientIO[A] =
       StateT.liftF(IO.fromEither(result))

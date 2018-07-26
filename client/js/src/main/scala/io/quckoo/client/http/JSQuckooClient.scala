@@ -16,11 +16,13 @@
 
 package io.quckoo.client.http
 
-import com.softwaremill.sttp.FetchBackend
+import com.softwaremill.sttp.Uri
+import com.softwaremill.sttp.impl.monix._
 
 object JSQuckooClient {
   def apply(host: String, port: Int = 80): HttpQuckooClient = {
-    val backend = FetchBackend()
-    new HttpQuckooClient(host, port)(backend)
+    val baseUri = Uri(host, port)
+    val backend = FetchMonixBackend()
+    new HttpQuckooClient(baseUri)(backend)
   }
 }

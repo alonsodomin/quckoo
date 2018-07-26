@@ -16,11 +16,13 @@
 
 package io.quckoo.client.http
 
-import com.softwaremill.sttp.akkahttp._
+import com.softwaremill.sttp.Uri
+import com.softwaremill.sttp.asynchttpclient.monix._
 
 object JVMQuckooClient {
   def apply(host: String, port: Int = 80): HttpQuckooClient = {
-    val backend = AkkaHttpBackend()
-    new HttpQuckooClient(host, port)(backend)
+    val baseUri = Uri(host, port)
+    val backend = AsyncHttpClientMonixBackend()
+    new HttpQuckooClient(baseUri)(backend)
   }
 }
