@@ -16,20 +16,18 @@
 
 package io.quckoo.console.core
 
-import diode.{ActionHandler, ActionResult}
+import diode._
 
-import io.quckoo.auth.Passport
+import io.quckoo.client.ClientState
 
-/**
-  * Created by alonsodomin on 26/03/2016.
-  */
-trait AuthHandler[S] { this: ActionHandler[ConsoleScope, S] =>
+import scala.concurrent.ExecutionContext.Implicits.global
 
-  def withAuth(f: Passport => ActionResult[ConsoleScope]): ActionResult[ConsoleScope] =
-    this.modelRW.root
-      .zoomMap(_.passport)(identity)
-      .value
-      .map(f)
-      .getOrElse(noChange)
+class CommonHandler(model: ModelRW[ConsoleScope, ClientState])
+    extends ActionHandler[ConsoleScope, ClientState](model) {
+
+  override def handle = {
+    case msg: ClientCompleted[a] =>
+      updatedSilent(msg.clientState, Effect.action[a](msg.result)(msg.actionType, global))
+  }
 
 }

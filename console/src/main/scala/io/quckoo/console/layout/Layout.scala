@@ -52,7 +52,7 @@ object Layout {
   class Backend($ : BackendScope[Props, Unit]) {
 
     def render(props: Props) = {
-      def navigation = props.proxy.wrap(_.passport.flatMap(_.principal)) { principal =>
+      def navigation = props.proxy.wrap(_.clientState.passport.flatMap(_.principal)) { principal =>
         Navigation(MainMenu.head, MainMenu, props.routerCtl, props.resolution.page, principal)
       }
 

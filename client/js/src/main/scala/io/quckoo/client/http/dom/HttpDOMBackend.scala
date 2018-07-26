@@ -38,11 +38,11 @@ private[http] object HttpDOMBackend extends HttpBackend {
 
   final val ResponseType = "arraybuffer"
 
-  override def open[Ch <: Channel[HttpProtocol]](channel: Ch) =
-    Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
-      val subscriber = new EventSourceSubscriber(channel.topicTag.name)
-      Observable.create(OverflowStrategy.DropOld(20))(subscriber)
-    }
+  override def open[Ch <: Channel[HttpProtocol]](channel: Ch) = ???
+  // Kleisli[Observable, Unit, HttpServerSentEvent] { _ =>
+  //   val subscriber = new EventSourceSubscriber(channel.topicTag.name)
+  //   Observable.create(OverflowStrategy.DropOld(20))(subscriber)
+  // }
 
   def send: Kleisli[Future, HttpRequest, HttpResponse] = Kleisli { req =>
     val timeout = {

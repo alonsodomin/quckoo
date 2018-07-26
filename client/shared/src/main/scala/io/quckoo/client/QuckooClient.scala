@@ -18,33 +18,21 @@ package io.quckoo.client
 
 import cats.data._
 
+import io.circe.Decoder
+
 import io.quckoo._
 import io.quckoo.api._
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 
-trait QuckooClient extends Auth[ClientIO] with Cluster[ClientIO] with Registry[ClientIO] with Scheduler[ClientIO] {
+import monix.reactive.Observable
 
-  def signIn(username: String, password: String): ClientIO[Unit]
-  def signOut(): ClientIO[Unit]
+trait QuckooClient extends Auth[ClientIO]
+  with Cluster[ClientIO]
+  with Registry[ClientIO]
+  with Scheduler[ClientIO] {
 
-  def clusterState: ClientIO[QuckooState]
+  def channel[A](implicit topicTag: TopicTag[A], decoder: Decoder[A]): Observable[A]
 
-  // -- Registry
-
-  def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]]
-  def fetchJob(jobId: JobId): ClientIO[Option[JobSpec]]
-  def fetchJobs(): ClientIO[List[(JobId, JobSpec)]]
-  def enableJob(jobId: JobId): ClientIO[Unit]
-  def disableJob(jobId: JobId): ClientIO[Unit]
-
-  // -- Scheduler
-
-  def startPlan(schedule: ScheduleJob): ClientIO[PlanId]
-  def cancelPlan(planId: PlanId): ClientIO[Unit]
-  def fetchPlans(): ClientIO[List[(PlanId, ExecutionPlan)]]
-  def fetchPlan(planId: PlanId): ClientIO[Option[ExecutionPlan]]
-  def fetchTasks(): ClientIO[List[(TaskId, TaskExecution)]]
-  def fetchTask(taskId: TaskId): ClientIO[Option[TaskExecution]]
 }

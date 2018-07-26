@@ -16,13 +16,32 @@
 
 package io.quckoo.client.http
 
-import com.softwaremill.sttp.Uri
+import java.nio.ByteBuffer
+
+import com.softwaremill.sttp.{Uri, SttpBackend}
 import com.softwaremill.sttp.impl.monix._
 
+import io.circe.Decoder
+
+import io.quckoo.api.TopicTag
+import io.quckoo.client.http.dom.EventSourceSubscriber
+
+import monix.eval.Task
+import monix.reactive.{Observable, OverflowStrategy}
+
 object JSQuckooClient {
-  def apply(host: String, port: Int = 80): HttpQuckooClient = {
-    val baseUri = Uri(host, port)
+  def apply(): HttpQuckooClient = {
     val backend = FetchMonixBackend()
-    new HttpQuckooClient(baseUri)(backend)
+    new JSQuckooClient()(backend)
   }
+}
+
+class JSQuckooClient(implicit backend: SttpBackend[Task, Observable[ByteBuffer]])
+    extends HttpQuckooClient(None) {
+
+  def channel[A](implicit topicTag: TopicTag[A], decoder: Decoder[A]): Observable[A] = {
+    val subscriber = EventSourceSubscriber(topicTag.name)
+    Observable.create(OverflowStrategy.DropOld(20))(subscriber)
+  }
+
 }

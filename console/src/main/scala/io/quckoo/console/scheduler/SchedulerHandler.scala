@@ -31,18 +31,14 @@ import scala.concurrent.ExecutionContext
   */
 class SchedulerHandler(model: ModelRW[ConsoleScope, UserScope], ops: ConsoleOps)(
     implicit ec: ExecutionContext
-) extends ConsoleHandler[UserScope](model) with AuthHandler[UserScope] with LazyLogging {
+) extends ConsoleHandler[UserScope](model) with LazyLogging {
 
   override def handle = {
-    case msg: ScheduleJob =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.scheduleJob(msg)))
-      }
+    case cmd: ScheduleJob =>
+      runClientIO(ops.scheduleJob(cmd))
 
     case CancelExecutionPlan(planId) =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.cancelPlan(planId)))
-      }
+      runClientIO(ops.cancelPlan(planId))
 
     case ExecutionPlanStarted(jobId, planId, _) =>
       val effect = Effects.parallel(

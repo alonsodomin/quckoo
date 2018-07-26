@@ -28,8 +28,8 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 trait Scheduler[F[_]] {
 
-  def startPlan(schedule: ScheduleJob): F[PlanId]
-  def cancelPlan(planId: PlanId): F[Unit]
+  def startPlan(schedule: ScheduleJob): F[ExecutionPlanStarted]
+  def cancelPlan(planId: PlanId): F[ExecutionPlanCancelled]
 
   def fetchPlans(): F[List[(PlanId, ExecutionPlan)]]
   def fetchPlan(planId: PlanId): F[Option[ExecutionPlan]]

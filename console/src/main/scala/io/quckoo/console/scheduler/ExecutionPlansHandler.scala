@@ -29,26 +29,23 @@ import scala.concurrent.ExecutionContext
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-class ExecutionPlansHandler(model: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]],
-                            ops: ConsoleOps)(implicit ec: ExecutionContext)
-    extends ConsoleHandler[PotMap[PlanId, ExecutionPlan]](model)
-    with AuthHandler[PotMap[PlanId, ExecutionPlan]] with LazyLogging {
+class ExecutionPlansHandler(
+    model: ModelRW[ConsoleScope, PotMap[PlanId, ExecutionPlan]],
+    ops: ConsoleOps
+)(implicit ec: ExecutionContext)
+    extends ConsoleHandler[PotMap[PlanId, ExecutionPlan]](model) with LazyLogging {
 
   override protected def handle = {
     case LoadExecutionPlans =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.loadPlans().map(ExecutionPlansLoaded)))
-      }
+      runClientIO(ops.loadPlans().map(ExecutionPlansLoaded))
 
     case ExecutionPlansLoaded(plans) if plans.nonEmpty =>
       logger.debug(s"Loaded ${plans.size} execution plans from the server.")
       updated(PotMap(ExecutionPlanFetcher, plans))
 
     case action: RefreshExecutionPlans =>
-      withAuth { implicit passport =>
-        val refreshEffect = action.effect(ops.loadPlans(action.keys))(identity)
-        action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
-      }
+      val refreshEffect = action.effect(clientEffect(ops.loadPlans(action.keys)))(identity)
+      action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
   }
 
 }

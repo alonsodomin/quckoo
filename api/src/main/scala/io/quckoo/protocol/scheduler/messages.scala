@@ -84,6 +84,13 @@ final case class ExecutionPlanFinished(jobId: JobId, planId: PlanId, dateTime: Z
     extends ExecutionEvent
 final case class ExecutionPlanCancelled(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime)
     extends ExecutionEvent
+object ExecutionPlanCancelled {
+  implicit val executionPlanCancelledEncoder: Encoder[ExecutionPlanCancelled] =
+    deriveEncoder[ExecutionPlanCancelled]
+
+  implicit val executionPlanCancelledDecoder: Decoder[ExecutionPlanCancelled] =
+    deriveDecoder[ExecutionPlanCancelled]
+}
 
 case object GetExecutionPlans                        extends SchedulerCommand
 final case class GetExecutionPlan(planId: PlanId)    extends SchedulerCommand

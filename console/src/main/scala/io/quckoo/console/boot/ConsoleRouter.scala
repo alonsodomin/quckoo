@@ -53,7 +53,7 @@ object ConsoleRouter {
       import dsl._
 
       def isLoggedIn: CallbackTo[Boolean] =
-        CallbackTo { proxy().passport.isDefined }
+        CallbackTo { proxy().clientState.passport.isDefined }
 
       def redirectToLogin(referral: ConsoleRoute) =
         Some(render(LoginPage(proxy, Some(referral))))

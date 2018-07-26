@@ -18,10 +18,12 @@ package io.quckoo.console.core
 
 import cats.data.{NonEmptyList, ValidatedNel}
 
+import diode.ActionType
 import diode.data.{AsyncAction, Pot, PotState}
 
 import io.quckoo._
 import io.quckoo.auth.Passport
+import io.quckoo.client.ClientState
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.components.Notification
 import io.quckoo.net.QuckooState
@@ -29,11 +31,14 @@ import io.quckoo.protocol.{Command, Event}
 
 import scala.util.{Failure, Try}
 
+final case class ClientCompleted[A](clientState: ClientState, result: A)(
+    implicit val actionType: ActionType[A]
+) extends Event
 final case class Failed(fault: NonEmptyList[QuckooError]) extends Event
 
 final case class Login(username: String, password: String, referral: Option[ConsoleRoute] = None)
     extends Command
-final case class LoggedIn(passport: Passport, referral: Option[ConsoleRoute]) extends Event
+final case class LoggedIn(referral: Option[ConsoleRoute]) extends Event
 
 case object Logout      extends Command
 case object LoggedOut   extends Event

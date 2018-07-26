@@ -18,12 +18,14 @@ package io.quckoo.console.core
 
 import java.time.Clock
 
+import cats.implicits._
+
 import diode._
 import diode.react.ReactConnector
 
 import io.quckoo.auth.InvalidCredentials
-import io.quckoo.client.http.HttpQuckooClient
-import io.quckoo.client.http.dom._
+import io.quckoo.client.ClientIO
+import io.quckoo.client.http.{HttpQuckooClient, JSQuckooClient}
 import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.dashboard.DashboardHandler
 import io.quckoo.console.registry.RegistryHandler
@@ -46,7 +48,7 @@ object ConsoleCircuit
     implicit val consoleClock: Clock = Clock.systemDefaultZone
   }
 
-  override protected val client: HttpQuckooClient = HttpDOMQuckooClient
+  override protected val client: HttpQuckooClient = JSQuckooClient()
 
   override protected def initialModel: ConsoleScope = ConsoleScope.initial
 
@@ -68,7 +70,7 @@ object ConsoleCircuit
 
       case StartClusterSubscription =>
         if (!model.subscribed) {
-          model.passport.map { implicit passport =>
+          model.clientState.passport.map { implicit passport =>
             logger.debug("Opening console subscription channels...")
             openSubscriptionChannels(client)
             ActionResult.ModelUpdate(model.copy(subscribed = true))
@@ -76,32 +78,25 @@ object ConsoleCircuit
         } else None
   }
 
-  val loginHandler = new ActionHandler(zoomTo(_.passport)) {
+  val loginHandler = new ConsoleHandler(zoomTo(_.clientState)) {
 
     def performLogin(username: String,
                      password: String,
-                     referral: Option[ConsoleRoute]): Future[Event] = {
-      implicit val timeout = DefaultTimeout
+                     referral: Option[ConsoleRoute]): ClientIO[Event] =
       client
-        .authenticate(username, password)
-        .map(passport => LoggedIn(passport, referral))
-        .recover { case _: InvalidCredentials.type => LoginFailed }
-        .recoverWith {
-          case ex =>
-            logger.error("Unexpected error when performing login.", ex)
-            Future.failed(ex)
+        .signIn(username, password)
+        .map(_ => LoggedIn(referral).asInstanceOf[Event])
+        .recover { case InvalidCredentials => LoginFailed }
+        .onError {
+          case ex => logger.error("Unexpected error when performing login.", ex).pure[ClientIO]
         }
-    }
 
     override def handle = {
       case Login(username, password, referral) =>
-        effectOnly(Effect(performLogin(username, password, referral)))
+        runClientIO(performLogin(username, password, referral))
 
       case Logout =>
-        implicit val timeout = DefaultTimeout
-        value.map { implicit passport =>
-          effectOnly(Effect(client.signOut.map(_ => LoggedOut)))
-        } getOrElse noChange
+        runClientIO(client.signOut.map(_ => LoggedOut))
     }
   }
 

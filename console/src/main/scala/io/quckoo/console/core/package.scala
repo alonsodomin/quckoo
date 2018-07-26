@@ -18,6 +18,8 @@ package io.quckoo.console
 
 import diode.{ActionType, Effect}
 
+import io.quckoo.client.{ClientIO, ClientState}
+
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 

@@ -41,7 +41,7 @@ import monix.execution.Scheduler.Implicits.global
 
 import scala.concurrent.Future
 
-class HttpQuckooClient private[http] (baseUri: Uri)(
+abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
     implicit backend: SttpBackend[Task, Observable[ByteBuffer]]
 ) extends QuckooClient {
 
@@ -128,10 +128,10 @@ class HttpQuckooClient private[http] (baseUri: Uri)(
 
   // -- Scheduler
 
-  def startPlan(schedule: ScheduleJob): ClientIO[PlanId] =
+  def startPlan(schedule: ScheduleJob): ClientIO[ExecutionPlanStarted] =
     for {
       request <- ClientIO.auth.map(
-        _.put(uri"$ExecutionPlansURI").body(schedule).response(asJson[PlanId])
+        _.put(uri"$ExecutionPlansURI").body(schedule).response(asJson[ExecutionPlanStarted])
       )
       response <- ClientIO.fromEffect(request.send())
       body <- if (response.code == 404) ClientIO.raiseError(JobNotFound(schedule.jobId))
@@ -139,13 +139,14 @@ class HttpQuckooClient private[http] (baseUri: Uri)(
       result <- ClientIO.fromAttempt(body)
     } yield result
 
-  def cancelPlan(planId: PlanId): ClientIO[Unit] =
+  def cancelPlan(planId: PlanId): ClientIO[ExecutionPlanCancelled] =
     for {
-      request  <- ClientIO.auth.map(_.delete(uri"$ExecutionPlansURI/$planId"))
+      request  <- ClientIO.auth.map(_.delete(uri"$ExecutionPlansURI/$planId").response(asJson[ExecutionPlanCancelled]))
       response <- ClientIO.fromEffect(request.send())
-      _ <- if (response.code == 404) ClientIO.raiseError(ExecutionPlanNotFound(planId))
-      else ClientIO.unit
-    } yield ()
+      body <- if (response.code == 404) ClientIO.raiseError(ExecutionPlanNotFound(planId))
+      else ClientIO.fromEither(response.body)
+      result <- ClientIO.fromAttempt(body)
+    } yield result
 
   def fetchPlans(): ClientIO[List[(PlanId, ExecutionPlan)]] =
     for {
