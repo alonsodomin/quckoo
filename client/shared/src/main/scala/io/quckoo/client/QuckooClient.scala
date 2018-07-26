@@ -20,7 +20,6 @@ import cats.data._
 
 import io.quckoo._
 import io.quckoo.api._
-import io.quckoo.auth.Passport
 import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
@@ -48,8 +47,4 @@ trait QuckooClient extends Auth[ClientIO] with Cluster[ClientIO] with Registry[C
   def fetchPlan(planId: PlanId): ClientIO[Option[ExecutionPlan]]
   def fetchTasks(): ClientIO[List[(TaskId, TaskExecution)]]
   def fetchTask(taskId: TaskId): ClientIO[Option[TaskExecution]]
-}
-
-object QuckooClient {
-  case class ClientState(passport: Option[Passport])
 }

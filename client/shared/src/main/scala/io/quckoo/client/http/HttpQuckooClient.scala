@@ -44,7 +44,6 @@ import scala.concurrent.Future
 class HttpQuckooClient private[http] (baseUri: Uri)(
     implicit backend: SttpBackend[Task, Observable[ByteBuffer]]
 ) extends QuckooClient {
-  import QuckooClient._
 
   def signIn(username: String, password: String): ClientIO[Unit] = {
     def decodeLoginBody(body: Either[String, String]): Either[Throwable, Passport] = {
