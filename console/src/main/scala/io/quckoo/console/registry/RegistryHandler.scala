@@ -65,7 +65,7 @@ class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]], ops:
       )
 
     case action: RefreshJobSpecs =>
-      val updateEffect = action.effect(toEffect(ops.loadJobSpecs(action.keys)))(identity)
+      val updateEffect = action.clientEffect(ops.loadJobSpecs(action.keys))
       action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
 
     case RegisterJob(spec) =>

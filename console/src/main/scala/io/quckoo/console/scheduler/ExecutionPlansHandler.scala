@@ -44,7 +44,7 @@ class ExecutionPlansHandler(
       updated(PotMap(ExecutionPlanFetcher, plans))
 
     case action: RefreshExecutionPlans =>
-      val refreshEffect = action.effect(clientEffect(ops.loadPlans(action.keys)))(identity)
+      val refreshEffect = action.clientEffect(ops.loadPlans(action.keys))
       action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
   }
 

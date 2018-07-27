@@ -41,7 +41,7 @@ class TasksHandler(model: ModelRW[ConsoleScope, PotMap[TaskId, TaskExecution]], 
       updated(PotMap(ExecutionFetcher, tasks))
 
     case action: RefreshExecutions =>
-      val refreshEffect = action.effect(clientEffect(ops.loadTasks(action.keys)))(identity)
+      val refreshEffect = action.clientEffect(ops.loadTasks(action.keys))
       action.handleWith(this, refreshEffect)(AsyncAction.mapHandler(action.keys))
   }
 

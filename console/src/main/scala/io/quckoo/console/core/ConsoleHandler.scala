@@ -28,6 +28,8 @@ import scala.concurrent.ExecutionContext
 abstract class ConsoleHandler[A](modelRW: ModelRW[ConsoleScope, A])
     extends ActionHandler[ConsoleScope, A](modelRW) {
 
+  implicit def clientState = modelRW.root.zoom(_.clientState).value
+
   def toEffect[B: ActionType](
       action: ClientIO[B]
   )(implicit ec: ExecutionContext): Effect =
