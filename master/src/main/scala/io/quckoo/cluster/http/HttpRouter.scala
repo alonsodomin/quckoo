@@ -34,7 +34,7 @@ import io.quckoo.cluster.scheduler.SchedulerHttpRouter
 
 trait HttpRouter
     extends StaticResources with RegistryHttpRouter with SchedulerHttpRouter with AuthDirectives
-    with EventStreamMarshalling { this: QuckooServer =>
+    with EventStreamMarshalling { api: QuckooServer =>
 
   import StatusCodes._
   import TimeoutDirectives._
@@ -66,7 +66,7 @@ trait HttpRouter
           pathEnd {
             extractTimeout(DefaultTimeout) { implicit timeout =>
               extractExecutionContext { implicit ec =>
-                complete(clusterState)
+                complete(api.clusterState.unsafeToFuture())
               }
             }
           }

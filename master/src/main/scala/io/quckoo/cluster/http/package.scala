@@ -19,23 +19,32 @@ package io.quckoo.cluster
 import java.util.UUID
 
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.MediaType
-import akka.http.scaladsl.model.MediaTypes
+import akka.http.scaladsl.model.{MediaTypes, MediaType, StatusCodes}
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server._
 import akka.stream.scaladsl.Source
 
+import cats.effect.IO
+import cats.implicits._
+
+import de.heikoseeberger.akkahttpcirce.{ErrorAccumulatingCirceSupport => JsonSupport}
 import de.heikoseeberger.akkasse.scaladsl.model.ServerSentEvent
 
 import io.circe.Encoder
+
+import io.quckoo._
 import io.quckoo.api.TopicTag
 
 import play.twirl.api.{Html, Txt, Xml}
 
 import scala.concurrent.duration._
+import scala.concurrent.{Future, ExecutionContext}
+import scala.language.implicitConversions
 
 /**
   * Created by alonsodomin on 24/03/2016.
   */
-package object http {
+package object http extends IORoutes {
   import MediaTypes._
 
   /** Twirl marshallers for Xml, Html and Txt mediatypes */
@@ -46,12 +55,32 @@ package object http {
   def twirlMarshaller[A](contentType: MediaType): ToEntityMarshaller[A] =
     Marshaller.StringMarshaller.wrap(contentType)(_.toString)
 
-  def asSSE[A](source: Source[A, _])(implicit topicTag: TopicTag[A],
-                                     encode: Encoder[A]): Source[ServerSentEvent, _] =
+  implicit def asSSE[A](source: Source[A, _])(
+      implicit
+      topicTag: TopicTag[A],
+      encode: Encoder[A]
+  ): Source[ServerSentEvent, _] =
     source
       .map(event => ServerSentEvent(encode(event).noSpaces, topicTag.name))
       .keepAlive(1 second, () => ServerSentEvent.heartbeat)
 
   def generateAuthToken: String = UUID.randomUUID().toString
+
+}
+
+trait IORoutes {
+  import JsonSupport._
+
+  implicit def routeIO[A](action: IO[A])(
+      implicit
+      ec: ExecutionContext,
+      enc: Encoder[A]
+  ): Route = {
+    val resolveRoute = action.map(res => complete(StatusCodes.OK -> res)).recover {
+      case JobNotFound(jobId)            => complete(StatusCodes.NotFound -> jobId)
+      case ExecutionPlanNotFound(planId) => complete(StatusCodes.NotFound -> planId)
+    }
+    onSuccess(resolveRoute.unsafeToFuture())(identity)
+  }
 
 }

@@ -22,6 +22,9 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
 
+import cats.effect.IO
+import cats.implicits._
+
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
 import de.heikoseeberger.akkasse.scaladsl.marshalling.EventStreamMarshalling
 
@@ -39,14 +42,15 @@ import io.quckoo.serialization.json._
   * Created by domingueza on 21/03/16.
   */
 trait SchedulerHttpRouter extends EventStreamMarshalling {
-  this: SchedulerApi with SchedulerStreams =>
+  api: SchedulerApi[IO] with SchedulerStreams =>
 
   import StatusCodes._
   import TimeoutDirectives._
   import ErrorAccumulatingCirceSupport._
 
   def schedulerApi(
-      implicit system: ActorSystem,
+      implicit
+      system: ActorSystem,
       materializer: ActorMaterializer,
       passport: Passport
   ): Route =
@@ -55,36 +59,26 @@ trait SchedulerHttpRouter extends EventStreamMarshalling {
         pathEnd {
           get {
             extractExecutionContext { implicit ec =>
-              complete(executionPlans)
+              complete(api.fetchPlans().unsafeToFuture())
             }
           } ~ put {
             entity(as[ScheduleJob]) { req =>
               extractExecutionContext { implicit ec =>
-                onSuccess(scheduleJob(req)) {
-                  case Right(res) => complete(res)
-                  case Left(JobNotEnabled(jobId)) =>
-                    complete(BadRequest -> jobId)
-                  case Left(JobNotFound(jobId)) => complete(NotFound            -> jobId)
-                  case Left(error)              => complete(InternalServerError -> error)
-                }
+                api.startPlan(req)
               }
             }
           }
         } ~ path(JavaUUID) { planUUID =>
           get {
             extractExecutionContext { implicit ec =>
-              onSuccess(executionPlan(PlanId(planUUID))) {
+              onSuccess(api.fetchPlan(PlanId(planUUID)).unsafeToFuture()) {
                 case Some(plan) => complete(plan)
                 case _          => complete(NotFound -> planUUID)
               }
             }
           } ~ delete {
             extractExecutionContext { implicit ec =>
-              onSuccess(cancelPlan(PlanId(planUUID))) {
-                case Right(res) => complete(res)
-                case Left(ExecutionPlanNotFound(_)) =>
-                  complete(NotFound -> planUUID)
-              }
+              api.cancelPlan(PlanId(planUUID))
             }
           }
         }
@@ -92,13 +86,13 @@ trait SchedulerHttpRouter extends EventStreamMarshalling {
         pathEnd {
           get {
             extractExecutionContext { implicit ec =>
-              complete(executions)
+              api.fetchTasks()
             }
           }
         } ~ path(JavaUUID) { taskUUID =>
           get {
             extractExecutionContext { implicit ec =>
-              onSuccess(execution(TaskId(taskUUID))) {
+              onSuccess(api.fetchTask(TaskId(taskUUID)).unsafeToFuture()) {
                 case Some(task) => complete(task)
                 case _          => complete(NotFound -> taskUUID)
               }

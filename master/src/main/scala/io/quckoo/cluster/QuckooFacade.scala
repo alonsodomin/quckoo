@@ -25,7 +25,9 @@ import akka.pattern._
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
+
 import cats.data.{EitherT, ValidatedNel}
+import cats.effect._
 import cats.implicits._
 
 import io.quckoo._
@@ -39,6 +41,7 @@ import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker.WorkerEvent
+import io.quckoo.util._
 
 import _root_.kamon.Kamon
 import _root_.kamon.prometheus.PrometheusReporter
@@ -93,42 +96,45 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
     extends HttpRouter with QuckooServer with LazyLogging {
 
   import QuckooFacade._
+  import system.dispatcher
 
   implicit val materializer = ActorMaterializer()
 
-  def cancelPlan(planId: PlanId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] = {
-    implicit val to = Timeout(timeout)
-    (core ? CancelExecutionPlan(planId)).map {
-      case msg: ExecutionPlanNotFound  => msg.asLeft[ExecutionPlanCancelled]
-      case msg: ExecutionPlanCancelled => msg.asRight[ExecutionPlanNotFound]
+  def startPlan(schedule: ScheduleJob): IO[ExecutionPlanStarted] = IO.fromFuture {
+    IO {
+      implicit val to = Timeout(DefaultTimeout)
+      (core ? schedule) flatMap {
+        case fault: QuckooError            => Future.failed(fault)
+        case started: ExecutionPlanStarted => Future.successful(started)
+      }
     }
   }
 
-  def executionPlans(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Seq[(PlanId, ExecutionPlan)]] = {
+  def cancelPlan(planId: PlanId): IO[ExecutionPlanCancelled] = IO.fromFuture {
+    IO {
+      implicit val to = Timeout(DefaultTimeout)
+      (core ? CancelExecutionPlan(planId)).flatMap {
+        case msg: ExecutionPlanNotFound  => Future.failed(msg)
+        case msg: ExecutionPlanCancelled => Future.successful(msg)
+      }
+    }
+  }
+
+  def fetchPlans(): IO[List[(PlanId, ExecutionPlan)]] = IO.fromFuture {
     val executionPlans = Source
       .actorRef[(PlanId, ExecutionPlan)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
       .mapMaterializedValue(upstream => core.tell(GetExecutionPlans, upstream))
 
-    executionPlans
-      .runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
-      .map(_.toSeq)
+    IO(
+      executionPlans
+        .runFold(Map.empty[PlanId, ExecutionPlan])((map, pair) => map + pair)
+        .map(_.toList)
+    )
   }
 
-  def executionPlan(planId: PlanId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Option[ExecutionPlan]] = {
-    def internalRequest: Future[Option[ExecutionPlan]] = {
-      implicit val to = Timeout(timeout)
+  def fetchPlan(planId: PlanId): IO[Option[ExecutionPlan]] = {
+    def internalRequest = IO {
+      implicit val to = Timeout(DefaultTimeout)
       (core ? GetExecutionPlan(planId)).map {
         case ExecutionPlanNotFound(`planId`) => None
         case plan: ExecutionPlan             => Some(plan)
@@ -137,43 +143,28 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
 
     /*implicit val sch = system.scheduler
     retry(internalRequest, 250 millis, 3)*/
-    internalRequest
+    IO.fromFuture(internalRequest)
   }
 
-  def executions(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Seq[(TaskId, TaskExecution)]] = {
+  def fetchTasks(): IO[List[(TaskId, TaskExecution)]] = IO.fromFuture {
     val tasks = Source
       .actorRef[(TaskId, TaskExecution)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
       .mapMaterializedValue(upstream => core.tell(GetTaskExecutions, upstream))
-    tasks
-      .runFold(Map.empty[TaskId, TaskExecution])((map, pair) => map + pair)
-      .map(_.toSeq)
+
+    IO(
+      tasks
+        .runFold(Map.empty[TaskId, TaskExecution])((map, pair) => map + pair)
+        .map(_.toList)
+    )
   }
 
-  def execution(taskId: TaskId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Option[TaskExecution]] = {
-    implicit val to = Timeout(timeout)
-    (core ? GetTaskExecution(taskId)) map {
-      case task: TaskExecution             => Some(task)
-      case TaskExecutionNotFound(`taskId`) => None
-    }
-  }
-
-  def scheduleJob(schedule: ScheduleJob)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[QuckooError, ExecutionPlanStarted]] = {
-    implicit val to = Timeout(timeout)
-    (core ? schedule) map {
-      case fault: QuckooError            => fault.asLeft[ExecutionPlanStarted]
-      case started: ExecutionPlanStarted => started.asRight[QuckooError]
+  def fetchTask(taskId: TaskId): IO[Option[TaskExecution]] = IO.fromFuture {
+    IO {
+      implicit val to = Timeout(DefaultTimeout)
+      (core ? GetTaskExecution(taskId)) map {
+        case task: TaskExecution             => Some(task)
+        case TaskExecutionNotFound(`taskId`) => None
+      }
     }
   }
 
@@ -186,54 +177,44 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
   def workerTopic: Source[WorkerEvent, NotUsed] =
     Topic.source[WorkerEvent]
 
-  def enableJob(jobId: JobId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[JobNotFound, JobEnabled]] = {
-    implicit val to = Timeout(timeout)
-    (core ? EnableJob(jobId)).map {
-      case msg: JobNotFound => msg.asLeft[JobEnabled]
-      case msg: JobEnabled  => msg.asRight[JobNotFound]
+  def enableJob(jobId: JobId): IO[Unit] = IO.fromFuture {
+    IO {
+      implicit val to = Timeout(DefaultTimeout)
+      (core ? EnableJob(jobId)).flatMap {
+        case msg: JobNotFound => Future.failed(msg)
+        case msg: JobEnabled  => Future.successful(())
+      }
     }
   }
 
-  def disableJob(jobId: JobId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[JobNotFound, JobDisabled]] = {
-    implicit val to = Timeout(timeout)
-    (core ? DisableJob(jobId)).map {
-      case msg: JobNotFound => msg.asLeft[JobDisabled]
-      case msg: JobDisabled => msg.asRight[JobNotFound]
+  def disableJob(jobId: JobId): IO[Unit] = IO.fromFuture {
+    IO {
+      implicit val to = Timeout(DefaultTimeout)
+      (core ? DisableJob(jobId)).flatMap {
+        case msg: JobNotFound => Future.failed(msg)
+        case msg: JobDisabled => Future.successful(())
+      }
     }
   }
 
-  def fetchJob(jobId: JobId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Option[JobSpec]] = {
-    implicit val to = Timeout(timeout)
-    (core ? GetJob(jobId)).map {
-      case JobNotFound(_) => None
-      case spec: JobSpec  => Some(spec)
+  def fetchJob(jobId: JobId): IO[Option[JobSpec]] = IO.fromFuture {
+    IO {
+      implicit val to = Timeout(DefaultTimeout)
+      (core ? GetJob(jobId)).map {
+        case JobNotFound(_) => None
+        case spec: JobSpec  => Some(spec)
+      }
     }
   }
 
-  def registerJob(jobSpec: JobSpec)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[ValidatedNel[QuckooError, JobId]] = {
+  def registerJob(jobSpec: JobSpec): IO[ValidatedNel[QuckooError, JobId]] = {
     val validatedJobSpec = JobSpec.valid.async
       .run(jobSpec)
       .map(_.leftMap(ValidationFault).leftMap(_.asInstanceOf[QuckooError]))
 
     EitherT(validatedJobSpec.map(_.toEither))
       .flatMapF { validJobSpec =>
-        implicit val to = Timeout(timeout)
+        implicit val to = Timeout(DefaultTimeout)
         logger.info(s"Registering job spec: $validJobSpec")
 
         (core ? RegisterJob(validJobSpec)) map {
@@ -241,29 +222,29 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
           case JobRejected(_, error) => error.asLeft[JobId]
         }
       }
+      .mapK(future2IO)
       .value
       .map(_.toValidatedNel)
   }
 
-  def fetchJobs(implicit ec: ExecutionContext,
-                timeout: FiniteDuration,
-                passport: Passport): Future[List[(JobId, JobSpec)]] =
-    Source
-      .actorRef[(JobId, JobSpec)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
-      .mapMaterializedValue { upstream =>
-        core.tell(GetJobs, upstream)
-      }
-      .runFold(Map.empty[JobId, JobSpec])((map, pair) => map + pair)
-      .map(_.toList)
+  def fetchJobs(): IO[List[(JobId, JobSpec)]] = IO.fromFuture {
+    IO {
+      Source
+        .actorRef[(JobId, JobSpec)](bufferSize = DefaultBufferSize, OverflowStrategy.fail)
+        .mapMaterializedValue { upstream =>
+          core.tell(GetJobs, upstream)
+        }
+        .runFold(Map.empty[JobId, JobSpec])((map, pair) => map + pair)
+        .map(_.toList)
+    }
+  }
 
   def registryTopic: Source[RegistryEvent, NotUsed] =
     Topic.source[RegistryEvent]
 
-  def clusterState(implicit ec: ExecutionContext,
-                   timeout: FiniteDuration,
-                   passport: Passport): Future[QuckooState] = {
-    implicit val to = Timeout(timeout)
-    (core ? GetClusterStatus).mapTo[QuckooState]
+  def clusterState: IO[QuckooState] = IO.fromFuture {
+    implicit val to = Timeout(DefaultTimeout)
+    IO((core ? GetClusterStatus).mapTo[QuckooState])
   }
 
 }

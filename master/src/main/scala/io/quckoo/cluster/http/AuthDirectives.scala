@@ -27,7 +27,7 @@ import cats.syntax.either._
 
 import io.quckoo.auth.{Passport, Principal}
 import io.quckoo.auth.http._
-import io.quckoo.cluster.core.Auth
+import io.quckoo.cluster.core.ServerAuth
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
 /**
   * Created by alonsodomin on 14/10/2015.
   */
-trait AuthDirectives { auth: Auth =>
+trait AuthDirectives { auth: ServerAuth =>
   import Directives._
 
   private[this] val QuckooHttpChallenge = HttpChallenge("FormBased", Realm)

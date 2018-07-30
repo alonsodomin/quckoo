@@ -32,7 +32,7 @@ import slogging.LoggerHolder
 /**
   * Created by alonsodomin on 14/10/2015.
   */
-trait Auth { this: LoggerHolder =>
+trait ServerAuth { this: LoggerHolder =>
 
   val Realm = "QuckooRealm"
   private[this] val Right(secretKey) =

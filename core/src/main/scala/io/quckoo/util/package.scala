@@ -18,9 +18,10 @@ package io.quckoo
 
 import cats._
 import cats.data.{EitherT, Validated}
+import cats.effect._
 import cats.implicits._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util._
 
 /**
@@ -55,6 +56,11 @@ package object util {
   final val try2Future = new (Try ~> Future) {
     override def apply[A](fa: Try[A]): Future[A] =
       Future.fromTry(fa)
+  }
+
+  def future2IO(implicit ec: ExecutionContext) = new (Future ~> IO) {
+    override def apply[A](fa: Future[A]): IO[A] =
+      IO.fromFuture(IO(fa))
   }
 
   final val attempt2Future: Attempt ~> Future = attempt2Try andThen try2Future

@@ -22,6 +22,9 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.stream.Materializer
 
+import cats.effect.IO
+import cats.implicits._
+
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
 import de.heikoseeberger.akkasse.scaladsl.marshalling.EventStreamMarshalling
 
@@ -39,7 +42,7 @@ import scala.concurrent.duration._
   * Created by domingueza on 21/03/16.
   */
 trait RegistryHttpRouter extends EventStreamMarshalling {
-  this: RegistryApi with RegistryStreams =>
+  api: RegistryApi[IO] with RegistryStreams =>
 
   import StatusCodes._
   import TimeoutDirectives._
@@ -53,14 +56,14 @@ trait RegistryHttpRouter extends EventStreamMarshalling {
         get {
           extractTimeout(DefaultTimeout) { implicit timeout =>
             extractExecutionContext { implicit ec =>
-              complete(fetchJobs)
+              complete(api.fetchJobs().unsafeToFuture())
             }
           }
         } ~ put {
           extractTimeout(10 minutes) { implicit timeout =>
             entity(as[JobSpec]) { jobSpec =>
               extractExecutionContext { implicit ec =>
-                complete(registerJob(jobSpec))
+                complete(api.registerJob(jobSpec).unsafeToFuture())
               }
             }
           }
@@ -70,7 +73,7 @@ trait RegistryHttpRouter extends EventStreamMarshalling {
           pathEnd {
             get {
               extractExecutionContext { implicit ec =>
-                onSuccess(fetchJob(JobId(jobId))) {
+                onSuccess(api.fetchJob(JobId(jobId)).unsafeToFuture()) {
                   case Some(spec) => complete(spec)
                   case _          => complete(NotFound)
                 }
@@ -79,19 +82,13 @@ trait RegistryHttpRouter extends EventStreamMarshalling {
           } ~ path("enable") {
             post {
               extractExecutionContext { implicit ec =>
-                onSuccess(enableJob(JobId(jobId))) {
-                  case Right(res @ JobEnabled(_)) => complete(res)
-                  case Left(JobNotFound(_))       => complete(NotFound -> jobId)
-                }
+                api.enableJob(JobId(jobId))
               }
             }
           } ~ path("disable") {
             post {
               extractExecutionContext { implicit ec =>
-                onSuccess(disableJob(JobId(jobId))) {
-                  case Right(res @ JobDisabled(_)) => complete(res)
-                  case Left(JobNotFound(_))        => complete(NotFound -> jobId)
-                }
+                api.disableJob(JobId(jobId))
               }
             }
           }
