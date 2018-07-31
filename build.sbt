@@ -167,7 +167,7 @@ lazy val quckoo = (project in file("."))
 
 lazy val core =
   (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("core"))
-    .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
+    .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin, ScalaJSBundlerPlugin)
     .settings(
       name := "core",
       moduleName := "quckoo-core",
@@ -192,7 +192,7 @@ lazy val coreJVM = core.jvm
 
 lazy val api =
   (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("api"))
-    .enablePlugins(AutomateHeaderPlugin)
+    .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
     .settings(commonSettings)
     .settings(scoverageSettings)
     .settings(publishSettings)
@@ -211,7 +211,7 @@ lazy val apiJVM = api.jvm
 // Client ==================================================
 
 lazy val client = (crossProject(JSPlatform, JVMPlatform) in file("client"))
-  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
   .settings(commonSettings)
   .settings(scoverageSettings)
   .settings(publishSettings)
@@ -276,7 +276,10 @@ lazy val master = (project in file("master"))
     scalaJSProjects := Seq(console),
     dockerExposedPorts := Seq(2551, 8095, 9095),
     parallelExecution in Test := false,
-    parallelExecution in MultiJvm := false
+    parallelExecution in MultiJvm := false,
+//    npmAssets ++= NpmAssets.ofProject(console) { modules =>
+//      (modules / "font-awesome").***
+//    }.value
   )
   .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
 
@@ -297,7 +300,7 @@ lazy val worker = (project in file("worker"))
 // Misc Utilities ===========================================
 
 lazy val util = (crossProject(JSPlatform, JVMPlatform) in file("util"))
-  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
   .settings(commonSettings)
   .jsSettings(commonJsSettings)
   .jsSettings(Dependencies.utilJS)
