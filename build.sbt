@@ -1,3 +1,5 @@
+import java.time.{Clock, Instant}
+
 import sbtcrossproject.{crossProject, CrossType}
 import com.typesafe.sbt.pgp.PgpKeys
 import scala.xml.transform.{RewriteRule, RuleTransformer}
@@ -172,7 +174,14 @@ lazy val core =
       name := "core",
       moduleName := "quckoo-core",
       buildInfoPackage := "io.quckoo",
-      buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
+      buildInfoKeys := Seq[BuildInfoKey](
+        version,
+        scalaVersion,
+        sbtVersion,
+        BuildInfoKey.action("buildTime") {
+          Instant.now(Clock.systemUTC()).toString
+        }
+      ),
       buildInfoObject := "Info"
     )
     .settings(commonSettings)
@@ -277,9 +286,11 @@ lazy val master = (project in file("master"))
     dockerExposedPorts := Seq(2551, 8095, 9095),
     parallelExecution in Test := false,
     parallelExecution in MultiJvm := false,
-//    npmAssets ++= NpmAssets.ofProject(console) { modules =>
-//      (modules / "font-awesome").***
-//    }.value
+    npmAssets ++= NpmAssets
+      .ofProject(console) { modules =>
+        (modules / "font-awesome") +++ (modules / "bootstrap")
+      }
+      .value
   )
   .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
 
