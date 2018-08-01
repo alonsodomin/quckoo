@@ -169,7 +169,7 @@ lazy val quckoo = (project in file("."))
 
 lazy val core =
   (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("core"))
-    .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin, ScalaJSBundlerPlugin)
+    .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
     .settings(
       name := "core",
       moduleName := "quckoo-core",
@@ -201,7 +201,7 @@ lazy val coreJVM = core.jvm
 
 lazy val api =
   (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("api"))
-    .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
+    .enablePlugins(AutomateHeaderPlugin)
     .settings(commonSettings)
     .settings(scoverageSettings)
     .settings(publishSettings)
@@ -220,7 +220,7 @@ lazy val apiJVM = api.jvm
 // Client ==================================================
 
 lazy val client = (crossProject(JSPlatform, JVMPlatform) in file("client"))
-  .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
+  .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(scoverageSettings)
   .settings(publishSettings)
@@ -241,7 +241,7 @@ lazy val clientJVM = client.jvm
 // Console ==================================================
 
 lazy val console = (project in file("console"))
-  .enablePlugins(AutomateHeaderPlugin, ScalaJSPlugin, ScalaJSWeb, ScalaJSBundlerPlugin)
+  .enablePlugins(AutomateHeaderPlugin, ScalaJSPlugin, ScalaJSWeb)
   .settings(commonSettings)
   .settings(commonJsSettings)
   .settings(publishSettings)
@@ -286,11 +286,6 @@ lazy val master = (project in file("master"))
     dockerExposedPorts := Seq(2551, 8095, 9095),
     parallelExecution in Test := false,
     parallelExecution in MultiJvm := false,
-    npmAssets ++= NpmAssets
-      .ofProject(console) { modules =>
-        (modules / "font-awesome") +++ (modules / "bootstrap")
-      }
-      .value
   )
   .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
 
@@ -311,7 +306,7 @@ lazy val worker = (project in file("worker"))
 // Misc Utilities ===========================================
 
 lazy val util = (crossProject(JSPlatform, JVMPlatform) in file("util"))
-  .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
+  .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .jsSettings(commonJsSettings)
   .jsSettings(Dependencies.utilJS)

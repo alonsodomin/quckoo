@@ -5,7 +5,6 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbtcrossproject.CrossPlugin.autoImport._
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import scalajsbundler.sbtplugin.ScalaJSBundlerPlugin.autoImport._
 
 object Dependencies {
 
@@ -101,7 +100,7 @@ object Dependencies {
     val jquery           = "2.2.4"
     val bootstrap        = "3.3.5"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs          = "16.4.1"
+    val reactJs          = "16.2.0"
     val sparkMD5         = "3.0.0"
     val codemirror       = "5.33.0"
   }
@@ -233,8 +232,11 @@ object Dependencies {
   // Utilities module ===========================
 
   lazy val utilJS = Def.settings(
-    npmDependencies in Compile ++= Seq(
-      "spark-md5" -> version.sparkMD5
+    jsDependencies ++= Seq(
+      "org.webjars.npm" % "spark-md5" % version.sparkMD5
+        /            "spark-md5.js"
+        minified     "spark-md5.min.js"
+        commonJSName "SparkMD5"
     )
   )
 
@@ -296,64 +298,58 @@ object Dependencies {
       "com.github.japgolly.test-state" %%% "ext-scalajs-react" % version.testState % Test,
       "com.github.japgolly.test-state" %%% "ext-cats"          % version.testState % Test
     ),
-    npmDependencies in Compile ++= Seq(
-      "react"            -> version.reactJs,
-      "react-dom"        -> version.reactJs,
-      "jquery"           -> version.jquery,
-      "bootstrap3"       -> version.bootstrap,
-      "bootstrap-notify" -> version.bootstrapNotifiy,
-      "codemirror"       -> version.codemirror
+    jsDependencies ++= Seq(
+      "org.webjars.npm" % "js-tokens" % "4.0.0" / "index.js",
+
+      // -- ReactJS
+      "org.webjars.npm" % "react" % version.reactJs
+         /        "umd/react.development.js"
+         minified "umd/react.production.min.js"
+         commonJSName "React",
+      "org.webjars.npm" % "react-dom" % version.reactJs
+         /         "umd/react-dom.development.js"
+         minified  "umd/react-dom.production.min.js"
+         dependsOn "umd/react.development.js"
+         commonJSName "ReactDOM",
+      "org.webjars.npm" % "react-dom" % version.reactJs
+         /         "umd/react-dom-server.browser.development.js"
+         minified  "umd/react-dom-server.browser.production.min.js"
+         dependsOn "umd/react-dom.development.js"
+         commonJSName "ReactDOMServer",
+
+      // -- JQuery & Bootstrap
+      "org.webjars" % "jquery"    % version.jquery
+         /        s"${version.jquery}/jquery.js"
+         minified "jquery.min.js",
+      "org.webjars" % "bootstrap" % version.bootstrap
+         /         "bootstrap.js"
+         minified  "bootstrap.min.js"
+         dependsOn s"${version.jquery}/jquery.js",
+      "org.webjars" % "bootstrap-notify" % version.bootstrapNotifiy
+         /         "bootstrap-notify.js"
+         minified  "bootstrap-notify.min.js"
+         dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js"),
+
+      // -- CodeMirror
+      "org.webjars" % "codemirror" % version.codemirror
+         /            "lib/codemirror.js"
+         commonJSName "CodeMirror",
+      "org.webjars" % "codemirror" % version.codemirror
+         /         "mode/shell/shell.js"
+         dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+         /         "mode/python/python.js"
+         dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+         /         "addon/display/autorefresh.js"
+         dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+         /         "addon/edit/closebrackets.js"
+         dependsOn "lib/codemirror.js",
+      "org.webjars" % "codemirror" % version.codemirror
+         /         "addon/edit/matchbrackets.js"
+         dependsOn "lib/codemirror.js"
     )
-    //jsDependencies ++= Seq(
-    // ReactJS
-    //"org.webjars.npm" % "react" % version.reactJs
-    //  /        "umd/react.development.js"
-    //  minified "umd/react.production.min.js"
-    //  commonJSName "React",
-    //"org.webjars.npm" % "react-dom" % version.reactJs
-    //  /         "umd/react-dom.development.js"
-    //  minified  "umd/react-dom.production.min.js"
-    //  dependsOn "umd/react.development.js"
-    //  commonJSName "ReactDOM",
-    //"org.webjars.npm" % "react-dom" % version.reactJs
-    //  /         "umd/react-dom-server.browser.development.js"
-    //  minified  "umd/react-dom-server.browser.production.min.js"
-    //  dependsOn "umd/react-dom.development.js"
-    //  commonJSName "ReactDOMServer",
-
-    // JQuery & Bootstrap
-    //"org.webjars" % "jquery"    % version.jquery
-    //  /        s"${version.jquery}/jquery.js"
-    //  minified "jquery.min.js",
-    //"org.webjars" % "bootstrap" % version.bootstrap
-    //  /         "bootstrap.js"
-    //  minified  "bootstrap.min.js"
-    //  dependsOn s"${version.jquery}/jquery.js",
-    //"org.webjars" % "bootstrap-notify" % version.bootstrapNotifiy
-    //  /         "bootstrap-notify.js"
-    //  minified  "bootstrap-notify.min.js"
-    //  dependsOn (s"${version.jquery}/jquery.js", "bootstrap.js"),
-
-    // CodeMirror
-    //"org.webjars" % "codemirror" % version.codemirror
-    //  /            "lib/codemirror.js"
-    //  commonJSName "CodeMirror",
-    //"org.webjars" % "codemirror" % version.codemirror
-    //  /         "mode/shell/shell.js"
-    //  dependsOn "lib/codemirror.js",
-    //"org.webjars" % "codemirror" % version.codemirror
-    //  /         "mode/python/python.js"
-    //  dependsOn "lib/codemirror.js",
-    //"org.webjars" % "codemirror" % version.codemirror
-    //  /         "addon/display/autorefresh.js"
-    //  dependsOn "lib/codemirror.js",
-    //"org.webjars" % "codemirror" % version.codemirror
-    //  /         "addon/edit/closebrackets.js"
-    //  dependsOn "lib/codemirror.js",
-    //"org.webjars" % "codemirror" % version.codemirror
-    //  /         "addon/edit/matchbrackets.js"
-    //  dependsOn "lib/codemirror.js"
-    //)
   )
 
   // Server modules ===============================

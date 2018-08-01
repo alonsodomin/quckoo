@@ -7,7 +7,6 @@ import spray.revolver.RevolverPlugin
 import org.irundaia.sbt.sass.SbtSassify
 import play.twirl.sbt.SbtTwirl
 import webscalajs.WebScalaJS
-import scalajsbundler.sbtplugin.WebScalaJSBundlerPlugin
 
 trait QuckooAppKeys {
   val sigarLoader = taskKey[File]("Sigar loader jar file")
@@ -44,7 +43,7 @@ object QuckooApp extends AutoPlugin {
 object QuckooWebServer extends AutoPlugin {
   import WebScalaJS.autoImport.{devCommands, scalaJSPipeline}
 
-  override def requires: Plugins = QuckooApp && SbtSassify && SbtTwirl && WebScalaJSBundlerPlugin
+  override def requires: Plugins = QuckooApp && SbtSassify && SbtTwirl
 
   override lazy val projectSettings: Seq[Def.Setting[_]] = Seq(
     compile in Compile := ((compile in Compile) dependsOn scalaJSPipeline).value,
