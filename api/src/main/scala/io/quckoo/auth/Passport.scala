@@ -42,7 +42,7 @@ object Passport {
 
     def parseClaims = decodePart(1).flatMap(_.as[Map[String, String]])
 
-    parseClaims.map(claims => new Passport(claims, token))
+    parseClaims.map(new Passport(_, token))
   }
 
   implicit val passportEq: Eq[Passport] = Eq.fromUniversalEquals[Passport]

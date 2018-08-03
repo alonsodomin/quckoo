@@ -16,6 +16,10 @@
 
 package io.quckoo.client
 
+import cats.effect._
+
+import com.softwaremill.sttp.SttpBackend
+
 import io.quckoo.auth.Passport
 import io.quckoo.client.core.ProtocolSpecs
 

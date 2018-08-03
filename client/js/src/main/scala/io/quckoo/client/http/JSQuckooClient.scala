@@ -18,6 +18,9 @@ package io.quckoo.client.http
 
 import java.nio.ByteBuffer
 
+import cats.effect._
+import cats.implicits._
+
 import com.softwaremill.sttp.{Uri, SttpBackend}
 import com.softwaremill.sttp.impl.monix._
 

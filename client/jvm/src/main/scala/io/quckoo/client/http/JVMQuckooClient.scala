@@ -18,6 +18,9 @@ package io.quckoo.client.http
 
 import java.nio.ByteBuffer
 
+import cats.effect._
+import cats.implicits._
+
 import com.softwaremill.sttp.{Uri, SttpBackend}
 import com.softwaremill.sttp.asynchttpclient.monix._
 
@@ -29,10 +32,10 @@ import monix.eval.Task
 import monix.reactive.{Observable, OverflowStrategy}
 
 object JVMQuckooClient {
-  def apply(host: String, port: Int = 80): HttpQuckooClient = {
+  def apply(host: String, port: Int = 80): Resource[IO, HttpQuckooClient] = {
     val baseUri = Uri(host, port)
-    val backend = AsyncHttpClientMonixBackend()
-    new JVMQuckooClient(baseUri)(backend)
+    val backend = Resource.make(IO(AsyncHttpClientMonixBackend()))(b => IO(b.close()))
+    backend.map(b => new JVMQuckooClient(baseUri)(b))
   }
 }
 
