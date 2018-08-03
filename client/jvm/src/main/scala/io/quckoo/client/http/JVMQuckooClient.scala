@@ -39,8 +39,9 @@ object JVMQuckooClient {
   }
 }
 
-class JVMQuckooClient(baseUri: Uri)(implicit backend: SttpBackend[Task, Observable[ByteBuffer]])
-    extends HttpQuckooClient(Some(baseUri)) {
+final class JVMQuckooClient private (baseUri: Uri)(
+    implicit backend: SttpBackend[Task, Observable[ByteBuffer]]
+) extends HttpQuckooClient(Some(baseUri)) {
 
   def channel[A](implicit topicTag: TopicTag[A], decoder: Decoder[A]): Observable[A] = ???
 

@@ -18,33 +18,25 @@ package io.quckoo.client.http
 
 import java.nio.ByteBuffer
 
-import cats.effect._
-import cats.implicits._
-
-import com.softwaremill.sttp.{Uri, SttpBackend}
-import com.softwaremill.sttp.impl.monix._
+import com.softwaremill.sttp.testing.SttpBackendStub
 
 import io.circe.Decoder
 
 import io.quckoo.api.TopicTag
-import io.quckoo.client.http.dom.EventSourceSubscriber
 
 import monix.eval.Task
-import monix.reactive.{Observable, OverflowStrategy}
+import monix.reactive.Observable
 
-object JSQuckooClient {
-  def apply(): HttpQuckooClient = {
-    val backend = FetchMonixBackend()
-    new JSQuckooClient()(backend)
-  }
+object HttpQuckooClientStub {
+
+  def apply(implicit backend: SttpBackendStub[Task, Observable[ByteBuffer]]): HttpQuckooClient =
+    new HttpQuckooClientStub
+
 }
 
-final class JSQuckooClient private (implicit backend: SttpBackend[Task, Observable[ByteBuffer]])
-    extends HttpQuckooClient(None) {
+final class HttpQuckooClientStub private (implicit backend: SttpBackendStub[Task, Observable[ByteBuffer]])
+  extends HttpQuckooClient(None) {
 
-  def channel[A](implicit topicTag: TopicTag[A], decoder: Decoder[A]): Observable[A] = {
-    val subscriber = EventSourceSubscriber(topicTag.name)
-    Observable.create(OverflowStrategy.DropOld(20))(subscriber)
-  }
+  def channel[A](implicit topicTag: TopicTag[A], decoder: Decoder[A]): Observable[A] = ???
 
 }
