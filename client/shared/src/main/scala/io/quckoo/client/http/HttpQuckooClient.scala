@@ -45,6 +45,9 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
     implicit backend: SttpBackend[Task, Observable[ByteBuffer]]
 ) extends QuckooClient {
 
+  private[this] def buildUri(path: String): Uri =
+    baseUri.map(_.path(path)).getOrElse(uri"$path")
+
   def signIn(username: String, password: String): ClientIO[Unit] = {
     def decodeLoginBody(body: Either[String, String]): Either[Throwable, Passport] = {
       val invalid: Either[Throwable, String] = body.leftMap(_ => InvalidCredentials)
@@ -53,7 +56,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
 
     for {
       request <- ClientIO.pure(
-        sttp.post(uri"$LoginURI").auth.basic(username, password)
+        sttp.post(buildUri(LoginURI)).auth.basic(username, password)
       )
       response <- ClientIO.fromEffect(request.send())
       passport <- ClientIO.fromAttempt(decodeLoginBody(response.body))
@@ -63,16 +66,17 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
 
   def signOut(): ClientIO[Unit] =
     for {
-      request <- ClientIO.auth.map(_.post(uri"$LogoutURI"))
+      request  <- ClientIO.auth.map(_.post(buildUri(LogoutURI)))
       response <- ClientIO.fromEffect(request.send())
-      _     <- ClientIO.fromEither(response.body)
+      _        <- ClientIO.fromEither(response.body)
+      _        <- ClientIO.clearPassport()
     } yield ()
 
   def clusterState: ClientIO[QuckooState] = for {
-    request <- ClientIO.auth.map(_.get(uri"$ClusterStateURI").response(asJson[QuckooState]))
+    request  <- ClientIO.auth.map(_.get(buildUri(ClusterStateURI)).response(asJson[QuckooState]))
     response <- ClientIO.fromEffect(request.send())
     body     <- ClientIO.fromEither(response.body)
-    result  <- ClientIO.fromAttempt(body)
+    result   <- ClientIO.fromAttempt(body)
   } yield result
 
   // -- Registry

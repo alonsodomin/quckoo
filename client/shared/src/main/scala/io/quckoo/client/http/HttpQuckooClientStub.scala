@@ -18,6 +18,8 @@ package io.quckoo.client.http
 
 import java.nio.ByteBuffer
 
+import com.softwaremill.sttp.Uri
+import com.softwaremill.sttp.impl.monix.TaskMonadAsyncError
 import com.softwaremill.sttp.testing.SttpBackendStub
 
 import io.circe.Decoder
@@ -28,14 +30,17 @@ import monix.eval.Task
 import monix.reactive.Observable
 
 object HttpQuckooClientStub {
+  type Backend = SttpBackendStub[Task, Observable[ByteBuffer]]
 
-  def apply(implicit backend: SttpBackendStub[Task, Observable[ByteBuffer]]): HttpQuckooClient =
-    new HttpQuckooClientStub
+  def apply(buildBackend: Backend => Backend): HttpQuckooClient = {
+    val backend = SttpBackendStub[Task, Observable[ByteBuffer]](TaskMonadAsyncError)
+    new HttpQuckooClientStub()(buildBackend(backend))
+  }
 
 }
 
-final class HttpQuckooClientStub private (implicit backend: SttpBackendStub[Task, Observable[ByteBuffer]])
-  extends HttpQuckooClient(None) {
+final class HttpQuckooClientStub private (implicit backend: HttpQuckooClientStub.Backend)
+  extends HttpQuckooClient(Some(Uri("example.org"))) {
 
   def channel[A](implicit topicTag: TopicTag[A], decoder: Decoder[A]): Observable[A] = ???
 

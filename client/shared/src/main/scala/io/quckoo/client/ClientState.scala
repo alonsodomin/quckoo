@@ -19,3 +19,6 @@ package io.quckoo.client
 import io.quckoo.auth.Passport
 
 case class ClientState(passport: Option[Passport] = None)
+object ClientState {
+  def initial: ClientState = ClientState()
+}

@@ -118,8 +118,15 @@ package object client {
       } yield passport
     }
 
-    def setPassport(passport: Passport): ClientIO[Unit] =
-      StateT.set(ClientState(passport.some))
+    def setPassport(passport: Passport): ClientIO[Unit] = for {
+      state <- StateT.get[IO, ClientState]
+      _     <- StateT.set[IO, ClientState](state.copy(passport = passport.some))
+    } yield ()
+
+    def clearPassport(): ClientIO[Unit] = for {
+      state <- StateT.get[IO, ClientState]
+      _     <- StateT.set[IO, ClientState](state.copy(passport = None))
+    } yield ()
 
     def raiseError[A](error: Throwable): ClientIO[A] =
       StateT.liftF(IO.raiseError(error))
