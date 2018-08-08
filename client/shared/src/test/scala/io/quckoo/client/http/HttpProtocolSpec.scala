@@ -283,7 +283,7 @@ class HttpProtocolSpec extends AsyncFlatSpec with HttpRequestMatchers with StubC
   //   hasBody(TestJobSpec) and
   //   isJsonRequest and
   //   hasTimeout(TestTimeout)
-  //
+  
   // "registerJob" should "return a validated JobId when it succeeds" in {
   //   inProtocol[HttpProtocol] ensuringRequest isRegisterJob replyWith { _ =>
   //     HttpSuccess(DataBuffer(TestJobId.validNel[QuckooError]))
