@@ -54,6 +54,7 @@ Thumbs.db
 ###############################
 target
 overlays/
+.mvn/
 
 # Tomcat artifacts #
 ####################
