@@ -74,7 +74,8 @@ object DataBuffer {
   final val Empty = new DataBuffer(ByteBuffer.allocateDirect(0))
 
   def apply[A](a: A, charset: Charset = StandardCharsets.UTF_8)(
-      implicit encoder: Encoder[A, String]): Attempt[DataBuffer] =
+      implicit encoder: Encoder[A, String]
+  ): Attempt[DataBuffer] =
     encoder.encode(a).map(str => fromString(str, charset))
 
   def apply(buffer: ByteBuffer): DataBuffer =

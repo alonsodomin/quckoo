@@ -39,10 +39,12 @@ trait TimeJson {
 
   implicit final val decodeFiniteDuration: Decoder[FiniteDuration] = Decoder.instance { c =>
     val decodeLength = c.downField("length").as[Long]
-    val decodeUnit   = c.downField("unit").as[String] match {
-      case Right(s) => try Right(TimeUnit.valueOf(s)) catch {
-        case _: IllegalArgumentException => Left(DecodingFailure("FiniteDuration", c.history))
-      }
+    val decodeUnit = c.downField("unit").as[String] match {
+      case Right(s) =>
+        try Right(TimeUnit.valueOf(s))
+        catch {
+          case _: IllegalArgumentException => Left(DecodingFailure("FiniteDuration", c.history))
+        }
       case l @ Left(_) => l.asInstanceOf[Decoder.Result[TimeUnit]]
     }
 

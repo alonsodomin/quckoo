@@ -37,43 +37,44 @@ package object client {
 
     def unit: ClientIO[Unit] = pure(())
 
-    def auth = for {
-      passport <- getPassport
-      req <- pure(sttp.auth.bearer(passport.toString))
-    } yield req
+    def auth =
+      for {
+        passport <- getPassport
+        req      <- pure(sttp.auth.bearer(passport.toString))
+      } yield req
 
     def handle[F[_]: Effect, A, S](request: Request[A, S])(
-      implicit backend: SttpBackend[F, S]
-    ): ClientIO[A] = for {
-      response <- fromEffect(request.send())
-      body     <- fromEither(response.body)
-    } yield body
+        implicit backend: SttpBackend[F, S]
+    ): ClientIO[A] =
+      for {
+        response <- fromEffect(request.send())
+        body     <- fromEither(response.body)
+      } yield body
 
-    def optionalBody[A](response: Response[A]): ClientIO[Option[A]] = {
+    def optionalBody[A](response: Response[A]): ClientIO[Option[A]] =
       if (response.code == 404) pure(none[A])
       else fromEither(response.body.map(_.some))
-    }
 
     def handleAttempt[F[_]: Effect, E <: Throwable, A, S](request: Request[Either[E, A], S])(
-      implicit backend: SttpBackend[F, S]
-    ): ClientIO[A] = for {
-      body   <- handle(request)
-      result <- fromAttempt(body)
-    } yield result
+        implicit backend: SttpBackend[F, S]
+    ): ClientIO[A] =
+      for {
+        body   <- handle(request)
+        result <- fromAttempt(body)
+      } yield result
 
     def handleNotFound[E <: Throwable, A, B, S](request: Request[Either[E, A], S])(
-      onNotFound: => B,
-      onFound: A => B
+        onNotFound: => B,
+        onFound: A => B
     )(
-      implicit backend: SttpBackend[Future, S]
+        implicit backend: SttpBackend[Future, S]
     ): ClientIO[B] = {
-      def optionalBody(response: Response[Either[E, A]]): ClientIO[Either[E, B]] = {
+      def optionalBody(response: Response[Either[E, A]]): ClientIO[Either[E, B]] =
         if (response.code == 404) {
           pure(onNotFound.asRight[E])
         } else {
           fromEither(response.body.map(_.map(onFound)))
         }
-      }
 
       for {
         response <- fromFuture(request.send())
@@ -83,14 +84,14 @@ package object client {
     }
 
     def handleNotFoundEither[E <: Throwable, A, B, S](request: Request[Either[E, A], S])(
-      onNotFound: => B
+        onNotFound: => B
     )(
-      implicit backend: SttpBackend[Future, S]
+        implicit backend: SttpBackend[Future, S]
     ): ClientIO[Either[B, A]] =
       handleNotFound(request)(onNotFound.asLeft[A], _.asRight[B])
 
     def handleNotFoundOption[E <: Throwable, A, S](request: Request[Either[E, A], S])(
-      implicit backend: SttpBackend[Future, S]
+        implicit backend: SttpBackend[Future, S]
     ): ClientIO[Option[A]] =
       handleNotFound(request)(none[A], _.some)
 
@@ -118,15 +119,17 @@ package object client {
       } yield passport
     }
 
-    def setPassport(passport: Passport): ClientIO[Unit] = for {
-      state <- StateT.get[IO, ClientState]
-      _     <- StateT.set[IO, ClientState](state.copy(passport = passport.some))
-    } yield ()
+    def setPassport(passport: Passport): ClientIO[Unit] =
+      for {
+        state <- StateT.get[IO, ClientState]
+        _     <- StateT.set[IO, ClientState](state.copy(passport = passport.some))
+      } yield ()
 
-    def clearPassport(): ClientIO[Unit] = for {
-      state <- StateT.get[IO, ClientState]
-      _     <- StateT.set[IO, ClientState](state.copy(passport = None))
-    } yield ()
+    def clearPassport(): ClientIO[Unit] =
+      for {
+        state <- StateT.get[IO, ClientState]
+        _     <- StateT.set[IO, ClientState](state.copy(passport = None))
+      } yield ()
 
     def raiseError[A](error: Throwable): ClientIO[A] =
       StateT.liftF(IO.raiseError(error))

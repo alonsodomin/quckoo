@@ -38,8 +38,8 @@ sealed trait RegistryResolutionEvent extends RegistryEvent
 final case class GetJob(jobId: JobId) extends RegistryReadCommand with RegistryJobCommand
 case object GetJobs                   extends RegistryReadCommand
 
-final case class RegisterJob(job: JobSpec)               extends RegistryWriteCommand
-final case class JobAccepted(jobId: JobId, job: JobSpec) extends RegistryResolutionEvent
+final case class RegisterJob(job: JobSpec)                     extends RegistryWriteCommand
+final case class JobAccepted(jobId: JobId, job: JobSpec)       extends RegistryResolutionEvent
 final case class JobRejected(jobId: JobId, fault: QuckooError) extends RegistryResolutionEvent
 
 final case class DisableJob(jobId: JobId)  extends RegistryWriteCommand with RegistryJobCommand

@@ -107,9 +107,9 @@ object CodeEditor {
     // $COVERAGE-ON$
 
     protected[CodeEditor] def initialize(props: Props, state: State): Callback =
-      $.getDOMNode
-        .map(node => CodeMirror(node.asElement, jsOptions(props)))
-        .map { codeMirror =>
+      $.getDOMNode.flatMap { node =>
+        val comp = node.toElement.map { elem =>
+          val codeMirror = CodeMirror(elem, jsOptions(props))
           codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
           codeMirror.on("blur", (cm, event) => onBlur(cm, event.asInstanceOf[Event]))
 
@@ -119,6 +119,9 @@ object CodeEditor {
           codeMirror.refresh()
           codeMirror.markClean()
         }
+
+        comp.fold(Callback.empty)(Callback(_))
+      }
 
     private[this] def valueUpdated(editorValue: Option[String]): Unit =
       $.modState(_.copy(value = editorValue), propagateUpdate).runNow()

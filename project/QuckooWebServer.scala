@@ -26,7 +26,7 @@ object QuckooApp extends AutoPlugin {
     sigarLoaderOptions := Seq(s"-javaagent:${sigarLoader.value.getAbsolutePath}"),
     sigarLoaderOptions in Test := sigarLoaderOptions.value :+ s"-Dkamon.sigar.folder=${baseDirectory.value / "target" / "native"}",
     baseDirectory in reStart := baseDirectory.value / "target",
-    aspectjVersion in Aspectj := "1.9.1",
+    aspectjVersion in Aspectj := "1.9.2",
     aspectjSourceLevel in Aspectj := "-1.8",
     javaOptions in reStart ++= (aspectjWeaverOptions in Aspectj).value ++ (sigarLoaderOptions in Test).value,
     javaOptions in Test ++= (sigarLoaderOptions in Test).value,

@@ -56,7 +56,7 @@ object Modal {
       def initJS: CallbackTo[RawModal] = $.getDOMNode.map { node =>
         // instruct Bootstrap to show the modal
         // $COVERAGE-OFF$ https://github.com/scoverage/scalac-scoverage-plugin/issues/176
-        jQuery(node.asElement).modal(
+        jQuery(node.asMounted().asElement()).modal(
           js.Dynamic.literal(
             "backdrop" -> props.options.backdrop,
             "keyboard" -> props.options.keyboard,
@@ -86,7 +86,7 @@ object Modal {
 
     private def invokeCmd(cmd: String): Callback =
       $.getDOMNode.map { node =>
-        jQuery(node.asElement).modal(cmd)
+        jQuery(node.asMounted().asElement()).modal(cmd)
       } void
 
     def toggle(): Callback = invokeCmd("toggle")

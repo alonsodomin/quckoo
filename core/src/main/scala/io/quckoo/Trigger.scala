@@ -52,8 +52,9 @@ object Trigger {
 
   case object Immediate extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)(
-        implicit clock: Clock): Option[ZonedDateTime] = referenceTime match {
+    override def nextExecutionTime(
+        referenceTime: ReferenceTime
+    )(implicit clock: Clock): Option[ZonedDateTime] = referenceTime match {
       case ScheduledTime(_)     => Some(ZonedDateTime.now(clock))
       case LastExecutionTime(_) => None
     }
@@ -62,8 +63,9 @@ object Trigger {
 
   final case class After(delay: FiniteDuration) extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)(
-        implicit clock: Clock): Option[ZonedDateTime] =
+    override def nextExecutionTime(
+        referenceTime: ReferenceTime
+    )(implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
         case ScheduledTime(time) =>
           val nanos = delay.toNanos
@@ -77,8 +79,9 @@ object Trigger {
   final case class At(when: ZonedDateTime, graceTime: Option[FiniteDuration] = None)
       extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)(
-        implicit clock: Clock): Option[ZonedDateTime] =
+    override def nextExecutionTime(
+        referenceTime: ReferenceTime
+    )(implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
         case ScheduledTime(_) =>
           if (graceTime.isDefined) {
@@ -99,8 +102,9 @@ object Trigger {
   final case class Every(frequency: FiniteDuration, startingIn: Option[FiniteDuration] = None)
       extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)(
-        implicit clock: Clock): Option[ZonedDateTime] =
+    override def nextExecutionTime(
+        referenceTime: ReferenceTime
+    )(implicit clock: Clock): Option[ZonedDateTime] =
       referenceTime match {
         case ScheduledTime(time) =>
           val delay = (startingIn getOrElse 0.seconds).toNanos
@@ -117,8 +121,9 @@ object Trigger {
 
   final case class Cron(expr: CronExpr) extends Trigger {
 
-    override def nextExecutionTime(referenceTime: ReferenceTime)(
-        implicit clock: Clock): Option[ZonedDateTime] =
+    override def nextExecutionTime(
+        referenceTime: ReferenceTime
+    )(implicit clock: Clock): Option[ZonedDateTime] =
       expr.next(referenceTime.when)
 
     override val isRecurring: Boolean = true

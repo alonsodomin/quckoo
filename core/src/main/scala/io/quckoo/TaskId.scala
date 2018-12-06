@@ -53,7 +53,7 @@ object TaskId {
 
   // Typeclass instances
 
-  implicit val taskIdEq: Eq[TaskId] = Eq.instance((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
+  implicit val taskIdEq: Eq[TaskId]     = Eq.instance((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
   implicit val taskIdShow: Show[TaskId] = Show.fromToString
 
 }

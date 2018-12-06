@@ -27,7 +27,7 @@ import io.quckoo.util.Attempt
   */
 package object json extends TimeJson with Cron4s {
 
-  type JsonCodec[A] = Codec[A, String]
+  type JsonCodec[A]   = Codec[A, String]
   type JsonEncoder[A] = Encoder[A, String]
   type JsonDecoder[A] = Decoder[String, A]
 

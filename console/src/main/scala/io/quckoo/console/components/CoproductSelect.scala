@@ -145,18 +145,17 @@ final class CoproductSelect[A: Reusability] private[components] (
     .builder[Props[A]]("CoproductSelect")
     .initialStateFromProps(generateState)
     .renderBackendWithChildren[Backend[A]]
-    .configure(
-      Reusability
-        .shouldComponentUpdate[Props[A], Children.Varargs, State[A], Backend[A]]
-    )
+    .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(options: List[Symbol],
-            selector: Selector[A],
-            value: Option[A],
-            default: Symbol,
-            onUpdate: OnUpdate[A],
-            attrs: TagMod*) =
+  def apply(
+      options: List[Symbol],
+      selector: Selector[A],
+      value: Option[A],
+      default: Symbol,
+      onUpdate: OnUpdate[A],
+      attrs: TagMod*
+  ) =
     component(Props(options, selector, value, Some(default), onUpdate, attrs)) _
 
   def apply(options: List[Symbol],

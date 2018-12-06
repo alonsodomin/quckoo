@@ -28,10 +28,8 @@ import io.quckoo.protocol.scheduler._
 
 import monix.reactive.Observable
 
-trait QuckooClient extends Auth[ClientIO]
-  with Cluster[ClientIO]
-  with Registry[ClientIO]
-  with Scheduler[ClientIO] {
+trait QuckooClient
+    extends Auth[ClientIO] with Cluster[ClientIO] with Registry[ClientIO] with Scheduler[ClientIO] {
 
   def channel[A](implicit topicTag: TopicTag[A], decoder: Decoder[A]): Observable[A]
 

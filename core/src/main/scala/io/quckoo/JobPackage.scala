@@ -39,13 +39,13 @@ sealed trait JobPackage {
 object JobPackage {
 
   val valid: Validator[JobPackage] = {
-    (ShellScriptPackage.valid <*> JarJobPackage.valid).dimap[JobPackage, Validated[Violation, JobPackage]](
-      {
+    (ShellScriptPackage.valid <*> JarJobPackage.valid)
+      .dimap[JobPackage, Validated[Violation, JobPackage]]({
         case shell: ShellScriptPackage => Left(shell)
         case jar: JarJobPackage        => Right(jar)
       })(
-      _.map(_.fold(_.asInstanceOf[JobPackage], _.asInstanceOf[JobPackage]))
-    )
+        _.map(_.fold(_.asInstanceOf[JobPackage], _.asInstanceOf[JobPackage]))
+      )
   }
 
   def jar(artifactId: ArtifactId, jobClass: String): JarJobPackage =
@@ -53,7 +53,7 @@ object JobPackage {
 
   def shell(content: String): ShellScriptPackage = ShellScriptPackage(content)
 
-  val asJar: Prism[JobPackage, JarJobPackage] = GenPrism[JobPackage, JarJobPackage]
+  val asJar: Prism[JobPackage, JarJobPackage]        = GenPrism[JobPackage, JarJobPackage]
   val asShell: Prism[JobPackage, ShellScriptPackage] = GenPrism[JobPackage, ShellScriptPackage]
 
   implicit val jobPackageShow: Show[JobPackage] = Show.show {
@@ -81,14 +81,16 @@ object ShellScriptPackage {
     caseClass1(validContent)(ShellScriptPackage.unapply, ShellScriptPackage.apply)
   }
 
-  implicit val shellScriptPackageEncoder: Encoder[ShellScriptPackage] = deriveEncoder[ShellScriptPackage]
-  implicit val shellScriptPackageDecoder: Decoder[ShellScriptPackage] = deriveDecoder[ShellScriptPackage]
+  implicit val shellScriptPackageEncoder: Encoder[ShellScriptPackage] =
+    deriveEncoder[ShellScriptPackage]
+  implicit val shellScriptPackageDecoder: Decoder[ShellScriptPackage] =
+    deriveDecoder[ShellScriptPackage]
 
 }
 
 @Lenses final case class JarJobPackage(
-  artifactId: ArtifactId,
-  jobClass: String
+    artifactId: ArtifactId,
+    jobClass: String
 ) extends JobPackage {
 
   def checksum: String = MD5.checksum(s"$artifactId!$jobClass")

@@ -10,7 +10,6 @@ lazy val sandbox =
 inThisBuild(
   Seq(
     parallelExecution := false,
-    scalafmtVersion := Dependencies.version.scalafmt,
     scalafmtOnCompile := true
   )
 )

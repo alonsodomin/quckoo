@@ -43,7 +43,7 @@ object QuckooError {
 
 // == Business errors ===============
 
-final case class JobNotFound(jobId: JobId)             extends QuckooError
+final case class JobNotFound(jobId: JobId) extends QuckooError
 object JobNotFound {
   implicit val jobNotFoundEncoder: Encoder[JobNotFound] = deriveEncoder[JobNotFound]
   implicit val jobNotFoundDecoder: Decoder[JobNotFound] = deriveDecoder[JobNotFound]
@@ -66,7 +66,8 @@ object ExceptionThrown {
 
 // == Artifact resolution errors ============
 
-final case class MissingDependencies(dependencies: NonEmptyList[DependencyError]) extends QuckooError
+final case class MissingDependencies(dependencies: NonEmptyList[DependencyError])
+    extends QuckooError
 
 sealed trait DependencyError extends Product with Serializable {
   val artifactId: ArtifactId
@@ -74,7 +75,7 @@ sealed trait DependencyError extends Product with Serializable {
 case class UnresolvedDependency(artifactId: ArtifactId) extends DependencyError
 
 object DownloadFailed {
-  sealed trait Reason extends Product with Serializable
+  sealed trait Reason                     extends Product with Serializable
   case object NotFound                    extends Reason
   final case class Other(message: String) extends Reason
 }

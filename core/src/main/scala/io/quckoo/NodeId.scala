@@ -51,7 +51,7 @@ object NodeId {
 
   // Typeclass instances
 
-  implicit val nodeIdEq: Eq[NodeId] = Eq.instance((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
+  implicit val nodeIdEq: Eq[NodeId]     = Eq.instance((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
   implicit val nodeIdShow: Show[NodeId] = Show.fromToString
 
 }

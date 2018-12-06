@@ -43,8 +43,8 @@ package object config {
 
   type HostAndPort = String Refined MatchesRegex[W.`"""(.+?):(\\d+)"""`.T]
 
-  implicit def hint[A]: ProductHint[A] =
-    ProductHint(ConfigFieldMapping(CamelCase, KebabCase))
+  /* implicit def hint[A]: ProductHint[A] =
+    ProductHint(ConfigFieldMapping(CamelCase, KebabCase))*/
 
   implicit val fileConfigConvert: ConfigConvert[File] =
     ConfigConvert.viaString(

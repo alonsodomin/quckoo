@@ -25,5 +25,5 @@ sealed trait WorkerEvent extends Event {
 }
 
 final case class WorkerJoined(workerId: NodeId, location: Location) extends WorkerEvent
-final case class WorkerLost(workerId: NodeId) extends WorkerEvent
-final case class WorkerRemoved(workerId: NodeId) extends WorkerEvent
+final case class WorkerLost(workerId: NodeId)                       extends WorkerEvent
+final case class WorkerRemoved(workerId: NodeId)                    extends WorkerEvent

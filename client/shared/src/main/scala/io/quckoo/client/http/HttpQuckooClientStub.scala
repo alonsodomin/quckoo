@@ -40,7 +40,7 @@ object HttpQuckooClientStub {
 }
 
 final class HttpQuckooClientStub private (implicit backend: HttpQuckooClientStub.Backend)
-  extends HttpQuckooClient(Some(Uri("example.org"))) {
+    extends HttpQuckooClient(Some(Uri("example.org"))) {
 
   def channel[A](implicit topicTag: TopicTag[A], decoder: Decoder[A]): Observable[A] = ???
 

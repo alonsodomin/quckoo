@@ -58,7 +58,7 @@ object JobId {
 
   // Typeclass instances
 
-  implicit val jobIdEq: Eq[JobId] = Eq.by(_.id)
+  implicit val jobIdEq: Eq[JobId]     = Eq.by(_.id)
   implicit val jobIdShow: Show[JobId] = Show.fromToString
 
 }

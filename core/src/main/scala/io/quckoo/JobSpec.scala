@@ -41,15 +41,15 @@ object JobSpec {
     import Validators._
 
     val validDisplayName = nonEmpty[String].at("displayName")
-    val validDetails = JobPackage.valid.at("jobPackage")
+    val validDetails     = JobPackage.valid.at("jobPackage")
 
-    caseClass4(validDisplayName,
-      any[Option[String]],
-      validDetails,
-      any[Boolean])(JobSpec.unapply, JobSpec.apply)
+    caseClass4(validDisplayName, any[Option[String]], validDetails, any[Boolean])(
+      JobSpec.unapply,
+      JobSpec.apply
+    )
   }
 
-  implicit val jobSpecEq: Eq[JobSpec] = Eq.fromUniversalEquals
+  implicit val jobSpecEq: Eq[JobSpec]     = Eq.fromUniversalEquals
   implicit val jobSpecShow: Show[JobSpec] = Show.fromToString[JobSpec]
 
   implicit val jobSpecEncoder: Encoder[JobSpec] = deriveEncoder[JobSpec]

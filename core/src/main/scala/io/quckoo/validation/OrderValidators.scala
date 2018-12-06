@@ -26,11 +26,11 @@ import Violation._
 trait OrderValidators {
 
   def greaterThanK[F[_]: Applicative, A](value: A)(implicit order: Order[A],
-                                                   show: Show[A]): ValidatorK[F, A] = {
+                                                   show: Show[A]): ValidatorK[F, A] =
     Validator[F, A](
       a => Applicative[F].pure(order.gt(a, value)),
-      a => GreaterThan(show.show(value), show.show(a)))
-  }
+      a => GreaterThan(show.show(value), show.show(a))
+    )
 
   def greaterThan[A: Order: Show](value: A): Validator[A] = greaterThanK[Id, A](value)
 
@@ -38,7 +38,8 @@ trait OrderValidators {
                                                 show: Show[A]): ValidatorK[F, A] =
     Validator[F, A](
       a => Applicative[F].pure(order.lt(a, value)),
-      a => LessThan(show.show(value), show.show(a)))
+      a => LessThan(show.show(value), show.show(a))
+    )
 
   def lessThan[A: Order: Show](value: A): Validator[A] = lessThanK[Id, A](value)
 

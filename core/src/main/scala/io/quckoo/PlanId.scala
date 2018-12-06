@@ -51,7 +51,7 @@ object PlanId {
 
   // Typeclass instances
 
-  implicit val planIdEq: Eq[PlanId] = Eq.instance((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
+  implicit val planIdEq: Eq[PlanId]     = Eq.instance((lhs, rhs) => lhs.uuid.equals(rhs.uuid))
   implicit val planIdShow: Show[PlanId] = Show.fromToString
 
 }

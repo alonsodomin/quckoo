@@ -72,12 +72,13 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       _        <- ClientIO.clearPassport()
     } yield ()
 
-  def clusterState: ClientIO[QuckooState] = for {
-    request  <- ClientIO.auth.map(_.get(buildUri(ClusterStateURI)).response(asJson[QuckooState]))
-    response <- ClientIO.fromEffect(request.send())
-    body     <- ClientIO.fromEither(response.body)
-    result   <- ClientIO.fromAttempt(body)
-  } yield result
+  def clusterState: ClientIO[QuckooState] =
+    for {
+      request  <- ClientIO.auth.map(_.get(buildUri(ClusterStateURI)).response(asJson[QuckooState]))
+      response <- ClientIO.fromEffect(request.send())
+      body     <- ClientIO.fromEither(response.body)
+      result   <- ClientIO.fromAttempt(body)
+    } yield result
 
   // -- Registry
 
@@ -92,24 +93,24 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       )
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.fromEither(response.body)
-      result  <- ClientIO.fromAttempt(body)
+      result   <- ClientIO.fromAttempt(body)
     } yield result
   }
 
   def fetchJob(jobId: JobId): ClientIO[Option[JobSpec]] =
     for {
-      request <- ClientIO.auth.map(_.get(uri"$JobsURI/$jobId").response(asJson[JobSpec]))
+      request  <- ClientIO.auth.map(_.get(uri"$JobsURI/$jobId").response(asJson[JobSpec]))
       response <- ClientIO.fromEffect(request.send())
-      body  <- ClientIO.optionalBody(response)
-      result <- ClientIO.fromAttempt(body.sequence)
+      body     <- ClientIO.optionalBody(response)
+      result   <- ClientIO.fromAttempt(body.sequence)
     } yield result
 
   def fetchJobs(): ClientIO[List[(JobId, JobSpec)]] =
     for {
-      request <- ClientIO.auth.map(_.get(uri"$JobsURI").response(asJson[List[(JobId, JobSpec)]]))
+      request  <- ClientIO.auth.map(_.get(uri"$JobsURI").response(asJson[List[(JobId, JobSpec)]]))
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.fromEither(response.body)
-      result  <- ClientIO.fromAttempt(body)
+      result   <- ClientIO.fromAttempt(body)
     } yield result
 
   def enableJob(jobId: JobId): ClientIO[Unit] =
@@ -145,7 +146,9 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
 
   def cancelPlan(planId: PlanId): ClientIO[ExecutionPlanCancelled] =
     for {
-      request  <- ClientIO.auth.map(_.delete(uri"$ExecutionPlansURI/$planId").response(asJson[ExecutionPlanCancelled]))
+      request <- ClientIO.auth.map(
+        _.delete(uri"$ExecutionPlansURI/$planId").response(asJson[ExecutionPlanCancelled])
+      )
       response <- ClientIO.fromEffect(request.send())
       body <- if (response.code == 404) ClientIO.raiseError(ExecutionPlanNotFound(planId))
       else ClientIO.fromEither(response.body)
@@ -159,7 +162,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       )
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.fromEither(response.body)
-      result  <- ClientIO.fromAttempt(body)
+      result   <- ClientIO.fromAttempt(body)
     } yield result
 
   def fetchPlan(planId: PlanId): ClientIO[Option[ExecutionPlan]] =
@@ -168,8 +171,8 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
         _.get(uri"$ExecutionPlansURI/$planId").response(asJson[ExecutionPlan])
       )
       response <- ClientIO.fromEffect(request.send())
-      body  <- ClientIO.optionalBody(response)
-      result <- ClientIO.fromAttempt(body.sequence)
+      body     <- ClientIO.optionalBody(response)
+      result   <- ClientIO.fromAttempt(body.sequence)
     } yield result
 
   def fetchTasks(): ClientIO[List[(TaskId, TaskExecution)]] =
@@ -179,7 +182,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       )
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.fromEither(response.body)
-      result  <- ClientIO.fromAttempt(body)
+      result   <- ClientIO.fromAttempt(body)
     } yield result
 
   def fetchTask(taskId: TaskId): ClientIO[Option[TaskExecution]] =
@@ -188,8 +191,8 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
         _.get(uri"$TaskExecutionsURI/$taskId").response(asJson[TaskExecution])
       )
       response <- ClientIO.fromEffect(request.send())
-      body  <- ClientIO.optionalBody(response)
-      result <- ClientIO.fromAttempt(body.sequence)
+      body     <- ClientIO.optionalBody(response)
+      result   <- ClientIO.fromAttempt(body.sequence)
     } yield result
 
 }

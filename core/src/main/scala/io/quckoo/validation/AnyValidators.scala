@@ -40,7 +40,8 @@ trait AnyValidators {
                                                show: Show[A]): ValidatorK[F, A] =
     Validator(
       a => Applicative[F].pure(eq.eqv(value, a)),
-      a => Violation.EqualTo(show.show(value), show.show(a)))
+      a => Violation.EqualTo(show.show(value), show.show(a))
+    )
 
   def equalTo[A: Eq: Show](value: A): Validator[A] = equalToK[Id, A](value)
 

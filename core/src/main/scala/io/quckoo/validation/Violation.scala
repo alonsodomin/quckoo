@@ -48,11 +48,11 @@ object Violation {
   implicit val violationEq: Eq[Violation] = Eq.instance {
     case (left @ And(And(aLeft, bLeft), cLeft), right @ And(aRight, And(bRight, cRight))) =>
       violationConjEquality.eqv(left, And(And(aRight, bRight), cRight)) &&
-      violationConjEquality.eqv(And(aLeft, And(bLeft, cLeft)), right)
+        violationConjEquality.eqv(And(aLeft, And(bLeft, cLeft)), right)
 
     case (left @ Or(Or(aLeft, bLeft), cLeft), right @ Or(aRight, Or(bRight, cRight))) =>
       violationDisjEquality.eqv(left, Or(Or(aRight, bRight), cRight)) ||
-      violationDisjEquality.eqv(Or(aLeft, Or(bLeft, cLeft)), right)
+        violationDisjEquality.eqv(Or(aLeft, Or(bLeft, cLeft)), right)
 
     case (left @ And(_, _), right @ And(_, _)) =>
       violationConjEquality.eqv(left, right)
@@ -84,18 +84,19 @@ object Violation {
     case v                => deriveEncoder[Violation].apply(v)
   }
 
-  implicit def violationDecoder: Decoder[Violation] = Decoder.instance {
-    cursor => PathViolation.jsonDecoder.or(deriveDecoder[Violation]).apply(cursor)
+  implicit def violationDecoder: Decoder[Violation] = Decoder.instance { cursor =>
+    PathViolation.jsonDecoder.or(deriveDecoder[Violation]).apply(cursor)
   }
 
   implicit class ViolationSyntax(val self: Violation) extends AnyVal {
     def and(other: Violation): Violation = And(self, other)
-    def or(other: Violation): Violation  = self match {
+    def or(other: Violation): Violation = self match {
       case Reject(_) => other
-      case _ => other match {
-        case Reject(_) => self
-        case _ => Or(self, other)
-      }
+      case _ =>
+        other match {
+          case Reject(_) => self
+          case _         => Or(self, other)
+        }
     }
   }
 
@@ -141,8 +142,9 @@ object PathViolation {
   }
 
   implicit val jsonDecoder: Decoder[PathViolation] = Decoder.instance { cursor =>
-    (cursor.downField("path").as[Path], cursor.downField("violation").as[Violation]).mapN { (path, violation) =>
-      PathViolation(path, violation)
+    (cursor.downField("path").as[Path], cursor.downField("violation").as[Violation]).mapN {
+      (path, violation) =>
+        PathViolation(path, violation)
     }
   }
 

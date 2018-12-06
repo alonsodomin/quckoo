@@ -64,6 +64,7 @@ trait HttpRegistryCmds extends HttpMarshalling with RegistryCmds[HttpProtocol] {
     new Auth[HttpProtocol, JobId, Either[JobNotFound, JobDisabled]] {
       override val marshall =
         marshallEmpty[DisableJobCmd](HttpMethod.Post, jobUrl(Some("disable")))
-      override val unmarshall = unmarshalEither[JobId, JobDisabled].map(_.leftMap(JobNotFound.apply))
+      override val unmarshall =
+        unmarshalEither[JobId, JobDisabled].map(_.leftMap(JobNotFound.apply))
     }
 }

@@ -27,7 +27,7 @@ import scala.reflect.ClassTag
   * Created by alonsodomin on 20/09/2016.
   */
 sealed abstract class TopicTag[A](val name: String)(implicit val eventType: ClassTag[A])
-  extends Product with Serializable
+    extends Product with Serializable
 
 object TopicTag {
 

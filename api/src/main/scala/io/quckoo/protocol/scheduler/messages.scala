@@ -33,7 +33,7 @@ import scala.concurrent.duration.FiniteDuration
 
 sealed trait SchedulerCommand extends Command
 sealed trait SchedulerEvent   extends Event
-sealed trait ExecutionEvent   extends SchedulerEvent {
+sealed trait ExecutionEvent extends SchedulerEvent {
   val dateTime: ZonedDateTime
 }
 
@@ -54,14 +54,12 @@ object ScheduleJob {
 
 final case class TaskScheduled(jobId: JobId, planId: PlanId, task: Task, dateTime: ZonedDateTime)
     extends ExecutionEvent
-final case class TaskTriggered(
-  jobId: JobId,
+final case class TaskTriggered(jobId: JobId,
                                planId: PlanId,
                                taskId: TaskId,
                                dateTime: ZonedDateTime)
     extends ExecutionEvent
-final case class TaskCompleted(
-  jobId: JobId,
+final case class TaskCompleted(jobId: JobId,
                                planId: PlanId,
                                taskId: TaskId,
                                dateTime: ZonedDateTime,

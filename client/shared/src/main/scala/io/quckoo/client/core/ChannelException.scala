@@ -20,4 +20,4 @@ package io.quckoo.client.core
   * Created by alonsodomin on 28/02/2017.
   */
 class ChannelException(val topicName: String, cause: Option[Exception] = None)
-  extends Exception(topicName, cause.orNull)
+    extends Exception(topicName, cause.orNull)

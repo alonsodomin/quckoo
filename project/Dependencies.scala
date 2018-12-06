@@ -19,30 +19,30 @@ object Dependencies {
     // Testing --------
 
     val scalaTest  = "3.0.5"
-    val scalaCheck = "1.13.5"
+    val scalaCheck = "1.14.0"
     val scalaMock  = "3.6.0"
     val discipline = "0.10.0"
-    val wiremock   = "2.18.0"
+    val wiremock   = "2.19.0"
 
     // Akka ----------
 
     object akka {
-      val main = "2.5.14"
-      val kryo = "0.9.2"
+      val main = "2.5.18"
+      val kryo = "0.9.3"
 
       val constructr = "0.9.0"
 
       object http {
-        val main = "10.1.3"
+        val main = "10.1.5"
 
         // http extensions
-        val json = "1.21.0"
+        val json = "1.22.0"
         val sse  = "3.0.0"
       }
 
       // persistence plugins
-      val cassandra = "0.87"
-      val inmemory  = "2.5.1.1"
+      val cassandra = "0.91"
+      val inmemory  = "2.5.15.1"
     }
 
     // Monitoring ----
@@ -51,7 +51,7 @@ object Dependencies {
       val core       = "1.1.3"
       val akka       = "1.1.2"
       val remote     = "1.0.1"
-      val http       = "1.1.0"
+      val http       = "1.1.1"
       val scala      = "1.0.0"
       val sysmetrics = "1.0.0"
       val prometheus = "1.1.1"
@@ -59,50 +59,49 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "1.2.3"
+    val scalaJsReact    = "1.3.1"
     val scalaJsDom      = "0.9.6"
     val scalaJsJQuery   = "0.9.4"
     val scalaJSScripts  = "1.1.2"
-    val testState       = "2.2.0"
+    val testState       = "2.3.0"
 
     // Other utils ---
 
     val arm         = "2.0"
-    val betterfiles = "3.6.0"
+    val betterfiles = "3.7.0"
     object diode {
-      val core  = "1.1.3"
-      val react = s"$core.120"
+      val core  = "1.1.4"
+      val react = s"$core.131"
     }
     object cats {
-      val main      = "1.1.0"
-      val mtl       = "0.3.0"
-      val effect    = "1.0.0-RC2"
-      val kittens   = "1.1.0"
+      val main      = "1.5.0"
+      val mtl       = "0.4.0"
+      val effect    = "1.1.0"
+      val kittens   = "1.2.0"
     }
-    val circe       = "0.9.3"
+    val circe       = "0.10.1"
     val cron4s      = "0.4.5"
-    val enumeratum  = "1.5.17"
+    val enumeratum  = "1.5.18"
     val ivy         = "2.4.0"
     val monix       = "3.0.0-RC1"
     val monocle     = "1.5.1-cats"
-    val pureconfig  = "0.9.1"
-    val refined     = "0.9.1"
+    val pureconfig  = "0.10.1"
+    val refined     = "0.9.3"
     val scalaCss    = "0.5.5"
-    val scalafmt    = "1.4.0"
     val scalaTime   = "2.0.0-M13"
     val scopt       = "3.7.0"
     val sttp        = "1.2.3"
-    val xml         = "1.1.0"
+    val xml         = "1.1.1"
 
     // JavaScript Libraries
 
     val animate          = "3.2.2"
     val jquery           = "2.2.4"
-    val bootstrap        = "3.3.5"
+    val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs          = "16.2.0"
+    val reactJs          = "16.5.2"
     val sparkMD5         = "3.0.0"
-    val codemirror       = "5.33.0"
+    val codemirror       = "5.41.0"
   }
 
   // Common library definitions
@@ -188,7 +187,7 @@ object Dependencies {
 
   object compiler {
     val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.1" cross CrossVersion.full
-    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.7" cross CrossVersion.binary
+    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.9" cross CrossVersion.binary
 
     val plugins = Seq(macroParadise, kindProjector).map(compilerPlugin)
   }

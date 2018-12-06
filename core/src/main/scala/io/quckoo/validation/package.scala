@@ -39,7 +39,9 @@ package object validation extends ValidatorSyntax {
       }
 
     def reject[F[_], A](implicit ev: Applicative[F]): ValidatorK[F, A] =
-      Kleisli { a => ev.pure(Violation.Reject(a.toString).invalid[A]) }
+      Kleisli { a =>
+        ev.pure(Violation.Reject(a.toString).invalid[A])
+      }
 
   }
 

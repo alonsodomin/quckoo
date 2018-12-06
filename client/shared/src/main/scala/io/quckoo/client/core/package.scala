@@ -31,8 +31,7 @@ package object core {
   type Marshall[Cmd[_] <: Command[_], In, Req] = Kleisli[Attempt, Cmd[In], Req]
   object Marshall {
     @inline
-    def apply[Cmd[_] <: Command[_], In, Req](
-        run: Cmd[In] => Attempt[Req]): Marshall[Cmd, In, Req] =
+    def apply[Cmd[_] <: Command[_], In, Req](run: Cmd[In] => Attempt[Req]): Marshall[Cmd, In, Req] =
       Kleisli[Attempt, Cmd[In], Req](run)
   }
 

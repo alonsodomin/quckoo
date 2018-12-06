@@ -49,7 +49,8 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
               HttpMethod.Post,
               LoginURI,
               cmd.timeout,
-              headers = httpHeaders(None, cmd.timeout) + authHdr)
+              headers = httpHeaders(None, cmd.timeout) + authHdr
+            )
         }
       }
 
@@ -64,7 +65,8 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
             HttpMethod.Post,
             AuthRefreshURI,
             cmd.timeout,
-            httpHeaders(Some(cmd.passport), cmd.timeout))
+            httpHeaders(Some(cmd.passport), cmd.timeout)
+          )
         }
       }
       override val unmarshall = unmarshallPassport[RefreshPassportCmd]
@@ -77,7 +79,8 @@ trait HttpSecurityCmds extends HttpMarshalling with SecurityCmds[HttpProtocol] {
           HttpMethod.Post,
           LogoutURI,
           cmd.timeout,
-          httpHeaders(Some(cmd.passport), cmd.timeout))
+          httpHeaders(Some(cmd.passport), cmd.timeout)
+        )
       }
     }
 

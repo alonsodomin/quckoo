@@ -57,10 +57,12 @@ trait JavaTimeGenerators {
 
   implicit lazy val arbitraryPeriod = Arbitrary(periodGen)
 
-  val yearGen: Gen[Year] = Gen.chooseNum(
-    ChronoField.YEAR.range.getMinimum,
-    ChronoField.YEAR.range.getMaximum
-  ).map(value => Year.of(value.toInt))
+  val yearGen: Gen[Year] = Gen
+    .chooseNum(
+      ChronoField.YEAR.range.getMinimum,
+      ChronoField.YEAR.range.getMaximum
+    )
+    .map(value => Year.of(value.toInt))
 
   implicit lazy val arbitraryYear = Arbitrary(yearGen)
 
