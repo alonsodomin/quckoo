@@ -18,7 +18,6 @@ package io.quckoo.client.http.dom
 
 import io.circe.Decoder
 import io.circe.parser.decode
-
 import io.quckoo.client.core.ChannelException
 import io.quckoo.client.http.topicURI
 import io.quckoo.util.Attempt

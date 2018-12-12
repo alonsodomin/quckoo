@@ -169,7 +169,7 @@ lazy val quckoo = (project in file("."))
 
 lazy val core =
   (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("core"))
-    .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
+    .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin, ScalaJSBundlerPlugin)
     .settings(
       name := "core",
       moduleName := "quckoo-core",
@@ -201,7 +201,7 @@ lazy val coreJVM = core.jvm
 
 lazy val api =
   (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("api"))
-    .enablePlugins(AutomateHeaderPlugin)
+    .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
     .settings(commonSettings)
     .settings(scoverageSettings)
     .settings(publishSettings)
@@ -220,7 +220,7 @@ lazy val apiJVM = api.jvm
 // Client ==================================================
 
 lazy val client = (crossProject(JSPlatform, JVMPlatform) in file("client"))
-  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
   .settings(commonSettings)
   .settings(scoverageSettings)
   .settings(publishSettings)
@@ -241,7 +241,7 @@ lazy val clientJVM = client.jvm
 // Console ==================================================
 
 lazy val console = (project in file("console"))
-  .enablePlugins(AutomateHeaderPlugin, ScalaJSPlugin, ScalaJSWeb)
+  .enablePlugins(AutomateHeaderPlugin, ScalaJSPlugin, ScalaJSBundlerPlugin, ScalaJSWeb)
   .settings(commonSettings)
   .settings(commonJsSettings)
   .settings(publishSettings)
@@ -272,7 +272,8 @@ lazy val master = (project in file("master"))
     AutomateHeaderPlugin,
     QuckooWebServer,
     QuckooServerPackager,
-    QuckooMultiJvmTesting
+    QuckooMultiJvmTesting,
+    WebScalaJSBundlerPlugin
   )
   .settings(commonSettings)
   .settings(commonJvmSettings)
@@ -306,7 +307,7 @@ lazy val worker = (project in file("worker"))
 // Misc Utilities ===========================================
 
 lazy val util = (crossProject(JSPlatform, JVMPlatform) in file("util"))
-  .enablePlugins(AutomateHeaderPlugin)
+  .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
   .settings(commonSettings)
   .jsSettings(commonJsSettings)
   .jsSettings(Dependencies.utilJS)
@@ -321,7 +322,7 @@ lazy val utilJVM = util.jvm
 
 lazy val testSupport =
   (crossProject(JSPlatform, JVMPlatform) in file("test-support"))
-    .enablePlugins(AutomateHeaderPlugin)
+    .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
     .settings(commonSettings)
     .settings(noPublishSettings)
     .settings(Dependencies.testSupport)

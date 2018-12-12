@@ -107,6 +107,9 @@ package object client {
     def fromEither[E: Show, A](result: Either[E, A]): ClientIO[A] =
       fromAttempt(result.leftMap(err => new Exception(err.show)))
 
+    def fromBody[E <: Throwable, A](body: Either[DeserializationError[E], A]): ClientIO[A] =
+      fromAttempt(body.leftMap(_.error))
+
     def getPassport: ClientIO[Passport] = {
       def retrievePassport(state: ClientState): IO[Passport] = state.passport match {
         case Some(pass) => IO.pure(pass)

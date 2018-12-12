@@ -4,6 +4,7 @@ import Keys._
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import sbtcrossproject.CrossPlugin.autoImport._
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
+import scalajsbundler.sbtplugin.ScalaJSBundlerPlugin.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object Dependencies {
@@ -27,7 +28,7 @@ object Dependencies {
     // Akka ----------
 
     object akka {
-      val main = "2.5.18"
+      val main = "2.5.19"
       val kryo = "0.9.3"
 
       val constructr = "0.9.0"
@@ -83,14 +84,14 @@ object Dependencies {
     val cron4s      = "0.4.5"
     val enumeratum  = "1.5.18"
     val ivy         = "2.4.0"
-    val monix       = "3.0.0-RC1"
+    val monix       = "3.0.0-RC2-379831b"
     val monocle     = "1.5.1-cats"
     val pureconfig  = "0.10.1"
     val refined     = "0.9.3"
     val scalaCss    = "0.5.5"
     val scalaTime   = "2.0.0-M13"
     val scopt       = "3.7.0"
-    val sttp        = "1.2.3"
+    val sttp        = "1.5.1"
     val xml         = "1.1.1"
 
     // JavaScript Libraries
@@ -230,14 +231,15 @@ object Dependencies {
 
   // Utilities module ===========================
 
-  lazy val utilJS = Def.settings(
-    jsDependencies ++= Seq(
+  lazy val utilJS = Def.settings {
+    /* jsDependencies ++= Seq(
       "org.webjars.npm" % "spark-md5" % version.sparkMD5
         /            "spark-md5.js"
         minified     "spark-md5.min.js"
         commonJSName "SparkMD5"
-    )
-  )
+    ),*/
+    npmDependencies in Compile += "spark-md5" -> version.sparkMD5
+  }
 
   // API module ===============================
 
@@ -297,8 +299,16 @@ object Dependencies {
       "com.github.japgolly.test-state" %%% "ext-scalajs-react" % version.testState % Test,
       "com.github.japgolly.test-state" %%% "ext-cats"          % version.testState % Test
     ),
-    jsDependencies ++= Seq(
-      "org.webjars.npm" % "js-tokens" % "4.0.0" / "index.js",
+    npmDependencies in Compile ++= Seq(
+      "react" -> version.reactJs,
+      "react-dom" -> version.reactJs,
+      "jquery" -> version.jquery,
+      "bootstrap" -> version.bootstrap,
+      "bootstrap-notify" -> version.bootstrapNotifiy,
+      "codemirror" -> version.codemirror
+    )
+    /*jsDependencies ++= Seq(
+      //"org.webjars.npm" % "js-tokens" % "4.0.0" / "index.js",
 
       // -- ReactJS
       "org.webjars.npm" % "react" % version.reactJs
@@ -348,7 +358,7 @@ object Dependencies {
       "org.webjars" % "codemirror" % version.codemirror
          /         "addon/edit/matchbrackets.js"
          dependsOn "lib/codemirror.js"
-    )
+    )*/
   )
 
   // Server modules ===============================

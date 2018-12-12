@@ -29,6 +29,7 @@ import io.quckoo.net.QuckooState
 import io.quckoo.protocol.registry._
 import io.quckoo.protocol.scheduler._
 import io.quckoo.serialization.json._
+import io.quckoo.util.Attempt
 
 import com.softwaremill.sttp._
 import com.softwaremill.sttp.circe._
@@ -48,12 +49,12 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
   private[this] def buildUri(path: String): Uri =
     baseUri.map(_.path(path)).getOrElse(uri"$path")
 
-  def signIn(username: String, password: String): ClientIO[Unit] = {
-    def decodeLoginBody(body: Either[String, String]): Either[Throwable, Passport] = {
-      val invalid: Either[Throwable, String] = body.leftMap(_ => InvalidCredentials)
-      invalid >>= Passport.apply
-    }
+  private[this] def decodeLoginBody(body: Either[String, String]): Attempt[Passport] = {
+    val invalid: Attempt[String] = body.leftMap(_ => InvalidCredentials)
+    invalid >>= Passport.apply
+  }
 
+  def signIn(username: String, password: String): ClientIO[Unit] =
     for {
       request <- ClientIO.pure(
         sttp.post(buildUri(LoginURI)).auth.basic(username, password)
@@ -62,7 +63,6 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       passport <- ClientIO.fromAttempt(decodeLoginBody(response.body))
       _        <- ClientIO.setPassport(passport)
     } yield ()
-  }
 
   def signOut(): ClientIO[Unit] =
     for {
@@ -72,12 +72,20 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       _        <- ClientIO.clearPassport()
     } yield ()
 
+  def refreshAuth(): ClientIO[Unit] =
+    for {
+      request  <- ClientIO.auth.map(_.post(buildUri(AuthRefreshURI)))
+      response <- ClientIO.fromEffect(request.send())
+      passport <- ClientIO.fromAttempt(decodeLoginBody(response.body))
+      _        <- ClientIO.setPassport(passport)
+    } yield ()
+
   def clusterState: ClientIO[QuckooState] =
     for {
       request  <- ClientIO.auth.map(_.get(buildUri(ClusterStateURI)).response(asJson[QuckooState]))
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.fromEither(response.body)
-      result   <- ClientIO.fromAttempt(body)
+      result   <- ClientIO.fromBody(body)
     } yield result
 
   // -- Registry
@@ -93,7 +101,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       )
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.fromEither(response.body)
-      result   <- ClientIO.fromAttempt(body)
+      result   <- ClientIO.fromBody(body)
     } yield result
   }
 
@@ -102,7 +110,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       request  <- ClientIO.auth.map(_.get(uri"$JobsURI/$jobId").response(asJson[JobSpec]))
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.optionalBody(response)
-      result   <- ClientIO.fromAttempt(body.sequence)
+      result   <- ClientIO.fromBody(body.sequence)
     } yield result
 
   def fetchJobs(): ClientIO[List[(JobId, JobSpec)]] =
@@ -110,7 +118,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       request  <- ClientIO.auth.map(_.get(uri"$JobsURI").response(asJson[List[(JobId, JobSpec)]]))
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.fromEither(response.body)
-      result   <- ClientIO.fromAttempt(body)
+      result   <- ClientIO.fromBody(body)
     } yield result
 
   def enableJob(jobId: JobId): ClientIO[Unit] =
@@ -141,7 +149,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       response <- ClientIO.fromEffect(request.send())
       body <- if (response.code == 404) ClientIO.raiseError(JobNotFound(schedule.jobId))
       else ClientIO.fromEither(response.body)
-      result <- ClientIO.fromAttempt(body)
+      result <- ClientIO.fromBody(body)
     } yield result
 
   def cancelPlan(planId: PlanId): ClientIO[ExecutionPlanCancelled] =
@@ -152,7 +160,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       response <- ClientIO.fromEffect(request.send())
       body <- if (response.code == 404) ClientIO.raiseError(ExecutionPlanNotFound(planId))
       else ClientIO.fromEither(response.body)
-      result <- ClientIO.fromAttempt(body)
+      result <- ClientIO.fromBody(body)
     } yield result
 
   def fetchPlans(): ClientIO[List[(PlanId, ExecutionPlan)]] =
@@ -162,7 +170,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       )
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.fromEither(response.body)
-      result   <- ClientIO.fromAttempt(body)
+      result   <- ClientIO.fromBody(body)
     } yield result
 
   def fetchPlan(planId: PlanId): ClientIO[Option[ExecutionPlan]] =
@@ -172,7 +180,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       )
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.optionalBody(response)
-      result   <- ClientIO.fromAttempt(body.sequence)
+      result   <- ClientIO.fromBody(body.sequence)
     } yield result
 
   def fetchTasks(): ClientIO[List[(TaskId, TaskExecution)]] =
@@ -182,7 +190,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       )
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.fromEither(response.body)
-      result   <- ClientIO.fromAttempt(body)
+      result   <- ClientIO.fromBody(body)
     } yield result
 
   def fetchTask(taskId: TaskId): ClientIO[Option[TaskExecution]] =
@@ -192,7 +200,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       )
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.optionalBody(response)
-      result   <- ClientIO.fromAttempt(body.sequence)
+      result   <- ClientIO.fromBody(body.sequence)
     } yield result
 
 }

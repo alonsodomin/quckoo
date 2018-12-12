@@ -76,9 +76,9 @@ class ProcessRunner(command: String, args: String*) extends StrictLogging {
     }
 
     def captureResult(proc: Process): IO[Result] = {
-      def exitCode = IO.shift *> IO { proc.waitFor() }
-      def stdOut   = IO.shift *> readStream(proc.getInputStream)
-      def stdErr   = IO.shift *> readStream(proc.getErrorStream)
+      def exitCode = IO { proc.waitFor() }
+      def stdOut   = readStream(proc.getInputStream)
+      def stdErr   = readStream(proc.getErrorStream)
 
       (exitCode, stdOut, stdErr).mapN(Result)
     }

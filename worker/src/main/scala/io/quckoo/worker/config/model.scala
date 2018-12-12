@@ -23,6 +23,8 @@ import io.quckoo.config._
 import io.quckoo.resolver.config.IvyConfig
 
 import pureconfig._
+import pureconfig.generic.auto._
+import pureconfig.module.akka._
 
 import scala.util.Try
 

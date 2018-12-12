@@ -96,3 +96,7 @@ build
 # Kamon native libraries            #
 #####################################
 native/
+
+# ScalaMeta Metals #
+####################
+.metals/
