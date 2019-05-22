@@ -14,7 +14,7 @@ object Dependencies {
     // Logging -------
 
     val slogging = "0.6.1"
-    val log4j    = "2.11.1"
+    val log4j    = "2.11.2"
     val slf4j    = "1.7.25"
 
     // Testing --------
@@ -22,27 +22,27 @@ object Dependencies {
     val scalaTest  = "3.0.5"
     val scalaCheck = "1.14.0"
     val scalaMock  = "3.6.0"
-    val discipline = "0.10.0"
-    val wiremock   = "2.19.0"
+    val discipline = "0.11.1"
+    val wiremock   = "2.23.2"
 
     // Akka ----------
 
     object akka {
-      val main = "2.5.19"
+      val main = "2.5.23"
       val kryo = "0.9.3"
 
       val constructr = "0.9.0"
 
       object http {
-        val main = "10.1.5"
+        val main = "10.1.8"
 
         // http extensions
-        val json = "1.22.0"
+        val json = "1.25.2"
         val sse  = "3.0.0"
       }
 
       // persistence plugins
-      val cassandra = "0.91"
+      val cassandra = "0.98"
       val inmemory  = "2.5.15.1"
     }
 
@@ -60,9 +60,9 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "1.3.1"
+    val scalaJsReact    = "1.4.2"
     val scalaJsDom      = "0.9.6"
-    val scalaJsJQuery   = "0.9.4"
+    val scalaJsJQuery   = "0.9.5"
     val scalaJSScripts  = "1.1.2"
     val testState       = "2.3.0"
 
@@ -71,27 +71,27 @@ object Dependencies {
     val arm         = "2.0"
     val betterfiles = "3.7.0"
     object diode {
-      val core  = "1.1.4"
-      val react = s"$core.131"
+      val core  = "1.1.5"
+      val react = s"$core.142"
     }
     object cats {
-      val main      = "1.5.0"
-      val mtl       = "0.4.0"
-      val effect    = "1.1.0"
-      val kittens   = "1.2.0"
+      val main      = "1.6.0"
+      val mtl       = "0.5.0"
+      val effect    = "1.3.0"
+      val kittens   = "1.2.1"
     }
-    val circe       = "0.10.1"
+    val circe       = "0.11.1"
     val cron4s      = "0.4.5"
     val enumeratum  = "1.5.18"
     val ivy         = "2.4.0"
     val monix       = "3.0.0-RC2-379831b"
     val monocle     = "1.5.1-cats"
-    val pureconfig  = "0.10.1"
-    val refined     = "0.9.3"
-    val scalaCss    = "0.5.5"
+    val pureconfig  = "0.10.2"
+    val refined     = "0.9.5"
+    val scalaCss    = "0.5.6"
     val scalaTime   = "2.0.0-M13"
-    val scopt       = "3.7.0"
-    val sttp        = "1.5.1"
+    val scopt       = "3.7.1"
+    val sttp        = "1.5.17"
     val xml         = "1.1.1"
 
     // JavaScript Libraries
