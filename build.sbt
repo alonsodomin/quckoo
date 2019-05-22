@@ -7,12 +7,9 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 lazy val sandbox =
   settingKey[String]("The name of the environment sandbox to use.")
 
-inThisBuild(
-  Seq(
-    parallelExecution := false,
-    scalafmtOnCompile := true
-  )
-)
+Global / onChangedBuildSource := ReloadOnSourceChanges
+ThisBuild / parallelExecution := false
+ThisBuild / scalafmtOnCompile := true
 
 lazy val commonSettings = Seq(
   homepage := Some(url("https://www.quckoo.io")),
@@ -249,7 +246,7 @@ lazy val console = (project in file("console"))
   .settings(
     name := "console",
     moduleName := "quckoo-console",
-    scalaJSUseMainModuleInitializer in Compile := true
+    scalaJSUseMainModuleInitializer := true
   )
   .dependsOn(clientJS, testSupportJS % Test)
 
@@ -284,6 +281,7 @@ lazy val master = (project in file("master"))
   .settings(
     moduleName := "quckoo-master",
     scalaJSProjects := Seq(console),
+    pipelineStages in Assets := Seq(scalaJSPipeline),
     dockerExposedPorts := Seq(2551, 8095, 9095),
     parallelExecution in Test := false,
     parallelExecution in MultiJvm := false,

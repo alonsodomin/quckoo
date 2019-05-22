@@ -14,10 +14,9 @@ addSbtPlugin("com.dwijnand"      % "sbt-travisci"  % "1.1.1")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs"              % "0.6.27")
 addSbtPlugin("org.portable-scala" % "sbt-crossproject"         % "0.6.0")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0")
-addSbtPlugin("com.vmunier"        % "sbt-web-scalajs"          % "1.0.6")
 addSbtPlugin("org.irundaia.sbt"   % "sbt-sassify"              % "1.4.11")
-addSbtPlugin("com.typesafe.sbt"   % "sbt-twirl"                % "1.4.1")
-addSbtPlugin("ch.epfl.scala"      % "sbt-web-scalajs-bundler"  % "0.14.0")
+addSbtPlugin("com.typesafe.sbt"   % "sbt-twirl"                % "1.3.15")
+addSbtPlugin("ch.epfl.scala"      % "sbt-web-scalajs-bundler"  % "0.15.0-0.6")
 
 // Server side plugins
 addSbtPlugin("io.spray"          % "sbt-revolver"        % "0.9.1")
