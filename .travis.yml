@@ -15,6 +15,7 @@ cache:
     - $HOME/.sbt/boot/scala*
     - $HOME/.sbt/launchers
     - $HOME/.ivy2/cache
+    - $HOME/.cache/coursier/v1
     - $HOME/.nvm
 
 env:
