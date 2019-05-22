@@ -15,7 +15,7 @@ object Dependencies {
 
     val slogging = "0.6.1"
     val log4j    = "2.11.2"
-    val slf4j    = "1.7.25"
+    val slf4j    = "1.7.26"
 
     // Testing --------
 
@@ -49,12 +49,12 @@ object Dependencies {
     // Monitoring ----
 
     object kamon {
-      val core       = "1.1.3"
-      val akka       = "1.1.2"
+      val core       = "1.1.6"
+      val akka       = "1.1.4"
       val remote     = "1.0.1"
-      val http       = "1.1.1"
-      val scala      = "1.0.0"
-      val sysmetrics = "1.0.0"
+      val http       = "1.1.2"
+      val scala      = "1.1.0"
+      val sysmetrics = "1.0.1"
       val prometheus = "1.1.1"
     }
 
@@ -92,7 +92,7 @@ object Dependencies {
     val scalaTime   = "2.0.0-M13"
     val scopt       = "3.7.1"
     val sttp        = "1.5.17"
-    val xml         = "1.1.1"
+    val xml         = "1.2.0"
 
     // JavaScript Libraries
 
@@ -100,7 +100,7 @@ object Dependencies {
     val jquery           = "2.2.4"
     val bootstrap        = "3.3.7"
     val bootstrapNotifiy = "3.1.3"
-    val reactJs          = "16.5.2"
+    val reactJs          = "16.7.0"
     val sparkMD5         = "3.0.0"
     val codemirror       = "5.41.0"
   }
@@ -187,10 +187,11 @@ object Dependencies {
   }
 
   object compiler {
-    val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.1" cross CrossVersion.full
-    val kindProjector = "org.spire-math"  %% "kind-projector" % "0.9.9" cross CrossVersion.binary
+    val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.1"  cross CrossVersion.full
+    val kindProjector = "org.typelevel"   %% "kind-projector" % "0.10.1" cross CrossVersion.binary
+    val monadicFor    = "com.olegpy"      %% "better-monadic-for" % "0.3.0"
 
-    val plugins = Seq(macroParadise, kindProjector).map(compilerPlugin)
+    val plugins = Seq(macroParadise, kindProjector, monadicFor).map(compilerPlugin)
   }
 
   // Core module ===============================

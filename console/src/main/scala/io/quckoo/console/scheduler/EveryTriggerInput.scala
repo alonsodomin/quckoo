@@ -48,7 +48,7 @@ object EveryTriggerInput {
 
   implicit val propsReuse: Reusability[Props] =
     Reusability.caseClassExcept('onUpdate)
-  implicit val stateReuse: Reusability[State] = Reusability.caseClass
+  implicit val stateReuse: Reusability[State] = Reusability.derive
 
   class Backend($ : BackendScope[Props, State]) {
 

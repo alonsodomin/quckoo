@@ -67,7 +67,7 @@ object CodeEditor {
       readOnly: ReadOnly = false
   )
   implicit val optionsReuse: Reusability[Options] =
-    Reusability.caseClass[Options]
+    Reusability.derive[Options]
 
   final val DefaultWidth: Width   = "100%"
   final val DefaultHeight: Height = 250
@@ -84,7 +84,7 @@ object CodeEditor {
 
   implicit val propsReuse: Reusability[Props] =
     Reusability.caseClassExcept('onUpdate, 'attrs)
-  implicit val stateReuse: Reusability[State] = Reusability.caseClass[State]
+  implicit val stateReuse: Reusability[State] = Reusability.derive[State]
 
   class Backend($ : BackendScope[Props, State]) {
 

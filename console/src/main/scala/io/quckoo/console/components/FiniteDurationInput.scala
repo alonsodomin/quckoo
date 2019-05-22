@@ -54,7 +54,7 @@ object FiniteDurationInput {
   }
 
   implicit val propsReuse: Reusability[Props] = Reusability.by(_.value)
-  implicit val stateReuse                     = Reusability.caseClass[State]
+  implicit val stateReuse                     = Reusability.derive[State]
 
   class Backend($ : BackendScope[Props, State]) {
 

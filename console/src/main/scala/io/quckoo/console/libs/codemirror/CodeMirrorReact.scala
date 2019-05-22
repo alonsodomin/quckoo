@@ -16,7 +16,7 @@
 
 package io.quckoo.console.libs.codemirror
 
-import japgolly.scalajs.react.extra.Reusability
+import japgolly.scalajs.react.Reusability
 
 /**
   * Created by alonsodomin on 03/03/2017.

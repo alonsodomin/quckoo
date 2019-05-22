@@ -16,7 +16,7 @@ addSbtPlugin("org.portable-scala" % "sbt-crossproject"         % "0.6.0")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0")
 addSbtPlugin("com.vmunier"        % "sbt-web-scalajs"          % "1.0.6")
 addSbtPlugin("org.irundaia.sbt"   % "sbt-sassify"              % "1.4.11")
-addSbtPlugin("com.typesafe.sbt"   % "sbt-twirl"                % "1.3.15")
+addSbtPlugin("com.typesafe.sbt"   % "sbt-twirl"                % "1.4.1")
 addSbtPlugin("ch.epfl.scala"      % "sbt-web-scalajs-bundler"  % "0.14.0")
 
 // Server side plugins

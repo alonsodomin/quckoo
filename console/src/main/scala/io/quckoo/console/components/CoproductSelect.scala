@@ -57,7 +57,7 @@ object CoproductSelect {
   implicit def cacheReuse[A: Reusability]: Reusability[Map[Symbol, A]] =
     Reusability.map[Symbol, A]
   implicit def stateReuse[A: Reusability]: Reusability[State[A]] =
-    Reusability.caseClass[State[A]]
+    Reusability.derive[State[A]]
 
   class Backend[A: Reusability]($ : BackendScope[Props[A], State[A]]) {
 

@@ -48,7 +48,7 @@ object ShellScriptPackageInput {
 
   implicit val propsReuse: Reusability[Props] =
     Reusability.caseClassExcept('onUpdate)
-  implicit val stateReuse: Reusability[State] = Reusability.caseClass[State]
+  implicit val stateReuse: Reusability[State] = Reusability.derive[State]
 
   class Backend($ : BackendScope[Props, State]) {
 
