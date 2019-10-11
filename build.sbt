@@ -44,7 +44,8 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("hseeberger", "maven"),
     Resolver.bintrayRepo("dnvriend", "maven"),
     Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
-  )
+  ),
+  libraryDependencies ++= Dependencies.compiler.plugins
 )
 
 lazy val commonJvmSettings = Seq(

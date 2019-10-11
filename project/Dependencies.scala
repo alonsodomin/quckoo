@@ -197,7 +197,7 @@ object Dependencies {
   // Core module ===============================
 
   lazy val core = Def.settings {
-    libraryDependencies ++= compiler.plugins ++ Seq(
+    libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-free"     % version.cats.main,
       "org.typelevel" %%% "cats-mtl-core" % version.cats.mtl,
       "org.typelevel" %%% "cats-effect"   % version.cats.effect,
@@ -242,7 +242,7 @@ object Dependencies {
   // API module ===============================
 
   lazy val api = Def.settings(
-    libraryDependencies ++= compiler.plugins ++ Seq(
+    libraryDependencies ++= Seq(
       "io.suzaku" %%% "diode"          % version.diode.core,
       "io.monix"  %%% "monix-reactive" % version.monix
     )
@@ -251,7 +251,7 @@ object Dependencies {
   // Client module ===============================
 
   lazy val client = Def.settings {
-    libraryDependencies ++= compiler.plugins ++ Seq(
+    libraryDependencies ++= Seq(
       "biz.enef"              %%% "slogging" % version.slogging,
       "com.softwaremill.sttp" %%% "core"     % version.sttp,
       "com.softwaremill.sttp" %%% "circe"    % version.sttp
@@ -284,7 +284,7 @@ object Dependencies {
   // Console module ===============================
 
   lazy val console = Def.settings(
-    libraryDependencies ++= compiler.plugins ++ Seq(
+    libraryDependencies ++= Seq(
       "org.scalatest"                     %%% "scalatest"         % version.scalaTest % Test,
       "io.suzaku"                         %%% "diode-react"       % version.diode.react,
       "be.doeraene"                       %%% "scalajs-jquery"    % version.scalaJsJQuery,
@@ -367,7 +367,7 @@ object Dependencies {
 
   lazy val clusterShared = Def.settings {
     import libs._
-    libraryDependencies ++= compiler.plugins ++ Kamon.All ++ Log4j.All ++ Pureconfig.All ++ Seq(
+    libraryDependencies ++= Kamon.All ++ Log4j.All ++ Pureconfig.All ++ Seq(
       Akka.actor,
       Akka.slf4j,
       Akka.clusterTools,
@@ -383,7 +383,7 @@ object Dependencies {
 
   lazy val clusterMaster = Def.settings {
     import libs._
-    libraryDependencies ++= compiler.plugins ++ Seq(
+    libraryDependencies ++= Seq(
       Akka.sharding,
       Akka.http.main,
       Akka.http.circe,
@@ -405,13 +405,13 @@ object Dependencies {
 
   lazy val clusterWorker = Def.settings {
     import libs._
-    libraryDependencies ++= compiler.plugins ++ Seq(scopt, scalaArm)
+    libraryDependencies ++= Seq(scopt, scalaArm)
   }
 
   // Support modules ================================
 
   lazy val testSupport = Def.settings {
-    libraryDependencies ++= compiler.plugins ++ Seq(
+    libraryDependencies ++= Seq(
       "io.github.cquiroz" %%% "scala-java-time"    % version.scalaTime,
       "org.scalatest"     %%% "scalatest"          % version.scalaTest,
       "org.scalacheck"    %%% "scalacheck"         % version.scalaCheck,
@@ -424,7 +424,7 @@ object Dependencies {
 
   lazy val testSupportJVM = Def.settings {
     import libs._
-    libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
+    libraryDependencies ++= Log4j.All ++ Seq(
       slogging_slf4j,
       scalaMock,
       Akka.testKit,
