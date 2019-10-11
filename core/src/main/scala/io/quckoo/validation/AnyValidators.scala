@@ -36,8 +36,9 @@ trait AnyValidators {
   def memberOf[A: Show](set: Set[A]): Validator[A] =
     memberOfK[Id, A](set)
 
-  def equalToK[F[_]: Applicative, A](value: A)(implicit eq: Eq[A],
-                                               show: Show[A]): ValidatorK[F, A] =
+  def equalToK[F[_]: Applicative, A](
+      value: A
+  )(implicit eq: Eq[A], show: Show[A]): ValidatorK[F, A] =
     Validator(
       a => Applicative[F].pure(eq.eqv(value, a)),
       a => Violation.EqualTo(show.show(value), show.show(a))

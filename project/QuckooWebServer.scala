@@ -9,7 +9,7 @@ import play.twirl.sbt.SbtTwirl
 import webscalajs.WebScalaJS
 
 trait QuckooAppKeys {
-  val sigarLoader = taskKey[File]("Sigar loader jar file")
+  val sigarLoader        = taskKey[File]("Sigar loader jar file")
   val sigarLoaderOptions = taskKey[Seq[String]]("JVM options for the Sigar loader")
 }
 object QuckooAppKeys extends QuckooAppKeys

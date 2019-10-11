@@ -298,17 +298,19 @@ object Table {
       .renderBackend[Backend[Id, Item]]
       .build
 
-  def apply[Id, Item](headers: List[Symbol],
-                      items: ItemSeq[Id, Item],
-                      render: RowCellRender[Id, Item],
-                      headerRenderer: HeaderRenderer = DefaultHeaderRenderer,
-                      onRowClick: Option[RowCallback[Id]] = None,
-                      onSelect: Option[OnSelect[Id]] = None,
-                      actions: Option[RowActionsFactory[Id, Item]] = None,
-                      filter: Option[Filter[Id, Item]] = None,
-                      selected: Set[Id] = Set.empty[Id],
-                      style: Set[TableStyle.Value] = Set.empty[TableStyle.Value],
-                      key: Option[String] = None) =
+  def apply[Id, Item](
+      headers: List[Symbol],
+      items: ItemSeq[Id, Item],
+      render: RowCellRender[Id, Item],
+      headerRenderer: HeaderRenderer = DefaultHeaderRenderer,
+      onRowClick: Option[RowCallback[Id]] = None,
+      onSelect: Option[OnSelect[Id]] = None,
+      actions: Option[RowActionsFactory[Id, Item]] = None,
+      filter: Option[Filter[Id, Item]] = None,
+      selected: Set[Id] = Set.empty[Id],
+      style: Set[TableStyle.Value] = Set.empty[TableStyle.Value],
+      key: Option[String] = None
+  ) =
     component[Id, Item](
       Props(
         headers,

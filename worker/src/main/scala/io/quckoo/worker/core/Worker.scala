@@ -43,11 +43,13 @@ object Worker {
 
   protected[worker] final val SchedulerPath = "/user/quckoo/scheduler"
 
-  def props(clusterClient: ActorRef,
-            resolver: Resolver[IO],
-            taskExecutorProvider: TaskExecutorProvider,
-            registerInterval: FiniteDuration = DefaultRegisterFrequency,
-            queueAckTimeout: FiniteDuration = DefaultQueueAckTimeout): Props =
+  def props(
+      clusterClient: ActorRef,
+      resolver: Resolver[IO],
+      taskExecutorProvider: TaskExecutorProvider,
+      registerInterval: FiniteDuration = DefaultRegisterFrequency,
+      queueAckTimeout: FiniteDuration = DefaultQueueAckTimeout
+  ): Props =
     Props(
       new Worker(
         clusterClient,
@@ -60,12 +62,13 @@ object Worker {
 
 }
 
-class Worker private (clusterClient: ActorRef,
-                      resolver: Resolver[IO],
-                      taskExecutorProvider: TaskExecutorProvider,
-                      registerInterval: FiniteDuration,
-                      queueAckTimeout: FiniteDuration)
-    extends Actor with ActorLogging { myself =>
+class Worker private (
+    clusterClient: ActorRef,
+    resolver: Resolver[IO],
+    taskExecutorProvider: TaskExecutorProvider,
+    registerInterval: FiniteDuration,
+    queueAckTimeout: FiniteDuration
+) extends Actor with ActorLogging { myself =>
 
   import Worker._
   import context.dispatcher

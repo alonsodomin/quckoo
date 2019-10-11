@@ -34,12 +34,16 @@ import scalacss.ScalaCssReact._
 object EveryTriggerInput {
   @inline private def lnf = lookAndFeel
 
-  case class Props(value: Option[Trigger.Every],
-                   onUpdate: Option[Trigger.Every] => Callback,
-                   readOnly: Boolean)
-  case class State(freq: Option[FiniteDuration],
-                   delay: Option[FiniteDuration],
-                   delayEnabled: Boolean = false) {
+  case class Props(
+      value: Option[Trigger.Every],
+      onUpdate: Option[Trigger.Every] => Callback,
+      readOnly: Boolean
+  )
+  case class State(
+      freq: Option[FiniteDuration],
+      delay: Option[FiniteDuration],
+      delayEnabled: Boolean = false
+  ) {
 
     def this(trigger: Option[Trigger.Every]) =
       this(trigger.map(_.frequency), trigger.flatMap(_.startingIn))
@@ -76,7 +80,7 @@ object EveryTriggerInput {
           st.copy(
             delay = if (st.delayEnabled) None else st.delay,
             delayEnabled = !st.delayEnabled
-        ),
+          ),
         propagateUpdate
       )
 
@@ -127,9 +131,11 @@ object EveryTriggerInput {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[Trigger.Every],
-            onUpdate: Option[Trigger.Every] => Callback,
-            readOnly: Boolean = false) =
+  def apply(
+      value: Option[Trigger.Every],
+      onUpdate: Option[Trigger.Every] => Callback,
+      readOnly: Boolean = false
+  ) =
     component(Props(value, onUpdate, readOnly))
 
 }

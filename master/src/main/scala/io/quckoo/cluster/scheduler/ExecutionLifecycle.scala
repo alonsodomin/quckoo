@@ -81,10 +81,12 @@ object ExecutionLifecycle {
 
   }
 
-  def props(planId: PlanId,
-            enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
-            maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
-            executionTimeout: Option[FiniteDuration] = None): Props =
+  def props(
+      planId: PlanId,
+      enqueueTimeout: FiniteDuration = DefaultEnqueueTimeout,
+      maxEnqueueAttempts: Int = DefaultMaxEnqueueAttempts,
+      executionTimeout: Option[FiniteDuration] = None
+  ): Props =
     Props(new ExecutionLifecycle(planId, enqueueTimeout, maxEnqueueAttempts, executionTimeout))
 
 }

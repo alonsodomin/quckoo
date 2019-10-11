@@ -24,9 +24,11 @@ object Patterns {
   def apply(ivyPatterns: Seq[String], artifactPatterns: Seq[String]): Patterns =
     Patterns(ivyPatterns, artifactPatterns, mavenCompatible = true)
 
-  def apply(ivyPatterns: Seq[String],
-            artifactPatterns: Seq[String],
-            mavenCompatible: Boolean): Patterns =
+  def apply(
+      ivyPatterns: Seq[String],
+      artifactPatterns: Seq[String],
+      mavenCompatible: Boolean
+  ): Patterns =
     new Patterns(ivyPatterns, artifactPatterns, mavenCompatible)
 
   private[resolver] def resolvePatterns(base: String, patterns: Patterns): Patterns = {
@@ -48,9 +50,11 @@ object Patterns {
 
 }
 
-final class Patterns private (val ivyPatterns: Seq[String],
-                              val artifactPatterns: Seq[String],
-                              val mavenCompatible: Boolean) {
+final class Patterns private (
+    val ivyPatterns: Seq[String],
+    val artifactPatterns: Seq[String],
+    val mavenCompatible: Boolean
+) {
 
   def mavenStyle(): Patterns =
     Patterns(ivyPatterns, artifactPatterns, mavenCompatible = true)

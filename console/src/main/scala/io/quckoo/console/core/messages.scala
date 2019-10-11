@@ -75,8 +75,10 @@ final case class RefreshExecutionPlans(
     result: Try[Map[PlanId, Pot[ExecutionPlan]]] = Failure(new AsyncAction.PendingException)
 ) extends AsyncAction[Map[PlanId, Pot[ExecutionPlan]], RefreshExecutionPlans] {
 
-  override def next(newState: PotState,
-                    newValue: Try[Map[PlanId, Pot[ExecutionPlan]]]): RefreshExecutionPlans =
+  override def next(
+      newState: PotState,
+      newValue: Try[Map[PlanId, Pot[ExecutionPlan]]]
+  ): RefreshExecutionPlans =
     copy(state = newState, result = newValue)
 
 }
@@ -91,8 +93,10 @@ final case class RefreshExecutions(
     result: Try[Map[TaskId, Pot[TaskExecution]]] = Failure(new AsyncAction.PendingException)
 ) extends AsyncAction[Map[TaskId, Pot[TaskExecution]], RefreshExecutions] {
 
-  override def next(newState: PotState,
-                    newValue: Try[Map[TaskId, Pot[TaskExecution]]]): RefreshExecutions =
+  override def next(
+      newState: PotState,
+      newValue: Try[Map[TaskId, Pot[TaskExecution]]]
+  ): RefreshExecutions =
     copy(state = newState, result = newValue)
 
 }

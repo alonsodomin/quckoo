@@ -98,7 +98,8 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
   import QuckooFacade._
   import system.dispatcher
 
-  implicit val materializer = ActorMaterializer()
+  implicit val contextShift: ContextShift[IO] = IO.contextShift(system.dispatcher)
+  implicit val materializer                   = ActorMaterializer()
 
   def startPlan(schedule: ScheduleJob): IO[ExecutionPlanStarted] = IO.fromFuture {
     IO {

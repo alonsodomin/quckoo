@@ -67,7 +67,8 @@ package object client {
         onNotFound: => B,
         onFound: A => B
     )(
-        implicit backend: SttpBackend[Future, S]
+        implicit backend: SttpBackend[Future, S],
+        cs: ContextShift[IO]
     ): ClientIO[B] = {
       def optionalBody(response: Response[Either[E, A]]): ClientIO[Either[E, B]] =
         if (response.code == 404) {
@@ -86,16 +87,18 @@ package object client {
     def handleNotFoundEither[E <: Throwable, A, B, S](request: Request[Either[E, A], S])(
         onNotFound: => B
     )(
-        implicit backend: SttpBackend[Future, S]
+        implicit backend: SttpBackend[Future, S],
+        cs: ContextShift[IO]
     ): ClientIO[Either[B, A]] =
       handleNotFound(request)(onNotFound.asLeft[A], _.asRight[B])
 
     def handleNotFoundOption[E <: Throwable, A, S](request: Request[Either[E, A], S])(
-        implicit backend: SttpBackend[Future, S]
+        implicit backend: SttpBackend[Future, S],
+        cs: ContextShift[IO]
     ): ClientIO[Option[A]] =
       handleNotFound(request)(none[A], _.some)
 
-    def fromFuture[A](action: => Future[A]): ClientIO[A] =
+    def fromFuture[A](action: => Future[A])(implicit cs: ContextShift[IO]): ClientIO[A] =
       StateT.liftF(IO.fromFuture(IO(action)))
 
     def fromEffect[F[_], A](effect: F[A])(implicit F: Effect[F]): ClientIO[A] =

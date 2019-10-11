@@ -98,11 +98,12 @@ class QuckooTcpClient(clientSettings: ClusterClientSettings, maxConnectionAttemp
 
 }
 
-private class ConnectHandler(clusterClient: ActorRef,
-                             requestor: ActorRef,
-                             timeout: FiniteDuration,
-                             maxConnectionAttempts: Int)
-    extends Actor with ActorLogging {
+private class ConnectHandler(
+    clusterClient: ActorRef,
+    requestor: ActorRef,
+    timeout: FiniteDuration,
+    maxConnectionAttempts: Int
+) extends Actor with ActorLogging {
 
   import QuckooTcpClient._
 

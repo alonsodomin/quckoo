@@ -93,10 +93,11 @@ abstract class Registration private[registry] (jobSpec: JobSpec, replyTo: ActorR
 
 }
 
-class SimpleRegistration private[registry] (jobSpec: JobSpec,
-                                            shardsGuardian: ActorRef,
-                                            replyTo: ActorRef)
-    extends Registration(jobSpec, replyTo) {
+class SimpleRegistration private[registry] (
+    jobSpec: JobSpec,
+    shardsGuardian: ActorRef,
+    replyTo: ActorRef
+) extends Registration(jobSpec, replyTo) {
 
   override def startRegistration: Receive = {
     shardsGuardian ! PersistentJob.CreateJob(jobId, jobSpec)

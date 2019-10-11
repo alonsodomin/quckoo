@@ -24,8 +24,9 @@ import cats.data.Validated
   */
 trait CaseClassValidators {
 
-  def caseClass1[F[_]: Functor, T, A](valid: ValidatorK[F, A])(f: T => Option[A],
-                                                               g: A => T): ValidatorK[F, T] =
+  def caseClass1[F[_]: Functor, T, A](
+      valid: ValidatorK[F, A]
+  )(f: T => Option[A], g: A => T): ValidatorK[F, T] =
     valid.dimap[T, Validated[Violation, T]](f(_).get)(_.map(g))
 
   def caseClass2[F[_]: Applicative, T, A, B](

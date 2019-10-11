@@ -14,36 +14,36 @@ object Dependencies {
     // Logging -------
 
     val slogging = "0.6.1"
-    val log4j    = "2.11.2"
-    val slf4j    = "1.7.26"
+    val log4j    = "2.12.1"
+    val slf4j    = "1.7.28"
 
     // Testing --------
 
-    val scalaTest  = "3.0.5"
-    val scalaCheck = "1.14.0"
+    val scalaTest  = "3.0.8"
+    val scalaCheck = "1.14.2"
     val scalaMock  = "3.6.0"
     val discipline = "0.11.1"
-    val wiremock   = "2.23.2"
+    val wiremock   = "2.25.0"
 
     // Akka ----------
 
     object akka {
-      val main = "2.5.23"
+      val main = "2.5.25"
       val kryo = "0.9.3"
 
       val constructr = "0.9.0"
 
       object http {
-        val main = "10.1.8"
+        val main = "10.1.10"
 
         // http extensions
-        val json = "1.25.2"
+        val json = "1.29.1"
         val sse  = "3.0.0"
       }
 
       // persistence plugins
-      val cassandra = "0.98"
-      val inmemory  = "2.5.15.1"
+      val cassandra = "0.99"
+      val inmemory  = "2.5.15.2"
     }
 
     // Monitoring ----
@@ -60,39 +60,39 @@ object Dependencies {
 
     // ScalaJS -------
 
-    val scalaJsReact    = "1.4.2"
-    val scalaJsDom      = "0.9.6"
-    val scalaJsJQuery   = "0.9.5"
-    val scalaJSScripts  = "1.1.2"
-    val testState       = "2.3.0"
+    val scalaJsReact   = "1.4.2"
+    val scalaJsDom     = "0.9.7"
+    val scalaJsJQuery  = "0.9.5"
+    val scalaJSScripts = "1.1.2"
+    val testState      = "2.3.0"
 
     // Other utils ---
 
     val arm         = "2.0"
-    val betterfiles = "3.7.0"
+    val betterfiles = "3.8.0"
     object diode {
       val core  = "1.1.5"
       val react = s"$core.142"
     }
     object cats {
-      val main      = "1.6.0"
-      val mtl       = "0.5.0"
-      val effect    = "1.3.0"
-      val kittens   = "1.2.1"
+      val main    = "2.0.0"
+      val mtl     = "0.7.0"
+      val effect  = "2.0.0"
+      val kittens = "2.0.0"
     }
-    val circe       = "0.11.1"
-    val cron4s      = "0.4.5"
-    val enumeratum  = "1.5.18"
-    val ivy         = "2.4.0"
-    val monix       = "3.0.0-RC2-379831b"
-    val monocle     = "1.5.1-cats"
-    val pureconfig  = "0.10.2"
-    val refined     = "0.9.5"
-    val scalaCss    = "0.5.6"
-    val scalaTime   = "2.0.0-M13"
-    val scopt       = "3.7.1"
-    val sttp        = "1.5.17"
-    val xml         = "1.2.0"
+    val circe      = "0.12.2"
+    val cron4s     = "0.6.0"
+    val enumeratum = "1.5.22"
+    val ivy        = "2.4.0"
+    val monix      = "3.0.0"
+    val monocle    = "2.0.0"
+    val pureconfig = "0.12.1"
+    val refined    = "0.9.10"
+    val scalaCss   = "0.5.6"
+    val scalaTime  = "2.0.0-RC3"
+    val scopt      = "3.7.1"
+    val sttp       = "1.7.1"
+    val xml        = "1.2.0"
 
     // JavaScript Libraries
 
@@ -102,7 +102,7 @@ object Dependencies {
     val bootstrapNotifiy = "3.1.3"
     val reactJs          = "16.7.0"
     val sparkMD5         = "3.0.0"
-    val codemirror       = "5.41.0"
+    val codemirror       = "5.48.2"
   }
 
   // Common library definitions
@@ -115,12 +115,12 @@ object Dependencies {
     val ivy = "org.apache.ivy" % "ivy" % version.ivy
 
     object Akka {
-      val actor           = "com.typesafe.akka" %% "akka-actor"             % version.akka.main
-      val slf4j           = "com.typesafe.akka" %% "akka-slf4j"             % version.akka.main
-      val clusterTools    = "com.typesafe.akka" %% "akka-cluster-tools"     % version.akka.main
-      val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"   % version.akka.main
-      val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding"  % version.akka.main
-      val distributedData = "com.typesafe.akka" %% "akka-distributed-data"  % version.akka.main
+      val actor           = "com.typesafe.akka" %% "akka-actor-typed"      % version.akka.main
+      val slf4j           = "com.typesafe.akka" %% "akka-slf4j"            % version.akka.main
+      val clusterTools    = "com.typesafe.akka" %% "akka-cluster-tools"    % version.akka.main
+      val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"  % version.akka.main
+      val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding" % version.akka.main
+      val distributedData = "com.typesafe.akka" %% "akka-distributed-data" % version.akka.main
 
       object http {
         val main    = "com.typesafe.akka" %% "akka-http"         % version.akka.http.main
@@ -144,9 +144,9 @@ object Dependencies {
     }
 
     object Log4j {
-      val api       = "org.apache.logging.log4j"  % "log4j-api"        % version.log4j
-      val core      = "org.apache.logging.log4j"  % "log4j-core"       % version.log4j
-      val slf4jImpl = "org.apache.logging.log4j"  % "log4j-slf4j-impl" % version.log4j
+      val api       = "org.apache.logging.log4j" % "log4j-api"        % version.log4j
+      val core      = "org.apache.logging.log4j" % "log4j-core"       % version.log4j
+      val slf4jImpl = "org.apache.logging.log4j" % "log4j-slf4j-impl" % version.log4j
 
       val All = Seq(api, core, slf4jImpl)
     }
@@ -172,24 +172,24 @@ object Dependencies {
       lazy val All = Seq(core, enumeratum, cats, akka)
     }
 
-    val slf4j          = "org.slf4j" % "slf4j-api"      % version.slf4j
-    val slogging_slf4j = "biz.enef" %% "slogging-slf4j" % version.slogging
+    val slf4j          = "org.slf4j" % "slf4j-api"       % version.slf4j
+    val slogging_slf4j = "biz.enef"  %% "slogging-slf4j" % version.slogging
 
     val scopt = "com.github.scopt" %% "scopt" % version.scopt
 
-    val authenticatJwt = "com.jason-goodwin"     %% "authentikat-jwt" % "0.4.5"
+    val authenticatJwt = "com.jason-goodwin" %% "authentikat-jwt" % "0.4.5"
 
-    val scalaTest  = "org.scalatest"   %% "scalatest"                   % version.scalaTest
-    val scalaMock  = "org.scalamock"   %% "scalamock-scalatest-support" % version.scalaMock
-    val wiremock   = "com.github.tomakehurst" % "wiremock" % version.wiremock
+    val scalaTest = "org.scalatest"          %% "scalatest"                   % version.scalaTest
+    val scalaMock = "org.scalamock"          %% "scalamock-scalatest-support" % version.scalaMock
+    val wiremock  = "com.github.tomakehurst" % "wiremock"                     % version.wiremock
 
     val betterfiles = "com.github.pathikrit" %% "better-files" % version.betterfiles
   }
 
   object compiler {
-    val macroParadise = "org.scalamacros" %% "paradise"       % "2.1.1"  cross CrossVersion.full
-    val kindProjector = "org.typelevel"   %% "kind-projector" % "0.10.1" cross CrossVersion.binary
-    val monadicFor    = "com.olegpy"      %% "better-monadic-for" % "0.3.0"
+    val macroParadise = "org.scalamacros" %% "paradise"           % "2.1.1" cross CrossVersion.full
+    val kindProjector = "org.typelevel"   %% "kind-projector"     % "0.10.3" cross CrossVersion.binary
+    val monadicFor    = "com.olegpy"      %% "better-monadic-for" % "0.3.1"
 
     val plugins = Seq(macroParadise, kindProjector, monadicFor).map(compilerPlugin)
   }
@@ -198,23 +198,20 @@ object Dependencies {
 
   lazy val core = Def.settings {
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "org.typelevel"     %%% "cats-free"          % version.cats.main,
-      "org.typelevel"     %%% "cats-mtl-core"      % version.cats.mtl,
-      "org.typelevel"     %%% "cats-effect"        % version.cats.effect,
-      "org.typelevel"     %%% "kittens"            % version.cats.kittens,
-      "io.circe"          %%% "circe-parser"       % version.circe,
-      "io.circe"          %%% "circe-generic"      % version.circe,
+      "org.typelevel" %%% "cats-free"     % version.cats.main,
+      "org.typelevel" %%% "cats-mtl-core" % version.cats.mtl,
+      "org.typelevel" %%% "cats-effect"   % version.cats.effect,
+      "org.typelevel" %%% "kittens"       % version.cats.kittens,
+      "io.circe"      %%% "circe-parser"  % version.circe,
+      "io.circe"      %%% "circe-generic" % version.circe,
       //"io.circe"          %%% "circe-optics"       % version.circe,
-      "io.circe"          %%% "circe-java8"        % version.circe,
-      "io.circe"          %%% "circe-refined"      % version.circe,
-      "com.beachape"      %%% "enumeratum-circe"   % version.enumeratum,
-      "eu.timepit"        %%% "refined"            % version.refined,
-      "eu.timepit"        %%% "refined-cats"       % version.refined,
-
-      "com.github.julien-truffaut" %%% "monocle-core"  % version.monocle,
-      "com.github.julien-truffaut" %%% "monocle-macro" % version.monocle,
-
-      "com.github.alonsodomin.cron4s" %%% "cron4s-core" % version.cron4s
+      "io.circe"                      %%% "circe-refined"    % version.circe,
+      "com.beachape"                  %%% "enumeratum-circe" % version.enumeratum,
+      "eu.timepit"                    %%% "refined"          % version.refined,
+      "eu.timepit"                    %%% "refined-cats"     % version.refined,
+      "com.github.julien-truffaut"    %%% "monocle-core"     % version.monocle,
+      "com.github.julien-truffaut"    %%% "monocle-macro"    % version.monocle,
+      "com.github.alonsodomin.cron4s" %%% "cron4s-core"      % version.cron4s
     )
   }
 
@@ -271,9 +268,15 @@ object Dependencies {
   lazy val clientJVM = Def.settings {
     import libs._
     libraryDependencies ++= Log4j.All.map(_ % Runtime) ++ Seq(
-      "com.softwaremill.sttp" %% "async-http-client-backend-monix"     % version.sttp,
-      slogging_slf4j, Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
-      Akka.kryo, Akka.http.main, Akka.http.sse,
+      "com.softwaremill.sttp"               %% "async-http-client-backend-monix" % version.sttp,
+      slogging_slf4j,
+      Akka.actor,
+      Akka.slf4j,
+      Akka.clusterTools,
+      Akka.clusterMetrics,
+      Akka.kryo,
+      Akka.http.main,
+      Akka.http.sse,
       wiremock % Test
     )
   }
@@ -282,31 +285,29 @@ object Dependencies {
 
   lazy val console = Def.settings(
     libraryDependencies ++= compiler.plugins ++ Seq(
-      "org.scalatest"    %%% "scalatest"      % version.scalaTest % Test,
-      "io.suzaku"        %%% "diode-react"    % version.diode.react,
-      "be.doeraene"      %%% "scalajs-jquery" % version.scalaJsJQuery,
-
-      "com.github.japgolly.scalajs-react" %%% "core"             % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "extra"            % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "ext-cats"         % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "ext-monocle-cats" % version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "test"             % version.scalaJsReact % Test,
-      "com.github.japgolly.scalacss"      %%% "core"             % version.scalaCss,
-      "com.github.japgolly.scalacss"      %%% "ext-react"        % version.scalaCss,
-
-      "com.github.japgolly.test-state" %%% "core"              % version.testState % Test,
-      "com.github.japgolly.test-state" %%% "dom-zipper"        % version.testState % Test,
-      "com.github.japgolly.test-state" %%% "dom-zipper-sizzle" % version.testState % Test,
-      "com.github.japgolly.test-state" %%% "ext-scalajs-react" % version.testState % Test,
-      "com.github.japgolly.test-state" %%% "ext-cats"          % version.testState % Test
+      "org.scalatest"                     %%% "scalatest"         % version.scalaTest % Test,
+      "io.suzaku"                         %%% "diode-react"       % version.diode.react,
+      "be.doeraene"                       %%% "scalajs-jquery"    % version.scalaJsJQuery,
+      "com.github.japgolly.scalajs-react" %%% "core"              % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "extra"             % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-cats"          % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-monocle-cats"  % version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "test"              % version.scalaJsReact % Test,
+      "com.github.japgolly.scalacss"      %%% "core"              % version.scalaCss,
+      "com.github.japgolly.scalacss"      %%% "ext-react"         % version.scalaCss,
+      "com.github.japgolly.test-state"    %%% "core"              % version.testState % Test,
+      "com.github.japgolly.test-state"    %%% "dom-zipper"        % version.testState % Test,
+      "com.github.japgolly.test-state"    %%% "dom-zipper-sizzle" % version.testState % Test,
+      "com.github.japgolly.test-state"    %%% "ext-scalajs-react" % version.testState % Test,
+      "com.github.japgolly.test-state"    %%% "ext-cats"          % version.testState % Test
     ),
     npmDependencies in Compile ++= Seq(
-      "react" -> version.reactJs,
-      "react-dom" -> version.reactJs,
-      "jquery" -> version.jquery,
-      "bootstrap" -> version.bootstrap,
+      "react"            -> version.reactJs,
+      "react-dom"        -> version.reactJs,
+      "jquery"           -> version.jquery,
+      "bootstrap"        -> version.bootstrap,
       "bootstrap-notify" -> version.bootstrapNotifiy,
-      "codemirror" -> version.codemirror
+      "codemirror"       -> version.codemirror
     )
     /*jsDependencies ++= Seq(
       //"org.webjars.npm" % "js-tokens" % "4.0.0" / "index.js",
@@ -367,9 +368,15 @@ object Dependencies {
   lazy val clusterShared = Def.settings {
     import libs._
     libraryDependencies ++= compiler.plugins ++ Kamon.All ++ Log4j.All ++ Pureconfig.All ++ Seq(
-      Akka.actor, Akka.slf4j, Akka.clusterTools, Akka.clusterMetrics,
-      Akka.kryo, ivy, scalaXml, slogging_slf4j, betterfiles,
-
+      Akka.actor,
+      Akka.slf4j,
+      Akka.clusterTools,
+      Akka.clusterMetrics,
+      Akka.kryo,
+      ivy,
+      scalaXml,
+      slogging_slf4j,
+      betterfiles,
       "eu.timepit" %% "refined-pureconfig" % version.refined
     )
   }
@@ -377,14 +384,22 @@ object Dependencies {
   lazy val clusterMaster = Def.settings {
     import libs._
     libraryDependencies ++= compiler.plugins ++ Seq(
-      Akka.sharding, Akka.http.main, Akka.http.circe, Akka.http.sse,
-      Akka.distributedData, Akka.persistence.core, Akka.persistence.cassandra,
-      Akka.persistence.query, Akka.persistence.memory, Akka.constructr,
-      Kamon.http, scopt, authenticatJwt,
-
-      "com.vmunier"      %% "scalajs-scripts" % version.scalaJSScripts,
-      "org.webjars"       % "codemirror"      % version.codemirror,
-      "org.webjars.bower" % "animatewithsass" % version.animate
+      Akka.sharding,
+      Akka.http.main,
+      Akka.http.circe,
+      Akka.http.sse,
+      Akka.distributedData,
+      Akka.persistence.core,
+      Akka.persistence.cassandra,
+      Akka.persistence.query,
+      Akka.persistence.memory,
+      Akka.constructr,
+      Kamon.http,
+      scopt,
+      authenticatJwt,
+      "com.vmunier"       %% "scalajs-scripts" % version.scalaJSScripts,
+      "org.webjars"       % "codemirror"       % version.codemirror,
+      "org.webjars.bower" % "animatewithsass"  % version.animate
     )
   }
 
@@ -410,7 +425,10 @@ object Dependencies {
   lazy val testSupportJVM = Def.settings {
     import libs._
     libraryDependencies ++= compiler.plugins ++ Log4j.All ++ Seq(
-      slogging_slf4j, scalaMock, Akka.testKit, Akka.http.testkit
+      slogging_slf4j,
+      scalaMock,
+      Akka.testKit,
+      Akka.http.testkit
     )
   }
 

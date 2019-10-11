@@ -48,9 +48,11 @@ trait RegistryHttpRouter extends EventStreamMarshalling {
   import TimeoutDirectives._
   import ErrorAccumulatingCirceSupport._
 
-  def registryApi(implicit system: ActorSystem,
-                  materializer: Materializer,
-                  passport: Passport): Route =
+  def registryApi(
+      implicit system: ActorSystem,
+      materializer: Materializer,
+      passport: Passport
+  ): Route =
     pathPrefix("jobs") {
       pathEnd {
         get {

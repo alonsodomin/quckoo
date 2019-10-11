@@ -67,9 +67,10 @@ package object components {
 
   implicit lazy val triggerReuse: Reusability[Trigger] =
     Reusability
-      .either[Trigger.Immediate.type, Either[Trigger.After, Either[Trigger.Every,
-                                                                   Either[Trigger.At,
-                                                                          Trigger.Cron]]]]
+      .either[Trigger.Immediate.type, Either[
+        Trigger.After,
+        Either[Trigger.Every, Either[Trigger.At, Trigger.Cron]]
+      ]]
       .contramap {
         case Trigger.Immediate    => Left(Trigger.Immediate)
         case after: Trigger.After => Right(Left(after))

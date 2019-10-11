@@ -57,8 +57,10 @@ object JobSpecList {
       onJobCreate: OnCreate,
       onJobEdit: OnClick
   )
-  final case class State(selectedFilter: Option[Symbol] = None,
-                         selectedJobs: Set[JobId] = Set.empty)
+  final case class State(
+      selectedFilter: Option[Symbol] = None,
+      selectedJobs: Set[JobId] = Set.empty
+  )
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -83,10 +85,9 @@ object JobSpecList {
         for {
           props <- $.props
           state <- $.state
-        } yield
-          selectedJobs(props, state).collect {
-            case (id, Ready(spec)) if filter(id, spec) => id
-          }
+        } yield selectedJobs(props, state).collect {
+          case (id, Ready(spec)) if filter(id, spec) => id
+        }
 
       def invokeCommand(jobIds: Iterable[JobId]): Callback =
         for {

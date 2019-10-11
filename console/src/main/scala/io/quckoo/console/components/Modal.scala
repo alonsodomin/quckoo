@@ -121,11 +121,13 @@ object Modal {
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
-  def apply(header: Callback => VdomNode,
-            footer: Callback => VdomNode,
-            onClosed: Callback,
-            onShown: Option[Callback] = None,
-            options: Options = Options()) =
+  def apply(
+      header: Callback => VdomNode,
+      footer: Callback => VdomNode,
+      onClosed: Callback,
+      onShown: Option[Callback] = None,
+      options: Options = Options()
+  ) =
     Component(Props(header, footer, onClosed, onShown, options)) _
 
   def apply(props: Props, children: VdomNode*) = Component(props)(children: _*)

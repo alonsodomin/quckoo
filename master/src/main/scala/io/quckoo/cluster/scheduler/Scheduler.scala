@@ -246,9 +246,11 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   private[this] def jobFetcherProps(jobId: JobId, replyTo: ActorRef, config: ScheduleJob): Props =
     Props(new JobFetcher(jobId, replyTo, config))
 
-  private[this] def factoryProps(jobId: JobId,
-                                 planId: PlanId,
-                                 createCmd: CreateExecutionDriver): Props =
+  private[this] def factoryProps(
+      jobId: JobId,
+      planId: PlanId,
+      createCmd: CreateExecutionDriver
+  ): Props =
     Props(new ExecutionDriverFactory(jobId, planId, createCmd, shardRegion))
 
   private[this] def terminatorProps(cancelCmd: CancelExecutionPlan, replyTo: ActorRef): Props =
@@ -296,11 +298,12 @@ private class JobFetcher(jobId: JobId, replyTo: ActorRef, config: ScheduleJob)
 
 }
 
-private class ExecutionDriverFactory(jobId: JobId,
-                                     planId: PlanId,
-                                     createCmd: Scheduler.CreateExecutionDriver,
-                                     shardRegion: ActorRef)
-    extends Actor with ActorLogging {
+private class ExecutionDriverFactory(
+    jobId: JobId,
+    planId: PlanId,
+    createCmd: Scheduler.CreateExecutionDriver,
+    shardRegion: ActorRef
+) extends Actor with ActorLogging {
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
 

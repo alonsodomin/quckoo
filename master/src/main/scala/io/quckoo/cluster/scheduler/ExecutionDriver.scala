@@ -294,10 +294,12 @@ class ExecutionDriver(
       sender() ! state.plan
 
     case ScheduleTask(task, time) =>
-      def createTrigger(task: Task,
-                        planId: PlanId,
-                        lifecycle: ActorRef,
-                        when: ZonedDateTime): Cancellable = {
+      def createTrigger(
+          task: Task,
+          planId: PlanId,
+          lifecycle: ActorRef,
+          when: ZonedDateTime
+      ): Cancellable = {
         val delay = {
           val now = ZonedDateTime.now(clock)
           if (when.isBefore(now) || when.isEqual(now)) 0 millis
@@ -330,9 +332,11 @@ class ExecutionDriver(
     * Running execution, waits for the execution to notify its completeness and
     * accepts cancellation (if possible)
     */
-  private def runningExecution(state: DriverState,
-                               lifecycle: ActorRef,
-                               trigger: Option[Cancellable] = None): Receive = {
+  private def runningExecution(
+      state: DriverState,
+      lifecycle: ActorRef,
+      trigger: Option[Cancellable] = None
+  ): Receive = {
     case ExecutionLifecycle.Triggered(task) =>
       log.debug("Trigger for task '{}' has successfully fired.", task.id)
       persist(TaskTriggered(state.jobId, state.planId, task.id, ZonedDateTime.now(clock))) {
@@ -439,9 +443,11 @@ class ExecutionDriver(
       } getOrElse FinishPlan
     }
 
-  private def nextCommand(state: DriverState,
-                          lastTaskId: TaskId,
-                          outcome: TaskExecution.Outcome): InternalCmd =
+  private def nextCommand(
+      state: DriverState,
+      lastTaskId: TaskId,
+      outcome: TaskExecution.Outcome
+  ): InternalCmd =
     if (state.plan.trigger.isRecurring) {
       outcome match {
         case TaskExecution.Outcome.Success =>

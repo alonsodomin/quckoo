@@ -76,13 +76,15 @@ object ConsoleCircuit
             ActionResult.ModelUpdate(model.copy(subscribed = true))
           }
         } else None
-  }
+    }
 
   val loginHandler = new ConsoleHandler(zoomTo(_.clientState)) {
 
-    def performLogin(username: String,
-                     password: String,
-                     referral: Option[ConsoleRoute]): ClientIO[Event] =
+    def performLogin(
+        username: String,
+        password: String,
+        referral: Option[ConsoleRoute]
+    ): ClientIO[Event] =
       client
         .signIn(username, password)
         .map(_ => LoggedIn(referral).asInstanceOf[Event])

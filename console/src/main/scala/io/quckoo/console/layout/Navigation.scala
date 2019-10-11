@@ -41,11 +41,13 @@ object Navigation {
   case class NavigationItem(icon: Icon, name: String, route: ConsoleRoute) extends NavigationMenu
   case object NavigationSeparator                                          extends NavigationMenu
 
-  case class Props(initial: NavigationItem,
-                   menu: List[NavigationMenu],
-                   routerCtl: RouterCtl[ConsoleRoute],
-                   current: ConsoleRoute,
-                   proxy: ModelProxy[Option[Principal]])
+  case class Props(
+      initial: NavigationItem,
+      menu: List[NavigationMenu],
+      routerCtl: RouterCtl[ConsoleRoute],
+      current: ConsoleRoute,
+      proxy: ModelProxy[Option[Principal]]
+  )
 
   class Backend($ : BackendScope[Props, Unit]) {
 
@@ -147,11 +149,13 @@ object Navigation {
     .renderBackend[Backend]
     .build
 
-  def apply(initial: NavigationItem,
-            menu: List[NavigationMenu],
-            routerCtl: RouterCtl[ConsoleRoute],
-            current: ConsoleRoute,
-            proxy: ModelProxy[Option[Principal]]) =
+  def apply(
+      initial: NavigationItem,
+      menu: List[NavigationMenu],
+      routerCtl: RouterCtl[ConsoleRoute],
+      current: ConsoleRoute,
+      proxy: ModelProxy[Option[Principal]]
+  ) =
     component(Props(initial, menu, routerCtl, current, proxy))
 
 }

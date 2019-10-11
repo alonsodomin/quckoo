@@ -32,8 +32,10 @@ import scala.concurrent.duration._
   */
 object TaskQueueMonitor {
 
-  case class QueueMetrics(pendingPerNode: Map[String, Int] = Map.empty,
-                          inProgressPerNode: Map[String, Int] = Map.empty)
+  case class QueueMetrics(
+      pendingPerNode: Map[String, Int] = Map.empty,
+      inProgressPerNode: Map[String, Int] = Map.empty
+  )
 
   def props: Props = Props(new TaskQueueMonitor)
 

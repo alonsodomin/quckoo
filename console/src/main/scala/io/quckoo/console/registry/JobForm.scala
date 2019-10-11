@@ -106,7 +106,7 @@ object JobForm {
                 <.span(
                   <.button(^.tpe := "button", lookAndFeel.close, ^.onClick --> hide, Icons.close),
                   <.h4("Register Job")
-              ),
+                ),
               footer = hide =>
                 <.span(
                   Button(
@@ -124,7 +124,7 @@ object JobForm {
                     ),
                     "Save"
                   )
-              ),
+                ),
               onClosed = onModalClosed(props)
             ),
             <.div(

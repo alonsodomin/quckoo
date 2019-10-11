@@ -24,7 +24,7 @@ import cron4s.lib.javatime._
 
 import io.circe.{Encoder, Decoder}
 import io.circe.generic.semiauto._
-import io.circe.java8.time._
+//import io.circe.java8.time._
 
 import io.quckoo.serialization.json._
 

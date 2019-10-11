@@ -54,10 +54,12 @@ object Button {
     }
     .build
 
-  def apply(onClick: Option[Callback] = None,
-            disabled: Boolean = false,
-            style: ContextStyle.Value = ContextStyle.default,
-            addStyles: Seq[StyleA] = Seq()) =
+  def apply(
+      onClick: Option[Callback] = None,
+      disabled: Boolean = false,
+      style: ContextStyle.Value = ContextStyle.default,
+      addStyles: Seq[StyleA] = Seq()
+  ) =
     component(Props(onClick, disabled, style, addStyles)) _
 
   def apply(props: Props, children: VdomNode*) = component(props)(children: _*)

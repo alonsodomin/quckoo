@@ -20,7 +20,6 @@ import java.time.ZonedDateTime
 
 import io.circe.{Encoder, Decoder}
 import io.circe.generic.semiauto._
-import io.circe.java8.time._
 
 import io.quckoo._
 import io.quckoo.Trigger.Immediate
@@ -54,17 +53,19 @@ object ScheduleJob {
 
 final case class TaskScheduled(jobId: JobId, planId: PlanId, task: Task, dateTime: ZonedDateTime)
     extends ExecutionEvent
-final case class TaskTriggered(jobId: JobId,
-                               planId: PlanId,
-                               taskId: TaskId,
-                               dateTime: ZonedDateTime)
-    extends ExecutionEvent
-final case class TaskCompleted(jobId: JobId,
-                               planId: PlanId,
-                               taskId: TaskId,
-                               dateTime: ZonedDateTime,
-                               outcome: TaskExecution.Outcome)
-    extends ExecutionEvent
+final case class TaskTriggered(
+    jobId: JobId,
+    planId: PlanId,
+    taskId: TaskId,
+    dateTime: ZonedDateTime
+) extends ExecutionEvent
+final case class TaskCompleted(
+    jobId: JobId,
+    planId: PlanId,
+    taskId: TaskId,
+    dateTime: ZonedDateTime,
+    outcome: TaskExecution.Outcome
+) extends ExecutionEvent
 
 final case class JobFailedToSchedule(jobId: JobId, cause: QuckooError) extends SchedulerEvent
 

@@ -61,8 +61,10 @@ object ExecutionPlanList {
   type OnClick  = ExecutionPlan => Callback
 
   final case class Props(proxy: ModelProxy[UserScope], onCreate: OnCreate, onClick: OnClick)
-  final case class State(selectedFilter: Option[Symbol] = None,
-                         selectedPlans: Set[PlanId] = Set.empty)
+  final case class State(
+      selectedFilter: Option[Symbol] = None,
+      selectedPlans: Set[PlanId] = Set.empty
+  )
 
   class Backend($ : BackendScope[Props, State]) {
 

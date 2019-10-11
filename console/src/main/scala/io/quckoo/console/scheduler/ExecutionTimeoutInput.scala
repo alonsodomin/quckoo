@@ -28,9 +28,11 @@ import scala.concurrent.duration.FiniteDuration
   */
 object ExecutionTimeoutInput {
 
-  case class Props(value: Option[FiniteDuration],
-                   onUpdate: Option[FiniteDuration] => Callback,
-                   readOnly: Boolean)
+  case class Props(
+      value: Option[FiniteDuration],
+      onUpdate: Option[FiniteDuration] => Callback,
+      readOnly: Boolean
+  )
   case class State(enabled: Boolean = false)
 
   class Backend($ : BackendScope[Props, State]) {
@@ -79,9 +81,11 @@ object ExecutionTimeoutInput {
     .renderBackend[Backend]
     .build
 
-  def apply(value: Option[FiniteDuration],
-            onUpdate: Option[FiniteDuration] => Callback,
-            readOnly: Boolean = false) =
+  def apply(
+      value: Option[FiniteDuration],
+      onUpdate: Option[FiniteDuration] => Callback,
+      readOnly: Boolean = false
+  ) =
     component(Props(value, onUpdate, readOnly))
 
 }

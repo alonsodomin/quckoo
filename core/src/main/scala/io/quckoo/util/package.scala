@@ -59,7 +59,7 @@ package object util {
       Future.fromTry(fa)
   }
 
-  def future2IO(implicit ec: ExecutionContext) = new (Future ~> IO) {
+  def future2IO(implicit cs: ContextShift[IO]) = new (Future ~> IO) {
     override def apply[A](fa: Future[A]): IO[A] =
       IO.fromFuture(IO(fa))
   }
@@ -67,8 +67,9 @@ package object util {
   final val attempt2Future: Attempt ~> Future = attempt2Try andThen try2Future
 
   implicit class RichValidated[E, A](val self: Validated[E, A]) extends AnyVal {
-    def append[EE >: E, AA >: A](other: Validated[EE, AA])(implicit es: Semigroup[EE],
-                                                           as: Semigroup[AA]): Validated[EE, AA] = {
+    def append[EE >: E, AA >: A](
+        other: Validated[EE, AA]
+    )(implicit es: Semigroup[EE], as: Semigroup[AA]): Validated[EE, AA] = {
       import Validated._
 
       (self, other) match {

@@ -58,7 +58,7 @@ object NotificationContainer {
             )
           ),
           <.a(^.href := "{3}", ^.target := "{4}", dataNotify := "url")
-    )
+      )
   ) build
 
   def apply() = component()

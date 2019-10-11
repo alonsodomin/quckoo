@@ -30,10 +30,12 @@ import scalacss.ScalaCssReact._
 object JobSelect {
   @inline private def lnf = lookAndFeel
 
-  case class Props(jobs: Map[JobId, JobSpec],
-                   value: Option[JobId],
-                   onUpdate: Option[JobId] => Callback,
-                   readOnly: Boolean = false)
+  case class Props(
+      jobs: Map[JobId, JobSpec],
+      value: Option[JobId],
+      onUpdate: Option[JobId] => Callback,
+      readOnly: Boolean = false
+  )
 
   private[this] val JobOption = ScalaComponent
     .builder[(JobId, JobSpec)]("JobOption")
@@ -84,10 +86,12 @@ object JobSelect {
     .renderBackend[Backend]
     .build
 
-  def apply(jobs: Map[JobId, JobSpec],
-            value: Option[JobId],
-            onUpdate: Option[JobId] => Callback,
-            readOnly: Boolean = false) =
+  def apply(
+      jobs: Map[JobId, JobSpec],
+      value: Option[JobId],
+      onUpdate: Option[JobId] => Callback,
+      readOnly: Boolean = false
+  ) =
     Component(Props(jobs, value, onUpdate, readOnly))
 
 }

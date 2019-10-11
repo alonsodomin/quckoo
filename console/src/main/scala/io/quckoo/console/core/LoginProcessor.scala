@@ -42,10 +42,12 @@ class LoginProcessor(routerCtl: RouterCtl[ConsoleRoute])
   val authFailedNotification =
     Notification.danger("Username or password incorrect")
 
-  override def process(dispatch: Dispatcher,
-                       action: Any,
-                       next: Any => ActionResult[ConsoleScope],
-                       currentModel: ConsoleScope): ActionResult[ConsoleScope] =
+  override def process(
+      dispatch: Dispatcher,
+      action: Any,
+      next: Any => ActionResult[ConsoleScope],
+      currentModel: ConsoleScope
+  ): ActionResult[ConsoleScope] =
     action match {
       case LoginFailed =>
         logger.warn("Login failed!")

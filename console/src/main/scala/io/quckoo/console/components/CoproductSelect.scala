@@ -158,10 +158,12 @@ final class CoproductSelect[A: Reusability] private[components] (
   ) =
     component(Props(options, selector, value, Some(default), onUpdate, attrs)) _
 
-  def apply(options: List[Symbol],
-            selector: Selector[A],
-            value: Option[A],
-            onUpdate: OnUpdate[A],
-            attrs: TagMod*) =
+  def apply(
+      options: List[Symbol],
+      selector: Selector[A],
+      value: Option[A],
+      onUpdate: OnUpdate[A],
+      attrs: TagMod*
+  ) =
     component(Props(options, selector, value, None, onUpdate, attrs)) _
 }

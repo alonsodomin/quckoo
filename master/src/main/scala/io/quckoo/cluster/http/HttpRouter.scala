@@ -40,8 +40,10 @@ trait HttpRouter
   import TimeoutDirectives._
   import ErrorAccumulatingCirceSupport._
 
-  private[this] def defineApi(implicit system: ActorSystem,
-                              materializer: ActorMaterializer): Route =
+  private[this] def defineApi(
+      implicit system: ActorSystem,
+      materializer: ActorMaterializer
+  ): Route =
     pathPrefix("auth") {
       extractTimeout(DefaultTimeout) { implicit timeout =>
         path("login") {
@@ -78,8 +80,10 @@ trait HttpRouter
       }
     }
 
-  private[this] def clusterEvents(implicit system: ActorSystem,
-                                  materializer: ActorMaterializer): Route =
+  private[this] def clusterEvents(
+      implicit system: ActorSystem,
+      materializer: ActorMaterializer
+  ): Route =
     path("master") {
       get {
         complete(asSSE(masterTopic))

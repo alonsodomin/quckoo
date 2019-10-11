@@ -31,9 +31,11 @@ private[resolver] object RepositoryConversion extends LazyLogging {
   def apply(repository: Repository, settings: IvySettings): DependencyResolver =
     apply(repository, settings, defaultConverter)
 
-  def apply(repository: Repository,
-            settings: IvySettings,
-            converter: RepositoryConverter): DependencyResolver =
+  def apply(
+      repository: Repository,
+      settings: IvySettings,
+      converter: RepositoryConverter
+  ): DependencyResolver =
     converter((repository, settings))
 
   lazy val defaultConverter: RepositoryConverter = {
@@ -70,9 +72,11 @@ private[resolver] object RepositoryConversion extends LazyLogging {
       }
   }
 
-  private def initializePatterns(resolver: AbstractPatternsBasedResolver,
-                                 patterns: Patterns,
-                                 settings: IvySettings) = {
+  private def initializePatterns(
+      resolver: AbstractPatternsBasedResolver,
+      patterns: Patterns,
+      settings: IvySettings
+  ) = {
     resolver.setM2compatible(patterns.mavenCompatible)
     patterns.artifactPatterns.foreach { p =>
       resolver.addArtifactPattern(settings substitute p)

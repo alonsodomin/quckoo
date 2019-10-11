@@ -9,7 +9,6 @@ lazy val sandbox =
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 ThisBuild / parallelExecution := false
-ThisBuild / scalafmtOnCompile := true
 
 lazy val commonSettings = Seq(
   homepage := Some(url("https://www.quckoo.io")),
@@ -284,7 +283,7 @@ lazy val master = (project in file("master"))
     pipelineStages in Assets := Seq(scalaJSPipeline),
     dockerExposedPorts := Seq(2551, 8095, 9095),
     parallelExecution in Test := false,
-    parallelExecution in MultiJvm := false,
+    parallelExecution in MultiJvm := false
   )
   .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
 
@@ -370,13 +369,29 @@ lazy val exampleProducers = (project in file("examples/producers"))
 // Command aliases ==================================================
 
 addCommandAlias(
+  "fmt",
+  Seq(
+    "scalafmt",
+    "scalafmtSbt"
+  ).mkString(";")
+)
+
+addCommandAlias(
+  "checkfmt",
+  Seq(
+    "scalafmtCheck",
+    "scalafmtSbtCheck"
+  ).mkString(";")
+)
+
+addCommandAlias(
   "testJS",
   Seq(
     "coreJS/test",
     "apiJS/test",
     "clientJS/test",
     "console/test"
-  ).mkString(";", ";", "")
+  ).mkString(";")
 )
 
 addCommandAlias(

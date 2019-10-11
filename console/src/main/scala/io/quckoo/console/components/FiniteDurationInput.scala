@@ -42,10 +42,12 @@ object FiniteDurationInput {
     DAYS         -> "Days"
   )
 
-  case class Props(id: String,
-                   value: Option[FiniteDuration],
-                   onUpdate: Option[FiniteDuration] => Callback,
-                   readOnly: Boolean = false)
+  case class Props(
+      id: String,
+      value: Option[FiniteDuration],
+      onUpdate: Option[FiniteDuration] => Callback,
+      readOnly: Boolean = false
+  )
   case class State(length: Option[Long], unit: Option[TimeUnit]) {
 
     def this(duration: Option[FiniteDuration]) =
@@ -133,10 +135,12 @@ object FiniteDurationInput {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(id: String,
-            value: Option[FiniteDuration],
-            onUpdate: Option[FiniteDuration] => Callback,
-            readOnly: Boolean = false) =
+  def apply(
+      id: String,
+      value: Option[FiniteDuration],
+      onUpdate: Option[FiniteDuration] => Callback,
+      readOnly: Boolean = false
+  ) =
     component(Props(id, value, onUpdate, readOnly))
 
 }
