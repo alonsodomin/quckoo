@@ -204,14 +204,14 @@ object Dependencies {
       "org.typelevel" %%% "kittens"       % version.cats.kittens,
       "io.circe"      %%% "circe-parser"  % version.circe,
       "io.circe"      %%% "circe-generic" % version.circe,
-      //"io.circe"          %%% "circe-optics"       % version.circe,
       "io.circe"                      %%% "circe-refined"    % version.circe,
       "com.beachape"                  %%% "enumeratum-circe" % version.enumeratum,
       "eu.timepit"                    %%% "refined"          % version.refined,
       "eu.timepit"                    %%% "refined-cats"     % version.refined,
       "com.github.julien-truffaut"    %%% "monocle-core"     % version.monocle,
       "com.github.julien-truffaut"    %%% "monocle-macro"    % version.monocle,
-      "com.github.alonsodomin.cron4s" %%% "cron4s-core"      % version.cron4s
+      "com.github.alonsodomin.cron4s" %%% "cron4s-core"      % version.cron4s,
+      "com.github.alonsodomin.cron4s" %%% "cron4s-circe"      % version.cron4s
     )
   }
 
