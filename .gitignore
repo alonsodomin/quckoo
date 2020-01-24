@@ -100,3 +100,5 @@ native/
 # ScalaMeta Metals #
 ####################
 .metals/
+.bloop/
+metals.sbt
