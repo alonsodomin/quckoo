@@ -20,15 +20,16 @@ import cats.Show
 
 import enumeratum._
 
-import io.circe.{Encoder, Decoder}
-import io.circe.generic.semiauto._
+import io.circe.generic.JsonCodec
 
 import monocle.macros.Lenses
 
 /**
   * Created by alonsodomin on 24/07/2016.
   */
-@Lenses final case class TaskExecution(
+@Lenses
+@JsonCodec
+final case class TaskExecution(
     planId: PlanId,
     task: Task,
     status: TaskExecution.Status,
@@ -71,8 +72,5 @@ object TaskExecution {
 
     implicit val outcomeShow: Show[Outcome] = Show.fromToString
   }
-
-  implicit val taskExecutionEncoder: Encoder[TaskExecution] = deriveEncoder[TaskExecution]
-  implicit val taskExecutionDecoder: Decoder[TaskExecution] = deriveDecoder[TaskExecution]
 
 }

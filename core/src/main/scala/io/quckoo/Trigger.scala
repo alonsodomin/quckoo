@@ -23,8 +23,7 @@ import cron4s.circe._
 import cron4s.syntax.all._
 import cron4s.lib.javatime._
 
-import io.circe.{Encoder, Decoder}
-import io.circe.generic.semiauto._
+import io.circe.generic.JsonCodec
 
 import io.quckoo.serialization.json._
 
@@ -33,6 +32,7 @@ import scala.concurrent.duration._
 /**
   * Created by aalonsodominguez on 08/07/15.
   */
+@JsonCodec
 sealed trait Trigger {
   import Trigger.ReferenceTime
 
@@ -130,13 +130,4 @@ object Trigger {
 
   }
 
-  implicit val triggerEncoder: Encoder[Trigger] = {
-    import io.circe.generic.auto._
-    deriveEncoder[Trigger]
-  }
-
-  implicit val triggerDecoder: Decoder[Trigger] = {
-    import io.circe.generic.auto._
-    deriveDecoder[Trigger]
-  }
 }

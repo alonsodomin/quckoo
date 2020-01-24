@@ -16,14 +16,9 @@
 
 package io.quckoo.net
 
-import io.circe.{Encoder, Decoder}
-import io.circe.generic.semiauto._
+import io.circe.generic.JsonCodec
 
 /**
   * Created by alonsodomin on 03/04/2016.
   */
-final case class Location(host: String)
-object Location {
-  implicit val locationEncoder: Encoder[Location] = deriveEncoder[Location]
-  implicit val locationDecoder: Decoder[Location] = deriveDecoder[Location]
-}
+@JsonCodec final case class Location(host: String)

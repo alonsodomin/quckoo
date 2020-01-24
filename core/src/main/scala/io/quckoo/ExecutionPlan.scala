@@ -18,15 +18,14 @@ package io.quckoo
 
 import java.time.{Clock, ZonedDateTime}
 
-import io.circe.{Encoder, Decoder}
-import io.circe.generic.semiauto._
+import io.circe.generic.JsonCodec
 
 import monocle.macros.Lenses
 
 /**
   * Created by alonsodomin on 14/03/2016.
   */
-@Lenses final case class ExecutionPlan(
+@Lenses @JsonCodec final case class ExecutionPlan(
     jobId: JobId,
     planId: PlanId,
     trigger: Trigger,
@@ -53,9 +52,4 @@ import monocle.macros.Lenses
 
 }
 
-object ExecutionPlan {
-
-  implicit val executionPlanEncoder: Encoder[ExecutionPlan] = deriveEncoder[ExecutionPlan]
-  implicit val executionPlanDecoder: Decoder[ExecutionPlan] = deriveDecoder[ExecutionPlan]
-
-}
+object ExecutionPlan { }

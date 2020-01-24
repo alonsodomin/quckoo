@@ -20,15 +20,16 @@ import cats.{Eq, Show}
 
 import io.quckoo.validation._
 
-import io.circe.{Encoder, Decoder}
-import io.circe.generic.semiauto._
+import io.circe.generic.JsonCodec
 
 import monocle.macros.Lenses
 
 /**
   * Created by aalonsodominguez on 10/07/15.
   */
-@Lenses final case class JobSpec(
+@Lenses
+@JsonCodec
+final case class JobSpec(
     displayName: String,
     description: Option[String] = None,
     jobPackage: JobPackage,
@@ -51,8 +52,5 @@ object JobSpec {
 
   implicit val jobSpecEq: Eq[JobSpec]     = Eq.fromUniversalEquals
   implicit val jobSpecShow: Show[JobSpec] = Show.fromToString[JobSpec]
-
-  implicit val jobSpecEncoder: Encoder[JobSpec] = deriveEncoder[JobSpec]
-  implicit val jobSpecDecoder: Decoder[JobSpec] = deriveDecoder[JobSpec]
 
 }

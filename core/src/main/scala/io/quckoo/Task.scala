@@ -19,12 +19,12 @@ package io.quckoo
 import cats.Show
 import cats.implicits._
 
-import io.circe.{Encoder, Decoder}
-import io.circe.generic.semiauto._
+import io.circe.generic.JsonCodec
 
 /**
   * Created by aalonsodominguez on 05/07/15.
   */
+@JsonCodec
 final case class Task(
     id: TaskId,
     jobPackage: JobPackage
@@ -32,9 +32,6 @@ final case class Task(
 )
 
 object Task {
-
-  implicit val taskEncoder: Encoder[Task] = deriveEncoder[Task]
-  implicit val taskDecoder: Decoder[Task] = deriveDecoder[Task]
 
   implicit val showTask: Show[Task] = Show[JobPackage].contramap(_.jobPackage)
 

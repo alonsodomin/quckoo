@@ -39,7 +39,6 @@ lazy val commonSettings = Seq(
   ),
   scalaModuleInfo := scalaModuleInfo.value.map(_.withOverrideScalaVersion(true)),
   resolvers ++= Seq(
-    Opts.resolver.mavenLocalFile,
     Resolver.bintrayRepo("krasserm", "maven"),
     Resolver.bintrayRepo("hseeberger", "maven"),
     Resolver.bintrayRepo("dnvriend", "maven"),

@@ -14,27 +14,27 @@ object Dependencies {
     // Logging -------
 
     val slogging = "0.6.1"
-    val log4j    = "2.12.1"
-    val slf4j    = "1.7.28"
+    val log4j    = "2.13.0"
+    val slf4j    = "1.7.30"
 
     // Testing --------
 
     val scalaTest  = "3.0.8"
-    val scalaCheck = "1.14.2"
+    val scalaCheck = "1.14.3"
     val scalaMock  = "3.6.0"
     val discipline = "0.11.1"
-    val wiremock   = "2.25.0"
+    val wiremock   = "2.25.1"
 
     // Akka ----------
 
     object akka {
-      val main = "2.5.25"
-      val kryo = "0.9.3"
+      val main = "2.5.27"
+      val kryo = "0.9.5"
 
       val constructr = "0.9.0"
 
       object http {
-        val main = "10.1.10"
+        val main = "10.1.11"
 
         // http extensions
         val json = "1.29.1"
@@ -42,7 +42,7 @@ object Dependencies {
       }
 
       // persistence plugins
-      val cassandra = "0.99"
+      val cassandra = "0.102"
       val inmemory  = "2.5.15.2"
     }
 
@@ -62,7 +62,7 @@ object Dependencies {
 
     val scalaJsReact   = "1.4.2"
     val scalaJsDom     = "0.9.7"
-    val scalaJsJQuery  = "0.9.5"
+    val scalaJsJQuery  = "0.9.6"
     val scalaJSScripts = "1.1.2"
     val testState      = "2.3.0"
 
@@ -80,18 +80,18 @@ object Dependencies {
       val effect  = "2.0.0"
       val kittens = "2.0.0"
     }
-    val circe      = "0.12.2"
+    val circe      = "0.12.3"
     val cron4s     = "0.6.0"
     val enumeratum = "1.5.22"
     val ivy        = "2.4.0"
     val monix      = "3.0.0"
-    val monocle    = "2.0.0"
-    val pureconfig = "0.12.1"
+    val monocle    = "2.0.1"
+    val pureconfig = "0.12.2"
     val refined    = "0.9.10"
     val scalaCss   = "0.5.6"
     val scalaTime  = "2.0.0-RC3"
     val scopt      = "3.7.1"
-    val sttp       = "1.7.1"
+    val sttp       = "1.7.2"
     val xml        = "1.2.0"
 
     // JavaScript Libraries

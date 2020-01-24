@@ -16,8 +16,7 @@
 
 package io.quckoo.net
 
-import io.circe.{Encoder, Decoder}
-import io.circe.generic.semiauto._
+import io.circe.generic.JsonCodec
 
 import io.quckoo.NodeId
 import io.quckoo.protocol.cluster._
@@ -28,7 +27,7 @@ import monocle.macros.Lenses
 /**
   * Created by alonsodomin on 03/04/2016.
   */
-@Lenses final case class QuckooState(
+@Lenses @JsonCodec final case class QuckooState(
     masterNodes: Map[NodeId, MasterNode] = Map.empty,
     workerNodes: Map[NodeId, WorkerNode] = Map.empty,
     metrics: QuckooMetrics = QuckooMetrics()
@@ -67,7 +66,4 @@ import monocle.macros.Lenses
   }
 
 }
-object QuckooState {
-  implicit val quckooStateEncoder: Encoder[QuckooState] = deriveEncoder[QuckooState]
-  implicit val quckooStateDecoder: Decoder[QuckooState] = deriveDecoder[QuckooState]
-}
+object QuckooState { }
