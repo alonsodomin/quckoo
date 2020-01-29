@@ -28,7 +28,7 @@ object Dependencies {
     // Akka ----------
 
     object akka {
-      val main = "2.5.27"
+      val main = "2.6.3"
       val kryo = "0.9.5"
 
       val constructr = "0.9.0"
@@ -115,12 +115,13 @@ object Dependencies {
     val ivy = "org.apache.ivy" % "ivy" % version.ivy
 
     object Akka {
-      val actor           = "com.typesafe.akka" %% "akka-actor-typed"      % version.akka.main
-      val slf4j           = "com.typesafe.akka" %% "akka-slf4j"            % version.akka.main
-      val clusterTools    = "com.typesafe.akka" %% "akka-cluster-tools"    % version.akka.main
-      val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"  % version.akka.main
-      val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding" % version.akka.main
-      val distributedData = "com.typesafe.akka" %% "akka-distributed-data" % version.akka.main
+      val actor           = "com.typesafe.akka" %% "akka-actor-typed"            % version.akka.main
+      val slf4j           = "com.typesafe.akka" %% "akka-slf4j"                  % version.akka.main
+      val cluster         = "com.typesafe.akka" %% "akka-cluster-typed"          % version.akka.main
+      val clusterTools    = "com.typesafe.akka" %% "akka-cluster-tools"          % version.akka.main
+      val clusterMetrics  = "com.typesafe.akka" %% "akka-cluster-metrics"        % version.akka.main
+      val sharding        = "com.typesafe.akka" %% "akka-cluster-sharding-typed" % version.akka.main
+      val distributedData = "com.typesafe.akka" %% "akka-distributed-data"       % version.akka.main
 
       object http {
         val main    = "com.typesafe.akka" %% "akka-http"         % version.akka.http.main
@@ -130,14 +131,14 @@ object Dependencies {
       }
 
       object persistence {
-        val core      = "com.typesafe.akka"   %% "akka-persistence"           % version.akka.main
+        val core      = "com.typesafe.akka"   %% "akka-persistence-typed"     % version.akka.main
         val query     = "com.typesafe.akka"   %% "akka-persistence-query"     % version.akka.main
         val cassandra = "com.typesafe.akka"   %% "akka-persistence-cassandra" % version.akka.cassandra
         val memory    = "com.github.dnvriend" %% "akka-persistence-inmemory"  % version.akka.inmemory % Test
       }
 
-      val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit" % version.akka.main
-      val testKit          = "com.typesafe.akka" %% "akka-testkit"            % version.akka.main % Test
+      val multiNodeTestKit = "com.typesafe.akka" %% "akka-multi-node-testkit"  % version.akka.main
+      val testKit          = "com.typesafe.akka" %% "akka-actor-testkit-typed" % version.akka.main
 
       val kryo       = "com.twitter" %% "chill-akka"                     % version.akka.kryo
       val constructr = "com.tecsisa" %% "constructr-coordination-consul" % version.akka.constructr % Runtime
@@ -272,6 +273,7 @@ object Dependencies {
       slogging_slf4j,
       Akka.actor,
       Akka.slf4j,
+      Akka.cluster,
       Akka.clusterTools,
       Akka.clusterMetrics,
       Akka.kryo,
@@ -370,6 +372,7 @@ object Dependencies {
     libraryDependencies ++= Kamon.All ++ Log4j.All ++ Pureconfig.All ++ Seq(
       Akka.actor,
       Akka.slf4j,
+      Akka.cluster,
       Akka.clusterTools,
       Akka.clusterMetrics,
       Akka.kryo,
@@ -393,7 +396,6 @@ object Dependencies {
       Akka.persistence.cassandra,
       Akka.persistence.query,
       Akka.persistence.memory,
-      Akka.constructr,
       Kamon.http,
       scopt,
       authenticatJwt,

@@ -52,4 +52,4 @@ import monocle.macros.Lenses
 
 }
 
-object ExecutionPlan { }
+object ExecutionPlan {}

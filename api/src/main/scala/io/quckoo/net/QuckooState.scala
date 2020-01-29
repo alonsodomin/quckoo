@@ -66,4 +66,4 @@ import monocle.macros.Lenses
   }
 
 }
-object QuckooState { }
+object QuckooState {}

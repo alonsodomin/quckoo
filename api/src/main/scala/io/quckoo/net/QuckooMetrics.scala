@@ -31,4 +31,4 @@ import monocle.macros.Lenses
     copy(pendingTasks = event.pendingTasks, inProgressTasks = event.inProgressTasks)
 
 }
-object QuckooMetrics { }
+object QuckooMetrics {}

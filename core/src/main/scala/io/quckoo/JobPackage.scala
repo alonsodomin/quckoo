@@ -23,8 +23,7 @@ import cats.implicits._
 import io.quckoo.md5.MD5
 import io.quckoo.validation._
 
-import io.circe.{Encoder, Decoder}
-import io.circe.generic.semiauto._
+import io.circe.generic.JsonCodec
 
 import monocle.Prism
 import monocle.macros.{GenPrism, Lenses}
@@ -32,7 +31,7 @@ import monocle.macros.{GenPrism, Lenses}
 /**
   * Created by alonsodomin on 17/02/2017.
   */
-sealed trait JobPackage {
+@JsonCodec sealed trait JobPackage {
   def checksum: String
 }
 
@@ -61,12 +60,9 @@ object JobPackage {
     case shell: ShellScriptPackage => shell.show
   }
 
-  implicit val jobPackageEncoder: Encoder[JobPackage] = deriveEncoder[JobPackage]
-  implicit val jobPackageDecoder: Decoder[JobPackage] = deriveDecoder[JobPackage]
-
 }
 
-@Lenses final case class ShellScriptPackage(content: String) extends JobPackage {
+@Lenses @JsonCodec final case class ShellScriptPackage(content: String) extends JobPackage {
   override def checksum: String = MD5.checksum(content)
 }
 object ShellScriptPackage {
@@ -81,14 +77,9 @@ object ShellScriptPackage {
     caseClass1(validContent)(ShellScriptPackage.unapply, ShellScriptPackage.apply)
   }
 
-  implicit val shellScriptPackageEncoder: Encoder[ShellScriptPackage] =
-    deriveEncoder[ShellScriptPackage]
-  implicit val shellScriptPackageDecoder: Decoder[ShellScriptPackage] =
-    deriveDecoder[ShellScriptPackage]
-
 }
 
-@Lenses final case class JarJobPackage(
+@Lenses @JsonCodec final case class JarJobPackage(
     artifactId: ArtifactId,
     jobClass: String
 ) extends JobPackage {
@@ -111,8 +102,5 @@ object JarJobPackage {
 
     caseClass2(validArtifactId, validJobClass)(JarJobPackage.unapply, JarJobPackage.apply)
   }
-
-  implicit val jarJobPackageEncoder: Encoder[JarJobPackage] = deriveEncoder[JarJobPackage]
-  implicit val jarJobPackageDecoder: Decoder[JarJobPackage] = deriveDecoder[JarJobPackage]
 
 }
