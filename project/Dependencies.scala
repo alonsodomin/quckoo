@@ -52,10 +52,10 @@ object Dependencies {
       val core       = "1.1.6"
       val akka       = "1.1.4"
       val remote     = "1.0.1"
-      val http       = "1.1.2"
+      val http       = "1.1.3"
       val scala      = "1.1.0"
       val sysmetrics = "1.0.1"
-      val prometheus = "1.1.1"
+      val prometheus = "1.1.2"
     }
 
     // ScalaJS -------
@@ -83,7 +83,7 @@ object Dependencies {
     val circe      = "0.12.3"
     val cron4s     = "0.6.0"
     val enumeratum = "1.5.22"
-    val ivy        = "2.4.0"
+    val ivy        = "2.5.0"
     val monix      = "3.0.0"
     val monocle    = "2.0.1"
     val pureconfig = "0.12.2"

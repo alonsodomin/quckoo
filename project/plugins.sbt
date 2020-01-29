@@ -11,7 +11,7 @@ addSbtPlugin("org.scalameta"     % "sbt-scalafmt"  % "2.0.5")
 addSbtPlugin("com.dwijnand"      % "sbt-travisci"  % "1.2.0")
 
 // Web plugins
-addSbtPlugin("org.scala-js"       % "sbt-scalajs"              % "0.6.29")
+addSbtPlugin("org.scala-js"       % "sbt-scalajs"              % "0.6.32")
 addSbtPlugin("org.portable-scala" % "sbt-crossproject"         % "0.6.1")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.1")
 addSbtPlugin("org.irundaia.sbt"   % "sbt-sassify"              % "1.4.13")
