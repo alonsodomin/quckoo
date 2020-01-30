@@ -19,8 +19,8 @@ package io.quckoo.validation
 import cats._
 import cats.implicits._
 
-import org.scalatest.FunSuite
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import org.scalacheck._
 
@@ -29,7 +29,7 @@ import org.typelevel.discipline.scalatest.Discipline
 /**
   * Created by alonsodomin on 06/11/2016.
   */
-class ValidatorSpec extends FunSuite with GeneratorDrivenPropertyChecks with Discipline with ValidatorGen {
+class ValidatorSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks with Discipline with ValidatorGen {
   import Arbitrary._
 
   {

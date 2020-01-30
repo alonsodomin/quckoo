@@ -318,13 +318,13 @@ object Dependencies {
 
   lazy val testkit = Def.settings {
     libraryDependencies ++= Seq(
-      "io.github.cquiroz" %%% "scala-java-time"    % Version.scalaTime,
-      "org.scalatest"     %%% "scalatest"          % Version.scalaTest,
-      "org.scalacheck"    %%% "scalacheck"         % Version.scalaCheck,
-      "org.typelevel"     %%% "cats-laws"          % Version.cats.main,
-      "org.typelevel"     %%% "discipline"         % Version.discipline,
-      "biz.enef"          %%% "slogging"           % Version.slogging,
-      "eu.timepit"        %%% "refined-scalacheck" % Version.refined
+      "io.github.cquiroz" %%% "scala-java-time"        % Version.scalaTime,
+      "org.scalatest"     %%% "scalatest"              % Version.scalaTest,
+      "org.scalacheck"    %%% "scalacheck"             % Version.scalaCheck,
+      "org.typelevel"     %%% "cats-laws"              % Version.cats.main,
+      "org.typelevel"     %%% "cats-testkit-scalatest" % Version.cats.testkit,
+      "biz.enef"          %%% "slogging"               % Version.slogging,
+      "eu.timepit"        %%% "refined-scalacheck"     % Version.refined
     )
   }
 

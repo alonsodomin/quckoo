@@ -23,7 +23,6 @@ import cats.data.{EitherT, NonEmptyList, Validated}
 import cats.implicits._
 
 import io.circe.generic.auto._
-import io.circe.java8.time._
 
 import io.quckoo._
 import io.quckoo.auth.{InvalidCredentials, Passport}

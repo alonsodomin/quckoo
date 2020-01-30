@@ -21,12 +21,14 @@ import java.nio.charset.StandardCharsets
 import io.quckoo.serialization.base64.Base64Codec
 import io.quckoo.serialization.json._
 
-import org.scalatest.{EitherValues, FlatSpec, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Created by alonsodomin on 16/09/2016.
   */
-class DataBufferSpec extends FlatSpec with EitherValues with Matchers {
+class DataBufferSpec extends AnyFlatSpec with EitherValues with Matchers {
 
   def emptyBuffer = DataBuffer.Empty
 

@@ -20,10 +20,11 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation._
 
 @js.native
-@JSGlobal
+@JSImport("spark-md5", JSImport.Default)
 object SparkMD5 extends js.Object {
 
-  def hash(str: String, raw: Boolean = false): String = js.native
+  def hash(str: String, raw: Boolean = false): String                            = js.native
+  def hashBinary(chunk: js.typedarray.ArrayBuffer, raw: Boolean = false): String = js.native
 
   @js.native
   class ArrayBuffer() extends js.Object {

@@ -19,7 +19,9 @@ package io.quckoo.testkit
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
 
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 import slogging._
 
@@ -27,7 +29,7 @@ import slogging._
   * Created by alonsodomin on 17/02/2017.
   */
 abstract class QuckooActorSuite(name: String)
-    extends TestKit(ActorSystem(name)) with WordSpecLike with Matchers with BeforeAndAfterAll {
+    extends TestKit(ActorSystem(name)) with AnyWordSpecLike with Matchers with BeforeAndAfterAll {
 
   override protected def beforeAll(): Unit = {
     LoggerConfig.factory = SLF4JLoggerFactory()

@@ -21,12 +21,13 @@ import cats.{Eq, Show}
 import io.quckoo.serialization.json.JsonCodec
 import io.quckoo.util.Attempt
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Created by domingueza on 27/02/2017.
   */
-abstract class IdValSpec[A : Eq : Show](name: String)(implicit jsonCodec: JsonCodec[A]) extends FlatSpec with Matchers {
+abstract class IdValSpec[A : Eq : Show](name: String)(implicit jsonCodec: JsonCodec[A]) extends AnyFlatSpec with Matchers {
 
   def generateTestId(): A
 
