@@ -157,8 +157,8 @@ lazy val quckoo = (project in file("."))
     examples,
     utilJS,
     utilJVM,
-    testSupportJS,
-    testSupportJVM
+    testkitJS,
+    testkitJVM
   )
 
 // Core ==================================================
@@ -188,7 +188,7 @@ lazy val core =
     .jsSettings(Dependencies.coreJS)
     .jvmSettings(commonJvmSettings)
     .jvmSettings(Dependencies.coreJVM)
-    .dependsOn(util, testSupport % Test)
+    .dependsOn(util, testkit % Test)
 
 lazy val coreJS  = core.js
 lazy val coreJVM = core.jvm
@@ -208,7 +208,7 @@ lazy val api =
       name := "api",
       moduleName := "quckoo-api"
     )
-    .dependsOn(core, testSupport % Test)
+    .dependsOn(core, testkit % Test)
 
 lazy val apiJS  = api.js
 lazy val apiJVM = api.jvm
@@ -229,7 +229,7 @@ lazy val client = (crossProject(JSPlatform, JVMPlatform) in file("client"))
     name := "client",
     moduleName := "quckoo-client"
   )
-  .dependsOn(api, testSupport % Test)
+  .dependsOn(api, testkit % Test)
 
 lazy val clientJS  = client.js
 lazy val clientJVM = client.jvm
@@ -247,11 +247,11 @@ lazy val console = (project in file("console"))
     moduleName := "quckoo-console",
     scalaJSUseMainModuleInitializer := true
   )
-  .dependsOn(clientJS, testSupportJS % Test)
+  .dependsOn(clientJS, testkitJS % Test)
 
 // Server ==================================================
 
-lazy val shared = (project in file("shared"))
+lazy val shared = (project in file("cluster/shared"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(commonJvmSettings)
@@ -261,9 +261,9 @@ lazy val shared = (project in file("shared"))
   .settings(
     moduleName := "quckoo-shared"
   )
-  .dependsOn(apiJVM, testSupportJVM % Test)
+  .dependsOn(apiJVM, testkitJVM % Test)
 
-lazy val master = (project in file("master"))
+lazy val master = (project in file("cluster/master"))
   .enablePlugins(
     AutomateHeaderPlugin,
     QuckooWebServer,
@@ -285,9 +285,9 @@ lazy val master = (project in file("master"))
     parallelExecution in Test := false,
     parallelExecution in MultiJvm := false
   )
-  .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
+  .dependsOn(shared % "compile->compile;test->test", testkitJVM % Test)
 
-lazy val worker = (project in file("worker"))
+lazy val worker = (project in file("cluster/worker"))
   .enablePlugins(AutomateHeaderPlugin, QuckooApp, QuckooServerPackager)
   .settings(commonSettings)
   .settings(commonJvmSettings)
@@ -299,7 +299,7 @@ lazy val worker = (project in file("worker"))
     dockerExposedPorts := Seq(5001, 9010, 9095),
     parallelExecution in Test := false
   )
-  .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
+  .dependsOn(shared % "compile->compile;test->test", testkitJVM % Test)
 
 // Misc Utilities ===========================================
 
@@ -310,29 +310,29 @@ lazy val util = (crossProject(JSPlatform, JVMPlatform) in file("util"))
   .jsSettings(Dependencies.utilJS)
   .jvmSettings(commonJvmSettings)
   .settings(moduleName := "quckoo-util")
-  .dependsOn(testSupport % Test)
+  .dependsOn(testkit % Test)
 
 lazy val utilJS  = util.js
 lazy val utilJVM = util.jvm
 
 // Test Support Utilities ===================================
 
-lazy val testSupport =
-  (crossProject(JSPlatform, JVMPlatform) in file("test-support"))
+lazy val testkit =
+  (crossProject(JSPlatform, JVMPlatform) in file("testkit"))
     .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
     .settings(commonSettings)
     .settings(noPublishSettings)
-    .settings(Dependencies.testSupport)
+    .settings(Dependencies.testkit)
     .jsSettings(commonJsSettings)
     .jvmSettings(commonJvmSettings)
-    .jvmSettings(Dependencies.testSupportJVM)
+    .jvmSettings(Dependencies.testkitJVM)
     .settings(
       name := "test-support",
       moduleName := "quckoo-test-support"
     )
 
-lazy val testSupportJS  = testSupport.js
-lazy val testSupportJVM = testSupport.jvm
+lazy val testkitJS  = testkit.js
+lazy val testkitJVM = testkit.jvm
 
 // Examples ==================================================
 
