@@ -56,7 +56,7 @@ object Modal {
       def initJS: CallbackTo[RawModal] = $.getDOMNode.map { node =>
         // instruct Bootstrap to show the modal
         // $COVERAGE-OFF$ https://github.com/scoverage/scalac-scoverage-plugin/issues/176
-        jQuery(node).modal(
+        jQuery(node.asMounted().asElement()).modal(
           js.Dynamic.literal(
             "backdrop" -> props.options.backdrop,
             "keyboard" -> props.options.keyboard,
@@ -86,7 +86,7 @@ object Modal {
 
     private def invokeCmd(cmd: String): Callback =
       $.getDOMNode.map { node =>
-        jQuery(node).modal(cmd)
+        jQuery(node.asMounted().asElement()).modal(cmd)
       } void
 
     def toggle(): Callback = invokeCmd("toggle")
@@ -121,11 +121,13 @@ object Modal {
     .componentDidMount($ => $.backend.initialize($.props))
     .build
 
-  def apply(header: Callback => VdomNode,
-            footer: Callback => VdomNode,
-            onClosed: Callback,
-            onShown: Option[Callback] = None,
-            options: Options = Options()) =
+  def apply(
+      header: Callback => VdomNode,
+      footer: Callback => VdomNode,
+      onClosed: Callback,
+      onShown: Option[Callback] = None,
+      options: Options = Options()
+  ) =
     Component(Props(header, footer, onClosed, onShown, options)) _
 
   def apply(props: Props, children: VdomNode*) = Component(props)(children: _*)

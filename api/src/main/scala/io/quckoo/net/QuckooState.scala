@@ -16,6 +16,8 @@
 
 package io.quckoo.net
 
+import io.circe.generic.JsonCodec
+
 import io.quckoo.NodeId
 import io.quckoo.protocol.cluster._
 import io.quckoo.protocol.worker._
@@ -25,7 +27,7 @@ import monocle.macros.Lenses
 /**
   * Created by alonsodomin on 03/04/2016.
   */
-@Lenses final case class QuckooState(
+@Lenses @JsonCodec final case class QuckooState(
     masterNodes: Map[NodeId, MasterNode] = Map.empty,
     workerNodes: Map[NodeId, WorkerNode] = Map.empty,
     metrics: QuckooMetrics = QuckooMetrics()
@@ -50,10 +52,8 @@ import monocle.macros.Lenses
   def updated(event: WorkerEvent): QuckooState = event match {
     case WorkerJoined(workerId, location) =>
       copy(
-        workerNodes = workerNodes + (workerId -> WorkerNode(
-            workerId,
-            location,
-            NodeStatus.Active)))
+        workerNodes = workerNodes + (workerId -> WorkerNode(workerId, location, NodeStatus.Active))
+      )
 
     case WorkerLost(workerId) =>
       val currentState = workerNodes.get(workerId)
@@ -66,3 +66,4 @@ import monocle.macros.Lenses
   }
 
 }
+object QuckooState {}

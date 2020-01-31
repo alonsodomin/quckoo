@@ -23,8 +23,8 @@ import cron4s.expr.CronExpr
 
 import io.quckoo._
 
+import japgolly.scalajs.react.Reusability
 import japgolly.scalajs.react.vdom.VdomNode
-import japgolly.scalajs.react.extra.Reusability
 
 import scala.concurrent.duration.FiniteDuration
 import scala.language.implicitConversions
@@ -45,13 +45,13 @@ package object components {
   implicit lazy val localTimeReuse      = Reusability.byRef[LocalTime]
   implicit lazy val localDateTimeReuse  = Reusability.byRef[LocalDateTime]
   implicit lazy val zonedDateTimeReuse  = Reusability.byRef[ZonedDateTime]
-  implicit lazy val artifactIdReuse     = Reusability.caseClass[ArtifactId]
+  implicit lazy val artifactIdReuse     = Reusability.derive[ArtifactId]
   implicit lazy val cronExprReuse       = Reusability.by[CronExpr, String](_.toString)
 
   implicit lazy val jarJobPackageReuse: Reusability[JarJobPackage] =
-    Reusability.caseClass[JarJobPackage]
+    Reusability.derive[JarJobPackage]
   implicit lazy val shellScriptPackageReuse: Reusability[ShellScriptPackage] =
-    Reusability.caseClass[ShellScriptPackage]
+    Reusability.derive[ShellScriptPackage]
   implicit lazy val jobPackageReuse: Reusability[JobPackage] =
     Reusability.either[JarJobPackage, ShellScriptPackage].contramap {
       case jar: JarJobPackage        => Left(jar)
@@ -60,16 +60,17 @@ package object components {
 
   implicit lazy val immediateTriggerReuse =
     Reusability.byRef[Trigger.Immediate.type]
-  implicit lazy val afterTriggerReuse = Reusability.caseClass[Trigger.After]
-  implicit lazy val everyTriggerReuse = Reusability.caseClass[Trigger.Every]
-  implicit lazy val atTriggerReuse    = Reusability.caseClass[Trigger.At]
-  implicit lazy val cronTriggerReuse  = Reusability.caseClass[Trigger.Cron]
+  implicit lazy val afterTriggerReuse = Reusability.derive[Trigger.After]
+  implicit lazy val everyTriggerReuse = Reusability.derive[Trigger.Every]
+  implicit lazy val atTriggerReuse    = Reusability.derive[Trigger.At]
+  implicit lazy val cronTriggerReuse  = Reusability.derive[Trigger.Cron]
 
   implicit lazy val triggerReuse: Reusability[Trigger] =
     Reusability
-      .either[Trigger.Immediate.type, Either[Trigger.After, Either[Trigger.Every,
-                                                                   Either[Trigger.At,
-                                                                          Trigger.Cron]]]]
+      .either[Trigger.Immediate.type, Either[
+        Trigger.After,
+        Either[Trigger.Every, Either[Trigger.At, Trigger.Cron]]
+      ]]
       .contramap {
         case Trigger.Immediate    => Left(Trigger.Immediate)
         case after: Trigger.After => Right(Left(after))

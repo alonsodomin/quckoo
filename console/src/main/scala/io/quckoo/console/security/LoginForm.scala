@@ -18,14 +18,18 @@ package io.quckoo.console.security
 
 import io.quckoo.console.components._
 import io.quckoo.console.layout.ContextStyle
+
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+
 import monocle.macros.Lenses
+
+import slogging.LazyLogging
 
 /**
   * Created by aalonsodominguez on 12/10/2015.
   */
-object LoginForm {
+object LoginForm extends LazyLogging {
 
   type LoginHandler = (String, String) => Callback
 
@@ -41,14 +45,14 @@ object LoginForm {
       $.modState(_.copy(password = password))
 
     def submit(handler: LoginHandler)(event: ReactEventFromInput): Callback = {
-      val username = $.state.map(_.username).asCBO[String]
-      val password = $.state.map(_.password).asCBO[Password]
+      val handleLogin = for {
+        username <- $.state.map(_.username).asCBO[String]
+        password <- $.state.map(_.password).asCBO[Password]
+        _        <- Callback(logger.debug(s"Login attempt by user: $username")).toCBO
+        _        <- handler(username, password.value).toCBO
+      } yield ()
 
-      val perform = username.flatMap(u => password.map(p => (u, p))) flatMap {
-        case (u, p) => handler(u, p.value)
-      } toCallback
-
-      event.preventDefaultCB >> perform
+      event.preventDefaultCB >> handleLogin
     }
 
     private[this] val UsernameInput = Input[String]

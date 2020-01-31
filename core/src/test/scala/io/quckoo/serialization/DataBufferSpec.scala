@@ -18,15 +18,20 @@ package io.quckoo.serialization
 
 import java.nio.charset.StandardCharsets
 
+import io.circe.parser.decode
+import io.circe.syntax._
+
 import io.quckoo.serialization.base64.Base64Codec
 import io.quckoo.serialization.json._
 
-import org.scalatest.{EitherValues, FlatSpec, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Created by alonsodomin on 16/09/2016.
   */
-class DataBufferSpec extends FlatSpec with EitherValues with Matchers {
+class DataBufferSpec extends AnyFlatSpec with EitherValues with Matchers {
 
   def emptyBuffer = DataBuffer.Empty
 
@@ -39,7 +44,7 @@ class DataBufferSpec extends FlatSpec with EitherValues with Matchers {
 
   "A DataBuffer (non empty)" should "deserialize to the original serialized object" in {
     val data = Some(10)
-    val returnedBackNForth = DataBuffer(data).flatMap(_.as[Option[Int]])
+    val returnedBackNForth = decode[Option[Int]](DataBuffer.fromString(data.asJson.noSpaces).asString())
 
     returnedBackNForth.right.value shouldBe data
   }

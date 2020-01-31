@@ -16,9 +16,11 @@
 
 package io.quckoo.client.http.dom
 
+import io.circe.Decoder
+import io.circe.parser.decode
 import io.quckoo.client.core.ChannelException
-import io.quckoo.client.http.{HttpServerSentEvent, topicURI}
-import io.quckoo.serialization.DataBuffer
+import io.quckoo.client.http.topicURI
+import io.quckoo.util.Attempt
 
 import monix.execution.Cancelable
 import monix.execution.cancelables.RefCountCancelable
@@ -31,8 +33,8 @@ import slogging.LazyLogging
 /**
   * Created by alonsodomin on 02/04/2016.
   */
-private[dom] class EventSourceSubscriber(topicName: String)
-    extends (Subscriber.Sync[HttpServerSentEvent] => Cancelable) with LazyLogging {
+class EventSourceSubscriber[A] private[dom] (topicName: String)(decodeMsg: String => Attempt[A])
+    extends (Subscriber.Sync[A] => Cancelable) with LazyLogging {
 
   val topicURL: String = topicURI(topicName)
 
@@ -40,7 +42,7 @@ private[dom] class EventSourceSubscriber(topicName: String)
 
   val source = new EventSource(topicURL)
 
-  override def apply(subscriber: Subscriber.Sync[HttpServerSentEvent]): Cancelable = {
+  override def apply(subscriber: Subscriber.Sync[A]): Cancelable = {
     val cancelable = RefCountCancelable { () =>
       subscriber.onComplete()
       source.close
@@ -56,12 +58,24 @@ private[dom] class EventSourceSubscriber(topicName: String)
     }
 
     source
-      .addEventListener[MessageEvent](topicName, (message: MessageEvent) => {
-        val data = DataBuffer.fromString(message.data.toString)
-        subscriber.onNext(HttpServerSentEvent(data))
-      })
+      .addEventListener[MessageEvent](
+        topicName,
+        (message: MessageEvent) => {
+          val messageContents = message.data.toString
+          decodeMsg(messageContents) match {
+            case Right(item) => subscriber.onNext(item)
+            case Left(error) =>
+              logger.error("Could not parse message contents: {}", messageContents)
+          }
+        }
+      )
 
     cancelable
   }
 
+}
+
+object EventSourceSubscriber {
+  def apply[A: Decoder](topicName: String): EventSourceSubscriber[A] =
+    new EventSourceSubscriber(topicName)(decode[A])
 }

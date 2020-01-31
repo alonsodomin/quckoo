@@ -67,7 +67,7 @@ object CodeEditor {
       readOnly: ReadOnly = false
   )
   implicit val optionsReuse: Reusability[Options] =
-    Reusability.caseClass[Options]
+    Reusability.derive[Options]
 
   final val DefaultWidth: Width   = "100%"
   final val DefaultHeight: Height = 250
@@ -84,7 +84,7 @@ object CodeEditor {
 
   implicit val propsReuse: Reusability[Props] =
     Reusability.caseClassExcept('onUpdate, 'attrs)
-  implicit val stateReuse: Reusability[State] = Reusability.caseClass[State]
+  implicit val stateReuse: Reusability[State] = Reusability.derive[State]
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -107,9 +107,9 @@ object CodeEditor {
     // $COVERAGE-ON$
 
     protected[CodeEditor] def initialize(props: Props, state: State): Callback =
-      $.getDOMNode
-        .map(node => CodeMirror(node, jsOptions(props)))
-        .map { codeMirror =>
+      $.getDOMNode.flatMap { node =>
+        val comp = node.toElement.map { elem =>
+          val codeMirror = CodeMirror(elem, jsOptions(props))
           codeMirror.on("change", (cm, event) => onChange(cm, event.asInstanceOf[ChangeEvent]))
           codeMirror.on("blur", (cm, event) => onBlur(cm, event.asInstanceOf[Event]))
 
@@ -119,6 +119,9 @@ object CodeEditor {
           codeMirror.refresh()
           codeMirror.markClean()
         }
+
+        comp.fold(Callback.empty)(Callback(_))
+      }
 
     private[this] def valueUpdated(editorValue: Option[String]): Unit =
       $.modState(_.copy(value = editorValue), propagateUpdate).runNow()

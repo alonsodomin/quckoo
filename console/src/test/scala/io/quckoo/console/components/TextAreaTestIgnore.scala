@@ -48,7 +48,7 @@ class TextAreaTestIgnore /** extends FunSuite **/ {
       TextArea(Some("hello"), onUpdate, ^.id := "testTextArea", ^.name := "myTextArea")
 
     ReactTestUtils.withRenderedIntoDocument(textAreaDef) { comp =>
-      def observe() = new TextAreaObserver(comp.htmlDomZipper)
+      def observe() = new TextAreaObserver(comp.domZipper)
 
       val test = plan
         .addInvariants(invariants)

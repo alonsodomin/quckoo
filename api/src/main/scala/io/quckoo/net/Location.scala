@@ -16,7 +16,9 @@
 
 package io.quckoo.net
 
+import io.circe.generic.JsonCodec
+
 /**
   * Created by alonsodomin on 03/04/2016.
   */
-final case class Location(host: String)
+@JsonCodec final case class Location(host: String)

@@ -32,27 +32,29 @@ object syntax extends ValidatorSyntax
 trait ValidatorSyntax {
 
   object conjunction {
-    implicit def instance[F[_]: Applicative]: MonoidK[ValidatorK[F, ?]] = new MonoidK[ValidatorK[F, ?]] {
-      def empty[A]: ValidatorK[F, A] = Validator.accept[F, A]
+    implicit def instance[F[_]: Applicative]: MonoidK[ValidatorK[F, ?]] =
+      new MonoidK[ValidatorK[F, ?]] {
+        def empty[A]: ValidatorK[F, A] = Validator.accept[F, A]
 
-      def combineK[A](a: ValidatorK[F, A], b: ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
-        import Violation.conjunction._
-        implicit val semi: Semigroup[A] = (first: A, _: A) => first
-        (a.run(x), b.run(x)).mapN(_ combine _)
+        def combineK[A](a: ValidatorK[F, A], b: ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
+          import Violation.conjunction._
+          implicit val semi: Semigroup[A] = (first: A, _: A) => first
+          (a.run(x), b.run(x)).mapN(_ combine _)
+        }
       }
-    }
   }
 
   object disjunction {
-    implicit def instance[F[_]: Applicative]: MonoidK[ValidatorK[F, ?]] = new MonoidK[ValidatorK[F, ?]] {
-      def empty[A]: ValidatorK[F, A] = Validator.reject[F, A]
+    implicit def instance[F[_]: Applicative]: MonoidK[ValidatorK[F, ?]] =
+      new MonoidK[ValidatorK[F, ?]] {
+        def empty[A]: ValidatorK[F, A] = Validator.reject[F, A]
 
-      def combineK[A](a: ValidatorK[F, A], b: ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
-        import Violation.disjunction._
-        implicit val semi: Semigroup[A] = (first: A, _: A) => first
-        (a.run(x), b.run(x)).mapN(_ append _)
+        def combineK[A](a: ValidatorK[F, A], b: ValidatorK[F, A]): ValidatorK[F, A] = Kleisli { x =>
+          import Violation.disjunction._
+          implicit val semi: Semigroup[A] = (first: A, _: A) => first
+          (a.run(x), b.run(x)).mapN(_ append _)
+        }
       }
-    }
   }
 
   implicit class ValidatorOps[A](self: Validator[A]) {
@@ -76,7 +78,7 @@ trait ValidatorSyntax {
     def *[B](other: ValidatorK[F, B]): ValidatorK[F, (A, B)] = product(other)
 
     def coproduct[B](other: ValidatorK[F, B]): ValidatorK[F, Either[A, B]] = Kleisli {
-      case Left(a) => self.run(a).map(_.map(Left(_)))
+      case Left(a)  => self.run(a).map(_.map(Left(_)))
       case Right(b) => other.run(b).map(_.map(Right(_)))
     }
     def <*>[B](other: ValidatorK[F, B]): ValidatorK[F, Either[A, B]] = coproduct(other)
@@ -89,8 +91,8 @@ trait ValidatorSyntax {
     def product[C](other: ValidatorK[F, C]): ValidatorK[F, (A, B, C)] = Kleisli {
       case (a, b, c) =>
         import Violation.conjunction._
-        (self.run((a, b)), other.run(c)).mapN((l, r) =>
-          (l, r).mapN { case ((a1, b1), c1) => (a1, b1, c1) })
+        (self.run((a, b)), other.run(c))
+          .mapN((l, r) => (l, r).mapN { case ((a1, b1), c1) => (a1, b1, c1) })
     }
     def *[C](other: ValidatorK[F, C]): ValidatorK[F, (A, B, C)] = product(other)
   }
@@ -99,8 +101,8 @@ trait ValidatorSyntax {
     def product[D](other: ValidatorK[F, D]): ValidatorK[F, (A, B, C, D)] = Kleisli {
       case (a, b, c, d) =>
         import Violation.conjunction._
-        (self.run((a, b, c)), other.run(d)).mapN((l, r) =>
-          (l, r).mapN { case ((a1, b1, c1), d1) => (a1, b1, c1, d1) })
+        (self.run((a, b, c)), other.run(d))
+          .mapN((l, r) => (l, r).mapN { case ((a1, b1, c1), d1) => (a1, b1, c1, d1) })
     }
     def *[D](other: ValidatorK[F, D]): ValidatorK[F, (A, B, C, D)] = product(other)
   }
@@ -109,8 +111,8 @@ trait ValidatorSyntax {
     def product[E](other: ValidatorK[F, E]): ValidatorK[F, (A, B, C, D, E)] = Kleisli {
       case (a, b, c, d, e) =>
         import Violation.conjunction._
-        (self.run((a, b, c, d)), other.run(e)).mapN((l, r) =>
-          (l, r).mapN { case ((a1, b1, c1, d1), e1) => (a1, b1, c1, d1, e1) })
+        (self.run((a, b, c, d)), other.run(e))
+          .mapN((l, r) => (l, r).mapN { case ((a1, b1, c1, d1), e1) => (a1, b1, c1, d1, e1) })
     }
     def *[E](other: ValidatorK[F, E]): ValidatorK[F, (A, B, C, D, E)] = product(other)
   }

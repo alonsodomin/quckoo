@@ -15,13 +15,14 @@ object QuckooMultiJvmTesting extends AutoPlugin {
 
   override def projectConfigurations: Seq[Configuration] = Seq(MultiJvm)
 
-  override def projectSettings: Seq[Def.Setting[_]] = Seq(
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-multi-node-testkit"  % Dependencies.version.akka.main,
-      "org.scoverage"     %% "scalac-scoverage-runtime" % "1.3.1"
-    ).map(_ % MultiJvm),
-    parallelExecution in MultiJvm := false,
-    jvmOptions in MultiJvm := (sigarLoaderOptions in Test).value :+ "-Xmx512M"
-  ) ++ headerSettings(MultiJvm)
+  override def projectSettings: Seq[Def.Setting[_]] =
+    Seq(
+      libraryDependencies ++= Seq(
+        "com.typesafe.akka" %% "akka-multi-node-testkit"  % Version.akka.main,
+        "org.scoverage"     %% "scalac-scoverage-runtime" % Version.scoverage
+      ).map(_ % MultiJvm),
+      parallelExecution in MultiJvm := false,
+      jvmOptions in MultiJvm := (sigarLoaderOptions in Test).value :+ "-Xmx512M"
+    ) ++ headerSettings(MultiJvm)
 
 }

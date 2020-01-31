@@ -17,15 +17,17 @@
 package io.quckoo.console.core
 
 import cats.data.{EitherT, NonEmptyList}
-import cats.instances.future._
+import cats.implicits._
 
 import diode.data.{Pot, Ready, Unavailable}
 
 import io.quckoo._
 import io.quckoo.auth.Passport
+import io.quckoo.client.ClientIO
 import io.quckoo.client.http.HttpQuckooClient
 import io.quckoo.protocol.Event
-import io.quckoo.protocol.scheduler.ScheduleJob
+import io.quckoo.protocol.registry._
+import io.quckoo.protocol.scheduler._
 
 import slogging.LoggerHolder
 
@@ -38,123 +40,69 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 trait ConsoleOps { this: LoggerHolder =>
 
-  val DefaultTimeout = 2500 millis
-
   protected def client: HttpQuckooClient
 
-  def refreshClusterStatus(
-      implicit passport: Passport
-  ): Future[ClusterStateLoaded] = {
-    implicit val timeout = DefaultTimeout
+  def refreshClusterStatus: ClientIO[ClusterStateLoaded] = {
     logger.debug("Refreshing cluster status...")
     client.clusterState.map(ClusterStateLoaded)
   }
 
-  def registerJob(jobSpec: JobSpec)(
-      implicit passport: Passport
-  ): Future[RegisterJobResult] = {
-    implicit val timeout = 20.minutes
+  def registerJob(jobSpec: JobSpec): ClientIO[RegisterJobResult] =
     client.registerJob(jobSpec).map(RegisterJobResult)
-  }
 
-  def enableJob(jobId: JobId)(
-      implicit passport: Passport
-  ): Future[Event] = {
-    implicit val timeout = DefaultTimeout
-    foldIntoEvent(client.enableJob(jobId))
-  }
+  def enableJob(jobId: JobId): ClientIO[JobEnabled] =
+    client.enableJob(jobId).map(_ => JobEnabled(jobId))
 
-  def disableJob(jobId: JobId)(
-      implicit passport: Passport
-  ): Future[Event] = {
-    implicit val timeout = DefaultTimeout
-    foldIntoEvent(client.disableJob(jobId))
-  }
+  def disableJob(jobId: JobId): ClientIO[JobDisabled] =
+    client.disableJob(jobId).map(_ => JobDisabled(jobId))
 
-  def loadJobSpec(jobId: JobId)(
-      implicit passport: Passport
-  ): Future[(JobId, Pot[JobSpec])] = {
-    implicit val timeout = DefaultTimeout
+  def loadJobSpec(jobId: JobId): ClientIO[(JobId, Pot[JobSpec])] =
     client.fetchJob(jobId).map {
       case Some(spec) => (jobId, Ready(spec))
       case None       => (jobId, Unavailable)
     }
-  }
 
-  def loadJobSpecs(keys: Set[JobId] = Set.empty)(
-      implicit passport: Passport
-  ): Future[Map[JobId, Pot[JobSpec]]] = {
-    implicit val timeout = DefaultTimeout
+  def loadJobSpecs(keys: Set[JobId] = Set.empty): ClientIO[Map[JobId, Pot[JobSpec]]] =
     if (keys.isEmpty) {
       logger.debug("Loading all jobs from the server...")
       client.fetchJobs.map(_.map { case (k, v) => (k, Ready(v)) }.toMap)
     } else {
       logger.debug("Loading job specs for ids: {}", keys.mkString(", "))
-      Future.sequence(keys.map(loadJobSpec)).map(_.toMap)
+      keys.toList.traverse(loadJobSpec).map(_.toMap)
     }
-  }
 
-  def scheduleJob(details: ScheduleJob)(
-      implicit passport: Passport
-  ): Future[Event] = {
-    implicit val timeout = DefaultTimeout
-    foldIntoEvent(client.scheduleJob(details))
-  }
+  def scheduleJob(details: ScheduleJob): ClientIO[ExecutionPlanStarted] =
+    client.startPlan(details)
 
-  def cancelPlan(planId: PlanId)(
-      implicit passport: Passport
-  ): Future[Event] = {
-    implicit val timeout = DefaultTimeout
-    foldIntoEvent(client.cancelPlan(planId))
-  }
+  def cancelPlan(planId: PlanId): ClientIO[ExecutionPlanCancelled] =
+    client.cancelPlan(planId)
 
-  def loadPlans(ids: Set[PlanId] = Set.empty)(
-      implicit passport: Passport
-  ): Future[Map[PlanId, Pot[ExecutionPlan]]] = {
-    implicit val timeout = DefaultTimeout
+  def loadPlans(ids: Set[PlanId] = Set.empty): ClientIO[Map[PlanId, Pot[ExecutionPlan]]] =
     if (ids.isEmpty) {
       logger.debug("Loading all execution plans from the server")
-      client.executionPlans.map(_.map { case (k, v) => (k, Ready(v)) }.toMap)
+      client.fetchPlans.map(_.map { case (k, v) => (k, Ready(v)) }.toMap)
     } else {
       logger.debug("Loading execution plans for ids: {}", ids.mkString(", "))
-      Future.sequence(ids.map(loadPlan)).map(_.toMap)
+      ids.toList.traverse(loadPlan).map(_.toMap)
     }
-  }
 
-  def loadPlan(id: PlanId)(
-      implicit passport: Passport
-  ): Future[(PlanId, Pot[ExecutionPlan])] = {
-    implicit val timeout = DefaultTimeout
-    client.executionPlan(id).map {
+  def loadPlan(id: PlanId): ClientIO[(PlanId, Pot[ExecutionPlan])] =
+    client.fetchPlan(id).map {
       case Some(plan) => id -> Ready(plan)
       case None       => id -> Unavailable
     }
-  }
 
-  def loadTasks(ids: Set[TaskId] = Set.empty)(
-      implicit passport: Passport
-  ): Future[Map[TaskId, Pot[TaskExecution]]] = {
-    implicit val timeout = DefaultTimeout
+  def loadTasks(ids: Set[TaskId] = Set.empty): ClientIO[Map[TaskId, Pot[TaskExecution]]] =
     if (ids.isEmpty) {
-      client.executions.map(_.map { case (k, v) => (k, Ready(v)) }.toMap)
+      client.fetchTasks().map(_.map { case (k, v) => (k, Ready(v)) }.toMap)
     } else {
-      Future.sequence(ids.map(loadTask)).map(_.toMap)
+      ids.toList.traverse(loadTask).map(_.toMap)
     }
-  }
 
-  def loadTask(id: TaskId)(
-      implicit passport: Passport
-  ): Future[(TaskId, Pot[TaskExecution])] = {
-    implicit val timeout = DefaultTimeout
-    client.execution(id).map {
+  def loadTask(id: TaskId): ClientIO[(TaskId, Pot[TaskExecution])] =
+    client.fetchTask(id).map {
       case Some(task) => id -> Ready(task)
       case None       => id -> Unavailable
     }
-  }
-
-  private[this] def foldIntoEvent[A <: Event](f: => Future[Either[QuckooError, A]]): Future[Event] =
-    EitherT(f)
-      .leftMap(fault => Failed(NonEmptyList.of[QuckooError](fault)))
-      .fold(identity, identity)
 
 }

@@ -14,95 +14,95 @@
  * limitations under the License.
  */
 
-package io.quckoo.client.http.akka
+// package io.quckoo.client.http.akka
 
-import akka.actor.ActorSystem
+// import akka.actor.ActorSystem
 
-import io.circe.generic.auto._
+// import io.circe.generic.auto._
 
-import io.quckoo.{ArtifactId, JobId}
-import io.quckoo.client.http.{HttpMethod, HttpRequest, WireMock}
-import io.quckoo.serialization.DataBuffer
-import io.quckoo.serialization.json._
+// import io.quckoo.{ArtifactId, JobId}
+// import io.quckoo.client.http.{HttpMethod, HttpRequest, WireMock}
+// import io.quckoo.serialization.DataBuffer
+// import io.quckoo.serialization.json._
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+// import com.github.tomakehurst.wiremock.client.WireMock._
 
-import org.scalatest.{Matchers, fixture}
+// import org.scalatest.{Matchers, fixture}
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+// import scala.concurrent.Await
+// import scala.concurrent.duration.Duration
 
-/**
-  * Created by alonsodomin on 20/09/2016.
-  */
-class AkkaHttpBackendSpec extends fixture.FlatSpec with WireMock with Matchers {
-  implicit val actorSystem = ActorSystem("AkkaHttpBackendSpec")
+// /**
+//   * Created by alonsodomin on 20/09/2016.
+//   */
+// class AkkaHttpBackendSpec extends fixture.FlatSpec with WireMock with Matchers {
+//   implicit val actorSystem = ActorSystem("AkkaHttpBackendSpec")
 
-  override protected def afterAll(): Unit = {
-    Await.ready(actorSystem.terminate(), Duration.Inf)
-    super.afterAll()
-  }
+//   override protected def afterAll(): Unit = {
+//     Await.ready(actorSystem.terminate(), Duration.Inf)
+//     super.afterAll()
+//   }
 
-  "on send" should "parse error codes correctly in any HTTP method" in { mockServer =>
-    val transport = new HttpAkkaBackend("localhost", mockServer.port)
+//   "on send" should "parse error codes correctly in any HTTP method" in { mockServer =>
+//     val transport = new HttpAkkaBackend("localhost", mockServer.port)
 
-    for (method <- HttpMethod.values) {
-      mockServer.stubFor(
-        request(method.entryName, anyUrl)
-          .willReturn(notFound)
-      )
+//     for (method <- HttpMethod.values) {
+//       mockServer.stubFor(
+//         request(method.entryName, anyUrl)
+//           .willReturn(notFound)
+//       )
 
-      val response = Await.result(
-        transport.send(HttpRequest(method, "/nowhere", Duration.Inf, Map.empty)),
-        Duration.Inf
-      )
+//       val response = Await.result(
+//         transport.send(HttpRequest(method, "/nowhere", Duration.Inf, Map.empty)),
+//         Duration.Inf
+//       )
 
-      response.statusCode shouldBe 404
-    }
-  }
+//       response.statusCode shouldBe 404
+//     }
+//   }
 
-  it should "send JSON body request and parse the JSON output" in { mockServer =>
-    val transport = new HttpAkkaBackend("localhost", mockServer.port)
+//   it should "send JSON body request and parse the JSON output" in { mockServer =>
+//     val transport = new HttpAkkaBackend("localhost", mockServer.port)
 
-    val input  = ArtifactId("com.example", "example", "latest")
-    val output = JobId("fooId")
+//     val input  = ArtifactId("com.example", "example", "latest")
+//     val output = JobId("fooId")
 
-    DataBuffer(input)
-      .flatMap(in => DataBuffer(output).map(out => (in, out)))
-      .foreach {
-        case (in, out) =>
-          mockServer.stubFor(
-            post(urlEqualTo("/path"))
-              .withRequestBody(equalToJson(in.asString()))
-              .willReturn(okJson(out.asString()))
-          )
+//     DataBuffer(input)
+//       .flatMap(in => DataBuffer(output).map(out => (in, out)))
+//       .foreach {
+//         case (in, out) =>
+//           mockServer.stubFor(
+//             post(urlEqualTo("/path"))
+//               .withRequestBody(equalToJson(in.asString()))
+//               .willReturn(okJson(out.asString()))
+//           )
 
-          val headers = Map("Content-Type" -> "application/json")
-          val response = Await.result(
-            transport.send(HttpRequest(HttpMethod.Post, "/path", Duration.Inf, headers, in)),
-            Duration.Inf
-          )
+//           val headers = Map("Content-Type" -> "application/json")
+//           val response = Await.result(
+//             transport.send(HttpRequest(HttpMethod.Post, "/path", Duration.Inf, headers, in)),
+//             Duration.Inf
+//           )
 
-          response.entity.asString() shouldBe out.asString()
-      }
-  }
+//           response.entity.asString() shouldBe out.asString()
+//       }
+//   }
 
-  it should "send Authorization header" in { mockServer =>
-    val transport = new HttpAkkaBackend("localhost", mockServer.port)
+//   it should "send Authorization header" in { mockServer =>
+//     val transport = new HttpAkkaBackend("localhost", mockServer.port)
 
-    mockServer.stubFor(
-      post(urlEqualTo("/path"))
-        .withHeader("Authorization", equalTo("foo"))
-        .willReturn(ok("OK!"))
-    )
+//     mockServer.stubFor(
+//       post(urlEqualTo("/path"))
+//         .withHeader("Authorization", equalTo("foo"))
+//         .willReturn(ok("OK!"))
+//     )
 
-    val headers = Map("Authorization" -> "foo")
-    val response = Await.result(
-      transport.send(HttpRequest(HttpMethod.Post, "/path", Duration.Inf, headers)),
-      Duration.Inf
-    )
+//     val headers = Map("Authorization" -> "foo")
+//     val response = Await.result(
+//       transport.send(HttpRequest(HttpMethod.Post, "/path", Duration.Inf, headers)),
+//       Duration.Inf
+//     )
 
-    response.entity.asString() shouldBe "OK!"
-  }
+//     response.entity.asString() shouldBe "OK!"
+//   }
 
-}
+// }

@@ -16,7 +16,12 @@
 
 package io.quckoo.console
 
+import cats.implicits._
+
 import diode.{ActionType, Effect}
+import diode.data.AsyncAction
+
+import io.quckoo.client.{ClientIO, ClientState}
 
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
@@ -25,6 +30,18 @@ import scala.language.implicitConversions
   * Created by alonsodomin on 05/07/2016.
   */
 package object core {
+
+  implicit class QuckooAsyncAction[A, P <: AsyncAction[A, P]](val self: AsyncAction[A, P])
+      extends AnyVal {
+    def clientEffect(effect: ClientIO[A])(implicit ec: ExecutionContext, clientState: ClientState) =
+      Effect(
+        effect
+          .map(self.ready)
+          .handleError(self.failed)
+          .runA(clientState)
+          .unsafeToFuture
+      )
+  }
 
   implicit def action2Effect[A: ActionType](action: => A)(implicit ec: ExecutionContext): Effect =
     Effect.action[A](action)

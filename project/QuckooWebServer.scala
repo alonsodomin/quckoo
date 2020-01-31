@@ -2,19 +2,14 @@ import sbt._
 import sbt.Keys._
 
 import com.lightbend.sbt.SbtAspectj
-
 import com.typesafe.sbt.web.Import._
-
 import spray.revolver.RevolverPlugin
-
 import org.irundaia.sbt.sass.SbtSassify
-
 import play.twirl.sbt.SbtTwirl
-
 import webscalajs.WebScalaJS
 
 trait QuckooAppKeys {
-  val sigarLoader = taskKey[File]("Sigar loader jar file")
+  val sigarLoader        = taskKey[File]("Sigar loader jar file")
   val sigarLoaderOptions = taskKey[Seq[String]]("JVM options for the Sigar loader")
 }
 object QuckooAppKeys extends QuckooAppKeys
@@ -31,7 +26,7 @@ object QuckooApp extends AutoPlugin {
     sigarLoaderOptions := Seq(s"-javaagent:${sigarLoader.value.getAbsolutePath}"),
     sigarLoaderOptions in Test := sigarLoaderOptions.value :+ s"-Dkamon.sigar.folder=${baseDirectory.value / "target" / "native"}",
     baseDirectory in reStart := baseDirectory.value / "target",
-    aspectjVersion in Aspectj := "1.8.13",
+    aspectjVersion in Aspectj := "1.9.2",
     aspectjSourceLevel in Aspectj := "-1.8",
     javaOptions in reStart ++= (aspectjWeaverOptions in Aspectj).value ++ (sigarLoaderOptions in Test).value,
     javaOptions in Test ++= (sigarLoaderOptions in Test).value,

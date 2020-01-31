@@ -18,9 +18,13 @@ package io.quckoo.protocol.scheduler
 
 import java.time.ZonedDateTime
 
+import io.circe.{Encoder, Decoder}
+import io.circe.generic.semiauto._
+
 import io.quckoo._
 import io.quckoo.Trigger.Immediate
 import io.quckoo.protocol.{Command, Event}
+import io.quckoo.serialization.json._
 
 import monocle.macros.Lenses
 
@@ -28,7 +32,7 @@ import scala.concurrent.duration.FiniteDuration
 
 sealed trait SchedulerCommand extends Command
 sealed trait SchedulerEvent   extends Event
-sealed trait ExecutionEvent   extends SchedulerEvent {
+sealed trait ExecutionEvent extends SchedulerEvent {
   val dateTime: ZonedDateTime
 }
 
@@ -39,29 +43,53 @@ final case class ScheduleJob(
     trigger: Trigger = Immediate,
     timeout: Option[FiniteDuration] = None
 ) extends SchedulerCommand
+object ScheduleJob {
+  implicit val scheduleJobEncoder: Encoder[ScheduleJob] =
+    deriveEncoder[ScheduleJob]
+
+  implicit val scheduleJobDecoder: Decoder[ScheduleJob] =
+    deriveDecoder[ScheduleJob]
+}
 
 final case class TaskScheduled(jobId: JobId, planId: PlanId, task: Task, dateTime: ZonedDateTime)
     extends ExecutionEvent
-final case class TaskTriggered(jobId: JobId,
-                               planId: PlanId,
-                               taskId: TaskId,
-                               dateTime: ZonedDateTime)
-    extends ExecutionEvent
-final case class TaskCompleted(jobId: JobId,
-                               planId: PlanId,
-                               taskId: TaskId,
-                               dateTime: ZonedDateTime,
-                               outcome: TaskExecution.Outcome)
-    extends ExecutionEvent
+final case class TaskTriggered(
+    jobId: JobId,
+    planId: PlanId,
+    taskId: TaskId,
+    dateTime: ZonedDateTime
+) extends ExecutionEvent
+final case class TaskCompleted(
+    jobId: JobId,
+    planId: PlanId,
+    taskId: TaskId,
+    dateTime: ZonedDateTime,
+    outcome: TaskExecution.Outcome
+) extends ExecutionEvent
 
 final case class JobFailedToSchedule(jobId: JobId, cause: QuckooError) extends SchedulerEvent
 
 final case class ExecutionPlanStarted(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime)
     extends ExecutionEvent
+object ExecutionPlanStarted {
+  implicit val executionPlanStartedEncoder: Encoder[ExecutionPlanStarted] =
+    deriveEncoder[ExecutionPlanStarted]
+
+  implicit val executionPlanStartedDecoder: Decoder[ExecutionPlanStarted] =
+    deriveDecoder[ExecutionPlanStarted]
+}
+
 final case class ExecutionPlanFinished(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime)
     extends ExecutionEvent
 final case class ExecutionPlanCancelled(jobId: JobId, planId: PlanId, dateTime: ZonedDateTime)
     extends ExecutionEvent
+object ExecutionPlanCancelled {
+  implicit val executionPlanCancelledEncoder: Encoder[ExecutionPlanCancelled] =
+    deriveEncoder[ExecutionPlanCancelled]
+
+  implicit val executionPlanCancelledDecoder: Decoder[ExecutionPlanCancelled] =
+    deriveDecoder[ExecutionPlanCancelled]
+}
 
 case object GetExecutionPlans                        extends SchedulerCommand
 final case class GetExecutionPlan(planId: PlanId)    extends SchedulerCommand

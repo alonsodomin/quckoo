@@ -28,36 +28,14 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Created by alonsodomin on 13/12/2015.
   */
-trait Registry {
+trait Registry[F[_]] {
 
-  def enableJob(jobId: JobId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[JobNotFound, JobEnabled]]
+  def registerJob(jobSpec: JobSpec): F[ValidatedNel[QuckooError, JobId]]
 
-  def disableJob(jobId: JobId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[JobNotFound, JobDisabled]]
+  def fetchJobs(): F[List[(JobId, JobSpec)]]
+  def fetchJob(jobId: JobId): F[Option[JobSpec]]
 
-  def fetchJob(jobId: JobId)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Option[JobSpec]]
-
-  def registerJob(jobSpec: JobSpec)(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[ValidatedNel[QuckooError, JobId]]
-
-  def fetchJobs(
-      implicit ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Seq[(JobId, JobSpec)]]
+  def enableJob(jobId: JobId): F[Unit]
+  def disableJob(jobId: JobId): F[Unit]
 
 }

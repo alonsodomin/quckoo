@@ -23,7 +23,7 @@ import org.scalajs.dom.html
 /**
   * Created by alonsodomin on 10/07/2016.
   */
-class LoginObserver($ : HtmlDomZipper) {
+class LoginObserver($ : DomZipperJs) {
 
   val usernameInput = $("#username").domAs[html.Input]
   val passwordInput = $("#password").domAs[html.Input]

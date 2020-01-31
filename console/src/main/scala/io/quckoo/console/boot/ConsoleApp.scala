@@ -16,6 +16,8 @@
 
 package io.quckoo.console.boot
 
+import cats.implicits._
+
 import diode.ActionProcessor
 import diode.react.ModelProxy
 
@@ -37,10 +39,13 @@ import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom._
 import japgolly.scalajs.react.vdom.Implicits._
 
+import slogging.LazyLogging
+
 /**
   * Created by alonsodomin on 14/05/2017.
   */
-object ConsoleApp {
+object ConsoleApp extends LazyLogging {
+  import CatsReact._
 
   case class Props(level: LogLevel, proxy: ModelProxy[ConsoleScope])
   case class State(router: Router[ConsoleRoute], processors: List[ActionProcessor[ConsoleScope]])
@@ -48,21 +53,25 @@ object ConsoleApp {
   class Backend($ : BackendScope[Props, State]) {
 
     def initialise: Callback = {
-      def connectProcessors(state: State): Callback =
-        state.processors
-          .map(p => Callback(ConsoleCircuit.addProcessor(p)))
-          .foldLeft(Callback.empty)(_ >> _)
+      def logInit: Callback = Callback {
+        logger.debug("Initialising console...")
+      }
 
-      $.state >>= connectProcessors
+      def connectProcessors(state: State): Callback =
+        state.processors.traverse_(p => Callback(ConsoleCircuit.addProcessor(p)))
+
+      logInit >> $.state >>= connectProcessors
     }
 
-    def dipose: Callback = {
-      def disconnectProcessors(state: State): Callback =
-        state.processors
-          .map(p => Callback(ConsoleCircuit.removeProcessor(p)))
-          .foldLeft(Callback.empty)(_ >> _)
+    def dispose: Callback = {
+      def logDispose: Callback = Callback {
+        logger.debug("Disposing console resources...")
+      }
 
-      $.state >>= disconnectProcessors
+      def disconnectProcessors(state: State): Callback =
+        state.processors.traverse_(p => Callback(ConsoleCircuit.removeProcessor(p)))
+
+      logDispose >> $.state >>= disconnectProcessors
     }
 
     def render(props: Props, state: State): VdomElement =
@@ -90,7 +99,7 @@ object ConsoleApp {
     .initialStateFromProps(initState)
     .renderBackend[Backend]
     .componentWillMount(_.backend.initialise)
-    .componentWillUnmount(_.backend.dipose)
+    .componentWillUnmount(_.backend.dispose)
     .build
 
   def apply(level: LogLevel) =

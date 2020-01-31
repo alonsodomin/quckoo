@@ -16,8 +16,11 @@
 
 package io.quckoo.client
 
+import cats.effect._
+
+import com.softwaremill.sttp.SttpBackend
+
 import io.quckoo.auth.Passport
-import io.quckoo.client.core.ProtocolSpecs
 
 /**
   * Created by alonsodomin on 04/09/2016.
@@ -52,9 +55,5 @@ package object http {
 
   @inline private[http] def authHeader(passport: Passport): (String, String) =
     AuthorizationHeader -> s"Bearer ${passport.token}"
-
-  type HttpQuckooClient = QuckooClient[HttpProtocol]
-
-  implicit val httpCommands: ProtocolSpecs[HttpProtocol] = Http
 
 }

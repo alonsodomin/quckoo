@@ -21,12 +21,12 @@ import io.quckoo.console.test.ConsoleTestExports
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.test.ReactTestUtils
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 /**
   * Created by alonsodomin on 11/07/2016.
   */
-class LoginTest extends FunSuite {
+class LoginTest extends AnyFunSuite {
   import ConsoleTestExports._
   import LoginTestDsl._
 
@@ -54,7 +54,7 @@ class LoginTest extends FunSuite {
 
   def runPlan(plan: dsl.Plan): Report[String] =
     ReactTestUtils.withRenderedIntoDocument(LoginForm((_, _) => Callback.empty)) { comp =>
-      def observe() = new LoginObserver(comp.htmlDomZipper)
+      def observe() = new LoginObserver(comp.domZipper)
 
       val test = plan
         .addInvariants(invariants)

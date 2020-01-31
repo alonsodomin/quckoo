@@ -30,14 +30,16 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 object AtTriggerInput {
 
-  case class Props(value: Option[Trigger.At],
-                   onUpdate: Option[Trigger.At] => Callback,
-                   readOnly: Boolean)
+  case class Props(
+      value: Option[Trigger.At],
+      onUpdate: Option[Trigger.At] => Callback,
+      readOnly: Boolean
+  )
   case class State(date: Option[LocalDate], time: Option[LocalTime])
 
   implicit val propsReuse: Reusability[Props] =
     Reusability.caseClassExcept('onUpdate)
-  implicit val stateReuse: Reusability[State] = Reusability.caseClass
+  implicit val stateReuse: Reusability[State] = Reusability.derive
 
   class Backend($ : BackendScope[Props, State]) {
 
@@ -102,9 +104,11 @@ object AtTriggerInput {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[Trigger.At],
-            onUpdate: Option[Trigger.At] => Callback,
-            readOnly: Boolean = false) =
+  def apply(
+      value: Option[Trigger.At],
+      onUpdate: Option[Trigger.At] => Callback,
+      readOnly: Boolean = false
+  ) =
     component(Props(value, onUpdate, readOnly))
 
 }

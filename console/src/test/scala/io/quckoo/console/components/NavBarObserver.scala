@@ -23,14 +23,14 @@ import org.scalajs.dom.html
 /**
   * Created by alonsodomin on 28/07/2016.
   */
-class NavBarObserver($ : HtmlDomZipper) {
+class NavBarObserver($ : DomZipperJs) {
 
-  val navItems = $.collect0n("li[role=presentation]").mapZippers { z =>
+  val navItems = $.collect0n("li[role=presentation]").map { z =>
     val anchor = z("a")
     Symbol(anchor.innerText) -> anchor.domAs[html.Anchor]
   } toMap
 
   val activeNavItem =
-    $.collect01("li.active").mapZippers(zipper => Symbol(zipper("a").innerText))
+    $.collect01("li.active").map(zipper => Symbol(zipper("a").innerText))
 
 }

@@ -21,12 +21,13 @@ import java.time.{LocalDate, LocalTime}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Created by alonsodomin on 13/04/2016.
   */
-class InputTest extends FlatSpec with Matchers {
+class InputTest extends AnyFlatSpec with Matchers {
 
   "An Input component" should "render an <input> properly typed" in {
     def onUpdate[A]: Input.OnUpdate[A] = _ => Callback.empty

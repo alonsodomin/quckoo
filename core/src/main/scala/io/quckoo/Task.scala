@@ -17,11 +17,14 @@
 package io.quckoo
 
 import cats.Show
-import cats.syntax.contravariant._
+import cats.implicits._
+
+import io.circe.generic.JsonCodec
 
 /**
   * Created by aalonsodominguez on 05/07/15.
   */
+@JsonCodec
 final case class Task(
     id: TaskId,
     jobPackage: JobPackage

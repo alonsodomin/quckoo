@@ -17,7 +17,7 @@
 package io.quckoo.console.registry
 
 import diode.{Effect, ModelRW}
-import diode.data.{AsyncAction, PotMap}
+import diode.data.{AsyncAction, PotMap, Ready}
 
 import io.quckoo.{JobId, JobSpec}
 import io.quckoo.console.components.Notification
@@ -33,14 +33,11 @@ import scala.concurrent.ExecutionContext
   */
 class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]], ops: ConsoleOps)(
     implicit ec: ExecutionContext
-) extends ConsoleHandler[PotMap[JobId, JobSpec]](model) with AuthHandler[PotMap[JobId, JobSpec]]
-    with LazyLogging {
+) extends ConsoleHandler[PotMap[JobId, JobSpec]](model) with LazyLogging {
 
   override protected def handle = {
     case LoadJobSpecs =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.loadJobSpecs().map(JobSpecsLoaded)))
-      }
+      runClientIO(ops.loadJobSpecs().map(JobSpecsLoaded))
 
     case JobSpecsLoaded(specs) if specs.nonEmpty =>
       logger.debug(s"Loaded ${specs.size} job specs from the server.")
@@ -48,10 +45,8 @@ class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]], ops:
 
     case JobAccepted(jobId, spec) =>
       logger.debug(s"Job has been accepted with identifier: $jobId")
-      // TODO re-enable following code once registerJob command is fully async
-      //val growl = Growl(Notification.info(s"Job accepted: $jobId"))
-      //updated(value + (jobId -> Ready(spec)), growl)
-      noChange
+      val growl = Growl(Notification.info(s"Job accepted: $jobId"))
+      updated(value + (jobId -> Ready(spec)), growl)
 
     case JobEnabled(jobId) =>
       effectOnly(
@@ -70,16 +65,11 @@ class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]], ops:
       )
 
     case action: RefreshJobSpecs =>
-      withAuth { implicit passport =>
-        val updateEffect =
-          action.effect(ops.loadJobSpecs(action.keys))(identity)
-        action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
-      }
+      val updateEffect = action.clientEffect(ops.loadJobSpecs(action.keys))
+      action.handleWith(this, updateEffect)(AsyncAction.mapHandler(action.keys))
 
     case RegisterJob(spec) =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.registerJob(spec)))
-      }
+      runClientIO(ops.registerJob(spec))
 
     case RegisterJobResult(validated) =>
       validated.toEither match {
@@ -102,14 +92,10 @@ class RegistryHandler(model: ModelRW[ConsoleScope, PotMap[JobId, JobSpec]], ops:
       }
 
     case EnableJob(jobId) =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.enableJob(jobId)))
-      }
+      runClientIO(ops.enableJob(jobId))
 
     case DisableJob(jobId) =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.disableJob(jobId)))
-      }
+      runClientIO(ops.disableJob(jobId))
   }
 
 }

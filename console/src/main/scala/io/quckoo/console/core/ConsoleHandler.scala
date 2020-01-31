@@ -16,10 +16,33 @@
 
 package io.quckoo.console.core
 
-import diode.{ActionHandler, ModelRW}
+import diode._
+
+import io.quckoo.client.ClientIO
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Created by alonsodomin on 14/05/2017.
   */
 abstract class ConsoleHandler[A](modelRW: ModelRW[ConsoleScope, A])
-    extends ActionHandler[ConsoleScope, A](modelRW)
+    extends ActionHandler[ConsoleScope, A](modelRW) {
+
+  implicit def clientState = modelRW.root.zoom(_.clientState).value
+
+  def toEffect[B: ActionType](
+      action: ClientIO[B]
+  )(implicit ec: ExecutionContext): Effect =
+    Effect(
+      action
+        .run(modelRW.root.zoom(_.clientState).value)
+        .map { case (state, result) => ClientCompleted(state, result) }
+        .unsafeToFuture
+    )
+
+  def runClientIO[B: ActionType](
+      action: ClientIO[B]
+  )(implicit ec: ExecutionContext) =
+    effectOnly(toEffect(action))
+
+}

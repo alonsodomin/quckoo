@@ -64,9 +64,11 @@ object CronTriggerInput {
         )
     } build
 
-  case class Props(value: Option[Trigger.Cron],
-                   onUpdate: Option[Trigger.Cron] => Callback,
-                   readOnly: Boolean)
+  case class Props(
+      value: Option[Trigger.Cron],
+      onUpdate: Option[Trigger.Cron] => Callback,
+      readOnly: Boolean
+  )
   case class State(inputExpr: Option[String], errorReason: Option[CronError] = None)
 
   class Backend($ : BackendScope[Props, State]) {
@@ -119,9 +121,11 @@ object CronTriggerInput {
     .renderBackend[Backend]
     .build
 
-  def apply(value: Option[Trigger.Cron],
-            onUpdate: Option[Trigger.Cron] => Callback,
-            readOnly: Boolean = false) =
+  def apply(
+      value: Option[Trigger.Cron],
+      onUpdate: Option[Trigger.Cron] => Callback,
+      readOnly: Boolean = false
+  ) =
     component(Props(value, onUpdate, readOnly))
 
 }

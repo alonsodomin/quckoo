@@ -138,14 +138,13 @@ class Input[A: Reusability] private[components] () {
     .builder[Props[A]]("Input")
     .stateless
     .renderBackend[Backend[A]]
-    .configure(
-      Reusability
-        .shouldComponentUpdate[Props[A], Children.None, Unit, Backend[A]]
-    )
+    .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(implicit C: Converter[A],
-                                                                     T: Type[A]) =
+  def apply(value: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(
+      implicit C: Converter[A],
+      T: Type[A]
+  ) =
     component(Props(value, None, onUpdate, attrs))
 
   def apply(value: Option[A], defaultValue: Option[A], onUpdate: OnUpdate[A], attrs: TagMod*)(

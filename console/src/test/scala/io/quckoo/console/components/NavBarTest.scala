@@ -21,12 +21,12 @@ import io.quckoo.console.test._
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.test.ReactTestUtils
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 /**
   * Created by alonsodomin on 29/07/2016.
   */
-class NavBarTest extends FunSuite {
+class NavBarTest extends AnyFunSuite {
   import ConsoleTestExports._
   import NavBarTestDsl._
 
@@ -44,7 +44,7 @@ class NavBarTest extends FunSuite {
     ReactTestUtils.withRenderedIntoDocument(
       NavBar(NavBar.Props(items, 'First, _ => Callback.empty))
     ) { comp =>
-      def observe() = new NavBarObserver(comp.htmlDomZipper)
+      def observe() = new NavBarObserver(comp.domZipper)
 
       val test = plan
         .addInvariants(invariants)

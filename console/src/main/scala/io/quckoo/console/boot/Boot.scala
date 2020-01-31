@@ -26,11 +26,11 @@ import io.quckoo.console.security.LoginPage
 
 import org.scalajs.dom
 
-import slogging.StrictLogging
+import slogging.LazyLogging
 
 import scalacss.internal.mutable.GlobalRegistry
 
-object Boot extends StrictLogging {
+object Boot extends LazyLogging {
   import CssSettings._
 
   private[this] def inlineStyles() = {

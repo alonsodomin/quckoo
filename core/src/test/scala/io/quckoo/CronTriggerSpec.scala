@@ -22,12 +22,13 @@ import cron4s._
 
 import io.quckoo.Trigger.{LastExecutionTime, ScheduledTime, Cron => CronTrigger}
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Created by alonsodomin on 03/09/2016.
   */
-class CronTriggerSpec extends FlatSpec with Matchers {
+class CronTriggerSpec extends AnyFlatSpec with Matchers {
 
   val zoneUTC = ZoneId.of("UTC")
   val instant = Instant.EPOCH

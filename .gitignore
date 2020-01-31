@@ -54,6 +54,7 @@ Thumbs.db
 ###############################
 target
 overlays/
+.mvn/
 
 # Tomcat artifacts #
 ####################
@@ -95,3 +96,9 @@ build
 # Kamon native libraries            #
 #####################################
 native/
+
+# ScalaMeta Metals #
+####################
+.metals/
+.bloop/
+metals.sbt

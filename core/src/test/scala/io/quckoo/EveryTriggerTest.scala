@@ -20,14 +20,15 @@ import java.time.{Clock, Instant, ZoneId, ZonedDateTime}
 
 import io.quckoo.Trigger.{Every, LastExecutionTime, ScheduledTime}
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.concurrent.duration._
 
 /**
   * Created by alonsodomin on 14/03/2016.
   */
-class EveryTriggerTest extends WordSpec with Matchers {
+class EveryTriggerTest extends AnyWordSpec with Matchers {
 
   val instant = Instant.EPOCH
   implicit val clock = Clock.fixed(instant, ZoneId.of("UTC"))

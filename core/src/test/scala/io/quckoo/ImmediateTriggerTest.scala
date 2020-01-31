@@ -20,12 +20,13 @@ import java.time.{Clock, Instant, ZoneId, ZonedDateTime}
 
 import io.quckoo.Trigger.{Immediate, LastExecutionTime, ScheduledTime}
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 /**
   * Created by alonsodomin on 14/03/2016.
   */
-class ImmediateTriggerTest extends WordSpec with Matchers {
+class ImmediateTriggerTest extends AnyWordSpec with Matchers {
 
   val instant = Instant.EPOCH
   implicit val clock = Clock.fixed(instant, ZoneId.of("UTC"))

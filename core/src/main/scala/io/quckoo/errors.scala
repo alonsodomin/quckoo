@@ -18,23 +18,30 @@ package io.quckoo
 
 import cats.data.NonEmptyList
 
+import enumeratum._
+
+import io.circe.generic.JsonCodec
+
 import io.quckoo.validation.Violation
 
 /**
   * Created by alonsodomin on 28/12/2015.
   */
-sealed trait QuckooError extends Product with Serializable
+
+@JsonCodec sealed abstract class QuckooError extends Exception
 
 // == Business errors ===============
 
-final case class JobNotFound(jobId: JobId)             extends QuckooError
-final case class JobNotEnabled(jobId: JobId)           extends QuckooError
-final case class ExecutionPlanNotFound(planId: PlanId) extends QuckooError
-final case class TaskExecutionNotFound(taskId: TaskId) extends QuckooError
+@JsonCodec final case class JobNotFound(jobId: JobId) extends QuckooError
+
+@JsonCodec final case class JobNotEnabled(jobId: JobId)           extends QuckooError
+@JsonCodec final case class ExecutionPlanNotFound(planId: PlanId) extends QuckooError
+@JsonCodec final case class TaskExecutionNotFound(taskId: TaskId) extends QuckooError
 
 // == Generic errors ================
 
-final case class ExceptionThrown(className: String, message: String) extends QuckooError {
+@JsonCodec final case class ExceptionThrown(className: String, message: String)
+    extends QuckooError {
 
   override def toString: String = s"$className: $message"
 
@@ -45,25 +52,27 @@ object ExceptionThrown {
 
 // == Artifact resolution errors ============
 
-final case class MissingDependencies(dependencies: NonEmptyList[DependencyError]) extends QuckooError
+@JsonCodec final case class MissingDependencies(dependencies: NonEmptyList[DependencyError])
+    extends QuckooError
 
-sealed trait DependencyError extends Product with Serializable {
+@JsonCodec sealed trait DependencyError extends Product with Serializable {
   val artifactId: ArtifactId
 }
-case class UnresolvedDependency(artifactId: ArtifactId) extends DependencyError
+@JsonCodec case class UnresolvedDependency(artifactId: ArtifactId) extends DependencyError
 
 object DownloadFailed {
-  sealed trait Reason
+  @JsonCodec
+  sealed trait Reason                     extends Product with Serializable
   case object NotFound                    extends Reason
   final case class Other(message: String) extends Reason
 }
-final case class DownloadFailed(artifactId: ArtifactId, reason: DownloadFailed.Reason)
+@JsonCodec final case class DownloadFailed(artifactId: ArtifactId, reason: DownloadFailed.Reason)
     extends DependencyError
 
 // == Validation errors ====================
 
-final case class ValidationFault(violation: Violation) extends QuckooError
+@JsonCodec final case class ValidationFault(violation: Violation) extends QuckooError
 
 // == Task Runtime Errors ==================
 
-final case class TaskExitCodeFault(exitCode: Int) extends QuckooError
+@JsonCodec final case class TaskExitCodeFault(exitCode: Int) extends QuckooError

@@ -20,12 +20,13 @@ import cats.implicits._
 
 import io.quckoo.validation._
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Created by alonsodomin on 24/01/2016.
   */
-class JobSpecSpec extends FlatSpec with Matchers {
+class JobSpecSpec extends AnyFlatSpec with Matchers {
   import Violation._
 
   "Validation for JobSpec parameters" should "not accept empty values" in {

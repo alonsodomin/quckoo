@@ -18,17 +18,23 @@ package io.quckoo.console.core
 
 import java.time.Clock
 
+import cats.implicits._
+
 import diode._
 import diode.react.ReactConnector
 
-import io.quckoo.client.http.HttpQuckooClient
-import io.quckoo.client.http.dom._
+import io.quckoo.auth.InvalidCredentials
+import io.quckoo.client.ClientIO
+import io.quckoo.client.http.{HttpQuckooClient, JSQuckooClient}
+import io.quckoo.console.ConsoleRoute
 import io.quckoo.console.dashboard.DashboardHandler
 import io.quckoo.console.registry.RegistryHandler
 import io.quckoo.console.scheduler.{ExecutionPlansHandler, SchedulerHandler, TasksHandler}
+import io.quckoo.protocol.Event
 
 import slogging.LazyLogging
 
+import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
@@ -42,7 +48,7 @@ object ConsoleCircuit
     implicit val consoleClock: Clock = Clock.systemDefaultZone
   }
 
-  override protected val client: HttpQuckooClient = HttpDOMQuckooClient
+  override protected val client: HttpQuckooClient = JSQuckooClient()
 
   override protected def initialModel: ConsoleScope = ConsoleScope.initial
 
@@ -64,35 +70,35 @@ object ConsoleCircuit
 
       case StartClusterSubscription =>
         if (!model.subscribed) {
-          model.passport.map { implicit passport =>
+          model.clientState.passport.map { implicit passport =>
             logger.debug("Opening console subscription channels...")
             openSubscriptionChannels(client)
             ActionResult.ModelUpdate(model.copy(subscribed = true))
           }
         } else None
-  }
+    }
 
-  val loginHandler = new ActionHandler(zoomTo(_.passport)) {
+  val loginHandler = new ConsoleHandler(zoomTo(_.clientState)) {
+
+    def performLogin(
+        username: String,
+        password: String,
+        referral: Option[ConsoleRoute]
+    ): ClientIO[Event] =
+      client
+        .signIn(username, password)
+        .map(_ => LoggedIn(referral).asInstanceOf[Event])
+        .onError {
+          case ex => logger.error("Unexpected error when performing login.", ex).pure[ClientIO]
+        }
+        .recover { case InvalidCredentials => LoginFailed }
 
     override def handle = {
       case Login(username, password, referral) =>
-        implicit val timeout = DefaultTimeout
-        effectOnly(
-          Effect(
-            client
-              .authenticate(username, password)
-              .map(pass => LoggedIn(pass, referral))
-              .recover {
-                case _ => LoginFailed
-              }
-          )
-        )
+        runClientIO(performLogin(username, password, referral))
 
       case Logout =>
-        implicit val timeout = DefaultTimeout
-        value.map { implicit passport =>
-          effectOnly(Effect(client.signOut.map(_ => LoggedOut)))
-        } getOrElse noChange
+        runClientIO(client.signOut.map(_ => LoggedOut))
     }
   }
 

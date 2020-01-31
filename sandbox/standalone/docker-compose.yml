@@ -31,7 +31,7 @@ services:
       - 8095:8095
       - 2551:2551
       - 9095:9095
-    links:
+    depends_on:
       - cassandra
     volumes:
       - ./etc/quckoo:/opt/quckoo/conf
@@ -44,7 +44,7 @@ services:
       - 8096:8095
       - 2552:2551
       - 9096:9095
-    links:
+    depends_on:
       - cassandra
       - master1
     volumes:
@@ -57,7 +57,7 @@ services:
     ports:
       - 5001:5001
       - 9097:9095
-    links:
+    depends_on:
       - master1
       - master2
     volumes:

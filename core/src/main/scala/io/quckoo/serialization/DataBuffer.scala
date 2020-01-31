@@ -45,8 +45,8 @@ final class DataBuffer private (protected val buffer: ByteBuffer) extends AnyVal
     new DataBuffer(newBuffer)
   }
 
-  def as[A](implicit decoder: Decoder[String, A]): Attempt[A] =
-    decoder.decode(asString())
+  // def as[A](implicit decoder: Decoder[String, A]): Attempt[A] =
+  //   decoder.decode(asString())
 
   def asString(charset: Charset = StandardCharsets.UTF_8): String = {
     val content = charset.decode(buffer).toString
@@ -73,9 +73,10 @@ object DataBuffer {
 
   final val Empty = new DataBuffer(ByteBuffer.allocateDirect(0))
 
-  def apply[A](a: A, charset: Charset = StandardCharsets.UTF_8)(
-      implicit encoder: Encoder[A, String]): Attempt[DataBuffer] =
-    encoder.encode(a).map(str => fromString(str, charset))
+  // def apply[A](a: A, charset: Charset = StandardCharsets.UTF_8)(
+  //     implicit encoder: Encoder[A, String]
+  // ): Attempt[DataBuffer] =
+  //   encoder.encode(a).map(str => fromString(str, charset))
 
   def apply(buffer: ByteBuffer): DataBuffer =
     new DataBuffer(buffer.asReadOnlyBuffer())

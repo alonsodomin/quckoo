@@ -19,6 +19,8 @@ package io.quckoo.auth
 import cats.{Eq, Show}
 import cats.implicits._
 
+import io.circe.parser.decode
+
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.serialization.json._
 import io.quckoo.util.Attempt
@@ -40,9 +42,11 @@ object Passport {
     def decodePart(part: Int): Attempt[DataBuffer] =
       tokenParts.map(_(part)).flatMap(DataBuffer.fromBase64)
 
-    def parseClaims = decodePart(1).flatMap(_.as[Map[String, String]])
+    def parseClaims = decodePart(1).flatMap { buff =>
+      decode[Map[String, String]](buff.asString())
+    }
 
-    parseClaims.map(claims => new Passport(claims, token))
+    parseClaims.map(new Passport(_, token))
   }
 
   implicit val passportEq: Eq[Passport] = Eq.fromUniversalEquals[Passport]

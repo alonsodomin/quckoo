@@ -23,26 +23,28 @@ import cats.implicits._
 import io.quckoo.md5.MD5
 import io.quckoo.validation._
 
+import io.circe.generic.JsonCodec
+
 import monocle.Prism
 import monocle.macros.{GenPrism, Lenses}
 
 /**
   * Created by alonsodomin on 17/02/2017.
   */
-sealed trait JobPackage {
+@JsonCodec sealed trait JobPackage {
   def checksum: String
 }
 
 object JobPackage {
 
   val valid: Validator[JobPackage] = {
-    (ShellScriptPackage.valid <*> JarJobPackage.valid).dimap[JobPackage, Validated[Violation, JobPackage]](
-      {
+    (ShellScriptPackage.valid <*> JarJobPackage.valid)
+      .dimap[JobPackage, Validated[Violation, JobPackage]]({
         case shell: ShellScriptPackage => Left(shell)
         case jar: JarJobPackage        => Right(jar)
       })(
-      _.map(_.fold(_.asInstanceOf[JobPackage], _.asInstanceOf[JobPackage]))
-    )
+        _.map(_.fold(_.asInstanceOf[JobPackage], _.asInstanceOf[JobPackage]))
+      )
   }
 
   def jar(artifactId: ArtifactId, jobClass: String): JarJobPackage =
@@ -50,7 +52,7 @@ object JobPackage {
 
   def shell(content: String): ShellScriptPackage = ShellScriptPackage(content)
 
-  val asJar: Prism[JobPackage, JarJobPackage] = GenPrism[JobPackage, JarJobPackage]
+  val asJar: Prism[JobPackage, JarJobPackage]        = GenPrism[JobPackage, JarJobPackage]
   val asShell: Prism[JobPackage, ShellScriptPackage] = GenPrism[JobPackage, ShellScriptPackage]
 
   implicit val jobPackageShow: Show[JobPackage] = Show.show {
@@ -60,7 +62,7 @@ object JobPackage {
 
 }
 
-@Lenses final case class ShellScriptPackage(content: String) extends JobPackage {
+@Lenses @JsonCodec final case class ShellScriptPackage(content: String) extends JobPackage {
   override def checksum: String = MD5.checksum(content)
 }
 object ShellScriptPackage {
@@ -77,9 +79,9 @@ object ShellScriptPackage {
 
 }
 
-@Lenses final case class JarJobPackage(
-  artifactId: ArtifactId,
-  jobClass: String
+@Lenses @JsonCodec final case class JarJobPackage(
+    artifactId: ArtifactId,
+    jobClass: String
 ) extends JobPackage {
 
   def checksum: String = MD5.checksum(s"$artifactId!$jobClass")
@@ -88,7 +90,7 @@ object ShellScriptPackage {
 
 object JarJobPackage {
 
-  implicit val jobPackageShow: Show[JarJobPackage] = Show.show { pckg =>
+  implicit val jarJobPackageShow: Show[JarJobPackage] = Show.show { pckg =>
     s"${pckg.jobClass} @ ${pckg.artifactId.show}"
   }
 

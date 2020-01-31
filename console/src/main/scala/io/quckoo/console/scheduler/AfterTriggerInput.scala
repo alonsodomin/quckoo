@@ -30,9 +30,11 @@ import scala.concurrent.duration.FiniteDuration
   */
 object AfterTriggerInput {
 
-  case class Props(value: Option[Trigger.After],
-                   onUpdate: Option[Trigger.After] => Callback,
-                   readOnly: Boolean)
+  case class Props(
+      value: Option[Trigger.After],
+      onUpdate: Option[Trigger.After] => Callback,
+      readOnly: Boolean
+  )
   implicit val propsReuse =
     Reusability.by[Props, Option[Trigger.After]](_.value)
 
@@ -60,9 +62,11 @@ object AfterTriggerInput {
     .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(value: Option[Trigger.After],
-            onUpdate: Option[Trigger.After] => Callback,
-            readOnly: Boolean = false) =
+  def apply(
+      value: Option[Trigger.After],
+      onUpdate: Option[Trigger.After] => Callback,
+      readOnly: Boolean = false
+  ) =
     component(Props(value, onUpdate, readOnly))
 
 }

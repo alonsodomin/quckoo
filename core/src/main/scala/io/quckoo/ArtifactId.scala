@@ -20,11 +20,14 @@ import cats._
 
 import io.quckoo.validation._
 
+import io.circe.generic.JsonCodec
+
 import monocle.macros.Lenses
 
 /**
   * Created by aalonsodominguez on 15/07/15.
   */
+@Lenses @JsonCodec final case class ArtifactId(organization: String, name: String, version: String)
 object ArtifactId {
 
   final val GroupSeparator: Char   = ':'
@@ -47,5 +50,3 @@ object ArtifactId {
   implicit val artifactIdEq: Eq[ArtifactId] = Eq.fromUniversalEquals[ArtifactId]
 
 }
-
-@Lenses final case class ArtifactId(organization: String, name: String, version: String)

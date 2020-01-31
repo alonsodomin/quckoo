@@ -53,10 +53,12 @@ object Panel {
     )
   } build
 
-  def apply(heading: String,
-            style: ContextStyle.Value = ContextStyle.default,
-            onHeaderClick: Option[Callback] = None,
-            addStyles: Seq[StyleA] = Seq.empty) =
+  def apply(
+      heading: String,
+      style: ContextStyle.Value = ContextStyle.default,
+      onHeaderClick: Option[Callback] = None,
+      addStyles: Seq[StyleA] = Seq.empty
+  ) =
     component(Props(heading, style, onHeaderClick, addStyles)) _
 
 }

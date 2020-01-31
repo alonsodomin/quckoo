@@ -36,32 +36,33 @@ object ClockWidget {
     "E, MMM d, HH:mm:ss"
   )
 
+  final case class Props(clock: Clock, refreshRate: FiniteDuration, formatter: DateTimeFormatter)
   final case class State(current: ZonedDateTime)
 
-  class Backend($ : BackendScope[Clock, State]) extends TimerSupport {
+  class Backend($ : BackendScope[Props, State]) extends TimerSupport {
 
     protected[ClockWidget] def mounted: Callback =
-      setInterval(tick(), 1 second)
+      $.props.flatMap(p => setInterval(tick(), p.refreshRate))
 
     def tick(): Callback =
-      $.props >>= updateCurrent
+      $.props.map(_.clock) >>= updateCurrent
 
     def updateCurrent(clock: Clock): Callback =
       $.modState(_.copy(current = ZonedDateTime.now(clock)))
 
-    def render(clock: Clock, state: State) =
-      <.span(DateTimeDisplay(state.current.toLocalDateTime, Some(Formatter)))
+    def render(props: Props, state: State) =
+      <.span(DateTimeDisplay(state.current.toLocalDateTime, Some(props.formatter)))
 
   }
 
   private[this] val component = ScalaComponent
-    .builder[Clock]("Clock")
-    .initialStateFromProps(clock => State(ZonedDateTime.now(clock)))
+    .builder[Props]("Clock")
+    .initialStateFromProps(props => State(ZonedDateTime.now(props.clock)))
     .renderBackend[Backend]
     .componentDidMount(_.backend.mounted)
     .configure(TimerSupport.install)
     .build
 
-  def apply(implicit clock: Clock) = component.withKey("clock")(clock)
+  def apply(implicit clock: Clock) = component.withKey("clock")(Props(clock, 1 second, Formatter))
 
 }

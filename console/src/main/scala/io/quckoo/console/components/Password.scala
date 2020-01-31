@@ -16,7 +16,7 @@
 
 package io.quckoo.console.components
 
-import japgolly.scalajs.react.extra.Reusability
+import japgolly.scalajs.react.Reusability
 
 /**
   * Created by alonsodomin on 03/07/2016.

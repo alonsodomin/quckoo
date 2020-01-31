@@ -25,6 +25,6 @@ case object GetClusterStatus extends Command
 sealed trait MasterEvent extends Event with Product with Serializable
 
 final case class MasterJoined(nodeId: NodeId, location: Location) extends MasterEvent
-final case class MasterReachable(nodeId: NodeId) extends MasterEvent
-final case class MasterUnreachable(nodeId: NodeId) extends MasterEvent
-final case class MasterRemoved(nodeId: NodeId) extends MasterEvent
+final case class MasterReachable(nodeId: NodeId)                  extends MasterEvent
+final case class MasterUnreachable(nodeId: NodeId)                extends MasterEvent
+final case class MasterRemoved(nodeId: NodeId)                    extends MasterEvent

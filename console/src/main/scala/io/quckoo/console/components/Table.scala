@@ -188,9 +188,11 @@ object Table {
   class Backend[Id, Item]($ : BackendScope[Props[Id, Item], State[Id]]) {
 
     private[this] def propagateSelection: Callback =
-      $.props.flatMap(
-        p => $.state.flatMap(s => p.onSelect.map(_(s.selected)).getOrElse(Callback.empty))
-      )
+      for {
+        props <- $.props
+        state <- $.state
+        act   <- props.onSelect.map(_(state.selected)).getOrElse(Callback.empty)
+      } yield act
 
     def visibleItems(props: Props[Id, Item]): ItemSeq[Id, Item] =
       props.filter map { f =>
@@ -210,7 +212,7 @@ object Table {
         if (allSelected(props, state)) state.copy(selected = Set.empty[Id])
         else state.copy(selected = props.items.map(_._1).toSet)
 
-      $.modState(updateState, propagateSelection)
+      $.modState(updateState _) >> propagateSelection
     }
 
     def toggleSelectItem(props: Props[Id, Item])(id: Id): Callback = {
@@ -223,7 +225,7 @@ object Table {
         state.copy(selected = newSet)
       }
 
-      $.modState(updateState, propagateSelection)
+      $.modState(updateState _) >> propagateSelection
     }
 
     def render(props: Props[Id, Item], state: State[Id]) = {
@@ -296,17 +298,19 @@ object Table {
       .renderBackend[Backend[Id, Item]]
       .build
 
-  def apply[Id, Item](headers: List[Symbol],
-                      items: ItemSeq[Id, Item],
-                      render: RowCellRender[Id, Item],
-                      headerRenderer: HeaderRenderer = DefaultHeaderRenderer,
-                      onRowClick: Option[RowCallback[Id]] = None,
-                      onSelect: Option[OnSelect[Id]] = None,
-                      actions: Option[RowActionsFactory[Id, Item]] = None,
-                      filter: Option[Filter[Id, Item]] = None,
-                      selected: Set[Id] = Set.empty[Id],
-                      style: Set[TableStyle.Value] = Set.empty[TableStyle.Value],
-                      key: Option[String] = None) =
+  def apply[Id, Item](
+      headers: List[Symbol],
+      items: ItemSeq[Id, Item],
+      render: RowCellRender[Id, Item],
+      headerRenderer: HeaderRenderer = DefaultHeaderRenderer,
+      onRowClick: Option[RowCallback[Id]] = None,
+      onSelect: Option[OnSelect[Id]] = None,
+      actions: Option[RowActionsFactory[Id, Item]] = None,
+      filter: Option[Filter[Id, Item]] = None,
+      selected: Set[Id] = Set.empty[Id],
+      style: Set[TableStyle.Value] = Set.empty[TableStyle.Value],
+      key: Option[String] = None
+  ) =
     component[Id, Item](
       Props(
         headers,

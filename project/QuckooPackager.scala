@@ -28,7 +28,8 @@ abstract class QuckooPackager extends AutoPlugin {
 
   protected lazy val defaultPackagingSettings: Seq[Def.Setting[_]] = Seq(
     QuckooPackagerKeys.extraJvmParams := defaultJvmParams,
-    bashScriptExtraDefines ++= QuckooPackagerKeys.extraJvmParams.value.map(p => s"""addJava "$p""""),
+    bashScriptExtraDefines ++= QuckooPackagerKeys.extraJvmParams.value
+      .map(p => s"""addJava "$p""""),
     maintainer in Docker := "A. Alonso Dominguez",
     dockerRepository := Some("quckoo"),
     dockerUpdateLatest := true,

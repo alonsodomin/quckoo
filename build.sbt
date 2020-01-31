@@ -1,3 +1,5 @@
+import java.time.{Clock, Instant}
+
 import sbtcrossproject.{crossProject, CrossType}
 import com.typesafe.sbt.pgp.PgpKeys
 import scala.xml.transform.{RewriteRule, RuleTransformer}
@@ -5,13 +7,8 @@ import scala.xml.transform.{RewriteRule, RuleTransformer}
 lazy val sandbox =
   settingKey[String]("The name of the environment sandbox to use.")
 
-inThisBuild(
-  Seq(
-    parallelExecution := false,
-    scalafmtVersion := Dependencies.version.scalafmt,
-    scalafmtOnCompile := true
-  )
-)
+Global / onChangedBuildSource := ReloadOnSourceChanges
+ThisBuild / parallelExecution := false
 
 lazy val commonSettings = Seq(
   homepage := Some(url("https://www.quckoo.io")),
@@ -35,19 +32,19 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-Xlint:-unused,_",
     "-Xfuture",
-    "-Xfatal-warnings",
+    //"-Xfatal-warnings",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Ypartial-unification"
   ),
   scalaModuleInfo := scalaModuleInfo.value.map(_.withOverrideScalaVersion(true)),
   resolvers ++= Seq(
-    Opts.resolver.mavenLocalFile,
     Resolver.bintrayRepo("krasserm", "maven"),
     Resolver.bintrayRepo("hseeberger", "maven"),
     Resolver.bintrayRepo("dnvriend", "maven"),
     Resolver.bintrayRepo("tecsisa", "maven-bintray-repo")
-  )
+  ),
+  libraryDependencies ++= Dependencies.compiler.plugins
 )
 
 lazy val commonJvmSettings = Seq(
@@ -58,6 +55,7 @@ lazy val commonJsSettings = Seq(
   coverageEnabled := false,
   scalaJSStage in Test := FastOptStage,
   jsEnv in Test := PhantomJSEnv().value,
+  //jsEnv in Test := PhantomJSEnv(autoExit = false).value,
   // batch mode decreases the amount of memory needed to compile scala.js code
   scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(isTravisBuild.value)
 )
@@ -159,31 +157,41 @@ lazy val quckoo = (project in file("."))
     examples,
     utilJS,
     utilJVM,
-    testSupportJS,
-    testSupportJVM
+    testkitJS,
+    testkitJVM
   )
 
 // Core ==================================================
 
 lazy val core =
-  (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("core"))
+  (crossProject(JSPlatform, JVMPlatform)
+    .withoutSuffixFor(JVMPlatform)
+    .crossType(CrossType.Pure) in file("core"))
     .enablePlugins(BuildInfoPlugin, AutomateHeaderPlugin)
     .settings(
       name := "core",
       moduleName := "quckoo-core",
       buildInfoPackage := "io.quckoo",
-      buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion),
+      buildInfoKeys := Seq[BuildInfoKey](
+        version,
+        scalaVersion,
+        sbtVersion,
+        BuildInfoKey.action("buildTime") {
+          Instant.now(Clock.systemUTC()).toString
+        }
+      ),
       buildInfoObject := "Info"
     )
     .settings(commonSettings)
     .settings(scoverageSettings)
     .settings(publishSettings)
     .settings(Dependencies.core)
+    .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
     .jsSettings(commonJsSettings)
     .jsSettings(Dependencies.coreJS)
     .jvmSettings(commonJvmSettings)
     .jvmSettings(Dependencies.coreJVM)
-    .dependsOn(util, testSupport % Test)
+    .dependsOn(util, testkit % Test)
 
 lazy val coreJS  = core.js
 lazy val coreJVM = core.jvm
@@ -191,40 +199,45 @@ lazy val coreJVM = core.jvm
 // API ==================================================
 
 lazy val api =
-  (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("api"))
+  (crossProject(JSPlatform, JVMPlatform)
+    .withoutSuffixFor(JVMPlatform)
+    .crossType(CrossType.Pure) in file("api"))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(commonSettings)
     .settings(scoverageSettings)
     .settings(publishSettings)
     .settings(Dependencies.api)
+    .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
     .jsSettings(commonJsSettings)
     .jvmSettings(commonJvmSettings)
     .settings(
       name := "api",
       moduleName := "quckoo-api"
     )
-    .dependsOn(core, testSupport % Test)
+    .dependsOn(core, testkit % Test)
 
 lazy val apiJS  = api.js
 lazy val apiJVM = api.jvm
 
 // Client ==================================================
 
-lazy val client = (crossProject(JSPlatform, JVMPlatform) in file("client"))
-  .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings)
-  .settings(scoverageSettings)
-  .settings(publishSettings)
-  .settings(Dependencies.client)
-  .jsSettings(commonJsSettings)
-  .jsSettings(Dependencies.clientJS)
-  .jvmSettings(commonJvmSettings)
-  .jvmSettings(Dependencies.clientJVM)
-  .settings(
-    name := "client",
-    moduleName := "quckoo-client"
-  )
-  .dependsOn(api, testSupport % Test)
+lazy val client =
+  (crossProject(JSPlatform, JVMPlatform).withoutSuffixFor(JVMPlatform) in file("client"))
+    .enablePlugins(AutomateHeaderPlugin)
+    .settings(commonSettings)
+    .settings(scoverageSettings)
+    .settings(publishSettings)
+    .settings(Dependencies.client)
+    .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
+    .jsSettings(commonJsSettings)
+    .jsSettings(Dependencies.clientJS)
+    .jvmSettings(commonJvmSettings)
+    .jvmSettings(Dependencies.clientJVM)
+    .settings(
+      name := "client",
+      moduleName := "quckoo-client"
+    )
+    .dependsOn(api, testkit % Test)
 
 lazy val clientJS  = client.js
 lazy val clientJVM = client.jvm
@@ -232,21 +245,21 @@ lazy val clientJVM = client.jvm
 // Console ==================================================
 
 lazy val console = (project in file("console"))
-  .enablePlugins(AutomateHeaderPlugin, ScalaJSPlugin, ScalaJSWeb)
+  .enablePlugins(AutomateHeaderPlugin, ScalaJSWeb, ScalaJSBundlerPlugin)
   .settings(commonSettings)
   .settings(commonJsSettings)
-  .settings(publishSettings)
+  .settings(noPublishSettings)
   .settings(Dependencies.console)
   .settings(
     name := "console",
     moduleName := "quckoo-console",
-    scalaJSUseMainModuleInitializer in Compile := true
+    scalaJSUseMainModuleInitializer := true
   )
-  .dependsOn(clientJS, testSupportJS % Test)
+  .dependsOn(clientJS, testkitJS % Test)
 
 // Server ==================================================
 
-lazy val shared = (project in file("shared"))
+lazy val shared = (project in file("cluster/shared"))
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings(commonJvmSettings)
@@ -256,14 +269,15 @@ lazy val shared = (project in file("shared"))
   .settings(
     moduleName := "quckoo-shared"
   )
-  .dependsOn(apiJVM, testSupportJVM % Test)
+  .dependsOn(apiJVM, testkitJVM % Test)
 
-lazy val master = (project in file("master"))
+lazy val master = (project in file("cluster/master"))
   .enablePlugins(
     AutomateHeaderPlugin,
     QuckooWebServer,
     QuckooServerPackager,
-    QuckooMultiJvmTesting
+    QuckooMultiJvmTesting,
+    WebScalaJSBundlerPlugin
   )
   .settings(commonSettings)
   .settings(commonJvmSettings)
@@ -274,13 +288,14 @@ lazy val master = (project in file("master"))
   .settings(
     moduleName := "quckoo-master",
     scalaJSProjects := Seq(console),
+    pipelineStages in Assets := Seq(scalaJSPipeline),
     dockerExposedPorts := Seq(2551, 8095, 9095),
     parallelExecution in Test := false,
     parallelExecution in MultiJvm := false
   )
-  .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
+  .dependsOn(shared % "compile->compile;test->test", testkitJVM % Test)
 
-lazy val worker = (project in file("worker"))
+lazy val worker = (project in file("cluster/worker"))
   .enablePlugins(AutomateHeaderPlugin, QuckooApp, QuckooServerPackager)
   .settings(commonSettings)
   .settings(commonJvmSettings)
@@ -292,40 +307,43 @@ lazy val worker = (project in file("worker"))
     dockerExposedPorts := Seq(5001, 9010, 9095),
     parallelExecution in Test := false
   )
-  .dependsOn(shared % "compile->compile;test->test", testSupportJVM % Test)
+  .dependsOn(shared % "compile->compile;test->test", testkitJVM % Test)
 
 // Misc Utilities ===========================================
 
-lazy val util = (crossProject(JSPlatform, JVMPlatform) in file("util"))
-  .enablePlugins(AutomateHeaderPlugin)
-  .settings(commonSettings)
-  .jsSettings(commonJsSettings)
-  .jsSettings(Dependencies.utilJS)
-  .jvmSettings(commonJvmSettings)
-  .settings(moduleName := "quckoo-util")
-  .dependsOn(testSupport % Test)
+lazy val util =
+  (crossProject(JSPlatform, JVMPlatform).withoutSuffixFor(JVMPlatform) in file("util"))
+    .enablePlugins(AutomateHeaderPlugin)
+    .settings(commonSettings)
+    .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
+    .jsSettings(commonJsSettings)
+    .jsSettings(Dependencies.utilJS)
+    .jvmSettings(commonJvmSettings)
+    .settings(moduleName := "quckoo-util")
+    .dependsOn(testkit % Test)
 
 lazy val utilJS  = util.js
 lazy val utilJVM = util.jvm
 
 // Test Support Utilities ===================================
 
-lazy val testSupport =
-  (crossProject(JSPlatform, JVMPlatform) in file("test-support"))
+lazy val testkit =
+  (crossProject(JSPlatform, JVMPlatform).withoutSuffixFor(JVMPlatform) in file("testkit"))
     .enablePlugins(AutomateHeaderPlugin)
     .settings(commonSettings)
     .settings(noPublishSettings)
-    .settings(Dependencies.testSupport)
+    .settings(Dependencies.testkit)
+    .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
     .jsSettings(commonJsSettings)
     .jvmSettings(commonJvmSettings)
-    .jvmSettings(Dependencies.testSupportJVM)
+    .jvmSettings(Dependencies.testkitJVM)
     .settings(
-      name := "test-support",
-      moduleName := "quckoo-test-support"
+      name := "testkit",
+      moduleName := "quckoo-testkit"
     )
 
-lazy val testSupportJS  = testSupport.js
-lazy val testSupportJVM = testSupport.jvm
+lazy val testkitJS  = testkit.js
+lazy val testkitJVM = testkit.jvm
 
 // Examples ==================================================
 
@@ -362,18 +380,35 @@ lazy val exampleProducers = (project in file("examples/producers"))
 // Command aliases ==================================================
 
 addCommandAlias(
+  "fmt",
+  Seq(
+    "scalafmt",
+    "scalafmtSbt"
+  ).mkString(";")
+)
+
+addCommandAlias(
+  "checkfmt",
+  Seq(
+    "scalafmtCheck",
+    "scalafmtSbtCheck"
+  ).mkString(";")
+)
+
+addCommandAlias(
   "testJS",
   Seq(
     "coreJS/test",
     "apiJS/test",
     "clientJS/test",
     "console/test"
-  ).mkString(";", ";", "")
+  ).mkString(";")
 )
 
 addCommandAlias(
   "validate",
   Seq(
+    "checkfmt",
     "test",
     "master/multi-jvm:test"
   ).mkString(";", ";", "")

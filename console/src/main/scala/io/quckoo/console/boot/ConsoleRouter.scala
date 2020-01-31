@@ -44,7 +44,7 @@ object ConsoleRouter {
       import dsl._
 
       (emptyRule
-        | staticRoute(root, Root) ~> redirectToPage(Dashboard)(Redirect.Push)
+        | staticRoute(root, Root) ~> redirectToPage(Dashboard)(SetRouteVia.HistoryPush)
         | staticRoute("#login", Login) ~> render(LoginPage(proxy)))
     }
 
@@ -53,7 +53,7 @@ object ConsoleRouter {
       import dsl._
 
       def isLoggedIn: CallbackTo[Boolean] =
-        CallbackTo { proxy().passport.isDefined }
+        CallbackTo { proxy().clientState.passport.isDefined }
 
       def redirectToLogin(referral: ConsoleRoute) =
         Some(render(LoginPage(proxy, Some(referral))))
@@ -62,7 +62,7 @@ object ConsoleRouter {
         | staticRoute("#home", Dashboard) ~> render(DashboardPage(proxy))
         | staticRoute("#registry", Registry) ~> render(RegistryPage(proxy))
         | staticRoute("#scheduler", Scheduler) ~> render(SchedulerPage(proxy)))
-        .addCondition(isLoggedIn)(redirectToLogin)
+        .addConditionWithOptionalFallback(isLoggedIn, redirectToLogin _)
     }
 
   def config(proxy: ModelProxy[ConsoleScope], logStream: Observable[LogRecord]) =
@@ -72,7 +72,7 @@ object ConsoleRouter {
       (emptyRule
         | publicPages(proxy)
         | privatePages(proxy))
-        .notFound(redirectToPage(Root)(Redirect.Replace))
+        .notFound(redirectToPage(Root)(SetRouteVia.HistoryReplace))
         .renderWith(Layout(proxy, logStream) _)
         .verify(ConsoleRoute.values.head, ConsoleRoute.values.tail: _*)
     }

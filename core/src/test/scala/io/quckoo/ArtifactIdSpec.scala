@@ -20,12 +20,13 @@ import cats.implicits._
 
 import io.quckoo.validation._
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Created by alonsodomin on 24/01/2016.
   */
-class ArtifactIdSpec extends FlatSpec with Matchers {
+class ArtifactIdSpec extends AnyFlatSpec with Matchers {
   import Violation._
 
   "ArtifactId" should "not accept empty strings" in {

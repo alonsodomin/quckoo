@@ -19,7 +19,7 @@ package io.quckoo
 import cats.{Eq, Show}
 import cats.instances.string._
 
-import io.circe.{Encoder, Decoder, KeyDecoder, KeyEncoder}
+import io.circe.{Encoder, Decoder, KeyDecoder, KeyEncoder, Codec}
 
 /**
   * Created by aalonsodominguez on 24/08/15.
@@ -46,11 +46,8 @@ object JobId {
 
   // Circe encoding/decoding
 
-  implicit val jobIdEncoder: Encoder[JobId] =
-    Encoder[String].contramap(_.id)
-
-  implicit val jobIdDecoder: Decoder[JobId] =
-    Decoder[String].map(apply)
+  implicit val jobIdJsonCodec: Codec[JobId] =
+    Codec.from(Decoder[String].map(apply), Encoder[String].contramap(_.id))
 
   implicit val jobIdKeyEncoder: KeyEncoder[JobId] = KeyEncoder.instance(_.id)
 
@@ -58,7 +55,7 @@ object JobId {
 
   // Typeclass instances
 
-  implicit val jobIdEq: Eq[JobId] = Eq.by(_.id)
+  implicit val jobIdEq: Eq[JobId]     = Eq.by(_.id)
   implicit val jobIdShow: Show[JobId] = Show.fromToString
 
 }

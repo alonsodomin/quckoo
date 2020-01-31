@@ -57,6 +57,7 @@ object Footer {
       <.div(
         props
           .proxy()
+          .clientState
           .passport
           .flatMap(_.principal)
           .map { _ =>

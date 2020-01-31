@@ -18,12 +18,14 @@ package io.quckoo
 
 import java.time.{Clock, ZonedDateTime}
 
+import io.circe.generic.JsonCodec
+
 import monocle.macros.Lenses
 
 /**
   * Created by alonsodomin on 14/03/2016.
   */
-@Lenses final case class ExecutionPlan(
+@Lenses @JsonCodec final case class ExecutionPlan(
     jobId: JobId,
     planId: PlanId,
     trigger: Trigger,
@@ -49,3 +51,5 @@ import monocle.macros.Lenses
   }
 
 }
+
+object ExecutionPlan {}

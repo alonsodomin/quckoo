@@ -29,7 +29,7 @@ object TextArea {
 
   implicit val propsReuse: Reusability[Props] =
     Reusability.caseClassExcept('onUpdate, 'attrs)
-  implicit val stateReuse: Reusability[State] = Reusability.caseClass[State]
+  implicit val stateReuse: Reusability[State] = Reusability.derive[State]
 
   class Backend($ : BackendScope[Props, State]) {
 

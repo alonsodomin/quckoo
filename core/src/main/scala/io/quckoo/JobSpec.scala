@@ -16,16 +16,20 @@
 
 package io.quckoo
 
-import cats.Show
+import cats.{Eq, Show}
 
 import io.quckoo.validation._
+
+import io.circe.generic.JsonCodec
 
 import monocle.macros.Lenses
 
 /**
   * Created by aalonsodominguez on 10/07/15.
   */
-@Lenses final case class JobSpec(
+@Lenses
+@JsonCodec
+final case class JobSpec(
     displayName: String,
     description: Option[String] = None,
     jobPackage: JobPackage,
@@ -38,14 +42,15 @@ object JobSpec {
     import Validators._
 
     val validDisplayName = nonEmpty[String].at("displayName")
-    val validDetails = JobPackage.valid.at("jobPackage")
+    val validDetails     = JobPackage.valid.at("jobPackage")
 
-    caseClass4(validDisplayName,
-      any[Option[String]],
-      validDetails,
-      any[Boolean])(JobSpec.unapply, JobSpec.apply)
+    caseClass4(validDisplayName, any[Option[String]], validDetails, any[Boolean])(
+      JobSpec.unapply,
+      JobSpec.apply
+    )
   }
 
-  implicit val display: Show[JobSpec] = Show.fromToString[JobSpec]
+  implicit val jobSpecEq: Eq[JobSpec]     = Eq.fromUniversalEquals
+  implicit val jobSpecShow: Show[JobSpec] = Show.fromToString[JobSpec]
 
 }

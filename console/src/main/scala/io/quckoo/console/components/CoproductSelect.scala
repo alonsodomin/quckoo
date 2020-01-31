@@ -57,7 +57,7 @@ object CoproductSelect {
   implicit def cacheReuse[A: Reusability]: Reusability[Map[Symbol, A]] =
     Reusability.map[Symbol, A]
   implicit def stateReuse[A: Reusability]: Reusability[State[A]] =
-    Reusability.caseClass[State[A]]
+    Reusability.derive[State[A]]
 
   class Backend[A: Reusability]($ : BackendScope[Props[A], State[A]]) {
 
@@ -145,24 +145,25 @@ final class CoproductSelect[A: Reusability] private[components] (
     .builder[Props[A]]("CoproductSelect")
     .initialStateFromProps(generateState)
     .renderBackendWithChildren[Backend[A]]
-    .configure(
-      Reusability
-        .shouldComponentUpdate[Props[A], Children.Varargs, State[A], Backend[A]]
-    )
+    .configure(Reusability.shouldComponentUpdate)
     .build
 
-  def apply(options: List[Symbol],
-            selector: Selector[A],
-            value: Option[A],
-            default: Symbol,
-            onUpdate: OnUpdate[A],
-            attrs: TagMod*) =
+  def apply(
+      options: List[Symbol],
+      selector: Selector[A],
+      value: Option[A],
+      default: Symbol,
+      onUpdate: OnUpdate[A],
+      attrs: TagMod*
+  ) =
     component(Props(options, selector, value, Some(default), onUpdate, attrs)) _
 
-  def apply(options: List[Symbol],
-            selector: Selector[A],
-            value: Option[A],
-            onUpdate: OnUpdate[A],
-            attrs: TagMod*) =
+  def apply(
+      options: List[Symbol],
+      selector: Selector[A],
+      value: Option[A],
+      onUpdate: OnUpdate[A],
+      attrs: TagMod*
+  ) =
     component(Props(options, selector, value, None, onUpdate, attrs)) _
 }

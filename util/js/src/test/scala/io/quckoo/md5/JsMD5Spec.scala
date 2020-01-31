@@ -16,9 +16,10 @@
 
 package io.quckoo.md5
 
-import org.scalatest._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
-class JsMD5Spec extends FlatSpec with Matchers {
+class JsMD5Spec extends AnyFlatSpec with Matchers {
 
   "MD5" should "generate MD5 checksums" in {
     val givenInput       = "foo"

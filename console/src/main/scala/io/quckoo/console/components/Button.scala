@@ -21,13 +21,14 @@ import io.quckoo.console.layout.{ContextStyle, lookAndFeel}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
 /**
   * Created by alonsodomin on 20/02/2016.
   */
 object Button {
+  val CssSettings = scalacss.devOrProdDefaults
+  import CssSettings._
 
   final case class Props(
       onClick: Option[Callback] = None,
@@ -53,10 +54,12 @@ object Button {
     }
     .build
 
-  def apply(onClick: Option[Callback] = None,
-            disabled: Boolean = false,
-            style: ContextStyle.Value = ContextStyle.default,
-            addStyles: Seq[StyleA] = Seq()) =
+  def apply(
+      onClick: Option[Callback] = None,
+      disabled: Boolean = false,
+      style: ContextStyle.Value = ContextStyle.default,
+      addStyles: Seq[StyleA] = Seq()
+  ) =
     component(Props(onClick, disabled, style, addStyles)) _
 
   def apply(props: Props, children: VdomNode*) = component(props)(children: _*)

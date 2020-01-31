@@ -28,7 +28,7 @@ object JobSpecFetcher extends Fetch[JobId] {
   override def fetch(key: JobId): Unit =
     ConsoleCircuit.dispatch(RefreshJobSpecs(keys = Set(key)))
 
-  override def fetch(keys: Traversable[JobId]): Unit =
+  override def fetch(keys: Iterable[JobId]): Unit =
     ConsoleCircuit.dispatch(RefreshJobSpecs(keys.toSet))
 
 }

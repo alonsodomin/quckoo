@@ -16,16 +16,22 @@
 
 package io.quckoo.net
 
+import io.circe.generic.JsonCodec
+
 import io.quckoo.NodeId
 
 /**
   * Created by alonsodomin on 03/04/2016.
   */
+@JsonCodec
 sealed trait QuckooNode {
   val id: NodeId
   val location: Location
   def status: NodeStatus
 }
 
+@JsonCodec
 final case class MasterNode(id: NodeId, location: Location, status: NodeStatus) extends QuckooNode
+
+@JsonCodec
 final case class WorkerNode(id: NodeId, location: Location, status: NodeStatus) extends QuckooNode

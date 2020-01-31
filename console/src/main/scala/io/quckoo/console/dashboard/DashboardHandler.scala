@@ -34,13 +34,11 @@ import scala.concurrent.ExecutionContext
   */
 class DashboardHandler(model: ModelRW[ConsoleScope, QuckooState], ops: ConsoleOps)(
     implicit ec: ExecutionContext
-) extends ConsoleHandler[QuckooState](model) with AuthHandler[QuckooState] with LazyLogging {
+) extends ConsoleHandler[QuckooState](model) with LazyLogging {
 
   override def handle = {
     case GetClusterStatus =>
-      withAuth { implicit passport =>
-        effectOnly(Effect(ops.refreshClusterStatus))
-      }
+      runClientIO(ops.refreshClusterStatus)
 
     case ClusterStateLoaded(state) =>
       updated(state)
