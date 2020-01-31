@@ -54,7 +54,7 @@ lazy val commonJvmSettings = Seq(
 lazy val commonJsSettings = Seq(
   coverageEnabled := false,
   scalaJSStage in Test := FastOptStage,
-  //jsEnv in Test := PhantomJSEnv().value,
+  jsEnv in Test := PhantomJSEnv().value,
   //jsEnv in Test := PhantomJSEnv(autoExit = false).value,
   // batch mode decreases the amount of memory needed to compile scala.js code
   scalaJSOptimizerOptions := scalaJSOptimizerOptions.value.withBatchMode(isTravisBuild.value)
@@ -245,10 +245,10 @@ lazy val clientJVM = client.jvm
 // Console ==================================================
 
 lazy val console = (project in file("console"))
-  .enablePlugins(AutomateHeaderPlugin, ScalaJSBundlerPlugin)
+  .enablePlugins(AutomateHeaderPlugin, ScalaJSWeb, ScalaJSBundlerPlugin)
   .settings(commonSettings)
   .settings(commonJsSettings)
-  .settings(publishSettings)
+  .settings(noPublishSettings)
   .settings(Dependencies.console)
   .settings(
     name := "console",

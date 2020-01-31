@@ -191,21 +191,22 @@ object Dependencies {
 
   lazy val console = Def.settings(
     libraryDependencies ++= Seq(
-      "org.scalatest"                     %%% "scalatest"         % Version.scalaTest % Test,
-      "io.suzaku"                         %%% "diode-react"       % Version.diode.react,
-      "be.doeraene"                       %%% "scalajs-jquery"    % Version.scalaJsJQuery,
-      "com.github.japgolly.scalajs-react" %%% "core"              % Version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "extra"             % Version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "ext-cats"          % Version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "ext-monocle-cats"  % Version.scalaJsReact,
-      "com.github.japgolly.scalajs-react" %%% "test"              % Version.scalaJsReact % Test,
-      "com.github.japgolly.scalacss"      %%% "core"              % Version.scalaCss,
-      "com.github.japgolly.scalacss"      %%% "ext-react"         % Version.scalaCss,
-      "com.github.japgolly.test-state"    %%% "core"              % Version.testState % Test,
-      "com.github.japgolly.test-state"    %%% "dom-zipper"        % Version.testState % Test,
-      "com.github.japgolly.test-state"    %%% "dom-zipper-sizzle" % Version.testState % Test,
-      "com.github.japgolly.test-state"    %%% "ext-scalajs-react" % Version.testState % Test,
-      "com.github.japgolly.test-state"    %%% "ext-cats"          % Version.testState % Test
+      "org.scalatest"                     %%% "scalatest"          % Version.scalaTest % Test,
+      "io.suzaku"                         %%% "diode-react"        % Version.diode.react,
+      "be.doeraene"                       %%% "scalajs-jquery"     % Version.scalaJsJQuery,
+      "io.github.cquiroz"                 %%% "scala-java-locales" % Version.scalaLocales,
+      "com.github.japgolly.scalajs-react" %%% "core"               % Version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "extra"              % Version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-cats"           % Version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "ext-monocle-cats"   % Version.scalaJsReact,
+      "com.github.japgolly.scalajs-react" %%% "test"               % Version.scalaJsReact % Test,
+      "com.github.japgolly.scalacss"      %%% "core"               % Version.scalaCss,
+      "com.github.japgolly.scalacss"      %%% "ext-react"          % Version.scalaCss,
+      "com.github.japgolly.test-state"    %%% "core"               % Version.testState % Test,
+      "com.github.japgolly.test-state"    %%% "dom-zipper"         % Version.testState % Test,
+      "com.github.japgolly.test-state"    %%% "dom-zipper-sizzle"  % Version.testState % Test,
+      "com.github.japgolly.test-state"    %%% "ext-scalajs-react"  % Version.testState % Test,
+      "com.github.japgolly.test-state"    %%% "ext-cats"           % Version.testState % Test
     ),
     npmDependencies in Compile ++= Seq(
       "react"            -> Version.reactJs,
