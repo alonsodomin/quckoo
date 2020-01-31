@@ -61,8 +61,8 @@ object ConsoleRouter {
       (emptyRule
         | staticRoute("#home", Dashboard) ~> render(DashboardPage(proxy))
         | staticRoute("#registry", Registry) ~> render(RegistryPage(proxy))
-        | staticRoute("#scheduler", Scheduler) ~> render(SchedulerPage(proxy))
-      ).addConditionWithOptionalFallback(isLoggedIn, redirectToLogin _)
+        | staticRoute("#scheduler", Scheduler) ~> render(SchedulerPage(proxy)))
+        .addConditionWithOptionalFallback(isLoggedIn, redirectToLogin _)
     }
 
   def config(proxy: ModelProxy[ConsoleScope], logStream: Observable[LogRecord]) =
@@ -71,8 +71,7 @@ object ConsoleRouter {
 
       (emptyRule
         | publicPages(proxy)
-        | privatePages(proxy)
-      )
+        | privatePages(proxy))
         .notFound(redirectToPage(Root)(SetRouteVia.HistoryReplace))
         .renderWith(Layout(proxy, logStream) _)
         .verify(ConsoleRoute.values.head, ConsoleRoute.values.tail: _*)

@@ -70,8 +70,8 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
   val replicationTimeout = 5 seconds
 
   implicit val node = DistributedData(context.system).selfUniqueAddress
-  
-  private[this] val pnPendingTasks = PNCounter.empty
+
+  private[this] val pnPendingTasks    = PNCounter.empty
   private[this] val pnInProgressTasks = PNCounter.empty
 
   private[this] var workers           = Map.empty[NodeId, WorkerState]
@@ -192,7 +192,7 @@ class TaskQueue private[scheduler] (maxWorkTimeout: FiniteDuration)
         pnInProgressTasks.decrement(1)
 
         sender ! TaskDoneAck(taskId)
-        
+
         notifyWorkers()
       }
 

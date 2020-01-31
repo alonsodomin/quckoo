@@ -118,7 +118,7 @@ class JarRegistration private[registry] (
     import context.dispatcher
 
     validate(artifactId)
-      .map(_.leftMap(MissingDependencies))
+      .map(_.leftMap(MissingDependencies(_)))
       .to[IO]
       .unsafeToFuture()
       .pipeTo(self)

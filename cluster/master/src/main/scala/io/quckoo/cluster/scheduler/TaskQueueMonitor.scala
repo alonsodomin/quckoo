@@ -52,11 +52,10 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
 
   private[this] var currentMetrics = QueueMetrics()
 
-  override def preStart(): Unit = {
+  override def preStart(): Unit =
     // replicator ! Replicator.Subscribe(TaskQueue.PendingKey, self)
     // replicator ! Replicator.Subscribe(TaskQueue.InProgressKey, self)
     mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Master.name, self)
-  }
 
   override def receive: Receive = initialising
 

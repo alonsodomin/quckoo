@@ -194,7 +194,8 @@ class Registry private[registry] (resolver: Resolver[IO], journal: QuckooJournal
     journal.read
       .currentEventsByTag(EventTag, journal.firstOffset)
       .runWith(
-        Sink.actorRefWithBackpressure(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed)
+        Sink
+          .actorRefWithBackpressure(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed)
       )
 
 }

@@ -25,7 +25,8 @@ import io.circe.{Encoder, Decoder, Codec}
   */
 package object json extends TimeJson {
 
-  implicit def validatedJsonCodec[E: Encoder : Decoder, A: Encoder : Decoder]: Codec[Validated[E, A]] =
+  implicit def validatedJsonCodec[E: Encoder: Decoder, A: Encoder: Decoder]
+      : Codec[Validated[E, A]] =
     Codec.codecForValidated("error", "success")
 
 }

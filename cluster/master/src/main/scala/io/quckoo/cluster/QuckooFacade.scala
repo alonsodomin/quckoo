@@ -210,7 +210,7 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
   def registerJob(jobSpec: JobSpec): IO[ValidatedNel[QuckooError, JobId]] = {
     val validatedJobSpec = JobSpec.valid.async
       .run(jobSpec)
-      .map(_.leftMap(ValidationFault).leftMap(_.asInstanceOf[QuckooError]))
+      .map(_.leftMap(ValidationFault(_)).leftMap(_.asInstanceOf[QuckooError]))
 
     EitherT(validatedJobSpec.map(_.toEither))
       .flatMapF { validJobSpec =>

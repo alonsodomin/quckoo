@@ -90,7 +90,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
 
   // -- Registry
 
-  def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]] = {
+  def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]] =
     for {
       request <- ClientIO.auth.map(
         _.post(buildUri(JobsURI)).body(jobSpec).response(asJson[ValidatedNel[QuckooError, JobId]])
@@ -99,7 +99,6 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
       body     <- ClientIO.fromEither(response.body)
       result   <- ClientIO.fromBody(body)
     } yield result
-  }
 
   def fetchJob(jobId: JobId): ClientIO[Option[JobSpec]] =
     for {

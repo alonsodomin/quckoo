@@ -88,10 +88,10 @@ object ConsoleCircuit
       client
         .signIn(username, password)
         .map(_ => LoggedIn(referral).asInstanceOf[Event])
-        .recover { case InvalidCredentials => LoginFailed }
         .onError {
           case ex => logger.error("Unexpected error when performing login.", ex).pure[ClientIO]
         }
+        .recover { case InvalidCredentials => LoginFailed }
 
     override def handle = {
       case Login(username, password, referral) =>

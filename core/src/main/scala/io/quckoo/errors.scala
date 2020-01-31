@@ -40,7 +40,8 @@ import io.quckoo.validation.Violation
 
 // == Generic errors ================
 
-@JsonCodec final case class ExceptionThrown(className: String, message: String) extends QuckooError {
+@JsonCodec final case class ExceptionThrown(className: String, message: String)
+    extends QuckooError {
 
   override def toString: String = s"$className: $message"
 
@@ -60,7 +61,7 @@ object ExceptionThrown {
 @JsonCodec case class UnresolvedDependency(artifactId: ArtifactId) extends DependencyError
 
 object DownloadFailed {
-  @JsonCodec 
+  @JsonCodec
   sealed trait Reason                     extends Product with Serializable
   case object NotFound                    extends Reason
   final case class Other(message: String) extends Reason

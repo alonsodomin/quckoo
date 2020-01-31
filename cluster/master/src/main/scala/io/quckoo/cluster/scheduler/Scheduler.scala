@@ -169,7 +169,9 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
       }
 
     case GetTaskExecutions =>
-      Source(executions).runWith(Sink.actorRef(sender(), Status.Success(GetTaskExecutions), Status.Failure(_)))
+      Source(executions).runWith(
+        Sink.actorRef(sender(), Status.Success(GetTaskExecutions), Status.Failure(_))
+      )
 
     case msg: WorkerMessage =>
       taskQueue forward msg
@@ -236,7 +238,8 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
     executionPlanEvents
       .concat(executionEvents)
       .runWith(
-        Sink.actorRefWithBackpressure(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed)
+        Sink
+          .actorRefWithBackpressure(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed)
       )
   }
 
