@@ -16,10 +16,13 @@
 
 package io.quckoo.serialization
 
-import io.circe.{Encoder => CirceEncoder, Decoder => CirceDecoder}
+import cats.data.ValidatedNel
+
+import io.circe.{Encoder => CirceEncoder, Decoder => CirceDecoder, Codec => CirceCodec}
 import io.circe.parser._
 import io.circe.syntax._
 
+import io.quckoo.QuckooError
 import io.quckoo.util.Attempt
 
 /**
@@ -30,6 +33,9 @@ package object json extends TimeJson {
   type JsonCodec[A]   = Codec[A, String]
   type JsonEncoder[A] = Encoder[A, String]
   type JsonDecoder[A] = Decoder[String, A]
+
+  implicit def errorCodec[A: CirceCodec]: CirceCodec[ValidatedNel[QuckooError, A]] =
+    CirceCodec.codecForValidated("error", "success")
 
   implicit def JsonEncoderInstance[A: CirceEncoder]: JsonEncoder[A] =
     (a: A) => Attempt(a.asJson.noSpaces)

@@ -34,7 +34,7 @@ import io.quckoo.util.Attempt
 import com.softwaremill.sttp._
 import com.softwaremill.sttp.circe._
 
-import io.circe.{Error => JsonError, _}
+import io.circe.{Error => JsonError, Decoder}
 
 import monix.eval.Task
 import monix.reactive.Observable
@@ -91,10 +91,6 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
   // -- Registry
 
   def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]] = {
-    // The Scala compiler needs some help resolving this decoder
-    implicit lazy val resultDec: Decoder[ValidatedNel[QuckooError, JobId]] =
-      Decoder[ValidatedNel[QuckooError, JobId]]
-
     for {
       request <- ClientIO.auth.map(
         _.post(uri"$JobsURI").body(jobSpec).response(asJson[ValidatedNel[QuckooError, JobId]])

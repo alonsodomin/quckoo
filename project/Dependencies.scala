@@ -303,7 +303,7 @@ object Dependencies {
       Kamon.http,
       scopt,
       authenticatJwt,
-      "com.vmunier"       %% "scalajs-scripts" % Version.scalaJSScripts,
+      //"com.vmunier"       %% "scalajs-scripts" % Version.scalaJSScripts,
       "org.webjars"       % "codemirror"       % Version.codemirror,
       "org.webjars.bower" % "animatewithsass"  % Version.animate
     )

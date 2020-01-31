@@ -25,7 +25,6 @@ import cats.implicits._
 
 import com.softwaremill.sttp._
 
-import io.circe.Encoder
 import io.circe.syntax._
 
 import io.quckoo._
@@ -35,7 +34,8 @@ import io.quckoo.client._
 import io.quckoo.net.QuckooState
 import io.quckoo.serialization.DataBuffer
 
-import org.scalatest.{AsyncFlatSpec, Matchers}
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 object HttpQuckooClientSpec {
 
@@ -138,9 +138,6 @@ class HttpQuckooClientSpec extends AsyncFlatSpec with Matchers {
   // -- Register Job
 
   "registerJob" must "return a validated JobId when it succeeds" in {
-    implicit lazy val resultEnc: Encoder[ValidatedNel[QuckooError, JobId]] =
-      Encoder[ValidatedNel[QuckooError, JobId]]
-
     val givenPassport = randomPassport
     val clientState = ClientState(Some(givenPassport))
 
@@ -153,7 +150,7 @@ class HttpQuckooClientSpec extends AsyncFlatSpec with Matchers {
 
     val client = HttpQuckooClientStub { stub =>
       stub.whenRequestMatches { req =>
-        req.uri.path.endsWith(List("api", "registry")) &&
+        req.uri.path.endsWith(List("api", "registry", "jobs")) &&
         req.method == Method.POST &&
         req.headers.contains(AuthorizationHeader -> s"Bearer ${givenPassport.token}")
       }.thenRespond(jobId.asJson.noSpaces)
