@@ -20,7 +20,7 @@ import java.util.UUID
 
 import cats.{Eq, Show}
 
-import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
+import io.circe.{Decoder, Encoder, Codec, KeyDecoder, KeyEncoder}
 
 import scala.util.Try
 
@@ -37,11 +37,8 @@ object NodeId {
 
   // Circe encoding/decoding
 
-  implicit val circeNodeIdEncoder: Encoder[NodeId] =
-    Encoder[UUID].contramap(_.uuid)
-
-  implicit val circeNodeIdDecoder: Decoder[NodeId] =
-    Decoder[UUID].map(apply)
+  implicit val nodeIdJsonCodec: Codec[NodeId] =
+    Codec.from(Decoder[UUID].map(apply), Encoder[UUID].contramap(_.uuid))
 
   implicit val circeNodeIdKeyEncoder: KeyEncoder[NodeId] =
     KeyEncoder.instance(_.uuid.toString)

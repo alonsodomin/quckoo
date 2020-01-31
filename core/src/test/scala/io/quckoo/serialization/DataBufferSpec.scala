@@ -18,6 +18,9 @@ package io.quckoo.serialization
 
 import java.nio.charset.StandardCharsets
 
+import io.circe.parser.decode
+import io.circe.syntax._
+
 import io.quckoo.serialization.base64.Base64Codec
 import io.quckoo.serialization.json._
 
@@ -41,7 +44,7 @@ class DataBufferSpec extends AnyFlatSpec with EitherValues with Matchers {
 
   "A DataBuffer (non empty)" should "deserialize to the original serialized object" in {
     val data = Some(10)
-    val returnedBackNForth = DataBuffer(data).flatMap(_.as[Option[Int]])
+    val returnedBackNForth = decode[Option[Int]](DataBuffer.fromString(data.asJson.noSpaces).asString())
 
     returnedBackNForth.right.value shouldBe data
   }

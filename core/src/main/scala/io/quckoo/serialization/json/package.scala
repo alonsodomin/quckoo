@@ -16,37 +16,16 @@
 
 package io.quckoo.serialization
 
-import cats.data.ValidatedNel
+import cats.data.Validated
 
-import io.circe.{Encoder => CirceEncoder, Decoder => CirceDecoder, Codec => CirceCodec}
-import io.circe.parser._
-import io.circe.syntax._
-
-import io.quckoo.QuckooError
-import io.quckoo.util.Attempt
+import io.circe.{Encoder, Decoder, Codec}
 
 /**
   * Created by alonsodomin on 11/08/2016.
   */
 package object json extends TimeJson {
 
-  type JsonCodec[A]   = Codec[A, String]
-  type JsonEncoder[A] = Encoder[A, String]
-  type JsonDecoder[A] = Decoder[String, A]
-
-  implicit def errorCodec[A: CirceCodec]: CirceCodec[ValidatedNel[QuckooError, A]] =
-    CirceCodec.codecForValidated("error", "success")
-
-  implicit def JsonEncoderInstance[A: CirceEncoder]: JsonEncoder[A] =
-    (a: A) => Attempt(a.asJson.noSpaces)
-
-  implicit def JsonDecoderInstance[A: CirceDecoder]: JsonDecoder[A] =
-    (input: String) => parse(input).flatMap(_.as[A])
-
-  implicit def JsonCodecInstance[A: CirceDecoder: CirceEncoder]: JsonCodec[A] = new JsonCodec[A] {
-    def encode(a: A): Attempt[String] = Attempt(a.asJson.noSpaces)
-
-    def decode(input: String): Attempt[A] = parse(input).flatMap(_.as[A])
-  }
+  implicit def validatedJsonCodec[E: Encoder : Decoder, A: Encoder : Decoder]: Codec[Validated[E, A]] =
+    Codec.codecForValidated("error", "success")
 
 }

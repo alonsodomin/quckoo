@@ -16,15 +16,14 @@
 
 package io.quckoo.serialization.base64
 
-import io.quckoo.serialization.Codec
 import io.quckoo.util.Attempt
 
 /**
   * Created by alonsodomin on 20/10/2016.
   */
-final class Base64Codec(scheme: Scheme) extends Codec[String, Array[Byte]] {
+final class Base64Codec(scheme: Scheme) {
 
-  override def encode(a: String): Attempt[Array[Byte]] = {
+  def encode(a: String): Attempt[Array[Byte]] = {
     lazy val cleanS = a.reverse.dropWhile(_ == '=').reverse
     lazy val pad    = a.length - cleanS.length
 
@@ -41,7 +40,7 @@ final class Base64Codec(scheme: Scheme) extends Codec[String, Array[Byte]] {
       }
   }
 
-  override def decode(input: Array[Byte]): Attempt[String] = {
+  def decode(input: Array[Byte]): Attempt[String] = {
     val pad = (3 - input.length % 3) % 3
 
     def sixBits(x: Array[Byte]): Array[Int] = {

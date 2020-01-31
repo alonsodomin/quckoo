@@ -33,6 +33,7 @@ import io.quckoo.auth.{InvalidCredentials, Passport}
 import io.quckoo.client._
 import io.quckoo.net.QuckooState
 import io.quckoo.serialization.DataBuffer
+import io.quckoo.serialization.json._
 
 import org.scalatest.flatspec.AsyncFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -153,7 +154,7 @@ class HttpQuckooClientSpec extends AsyncFlatSpec with Matchers {
         req.uri.path.endsWith(List("api", "registry", "jobs")) &&
         req.method == Method.POST &&
         req.headers.contains(AuthorizationHeader -> s"Bearer ${givenPassport.token}")
-      }.thenRespond(jobId.asJson.noSpaces)
+      }.thenRespond(jobId.validNel[QuckooError].asJson.noSpaces)
     }
 
     client.registerJob(jobSpec).runA(clientState).unsafeToFuture().map { result =>

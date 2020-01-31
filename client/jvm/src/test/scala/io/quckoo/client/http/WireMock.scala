@@ -21,14 +21,16 @@ import java.util.concurrent.TimeUnit
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
-import org.scalatest.{BeforeAndAfterAll, Outcome, fixture}
+
+import org.scalatest.{BeforeAndAfterAll, Outcome}
+import org.scalatest.flatspec.FixtureAnyFlatSpec
 
 import scala.util.control.NonFatal
 
 /**
   * Created by alonsodomin on 19/09/2016.
   */
-trait WireMock extends fixture.FlatSpec with BeforeAndAfterAll {
+trait WireMock extends FixtureAnyFlatSpec with BeforeAndAfterAll {
   type FixtureParam = WireMockServer
 
   private[this] def findFreePort(): Int = {

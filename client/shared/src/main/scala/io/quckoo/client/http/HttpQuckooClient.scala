@@ -93,7 +93,7 @@ abstract class HttpQuckooClient private[http] (baseUri: Option[Uri])(
   def registerJob(jobSpec: JobSpec): ClientIO[ValidatedNel[QuckooError, JobId]] = {
     for {
       request <- ClientIO.auth.map(
-        _.post(uri"$JobsURI").body(jobSpec).response(asJson[ValidatedNel[QuckooError, JobId]])
+        _.post(buildUri(JobsURI)).body(jobSpec).response(asJson[ValidatedNel[QuckooError, JobId]])
       )
       response <- ClientIO.fromEffect(request.send())
       body     <- ClientIO.fromEither(response.body)

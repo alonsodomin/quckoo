@@ -20,7 +20,7 @@ import java.util.UUID
 
 import cats.{Eq, Show}
 
-import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
+import io.circe.{Decoder, Encoder, Codec, KeyDecoder, KeyEncoder}
 
 import scala.util.Try
 
@@ -39,11 +39,8 @@ object TaskId {
 
   // Circe encoding/decoding
 
-  implicit val circeTaskIdEncoder: Encoder[TaskId] =
-    Encoder[UUID].contramap(_.uuid)
-
-  implicit val circeTaskIdDecoder: Decoder[TaskId] =
-    Decoder[UUID].map(apply)
+  implicit val circeTaskIdCodec: Codec[TaskId] =
+    Codec.from(Decoder[UUID].map(apply), Encoder[UUID].contramap(_.uuid))
 
   implicit val circeTaskIdKeyEncoder: KeyEncoder[TaskId] =
     KeyEncoder.instance(_.uuid.toString)
