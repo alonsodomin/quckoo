@@ -25,8 +25,8 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
 
 import cats.data.ValidatedNel
-import cats.syntax.either._
-import cats.syntax.validated._
+import cats.effect.IO
+import cats.implicits._
 
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
 
@@ -38,7 +38,8 @@ import io.quckoo.auth.Passport
 import io.quckoo.protocol.registry._
 import io.quckoo.serialization.DataBuffer
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -75,7 +76,7 @@ object RegistryHttpRouterSpec {
 }
 
 class RegistryHttpRouterSpec
-    extends WordSpec with ScalatestRouteTest with Matchers with RegistryHttpRouter with RegistryApi
+    extends AnyWordSpec with ScalatestRouteTest with Matchers with RegistryHttpRouter with RegistryApi[IO]
     with RegistryStreams {
 
   import RegistryHttpRouterSpec._
@@ -87,38 +88,23 @@ class RegistryHttpRouterSpec
     registryApi
   }
 
-  override def enableJob(jobId: JobId)(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[JobNotFound, JobEnabled]] = {
+  override def enableJob(jobId: JobId): IO[Unit] = {
     val response = {
       if (TestJobMap.contains(jobId)) JobEnabled(jobId).asRight[JobNotFound]
       else JobNotFound(jobId).asLeft[JobEnabled]
     }
-    Future.successful(response)
+    IO.pure(response).void
   }
 
-  override def disableJob(jobId: JobId)(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[JobNotFound, JobDisabled]] = {
+  override def disableJob(jobId: JobId): IO[Unit] = {
     val response = {
       if (TestJobMap.contains(jobId)) JobDisabled(jobId).asRight[JobNotFound]
       else JobNotFound(jobId).asLeft[JobDisabled]
     }
-    Future.successful(response)
+    IO.pure(response).void
   }
 
-  override def registerJob(jobSpec: JobSpec)(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[ValidatedNel[QuckooError, JobId]] = Future.successful {
+  override def registerJob(jobSpec: JobSpec): IO[ValidatedNel[QuckooError, JobId]] = IO {
     JobSpec.valid
       .run(jobSpec)
       .map(JobId(_))
@@ -126,21 +112,11 @@ class RegistryHttpRouterSpec
       .toValidatedNel
   }
 
-  override def fetchJobs(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Seq[(JobId, JobSpec)]] =
-    Future.successful(TestJobMap.toSeq)
+  override def fetchJobs(): IO[List[(JobId, JobSpec)]] =
+    IO.pure(TestJobMap.toSeq.toList)
 
-  override def fetchJob(jobId: JobId)(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Option[JobSpec]] =
-    Future.successful(TestJobMap.get(jobId))
+  override def fetchJob(jobId: JobId): IO[Option[JobSpec]] =
+    IO.pure(TestJobMap.get(jobId))
 
   override def registryTopic: Source[RegistryEvent, NotUsed] = ???
 

@@ -23,11 +23,11 @@ import org.scalajs.dom.html
 /**
   * Created by alonsodomin on 03/09/2016.
   */
-class CronTriggerInputObserver($ : HtmlDomZipper) {
+class CronTriggerInputObserver($ : DomZipperJs) {
 
   val expressionInput = $("#cronTrigger").domAs[html.Input]
   val parseError = $.collect01("#cronParseError")
-    .mapZippers(_.domAs[html.Div])
+    .map(_.domAs[html.Div])
     .map(_.innerHTML)
 
 }

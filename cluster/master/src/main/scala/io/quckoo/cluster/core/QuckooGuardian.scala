@@ -60,7 +60,7 @@ class QuckooGuardian(settings: ClusterSettings, journal: QuckooJournal, boot: Pr
 
   import QuckooGuardian._
 
-  ClusterClientReceptionist(context.system).registerService(self)
+  //ClusterClientReceptionist(context.system).registerService(self)
 
   private[this] val cluster = Cluster(context.system)
 

@@ -25,7 +25,7 @@ import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.pattern._
 import akka.persistence.query.EventEnvelope
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
@@ -83,12 +83,9 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
   import Scheduler._
   import SchedulerTagEventAdapter.tags
 
-  ClusterClientReceptionist(context.system).registerService(self)
+  //ClusterClientReceptionist(context.system).registerService(self)
 
-  final implicit val materializer = ActorMaterializer(
-    ActorMaterializerSettings(context.system),
-    "scheduler"
-  )
+  final implicit val materializer = Materializer(context.system)
 
   private[this] val mediator = DistributedPubSub(context.system).mediator
 
@@ -162,7 +159,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
 
       Source(planIds)
         .mapAsync(2)(fetchPlanAsync)
-        .runWith(Sink.actorRef(origSender, Status.Success(GetExecutionPlans)))
+        .runWith(Sink.actorRef(origSender, Status.Success(GetExecutionPlans), Status.Failure(_)))
 
     case GetTaskExecution(taskId) =>
       if (executions.contains(taskId)) {
@@ -172,7 +169,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
       }
 
     case GetTaskExecutions =>
-      Source(executions).runWith(Sink.actorRef(sender(), Status.Success(GetTaskExecutions)))
+      Source(executions).runWith(Sink.actorRef(sender(), Status.Success(GetTaskExecutions), Status.Failure(_)))
 
     case msg: WorkerMessage =>
       taskQueue forward msg
@@ -239,7 +236,7 @@ class Scheduler(journal: QuckooJournal, registry: ActorRef, queueProps: Props)(
     executionPlanEvents
       .concat(executionEvents)
       .runWith(
-        Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed)
+        Sink.actorRefWithBackpressure(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed)
       )
   }
 

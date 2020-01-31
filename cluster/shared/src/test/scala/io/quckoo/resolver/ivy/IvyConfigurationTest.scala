@@ -19,7 +19,8 @@ package io.quckoo.resolver.ivy
 import java.nio.file.Paths
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Created by domingueza on 04/08/15.
@@ -48,7 +49,7 @@ object IvyConfigurationTest {
 
 }
 
-class IvyConfigurationTest extends FlatSpec with Matchers {
+class IvyConfigurationTest extends AnyFlatSpec with Matchers {
 
   import IvyConfigurationTest._
 

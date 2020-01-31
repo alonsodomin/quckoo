@@ -22,7 +22,7 @@ import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.pattern._
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, OverflowStrategy}
+import akka.stream.{Materializer, ActorMaterializerSettings, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 
@@ -61,8 +61,7 @@ object QuckooFacade extends LazyLogging {
 
   def start(settings: ClusterSettings)(implicit system: ActorSystem, clock: Clock): Future[Unit] = {
     def startHttpListener(facade: QuckooFacade)(implicit ec: ExecutionContext) = {
-      implicit val materializer =
-        ActorMaterializer(ActorMaterializerSettings(system), "http")
+      implicit val materializer = Materializer(system)
 
       Http()
         .bindAndHandle(
@@ -99,7 +98,7 @@ final class QuckooFacade(core: ActorRef)(implicit system: ActorSystem)
   import system.dispatcher
 
   implicit val contextShift: ContextShift[IO] = IO.contextShift(system.dispatcher)
-  implicit val materializer                   = ActorMaterializer()
+  implicit val materializer                   = Materializer(system)
 
   def startPlan(schedule: ScheduleJob): IO[ExecutionPlanStarted] = IO.fromFuture {
     IO {

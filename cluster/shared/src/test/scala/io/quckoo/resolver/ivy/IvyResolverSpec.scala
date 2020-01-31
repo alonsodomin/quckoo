@@ -27,7 +27,9 @@ import io.quckoo.reflect.Artifact
 import io.quckoo.resolver._
 import io.quckoo.resolver.config.IvyConfig
 
-import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
+import org.scalatest.GivenWhenThen
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Created by alonsodomin on 23/01/2016.
@@ -48,7 +50,7 @@ object IvyResolverSpec {
 
 }
 
-class IvyResolverSpec extends FlatSpec with GivenWhenThen with Matchers {
+class IvyResolverSpec extends AnyFlatSpec with GivenWhenThen with Matchers {
   import IvyResolverSpec._
 
   "IvyResolve" should "accumulate all the errors of the resolve operation" in {

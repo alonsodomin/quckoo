@@ -19,7 +19,7 @@ package io.quckoo.cluster.scheduler
 import java.util.UUID
 
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
-import akka.stream.{ActorMaterializer, OverflowStrategy}
+import akka.stream.{Materializer, OverflowStrategy}
 import akka.stream.scaladsl.Source
 import akka.testkit._
 
@@ -56,7 +56,7 @@ class SchedulerSpec
   import SchedulerSpec._
   import DistributedPubSubMediator._
 
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer = Materializer(system)
 
   val registryProbe  = TestProbe("registryProbe")
   val taskQueueProbe = TestProbe("taskQueueProbe")

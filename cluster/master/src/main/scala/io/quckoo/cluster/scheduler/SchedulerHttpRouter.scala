@@ -20,7 +20,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 
 import cats.effect.IO
 import cats.implicits._
@@ -50,7 +50,7 @@ trait SchedulerHttpRouter extends EventStreamMarshalling {
   def schedulerApi(
       implicit
       system: ActorSystem,
-      materializer: ActorMaterializer,
+      materializer: Materializer,
       passport: Passport
   ): Route =
     extractTimeout(DefaultTimeout) { implicit timeout =>
@@ -101,7 +101,7 @@ trait SchedulerHttpRouter extends EventStreamMarshalling {
       }
     }
 
-  def schedulerEvents(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+  def schedulerEvents(implicit system: ActorSystem, materializer: Materializer): Route =
     path("scheduler") {
       get {
         complete(asSSE(schedulerTopic))

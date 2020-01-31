@@ -39,7 +39,7 @@ object ClusterSettings {
   final val Namespace = "quckoo"
 
   def apply(config: Config): Try[ClusterSettings] =
-    Try(ConfigSource.fromConfig(config).at(Namespace).loadOrThrow)
+    Try(ConfigSource.fromConfig(config).at(Namespace).loadOrThrow[ClusterSettings])
 
 }
 

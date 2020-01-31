@@ -32,7 +32,7 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-Xlint:-unused,_",
     "-Xfuture",
-    "-Xfatal-warnings",
+    //"-Xfatal-warnings",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Ypartial-unification"

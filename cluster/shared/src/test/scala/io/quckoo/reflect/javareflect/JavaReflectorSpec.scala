@@ -24,12 +24,13 @@ import io.quckoo.ArtifactId
 import io.quckoo.reflect.Artifact
 import io.quckoo.reflect.ops._
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 /**
   * Created by alonsodomin on 06/05/2017.
   */
-class JavaReflectorSpec extends FlatSpec with Matchers {
+class JavaReflectorSpec extends AnyFlatSpec with Matchers {
 
   "JavaReflector" should "fail to a class that does not exist" in {
     val fooArtifactId = ArtifactId("com.example", "foo", "latest")

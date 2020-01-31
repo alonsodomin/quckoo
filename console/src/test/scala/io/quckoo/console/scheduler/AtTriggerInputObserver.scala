@@ -20,7 +20,7 @@ import io.quckoo.console.test.ConsoleTestExports._
 
 import org.scalajs.dom.html
 
-class AtTriggerInputObserver($ : HtmlDomZipper) {
+class AtTriggerInputObserver($ : DomZipperJs) {
 
   val dateInput = $("#atTrigger_date").domAs[html.Input]
   val timeInput = $("#atTrigger_time").domAs[html.Input]

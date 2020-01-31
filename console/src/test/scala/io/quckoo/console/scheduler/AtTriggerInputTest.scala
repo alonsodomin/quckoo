@@ -23,13 +23,13 @@ import io.quckoo.console.test.ConsoleTestExports
 
 import japgolly.scalajs.react.test.ReactTestUtils
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 object AtTriggerInputTest {
   final val TestClock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC)
 }
 
-class AtTriggerInputTest extends FunSuite {
+class AtTriggerInputTest extends AnyFunSuite {
   import ConsoleTestExports._
   import AtTriggerInputTestDsl._
   import AtTriggerInputTest._
@@ -56,7 +56,7 @@ class AtTriggerInputTest extends FunSuite {
     val initialTrigger = Option.empty[Trigger.At]
 
     ReactTestUtils.withRenderedIntoDocument(AtTriggerInput(initialTrigger, onUpdate)) { comp =>
-      def observe() = new AtTriggerInputObserver(comp.htmlDomZipper)
+      def observe() = new AtTriggerInputObserver(comp.domZipper)
 
       val test = plan
         .addInvariants(invariants)

@@ -25,21 +25,19 @@ import org.scalajs.dom.html
 /**
   * Created by alonsodomin on 26/02/2017.
   */
-class FiniteDurationInputObserver(id: String, $ : HtmlDomZipper) {
+class FiniteDurationInputObserver(id: String, $ : DomZipperJs) {
 
   val lengthInput = $(s"input#${id}_length").domAs[html.Input]
 
   val unitSelect = $(s"select#${id}_unit").domAs[html.Select]
 
-  val unitOpts =
-    $.collect1n("option[value!='']").mapZippers(_.domAs[html.Option])
+  val unitOpts = $.collect1n("option[value!='']").map(_.domAs[html.Option])
   def unitOpt(unit: TimeUnit) = unitOpts.find(_.value == unit.name()).get
 
   val units = unitOpts.map(opt => TimeUnit.valueOf(opt.value))
 
   val selectedUnitOpt = unitOpts.find(_.value == unitSelect.value)
 
-  val validationBlock =
-    $.collect01(".help-block").mapZippers(_.domAs[html.Span])
+  val validationBlock = $.collect01(".help-block").map(_.domAs[html.Span])
 
 }

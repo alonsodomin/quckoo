@@ -21,9 +21,9 @@ import io.quckoo.console.test.ConsoleTestExports
 
 import japgolly.scalajs.react.test.ReactTestUtils
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class CronTriggerInputTest extends FunSuite {
+class CronTriggerInputTest extends AnyFunSuite {
   import ConsoleTestExports._
   import CronTriggerInputTestDsl._
 
@@ -48,7 +48,7 @@ class CronTriggerInputTest extends FunSuite {
     val initialTrigger = Option.empty[Trigger.Cron]
 
     ReactTestUtils.withRenderedIntoDocument(CronTriggerInput(initialTrigger, onUpdate)) { comp =>
-      def observe() = new CronTriggerInputObserver(comp.htmlDomZipper)
+      def observe() = new CronTriggerInputObserver(comp.domZipper)
 
       val test = plan
         .addInvariants(invariants)

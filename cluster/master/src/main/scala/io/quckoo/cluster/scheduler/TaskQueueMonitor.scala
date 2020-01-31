@@ -53,8 +53,8 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
   private[this] var currentMetrics = QueueMetrics()
 
   override def preStart(): Unit = {
-    replicator ! Replicator.Subscribe(TaskQueue.PendingKey, self)
-    replicator ! Replicator.Subscribe(TaskQueue.InProgressKey, self)
+    // replicator ! Replicator.Subscribe(TaskQueue.PendingKey, self)
+    // replicator ! Replicator.Subscribe(TaskQueue.InProgressKey, self)
     mediator ! DistributedPubSubMediator.Subscribe(TopicTag.Master.name, self)
   }
 
@@ -70,33 +70,34 @@ class TaskQueueMonitor extends Actor with ActorLogging with Stash {
   }
 
   private def ready: Receive = {
-    case evt @ Replicator.Changed(TaskQueue.PendingKey) =>
-      val state = evt.get(TaskQueue.PendingKey).entries.map {
-        case (node, value) => node -> value.toInt
-      }
-      currentMetrics = currentMetrics.copy(pendingPerNode = state)
-      publishMetrics()
+    case _ => ()
+    // case evt @ Replicator.Changed(TaskQueue.PendingKey) =>
+    //   val state = evt.get(TaskQueue.PendingKey).entries.map {
+    //     case (node, value) => node -> value.toInt
+    //   }
+    //   currentMetrics = currentMetrics.copy(pendingPerNode = state)
+    //   publishMetrics()
 
-    case evt @ Replicator.Changed(TaskQueue.InProgressKey) =>
-      val state = evt.get(TaskQueue.InProgressKey).entries.map {
-        case (node, value) => node -> value.toInt
-      }
-      currentMetrics = currentMetrics.copy(inProgressPerNode = state)
-      publishMetrics()
+    // case evt @ Replicator.Changed(TaskQueue.InProgressKey) =>
+    //   val state = evt.get(TaskQueue.InProgressKey).entries.map {
+    //     case (node, value) => node -> value.toInt
+    //   }
+    //   currentMetrics = currentMetrics.copy(inProgressPerNode = state)
+    //   publishMetrics()
 
-    case MasterRemoved(nodeId) =>
-      // Drop the key holding the counter for the lost node.
-      replicator ! Replicator
-        .Update(TaskQueue.PendingKey, PNCounterMap[String](), Replicator.WriteMajority(timeout)) {
-          _ - nodeId.toString
-        }
-      // TODO This might not be the right thing to do with that tasks that are in-progress
-      // ideally, the worker that has got it should be able to notify any of the partitions
-      // that conform the cluster-wide queue
-      replicator ! Replicator
-        .Update(TaskQueue.InProgressKey, PNCounterMap[String](), Replicator.WriteMajority(timeout)) {
-          _ - nodeId.toString
-        }
+    // case MasterRemoved(nodeId) =>
+    //   // Drop the key holding the counter for the lost node.
+    //   replicator ! Replicator
+    //     .Update(TaskQueue.PendingKey, PNCounterMap[String](), Replicator.WriteMajority(timeout)) {
+    //       _ - nodeId.toString
+    //     }
+    //   // TODO This might not be the right thing to do with that tasks that are in-progress
+    //   // ideally, the worker that has got it should be able to notify any of the partitions
+    //   // that conform the cluster-wide queue
+    //   replicator ! Replicator
+    //     .Update(TaskQueue.InProgressKey, PNCounterMap[String](), Replicator.WriteMajority(timeout)) {
+    //       _ - nodeId.toString
+    //     }
   }
 
   private def publishMetrics(): Unit = {

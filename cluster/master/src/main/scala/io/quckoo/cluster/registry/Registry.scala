@@ -25,7 +25,7 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.pattern._
 import akka.persistence.query.EventEnvelope
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 
@@ -93,12 +93,9 @@ class Registry private[registry] (resolver: Resolver[IO], journal: QuckooJournal
     extends Actor with ActorLogging with Stash {
   import Registry._
 
-  ClusterClientReceptionist(context.system).registerService(self)
+  //ClusterClientReceptionist(context.system).registerService(self)
 
-  final implicit val materializer = ActorMaterializer(
-    ActorMaterializerSettings(context.system),
-    "registry"
-  )
+  final implicit val materializer = Materializer(context.system)
 
   private[this] val mediator    = DistributedPubSub(context.system).mediator
   private[this] val shardRegion = startShardRegion(context.system)
@@ -147,7 +144,7 @@ class Registry private[registry] (resolver: Resolver[IO], journal: QuckooJournal
 
       Source(jobIds)
         .mapAsync(2)(fetchJobAsync)
-        .runWith(Sink.actorRef(origSender, Status.Success(GetJobs)))
+        .runWith(Sink.actorRef(origSender, Status.Success(GetJobs), Status.Failure(_)))
 
     case get @ GetJob(jobId) =>
       if (jobIds.contains(jobId)) {
@@ -197,7 +194,7 @@ class Registry private[registry] (resolver: Resolver[IO], journal: QuckooJournal
     journal.read
       .currentEventsByTag(EventTag, journal.firstOffset)
       .runWith(
-        Sink.actorRefWithAck(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed)
+        Sink.actorRefWithBackpressure(self, WarmUp.Start, WarmUp.Ack, WarmUp.Completed, WarmUp.Failed)
       )
 
 }

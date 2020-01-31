@@ -25,12 +25,12 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.scaladsl.Source
 
+import cats.effect.IO
 import cats.syntax.either._
 
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
 
 import io.circe.generic.auto._
-import io.circe.java8.time._
 
 import io.quckoo._
 import io.quckoo.api.{Scheduler => SchedulerApi}
@@ -39,7 +39,8 @@ import io.quckoo.auth.Passport
 import io.quckoo.serialization.DataBuffer
 import io.quckoo.testkit.ImplicitClock
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -87,8 +88,8 @@ object SchedulerHttpRouterSpec {
 }
 
 class SchedulerHttpRouterSpec
-    extends WordSpec with ScalatestRouteTest with Matchers with SchedulerHttpRouter
-    with SchedulerApi with SchedulerStreams with ImplicitClock {
+    extends AnyWordSpec with ScalatestRouteTest with Matchers with SchedulerHttpRouter
+    with SchedulerApi[IO] with SchedulerStreams with ImplicitClock {
 
   import SchedulerHttpRouterSpec._
   import StatusCodes._
@@ -99,70 +100,39 @@ class SchedulerHttpRouterSpec
     schedulerApi
   }
 
-  override def cancelPlan(planId: PlanId)(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[ExecutionPlanNotFound, ExecutionPlanCancelled]] =
-    Future.successful {
-      TestPlanMap
-        .get(planId)
-        .map(
-          plan =>
-            ExecutionPlanCancelled(plan.jobId, planId, ZonedDateTime.now(clock))
-              .asRight[ExecutionPlanNotFound]
-        )
-        .getOrElse(ExecutionPlanNotFound(planId).asLeft[ExecutionPlanCancelled])
-    }
+  override def cancelPlan(planId: PlanId): IO[ExecutionPlanCancelled] = {
+    TestPlanMap
+      .get(planId)
+      .map(
+        plan =>
+          ExecutionPlanCancelled(plan.jobId, planId, ZonedDateTime.now(clock))
+      )
+      .map(IO.pure)
+      .getOrElse(IO.raiseError(ExecutionPlanNotFound(planId)))
+  }
 
-  override def executionPlan(planId: PlanId)(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Option[ExecutionPlan]] =
-    Future.successful(TestPlanMap.get(planId))
+  override def fetchPlan(planId: PlanId): IO[Option[ExecutionPlan]] =
+    IO.pure(TestPlanMap.get(planId))
 
-  override def scheduleJob(schedule: ScheduleJob)(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Either[JobNotFound, ExecutionPlanStarted]] = Future.successful {
+  override def startPlan(schedule: ScheduleJob): IO[ExecutionPlanStarted] = {
     TestPlanMap.values
       .find(_.jobId == schedule.jobId)
       .map(
         plan =>
           ExecutionPlanStarted(schedule.jobId, plan.planId, ZonedDateTime.now(clock))
-            .asRight[JobNotFound]
       )
-      .getOrElse(JobNotFound(schedule.jobId).asLeft[ExecutionPlanStarted])
+      .map(IO.pure)
+      .getOrElse(IO.raiseError(JobNotFound(schedule.jobId)))
   }
 
-  override def executionPlans(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Seq[(PlanId, ExecutionPlan)]] =
-    Future.successful(TestPlanMap.toSeq)
+  override def fetchPlans(): IO[List[(PlanId, ExecutionPlan)]] =
+    IO.pure(TestPlanMap.toSeq.toList)
 
-  override def executions(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Seq[(TaskId, TaskExecution)]] =
-    Future.successful(TestTaskMap.toSeq)
+  override def fetchTasks(): IO[List[(TaskId, TaskExecution)]] =
+    IO.pure(TestTaskMap.toSeq.toList)
 
-  override def execution(taskId: TaskId)(
-      implicit
-      ec: ExecutionContext,
-      timeout: FiniteDuration,
-      passport: Passport
-  ): Future[Option[TaskExecution]] =
-    Future.successful(TestTaskMap.get(taskId))
+  override def fetchTask(taskId: TaskId): IO[Option[TaskExecution]] =
+    IO.pure(TestTaskMap.get(taskId))
 
   override def schedulerTopic: Source[SchedulerEvent, NotUsed] = ???
 

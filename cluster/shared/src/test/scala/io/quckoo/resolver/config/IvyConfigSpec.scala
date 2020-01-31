@@ -23,9 +23,12 @@ import com.typesafe.config.ConfigFactory
 import io.quckoo.config._
 import io.quckoo.resolver.MavenRepository
 
-import org.scalatest.{EitherValues, FlatSpec, Matchers}
+import org.scalatest.EitherValues
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.AnyFlatSpec
 
 import pureconfig._
+import pureconfig.generic.auto._
 
 /**
   * Created by domingueza on 04/11/2016.
@@ -50,7 +53,7 @@ object IvyConfigSpec {
     """.stripMargin
 }
 
-class IvyConfigSpec extends FlatSpec with Matchers with EitherValues {
+class IvyConfigSpec extends AnyFlatSpec with Matchers with EitherValues {
   import IvyConfigSpec._
 
   "IvyConfig" should "correctly parse config attributes and repositories" in {
@@ -59,7 +62,7 @@ class IvyConfigSpec extends FlatSpec with Matchers with EitherValues {
     val expectedMavenRepo =
       MavenRepository(TestRepositoryName, new URL(TestRepositoryUrl))
 
-    val returnedConfig = loadConfig[IvyConfig](config)
+    val returnedConfig = ConfigSource.fromConfig(config).load[IvyConfig]
     returnedConfig.right.value.repositories should contain(expectedMavenRepo)
   }
 

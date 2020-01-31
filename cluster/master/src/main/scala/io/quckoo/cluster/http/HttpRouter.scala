@@ -21,7 +21,7 @@ import akka.event.LoggingAdapter
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route, ValidationRejection}
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport
 import de.heikoseeberger.akkasse.scaladsl.marshalling.EventStreamMarshalling
@@ -41,8 +41,9 @@ trait HttpRouter
   import ErrorAccumulatingCirceSupport._
 
   private[this] def defineApi(
-      implicit system: ActorSystem,
-      materializer: ActorMaterializer
+      implicit
+      system: ActorSystem,
+      materializer: Materializer
   ): Route =
     pathPrefix("auth") {
       extractTimeout(DefaultTimeout) { implicit timeout =>
@@ -81,8 +82,9 @@ trait HttpRouter
     }
 
   private[this] def clusterEvents(
-      implicit system: ActorSystem,
-      materializer: ActorMaterializer
+      implicit
+      system: ActorSystem,
+      materializer: Materializer
   ): Route =
     path("master") {
       get {
@@ -109,7 +111,7 @@ trait HttpRouter
         complete(HttpResponse(BadRequest, entity = msg))
     } result ()
 
-  def router(implicit system: ActorSystem, materializer: ActorMaterializer): Route =
+  def router(implicit system: ActorSystem, materializer: Materializer): Route =
     logRequest("HTTPRequest") {
       logResult("HTTPResponse") {
         handleExceptions(exceptionHandler(system.log)) {

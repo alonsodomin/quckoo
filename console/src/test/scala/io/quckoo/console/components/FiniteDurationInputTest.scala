@@ -21,14 +21,14 @@ import japgolly.scalajs.react.test.ReactTestUtils
 
 import io.quckoo.console.test.ConsoleTestExports
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.concurrent.duration._
 
 /**
   * Created by alonsodomin on 26/02/2017.
   */
-class FiniteDurationInputTest extends FunSuite {
+class FiniteDurationInputTest extends AnyFunSuite {
   import ConsoleTestExports._
   import FiniteDurationInputTestDsl._
 
@@ -54,7 +54,7 @@ class FiniteDurationInputTest extends FunSuite {
       FiniteDurationInput("testFD", None, _ => Callback.empty)
     ) { comp =>
       def observe() =
-        new FiniteDurationInputObserver("testFD", comp.htmlDomZipper)
+        new FiniteDurationInputObserver("testFD", comp.domZipper)
 
       val test = plan
         .addInvariants(invariants)
