@@ -51,9 +51,9 @@ object NotificationContainer {
             <.div(
               ^.`class` := "progress-bar progress-bar-{0}",
               ^.role := "progressbar",
-              ^.aria.valueNow := "0",
-              ^.aria.valueMin := "0",
-              ^.aria.valueMax := "100",
+              ^.aria.valueNow := 0,
+              ^.aria.valueMin := 0,
+              ^.aria.valueMax := 100,
               ^.width := "0%"
             )
           ),

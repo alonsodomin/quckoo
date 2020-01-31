@@ -28,7 +28,7 @@ object ExecutionFetcher extends Fetch[TaskId] {
   override def fetch(key: TaskId): Unit =
     ConsoleCircuit.dispatch(RefreshExecutions(Set(key)))
 
-  override def fetch(keys: Traversable[TaskId]): Unit =
+  override def fetch(keys: Iterable[TaskId]): Unit =
     ConsoleCircuit.dispatch(RefreshExecutions(keys.toSet))
 
 }

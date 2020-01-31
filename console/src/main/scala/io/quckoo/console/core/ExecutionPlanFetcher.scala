@@ -27,6 +27,6 @@ object ExecutionPlanFetcher extends Fetch[PlanId] {
   override def fetch(key: PlanId): Unit =
     ConsoleCircuit.dispatch(RefreshExecutionPlans(keys = Set(key)))
 
-  override def fetch(keys: Traversable[PlanId]): Unit =
+  override def fetch(keys: Iterable[PlanId]): Unit =
     ConsoleCircuit.dispatch(RefreshExecutionPlans(keys.toSet))
 }

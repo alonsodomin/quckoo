@@ -80,7 +80,7 @@ object Navigation {
             ^.href := "#",
             ^.`class` := "dropdown-toggle",
             ^.role := "button",
-            ^.aria.hasPopup := true,
+            //^.aria.hasPopup := true,
             ^.aria.expanded := false,
             list.icon,
             list.name,
